@@ -37,3 +37,21 @@ export async function sentMailWithSubject(address: string, subject: string): Pro
 export function linksIn(mail: CapturedMail): string[] {
   return mail.text.match(/https?:\/\/[^\s<>"]+/g) ?? [];
 }
+
+const MAIL_WAIT_MS = 10_000;
+const MAIL_POLL_MS = 100;
+
+/**
+ * Waits for `count` emails to `address` (with `subject`, when given) to reach the sink, since
+ * the outbox's sender sends a moment after the request that queued them (#844). Returns what
+ * arrived, which is short of `count` only when the wait ran out, so the caller's length
+ * assertion fails with what was seen.
+ */
+export async function awaitSentMailTo(address: string, count: number, subject?: string): Promise<CapturedMail[]> {
+  const deadline = Date.now() + MAIL_WAIT_MS;
+  for (;;) {
+    const mail = subject === undefined ? await sentMailTo(address) : await sentMailWithSubject(address, subject);
+    if (mail.length >= count || Date.now() >= deadline) return mail;
+    await new Promise((resolve) => { setTimeout(resolve, MAIL_POLL_MS); });
+  }
+}

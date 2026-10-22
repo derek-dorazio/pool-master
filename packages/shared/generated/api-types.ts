@@ -572,13 +572,13 @@ export interface paths {
         };
         /**
          * List a league's outstanding invitations
-         * @description Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted. Accepted and cancelled invitations are not listed. Commissioner only.
+         * @description Lists the league's outstanding invitations, newest first: every PENDING email invite and join link, plus email invites that expired without being accepted, each email invite with where its latest email stands. Accepted and cancelled invitations are not listed. Commissioner only.
          */
         get: operations["listLeagueInvitations"];
         put?: never;
         /**
          * Send email invitations to join a league
-         * @description Creates direct email invitations for the target league. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
+         * @description Creates direct email invitations for the target league and queues each one's email; each sent invitation carries its email status. Existing members and pending duplicate invitees are reported separately in the response. An inactive league refuses with 400 `LEAGUE_INACTIVE`.
          */
         post: operations["sendLeagueInvitations"];
         delete?: never;
@@ -598,7 +598,7 @@ export interface paths {
         put?: never;
         /**
          * Resend an email invitation
-         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email sent again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive; 502 LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED when the email could not be sent. Commissioner only.
+         * @description Renews an outstanding email invitation: a new invite code (the old link stops working), a new expiry, and the invitation email queued again. 409 LEAGUE_INVITATION_NOT_RESENDABLE for a join link or an accepted or cancelled invitation, and 409 LEAGUE_INACTIVE while the league is inactive. Commissioner only.
          */
         post: operations["resendLeagueInvitation"];
         delete?: never;
@@ -3859,6 +3859,11 @@ export interface components {
                 createdAt?: string;
             };
         };
+        /**
+         * @description Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the address may not be emailed here.
+         * @enum {string}
+         */
+        EmailMessageStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED";
         /** @description Invitation record returned from commissioner invite-management APIs. */
         LeagueInvitationDto: {
             /** @description Invitation record identifier. */
@@ -3897,6 +3902,11 @@ export interface components {
             acceptedAt?: string | null;
             /** @description User ID that accepted the invite, when known. */
             acceptedBy?: string | null;
+            /**
+             * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+             * @enum {string|null}
+             */
+            emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
             /**
              * Format: date-time
              * @description Invitation creation timestamp.
@@ -4398,7 +4408,7 @@ export interface components {
         };
         /** @description League invitation-send response. */
         SendLeagueInvitationsResponse: {
-            /** @description Invitation records successfully created and sent. */
+            /** @description Invitations created, each with its email queued or skipped. */
             sent: {
                 /** @description Invitation record identifier. */
                 id: string;
@@ -4436,6 +4446,11 @@ export interface components {
                 acceptedAt?: string | null;
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
+                /**
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @enum {string|null}
+                 */
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -4493,6 +4508,11 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @enum {string|null}
+                 */
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
                  */
@@ -4545,6 +4565,11 @@ export interface components {
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
                 /**
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @enum {string|null}
+                 */
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
+                /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
                  */
@@ -4596,6 +4621,11 @@ export interface components {
                 acceptedAt?: string | null;
                 /** @description User ID that accepted the invite, when known. */
                 acceptedBy?: string | null;
+                /**
+                 * @description Where the latest email of an email invite stands; null for a join link, which has no email.
+                 * @enum {string|null}
+                 */
+                emailStatus: "QUEUED" | "SENDING" | "SENT" | "FAILED" | "SKIPPED" | null;
                 /**
                  * Format: date-time
                  * @description Invitation creation timestamp.
@@ -11342,13 +11372,15 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
             enabled: boolean;
             /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
             allowedRecipients: string[];
+            /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+            sendRatePerSecond: number;
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
             templates: {
                 /** @description Whether this email is sent. */
@@ -11783,6 +11815,8 @@ export interface components {
                 enabled: boolean;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
+                /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                sendRatePerSecond: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -11801,6 +11835,8 @@ export interface components {
                 enabled: boolean;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
+                /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                sendRatePerSecond: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12124,6 +12160,8 @@ export interface components {
                     enabled: boolean;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
+                    /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                    sendRatePerSecond: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -12142,6 +12180,8 @@ export interface components {
                     enabled: boolean;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
+                    /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                    sendRatePerSecond: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -12314,6 +12354,8 @@ export interface components {
                 enabled: boolean;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
+                /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                sendRatePerSecond: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12589,6 +12631,8 @@ export interface components {
                 enabled: boolean;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
+                /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                sendRatePerSecond: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12607,6 +12651,8 @@ export interface components {
                 enabled: boolean;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
+                /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                sendRatePerSecond: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12909,6 +12955,8 @@ export interface components {
                     enabled: boolean;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
+                    /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                    sendRatePerSecond: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -12927,6 +12975,8 @@ export interface components {
                     enabled: boolean;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
+                    /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+                    sendRatePerSecond: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -16148,15 +16198,6 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description Standard API error envelope. */
-            502: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
         };
     };
     resendLeagueInvitation: {
@@ -16200,15 +16241,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            502: {
                 headers: {
                     [name: string]: unknown;
                 };

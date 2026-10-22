@@ -52,6 +52,7 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
       label: 'Only send to',
       value: config.allowedRecipients.length > 0 ? config.allowedRecipients.join(', ') : 'Everyone',
     },
+    { id: 'sendRatePerSecond', label: 'Emails a second', value: String(config.sendRatePerSecond) },
   ];
 }
 

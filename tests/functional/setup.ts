@@ -407,6 +407,14 @@ export async function cleanupFunctionalData(): Promise<void> {
   await cleanupContestArtifacts(database, contestIds);
 
   if (leagueIds.length > 0) {
+    // The outbox keeps an email when what it is about goes, so the test leagues' emails go first.
+    await database.emailMessage.deleteMany({
+      where: {
+        leagueId: {
+          in: leagueIds,
+        },
+      },
+    });
     await database.leagueInvitation.deleteMany({
       where: {
         leagueId: {

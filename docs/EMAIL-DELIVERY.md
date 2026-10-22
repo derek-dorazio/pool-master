@@ -2,8 +2,39 @@
 
 PoolMaster sends every system email through one call, `EmailService.send(templateKey, input)`
 in `packages/core-api/src/modules/email`. It checks `EMAIL_CONFIG` and who may be emailed,
-renders the template for the recipient, picks the sender, and hands one email to one person to
-the transport. Callers never render or call a transport themselves.
+renders the template for the recipient, picks the sender, and records one email to one person
+in the outbox; the sender sends it a moment later. Callers never render or call a transport
+themselves.
+
+## Outbox
+
+Every email is a row in `email_messages` (#844 slice 3), one per recipient:
+
+- **Queued** (`QUEUED`) with its subject and bodies rendered at queue time, so what is sent is
+  what was stored; or **skipped** (`SKIPPED`) with the reason and no content.
+- **Once per key.** Each caller passes what the email is about (an invitation and its code, an
+  entry's submission, a contest's start); with the template and the recipient (their user id,
+  or the address for an invite) it makes `idempotency_key`, which is unique. A retried action,
+  a second sweep or a double click records nothing new. A resend is a new invite code, so a
+  new email.
+- **The sender** (`EmailSender`) runs in every core-api task. It claims due rows with
+  `FOR UPDATE SKIP LOCKED`, so two tasks never send the same email, and sends no faster than
+  `EMAIL_CONFIG.sendRatePerSecond` per task. A queued email wakes it; a 15-second tick picks up
+  retries and anything a wake missed.
+- **Retries.** A failed send is tried again 1, 5 and 30 minutes later, then marked `FAILED`
+  with its last error and logged. An SES throttle (`TooManyRequestsException`) is tried again 10
+  seconds later without counting the try. A claim lapses after 5 minutes, so an email a stopped
+  task held is sent by another.
+- **Send-by window.** A template may say how long after it is queued it may still go out
+  (`sendWithinMs` in the registry). The password reset's is its link's 10 minutes: a reset that
+  would be sent or retried later is marked `FAILED` with its content cleared
+  (`email.sender.expired`). Emails with a window are claimed ahead of the rest, so a reset never
+  waits behind a large send.
+- **Content is cleared after 30 days**; the row stays, so "why didn't I get it?" still has an
+  answer.
+
+The logs (`email.send.queued`, `email.send.skip`, `email.sender.sent`, `email.sender.retry`,
+`email.sender.failed`, `email.sender.expired`) carry the template key and ids, never the body or an address.
 
 ## Templates
 
@@ -70,6 +101,9 @@ holds:
 - `allowedRecipients` ("Only send to"): when not empty, the only recipients email goes to, each
   a whole address or `@domain`, compared without case. Every other recipient is skipped. Empty
   (the default) means no limit.
+- `sendRatePerSecond` ("Emails a second"): the most emails each core-api task sends a second,
+  10 by default. Production runs two tasks; keep the total within the SES account's rate
+  (14 a second when production access is granted).
 
 Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
 `.example`, `.localhost`, `example.com`, `example.net`, `example.org`) is always skipped: no mail
@@ -77,7 +111,7 @@ server answers for them, so a send would only hard-bounce. The e2e smoke users a
 `@e2e.invalid`, so smoke runs on QA never send. Mailpit and the test SMTP sink catch every
 address, so SMTP sends to them.
 
-An email that is skipped still reports success, so invite by email still creates the invitation
+An email that is skipped is recorded as skipped, and invite by email still creates the invitation
 and the request succeeds. Each skip is logged as `email.send.skip` with the reason
 (`EMAIL_DISABLED`, `TEMPLATE_DISABLED` or `NOT_ALLOWED_IN_ENVIRONMENT`), the template key and
 ids, never the body or an address. The transport (`EMAIL_PROVIDER`) and the
@@ -113,8 +147,10 @@ confirmation, contest started) is sent once, to the right person, with the
 right subject and link; the functional server runs with a fixed
 `APP_BASE_URL` so links are exact. `tests/functional/password-reset.functional.ts`
 reads the reset link out of the reset email and uses it. Functional tests read the sink through
-`tests/functional/mail.ts`. `tests/integration/core-api/email-settings.integration.ts`
-covers switching email, and one email, off, and the allow list.
+`tests/functional/mail.ts`, whose `awaitSentMailTo` waits for the sender to send.
+`tests/integration/core-api/email-settings.integration.ts` covers switching email, and one
+email, off, and the allow list; `email-outbox.integration.ts` covers each outbox query. Unit
+tests run the real service and sender over an in-memory outbox (`tests/support/email-service.ts`).
 
 ## SES Infrastructure
 
@@ -145,39 +181,37 @@ in `infrastructure/terraform/README.md`, *System email (SES)*.
 
 ## Success Semantics
 
-League invite-by-email returns success only after PoolMaster creates the
-invitation record and submits the rendered email to the configured provider.
-If provider submission fails, the API returns
-`LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and logs provider, template, league,
-and invitation identifiers without logging email body content.
+No request waits for an email to be sent, and none fails because the mail provider refused
+one: the email is queued, and the outbox retries it.
 
-Resend Invite (Commissioner tools › Invites, commissioner only) follows the same rule. It
-gives the invitation a new invite code and a fresh seven-day expiry before
-sending, so the old link stops working even when the provider then rejects the
-email; the commissioner sees `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED` and can
-resend again. When `EMAIL_CONFIG` has the league invite email switched off, a
-resend still renews the code and reports success; the email is skipped, so the
-commissioner shares the new link another way.
+League invite by email returns success once the invitation exists and its email is recorded.
+Each sent invitation carries `emailStatus`, and the commissioner's pending invites list
+(Commissioner tools › Invites) shows where each invite's latest email stands: sending, sent,
+could not be sent (`FAILED`), or not sent (`SKIPPED`, with email switched off or the address
+not allowed here), when the commissioner copies the link and shares it another way. Resend gives
+the invitation a new invite code and a fresh seven-day expiry and queues a new email, so the
+old link stops working.
 
-Contest entry confirmation emails ("Entry submitted") are best-effort receipts,
-sent when a member submits an entry (#481), not when its picks or tiebreaker
-are saved. A repeat submit of an already submitted entry sends nothing. The
-submitted entry is not rolled back when provider submission fails; PoolMaster
-logs the template, league, contest, and entry identifiers for follow-up.
+Contest entry confirmation emails ("Entry submitted") are receipts, queued when a member
+submits an entry (#481), not when its picks or tiebreaker are saved. A repeat submit of an
+already submitted entry sends nothing.
 
-Password reset emails (#847) go through `EmailService` like every other email, from the app's
-`noreply@` address, and are sent at once, inside the request that asked for them, never queued, because the link expires 10 minutes after it is issued. The request route has already
-answered 202 by then, the same answer it gives when no account matches, so a provider failure is
-only logged (user id, never the address, token or link) and the person asks again.
+Password reset emails (#847) are queued like every other email, from the app's `noreply@`
+address. Queuing wakes the sender, so the email goes out at once; the link expires 10 minutes
+after it is issued. They have no switch in EMAIL_CONFIG (only the overall one), and because the
+email carries the link, the outbox clears its subject and bodies the moment it is sent or given
+up on instead of keeping them for 30 days. The request route has already answered 202 by then,
+the same answer it gives when no account matches, so a failure is only logged (user id, never
+the address, token or link) and the person asks again.
 
-Password changed emails (#848) go after a reset by link and after a person changes their own
-password, not after a root admin's reset. They are sent after the password write commits; a
-provider failure is logged and never undoes the change.
+Password changed emails (#848) are queued after a reset by link and after a person changes their
+own password, not after a root admin's reset, once the password write commits. Like the reset,
+they have no switch in EMAIL_CONFIG. A failure to queue one is logged and never undoes the change.
 
-Contest started summary emails are sent when a sport event moves to
-`IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first
-moves its contests from `OPEN` to `ACTIVE`. They go to the league's
-commissioners and the team members of each submitted entry, once each. An already-active
-contest is not told again. Delivery is best effort; the transition still
-succeeds if the provider rejects the email,
-and PoolMaster logs the template, league, contest, and user identifiers.
+Contest started summary emails are queued when a sport event moves to `IN_PROGRESS` (a root
+admin's transition, or the lifecycle scheduler) and first moves its contests from `OPEN` to
+`ACTIVE`. They go to the league's commissioners and the team members of each submitted entry,
+once each. An already-active contest is not told again.
+
+If the outbox cannot record a welcome, a receipt or a contest-started email, the action that
+sends it still succeeds and PoolMaster logs the template and ids.

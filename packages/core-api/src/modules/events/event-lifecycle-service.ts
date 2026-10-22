@@ -332,7 +332,8 @@ export class EventLifecycleService {
     for (const user of summary.recipients) {
       try {
         await this.email.send(templateKey, {
-          to: { email: user.email, timeZone: user.timezone },
+          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          about: `${contest.id}:${sportEvent.id}`,
           league,
           refs: { contestId: contest.id },
           data: {
@@ -351,7 +352,7 @@ export class EventLifecycleService {
           leagueId: contest.leagueId,
           userId: user.id,
           templateKey,
-        }, 'Delivered contest started summary email');
+        }, 'Queued contest started summary email');
       } catch (err) {
         this.logger?.error({
           contestId: contest.id,
@@ -359,7 +360,7 @@ export class EventLifecycleService {
           userId: user.id,
           templateKey,
           error: err instanceof Error ? err.message : String(err),
-        }, 'Failed to deliver contest started summary email');
+        }, 'Failed to queue contest started summary email');
       }
     }
   }

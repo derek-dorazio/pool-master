@@ -45,6 +45,7 @@ const SAVED_INGESTION: SettingsGroup = {
 const EMAIL_DEFAULTS = {
   enabled: true,
   allowedRecipients: [] as string[],
+  sendRatePerSecond: 10,
   templates: {
     LEAGUE_MEMBER_INVITE: true,
     LEAGUE_JOIN_SUCCESS: true,
@@ -163,6 +164,7 @@ describe('RootAdminSettingsPage email card', () => {
         value: {
           enabled: false,
           allowedRecipients: ['tester@gmail.com'],
+          sendRatePerSecond: 10,
           templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
         },
       },
@@ -181,6 +183,28 @@ describe('RootAdminSettingsPage email card', () => {
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
     const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { allowedRecipients: string[] } } }];
     expect(request.body.value.allowedRecipients).toEqual(['derek+alice@gmail.com', '@simulator.amazonses.com']);
+  });
+
+  it('saves the send rate as a number', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { sendRatePerSecond: number } } }];
+    expect(request.body.value.sendRatePerSecond).toBe(5);
+  });
+
+  it('refuses to save a send rate below one email a second', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '0' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    expect(await screen.findByText(/greater than or equal to 1/)).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
   it('shows the saved allow list one per line', async () => {

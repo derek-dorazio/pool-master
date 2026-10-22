@@ -111,3 +111,8 @@ export type {
   ContestSquaresDrawWrite,
   ContestSquaresRepository,
 } from './squares-ports';
+export type {
+  EmailMessageRecord,
+  EmailMessageRecordResult,
+  EmailMessageRepository,
+} from './email-ports';

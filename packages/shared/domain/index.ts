@@ -61,6 +61,7 @@ export type {
   InjuryStatus,
   IntermediatePrize,
   League,
+  EmailMessage,
   LeagueInvitation,
   LeagueMembership,
   ContestEntryPick,

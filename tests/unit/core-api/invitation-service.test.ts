@@ -1,7 +1,6 @@
 import { expect } from '@jest/globals';
 import {
   InvitationService,
-  InvitationEmailDeliveryError,
   InvitationNotFoundError,
   InvitationInvalidError,
 } from '../../../packages/core-api/src/modules/leagues/invitation-service';
@@ -32,7 +31,8 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { asPrismaClient } from '../../support/prisma-double';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
@@ -194,6 +194,8 @@ describe('InvitationService', () => {
       });
 
       expect(result.sent).toHaveLength(1);
+      expect(result.sent[0].emailStatus).toBe('QUEUED');
+      await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
         to: 'alice@example.com',
@@ -212,29 +214,38 @@ describe('InvitationService', () => {
       expect(sentMessage.html).toContain('Ultimate Office Pool Manager');
     });
 
-    it('pool-master-7ij fails the send when provider submission fails', async () => {
+    it('still creates the invitation when the transport refuses its email, leaving the email queued for a retry', async () => {
       const invitationRepo = createMockInvitationRepo();
       const mailDelivery = {
         providerName: 'smtp' as const,
         send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
       };
+      const outbox = inMemoryEmailMessages();
       const service = new InvitationService({
         invitations: invitationRepo,
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        email: emailServiceOver(mailDelivery),
+        email: emailServiceOver(mailDelivery, outbox),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
       });
 
-      await expect(service.sendEmailInvitations({
+      const result = await service.sendEmailInvitations({
         leagueId: 'league-1',
         emails: ['alice@example.com'],
         invitedBy: 'owner-1',
-      })).rejects.toBeInstanceOf(InvitationEmailDeliveryError);
-      expect(invitationRepo.create).toHaveBeenCalledTimes(1);
+      });
+      await deliverQueuedEmail();
+
+      expect(result.sent.map((sent) => sent.invitation.id)).toEqual(['new-invite-id']);
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+      expect(outbox.rows).toEqual([expect.objectContaining({
+        invitationId: 'new-invite-id',
+        status: 'QUEUED',
+        attempts: 1,
+        lastError: 'SES rejected request',
+      })]);
     });
 
     it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
@@ -350,7 +361,7 @@ describe('InvitationService', () => {
 
       const listed = await service.listOutstandingInvitations('league-1');
 
-      expect(listed.map((invitation) => invitation.id)).toEqual([
+      expect(listed.map(({ invitation }) => invitation.id)).toEqual([
         pendingEmail.id,
         pendingLink.id,
         expiredEmail.id,
@@ -392,8 +403,10 @@ describe('InvitationService', () => {
       const { invitationRepo, service } = createResendService(invitation, mailDelivery);
       const before = Date.now();
 
-      const renewed = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      const { invitation: renewed, emailStatus } = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      await deliverQueuedEmail();
 
+      expect(emailStatus).toBe('QUEUED');
       const update = jest.mocked(invitationRepo.update).mock.calls[0][1];
       expect(update.inviteCode).toBeDefined();
       expect(update.inviteCode).not.toBe('oldcode');
@@ -414,7 +427,7 @@ describe('InvitationService', () => {
         buildInvitation({ id: 'invite-1', status: InvitationStatus.EXPIRED }),
       );
 
-      const renewed = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      const { invitation: renewed } = await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
 
       expect(renewed.status).toBe(InvitationStatus.PENDING);
       expect(invitationRepo.update).toHaveBeenCalledWith('invite-1', expect.objectContaining({
@@ -453,15 +466,18 @@ describe('InvitationService', () => {
       );
     });
 
-    it('fails the resend with a delivery error when the email cannot be sent', async () => {
-      const { service } = createResendService(buildInvitation({ id: 'invite-1' }), {
-        providerName: 'smtp',
-        send: jest.fn().mockRejectedValue(new Error('SMTP down')),
-      });
+    it('queues a new email for each resend, since each one carries a new link', async () => {
+      const mailDelivery = {
+        providerName: 'smtp' as const,
+        send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
+      };
+      const { service } = createResendService(buildInvitation({ id: 'invite-1', email: 'alice@example.com' }), mailDelivery);
 
-      await expect(service.resendEmailInvitation('league-1', 'invite-1', 'owner-1')).rejects.toBeInstanceOf(
-        InvitationEmailDeliveryError,
-      );
+      await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      await service.resendEmailInvitation('league-1', 'invite-1', 'owner-1');
+      await deliverQueuedEmail();
+
+      expect(mailDelivery.send).toHaveBeenCalledTimes(2);
     });
   });
 
@@ -599,6 +615,7 @@ describe('InvitationService', () => {
 
       await service.acceptInvitation('valid-code', 'new-user');
 
+      await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
         to: 'invitee@example.com',
@@ -646,6 +663,7 @@ describe('InvitationService', () => {
       await expect(service.acceptInvitation('valid-code', 'existing-user')).rejects.toThrow(
         InvitationInvalidError,
       );
+      await deliverQueuedEmail();
       expect(mailDelivery.send).not.toHaveBeenCalled();
     });
 
@@ -678,6 +696,7 @@ describe('InvitationService', () => {
         expect.objectContaining({ id: 'new-membership-id' }),
       );
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
+      await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
     });
 

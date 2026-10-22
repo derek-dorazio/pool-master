@@ -14,6 +14,9 @@ import type {
   ContestStatus,
   ContestFormat,
   DateFormat,
+  EmailMessageStatus,
+  EmailSkipReason,
+  EmailTemplateKey,
   InjuryStatusCode,
   InvitationStatus,
   InviteType,
@@ -126,6 +129,41 @@ export interface LeagueInvitation extends DomainEntity {
   expiresAt?: Date;
   acceptedAt?: Date;
   acceptedBy?: string;
+}
+
+/**
+ * One system email to one person, in the outbox (#844): queued, then sent by the sender, or
+ * skipped with the reason. Its content is rendered when it is queued, so what is sent is what was
+ * stored; the bodies are cleared after 30 days and the row stays.
+ */
+export interface EmailMessage extends DomainEntity {
+  templateKey: EmailTemplateKey;
+  /** The user it goes to; absent for an address with no account yet (an invite). */
+  recipientUserId?: string;
+  recipientEmail: string;
+  leagueId?: string;
+  contestId?: string;
+  entryId?: string;
+  invitationId?: string;
+  /** Template, what the email is about, and the recipient: one email per key, ever. */
+  idempotencyKey: string;
+  fromName: string;
+  fromAddress: string;
+  /** Absent on a skipped email and once the bodies are cleared. */
+  subject?: string;
+  textBody?: string;
+  htmlBody?: string;
+  status: EmailMessageStatus;
+  /** Set exactly when the status is SKIPPED. */
+  skipReason?: EmailSkipReason;
+  /** Tries so far, the current one included. */
+  attempts: number;
+  /** When a queued email is due, or when a sender's claim on it lapses. */
+  nextAttemptAt?: Date;
+  lastError?: string;
+  /** The transport's id for the sent email; SES's id matches its delivery events. */
+  providerMessageId?: string;
+  sentAt?: Date;
 }
 
 // --- Sport & Participant ---

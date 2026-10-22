@@ -3,6 +3,8 @@ import { EmailConfigSchema } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
   MailDeliveryConfigError,
+  MailDeliveryError,
+  MailDeliveryThrottledError,
   SesMailDeliveryProvider,
   formatMailAddress,
   readApplicationBaseUrl,
@@ -128,6 +130,32 @@ describe('pool-master-7ij SES mail delivery provider', () => {
     expect(JSON.stringify(logger.info.mock.calls)).not.toContain('Plain text body');
     expect(JSON.stringify(logger.info.mock.calls)).not.toContain('HTML body');
   });
+
+  it.each([
+    ['TooManyRequestsException', MailDeliveryThrottledError],
+    ['MessageRejected', MailDeliveryError],
+  ])('reports an SES %s as %p, so only sending too fast is retried without counting the try', async (name, expected) => {
+    const refusal = Object.assign(new Error('SES refused'), { name });
+    const provider = new SesMailDeliveryProvider(
+      { provider: 'ses', fromEmail: 'noreply@example.com', ses: { region: 'us-east-2' } },
+      { send: () => Promise.reject(refusal) },
+    );
+
+    const attempt = provider.send({
+      from: { name: 'Office League', address: 'officeleague@qa.example.com' },
+      to: 'member@gmail.com',
+      subject: 'League invitation',
+      text: 'Plain text body',
+      html: '<p>HTML body</p>',
+      metadata: { templateKey: 'LEAGUE_MEMBER_INVITE' },
+    });
+
+    await expect(attempt).rejects.toBeInstanceOf(expected);
+    await expect(attempt).rejects.toMatchObject({ cause: refusal });
+    if (expected === MailDeliveryError) {
+      await expect(attempt).rejects.not.toBeInstanceOf(MailDeliveryThrottledError);
+    }
+  });
 });
 
 describe('the From header', () => {
@@ -155,6 +183,7 @@ describe('EMAIL_CONFIG defaults', () => {
     expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })).toEqual({
       enabled: true,
       allowedRecipients: [],
+      sendRatePerSecond: 10,
       templates: {
         LEAGUE_MEMBER_INVITE: true,
         LEAGUE_JOIN_SUCCESS: true,
@@ -166,6 +195,16 @@ describe('EMAIL_CONFIG defaults', () => {
 
   it('refuses to pick a default when POOLMASTER_ENVIRONMENT is unset, instead of guessing email should be on', () => {
     expect(() => EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' })).toThrow(/POOLMASTER_ENVIRONMENT/);
+  });
+});
+
+describe('EMAIL_CONFIG send rate', () => {
+  it('takes a whole number of emails a second from 1 to 100', () => {
+    const base = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'qa' });
+    const parses = (sendRatePerSecond: number) => EmailConfigSchema.safeParse({ ...base, sendRatePerSecond }).success;
+
+    expect([1, 14, 100].map(parses)).toEqual([true, true, true]);
+    expect([0, 101, 2.5].map(parses)).toEqual([false, false, false]);
   });
 });
 

@@ -177,6 +177,29 @@ enum PrismaLeagueInvitationStatus {
   REVOKED
 }
 
+enum PrismaEmailTemplateKey {
+  LEAGUE_MEMBER_INVITE
+  LEAGUE_JOIN_SUCCESS
+  CONTEST_ENTRY_COMPLETED
+  CONTEST_STARTED_SUMMARY
+  PASSWORD_RESET
+  PASSWORD_CHANGED
+}
+
+enum PrismaEmailMessageStatus {
+  QUEUED
+  SENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+enum PrismaEmailSkipReason {
+  EMAIL_DISABLED
+  TEMPLATE_DISABLED
+  NOT_ALLOWED_IN_ENVIRONMENT
+}
+
 enum PrismaSquadOwnerInvitationStatus {
   PENDING
   ACCEPTED
@@ -461,6 +484,7 @@ model User {
   squaresDrawn        ContestSquaresDraw[]
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  emailMessages       EmailMessage[]
 
   @@map("users")
 }
@@ -519,6 +543,7 @@ model League {
   contests              Contest[]
   invitations           LeagueInvitation[]
   squadOwnerInvitations SquadOwnerInvitation[]
+  emailMessages         EmailMessage[]
 
   @@map("leagues")
 }
@@ -602,8 +627,50 @@ model LeagueInvitation {
   inviter  User   @relation("InvitedBy", fields: [invitedBy], references: [id])
   acceptor User?  @relation("AcceptedBy", fields: [acceptedBy], references: [id])
 
+  emailMessages EmailMessage[]
+
   @@index([leagueId, status])
   @@map("league_invitations")
+}
+
+/// One system email to one person (#844): queued and sent by the sender, or skipped with the
+/// reason. A check constraint holds skip_reason to exactly the SKIPPED rows.
+model EmailMessage {
+  id                String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateKey       PrismaEmailTemplateKey   @map("template_key")
+  recipientUserId   String?                  @map("recipient_user_id") @db.Uuid
+  recipientEmail    String                   @map("recipient_email") @db.VarChar(255)
+  leagueId          String?                  @map("league_id") @db.Uuid
+  contestId         String?                  @map("contest_id") @db.Uuid
+  entryId           String?                  @map("entry_id") @db.Uuid
+  invitationId      String?                  @map("invitation_id") @db.Uuid
+  idempotencyKey    String                   @unique @map("idempotency_key")
+  fromName          String                   @map("from_name") @db.VarChar(255)
+  fromAddress       String                   @map("from_address") @db.VarChar(255)
+  subject           String?
+  textBody          String?                  @map("text_body")
+  htmlBody          String?                  @map("html_body")
+  status            PrismaEmailMessageStatus
+  skipReason        PrismaEmailSkipReason?   @map("skip_reason")
+  attempts          Int                      @default(0)
+  nextAttemptAt     DateTime?                @map("next_attempt_at") @db.Timestamptz
+  lastError         String?                  @map("last_error")
+  providerMessageId String?                  @map("provider_message_id") @db.VarChar(255)
+  sentAt            DateTime?                @map("sent_at") @db.Timestamptz
+  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Deleting an account deletes the emails it was sent; deleting what an email is about keeps it.
+  recipient  User?             @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+  league     League?           @relation(fields: [leagueId], references: [id], onDelete: SetNull)
+  contest    Contest?          @relation(fields: [contestId], references: [id], onDelete: SetNull)
+  entry      ContestEntry?     @relation(fields: [entryId], references: [id], onDelete: SetNull)
+  invitation LeagueInvitation? @relation(fields: [invitationId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextAttemptAt])
+  @@index([invitationId, createdAt])
+  @@index([createdAt])
+  @@map("email_messages")
 }
 
 model SquadOwnerInvitation {
@@ -826,6 +893,7 @@ model Contest {
   squares             ContestEntrySquare[]
   squaresDraw         ContestSquaresDraw?
   squaresWinners      ContestSquaresWinner[]
+  emailMessages       EmailMessage[]
 
   @@index([leagueId])
   @@index([status])
@@ -873,31 +941,31 @@ model ContestConfiguration {
 }
 
 model ContestConfigTemplate {
-  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sport            PrismaSport
   /// The sport league whose events this template is offered for — a league's own official
   /// preset (NASCAR, IndyCar, F1 points). Null offers it for every league of its sport.
-  sportLeagueId    String?             @map("sport_league_id") @db.Uuid
+  sportLeagueId    String?                         @map("sport_league_id") @db.Uuid
   /// The kind of event the template is offered for (#802): KNOCKOUT or WEEK for a sport played as
   /// matches. Null offers it for every event of its sport.
   eventType        PrismaContestTemplateEventType? @map("event_type")
-  contestFormat    PrismaContestFormat @map("contest_type")
+  contestFormat    PrismaContestFormat             @map("contest_type")
   /// A `SelectionType` value: how an entry in a contest created from this template picks.
-  selectionType    PrismaSelectionType @map("selection_type")
-  templateKey      String              @map("template_key") @db.VarChar(100)
-  name             String              @db.VarChar(120)
-  description      String              @db.VarChar(500)
-  sortOrder        Int                 @map("sort_order")
-  isDefault        Boolean             @default(false) @map("is_default")
-  active           Boolean             @default(true)
-  configJson       Json                @map("config_json")
-  schemaVersion    Int                 @default(1) @map("schema_version")
+  selectionType    PrismaSelectionType             @map("selection_type")
+  templateKey      String                          @map("template_key") @db.VarChar(100)
+  name             String                          @db.VarChar(120)
+  description      String                          @db.VarChar(500)
+  sortOrder        Int                             @map("sort_order")
+  isDefault        Boolean                         @default(false) @map("is_default")
+  active           Boolean                         @default(true)
+  configJson       Json                            @map("config_json")
+  schemaVersion    Int                             @default(1) @map("schema_version")
   /// The event series a contest made from this template covers (#714: the four majors), by name
   /// in its sport league. A contest takes each series' edition of its year as it is released.
   /// Empty: the commissioner adds the contest's events.
-  eventSeriesNames String[]            @default([]) @map("event_series_names")
-  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  eventSeriesNames String[]                        @default([]) @map("event_series_names")
+  createdAt        DateTime                        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime                        @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeague    SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
   configurations ContestConfiguration[]
@@ -970,6 +1038,7 @@ model ContestEntry {
   eventStandings ContestEntryEventStanding[]
   squares        ContestEntrySquare[]
   squaresWon     ContestSquaresWinner[]
+  emailMessages  EmailMessage[]
 
   @@unique([contestId, squadId, entryNumber])
   // The key a claimed box's (contest, entry) foreign key names, so a box's entry is its contest's.

@@ -5,11 +5,18 @@
  * would have seen a message, so "nothing captured" means nothing was sent rather than that
  * capture is broken.
  */
-import type { EmailConfig, LeagueResponse, SendLeagueInvitationsResponse, SettingsGroup } from '@poolmaster/shared/dto';
+import type {
+  EmailConfig,
+  LeagueResponse,
+  ListLeagueInvitationsResponse,
+  SendLeagueInvitationsResponse,
+  SettingsGroup,
+} from '@poolmaster/shared/dto';
 import {
   buildCreateLeaguePayload,
   cleanupTestData,
   createTestUser,
+  deliverQueuedIntegrationEmail,
   getApp,
   getPrisma,
   getSentMail,
@@ -54,7 +61,12 @@ async function saveEmailConfig(change: (current: EmailConfig) => EmailConfig): P
   expect(saved.statusCode).toBe(200);
 }
 
-async function inviteByEmail(inviteeEmail: string): Promise<{ leagueId: string; statusCode: number; body: SendLeagueInvitationsResponse }> {
+async function inviteByEmail(inviteeEmail: string): Promise<{
+  commissioner: TestUser;
+  leagueId: string;
+  statusCode: number;
+  body: SendLeagueInvitationsResponse;
+}> {
   const commissioner = await createTestUser();
   const league = await getApp().inject({
     method: 'POST',
@@ -71,7 +83,8 @@ async function inviteByEmail(inviteeEmail: string): Promise<{ leagueId: string; 
     headers: commissioner.headers,
     payload: { emails: [inviteeEmail] },
   });
-  return { leagueId, statusCode: response.statusCode, body: response.json<SendLeagueInvitationsResponse>() };
+  await deliverQueuedIntegrationEmail();
+  return { commissioner, leagueId, statusCode: response.statusCode, body: response.json<SendLeagueInvitationsResponse>() };
 }
 
 function sentTo(address: string): number {
@@ -91,6 +104,7 @@ describe('league invite by email under the EMAIL_CONFIG setting', () => {
     const stored = await getPrisma().leagueInvitation.findMany({ where: { leagueId, email: inviteeEmail } });
     expect(stored).toHaveLength(1);
     expect(stored[0].status).toBe('PENDING');
+    expect(body.sent[0].emailStatus).toBe('SKIPPED');
     expect(getSentMail()).toHaveLength(sentBefore);
   });
 
@@ -108,13 +122,21 @@ describe('league invite by email under the EMAIL_CONFIG setting', () => {
     expect(sentTo(inviteeEmail)).toBe(0);
   });
 
-  it('with the defaults, sends the same invite through SMTP', async () => {
+  it('with the defaults, queues the same invite, sends it through SMTP, and lists the invite\'s email as sent', async () => {
     const inviteeEmail = `smtp-invitee-${Date.now()}@integration.test`;
 
-    const { statusCode } = await inviteByEmail(inviteeEmail);
+    const { commissioner, leagueId, statusCode, body } = await inviteByEmail(inviteeEmail);
 
     expect(statusCode).toBe(201);
+    expect(body.sent[0].emailStatus).toBe('QUEUED');
     expect(sentTo(inviteeEmail)).toBe(1);
+    const listed = await getApp().inject({
+      method: 'GET',
+      url: `/api/v1/leagues/${leagueId}/invitations`,
+      headers: commissioner.headers,
+    });
+    const [invitation] = listed.json<ListLeagueInvitationsResponse>().invitations;
+    expect(invitation).toMatchObject({ email: inviteeEmail, emailStatus: 'SENT' });
   });
 
   it('sends again as soon as an admin switches email back on', async () => {

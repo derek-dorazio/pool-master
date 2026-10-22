@@ -9,7 +9,6 @@ import {
   type User,
 } from '@poolmaster/shared/domain';
 import {
-  InvitationEmailDeliveryError,
   InvitationInvalidError,
   InvitationNotFoundError,
   InvitationService,
@@ -21,7 +20,7 @@ import type {
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 
 /**
  * League invitation use cases — invite by email, invite link, revoke, preview, accept — against
@@ -109,8 +108,8 @@ describe('InvitationService — inviting by email', () => {
       invitedBy: commissioner.id,
     });
 
-    expect(result.sent.map((invitation) => invitation.email)).toEqual(['alex@example.com', 'blair@example.com']);
-    for (const invitation of result.sent) {
+    expect(result.sent.map(({ invitation }) => invitation.email)).toEqual(['alex@example.com', 'blair@example.com']);
+    for (const { invitation } of result.sent) {
       expect(invitation).toMatchObject({
         inviteType: InviteType.EMAIL,
         status: InvitationStatus.PENDING,
@@ -134,7 +133,7 @@ describe('InvitationService — inviting by email', () => {
       invitedBy: commissioner.id,
     });
 
-    expect(result.sent.map((invitation) => invitation.email)).toEqual(['new@example.com']);
+    expect(result.sent.map(({ invitation }) => invitation.email)).toEqual(['new@example.com']);
     expect(result.skippedDuplicates).toEqual(['pending@example.com', 'new@example.com']);
   });
 
@@ -150,7 +149,7 @@ describe('InvitationService — inviting by email', () => {
     });
 
     expect(result.skippedMembers).toEqual(['member@example.com']);
-    expect(result.sent.map((invitation) => invitation.email)).toEqual(['outsider@example.com']);
+    expect(result.sent.map(({ invitation }) => invitation.email)).toEqual(['outsider@example.com']);
   });
 
   it('invites a removed member again, because only active members are skipped', async () => {
@@ -193,12 +192,13 @@ describe('InvitationService — inviting by email', () => {
       message: 'Join us for the Masters',
     });
 
+    await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0]).toMatchObject({
       to: 'alex@example.com',
-      metadata: { templateKey: 'LEAGUE_MEMBER_INVITE', invitationId: sent[0].id },
+      metadata: { templateKey: 'LEAGUE_MEMBER_INVITE', invitationId: sent[0].invitation.id },
     });
-    expect(mail.sent[0].text).toContain(`https://pool.example.com/invite/${sent[0].inviteCode}`);
+    expect(mail.sent[0].text).toContain(`https://pool.example.com/invite/${sent[0].invitation.inviteCode}`);
     expect(mail.sent[0].text).toContain('Casey Commish');
     expect(mail.sent[0].text).toContain('Office Pool');
     expect(mail.sent[0].text).toContain('Join us for the Masters');
@@ -213,6 +213,7 @@ describe('InvitationService — inviting by email', () => {
     const inviter = world.addUser({ username: 'casey-handle', email: 'casey@example.com', ...overrides });
 
     await service.sendEmailInvitations({ leagueId: league.id, emails: ['x@example.com'], invitedBy: inviter.id });
+    await deliverQueuedEmail();
 
     expect(mail.sent[0].text).toContain(expected);
   });
@@ -223,22 +224,24 @@ describe('InvitationService — inviting by email', () => {
 
     await service.sendEmailInvitations({ leagueId: league.id, emails: ['x@example.com'], invitedBy: 'gone-user' });
 
+    await deliverQueuedEmail();
     expect(mail.sent[0].text).toContain('League commissioner');
   });
 
-  it('throws InvitationEmailDeliveryError naming the stored invitation when the mail provider fails', async () => {
+  it('keeps the stored invitation when the mail provider refuses its email, which waits in the outbox for a retry', async () => {
     const mail = recordingMail({ failFor: 'bounce@example.com' });
     const { world, commissioner, league, service } = setup({ mail: mail.provider });
 
-    const attempt = service.sendEmailInvitations({
+    const result = await service.sendEmailInvitations({
       leagueId: league.id,
       emails: ['bounce@example.com'],
       invitedBy: commissioner.id,
     });
+    await deliverQueuedEmail();
 
-    await expect(attempt).rejects.toBeInstanceOf(InvitationEmailDeliveryError);
     const [stored] = world.tables.leagueInvitations.where(() => true);
-    await expect(attempt).rejects.toMatchObject({ invitationId: stored.id, email: 'bounce@example.com' });
+    expect(result.sent).toEqual([{ invitation: stored, emailStatus: 'QUEUED' }]);
+    expect(mail.sent).toHaveLength(0);
   });
 });
 
@@ -431,6 +434,7 @@ describe('InvitationService — accepting', () => {
 
     await service.acceptInvitation(invitation.inviteCode, newcomer.id);
 
+    await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0]).toMatchObject({ to: 'nia@example.com', metadata: { templateKey: 'LEAGUE_JOIN_SUCCESS' } });
     expect(mail.sent[0].text).toContain('Nia New');
@@ -512,6 +516,7 @@ describe('InvitationService — who may accept, and inactive leagues', () => {
 
     await expect(service.resendEmailInvitation(league.id, invitation.id, commissioner.id))
       .rejects.toMatchObject({ code: 'LEAGUE_INACTIVE' });
+    await deliverQueuedEmail();
     expect(mail.sent).toEqual([]);
     expect(world.tables.leagueInvitations.get(invitation.id)?.inviteCode).toBe(invitation.inviteCode);
   });

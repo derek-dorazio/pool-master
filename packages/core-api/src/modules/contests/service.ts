@@ -1109,7 +1109,9 @@ export class ContestService {
     const league = entry.contest.league;
     try {
       await this.deps.email.send(templateKey, {
-        to: { email: user.email, timeZone: user.timezone },
+        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        // One receipt per submission of the entry in the event.
+        about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
         league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode },
         refs: { contestId, entryId },
         data: {
@@ -1131,7 +1133,7 @@ export class ContestService {
       this.logger.info({
         action: 'contestEntry.emailDelivery.success',
         data: { contestId, entryId, templateKey },
-      }, 'Delivered contest entry confirmation email');
+      }, 'Queued contest entry confirmation email');
     } catch (err) {
       this.logger.error({
         action: 'contestEntry.emailDelivery.failure',
@@ -1141,7 +1143,7 @@ export class ContestService {
           templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
-      }, 'Failed to deliver contest entry confirmation email');
+      }, 'Failed to queue contest entry confirmation email');
     }
   }
 

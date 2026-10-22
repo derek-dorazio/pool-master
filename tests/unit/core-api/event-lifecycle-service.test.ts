@@ -25,7 +25,8 @@ import {
 import { fakeLogger } from '../../support/fake-logger';
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
 const STARTED_EVENT_START = new Date('2026-05-02T20:00:00.000Z');
 
@@ -423,6 +424,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
     });
+    await deliverQueuedEmail();
     expect(mailDelivery.send).toHaveBeenCalledTimes(2);
     expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
       to: 'commissioner@example.com',
@@ -465,22 +467,21 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'SYSTEM' },
     });
 
+    await deliverQueuedEmail();
     expect(mailDelivery.send).not.toHaveBeenCalled();
   });
 
-  it('pool-master-9ya keeps the transition successful when contest-started email delivery fails', async () => {
+  it('keeps the transition successful, and logs it, when the contest-started emails cannot be queued', async () => {
     const logger = fakeLogger();
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
     const contests = contestDeps({ startedContest: true });
-    const mailDelivery = {
-      providerName: 'smtp' as const,
-      send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
-    };
+    const outbox = inMemoryEmailMessages();
+    outbox.record = () => Promise.reject(new Error('database unavailable'));
     const service = new EventLifecycleService(
       contests,
       sportEvents,
       logger,
-      emailServiceOver(mailDelivery),
+      emailServiceOver({ providerName: 'smtp', send: jest.fn() }, outbox),
     );
 
     await expect(
@@ -491,13 +492,12 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       }),
     ).resolves.toMatchObject({ toStatus: SportEventStatus.IN_PROGRESS });
 
-    expect(mailDelivery.send).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         contestId: 'contest-1',
         templateKey: 'CONTEST_STARTED_SUMMARY',
       }),
-      'Failed to deliver contest started summary email',
+      'Failed to queue contest started summary email',
     );
   });
 });
@@ -556,6 +556,7 @@ describe('EventLifecycleService contest-started emails', () => {
     await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
 
     expect(contests.contests.transitionStatus).toHaveBeenCalled();
+    await deliverQueuedEmail();
     expect(mailDelivery.send).not.toHaveBeenCalled();
   });
 
@@ -580,6 +581,7 @@ describe('EventLifecycleService contest-started emails', () => {
 
     await new EventLifecycleService(contests, sportEvents, fakeLogger(), emailServiceOver(mailDelivery)).applySportEventStatusTransition(START);
 
+    await deliverQueuedEmail();
     const recipients = mailDelivery.send.mock.calls.map(([message]) => message.to);
     expect(recipients).toHaveLength(2);
     expect(recipients).toEqual(expect.arrayContaining(['commissioner@example.com', 'member@example.com']));

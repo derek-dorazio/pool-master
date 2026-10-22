@@ -90,6 +90,7 @@ type GeneratedInviteLinkFixture = Pick<
   | 'maxUses'
   | 'currentUses'
   | 'invitedBy'
+  | 'emailStatus'
   | 'createdAt'
   | 'updatedAt'
 >;
@@ -173,6 +174,7 @@ const baseGeneratedInviteLink: GeneratedInviteLinkFixture = {
   maxUses: 1,
   currentUses: 0,
   invitedBy: 'user-1',
+  emailStatus: null,
   createdAt: '2026-04-16T00:00:00.000Z',
   updatedAt: '2026-04-16T00:00:00.000Z',
 };

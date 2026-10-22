@@ -179,13 +179,19 @@ New table `email_message` (one row per recipient per email):
 | `attempts`, `nextAttemptAt`, `lastError` | Retry with backoff (1 min, 5 min, 30 min, then `FAILED`) |
 | `providerMessageId`, `sentAt` | SES message id, to match bounce events |
 
+As built (slice 3): there is no `category` column, because the template registry gives each
+template's category. `DELIVERED`, `BOUNCED`, `COMPLAINED` and the skip reasons `SUPPRESSED` and
+`OPTED_OUT` arrive with slices 4 and 5. Each template may also set a send-by window: a password
+reset is given up (FAILED, content cleared) once its 10-minute link would be dead, and emails with a
+window are claimed ahead of the rest.
+
 **Sender.** An in-process loop, like the event lifecycle scheduler, claims due rows with
 `FOR UPDATE SKIP LOCKED` (prod runs two tasks), sends them, and records the outcome. A queue write
 also wakes it, so an invite goes out within a second rather than at the next tick. It sends no
 faster than a rate held in `EMAIL_CONFIG` (default 10 per second; SES production accounts start at
 14), and a throttling error just pushes `nextAttemptAt`.
 
-**What this changes for invites.** Today a provider error fails the invite request with
+**What this changes for invites.** Before slice 3 a provider error failed the invite request with
 `LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED`. With the outbox the invite is created and its email
 queued; the commissioner's pending invites list shows the email's state ("Sent", "Bounced", "Could
 not send") and Resend works as today.

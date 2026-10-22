@@ -22,7 +22,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
 import { expectDefined } from '../../support/expect-defined';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
-import { emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -845,6 +845,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     ]);
     expect(started).toEqual(expect.objectContaining({ status: ContestStatus.ACTIVE, startsAt: event.startDate }));
     expect(untouched?.status).toBe(ContestStatus.DRAFT);
+    await deliverQueuedEmail();
     expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
     expect(send.mock.calls[0][0].text).toContain('- Alpha Entry: Alpha');
 

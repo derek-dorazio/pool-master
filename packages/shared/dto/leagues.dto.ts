@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  EmailMessageStatus,
   InvitationStatus,
   InviteType,
   LeagueIconKey,
@@ -182,6 +183,12 @@ export const LeagueMembershipDtoSchema = z.object({
 }).describe('A membership of a user in a league, with the member embedded.');
 export type LeagueMembershipDto = z.infer<typeof LeagueMembershipDtoSchema>;
 
+export const EmailMessageStatusSchema = z.nativeEnum(EmailMessageStatus).describe(
+  'Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail '
+  + 'service, FAILED not sent after every try, SKIPPED not sent because email is switched off or the '
+  + 'address may not be emailed here.',
+);
+
 export const LeagueInvitationDtoSchema = z.object({
   id: z.string().describe('Invitation record identifier.'),
   leagueId: z.string().describe('League that owns the invitation.'),
@@ -204,6 +211,9 @@ export const LeagueInvitationDtoSchema = z.object({
   expiresAt: DateTimeSchema.nullable().optional().describe('When the invite stops being valid, if it expires.'),
   acceptedAt: DateTimeSchema.nullable().optional().describe('When the invitation was accepted, if applicable.'),
   acceptedBy: z.string().nullable().optional().describe('User ID that accepted the invite, when known.'),
+  emailStatus: EmailMessageStatusSchema.nullable().describe(
+    'Where the latest email of an email invite stands; null for a join link, which has no email.',
+  ),
   createdAt: DateTimeSchema.describe('Invitation creation timestamp.'),
   updatedAt: DateTimeSchema.describe('Last invitation update timestamp.'),
 }).describe('Invitation record returned from commissioner invite-management APIs.');
@@ -312,7 +322,7 @@ export const LeagueMembershipResponseSchema = z.object({
 }).describe('Single league-membership response.');
 
 export const SendLeagueInvitationsResponseSchema = z.object({
-  sent: z.array(LeagueInvitationDtoSchema).describe('Invitation records successfully created and sent.'),
+  sent: z.array(LeagueInvitationDtoSchema).describe('Invitations created, each with its email queued or skipped.'),
   skippedMembers: z.array(z.string()).describe('Emails skipped because they already belong to the league.'),
   skippedDuplicates: z.array(z.string()).describe('Emails skipped because they were duplicated in the request or invite set.'),
 }).describe('League invitation-send response.');
@@ -362,6 +372,7 @@ registerSchema('ImportLeagueMembersRequest', ImportLeagueMembersRequestSchema);
 registerSchema('LeagueListQuery', LeagueListQuerySchema);
 registerSchema('LeagueDto', LeagueDtoSchema);
 registerSchema('LeagueMembershipDto', LeagueMembershipDtoSchema);
+registerSchema('EmailMessageStatus', EmailMessageStatusSchema);
 registerSchema('LeagueInvitationDto', LeagueInvitationDtoSchema);
 registerSchema('InvitationPreviewResponse', InvitationPreviewResponseSchema);
 registerSchema('LeagueResponse', LeagueResponseSchema);

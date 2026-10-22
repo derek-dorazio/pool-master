@@ -4,6 +4,7 @@ import {
   createContest,
   enterContest,
   listContestConfigTemplates,
+  listLeagueInvitations,
   resendLeagueInvitation,
   openContest,
   sendLeagueInvitations,
@@ -19,7 +20,7 @@ import {
   promoteToRootAdmin,
   type RegisteredUserContext,
 } from './builders';
-import { linksIn, sentMailTo, sentMailWithSubject } from './mail';
+import { awaitSentMailTo, linksIn, sentMailTo, sentMailWithSubject } from './mail';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { cleanupFreshEventEditions, freshEventEdition } from '../support/event-edition';
@@ -126,6 +127,17 @@ async function inviteAndJoin(
   return inviteCode;
 }
 
+/** The league's pending invites' email statuses, once none is still queued or being sent. */
+async function inviteEmailStatusesOnceSettled(commissioner: RegisteredUserContext, leagueId: string): Promise<unknown[]> {
+  const deadline = Date.now() + 10_000;
+  for (;;) {
+    const listed = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
+    const statuses = listed.data?.invitations.map((invitation) => invitation.emailStatus) ?? [];
+    if (!statuses.some((status) => status === 'QUEUED' || status === 'SENDING') || Date.now() >= deadline) return statuses;
+    await new Promise((resolve) => { setTimeout(resolve, 100); });
+  }
+}
+
 afterEach(async () => {
   await cleanupEventFixtures();
   await cleanupFunctionalData();
@@ -149,9 +161,10 @@ describe('SDK Functional: system emails', () => {
       body: { emails: [invitee.email] },
     });
     expect(invite.response.status).toBe(201);
+    expect(invite.data?.sent[0]?.emailStatus).toBe('QUEUED');
     const inviteCode = invite.data?.sent[0]?.inviteCode as string;
 
-    const invitesSent = await sentMailTo(invitee.email);
+    const invitesSent = await awaitSentMailTo(invitee.email, 1);
     expect(invitesSent).toHaveLength(1);
     expect(invitesSent[0].to).toEqual([invitee.email]);
     expect(invitesSent[0].from).toBe(`${league.leagueCode.toLowerCase()}@functional.test`);
@@ -159,11 +172,13 @@ describe('SDK Functional: system emails', () => {
     expect(linksIn(invitesSent[0])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/invite/${inviteCode}`]);
     // Nobody but the invitee is told about the invitation.
     expect(await sentMailTo(commissioner.email)).toHaveLength(0);
+    // The commissioner's pending invites show the email went out, once the sender has recorded it.
+    expect(await inviteEmailStatusesOnceSettled(commissioner, league.id)).toEqual(['SENT']);
 
     const accepted = await acceptInvitation({ client: invitee.client, body: { inviteCode } });
     expect(accepted.response.status).toBe(201);
 
-    const welcomes = await sentMailWithSubject(invitee.email, `Welcome to ${league.name}`);
+    const welcomes = await awaitSentMailTo(invitee.email, 1, `Welcome to ${league.name}`);
     expect(welcomes).toHaveLength(1);
     expect(welcomes[0].to).toEqual([invitee.email]);
     expect(linksIn(welcomes[0])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}`]);
@@ -194,8 +209,9 @@ describe('SDK Functional: system emails', () => {
     const newCode = resent.data?.invitation.inviteCode as string;
     expect(newCode).toBeTruthy();
     expect(newCode).not.toBe(original?.inviteCode);
-    const invitesSent = await sentMailWithSubject(
+    const invitesSent = await awaitSentMailTo(
       invitee.email,
+      2,
       `Resending Commissioner invited you to ${league.name}`,
     );
     expect(invitesSent).toHaveLength(2);
@@ -274,7 +290,7 @@ describe('SDK Functional: system emails', () => {
     expect(submitted.response.status).toBe(200);
     expect(submitted.data?.entries.find((row) => row.id === entryId)?.status).toBe('SUBMITTED');
 
-    const confirmations = await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`);
+    const confirmations = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
     expect(confirmations).toHaveLength(1);
     expect(confirmations[0].to).toEqual([member.email]);
     expect(linksIn(confirmations[0])).toEqual([
@@ -295,7 +311,7 @@ describe('SDK Functional: system emails', () => {
     const startedSubject = `${contestName} has started`;
     const contestUrl = `${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/contests/${contestId}`;
     for (const recipient of [commissioner, member]) {
-      const summaries = await sentMailWithSubject(recipient.email, startedSubject);
+      const summaries = await awaitSentMailTo(recipient.email, 1, startedSubject);
       expect(summaries).toHaveLength(1);
       expect(summaries[0].to).toEqual([recipient.email]);
       expect(linksIn(summaries[0])).toEqual([contestUrl]);

@@ -5,7 +5,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { InvitationService, SendInvitationsResult } from './invitation-service';
 import {
-  InvitationEmailDeliveryError,
   InvitationInvalidError,
   InvitationNotFoundError,
 } from './invitation-service';
@@ -58,22 +57,6 @@ export function createInvitationHandlers(
         message: request.body.message,
       });
     } catch (err) {
-      if (err instanceof InvitationEmailDeliveryError) {
-        logger.error({
-          action: 'leagueInvitationRoute.sendEmail.deliveryFailure',
-          data: {
-            leagueId: request.params.id,
-            userId,
-            invitationId: err.invitationId,
-          },
-        }, 'League invitation record was created but email delivery failed');
-        return sendError(
-          reply,
-          502,
-          'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED',
-          'Invitation email delivery failed. Please try again or use the join URL.',
-        );
-      }
       if (err instanceof InvitationInvalidError) {
         logger.warn({
           action: 'leagueInvitationRoute.sendEmail.invalid',
@@ -93,7 +76,11 @@ export function createInvitationHandlers(
         skippedMemberCount: result.skippedMembers.length,
       },
     }, 'Sent league invitations');
-    return reply.status(201).send(result);
+    return reply.status(201).send({
+      sent: result.sent.map(({ invitation, emailStatus }) => mapLeagueInvitationToDto(invitation, emailStatus)),
+      skippedMembers: result.skippedMembers,
+      skippedDuplicates: result.skippedDuplicates,
+    });
   }
 
   async function listInvitations(
@@ -110,7 +97,9 @@ export function createInvitationHandlers(
       action: 'leagueInvitationRoute.list.success',
       data: { leagueId: request.params.id, invitationCount: invitations.length },
     }, 'Listed league invitations');
-    return reply.send({ invitations: invitations.map(mapLeagueInvitationToDto) });
+    return reply.send({
+      invitations: invitations.map(({ invitation, emailStatus }) => mapLeagueInvitationToDto(invitation, emailStatus)),
+    });
   }
 
   async function resendInvitation(
@@ -124,7 +113,7 @@ export function createInvitationHandlers(
       data: { leagueId: request.params.id, invitationId: request.params.invitationId, userId },
     }, 'Handling resend league invitation request');
     try {
-      const invitation = await invitationService.resendEmailInvitation(
+      const { invitation, emailStatus } = await invitationService.resendEmailInvitation(
         request.params.id,
         request.params.invitationId,
         userId,
@@ -133,7 +122,7 @@ export function createInvitationHandlers(
         action: 'leagueInvitationRoute.resend.success',
         data: { leagueId: request.params.id, invitationId: invitation.id },
       }, 'Resent league invitation');
-      return reply.send({ invitation: mapLeagueInvitationToDto(invitation) });
+      return reply.send({ invitation: mapLeagueInvitationToDto(invitation, emailStatus) });
     } catch (err) {
       if (err instanceof InvitationNotFoundError) {
         logger.warn({
@@ -148,18 +137,6 @@ export function createInvitationHandlers(
           data: { leagueId: request.params.id, errorCode: err.code },
         }, 'Rejected league invitation resend');
         return sendError(reply, 409, err.code, err.message);
-      }
-      if (err instanceof InvitationEmailDeliveryError) {
-        logger.error({
-          action: 'leagueInvitationRoute.resend.deliveryFailure',
-          data: { leagueId: request.params.id, invitationId: err.invitationId },
-        }, 'League invitation was renewed but email delivery failed');
-        return sendError(
-          reply,
-          502,
-          'LEAGUE_INVITATION_EMAIL_DELIVERY_FAILED',
-          'Invitation email delivery failed. Please try again or use the join URL.',
-        );
       }
       throw err;
     }
@@ -209,7 +186,7 @@ export function createInvitationHandlers(
         maxUses: invitation.maxUses,
       },
     }, 'Generated league invite link');
-    return reply.status(201).send({ invitation });
+    return reply.status(201).send({ invitation: mapLeagueInvitationToDto(invitation, null) });
   }
 
   async function revokeInviteLink(
