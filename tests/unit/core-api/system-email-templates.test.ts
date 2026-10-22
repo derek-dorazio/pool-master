@@ -1,4 +1,4 @@
-import { EmailCategory, EmailTemplateKey } from '@poolmaster/shared/domain';
+import { EmailCategory, EmailTemplateKey, NotificationClass } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
@@ -241,6 +241,19 @@ describe('the email template registry', () => {
       CONTEST_OPENED: EmailCategory.CONTEST_UPDATES,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
+    });
+  });
+
+  it('gives every template a notification class: account and membership email essential, the contest opening and receipts on the free class, reminders and the live email on the first paid class', () => {
+    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.notificationClass]))).toEqual({
+      LEAGUE_MEMBER_INVITE: NotificationClass.ESSENTIAL,
+      LEAGUE_JOIN_SUCCESS: NotificationClass.ESSENTIAL,
+      CONTEST_ENTRY_COMPLETED: NotificationClass.A,
+      CONTEST_STARTED_SUMMARY: NotificationClass.B,
+      CONTEST_ENTRY_REMINDER: NotificationClass.B,
+      CONTEST_OPENED: NotificationClass.A,
+      PASSWORD_RESET: NotificationClass.ESSENTIAL,
+      PASSWORD_CHANGED: NotificationClass.ESSENTIAL,
     });
   });
 

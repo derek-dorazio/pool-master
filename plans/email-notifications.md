@@ -109,16 +109,26 @@ weekly digest in #851 is for commissioners and covers one league.
 Columns: **Trigger and conditions** is the model change or clock time that fires it; **Timing**
 is when it goes relative to that; **Today** is ✅ exists, 🟡 partly, or blank for new.
 **Priority** is P1 (Derek's list and the gaps that block it), P2 (clearly worth it), P3 (later).
+**Class** is the service level the email belongs to (Derek 2026-10-22, a first guess for him
+to review), so monetization can later send an email only to leagues whose plan includes it.
+Classes are not plan names; `plans/monetization-strategy.md` maps them to plans when it is
+built. **Essential**: account, security and membership email, every league always. **A**: the
+basics, free plan too (a contest opening, receipts, final results, an event cancelled or
+moved). **B**: the first paid level and up (reminders, commissioner nudges, the good luck and
+"you're out" emails, a commissioner's "remind everyone" button if built). **C**: the second paid
+level and up (live standings during an event). **D**: the top level only (trophies, cups and
+season standings across contests, rows for which come with #841 and #863). The class is the
+`notificationClass` field of each `EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| A1 | Reset your password | Someone asks for a reset on the sign-in screen with an address that has an active account | That account's email | At once | Reset link with a short expiry, "didn't ask? ignore this" | | P1 (password recovery design) |
-| A2 | Your password was changed | The password changes by reset link, by the user on their profile, or by a root admin reset | The account's email | At once | When, how (reset, profile, admin), "wasn't you? reset it now" link | | P1 (password recovery design) |
-| A3 | Welcome to Poolmaster | A new account is registered **without** an invitation (a commissioner signing up to start a league) | The new account | At once | Start a league button, how a league works in three lines | | P3 |
-| A4 | Confirm your email address | Sign-up, if email verification is adopted (Q3.1) | The new account | At once | Confirm link | | P3 |
-| A5 | Your email address was changed | The account's email is changed | The **old** address | At once | New address, "wasn't you?" link | | P2 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| A1 | Reset your password | Someone asks for a reset on the sign-in screen with an address that has an active account | That account's email | At once | Reset link with a short expiry, "didn't ask? ignore this" | | P1 (password recovery design) | Essential |
+| A2 | Your password was changed | The password changes by reset link, by the user on their profile, or by a root admin reset | The account's email | At once | When, how (reset, profile, admin), "wasn't you? reset it now" link | | P1 (password recovery design) | Essential |
+| A3 | Welcome to Poolmaster | A new account is registered **without** an invitation (a commissioner signing up to start a league) | The new account | At once | Start a league button, how a league works in three lines | | P3 | Essential |
+| A4 | Confirm your email address | Sign-up, if email verification is adopted (Q3.1) | The new account | At once | Confirm link | | P3 | Essential |
+| A5 | Your email address was changed | The account's email is changed | The **old** address | At once | New address, "wasn't you?" link | | P2 | Essential |
 
 **Q3.1 Verify email at sign-up?** Most people arrive through an invite sent to their address,
 but they can register under a different one.
@@ -127,16 +137,16 @@ decision to the password recovery design.
 
 ### B. Leagues, invites and membership
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| B1 | League invitation | Commissioner invites an address by email; refused for current members | The invited address | At once | Inviter, league, message, expiry, Join league | ✅ `LEAGUE_MEMBER_INVITE` | – |
-| B2 | League invitation (resent) | Commissioner presses Resend Invite on a pending email invite | The invited address | At once | Same as B1, new expiry | ✅ same template | – |
-| B3 | Welcome to the league | An invitation is accepted (new squad or a restored one) | The person who joined | At once | League, their squad's name, League Home, the league's open contests if any | 🟡 `LEAGUE_JOIN_SUCCESS` (add open contests) | P2 |
-| B4 | Co-owner invitation | Commissioner or squad owner invites an address to co-own a squad; a new address joins on sign-up | The invited address | At once | Who invited them, the squad's name, league, Accept button | | P1 |
-| B5 | You were added as a co-owner | Co-owner invite to an address that already has an account (added straight away) | That person | At once | Squad's name, league, League Home | | P2 |
-| B6 | New member joined | An invitation is accepted | The league's commissioners, not the joiner | At once, or daily if more than three in a day | Who joined, their squad's name, member count, Teams and Owners link | | P2 |
-| B7 | Invitation still pending | An email invite is pending and expires in 2 days | The commissioner who sent it | Once, 2 days before expiry | Who hasn't joined, Resend Invite link | | P3 |
-| B8 | You're now a commissioner | A member is made commissioner | That person | At once | What commissioners can do, Commissioner tools link | | P3 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| B1 | League invitation | Commissioner invites an address by email; refused for current members | The invited address | At once | Inviter, league, message, expiry, Join league | ✅ `LEAGUE_MEMBER_INVITE` | – | Essential |
+| B2 | League invitation (resent) | Commissioner presses Resend Invite on a pending email invite | The invited address | At once | Same as B1, new expiry | ✅ same template | – | Essential |
+| B3 | Welcome to the league | An invitation is accepted (new squad or a restored one) | The person who joined | At once | League, their squad's name, League Home, the league's open contests if any | 🟡 `LEAGUE_JOIN_SUCCESS` (add open contests) | P2 | Essential |
+| B4 | Co-owner invitation | Commissioner or squad owner invites an address to co-own a squad; a new address joins on sign-up | The invited address | At once | Who invited them, the squad's name, league, Accept button | | P1 | Essential |
+| B5 | You were added as a co-owner | Co-owner invite to an address that already has an account (added straight away) | That person | At once | Squad's name, league, League Home | | P2 | Essential |
+| B6 | New member joined | An invitation is accepted | The league's commissioners, not the joiner | At once, or daily if more than three in a day | Who joined, their squad's name, member count, Teams and Owners link | | P2 | B |
+| B7 | Invitation still pending | An email invite is pending and expires in 2 days | The commissioner who sent it | Once, 2 days before expiry | Who hasn't joined, Resend Invite link | | P3 | B |
+| B8 | You're now a commissioner | A member is made commissioner | That person | At once | What commissioners can do, Commissioner tools link | | P3 | Essential |
 
 **Q3.2 Tell someone they left a league?** Removing an owner or inactivating a squad ends
 their membership.
@@ -150,15 +160,15 @@ invisible to them. Whole seasons are loaded and released months ahead, so "relea
 is the wrong moment to say "go set up your contest". These emails use the event's start date
 instead. They go to every commissioner of every league (Q3.3).
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| C1 | Coming up soon | An event of any sport league starts in 10 days; it may still be `DRAFT` | Every commissioner of every active league | Once, 10 days before start | "The Masters is next week. Get ready to set up your league's contest." Dates, last year's winner of your league's contest on it if any, link to the sport league's schedule | | P1 |
-| C2 | Ready for contests | The event is released **and** starts within 7 days; fires at whichever comes later. Skipped for a league that already has a contest on it | Same as C1 | Once | "The Masters is ready. Set up your contest." Start date, field size, the default contest setups for it, Create contest button | | P1 |
-| C3 | No contest yet | 3 days before start, a league has no contest on the event | Same as C1 | Once | Short nudge, Create contest button | | P3 |
-| C4 | Your contest isn't open yet | A league's contest on the event is still `DRAFT` 48 hours before its cutoff | That league's commissioners | Once, 48 h before cutoff | Contest name, "members can't enter until you open it", Open contest link | | P2 |
-| C5 | Entries so far | A contest's cutoff is 24 hours away | That league's commissioners | Once | Entries submitted, members with none (names), Remind link (sends D2 now) | | P3 |
-| C6 | Event postponed or rescheduled | A released event's start date changes, or it goes `POSTPONED` | Commissioners with a contest on it, plus members with an entry | At once | Old and new dates, what it means for picks (still open until the new start) | | P2 |
-| C7 | Event cancelled | An event goes `CANCELLED` | Commissioners with a contest on it, plus members with an entry | At once | "Cancelled: counts for nothing in [contest]." For a one-event contest, that the contest ends with no scores (F2 then follows only if it had other events) | | P2 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| C1 | Coming up soon | An event of any sport league starts in 10 days; it may still be `DRAFT` | Every commissioner of every active league | Once, 10 days before start | "The Masters is next week. Get ready to set up your league's contest." Dates, last year's winner of your league's contest on it if any, link to the sport league's schedule | | P1 | B |
+| C2 | Ready for contests | The event is released **and** starts within 7 days; fires at whichever comes later. Skipped for a league that already has a contest on it | Same as C1 | Once | "The Masters is ready. Set up your contest." Start date, field size, the default contest setups for it, Create contest button | | P1 | B |
+| C3 | No contest yet | 3 days before start, a league has no contest on the event | Same as C1 | Once | Short nudge, Create contest button | | P3 | B |
+| C4 | Your contest isn't open yet | A league's contest on the event is still `DRAFT` 48 hours before its cutoff | That league's commissioners | Once, 48 h before cutoff | Contest name, "members can't enter until you open it", Open contest link | | P2 | B |
+| C5 | Entries so far | A contest's cutoff is 24 hours away | That league's commissioners | Once | Entries submitted, members with none (names), Remind link (sends D2 now) | | P3 | B |
+| C6 | Event postponed or rescheduled | A released event's start date changes, or it goes `POSTPONED` | Commissioners with a contest on it, plus members with an entry | At once | Old and new dates, what it means for picks (still open until the new start) | | P2 | A |
+| C7 | Event cancelled | An event goes `CANCELLED` | Commissioners with a contest on it, plus members with an entry | At once | "Cancelled: counts for nothing in [contest]." For a one-event contest, that the contest ends with no scores (F2 then follows only if it had other events) | | P2 | A |
 
 **Q3.3 Which leagues get C1–C3?** **Decided (Derek 2026-10-21):** start simple. Every
 commissioner of every active league gets them for every sport league's events, whether or not
@@ -178,15 +188,15 @@ listed. Members without an entry don't need to know.
 
 ### D. Contests, before they start
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| D1 | New contest open | Commissioner opens a contest (`DRAFT` → `OPEN`) | Every active league member | At once | Contest name, event(s) and start, selection type in a line ("pick 6 golfers from 6 tiers"), entries per member, prizes if set, closes at, Enter contest button | | P1 |
-| D2 | Entry reminder | The contest is `OPEN`, its cutoff is near, and the member has no submitted entry for the starting event (no entry, or a draft) | Members with nothing submitted | 48 h, 24 h and 3 h before cutoff, with the rules in Q3.6 | "Entries close Thursday 7:00 am." Their draft's status if they have one ("4 of 6 picked"), Make picks button | | P1 |
-| D3 | Entry submitted | An entry's lineup is submitted for an event | Every owner of the squad | At once | Lineup, tiebreaker, "you can change picks until [time]", Entry link | 🟡 `CONTEST_ENTRY_COMPLETED`: roster contests only, submitter only, golf tiebreaker | P2 |
-| D4 | Pick'em week submitted | A pick'em or survivor week is submitted | Every owner of the squad | At once | Their picks by game (confidence values), "each pick locks at its kickoff" | | P3 |
-| D5 | A pick withdrew | A field member in a submitted lineup withdraws (or is scratched) while that event's picks are still open | Owners of entries holding that pick | At once, at most once per entry per event | Who withdrew, whether the lineup is now short (back to draft) and won't count unless fixed, Make picks button | | P2 |
-| D6 | Your picks were drawn | A random draw contest's draw runs | Owners of every entry | At once | Their dealt picks, Leaderboard link | | P2 |
-| D7 | Squares numbers drawn | A squares contest's numbers are drawn | Owners of every entry with a box | At once | Their boxes with their numbers, the grid link | | P2 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| D1 | New contest open | Commissioner opens a contest (`DRAFT` → `OPEN`) | Every active league member | At once | Contest name, event(s) and start, selection type in a line ("pick 6 golfers from 6 tiers"), entries per member, prizes if set, closes at, Enter contest button | | P1 | A |
+| D2 | Entry reminder | The contest is `OPEN`, its cutoff is near, and the member has no submitted entry for the starting event (no entry, or a draft) | Members with nothing submitted | 48 h, 24 h and 3 h before cutoff, with the rules in Q3.6 | "Entries close Thursday 7:00 am." Their draft's status if they have one ("4 of 6 picked"), Make picks button | | P1 | B |
+| D3 | Entry submitted | An entry's lineup is submitted for an event | Every owner of the squad | At once | Lineup, tiebreaker, "you can change picks until [time]", Entry link | 🟡 `CONTEST_ENTRY_COMPLETED`: roster contests only, submitter only, golf tiebreaker | P2 | A |
+| D4 | Pick'em week submitted | A pick'em or survivor week is submitted | Every owner of the squad | At once | Their picks by game (confidence values), "each pick locks at its kickoff" | | P3 | A |
+| D5 | A pick withdrew | A field member in a submitted lineup withdraws (or is scratched) while that event's picks are still open | Owners of entries holding that pick | At once, at most once per entry per event | Who withdrew, whether the lineup is now short (back to draft) and won't count unless fixed, Make picks button | | P2 | B |
+| D6 | Your picks were drawn | A random draw contest's draw runs | Owners of every entry | At once | Their dealt picks, Leaderboard link | | P2 | A |
+| D7 | Squares numbers drawn | A squares contest's numbers are drawn | Owners of every entry with a box | At once | Their boxes with their numbers, the grid link | | P2 | A |
 
 **Q3.6 Reminder timing.** **Decided (Derek 2026-10-21):** three reminders, 48, 24 and 3 hours
 before the cutoff, and none once something is submitted. The same schedule applies to every
@@ -221,16 +231,16 @@ league exists for.
 `ACTIVE` contests. Each standings email shows the **top 10** and the reader's own entries'
 places when they are outside it, with movement since the last email.
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 |
-| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 |
-| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 |
-| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 |
-| E5 | You're out | A survivor entry is eliminated (losing pick, a draw where draws knock you out, or no unused team left) | Owners of that entry | With E3 | Which week and pick, how many are left, Leaderboard link | | P2 |
-| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 |
-| E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 |
-| E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 | B |
+| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 | C |
+| E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 | C |
+| E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 | C |
+| E5 | You're out | A survivor entry is eliminated (losing pick, a draw where draws knock you out, or no unused team left) | Owners of that entry | With E3 | Which week and pick, how many are left, Leaderboard link | | P2 | B |
+| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 | C |
+| E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 | C |
+| E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 | B |
 
 **Q3.8 Who gets E1?** Today it goes to commissioners and squads with an entry.
 **Decided (Derek 2026-10-21):** every active member, with a line for those not in it ("You're
@@ -264,22 +274,22 @@ The lifecycle scheduler sends each email on its first sweep after "finished" plu
 
 ### F. Settlement
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| F1 | Final results and winners | The contest settles (`ACTIVE` → `COMPLETED`) with scores | Every active league member | At once | Winners (places 1–3 and ties), prizes as set (paid outside Poolmaster), final top 10, the reader's entries' places, Final leaderboard button | | P1 |
-| F2 | Contest ended with no scores | Every event of the contest was cancelled | Commissioners and members with an entry | At once | "Every event was cancelled, so [contest] ends with no scores." | | P2 |
-| F3 | You won | The reader's entry finished first (or tied first) | That entry's owners | With F1, folded into it as a personal line | "Congratulations, [squad] won [contest]." | | P2 (part of F1) |
-| F4 | Settle up | The contest settles with prizes defined | The league's commissioners | With F1 | Prize table with each winner's squad and owners' names, reminder that payment is outside Poolmaster | | P3 |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| F1 | Final results and winners | The contest settles (`ACTIVE` → `COMPLETED`) with scores | Every active league member | At once | Winners (places 1–3 and ties), prizes as set (paid outside Poolmaster), final top 10, the reader's entries' places, Final leaderboard button | | P1 | A |
+| F2 | Contest ended with no scores | Every event of the contest was cancelled | Commissioners and members with an entry | At once | "Every event was cancelled, so [contest] ends with no scores." | | P2 | A |
+| F3 | You won | The reader's entry finished first (or tied first) | That entry's owners | With F1, folded into it as a personal line | "Congratulations, [squad] won [contest]." | | P2 (part of F1) | A |
+| F4 | Settle up | The contest settles with prizes defined | The league's commissioners | With F1 | Prize table with each winner's squad and owners' names, reminder that payment is outside Poolmaster | | P3 | B |
 
 **Q3.12 Score corrections after settlement.** A settled result never changes, so there is
 nothing to re-send. *Recommendation:* no email.
 
 ### G. Root admin (operations)
 
-| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority |
-|---|---|---|---|---|---|---|---|
-| G1 | Event still in draft | An event starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | | P2 |
-| G2 | Email delivery problems | Bounces or complaints from the email provider in the last day | Root admins | Daily, only when there are any | Count by template, addresses suppressed | | P2 (sending design) |
+| # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
+|---|---|---|---|---|---|---|---|---|
+| G1 | Event still in draft | An event starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | | P2 | Essential |
+| G2 | Email delivery problems | Bounces or complaints from the email provider in the last day | Root admins | Daily, only when there are any | Count by template, addresses suppressed | | P2 (sending design) | Essential |
 
 Later, not now: cup standings and "crowned champion" emails belong to season cups (#841), and a
 season recap belongs to league history (#837). Each design adds its rows to this catalog when

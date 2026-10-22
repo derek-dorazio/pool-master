@@ -125,13 +125,19 @@ A starting point to react to, not a decision. Names follow Derek's message.
 | History: list of every past contest and its results | | ✓ | ✓ | ✓ |
 | History dashboards: by season, by team, all-time | | | ✓ | ✓ |
 | Record book and trophy case | | | | ✓ |
-| Entry deadline reminders (one day before) | ✓ | ✓ | ✓ | ✓ |
-| Last-hour reminder, only to teams not yet submitted | | ✓ | ✓ | ✓ |
-| Contest opened and final results emails | | ✓ | ✓ | ✓ |
+| Contest opened, entry receipt and final results emails | ✓ | ✓ | ✓ | ✓ |
+| Entry deadline reminders, only to teams not yet submitted | | ✓ | ✓ | ✓ |
 | End-of-day standings email during a live event | | | ✓ | ✓ |
 | Branding: logo, colours | | | ✓ | ✓ |
 | Season-long league standings across contests | | | | ✓ |
 | Export results (CSV) | | | | ✓ |
+
+Emails (Derek 2026-10-22): every email in `plans/email-notifications.md` carries a
+**notification class** (Essential, A, B, C, D), not a plan name, so this plan only has to map
+classes to plans. Essential and A go to every league, free included (account and membership
+email; a contest opening, receipts, final results). B starts at the first paid tier
+(reminders and nudges), C at the second (live standings), D is the top tier's (trophies, cups,
+season standings). The email rows above follow that first guess; Derek reviews it.
 
 Rules that make the two mechanisms work together:
 

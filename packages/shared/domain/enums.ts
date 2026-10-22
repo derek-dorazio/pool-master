@@ -777,6 +777,25 @@ export function isOptionalEmailCategory(category: EmailCategory): category is Op
   return Object.values<EmailCategory>(OptionalEmailCategory).includes(category);
 }
 
+/**
+ * Which service level an email belongs to (#845, Derek 2026-10-22), so that monetization can
+ * later send an email only to leagues whose plan includes it. Not tied to plan names: the
+ * monetization work maps each class to its plans. Nothing reads it yet.
+ */
+export const NotificationClass = {
+  /** Account, security and membership email. Every league gets it, on every plan, always. */
+  ESSENTIAL: 'ESSENTIAL',
+  /** The basics, on the free plan too: a contest opening, receipts, final results. */
+  A: 'A',
+  /** The first paid level and up: reminders and other conveniences. */
+  B: 'B',
+  /** The second paid level and up: live standings during an event. */
+  C: 'C',
+  /** The top level only: trophies, cups and season standings across contests. */
+  D: 'D',
+} as const;
+export type NotificationClass = (typeof NotificationClass)[keyof typeof NotificationClass];
+
 /** The system emails core-api can send, one per template. */
 export const EmailTemplateKey = {
   LEAGUE_MEMBER_INVITE: 'LEAGUE_MEMBER_INVITE',
