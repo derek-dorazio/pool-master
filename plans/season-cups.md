@@ -1,7 +1,8 @@
 # Championships: cups, the league championship and history
 
-**Tracking issues:** #841 sports league cups, #863 league championship, #837 league history.
-One plan, three tickets, each with its own slices (section 9).
+**Tracking issues:** #841 sports league cups, #863 league championship, #837 league history,
+#872 squad page, #873 record book and Hall of Lame, #874 perpetual trophies. One plan, six tickets, each with its
+own slices (sections 8, 10, 11, 12).
 
 Written 2026-10-21 for Derek's ask: a season-long points race FedEx Cup style, then widened
 on 2026-10-22 to the league championship and history, so one doc holds the whole design.
@@ -11,7 +12,7 @@ championship store and adds no tables. Research input: `plans/league-history-res
 
 Mockups: the "Season cups concepts" canvas, https://claude.ai/artifact/7CNDV2iCytR2ieq5tA46AH
 (phone screens, sample squads): **D** Championship tab, **B** Trophy case tab, **A** Points race
-tab, **C** All years summary.
+tab, **C** All years summary, **E** squad page.
 
 ---
 
@@ -162,7 +163,9 @@ LeagueYearFinish                    one per squad per counted contest; unique (c
   leagueId, year, squadId, contestId
   place           Int               1 best
   tiedCount       Int               entries sharing the place, for the point split
-  rankedEntryCount Int              entries ranked in the contest, for FIELD_BEATEN and the summary
+  rankedEntryCount Int              entries ranked in the contest, for FIELD_BEATEN, records and last places
+  eventSeriesId   String?           the series of a single-edition contest (the Masters), for perpetual trophies (§12)
+  selectionType   SelectionType     the contest's, so a Masters pick'em and a Masters squares keep separate trophies
   weight          CupWeight         at settlement
   points          Int               tenths, from the points table at settlement
   settledAt
@@ -268,10 +271,11 @@ the views only ask about their feature (Q4).
 | `CUP_STANDINGS` | Trophy case, Points race, race chart, movement, squad breakdown, projected points, league home card | B (Pro) |
 | `CUP_CROWNING` | Ready to crown, crowned podiums, cup trophies | B (Pro) |
 | `CHAMPIONSHIP` | The Championship tab: trophy, podium, medal tiles, finish matrix, year's contests | B (Pro) |
-| `TROPHY_SHELF` | Cup and championship trophies on team pages | B (Pro) |
+| `TROPHY_SHELF` | Cup and championship trophies, contest medals and perpetual trophies on squad pages and the Trophy case | B (Pro) |
 | `CUP_SETTINGS` | Points table, cup weights, cup name | B (Pro) |
 | `PAST_YEARS` | The year picker's earlier years, on every tab, and their drill-through | B (Pro) |
 | `ALL_TIME_SUMMARY` | All years | D (Platinum) |
+| `RECORD_BOOK` | Record book and Hall of Lame (#873) | D (Platinum) |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
 and leader with a short note, and only the commissioner sees how to upgrade. Routes ask an
@@ -301,7 +305,8 @@ journey row once a page exists.
 
 1. **Storage and read.** `LeagueYearFinish`, `League.cupName`, written at settlement, backfill,
    `GET /championship/:year` and `/championship`. Plus the guard and best-entry function if #841
-   slice 1 hasn't landed them.
+   slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
+   second backfill.
 2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting;
    championship trophies on the shelf. Builds the page shell if #841 slice 2 hasn't.
 
@@ -314,26 +319,123 @@ journey row once a page exists.
 
 1 and 2 in parallel; 3 after 1.
 
-## 9. Parked ideas
+## 9. Ideas not taken
 
-Dropped (Derek, 2026-10-22): a squad career page and an all-time table, which duplicate All years.
+Derek, 2026-10-22: the history ideas became tickets #872 (squad page, with contest medals and
+the year in review), #873 (record book and Hall of Lame) and #874 (perpetual trophies). An
+all-time table and a separate career page duplicate All years and the squad page. Head to head
+is dropped: pools aren't played head to head. Past winners entered by hand wait until a league
+asks.
 
-From the research (`plans/league-history-research.md`) and the first history design, dropped
-when history became additive. None is in a slice; each is built from the same stored rows unless
-it says otherwise, and each needs Derek's yes and a ticket.
+**Shared components.** The league slices build the medal tiles, finish matrix, cup row, contest
+row and trophy shelf as components that take an optional `focusSquadId`, so #872 reuses them
+without a rewrite. That is the only thing the squad page asks of the league slices.
 
-- **Record book.** Most championships, back-to-back champions, most wins in a year, longest run
-  of podiums, biggest field won (needs `rankedEntryCount`, already on the row), each with the
-  holder and the next best.
-- **Hall of Lame.** The bad records beside the good: most runner-up finishes, most last places,
-  longest drought without a win, earliest survivor exit. A league setting hides it.
-- **Perpetual trophies.** One trophy per recurring contest (the Masters pool every year), with a
-  plate per year's winner, linked by the contest's event series.
-- **Head to head.** For two squads, who finished higher in the contests both played. Shown only
-  for rivals with five or more shared contests.
-- **Contest medals on the trophy shelf.** A single contest's 1st to 3rd as small medals, so a
-  season trophy still stands out.
-- **Season recap.** An end-of-year awards card per member, pushed by email (#845) or shown once
-  on login. Needs a "seen" flag.
-- **Past winners entered by hand.** For leagues older than Poolmaster. Needs a new "historical
-  result" record outside the read-only model, so only if leagues ask.
+## 10. Squad page (#872)
+
+Every squad's page, My team and other teams' (`/league/:code/team`, `/league/:code/teams/:teamId`),
+gains the squad's cut of every Championships view: the same rows, filtered to one squad, with
+the same components (mockup E). It moves exactly when the league views do: as each contest
+goes Final, and live contests show the squad's current place.
+
+```
+Squad header: icon · name · owners · year picker "2026 ▾"
+  Championship card   place of N, points, gap to the leader, movement   → Championship tab
+  Medal tiles         1sts, 2nds, 3rds, podiums, top tens, played (its own counts)
+  Finish row          its matrix row; a number opens those contests
+  Cups                one row per cup: place, points, movement          → Points race, chip set
+  Contests            the year's contests: place, points, weight; live ones dashed, current place
+                                                                         → the contest's leaderboard
+  Trophy case         cup and championship trophies, contest medals (1st/2nd/3rd counts),
+                      perpetual trophy plates (#874)
+  Records             records and Hall of Lame entries it holds (#873)
+  All years           one line per year: championship place and cup finishes → that year here
+```
+
+- **One request per page:** `GET /leagues/:leagueId/squads/:squadId/results?year=` returning
+  `SquadYearResultsDto`. The server calls the same service functions the league pages use
+  (championship standings, cup standings, records) and keeps the squad's row, so the squad page
+  and the league page can never disagree. The contest list pages through the existing
+  `GET /history/contests?squadId=`.
+- **Contest medals** (Derek's idea 6) are small counts of contest 1sts, 2nds and 3rds, all time,
+  from `LeagueYearFinish`, so a cup trophy still stands out.
+- Today's owners section stays at the top; results sit under it. The page replaces
+  `my-team-history-page.tsx` together with All years (#837 slice 3).
+- **Classes:** each section asks for its league feature (`CHAMPIONSHIP`, `CUP_STANDINGS`,
+  `TROPHY_SHELF`, `PAST_YEARS`, `RECORD_BOOK`), so the squad page needs no class of its own.
+
+### Year in review
+
+At the end of the year each member gets an email with their squad's year: the squad page's
+snapshot as of 31 December (championship place, tiles, best finish, cups, trophies won that
+year), linking to the squad page for that year. It is the same data at one moment, so it is an
+email, not another page. Sent through the email outbox (#845), class B.
+
+- **Q6 (open, Derek)** What sends it? Recommendation: the commissioner, with a "Send the 2026
+  year in review" button on the Championships page from 1 January, like crowning. No job runs,
+  and the commissioner picks the moment (after the last cup is crowned, say). The other way is
+  the existing event lifecycle sweep sending it on its first pass after 1 January.
+
+### Slices (#872)
+
+1. **Squad year.** The results endpoint; championship card, tiles, finish row, cups and contests
+   on the squad page. After #863 slice 2 and #841 slice 2.
+2. **Trophies and all years.** Contest medals, the trophy case section, the All years strip and
+   the year picker. After #841 slice 4 and #837 slice 1.
+3. **Records.** The squad's records and Hall of Lame entries. After #873.
+4. **Year in review email.** After slice 1 and #845's outbox.
+
+## 11. Record book and Hall of Lame (#873)
+
+A section on the All years page, and on the squad page for records a squad holds. Every record
+is worked out on read from the league's `LeagueYearFinish` rows (a few thousand at most), by
+pure functions in the `history` module, and shows the holder(s), the value, the year, and the
+next best. Ties show every holder.
+
+| `RecordType` | Record |
+|---|---|
+| `MOST_CHAMPIONSHIPS` | Most league championships |
+| `BACK_TO_BACK_CHAMPIONS` | Longest run of championships in consecutive years |
+| `MOST_WINS_IN_A_YEAR` | Most contest wins in one year |
+| `MOST_WINS_ALL_TIME` | Most contest wins |
+| `LONGEST_PODIUM_RUN` | Most contests in a row on the podium, in settlement order |
+| `BIGGEST_FIELD_WON` | A win with the most ranked entries |
+| `REPEAT_WINNER` | Most years in a row winning the same recurring contest (#874's key) |
+| `MOST_RUNNER_UPS` | Hall of Lame: most 2nd places |
+| `MOST_FOURTHS` | Hall of Lame: most 4th places, just off the podium |
+| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more entries |
+| `LONGEST_DROUGHT` | Hall of Lame: most contests in a row played without a win, past or still running |
+
+- `League.hallOfLameVisible Boolean @default(true)`, on league settings, hides the Hall of Lame
+  rows for the whole league.
+- `GET /leagues/:leagueId/history/records` returns `RecordDto[]`; Not counted and cancelled
+  contests are out, as everywhere.
+- Class: `RECORD_BOOK`, D (Platinum), with All years.
+
+### Slices (#873)
+
+1. **Record book.** The endpoint, the record book rows, the section on All years. After #863
+   slice 1 and #837 slice 3. `REPEAT_WINNER` waits for #874.
+2. **Hall of Lame.** Its rows and the league setting.
+
+## 12. Perpetual trophies (#874)
+
+One trophy per contest a league runs every year, with a plate per year's winner: "The Masters
+pick'em, 2022 Gimme Putts, 2023 Fore Play, 2024 Gimme Putts".
+
+- **What makes a contest recurring:** all its events are in one event series that has one
+  edition a year (the Masters, the Super Bowl). Its `LeagueYearFinish` rows carry that
+  `eventSeriesId`; contests across several series, or a series with many events a year (NFL
+  weeks), get none. Trophies are keyed by (`eventSeriesId`, `selectionType`), so the Masters
+  pick'em and the Masters squares are two trophies.
+- A trophy appears once the league has run it in two years. Each plate shows the year and the
+  winner(s); a year it didn't run is skipped, and a year with no result says so.
+- The name is built from the series and the selection type ("The Masters pick'em"), no setting.
+- Shown on the Trophy case tab under the cups, and as plates on each winner's squad page.
+- `GET /leagues/:leagueId/trophies/perpetual` returns `PerpetualTrophyDto[]`. Class:
+  `TROPHY_SHELF`, B.
+
+### Slices (#874)
+
+1. **Perpetual trophies.** The endpoint, the Trophy case section, plates on squad pages. After
+   #863 slice 1 and #841 slice 4.
