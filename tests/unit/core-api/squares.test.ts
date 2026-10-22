@@ -23,7 +23,8 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
-import { SquaresService, type SquaresActor, type SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
+import type { DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
+import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
@@ -78,7 +79,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
 
   let now = later(KICKOFF, -24);
   // The boards the service asked receipts for, one per draw (#867).
-  const receipts: SquaresBoard[] = [];
+  const receipts: DrawnSquaresBoard[] = [];
   const service = new SquaresService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),

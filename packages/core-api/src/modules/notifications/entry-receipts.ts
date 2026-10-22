@@ -68,10 +68,13 @@ export interface GamePicksReceiptNotice {
   gamePicksSubmitted(view: GamePicksView): Promise<void>;
 }
 
+/** What a squares receipt reads of the drawn board. */
+export type DrawnSquaresBoard = Pick<SquaresBoard, 'contest' | 'homeTeamName' | 'awayTeamName' | 'boxes' | 'digits'>;
+
 /** The seam SquaresService calls once a squares contest's numbers are drawn. */
 export interface SquaresDrawnNotice {
   /** Never throws: a receipt that cannot be queued is logged, and the draw stands. */
-  squaresDrawn(board: SquaresBoard): Promise<void>;
+  squaresDrawn(board: DrawnSquaresBoard): Promise<void>;
 }
 
 export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice {
@@ -122,7 +125,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
    * Queues each entry with a box a receipt of its boxes' numbers, once the squares draw is in.
    * Rows take the away team's score and columns the home team's, as the grid shows them.
    */
-  async squaresDrawn(board: SquaresBoard): Promise<void> {
+  async squaresDrawn(board: DrawnSquaresBoard): Promise<void> {
     const { contest, digits } = board;
     try {
       const league = await this.deps.leagues.findById(contest.leagueId);
@@ -147,8 +150,8 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
           data: {
             receipt: {
               kind: EntryReceiptKind.SQUARES,
-              rowTeam: board.awayTeamName ?? 'Away',
-              columnTeam: board.homeTeamName ?? 'Home',
+              rowTeam: board.awayTeamName,
+              columnTeam: board.homeTeamName,
               boxes,
             },
           },

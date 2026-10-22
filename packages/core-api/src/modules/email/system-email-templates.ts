@@ -108,9 +108,9 @@ export interface QuickPickReceipt {
 
 export interface SquaresReceipt {
   kind: typeof EntryReceiptKind.SQUARES;
-  /** The team whose score's last digit picks the row, and the one that picks the column. */
-  rowTeam: string;
-  columnTeam: string;
+  /** The team whose score's last digit picks the row (the away team), and the one that picks the column (home); null while a team is not known. */
+  rowTeam: string | null;
+  columnTeam: string | null;
   /** The entry's boxes by their drawn numbers, row then column. */
   boxes: Array<{ rowNumber: number; columnNumber: number }>;
 }
@@ -544,7 +544,7 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
           title: 'Your boxes',
           rows: receipt.boxes.map((box, index): [string, string] => [
             `Box ${String(index + 1)}`,
-            `${receipt.rowTeam} ${String(box.rowNumber)}, ${receipt.columnTeam} ${String(box.columnNumber)}`,
+            `${receipt.rowTeam ?? 'Away'} ${String(box.rowNumber)}, ${receipt.columnTeam ?? 'Home'} ${String(box.columnNumber)}`,
           ]),
         }],
         changeLine: 'A box wins when the last digit of each team\'s score matches its numbers.',

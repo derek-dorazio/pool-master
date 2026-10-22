@@ -13,9 +13,8 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
-import { EntryReceipts } from '../../../packages/core-api/src/modules/notifications';
+import { EntryReceipts, type DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
-import type { SquaresBoard } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { TEST_UNSUBSCRIBE } from '../../support/email-service';
@@ -295,7 +294,7 @@ describe('EntryReceipts', () => {
 
   describe('squaresDrawn', () => {
     /** The drawn board: rows take the away team's digits, columns the home team's. */
-    function drawnBoard(contestId: string, boxes: Array<{ rowIndex: number; columnIndex: number; contestEntryId: string }>): SquaresBoard {
+    function drawnBoard(contestId: string, boxes: Array<{ rowIndex: number; columnIndex: number; contestEntryId: string }>): DrawnSquaresBoard {
       return {
         contest: expectDefinedContest(contestId),
         homeTeamName: 'Chiefs',
@@ -309,7 +308,7 @@ describe('EntryReceipts', () => {
           drawnByUserId: null,
           drawnAt: SUBMITTED_AT,
         },
-      } as unknown as SquaresBoard;
+      };
     }
 
     function expectDefinedContest(contestId: string) {
@@ -337,6 +336,15 @@ describe('EntryReceipts', () => {
       expect(text).toContain('- Box 1: Eagles 0, Chiefs 0');
       expect(text).toContain('- Box 2: Eagles 3, Chiefs 7');
       expect(text).toContain(`Review entry: https://app.example.test/league/OFFICE24/contests/${contest.id}/entries/${entry.id}`);
+    });
+
+    it('names the row and column sides Away and Home while the game\'s teams are not known', async () => {
+      const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
+      const board = { ...drawnBoard(contest.id, [{ rowIndex: 0, columnIndex: 0, contestEntryId: entry.id }]), homeTeamName: null, awayTeamName: null };
+
+      await receipts().squaresDrawn(board);
+
+      expect(textTo(owners[0].id)).toContain('- Box 1: Away 3, Home 7');
     });
 
     it('logs and resolves, sending nothing, when the draw is missing from the board', async () => {
