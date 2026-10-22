@@ -456,10 +456,11 @@ model User {
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
 
-  contestDraws   ContestDraw[]
-  squaresClaimed ContestEntrySquare[]
-  squaresDrawn   ContestSquaresDraw[]
-  refreshTokens  RefreshToken[]
+  contestDraws        ContestDraw[]
+  squaresClaimed      ContestEntrySquare[]
+  squaresDrawn        ContestSquaresDraw[]
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -478,6 +479,24 @@ model RefreshToken {
   @@index([userId])
   @@index([sessionId])
   @@map("refresh_tokens")
+}
+
+/// A "Forgot password?" link (#847, plans/password-recovery.md). Only the SHA-256 of the
+/// token is stored, so a database read cannot reset anybody. A link is live while it is
+/// unused, not cancelled and not expired; a newer request or a password change cancels it.
+model PasswordResetToken {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @unique @map("token_hash") @db.Char(64)
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz
+  usedAt      DateTime? @map("used_at") @db.Timestamptz
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("password_reset_tokens")
 }
 
 // =============================================================================

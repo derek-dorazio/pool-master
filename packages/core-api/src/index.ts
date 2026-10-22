@@ -134,7 +134,7 @@ export function buildApp() {
   // =========================================================================
   // Auth (public routes — no JWT required)
   // =========================================================================
-  app.register(authModule, { prefix: '/api/v1/auth' });
+  app.register(authModule, { prefix: '/api/v1/auth', mailDelivery });
   app.register(usersModule, { prefix: '/api/v1/users' });
   app.register(versionModule, { prefix: '/api/v1/version', operationId: 'getVersion' });
 

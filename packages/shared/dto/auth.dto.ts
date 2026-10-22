@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { EmailInputSchema } from './common.dto';
+import { EmailInputSchema, NewPasswordInputSchema } from './common.dto';
 import { UserDtoSchema } from './users.dto';
 
 // --- Requests ---
@@ -17,11 +17,7 @@ export const RegisterRequestSchema = z.object({
     .regex(/^\S+$/, 'Username cannot contain spaces')
     .describe('Unique login identifier for the account. This may be email-shaped, but it remains distinct from the contact email field.'),
   email: EmailInputSchema.describe('Primary contact email address for the user account.'),
-  password: z
-    .string()
-    .min(8)
-    .max(128)
-    .describe('Plaintext password chosen during registration.'),
+  password: NewPasswordInputSchema.describe('Plaintext password chosen during registration.'),
   firstName: z
     .string()
     .min(1)
@@ -61,6 +57,28 @@ export const LogoutRequestSchema = z.object({
     .describe('Optional refresh token override when the client is not relying on the refresh cookie.'),
 }).optional().describe('Optional logout payload. Normally omitted when the refresh cookie is present.');
 export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;
+
+export const PasswordResetRequestSchema = z.object({
+  identifier: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .min(1)
+    .max(255)
+    .describe('Email or username of the account to reset, matched the same way as sign in.'),
+}).describe('Asks for a password reset link. The answer is the same whether or not an account matches.');
+export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;
+
+export const PasswordResetConfirmRequestSchema = z.object({
+  token: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('The one-time token from the reset link. It works once and expires 10 minutes after it was sent.'),
+  newPassword: NewPasswordInputSchema.describe('The new password for the account.'),
+  confirmNewPassword: NewPasswordInputSchema.describe('Repeat of the new password to guard against typing mistakes.'),
+}).describe('Sets a new password with a reset link. Every session of the account is signed out.');
+export type PasswordResetConfirmRequest = z.infer<typeof PasswordResetConfirmRequestSchema>;
 
 // --- Response Sub-schemas ---
 
@@ -102,5 +120,7 @@ export type TokenRefreshResponse = z.infer<typeof TokenRefreshResponseSchema>;
 registerSchema('AuthTokensDto', AuthTokensDtoSchema);
 registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
+registerSchema('PasswordResetRequest', PasswordResetRequestSchema);
+registerSchema('PasswordResetConfirmRequest', PasswordResetConfirmRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);
 registerSchema('TokenRefreshResponse', TokenRefreshResponseSchema);

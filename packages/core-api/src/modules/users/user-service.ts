@@ -26,6 +26,7 @@ import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import type { DateFormat, TimeFormat, User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import {
+  cancelOpenPasswordResetTokens,
   countUserDeleteDependencies,
   deleteUserCascade,
   hasUserDeleteDependencies,
@@ -217,6 +218,8 @@ export class UserService {
         },
         data: { revokedAt: new Date() },
       });
+      // A reset link sent before the change must not undo it (#847).
+      await cancelOpenPasswordResetTokens(tx, targetUserId, new Date());
     });
     this.logger?.info({
       action: 'userService.changePassword.success',
@@ -241,6 +244,7 @@ export class UserService {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { passwordHash } });
       await revokeUserSessions(tx, user.id);
+      await cancelOpenPasswordResetTokens(tx, user.id, new Date());
     });
 
     this.logger?.info({

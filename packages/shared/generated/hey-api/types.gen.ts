@@ -440,6 +440,34 @@ export type LoginRequest = {
 };
 
 /**
+ * Asks for a password reset link. The answer is the same whether or not an account matches.
+ */
+export type PasswordResetRequest = {
+    /**
+     * Email or username of the account to reset, matched the same way as sign in.
+     */
+    identifier: string;
+};
+
+/**
+ * Sets a new password with a reset link. Every session of the account is signed out.
+ */
+export type PasswordResetConfirmRequest = {
+    /**
+     * The one-time token from the reset link. It works once and expires 10 minutes after it was sent.
+     */
+    token: string;
+    /**
+     * The new password for the account.
+     */
+    newPassword: string;
+    /**
+     * Repeat of the new password to guard against typing mistakes.
+     */
+    confirmNewPassword: string;
+};
+
+/**
  * Successful authentication response returned after registration or login.
  */
 export type AuthResponse = {
@@ -16420,6 +16448,64 @@ export type LogoutUserResponses = {
 };
 
 export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
+
+export type RequestPasswordResetData = {
+    body: PasswordResetRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/password-reset/request';
+};
+
+export type RequestPasswordResetErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type RequestPasswordResetError = RequestPasswordResetErrors[keyof RequestPasswordResetErrors];
+
+export type RequestPasswordResetResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    202: SuccessResponse;
+};
+
+export type RequestPasswordResetResponse = RequestPasswordResetResponses[keyof RequestPasswordResetResponses];
+
+export type ConfirmPasswordResetData = {
+    body: PasswordResetConfirmRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/password-reset/confirm';
+};
+
+export type ConfirmPasswordResetErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type ConfirmPasswordResetError = ConfirmPasswordResetErrors[keyof ConfirmPasswordResetErrors];
+
+export type ConfirmPasswordResetResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: SuccessResponse;
+};
+
+export type ConfirmPasswordResetResponse = ConfirmPasswordResetResponses[keyof ConfirmPasswordResetResponses];
 
 export type ListUsersData = {
     body?: never;

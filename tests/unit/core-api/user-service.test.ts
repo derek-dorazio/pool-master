@@ -44,6 +44,7 @@ function createPrismaMock(passwordHash: string | null = null) {
   const tx = {
     user: { update: jest.fn().mockResolvedValue(undefined) },
     refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
+    passwordResetToken: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
   };
 
   const prisma = {

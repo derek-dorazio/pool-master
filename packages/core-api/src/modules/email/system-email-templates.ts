@@ -1,6 +1,16 @@
 import type { EmailTemplateKey } from '@poolmaster/shared/dto';
 
-export type SystemEmailTemplateKey = EmailTemplateKey;
+/**
+ * Account emails (#847, plans/password-recovery.md Q4.1). EMAIL_CONFIG has no switch for them,
+ * because switching one off would silently break password recovery. They still obey the global
+ * `enabled` switch, which is what keeps QA quiet.
+ */
+export const AccountEmailTemplateKey = {
+  PASSWORD_RESET: 'PASSWORD_RESET',
+} as const;
+export type AccountEmailTemplateKey = (typeof AccountEmailTemplateKey)[keyof typeof AccountEmailTemplateKey];
+
+export type SystemEmailTemplateKey = EmailTemplateKey | AccountEmailTemplateKey;
 
 export interface SystemEmailMessage {
   templateKey: SystemEmailTemplateKey;
@@ -60,11 +70,19 @@ export interface ContestStartedSummaryEmailData {
   entries: ContestStartedEntrySummary[];
 }
 
+export interface PasswordResetEmailData {
+  firstName: string;
+  username: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+}
+
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
+  PASSWORD_RESET: PasswordResetEmailData;
 }
 
 type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
@@ -105,6 +123,7 @@ const SYSTEM_EMAIL_TEMPLATE_RENDERERS: TemplateRendererMap = {
   LEAGUE_JOIN_SUCCESS: renderLeagueJoinSuccessEmail,
   CONTEST_ENTRY_COMPLETED: renderContestEntryCompletedEmail,
   CONTEST_STARTED_SUMMARY: renderContestStartedSummaryEmail,
+  PASSWORD_RESET: renderPasswordResetEmail,
 };
 
 function renderLeagueMemberInviteEmail(
@@ -264,6 +283,40 @@ function renderContestStartedSummaryEmail(
     subject,
     preheader: `${data.contestName} is live with ${data.entryCount} entries.`,
     title: 'Contest started',
+    bodyBlocks,
+    textLines,
+  });
+}
+
+function renderPasswordResetEmail(
+  data: PasswordResetEmailData,
+): SystemEmailMessage {
+  const subject = `Reset your ${BRAND_NAME} password`;
+  const expiryLine = `This link works once and expires in ${data.expiresInMinutes} minutes. `
+    + "If you didn't ask for this, you can ignore this email. Your password won't change.";
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.firstName)},`),
+    paragraph(
+      `We got a request to reset the password for your ${BRAND_NAME} account (${strong(data.username)}).`,
+    ),
+    button('Choose a new password', data.resetUrl),
+    paragraph(escapeHtml(expiryLine)),
+  ].join('');
+  const textLines = [
+    `Hi ${data.firstName},`,
+    '',
+    `We got a request to reset the password for your ${BRAND_NAME} account (${data.username}).`,
+    '',
+    `Choose a new password: ${data.resetUrl}`,
+    '',
+    expiryLine,
+  ];
+
+  return buildMessage({
+    templateKey: AccountEmailTemplateKey.PASSWORD_RESET,
+    subject,
+    preheader: `Choose a new password. The link expires in ${data.expiresInMinutes} minutes.`,
+    title: 'Reset your password',
     bodyBlocks,
     textLines,
   });

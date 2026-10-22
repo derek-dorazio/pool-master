@@ -1,5 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { ClientLogBatch, ApiErrorCode } from '@poolmaster/shared/dto';
+import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 
 /**
  * Per-process, per-IP, per-minute. **Not a fleet-wide ceiling** — the window below lives in an
@@ -57,17 +58,16 @@ type ClientLogServiceOptions = {
 
 export class ClientLogService {
   private readonly logger?: FastifyBaseLogger;
-  private readonly now: () => number;
   private readonly rateLimitPerMinute: number;
   private readonly maxBatchBytes: number;
-  private readonly requestWindows = new Map<string, number[]>();
+  private readonly rateLimiter: SlidingWindowRateLimiter;
 
   constructor(options: ClientLogServiceOptions = {}) {
     this.logger = options.logger;
-    this.now = options.now ?? (() => Date.now());
     this.rateLimitPerMinute = options.rateLimitPerMinute
       ?? Number(process.env.CLIENT_LOGS_RATE_LIMIT_PER_MIN ?? DEFAULT_RATE_LIMIT_PER_MINUTE);
     this.maxBatchBytes = options.maxBatchBytes ?? DEFAULT_MAX_BATCH_BYTES;
+    this.rateLimiter = new SlidingWindowRateLimiter(this.rateLimitPerMinute, 60_000, options.now);
   }
 
   ingestBatch(params: {
@@ -153,26 +153,18 @@ export class ClientLogService {
       return;
     }
 
-    const now = this.now();
-    const windowStart = now - 60_000;
-    const existing = this.requestWindows.get(ip) ?? [];
-    const pruned = existing.filter((timestamp) => timestamp >= windowStart);
-
-    if (pruned.length >= this.rateLimitPerMinute) {
-      this.requestWindows.set(ip, pruned);
+    const { allowed, count } = this.rateLimiter.hit(ip);
+    if (!allowed) {
       this.logger?.warn({
         action: 'clientLogs.ingest.rateLimited',
         data: {
           ip,
-          requestCount: pruned.length,
+          requestCount: count,
           rateLimitPerMinute: this.rateLimitPerMinute,
         },
       }, 'Rejected client log batch due to rate limiting');
       throw new ClientLogRateLimitError();
     }
-
-    pruned.push(now);
-    this.requestWindows.set(ip, pruned);
   }
 }
 

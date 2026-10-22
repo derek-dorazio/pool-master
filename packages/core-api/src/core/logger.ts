@@ -26,6 +26,11 @@ const REDACT_PATHS = [
   '*.passwordHash',
   '*.accessToken',
   '*.refreshToken',
+  // #847 — the password reset and change bodies. A reset token is as good as the password.
+  '*.currentPassword',
+  '*.newPassword',
+  '*.confirmNewPassword',
+  '*.token',
 ];
 
 export interface RequestLogBindings {

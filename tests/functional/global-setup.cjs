@@ -184,6 +184,11 @@ async function startDaemon(runId) {
       LOG_LEVEL: process.env.LOG_LEVEL || 'warn',
       NODE_V8_COVERAGE: functionalServerV8CoverageDir,
       OPENAPI_EXPORT: 'false',
+      // #847 — every suite calls from 127.0.0.1, so the per-address password reset limits
+      // (5 and 10 a minute) would refuse the shared daemon's later suites. Their refusal is
+      // covered in tests/unit/core-api/password-reset.test.ts.
+      PASSWORD_RESET_REQUESTS_PER_MIN: '10000',
+      PASSWORD_RESET_CONFIRMS_PER_MIN: '10000',
       POOLMASTER_DISABLE_AUTO_START: 'true',
       TS_NODE_PROJECT: tsConfigPath,
     },
