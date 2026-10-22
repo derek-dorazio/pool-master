@@ -17,7 +17,7 @@ import {
   type EmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
-const CLEARED_CONTENT = { subject: null, textBody: null, htmlBody: null };
+const CLEARED_CONTENT = { subject: null, textBody: null, htmlBody: null, listUnsubscribeUrl: null };
 
 export class PrismaEmailMessageRepository implements EmailMessageRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -45,6 +45,7 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
           subject: input.subject,
           textBody: input.textBody,
           htmlBody: input.htmlBody,
+          listUnsubscribeUrl: input.listUnsubscribeUrl,
           nextAttemptAt: input.dueAt,
         }
         : { ...base, skipReason: input.skipReason },
@@ -190,6 +191,7 @@ function toEmailMessage(row: EmailMessageRow): EmailMessage {
     subject: row.subject ?? undefined,
     textBody: row.textBody ?? undefined,
     htmlBody: row.htmlBody ?? undefined,
+    listUnsubscribeUrl: row.listUnsubscribeUrl ?? undefined,
     status: row.status,
     skipReason: row.skipReason ?? undefined,
     attempts: row.attempts,

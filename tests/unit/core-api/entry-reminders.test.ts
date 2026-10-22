@@ -15,7 +15,8 @@ import {
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { EntryReminders, dueReminderHours } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
-import { inMemoryEmailMessages, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
+import { TEST_UNSUBSCRIBE } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const HOUR = 60 * 60_000;
@@ -72,6 +73,8 @@ describe('EntryReminders.queueDue', () => {
       readConfig: () => config,
       senderAddress: 'noreply@poolmaster.test',
       suppressions: inMemoryEmailSuppressions(),
+      optOuts: inMemoryEmailOptOuts(),
+      unsubscribe: TEST_UNSUBSCRIBE,
       logger,
     });
     return new EntryReminders({

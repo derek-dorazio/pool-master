@@ -1,8 +1,7 @@
-import { EmailTemplateKey } from '@poolmaster/shared/domain';
+import { EmailCategory, EmailTemplateKey } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
-  EmailCategory,
   renderSystemEmailTemplate,
   type SystemEmailTemplateKey,
 } from '../../../packages/core-api/src/modules/email';
@@ -126,6 +125,29 @@ describe('pool-master-98i system email templates', () => {
 
     expect(message.text).toContain('Your Week 7 entry is saved as a draft. It won\'t count until you submit it.');
     expect(message.text).not.toContain('haven\'t entered');
+  });
+
+  it('ends an email with a "Stop these emails" link in both bodies when it is given one, and with none otherwise', () => {
+    const data = {
+      userName: 'Derek Dorazio',
+      leagueName: 'Mathworks',
+      contestName: 'Masters Pick 6',
+      eventName: 'Manual Test Golf Tournament',
+      contestUrl: 'https://app.example.test/contests/contest-1',
+      startedAt: '2026-04-05T14:00:00.000Z',
+      entryCount: 0,
+      entries: [],
+    };
+    const unsubscribeUrl = 'https://app.example.test/email/unsubscribe?token=a&b';
+
+    const linked = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', data, { ...UTC, unsubscribeUrl });
+    const plain = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', data, UTC);
+
+    expect(linked.text).toContain(`Stop these emails: ${unsubscribeUrl}`);
+    expect(linked.html).toContain('href="https://app.example.test/email/unsubscribe?token=a&amp;b"');
+    expect(linked.html).toContain('Stop these emails');
+    expect(plain.text).not.toContain('Stop these emails');
+    expect(plain.html).not.toContain('Stop these emails');
   });
 
   it('escapes untrusted HTML in themed message bodies', () => {

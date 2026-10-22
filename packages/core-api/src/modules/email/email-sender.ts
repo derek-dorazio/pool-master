@@ -79,23 +79,28 @@ export class EmailSender {
   drain(): Promise<void> {
     this.wakes++;
     if (this.draining) return this.draining;
-    this.draining = this.run().finally(() => { this.draining = undefined; });
+    this.draining = this.run();
     return this.draining;
   }
 
   private async run(): Promise<void> {
     try {
+      // The sweep goes first: a wake during it is then seen by the loop below, where after the
+      // loop it would find this drain finishing and be lost until the next tick.
+      await this.clearOldContent();
       let wakesSeen: number;
       do {
         wakesSeen = this.wakes;
         await this.sendDue();
       } while (this.wakes !== wakesSeen);
-      await this.clearOldContent();
     } catch (err) {
       this.options.logger?.error({
         action: 'email.sender.failure',
         data: { error: describeError(err) },
       }, 'Email sender pass failed; the next tick tries again');
+    } finally {
+      // Cleared in the same step as the last wake check, so a later wake starts a new drain.
+      this.draining = undefined;
     }
   }
 
@@ -147,6 +152,7 @@ export class EmailSender {
         subject: message.subject,
         text: message.textBody,
         html: message.htmlBody,
+        listUnsubscribeUrl: message.listUnsubscribeUrl,
         metadata: {
           templateKey: message.templateKey,
           leagueId: message.leagueId,

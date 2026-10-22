@@ -71,6 +71,7 @@ import {
   readApplicationBaseUrl,
 } from './modules/email';
 import { emailEventsModule } from './modules/email/email-events-routes';
+import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
 
 export function buildApp() {
   const app = Fastify({
@@ -94,7 +95,7 @@ export function buildApp() {
     logger: app.log,
   });
   // One email outbox for the whole app; EMAIL_CONFIG decides on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     env: process.env,
@@ -145,7 +146,7 @@ export function buildApp() {
   // Auth (public routes — no JWT required)
   // =========================================================================
   app.register(authModule, { prefix: '/api/v1/auth', email });
-  app.register(usersModule, { prefix: '/api/v1/users', email });
+  app.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences });
   app.register(versionModule, { prefix: '/api/v1/version', operationId: 'getVersion' });
 
   const ingestionCallbacks: IngestionCallbacks = {
@@ -225,6 +226,7 @@ export function buildApp() {
     verifier: new SnsMessageVerifier(),
     topicArn: process.env.SES_EVENTS_TOPIC_ARN?.trim() || undefined,
   });
+  app.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: emailPreferences });
 
   // =========================================================================
   // Draft module

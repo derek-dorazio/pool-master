@@ -1440,7 +1440,7 @@ export type EmailMessageStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | '
 /**
  * Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam.
  */
-export type EmailSkipReason = 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED';
+export type EmailSkipReason = 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT';
 
 /**
  * Invitation record returned from commissioner invite-management APIs.
@@ -1501,7 +1501,7 @@ export type LeagueInvitationDto = {
     /**
      * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
      */
-    emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
+    emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
     /**
      * Invitation creation timestamp.
      */
@@ -2216,7 +2216,7 @@ export type SendLeagueInvitationsResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2299,7 +2299,7 @@ export type GenerateInviteLinkResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2374,7 +2374,7 @@ export type ListLeagueInvitationsResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2449,7 +2449,7 @@ export type ResendLeagueInvitationResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -11914,6 +11914,82 @@ export type SnsMessage = {
 };
 
 /**
+ * A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+ */
+export type OptionalEmailCategory = 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+
+/**
+ * One category of email and whether the user gets it.
+ */
+export type EmailPreferenceDto = {
+    /**
+     * A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+     */
+    category: 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+    /**
+     * Whether the user gets emails in this category.
+     */
+    enabled: boolean;
+};
+
+/**
+ * Which categories of email the user gets, and whether their address can be emailed at all.
+ */
+export type EmailPreferencesResponse = {
+    /**
+     * Every category a member can turn off, in a fixed order.
+     */
+    preferences: Array<{
+        /**
+         * A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+         */
+        category: 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+        /**
+         * Whether the user gets emails in this category.
+         */
+        enabled: boolean;
+    }>;
+    /**
+     * Why no email reaches the account's address any more, or null: BOUNCE when mail to it bounced for good, COMPLAINT when an email was marked as spam. Changing the account's email fixes it.
+     */
+    emailSuppression: 'BOUNCE' | 'COMPLAINT' | null;
+};
+
+/**
+ * Turns one category of email on or off.
+ */
+export type EmailPreferenceUpdateRequest = {
+    /**
+     * A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, RESULTS or RECEIPTS. Account and membership emails are always sent.
+     */
+    category: 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+    /**
+     * Whether the user gets emails in this category.
+     */
+    enabled: boolean;
+};
+
+/**
+ * The unsubscribe link's token.
+ */
+export type EmailUnsubscribeQuery = {
+    /**
+     * The token from the email's unsubscribe link.
+     */
+    token: string;
+};
+
+/**
+ * The category the unsubscribe link turned off.
+ */
+export type EmailUnsubscribeResponse = {
+    /**
+     * The category of email that is now off.
+     */
+    category: 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+};
+
+/**
  * The stored key of a settings group.
  */
 export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG';
@@ -16957,6 +17033,90 @@ export type UpdateUserPreferencesResponses = {
 };
 
 export type UpdateUserPreferencesResponse = UpdateUserPreferencesResponses[keyof UpdateUserPreferencesResponses];
+
+export type GetUserEmailPreferencesData = {
+    body?: never;
+    path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/email-preferences';
+};
+
+export type GetUserEmailPreferencesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetUserEmailPreferencesError = GetUserEmailPreferencesErrors[keyof GetUserEmailPreferencesErrors];
+
+export type GetUserEmailPreferencesResponses = {
+    /**
+     * Which categories of email the user gets, and whether their address can be emailed at all.
+     */
+    200: EmailPreferencesResponse;
+};
+
+export type GetUserEmailPreferencesResponse = GetUserEmailPreferencesResponses[keyof GetUserEmailPreferencesResponses];
+
+export type UpdateUserEmailPreferenceData = {
+    body: EmailPreferenceUpdateRequest;
+    path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/email-preferences';
+};
+
+export type UpdateUserEmailPreferenceErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type UpdateUserEmailPreferenceError = UpdateUserEmailPreferenceErrors[keyof UpdateUserEmailPreferenceErrors];
+
+export type UpdateUserEmailPreferenceResponses = {
+    /**
+     * Which categories of email the user gets, and whether their address can be emailed at all.
+     */
+    200: EmailPreferencesResponse;
+};
+
+export type UpdateUserEmailPreferenceResponse = UpdateUserEmailPreferenceResponses[keyof UpdateUserEmailPreferenceResponses];
 
 export type ChangeUserPasswordData = {
     body: UserPasswordChangeRequest;
@@ -22319,6 +22479,36 @@ export type ReceiveSesEventResponses = {
 };
 
 export type ReceiveSesEventResponse = ReceiveSesEventResponses[keyof ReceiveSesEventResponses];
+
+export type UnsubscribeFromEmailData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The token from the email's unsubscribe link.
+         */
+        token: string;
+    };
+    url: '/api/v1/email/unsubscribe';
+};
+
+export type UnsubscribeFromEmailErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+};
+
+export type UnsubscribeFromEmailError = UnsubscribeFromEmailErrors[keyof UnsubscribeFromEmailErrors];
+
+export type UnsubscribeFromEmailResponses = {
+    /**
+     * The category the unsubscribe link turned off.
+     */
+    200: EmailUnsubscribeResponse;
+};
+
+export type UnsubscribeFromEmailResponse = UnsubscribeFromEmailResponses[keyof UnsubscribeFromEmailResponses];
 
 export type GetSelectionStateData = {
     body?: never;

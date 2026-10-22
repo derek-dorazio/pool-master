@@ -9,6 +9,7 @@ import type {
   EmailMessageRecordResult,
   EmailMessageRepository,
   EmailMessageState,
+  EmailOptOutRepository,
   EmailSuppressionRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -17,9 +18,10 @@ import {
   type EmailSuppression,
   type EmailMessage,
   type EmailTemplateKey,
+  type OptionalEmailCategory,
 } from '@poolmaster/shared/domain';
 
-const CLEARED_CONTENT = { subject: undefined, textBody: undefined, htmlBody: undefined };
+const CLEARED_CONTENT = { subject: undefined, textBody: undefined, htmlBody: undefined, listUnsubscribeUrl: undefined };
 
 export interface InMemoryEmailMessages extends EmailMessageRepository {
   /** Every recorded email, in the order recorded. */
@@ -143,6 +145,33 @@ export function inMemoryEmailSuppressions(): InMemoryEmailSuppressions {
     findByEmail(email) {
       const found = rows.find((row) => row.email === email.toLowerCase());
       return Promise.resolve(found ? { ...found } : undefined);
+    },
+  };
+}
+
+export interface InMemoryEmailOptOuts extends EmailOptOutRepository {
+  /** `${userId}:${category}` for every category a user turned off. */
+  rows: Set<string>;
+}
+
+/** An in-memory EmailOptOutRepository; the Prisma one is tested in email-preferences.integration. */
+export function inMemoryEmailOptOuts(): InMemoryEmailOptOuts {
+  const rows = new Set<string>();
+  const keyOf = (userId: string, category: OptionalEmailCategory) => `${userId}:${category}`;
+  return {
+    rows,
+    findByUser(userId) {
+      return Promise.resolve([...rows]
+        .filter((row) => row.startsWith(`${userId}:`))
+        .map((row) => row.slice(userId.length + 1) as OptionalEmailCategory));
+    },
+    isOptedOut(userId, category) {
+      return Promise.resolve(rows.has(keyOf(userId, category)));
+    },
+    setOptedOut(userId, category, optedOut) {
+      if (optedOut) rows.add(keyOf(userId, category));
+      else rows.delete(keyOf(userId, category));
+      return Promise.resolve();
     },
   };
 }

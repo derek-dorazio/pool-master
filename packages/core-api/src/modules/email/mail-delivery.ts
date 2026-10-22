@@ -23,6 +23,8 @@ export interface MailDeliveryMessage {
   subject: string;
   text: string;
   html: string;
+  /** The one-click unsubscribe URL, on an email a member can turn off: sent as List-Unsubscribe. */
+  listUnsubscribeUrl?: string;
   metadata: {
     templateKey: SystemEmailTemplateKey;
     leagueId?: string;
@@ -160,6 +162,7 @@ export class SmtpMailDeliveryProvider implements MailDeliveryProvider {
         subject: message.subject,
         text: message.text,
         html: message.html,
+        headers: Object.fromEntries(listUnsubscribeHeaders(message).map(({ Name, Value }) => [Name, Value])),
       });
       const messageId = typeof result.messageId === 'string' ? result.messageId : undefined;
       this.logger?.info({
@@ -247,6 +250,8 @@ export class SesMailDeliveryProvider implements MailDeliveryProvider {
               Text: { Data: message.text, Charset: 'UTF-8' },
               Html: { Data: message.html, Charset: 'UTF-8' },
             },
+            // An email a member cannot turn off sends no extra headers.
+            ...(message.listUnsubscribeUrl ? { Headers: listUnsubscribeHeaders(message) } : {}),
           },
         },
       });
@@ -351,4 +356,16 @@ function parsePort(value: string | undefined, fallback: number): number {
 
 function parseBoolean(value: string | undefined): boolean {
   return value?.trim().toLowerCase() === 'true';
+}
+
+/**
+ * RFC 8058 one-click unsubscribe headers: mail apps show an Unsubscribe button that posts to the
+ * URL, and Gmail and Yahoo require them from bulk senders. None on an email that can't be turned off.
+ */
+function listUnsubscribeHeaders(message: MailDeliveryMessage): { Name: string; Value: string }[] {
+  if (!message.listUnsubscribeUrl) return [];
+  return [
+    { Name: 'List-Unsubscribe', Value: `<${message.listUnsubscribeUrl}>` },
+    { Name: 'List-Unsubscribe-Post', Value: 'List-Unsubscribe=One-Click' },
+  ];
 }

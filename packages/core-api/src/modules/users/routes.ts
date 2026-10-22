@@ -17,6 +17,7 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto/users.dto';
+import '@poolmaster/shared/dto/email-preferences.dto';
 // Registers ErrorEnvelope and SuccessResponse, which this module's routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -26,6 +27,11 @@ import { UserService } from './user-service';
 import { AuthService } from '../auth/auth-service';
 import { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import type { EmailPreferencesService } from '../email/email-preferences-service';
+
+export interface UsersModuleOptions extends MailModuleOptions {
+  emailPreferences: EmailPreferencesService;
+}
 
 /**
  * `:userId` is the caller's `me` or a user id. Anything else is a 400 here rather than reaching
@@ -60,7 +66,7 @@ function withUserErrorResponses(
   };
 }
 
-export function usersModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -72,7 +78,7 @@ export function usersModule(fastify: FastifyInstance, opts: MailModuleOptions): 
     fastify.log,
   );
   const authService = new AuthService(users, prisma, fastify.log);
-  const handlers = createUserHandlers(service, authService);
+  const handlers = createUserHandlers(service, authService, opts.emailPreferences);
 
   fastify.get('/', {
     schema: {
@@ -146,6 +152,33 @@ export function usersModule(fastify: FastifyInstance, opts: MailModuleOptions): 
       response: withUserErrorResponses({ 200: schemaRef('UserResponse') }, [409]),
     },
     handler: handlers.updatePreferences,
+  });
+
+  fastify.get('/:userId/email-preferences', {
+    schema: {
+      tags: ['Users'],
+      summary: 'Read which categories of email a user gets',
+      description:
+        'One switch per category of email a member can turn off, the same for every league; account and membership emails have none. Also says why the address gets no email at all, when it bounced for good or was marked as spam. Access rule A6: the subject themselves, or a root admin.',
+      operationId: 'getUserEmailPreferences',
+      params: USER_ID_PARAMS,
+      response: withUserErrorResponses({ 200: schemaRef('EmailPreferencesResponse') }),
+    },
+    handler: handlers.readEmailPreferences,
+  });
+
+  fastify.put('/:userId/email-preferences', {
+    schema: {
+      tags: ['Users'],
+      summary: 'Turn one category of email on or off',
+      description:
+        'Sets one category\'s switch and returns them all. The same switch an email\'s "Stop these emails" link turns off. Access rule A6: the subject themselves, or a root admin.',
+      operationId: 'updateUserEmailPreference',
+      params: USER_ID_PARAMS,
+      body: schemaRef('EmailPreferenceUpdateRequest'),
+      response: withUserErrorResponses({ 200: schemaRef('EmailPreferencesResponse') }),
+    },
+    handler: handlers.updateEmailPreference,
   });
 
   fastify.post('/:userId/password', {

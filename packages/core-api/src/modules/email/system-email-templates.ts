@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { EmailCategory } from './email-categories';
+import { EmailCategory } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -102,6 +102,11 @@ export interface SystemEmailTemplateDataByKey {
 export interface EmailRenderContext {
   /** IANA time zone dates are shown in: the recipient's, or UTC when they have none. */
   timeZone: string;
+  /**
+   * The recipient's "Stop these emails" page for this email's category (#844 slice 5), on an
+   * email a member can turn off; absent on the rest.
+   */
+  unsubscribeUrl?: string;
 }
 
 type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
@@ -162,6 +167,7 @@ const BRAND_NAME = 'Prime Time Commissioner';
 const BRAND_TAGLINE = 'Ultimate Office Pool Manager';
 /** System email has no Reply-To (#844), so a reply bounces; the footer says so. */
 const NOT_MONITORED = 'Replies to this email aren\'t read.';
+const STOP_THESE_EMAILS = 'Stop these emails';
 
 const EMAIL_THEME = {
   canvas: '#f5f5f2',
@@ -278,7 +284,7 @@ function renderLeagueMemberInviteEmail(
     `Join league: ${data.inviteUrl}`,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'LEAGUE_MEMBER_INVITE',
     subject,
     preheader: `Join ${data.leagueName} on ${BRAND_NAME}.`,
@@ -290,6 +296,7 @@ function renderLeagueMemberInviteEmail(
 
 function renderLeagueJoinSuccessEmail(
   data: LeagueJoinSuccessEmailData,
+  context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `Welcome to ${data.leagueName}`;
   const bodyBlocks = [
@@ -310,7 +317,7 @@ function renderLeagueJoinSuccessEmail(
     `Open league: ${data.leagueHomeUrl}`,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'LEAGUE_JOIN_SUCCESS',
     subject,
     preheader: `Your ${BRAND_NAME} account is ready.`,
@@ -359,7 +366,7 @@ function renderContestEntryCompletedEmail(
     `Review entry: ${data.entryUrl}`,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'CONTEST_ENTRY_COMPLETED',
     subject,
     preheader: `Your ${data.contestName} entry is saved.`,
@@ -406,7 +413,7 @@ function renderContestStartedSummaryEmail(
     `Open contest board: ${data.contestUrl}`,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'CONTEST_STARTED_SUMMARY',
     subject,
     preheader: `${data.contestName} is live with ${data.entryCount} entries.`,
@@ -445,7 +452,7 @@ function renderContestEntryReminderEmail(
     `Make your picks: ${data.contestUrl}`,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'CONTEST_ENTRY_REMINDER',
     subject,
     preheader: `Picks for ${data.eventName} close ${closesLine}.`,
@@ -457,6 +464,7 @@ function renderContestEntryReminderEmail(
 
 function renderPasswordResetEmail(
   data: PasswordResetEmailData,
+  context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `Reset your ${BRAND_NAME} password`;
   const expiryLine = `This link works once and expires in ${data.expiresInMinutes} minutes. `
@@ -479,7 +487,7 @@ function renderPasswordResetEmail(
     expiryLine,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'PASSWORD_RESET',
     subject,
     preheader: `Choose a new password. The link expires in ${data.expiresInMinutes} minutes.`,
@@ -510,7 +518,7 @@ function renderPasswordChangedEmail(
     data.forgotPasswordUrl,
   ];
 
-  return buildMessage({
+  return buildMessage(context, {
     templateKey: 'PASSWORD_CHANGED',
     subject,
     preheader: `Your ${BRAND_NAME} password was changed.`,
@@ -520,7 +528,7 @@ function renderPasswordChangedEmail(
   });
 }
 
-function buildMessage(input: {
+function buildMessage(context: EmailRenderContext, input: {
   templateKey: SystemEmailTemplateKey;
   subject: string;
   preheader: string;
@@ -540,11 +548,13 @@ function buildMessage(input: {
       ...input.textLines,
       '',
       NOT_MONITORED,
+      ...(context.unsubscribeUrl ? [`${STOP_THESE_EMAILS}: ${context.unsubscribeUrl}`] : []),
     ].join('\n'),
     html: documentShell({
       preheader: input.preheader,
       title: input.title,
       bodyBlocks: input.bodyBlocks,
+      unsubscribeUrl: context.unsubscribeUrl,
     }),
   };
 }
@@ -553,7 +563,11 @@ function documentShell(input: {
   preheader: string;
   title: string;
   bodyBlocks: string;
+  unsubscribeUrl?: string;
 }): string {
+  const unsubscribe = input.unsubscribeUrl
+    ? `<br><a href="${escapeHtml(input.unsubscribeUrl)}" style="color:rgba(255,255,255,0.85);">${STOP_THESE_EMAILS}</a>`
+    : '';
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -581,7 +595,7 @@ function documentShell(input: {
             </tr>
             <tr>
               <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:rgba(255,255,255,0.70);font-size:12px;line-height:1.5;">
-                Sent by ${BRAND_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}
+                Sent by ${BRAND_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${unsubscribe}
               </td>
             </tr>
           </table>

@@ -95,6 +95,14 @@ export class UserService {
 
   // --- Profile writes ---------------------------------------------------------
 
+  /**
+   * The user `actor` may change (A6), for a write another module performs on the account, such
+   * as which categories of email it gets.
+   */
+  async writableUser(actor: UserWriteActor, targetUserId: string): Promise<User> {
+    return this.requireWritableUser(actor, targetUserId);
+  }
+
   async updateProfile(
     actor: UserWriteActor,
     targetUserId: string,
