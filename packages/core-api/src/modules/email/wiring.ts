@@ -7,17 +7,27 @@
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
-import { PrismaEmailMessageRepository, PrismaEmailSuppressionRepository } from '../../adapters';
+import {
+  PrismaEmailMessageRepository,
+  PrismaEmailOptOutRepository,
+  PrismaEmailSuppressionRepository,
+  PrismaUserRepository,
+} from '../../adapters';
+import { readJwtSecret } from '../../core/config';
 import { EmailDeliveryEvents } from './email-delivery-events';
+import { EmailPreferencesService } from './email-preferences-service';
 import { EmailSender } from './email-sender';
 import { EmailService } from './email-service';
-import { createMailDeliveryProvider, readMailDeliveryConfig } from './mail-delivery';
+import { createMailDeliveryProvider, readApplicationBaseUrl, readMailDeliveryConfig } from './mail-delivery';
+import { UnsubscribeTokens } from './unsubscribe-tokens';
 
 export interface EmailOutbox {
   email: EmailService;
   sender: EmailSender;
   /** Records what SES reports after it accepts an email. */
   deliveryEvents: EmailDeliveryEvents;
+  /** Which categories of email each user gets, and the unsubscribe their links lead to. */
+  preferences: EmailPreferencesService;
 }
 
 export function createEmailOutbox(options: {
@@ -30,6 +40,8 @@ export function createEmailOutbox(options: {
   const transport = createMailDeliveryProvider(mailConfig, options.logger);
   const messages = new PrismaEmailMessageRepository(options.prisma);
   const suppressions = new PrismaEmailSuppressionRepository(options.prisma);
+  const optOuts = new PrismaEmailOptOutRepository(options.prisma);
+  const unsubscribeTokens = new UnsubscribeTokens(readJwtSecret());
   const sender = new EmailSender({
     messages,
     transport,
@@ -39,6 +51,8 @@ export function createEmailOutbox(options: {
   const email = new EmailService({
     messages,
     suppressions,
+    optOuts,
+    unsubscribe: { tokens: unsubscribeTokens, appBaseUrl: readApplicationBaseUrl(options.env) },
     providerName: transport.providerName,
     readConfig: options.readConfig,
     senderAddress: mailConfig.fromEmail,
@@ -46,5 +60,12 @@ export function createEmailOutbox(options: {
     logger: options.logger,
   });
   const deliveryEvents = new EmailDeliveryEvents({ messages, suppressions, logger: options.logger });
-  return { email, sender, deliveryEvents };
+  const preferences = new EmailPreferencesService({
+    users: new PrismaUserRepository(options.prisma),
+    optOuts,
+    suppressions,
+    tokens: unsubscribeTokens,
+    logger: options.logger,
+  });
+  return { email, sender, deliveryEvents, preferences };
 }

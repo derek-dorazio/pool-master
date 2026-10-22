@@ -11,6 +11,7 @@ export * from './predictions.dto';
 export * from './participants.dto';
 export * from './config.dto';
 export * from './email-events.dto';
+export * from './email-preferences.dto';
 export * from './settings.dto';
 export * from './events.dto';
 export * from './sport-catalog.dto';

@@ -73,6 +73,38 @@ certificate under `/SimpleNotificationService-` on the `sns.<region>.amazonaws.c
 topic's region, and at most an hour old (SNS retries within minutes, so anything older is a
 replay). Fetching a certificate or confirming the subscription times out after 5 seconds.
 
+## Preferences and Unsubscribe
+
+A member turns categories of email off on their profile (*Email notifications*), one switch per
+category, the same for all their leagues (#844 slice 5, Q7.1). The switchable categories are
+`COMMISSIONER_UPDATES`, `CONTEST_UPDATES`, `LIVE_STANDINGS`, `RESULTS` and `RECEIPTS`
+(`OptionalEmailCategory`); account and membership emails have no switch. A row in
+`email_opt_outs` means off; no row means on. `EmailService.send` checks it after the
+suppression list and records an email in a category the recipient turned off as `SKIPPED` with
+the reason `OPTED_OUT`.
+
+Every email in a switchable category, to someone with an account, carries:
+
+- a footer link, *Stop these emails*, to `${APP_BASE_URL}/email/unsubscribe?token=…`: a page that
+  asks before it turns the category off, so a link scanner opening it unsubscribes nobody, and
+  then links to the profile's switches;
+- `List-Unsubscribe: <${APP_BASE_URL}/api/v1/email/unsubscribe?token=…>` and
+  `List-Unsubscribe-Post: List-Unsubscribe=One-Click` (RFC 8058), which mail apps show as an
+  Unsubscribe button. The URL is stored on the outbox row (`list_unsubscribe_url`, cleared with
+  the bodies) and sent as headers through SES and SMTP alike.
+
+The token names one user and one category and never expires, so it can do one thing only: turn
+that category off for that user. It is an HMAC-SHA256 over both, keyed by a key derived from
+`JWT_SECRET` for this purpose alone (`UnsubscribeTokens`). It is deliberately not a JWT: access
+tokens are JWTs signed with `JWT_SECRET`, and a token that verified as one would sign its holder
+in. `POST /api/v1/email/unsubscribe` takes it with no session; a token this app did not issue,
+or one for a deleted account, is 400 `EMAIL_UNSUBSCRIBE_LINK_INVALID`. The request log records the
+URL with `token=[REDACTED]`.
+
+When the member's address is on the suppression list, the profile and the *Email notifications*
+dialog say no email reaches them and that changing their email starts it again (a new address
+is not suppressed).
+
 ## Templates
 
 Templates are typed TypeScript renderers, not SES stored templates (#844, Q2.1).
@@ -190,7 +222,10 @@ right subject and link; the functional server runs with a fixed
 reads the reset link out of the reset email and uses it. Functional tests read the sink through
 `tests/functional/mail.ts`, whose `awaitSentMailTo` waits for the sender to send.
 `tests/integration/core-api/email-settings.integration.ts` covers switching email, and one
-email, off, and the allow list; `email-outbox.integration.ts` covers each outbox query. Unit
+email, off, and the allow list; `email-outbox.integration.ts` covers each outbox query;
+`email-preferences.integration.ts` covers the preference routes and the one-click unsubscribe.
+The sink also records each message's `List-Unsubscribe` headers, and the functional lane follows
+one back. Unit
 tests run the real service and sender over an in-memory outbox (`tests/support/email-service.ts`).
 
 ## SES Infrastructure
@@ -232,8 +267,9 @@ League invite by email returns success once the invitation exists and its email 
 Each sent invitation carries `emailStatus`, and the commissioner's pending invites list
 (Commissioner tools › Invites) shows where each invite's latest email stands: sending, sent,
 delivered, bounced, marked as spam, could not be sent (`FAILED`), or not sent (`SKIPPED`, with
-email switched off or the address not allowed here; `emailSkipReason` `SUPPRESSED` says the
-address bounced or complained before), when the commissioner copies the link and shares it
+email switched off or the address not allowed here; `emailSkipReason` `SUPPRESSED` means the
+address is on the suppression list, which the screen shows only as "We can't email this
+address"; `OPTED_OUT` means the member turned that category off), when the commissioner copies the link and shares it
 another way. Resend gives
 the invitation a new invite code and a fresh seven-day expiry and queues a new email, so the
 old link stops working.

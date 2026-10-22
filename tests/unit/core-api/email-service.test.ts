@@ -6,10 +6,13 @@ import {
   type MailDeliveryProviderName,
 } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
+import { TEST_UNSUBSCRIBE } from '../../support/email-service';
 import {
   inMemoryEmailMessages,
+  inMemoryEmailOptOuts,
   inMemoryEmailSuppressions,
   type InMemoryEmailMessages,
+  type InMemoryEmailOptOuts,
   type InMemoryEmailSuppressions,
 } from '../../support/in-memory-email-messages';
 
@@ -34,6 +37,25 @@ function invite(to: string, overrides: Partial<EmailSendInput<'LEAGUE_MEMBER_INV
   };
 }
 
+function entryReceipt(userId: string | undefined): EmailSendInput<'CONTEST_ENTRY_COMPLETED'> {
+  return {
+    to: { email: 'member@gmail.com', userId },
+    about: 'entry-1:2026-10-22T12:00:00.000Z',
+    league: LEAGUE,
+    refs: { contestId: 'contest-1', entryId: 'entry-1' },
+    data: {
+      userName: 'Morgan Member',
+      leagueName: LEAGUE.name,
+      contestName: 'Masters Pick 6',
+      teamName: 'Morgan Member',
+      entryName: 'Entry 1',
+      entryUrl: 'https://qa.example.com/entries/entry-1',
+      submittedAt: '2026-10-22T12:00:00.000Z',
+      tiers: [],
+    },
+  };
+}
+
 function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
   return { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), ...overrides };
 }
@@ -41,6 +63,7 @@ function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
 function service(options: {
   outbox?: InMemoryEmailMessages;
   suppressions?: InMemoryEmailSuppressions;
+  optOuts?: InMemoryEmailOptOuts;
   providerName?: MailDeliveryProviderName;
   readConfig?: () => EmailConfig;
   logger?: ReturnType<typeof fakeLogger>;
@@ -49,6 +72,8 @@ function service(options: {
   return new EmailService({
     messages: options.outbox ?? inMemoryEmailMessages(),
     suppressions: options.suppressions ?? inMemoryEmailSuppressions(),
+    optOuts: options.optOuts ?? inMemoryEmailOptOuts(),
+    unsubscribe: TEST_UNSUBSCRIBE,
     providerName: options.providerName ?? 'smtp',
     readConfig: options.readConfig ?? (() => emailConfig()),
     senderAddress: 'noreply@qa.example.com',
@@ -351,5 +376,57 @@ describe('email service: who may be emailed', () => {
       .send('LEAGUE_MEMBER_INVITE', invite('member@example.test'));
 
     expect(message.skipReason).toBe('NOT_ALLOWED_IN_ENVIRONMENT');
+  });
+});
+
+describe('email service: categories a member turned off', () => {
+  it('skips an email in a category the recipient turned off, with no content, and still queues their emails in other categories', async () => {
+    const optOuts = inMemoryEmailOptOuts();
+    await optOuts.setOptedOut('user-1', 'RECEIPTS', true);
+    const email = service({ optOuts });
+
+    const receipt = await email.send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1'));
+    const inviteEmail = await email.send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com'));
+
+    expect(receipt).toMatchObject({ status: 'SKIPPED', skipReason: 'OPTED_OUT' });
+    expect(receipt.textBody).toBeUndefined();
+    expect(inviteEmail.status).toBe('QUEUED');
+  });
+
+  it('queues the email again once the recipient turns its category back on', async () => {
+    const optOuts = inMemoryEmailOptOuts();
+    await optOuts.setOptedOut('user-1', 'RECEIPTS', true);
+    await optOuts.setOptedOut('user-1', 'RECEIPTS', false);
+
+    const receipt = await service({ optOuts }).send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1'));
+
+    expect(receipt.status).toBe('QUEUED');
+  });
+
+  it('puts a "Stop these emails" link to the recipient\'s own unsubscribe page in the footer of an email they can turn off, and its one-click URL on the message', async () => {
+    const receipt = await service().send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1'));
+
+    const page = /https:\/\/app\.example\.test\/email\/unsubscribe\?token=([^\s"<]+)/.exec(receipt.textBody ?? '');
+    expect(page).not.toBeNull();
+    const token = decodeURIComponent(page?.[1] ?? '');
+    expect(TEST_UNSUBSCRIBE.tokens.read(token)).toEqual({ userId: 'user-1', category: 'RECEIPTS' });
+    expect(receipt.textBody).toContain('Stop these emails:');
+    expect(receipt.htmlBody).toContain('Stop these emails');
+    expect(receipt.listUnsubscribeUrl).toBe(`https://app.example.test/api/v1/email/unsubscribe?token=${page?.[1] ?? ''}`);
+  });
+
+  it('puts no unsubscribe link on an email that cannot be turned off, such as an invite', async () => {
+    const message = await service().send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com'));
+
+    expect(message.textBody).not.toContain('Stop these emails');
+    expect(message.listUnsubscribeUrl).toBeUndefined();
+  });
+
+  it('puts no unsubscribe link on an email to an address with no account, since there is no one to turn it off for', async () => {
+    const message = await service().send('CONTEST_ENTRY_COMPLETED', entryReceipt(undefined));
+
+    expect(message.status).toBe('QUEUED');
+    expect(message.textBody).not.toContain('Stop these emails');
+    expect(message.listUnsubscribeUrl).toBeUndefined();
   });
 });

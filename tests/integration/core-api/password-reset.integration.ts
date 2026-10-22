@@ -16,7 +16,7 @@ import {
   createTestUser,
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
-import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver, TEST_UNSUBSCRIBE } from '../../support/email-service';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import {
   PasswordResetService,
@@ -26,6 +26,7 @@ import { UserService } from '../../../packages/core-api/src/modules/users/user-s
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import {
   PrismaEmailMessageRepository,
+  PrismaEmailOptOutRepository,
   PrismaEmailSuppressionRepository,
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
@@ -102,6 +103,8 @@ function buildService(options: { now?: () => Date } = {}) {
     email: new EmailService({
       messages,
       suppressions: new PrismaEmailSuppressionRepository(prisma),
+      optOuts: new PrismaEmailOptOutRepository(prisma),
+      unsubscribe: TEST_UNSUBSCRIBE,
       providerName: mail.providerName,
       readConfig,
       senderAddress: 'noreply@integration.test',

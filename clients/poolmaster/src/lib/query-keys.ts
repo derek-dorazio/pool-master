@@ -161,6 +161,9 @@ export const QueryKeys = {
     me: ['poolmaster', 'auth', 'me'] as const,
     refresh: ['poolmaster', 'auth', 'refresh'] as const,
   },
+  emailPreferences: {
+    detail: (userId: QueryKeyId) => ['poolmaster', 'email-preferences', userId] as const,
+  },
   users: {
     all: ['poolmaster', 'admin', 'user-detail'] as const,
     detail: (userId: QueryKeyId) => ['poolmaster', 'admin', 'user-detail', userId] as const,

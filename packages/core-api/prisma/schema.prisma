@@ -203,6 +203,16 @@ enum PrismaEmailSkipReason {
   TEMPLATE_DISABLED
   NOT_ALLOWED_IN_ENVIRONMENT
   SUPPRESSED
+  OPTED_OUT
+}
+
+/// The email categories a member can turn off (#844 slice 5).
+enum PrismaOptionalEmailCategory {
+  COMMISSIONER_UPDATES
+  CONTEST_UPDATES
+  LIVE_STANDINGS
+  RESULTS
+  RECEIPTS
 }
 
 enum PrismaEmailSuppressionReason {
@@ -495,6 +505,7 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   emailMessages       EmailMessage[]
+  emailOptOuts        EmailOptOut[]
 
   @@map("users")
 }
@@ -646,29 +657,31 @@ model LeagueInvitation {
 /// One system email to one person (#844): queued and sent by the sender, or skipped with the
 /// reason. A check constraint holds skip_reason to exactly the SKIPPED rows.
 model EmailMessage {
-  id                String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  templateKey       PrismaEmailTemplateKey   @map("template_key")
-  recipientUserId   String?                  @map("recipient_user_id") @db.Uuid
-  recipientEmail    String                   @map("recipient_email") @db.VarChar(255)
-  leagueId          String?                  @map("league_id") @db.Uuid
-  contestId         String?                  @map("contest_id") @db.Uuid
-  entryId           String?                  @map("entry_id") @db.Uuid
-  invitationId      String?                  @map("invitation_id") @db.Uuid
-  idempotencyKey    String                   @unique @map("idempotency_key")
-  fromName          String                   @map("from_name") @db.VarChar(255)
-  fromAddress       String                   @map("from_address") @db.VarChar(255)
-  subject           String?
-  textBody          String?                  @map("text_body")
-  htmlBody          String?                  @map("html_body")
-  status            PrismaEmailMessageStatus
-  skipReason        PrismaEmailSkipReason?   @map("skip_reason")
-  attempts          Int                      @default(0)
-  nextAttemptAt     DateTime?                @map("next_attempt_at") @db.Timestamptz
-  lastError         String?                  @map("last_error")
-  providerMessageId String?                  @map("provider_message_id") @db.VarChar(255)
-  sentAt            DateTime?                @map("sent_at") @db.Timestamptz
-  createdAt         DateTime                 @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt         DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  templateKey        PrismaEmailTemplateKey   @map("template_key")
+  recipientUserId    String?                  @map("recipient_user_id") @db.Uuid
+  recipientEmail     String                   @map("recipient_email") @db.VarChar(255)
+  leagueId           String?                  @map("league_id") @db.Uuid
+  contestId          String?                  @map("contest_id") @db.Uuid
+  entryId            String?                  @map("entry_id") @db.Uuid
+  invitationId       String?                  @map("invitation_id") @db.Uuid
+  idempotencyKey     String                   @unique @map("idempotency_key")
+  fromName           String                   @map("from_name") @db.VarChar(255)
+  fromAddress        String                   @map("from_address") @db.VarChar(255)
+  subject            String?
+  textBody           String?                  @map("text_body")
+  htmlBody           String?                  @map("html_body")
+  /// The one-click unsubscribe URL sent as List-Unsubscribe, on an email a member can turn off.
+  listUnsubscribeUrl String?                  @map("list_unsubscribe_url")
+  status             PrismaEmailMessageStatus
+  skipReason         PrismaEmailSkipReason?   @map("skip_reason")
+  attempts           Int                      @default(0)
+  nextAttemptAt      DateTime?                @map("next_attempt_at") @db.Timestamptz
+  lastError          String?                  @map("last_error")
+  providerMessageId  String?                  @map("provider_message_id") @db.VarChar(255)
+  sentAt             DateTime?                @map("sent_at") @db.Timestamptz
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   // Deleting an account deletes the emails it was sent; deleting what an email is about keeps it.
   recipient  User?             @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
@@ -1707,4 +1720,17 @@ model PlatformRuntimeConfigHistory {
 
   @@index([configKey, changedAt(sort: Desc)])
   @@map("platform_runtime_config_history")
+}
+
+/// A category of email a user turned off (#844 slice 5); no row means it is on.
+model EmailOptOut {
+  id        String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String                      @map("user_id") @db.Uuid
+  category  PrismaOptionalEmailCategory
+  createdAt DateTime                    @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@map("email_opt_outs")
 }

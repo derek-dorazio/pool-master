@@ -154,6 +154,8 @@ export interface EmailMessage extends DomainEntity {
   subject?: string;
   textBody?: string;
   htmlBody?: string;
+  /** The one-click unsubscribe URL, sent as List-Unsubscribe, on an email a member can turn off. */
+  listUnsubscribeUrl?: string;
   status: EmailMessageStatus;
   /** Set exactly when the status is SKIPPED. */
   skipReason?: EmailSkipReason;

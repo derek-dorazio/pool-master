@@ -33,6 +33,24 @@ const REDACT_PATHS = [
   '*.token',
 ];
 
+/** Query values that are as good as a credential: the email unsubscribe link carries `token`. */
+const REDACTED_QUERY_KEYS = new Set(['token']);
+
+/** The URL as logged, with each credential-like query value replaced by the redaction censor. */
+export function redactUrlForLog(url: string): string {
+  const queryStart = url.indexOf('?');
+  if (queryStart < 0) return url;
+  const query = url
+    .slice(queryStart + 1)
+    .split('&')
+    .map((pair) => {
+      const key = pair.split('=', 1)[0];
+      return REDACTED_QUERY_KEYS.has(key) ? `${key}=[REDACTED]` : pair;
+    })
+    .join('&');
+  return `${url.slice(0, queryStart)}?${query}`;
+}
+
 export interface RequestLogBindings {
   reqId: string;
   sessionId: string | null;
@@ -72,6 +90,18 @@ export function createFastifyLoggerOptions(
     redact: {
       paths: REDACT_PATHS,
       censor: '[REDACTED]',
+    },
+    serializers: {
+      // Fastify's default request serializer, with the URL's credential query values redacted.
+      req(request: FastifyRequest) {
+        return {
+          method: request.method,
+          url: redactUrlForLog(request.url),
+          host: request.host,
+          remoteAddress: request.ip,
+          remotePort: request.socket.remotePort,
+        };
+      },
     },
     formatters: {
       level(label) {

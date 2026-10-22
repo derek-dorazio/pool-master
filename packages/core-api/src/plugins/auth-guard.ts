@@ -72,6 +72,9 @@ const PUBLIC_ROUTES = new Set([
   // #844 — SES delivery events, posted by Amazon SNS. The SNS signature and this environment's
   // topic are the whole authority; the route refuses anything else with 403.
   'POST /api/v1/email/ses-events',
+  // #844 slice 5 — one-click unsubscribe from an email's link; its token is its whole authority
+  // and can only turn one category of email off for one user.
+  'POST /api/v1/email/unsubscribe',
   // #217 — registering against a squad-owner invitation. Public by necessity: the caller has no
   // account yet, which is the entire reason this route exists alongside
   // `POST /api/v1/team-invitations/accept`, which requires a session. It is not an open

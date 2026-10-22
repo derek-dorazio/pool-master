@@ -11,6 +11,7 @@ import type {
   EmailSuppression,
   EmailSuppressionReason,
   EmailTemplateKey,
+  OptionalEmailCategory,
 } from '../domain';
 
 /** Where one email stands: its status, and why it was skipped when it was. */
@@ -36,6 +37,7 @@ export type EmailMessageRecord =
     subject: string;
     textBody: string;
     htmlBody: string;
+    listUnsubscribeUrl?: string;
     dueAt: Date;
   })
   | (EmailMessageRecordBase & {
@@ -99,4 +101,12 @@ export interface EmailSuppressionRepository {
   suppress(input: { email: string; suppressionReason: EmailSuppressionReason; emailMessageId?: string }): Promise<void>;
   /** The address's suppression, if it has one. */
   findByEmail(email: string): Promise<EmailSuppression | undefined>;
+}
+
+/** The categories of email each user turned off (#844 slice 5); a category not listed is on. */
+export interface EmailOptOutRepository {
+  findByUser(userId: string): Promise<OptionalEmailCategory[]>;
+  isOptedOut(userId: string, category: OptionalEmailCategory): Promise<boolean>;
+  /** Turns the category off (`optedOut` true) or back on; repeating either changes nothing. */
+  setOptedOut(userId: string, category: OptionalEmailCategory, optedOut: boolean): Promise<void>;
 }

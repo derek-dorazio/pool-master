@@ -601,7 +601,9 @@ tokens, refresh tokens, and any other secret-bearing value before it can
 reach a log line. `packages/core-api/src/core/logger.ts`'s `REDACT_PATHS` is
 the enforced list — extend it when a new secret-bearing field enters any
 request/response shape; don't work around it with ad hoc field-stripping at
-the call site.
+the call site. A secret carried in a URL's query string (the email
+unsubscribe `token`) goes in the same file's `REDACTED_QUERY_KEYS`, which
+the request serializer applies to the logged `req.url`.
 
 ### Testing
 

@@ -382,6 +382,7 @@ describe('ContestService entries — confirmation email', () => {
     expect(mail.sent).toHaveLength(0);
 
     await service.sendEntrySubmittedEmail(contest.id, created.id, owner.id, contest.sportEventIds[0] ?? '');
+    await deliverQueuedEmail();
 
     expect(mail.sent).toHaveLength(1);
     expect(mail.sent[0].to).toBe('olive@example.com');
