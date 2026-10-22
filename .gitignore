@@ -27,6 +27,8 @@ packages/*/src/**/*.d.ts.map
 
 # Testing
 coverage/
+# Written by npm run email:preview (#844)
+tmp/email-preview/
 clients/poolmaster/e2e/.auth/
 clients/poolmaster/test-results/
 clients/poolmaster/playwright-report/

@@ -47,6 +47,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
+import { emailServiceOver } from '../../support/email-service';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -1391,7 +1392,7 @@ describe('ContestService', () => {
           ]),
         }),
         tiers,
-        mailDelivery: mailDelivery,
+        email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
@@ -1432,7 +1433,7 @@ describe('ContestService', () => {
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
-        providerName: 'ses' as const,
+        providerName: 'smtp' as const,
         send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
       };
       const service = buildService({
@@ -1454,7 +1455,7 @@ describe('ContestService', () => {
             buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
           ]),
         }),
-        mailDelivery: mailDelivery,
+        email: emailServiceOver(mailDelivery),
       });
 
       await expect(service.sendEntrySubmittedEmail('contest-1', 'entry-1', 'user-1', 'event-1')).resolves.toBeUndefined();
@@ -1475,7 +1476,7 @@ describe('ContestService', () => {
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
-        providerName: 'ses' as const,
+        providerName: 'smtp' as const,
         send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'ses', messageId: 'mail-1' })),
       };
       const service = buildService({
@@ -1497,7 +1498,7 @@ describe('ContestService', () => {
             buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
           ]),
         }),
-        mailDelivery: mailDelivery,
+        email: emailServiceOver(mailDelivery),
       });
 
       await service.updateEntry('contest-1', 'entry-1', 'user-1', { tiebreakerValue: -12 });

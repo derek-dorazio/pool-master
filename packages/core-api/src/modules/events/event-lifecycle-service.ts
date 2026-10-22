@@ -38,9 +38,8 @@ import {
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
 import {
-  renderSystemEmailTemplate,
   type ContestStartedEntrySummary,
-  type MailDeliveryProvider,
+  type EmailService,
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -126,7 +125,7 @@ export class EventLifecycleService {
     private readonly contestDeps: EventLifecycleContestDeps,
     private readonly sportEvents: SportEventRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly mailDelivery?: MailDeliveryProvider,
+    private readonly email?: EmailService,
     private readonly appBaseUrl = 'http://localhost:5173',
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
@@ -301,11 +300,11 @@ export class EventLifecycleService {
     contest: Contest,
     sportEvent: SportEvent,
   ): Promise<void> {
-    if (!this.mailDelivery) {
+    if (!this.email) {
       this.logger?.debug({
         contestId: contest.id,
         leagueId: contest.leagueId,
-      }, 'Skipped contest started summary email because mail delivery is unavailable');
+      }, 'Skipped contest started summary email because the email service is unavailable');
       return;
     }
 
@@ -328,42 +327,37 @@ export class EventLifecycleService {
       contest.id,
     );
 
+    const templateKey = 'CONTEST_STARTED_SUMMARY';
+    const league = { id: summary.league.id, name: summary.league.name, leagueCode: summary.league.leagueCode };
     for (const user of summary.recipients) {
-      const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
-        userName: formatUserName(user),
-        leagueName: summary.league.name,
-        contestName: contest.name,
-        eventName: sportEvent.name,
-        contestUrl,
-        startedAt: sportEvent.startDate,
-        entryCount: entries.length,
-        entries,
-      });
-
       try {
-        await this.mailDelivery.send({
-          to: user.email,
-          subject: message.subject,
-          text: message.text,
-          html: message.html,
-          metadata: {
-            templateKey: message.templateKey,
-            leagueId: contest.leagueId,
-            contestId: contest.id,
+        await this.email.send(templateKey, {
+          to: { email: user.email, timeZone: user.timezone },
+          league,
+          refs: { contestId: contest.id },
+          data: {
+            userName: formatUserName(user),
+            leagueName: summary.league.name,
+            contestName: contest.name,
+            eventName: sportEvent.name,
+            contestUrl,
+            startedAt: sportEvent.startDate,
+            entryCount: entries.length,
+            entries,
           },
         });
         this.logger?.info({
           contestId: contest.id,
           leagueId: contest.leagueId,
           userId: user.id,
-          templateKey: message.templateKey,
+          templateKey,
         }, 'Delivered contest started summary email');
       } catch (err) {
         this.logger?.error({
           contestId: contest.id,
           leagueId: contest.leagueId,
           userId: user.id,
-          templateKey: message.templateKey,
+          templateKey,
           error: err instanceof Error ? err.message : String(err),
         }, 'Failed to deliver contest started summary email');
       }

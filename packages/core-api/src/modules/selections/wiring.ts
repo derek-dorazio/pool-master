@@ -23,7 +23,7 @@ import {
 } from '../../adapters';
 import { ContestEntryPickService } from '../contest-entry-picks';
 import { createContestService } from '../contests/wiring';
-import type { MailDeliveryProvider } from '../email';
+import type { EmailService } from '../email';
 import { createSportEventTierService } from '../events/wiring';
 import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
@@ -32,7 +32,7 @@ import { SquaresService } from './squares-service';
 export function createSelectionService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
-  options?: { mailDelivery?: MailDeliveryProvider; appBaseUrl?: string },
+  options?: { email?: EmailService; appBaseUrl?: string },
 ): SelectionService {
   return new SelectionService({
     contests: new PrismaContestRepository(prisma),

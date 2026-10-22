@@ -1,13 +1,10 @@
-import { type SendEmailCommand } from '@aws-sdk/client-ses';
-import { EmailConfigSchema, type EmailConfig } from '@poolmaster/shared/dto';
+import { type SendEmailCommand } from '@aws-sdk/client-sesv2';
+import { EmailConfigSchema } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
   MailDeliveryConfigError,
   SesMailDeliveryProvider,
-  SettingsAwareMailDeliveryProvider,
-  type MailDeliveryMessage,
-  type MailDeliveryProvider,
-  type MailDeliveryProviderName,
+  formatMailAddress,
   readApplicationBaseUrl,
   readMailDeliveryConfig,
 } from '../../../packages/core-api/src/modules/email';
@@ -77,7 +74,7 @@ describe('pool-master-7ij mail delivery provider configuration', () => {
 });
 
 describe('pool-master-7ij SES mail delivery provider', () => {
-  it('submits rendered subject, text, and HTML to SES without logging message content', async () => {
+  it('submits one email to SES v2 from the given sender, through the configuration set, without logging message content', async () => {
     const sentCommands: SendEmailCommand[] = [];
     const client = {
       send: jest.fn(async (command: SendEmailCommand) => {
@@ -100,11 +97,11 @@ describe('pool-master-7ij SES mail delivery provider', () => {
     );
 
     const result = await provider.send({
+      from: { name: 'Office League', address: 'officeleague@qa.example.com' },
       to: 'member@example.com',
       subject: 'League invitation',
       text: 'Plain text body',
       html: '<p>HTML body</p>',
-      replyTo: 'reply@example.com',
       metadata: {
         templateKey: 'LEAGUE_MEMBER_INVITE',
         leagueId: 'league-1',
@@ -115,15 +112,16 @@ describe('pool-master-7ij SES mail delivery provider', () => {
     expect(result).toEqual({ provider: 'ses', messageId: 'ses-message-1' });
     expect(sentCommands).toHaveLength(1);
     expect(sentCommands[0].input).toEqual({
-      Source: 'noreply@example.com',
+      FromEmailAddress: '"Office League" <officeleague@qa.example.com>',
       Destination: { ToAddresses: ['member@example.com'] },
-      ReplyToAddresses: ['reply@example.com'],
       ConfigurationSetName: 'poolmaster-qa',
-      Message: {
-        Subject: { Data: 'League invitation', Charset: 'UTF-8' },
-        Body: {
-          Text: { Data: 'Plain text body', Charset: 'UTF-8' },
-          Html: { Data: '<p>HTML body</p>', Charset: 'UTF-8' },
+      Content: {
+        Simple: {
+          Subject: { Data: 'League invitation', Charset: 'UTF-8' },
+          Body: {
+            Text: { Data: 'Plain text body', Charset: 'UTF-8' },
+            Html: { Data: '<p>HTML body</p>', Charset: 'UTF-8' },
+          },
         },
       },
     });
@@ -132,45 +130,30 @@ describe('pool-master-7ij SES mail delivery provider', () => {
   });
 });
 
-const INVITE: MailDeliveryMessage = {
-  to: ['member@example.com', 'second@example.com'],
-  subject: 'League invitation',
-  text: 'Plain text body',
-  html: '<p>HTML body</p>',
-  metadata: {
-    templateKey: 'LEAGUE_MEMBER_INVITE',
-    leagueId: 'league-1',
-    invitationId: 'invite-1',
-  },
-};
+describe('the From header', () => {
+  it('quotes a plain display name, escaping its quotes and backslashes', () => {
+    expect(formatMailAddress({ name: 'The "A" Team \\ Co', address: 'ateam@qa.example.com' }))
+      .toBe('"The \\"A\\" Team \\\\ Co" <ateam@qa.example.com>');
+  });
 
-function recordingTransport(
-  providerName: MailDeliveryProviderName = 'smtp',
-): MailDeliveryProvider & { sent: MailDeliveryMessage[] } {
-  const sent: MailDeliveryMessage[] = [];
-  return {
-    providerName,
-    sent,
-    send: (message) => {
-      sent.push(message);
-      return Promise.resolve({ provider: providerName, messageId: `message-${sent.length}` });
-    },
-  };
-}
+  it('encodes a display name that is not plain ASCII as UTF-8 words of at most 75 characters each', () => {
+    const name = 'Liga de Fútbol Ñandú de la Oficina Central';
+    const header = formatMailAddress({ name, address: 'liga@qa.example.com' });
+    const words = header.replace(' <liga@qa.example.com>', '').split(' ');
 
-function emailConfig(overrides: Partial<EmailConfig> = {}): EmailConfig {
-  return { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), ...overrides };
-}
+    expect(words.every((word) => /^=\?UTF-8\?B\?[A-Za-z0-9+/=]+\?=$/.test(word) && word.length <= 75)).toBe(true);
+    expect(words.map((word) => Buffer.from(word.slice(10, -2), 'base64').toString('utf8')).join('')).toBe(name);
+  });
+});
 
 describe('EMAIL_CONFIG defaults', () => {
   it('sends nothing on QA until a root admin turns email on', () => {
     expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'qa' }).enabled).toBe(false);
   });
 
-  it('sends every email to everyone, with no Reply-To, everywhere else', () => {
+  it('sends every email to everyone everywhere else', () => {
     expect(EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })).toEqual({
       enabled: true,
-      replyTo: null,
       allowedRecipients: [],
       templates: {
         LEAGUE_MEMBER_INVITE: true,
@@ -183,185 +166,6 @@ describe('EMAIL_CONFIG defaults', () => {
 
   it('refuses to pick a default when POOLMASTER_ENVIRONMENT is unset, instead of guessing email should be on', () => {
     expect(() => EMAIL_SETTINGS.defaults({ ENVIRONMENT: 'qa' })).toThrow(/POOLMASTER_ENVIRONMENT/);
-  });
-});
-
-describe('settings-aware mail delivery', () => {
-  it('with email switched off, reports success without sending and logs the skip with ids but no content or address', async () => {
-    const transport = recordingTransport();
-    const logger = fakeLogger();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig({ enabled: false }), logger);
-
-    const result = await provider.send(INVITE);
-
-    expect(result).toEqual({ provider: 'smtp', skipped: 'EMAIL_DISABLED' });
-    expect(transport.sent).toHaveLength(0);
-    expect(logger.info).toHaveBeenCalledWith(
-      {
-        action: 'mailDelivery.skip',
-        data: {
-          reason: 'EMAIL_DISABLED',
-          toCount: 2,
-          templateKey: 'LEAGUE_MEMBER_INVITE',
-          leagueId: 'league-1',
-          contestId: null,
-          entryId: null,
-          invitationId: 'invite-1',
-        },
-      },
-      expect.any(String),
-    );
-    const logged = JSON.stringify(logger.info.mock.calls);
-    expect(logged).not.toContain('Plain text body');
-    expect(logged).not.toContain('member@example.com');
-  });
-
-  it('skips only the template switched off and still sends the others', async () => {
-    const transport = recordingTransport();
-    const config = emailConfig();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => ({
-      ...config,
-      templates: { ...config.templates, LEAGUE_MEMBER_INVITE: false },
-    }));
-
-    const skipped = await provider.send(INVITE);
-    await provider.send({ ...INVITE, metadata: { templateKey: 'LEAGUE_JOIN_SUCCESS' } });
-
-    expect(skipped.skipped).toBe('TEMPLATE_DISABLED');
-    expect(transport.sent.map((message) => message.metadata?.templateKey)).toEqual(['LEAGUE_JOIN_SUCCESS']);
-  });
-
-  it('reads the setting on every send, so a change applies to the next email without a restart', async () => {
-    const transport = recordingTransport();
-    let config = emailConfig({ enabled: false });
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => config);
-
-    await provider.send(INVITE);
-    config = emailConfig({ enabled: true });
-    await provider.send(INVITE);
-
-    expect(transport.sent).toHaveLength(1);
-  });
-
-  it('adds the configured Reply-To, unless the message names its own', async () => {
-    const transport = recordingTransport();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig({ replyTo: 'support@example.com' }));
-
-    await provider.send(INVITE);
-    await provider.send({ ...INVITE, replyTo: 'commissioner@example.com' });
-
-    expect(transport.sent.map((message) => message.replyTo)).toEqual(['support@example.com', 'commissioner@example.com']);
-  });
-
-  it('sends with no Reply-To when none is configured', async () => {
-    const transport = recordingTransport();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig());
-
-    await provider.send(INVITE);
-
-    expect(transport.sent[0].replyTo).toBeUndefined();
-  });
-});
-
-describe('who settings-aware mail delivery may email', () => {
-  it('through SES, skips an email to a reserved domain such as the e2e smoke users\' @e2e.invalid, and logs no address', async () => {
-    const transport = recordingTransport('ses');
-    const logger = fakeLogger();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig(), logger);
-
-    const results = await Promise.all(
-      ['smoke@e2e.invalid', 'a@b.test', 'c@d.example', 'e@localhost', 'f@example.com', 'g@mail.example.org']
-        .map((to) => provider.send({ ...INVITE, to })),
-    );
-
-    expect(results.map((result) => result.skipped)).toEqual(Array(6).fill('NOT_ALLOWED_IN_ENVIRONMENT'));
-    expect(transport.sent).toHaveLength(0);
-    expect(logger.info).toHaveBeenCalledWith(
-      { action: 'mailDelivery.skip', data: { reason: 'NOT_ALLOWED_IN_ENVIRONMENT', toCount: 1, templateKey: 'LEAGUE_MEMBER_INVITE', leagueId: 'league-1', contestId: null, entryId: null, invitationId: 'invite-1' } },
-      expect.any(String),
-    );
-    expect(JSON.stringify(logger.info.mock.calls)).not.toContain('e2e.invalid');
-  });
-
-  it('through SES, still sends to a domain that only looks like a reserved one', async () => {
-    const transport = recordingTransport('ses');
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig());
-
-    const result = await provider.send({ ...INVITE, to: 'member@notexample.com' });
-
-    expect(result.skipped).toBeUndefined();
-    expect(transport.sent.map((message) => message.to)).toEqual(['member@notexample.com']);
-  });
-
-  it('through SMTP, sends to reserved domains, since Mailpit and the test sink catch every address', async () => {
-    const transport = recordingTransport('smtp');
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig());
-
-    await provider.send({ ...INVITE, to: 'member@example.test' });
-
-    expect(transport.sent).toHaveLength(1);
-  });
-
-  it('with an allow list, sends only to listed addresses and @domains, ignoring case, and skips everyone else', async () => {
-    const transport = recordingTransport('ses');
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig({
-      allowedRecipients: ['derek+alice@gmail.com', '@simulator.amazonses.com'],
-    }));
-
-    const results = await Promise.all([
-      'Derek+Alice@Gmail.com',
-      'bounce@simulator.amazonses.com',
-      'derek+bob@gmail.com',
-      'someone@sub.simulator.amazonses.com',
-      'stranger@gmail.com',
-    ].map((to) => provider.send({ ...INVITE, to })));
-
-    expect(results.map((result) => result.skipped ?? 'SENT')).toEqual([
-      'SENT',
-      'SENT',
-      'NOT_ALLOWED_IN_ENVIRONMENT',
-      'NOT_ALLOWED_IN_ENVIRONMENT',
-      'NOT_ALLOWED_IN_ENVIRONMENT',
-    ]);
-    expect(transport.sent.map((message) => message.to)).toEqual(['Derek+Alice@Gmail.com', 'bounce@simulator.amazonses.com']);
-  });
-
-  it('with an allow list, also limits SMTP delivery', async () => {
-    const transport = recordingTransport('smtp');
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig({ allowedRecipients: ['@poolmaster.local'] }));
-
-    const result = await provider.send({ ...INVITE, to: 'member@example.test' });
-
-    expect(result.skipped).toBe('NOT_ALLOWED_IN_ENVIRONMENT');
-    expect(transport.sent).toHaveLength(0);
-  });
-
-  it('drops only the recipients that are not allowed from an email to several, and logs how many without addresses', async () => {
-    const transport = recordingTransport('ses');
-    const logger = fakeLogger();
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig(), logger);
-
-    const result = await provider.send({ ...INVITE, to: ['member@gmail.com', 'smoke@e2e.invalid'] });
-
-    expect(result.skipped).toBeUndefined();
-    expect(transport.sent.map((message) => message.to)).toEqual([['member@gmail.com']]);
-    expect(logger.info).toHaveBeenCalledWith(
-      {
-        action: 'mailDelivery.skipRecipients',
-        data: { reason: 'NOT_ALLOWED_IN_ENVIRONMENT', toCount: 2, skippedCount: 1, templateKey: 'LEAGUE_MEMBER_INVITE', leagueId: 'league-1', contestId: null, entryId: null, invitationId: 'invite-1' },
-      },
-      expect.any(String),
-    );
-    expect(JSON.stringify(logger.info.mock.calls)).not.toContain('gmail.com');
-  });
-
-  it('reports a switched-off email as switched off, not as a recipient problem', async () => {
-    const transport = recordingTransport('ses');
-    const provider = new SettingsAwareMailDeliveryProvider(transport, () => emailConfig({ enabled: false }));
-
-    const result = await provider.send({ ...INVITE, to: 'smoke@e2e.invalid' });
-
-    expect(result.skipped).toBe('EMAIL_DISABLED');
   });
 });
 

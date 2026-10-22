@@ -21,9 +21,10 @@ import {
 } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import { LeagueNotFoundError } from './service';
 import {
-  renderSystemEmailTemplate,
-  type MailDeliveryProvider,
+  type EmailLeague,
+  type EmailService,
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -85,7 +86,7 @@ export interface InvitationServiceDeps {
   users: UserRepository;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
-  mailDelivery?: MailDeliveryProvider;
+  email?: EmailService;
   appBaseUrl?: string;
 }
 
@@ -113,9 +114,9 @@ export class InvitationService {
       this.resolveInviterName(input.invitedBy),
       this.findActiveMemberEmails(input.leagueId),
     ]);
-    if (league) {
-      this.requireActiveLeague(league, 'sendEmail');
-    }
+    // The commissioner guard has found the league already; its name and code are the email's sender.
+    if (!league) throw new LeagueNotFoundError(input.leagueId);
+    this.requireActiveLeague(league, 'sendEmail');
     const sent: LeagueInvitation[] = [];
     const skippedMembers: string[] = [];
     const skippedDuplicates: string[] = [];
@@ -155,8 +156,11 @@ export class InvitationService {
         invitationId: invitation.id,
         email: normalised,
         inviterName,
-        leagueName: league?.name ?? 'your league',
-        leagueCode: league?.leagueCode ?? input.leagueId,
+        league: {
+          id: input.leagueId,
+          name: league.name,
+          leagueCode: league.leagueCode,
+        },
         inviteCode: invitation.inviteCode,
         expiresAt,
         message: input.message,
@@ -180,59 +184,48 @@ export class InvitationService {
     invitationId: string;
     email: string;
     inviterName: string;
-    leagueName: string;
-    leagueCode: string;
+    league: EmailLeague;
     inviteCode: string;
     expiresAt: Date;
     message?: string;
   }): Promise<void> {
-    if (!this.deps.mailDelivery) {
+    if (!this.deps.email) {
       this.logger?.debug({
         action: 'leagueInvitation.emailDelivery.skipped',
         data: { invitationId: input.invitationId },
-      }, 'No mail delivery provider configured for league invitation');
+      }, 'No email service configured for league invitation');
       return;
     }
-    const message = renderSystemEmailTemplate('LEAGUE_MEMBER_INVITE', {
-      recipientEmail: input.email,
-      inviterName: input.inviterName,
-      leagueName: input.leagueName,
-      leagueCode: input.leagueCode,
-      inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
-      message: input.message,
-      expiresAt: input.expiresAt,
-    });
+    const templateKey = 'LEAGUE_MEMBER_INVITE';
     this.logger?.debug({
       action: 'leagueInvitation.emailDelivery.enter',
-      data: {
-        invitationId: input.invitationId,
-        templateKey: message.templateKey,
-      },
+      data: { invitationId: input.invitationId, templateKey },
     }, 'Delivering league invitation email');
     try {
-      await this.deps.mailDelivery.send({
-        to: input.email,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-        metadata: {
-          templateKey: message.templateKey,
-          invitationId: input.invitationId,
+      await this.deps.email.send(templateKey, {
+        to: { email: input.email },
+        league: input.league,
+        refs: { invitationId: input.invitationId },
+        data: {
+          recipientEmail: input.email,
+          inviterName: input.inviterName,
+          leagueName: input.league.name,
+          leagueCode: input.league.leagueCode,
+          inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
+          message: input.message,
+          expiresAt: input.expiresAt,
         },
       });
       this.logger?.info({
         action: 'leagueInvitation.emailDelivery.success',
-        data: {
-          invitationId: input.invitationId,
-          templateKey: message.templateKey,
-        },
+        data: { invitationId: input.invitationId, templateKey },
       }, 'Delivered league invitation email');
     } catch (err) {
       this.logger?.error({
         action: 'leagueInvitation.emailDelivery.failure',
         data: {
           invitationId: input.invitationId,
-          templateKey: message.templateKey,
+          templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'Failed to deliver league invitation email');
@@ -384,9 +377,9 @@ export class InvitationService {
       this.deps.leagues.findById(leagueId),
       this.resolveInviterName(resentBy),
     ]);
-    if (league) {
-      this.requireActiveLeague(league, 'resend');
-    }
+    // The commissioner guard has found the league already; its name and code are the email's sender.
+    if (!league) throw new LeagueNotFoundError(leagueId);
+    this.requireActiveLeague(league, 'resend');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + DEFAULT_INVITE_EXPIRY_DAYS);
     const renewed = await this.deps.invitations.update(invitation.id, {
@@ -398,8 +391,11 @@ export class InvitationService {
       invitationId: renewed.id,
       email: invitation.email,
       inviterName,
-      leagueName: league?.name ?? 'your league',
-      leagueCode: league?.leagueCode ?? leagueId,
+      league: {
+        id: leagueId,
+        name: league.name,
+        leagueCode: league.leagueCode,
+      },
       inviteCode: renewed.inviteCode,
       expiresAt,
     });
@@ -581,7 +577,7 @@ export class InvitationService {
     leagueCode: string;
     userId: string;
   }): Promise<void> {
-    if (!this.deps.mailDelivery || !this.deps.prisma) {
+    if (!this.deps.email || !this.deps.prisma) {
       this.logger?.debug({
         action: 'leagueInvitation.joinSuccessEmail.skipped',
         data: { invitationId: input.invitationId, leagueId: input.leagueId },
@@ -603,23 +599,18 @@ export class InvitationService {
       }, 'Skipped league join success email because recipient user was not found');
       return;
     }
-    const message = renderSystemEmailTemplate('LEAGUE_JOIN_SUCCESS', {
-      userName: recipient.name,
-      leagueName: input.leagueName,
-      leagueCode: input.leagueCode,
-      teamName,
-      leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
-    });
+    const templateKey = 'LEAGUE_JOIN_SUCCESS';
     try {
-      await this.deps.mailDelivery.send({
-        to: recipient.email,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-        metadata: {
-          templateKey: message.templateKey,
-          leagueId: input.leagueId,
-          invitationId: input.invitationId,
+      await this.deps.email.send(templateKey, {
+        to: { email: recipient.email, timeZone: recipient.timeZone },
+        league: { id: input.leagueId, name: input.leagueName, leagueCode: input.leagueCode },
+        refs: { invitationId: input.invitationId },
+        data: {
+          userName: recipient.name,
+          leagueName: input.leagueName,
+          leagueCode: input.leagueCode,
+          teamName,
+          leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
         },
       });
       this.logger?.info({
@@ -627,7 +618,7 @@ export class InvitationService {
         data: {
           invitationId: input.invitationId,
           leagueId: input.leagueId,
-          templateKey: message.templateKey,
+          templateKey,
         },
       }, 'Delivered league join success email');
     } catch (err) {
@@ -636,14 +627,16 @@ export class InvitationService {
         data: {
           invitationId: input.invitationId,
           leagueId: input.leagueId,
-          templateKey: message.templateKey,
+          templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'Failed to deliver league join success email');
     }
   }
 
-  private async resolveRecipientUser(userId: string): Promise<{ email: string; name: string } | null> {
+  private async resolveRecipientUser(
+    userId: string,
+  ): Promise<{ email: string; name: string; timeZone?: string } | null> {
     const user = await this.deps.users.findById(userId);
     if (!user) return null;
     const fullName = [user.firstName, user.lastName]
@@ -653,6 +646,7 @@ export class InvitationService {
     return {
       email: user.email,
       name: fullName || user.username || user.email,
+      timeZone: user.timezone,
     };
   }
 

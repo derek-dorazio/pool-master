@@ -13,7 +13,12 @@ import {
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
-import { EmailSkipReason, renderSystemEmailTemplate } from '../../../packages/core-api/src/modules/email';
+import {
+  EMAIL_SETTINGS,
+  EmailService,
+  renderSystemEmailTemplate,
+} from '../../../packages/core-api/src/modules/email';
+import type { EmailConfig } from '../../../packages/shared/dto';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -35,6 +40,7 @@ const USER: User = {
 
 function buildService(overrides: {
   send?: jest.Mock;
+  emailConfig?: EmailConfig;
   limits?: { requestsPerMinute?: number; confirmsPerMinute?: number };
   now?: () => Date;
 } = {}) {
@@ -58,7 +64,11 @@ function buildService(overrides: {
   const service = new PasswordResetService({
     users: fakeUserRepo({ findByIdentifier: jest.fn().mockResolvedValue(USER) }),
     prisma: asPrismaClient(prisma),
-    mailDelivery: { providerName: 'smtp', send },
+    email: new EmailService({
+      transport: { providerName: 'smtp', send },
+      readConfig: () => overrides.emailConfig ?? EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+      senderAddress: 'noreply@poolmaster.test',
+    }),
     appBaseUrl: 'https://app.example.test',
     logger,
     now: overrides.now,
@@ -128,7 +138,7 @@ describe('PasswordResetService.requestReset', () => {
 
   it('logs the email as skipped, not sent, when email is switched off in settings', async () => {
     const { service, logger } = buildService({
-      send: jest.fn().mockResolvedValue({ provider: 'smtp', skipped: EmailSkipReason.EMAIL_DISABLED }),
+      emailConfig: { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), enabled: false },
     });
 
     await service.requestReset('riley@example.com');
@@ -242,7 +252,7 @@ describe('PASSWORD_RESET email', () => {
       username: 'riley',
       resetUrl: 'https://app.example.test/reset-password#token=abc',
       expiresInMinutes: 10,
-    });
+    }, { timeZone: 'UTC' });
 
     expect(message.templateKey).toBe('PASSWORD_RESET');
     expect(message.subject).toBe('Reset your Prime Time Commissioner password');
@@ -260,7 +270,7 @@ describe('PASSWORD_RESET email', () => {
       username: 'riley',
       resetUrl: 'https://app.example.test/reset-password#token=abc',
       expiresInMinutes: 10,
-    });
+    }, { timeZone: 'UTC' });
 
     expect(message.html).toContain('Hi &lt;b&gt;Riley&lt;/b&gt;,');
     expect(message.html).not.toContain('<b>Riley</b>');

@@ -32,6 +32,7 @@ import {
 import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { asPrismaClient } from '../../support/prisma-double';
+import { emailServiceOver } from '../../support/email-service';
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
@@ -180,7 +181,7 @@ describe('InvitationService', () => {
           })),
         }),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        mailDelivery,
+        email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com/',
         users: createProvisioningUsers(),
       });
@@ -197,10 +198,12 @@ describe('InvitationService', () => {
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
         to: 'alice@example.com',
         subject: 'User One invited you to Mathworks',
-        metadata: {
+        from: { name: 'Mathworks', address: 'mathworks@poolmaster.test' },
+        metadata: expect.objectContaining({
           templateKey: 'LEAGUE_MEMBER_INVITE',
+          leagueId: 'league-1',
           invitationId: 'new-invite-id',
-        },
+        }) as unknown,
       }));
       const sentMessage = mailDelivery.send.mock.calls[0][0];
       expect(sentMessage.text).toContain('Join league: https://app.primetimecommissioner.com/invite/');
@@ -212,7 +215,7 @@ describe('InvitationService', () => {
     it('pool-master-7ij fails the send when provider submission fails', async () => {
       const invitationRepo = createMockInvitationRepo();
       const mailDelivery = {
-        providerName: 'ses' as const,
+        providerName: 'smtp' as const,
         send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
       };
       const service = new InvitationService({
@@ -220,7 +223,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        mailDelivery,
+        email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
       });
@@ -232,6 +235,23 @@ describe('InvitationService', () => {
       })).rejects.toBeInstanceOf(InvitationEmailDeliveryError);
       expect(invitationRepo.create).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
+    });
+
+    it('refuses to invite into a league that does not exist, creating nothing, since its name and code are the email\'s sender', async () => {
+      const invitationRepo = createMockInvitationRepo();
+      const service = new InvitationService({
+        invitations: invitationRepo,
+        memberships: createMockMembershipRepo(),
+        leagues: createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }),
+        users: fakeUserRepo(),
+      });
+
+      await expect(service.sendEmailInvitations({
+        leagueId: 'missing-league',
+        emails: ['alice@example.com'],
+        invitedBy: 'owner-1',
+      })).rejects.toMatchObject({ code: 'LEAGUE_NOT_FOUND', statusCode: 404 });
+      expect(invitationRepo.create).not.toHaveBeenCalled();
     });
 
     it('skips emails with existing pending invitations', async () => {
@@ -357,7 +377,7 @@ describe('InvitationService', () => {
           })),
         }),
         users: createProvisioningUsers(),
-        mailDelivery,
+        email: mailDelivery ? emailServiceOver(mailDelivery) : undefined,
         appBaseUrl: 'https://app.example.com',
       });
       return { invitationRepo, service };
@@ -572,7 +592,7 @@ describe('InvitationService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        mailDelivery,
+        email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
       });
@@ -619,7 +639,7 @@ describe('InvitationService', () => {
         memberships: membershipRepo,
         leagues: createMockLeagueRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        mailDelivery,
+        email: emailServiceOver(mailDelivery),
         users: createProvisioningUsers(),
       });
 
@@ -639,7 +659,7 @@ describe('InvitationService', () => {
       });
       const membershipRepo = createMockMembershipRepo();
       const mailDelivery = {
-        providerName: 'ses' as const,
+        providerName: 'smtp' as const,
         send: jest.fn().mockRejectedValue(new Error('SES rejected request')),
       };
       const service = new InvitationService({
@@ -649,7 +669,7 @@ describe('InvitationService', () => {
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
-        mailDelivery,
+        email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
       });

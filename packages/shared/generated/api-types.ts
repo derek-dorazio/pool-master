@@ -11347,11 +11347,6 @@ export interface components {
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
             enabled: boolean;
-            /**
-             * Format: email
-             * @description Reply-To address for system email, or null to let replies go to the sender.
-             */
-            replyTo: string | null;
             /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
             allowedRecipients: string[];
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -11786,11 +11781,6 @@ export interface components {
             value: {
                 /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                 enabled: boolean;
-                /**
-                 * Format: email
-                 * @description Reply-To address for system email, or null to let replies go to the sender.
-                 */
-                replyTo: string | null;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -11809,11 +11799,6 @@ export interface components {
             defaults: {
                 /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                 enabled: boolean;
-                /**
-                 * Format: email
-                 * @description Reply-To address for system email, or null to let replies go to the sender.
-                 */
-                replyTo: string | null;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12137,11 +12122,6 @@ export interface components {
                 value: {
                     /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                     enabled: boolean;
-                    /**
-                     * Format: email
-                     * @description Reply-To address for system email, or null to let replies go to the sender.
-                     */
-                    replyTo: string | null;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12160,11 +12140,6 @@ export interface components {
                 defaults: {
                     /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                     enabled: boolean;
-                    /**
-                     * Format: email
-                     * @description Reply-To address for system email, or null to let replies go to the sender.
-                     */
-                    replyTo: string | null;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12337,11 +12312,6 @@ export interface components {
             value: {
                 /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                 enabled: boolean;
-                /**
-                 * Format: email
-                 * @description Reply-To address for system email, or null to let replies go to the sender.
-                 */
-                replyTo: string | null;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12617,11 +12587,6 @@ export interface components {
             previousValue: {
                 /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                 enabled: boolean;
-                /**
-                 * Format: email
-                 * @description Reply-To address for system email, or null to let replies go to the sender.
-                 */
-                replyTo: string | null;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12640,11 +12605,6 @@ export interface components {
             newValue: {
                 /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                 enabled: boolean;
-                /**
-                 * Format: email
-                 * @description Reply-To address for system email, or null to let replies go to the sender.
-                 */
-                replyTo: string | null;
                 /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                 allowedRecipients: string[];
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12947,11 +12907,6 @@ export interface components {
                 previousValue: {
                     /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                     enabled: boolean;
-                    /**
-                     * Format: email
-                     * @description Reply-To address for system email, or null to let replies go to the sender.
-                     */
-                    replyTo: string | null;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
@@ -12970,11 +12925,6 @@ export interface components {
                 newValue: {
                     /** @description Whether any system email is sent. Off: every email is skipped and logged. */
                     enabled: boolean;
-                    /**
-                     * Format: email
-                     * @description Reply-To address for system email, or null to let replies go to the sender.
-                     */
-                    replyTo: string | null;
                     /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
                     allowedRecipients: string[];
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */

@@ -48,7 +48,7 @@ import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/se
 import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
 import {
   EMAIL_SETTINGS,
-  SettingsAwareMailDeliveryProvider,
+  EmailService,
   createMailDeliveryProvider,
   readMailDeliveryConfig,
 } from '../../packages/core-api/src/modules/email';
@@ -146,10 +146,12 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   await settings.load();
   appSettings = settings;
-  const mailDelivery = new SettingsAwareMailDeliveryProvider(
-    createMailDeliveryProvider(readMailDeliveryConfig(process.env)),
-    () => settings.get(EMAIL_SETTINGS),
-  );
+  const mailConfig = readMailDeliveryConfig(process.env);
+  const email = new EmailService({
+    transport: createMailDeliveryProvider(mailConfig),
+    readConfig: () => settings.get(EMAIL_SETTINGS),
+    senderAddress: mailConfig.fromEmail,
+  });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({
     settings,
@@ -165,23 +167,23 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
 
   // Route modules
-  testApp.register(authModule, { prefix: '/api/v1/auth', mailDelivery });
-  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', mailDelivery });
+  testApp.register(authModule, { prefix: '/api/v1/auth', email });
+  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
-  testApp.register(invitationsModule, { prefix: '/api/v1/invitations', mailDelivery });
+  testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
-  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', mailDelivery });
+  testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
   });
-  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', mailDelivery });
+  testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users' });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry });
   testApp.register(sportsModule, { prefix: '/api/v1/sports' });
   testApp.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   testApp.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
-  testApp.register(selectionsModule, { prefix: '/api/v1/selections', mailDelivery });
+  testApp.register(selectionsModule, { prefix: '/api/v1/selections', email });
   testApp.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   testApp.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry });
 

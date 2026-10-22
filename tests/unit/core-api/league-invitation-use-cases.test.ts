@@ -21,6 +21,7 @@ import type {
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
+import { emailServiceOver } from '../../support/email-service';
 
 /**
  * League invitation use cases — invite by email, invite link, revoke, preview, accept — against
@@ -70,7 +71,7 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
     squads: world.squads,
     squadMemberships: world.squadMemberships,
     users: world.users,
-    ...(options.mail ? { mailDelivery: options.mail } : {}),
+    ...(options.mail ? { email: emailServiceOver(options.mail) } : {}),
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
   });

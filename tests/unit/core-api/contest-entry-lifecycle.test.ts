@@ -19,6 +19,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
+import { emailServiceOver } from '../../support/email-service';
 
 function setup(options: { mailDelivery?: MailDeliveryProvider } = {}) {
   const world = new InMemoryContestWorld();
@@ -35,7 +36,7 @@ function setup(options: { mailDelivery?: MailDeliveryProvider } = {}) {
   world.addSquadMember(rivalSquad.id, rival.id);
   const contest = world.addContest(league.id, { status: ContestStatus.OPEN });
   world.addConfiguration(contest.id);
-  const service = new ContestService(world.contestServiceDeps({ mailDelivery: options.mailDelivery }));
+  const service = new ContestService(world.contestServiceDeps({ email: options.mailDelivery ? emailServiceOver(options.mailDelivery) : undefined }));
   return { world, league, commissioner, owner, squad, rival, rivalSquad, contest, service };
 }
 
@@ -44,7 +45,7 @@ function capturingMail(): MailDeliveryProvider & { sent: Array<{ to: string; sub
   return {
     sent,
     send: async (message) => {
-      sent.push({ to: String(message.to), subject: message.subject, text: message.text });
+      sent.push({ to: message.to, subject: message.subject, text: message.text });
       return { messageId: `message-${sent.length}` };
     },
   } as MailDeliveryProvider & { sent: typeof sent };

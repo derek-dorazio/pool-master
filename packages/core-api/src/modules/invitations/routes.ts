@@ -36,7 +36,7 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
   const invitationRepo = new PrismaLeagueInvitationRepository(prisma);
   const squadRepo = new PrismaSquadRepository(prisma);
   const squadMembershipRepo = new PrismaSquadMembershipRepository(prisma);
-  const mailDelivery = opts.mailDelivery;
+  const email = opts.email;
   const appBaseUrl = readApplicationBaseUrl(process.env);
 
   const invitationService = new InvitationService({
@@ -48,7 +48,7 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
     users: userRepo,
     prisma,
     logger: fastify.log,
-    mailDelivery,
+    email,
     appBaseUrl,
   });
   const handlers = createInvitationHandlers(invitationService, userRepo);

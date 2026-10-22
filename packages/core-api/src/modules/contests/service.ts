@@ -98,9 +98,8 @@ import {
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
-  renderSystemEmailTemplate,
   type ContestEntryCompletedTierSelection,
-  type MailDeliveryProvider,
+  type EmailService,
 } from '../email';
 /** Who is reading contests, for what they may see: DRAFT contests are commissioner-only (#117). */
 export interface ContestViewer {
@@ -191,7 +190,7 @@ export interface ContestServiceDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
   tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
   logger?: LifecycleLogger;
-  mailDelivery?: MailDeliveryProvider;
+  email?: EmailService;
   appBaseUrl?: string;
   now?: () => Date;
 }
@@ -1078,7 +1077,7 @@ export class ContestService {
     userId: string,
     sportEventId: string,
   ): Promise<void> {
-    if (!this.deps.mailDelivery) {
+    if (!this.deps.email) {
       this.logger.debug({
         action: 'contestEntry.emailDelivery.skipped',
         data: { contestId, entryId },
@@ -1106,47 +1105,32 @@ export class ContestService {
       return;
     }
 
-    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
-      userName: formatUserName(user),
-      leagueName: entry.contest.league.name,
-      contestName: entry.contest.name,
-      teamName: entry.squad.name,
-      entryName: entry.name,
-      entryUrl: buildEntryUrl(
-        this.appBaseUrl,
-        entry.contest.league.leagueCode,
-        contestId,
-        entryId,
-      ),
-      submittedAt: entry.updatedAt,
-      // The tiebreaker is a predicted winning score relative to par. Submit does not require
-      // one, so a lineup submitted without it says so.
-      tiebreaker: entry.tiebreakerValue === null
-        ? 'None'
-        : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
-      tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
-    });
-
+    const templateKey = 'CONTEST_ENTRY_COMPLETED';
+    const league = entry.contest.league;
     try {
-      await this.deps.mailDelivery.send({
-        to: user.email,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-        metadata: {
-          templateKey: message.templateKey,
-          leagueId: entry.contest.leagueId,
-          contestId,
-          entryId,
+      await this.deps.email.send(templateKey, {
+        to: { email: user.email, timeZone: user.timezone },
+        league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode },
+        refs: { contestId, entryId },
+        data: {
+          userName: formatUserName(user),
+          leagueName: league.name,
+          contestName: entry.contest.name,
+          teamName: entry.squad.name,
+          entryName: entry.name,
+          entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
+          submittedAt: entry.updatedAt,
+          // The tiebreaker is a predicted winning score relative to par. Submit does not require
+          // one, so a lineup submitted without it says so.
+          tiebreaker: entry.tiebreakerValue === null
+            ? 'None'
+            : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
+          tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
         },
       });
       this.logger.info({
         action: 'contestEntry.emailDelivery.success',
-        data: {
-          contestId,
-          entryId,
-          templateKey: message.templateKey,
-        },
+        data: { contestId, entryId, templateKey },
       }, 'Delivered contest entry confirmation email');
     } catch (err) {
       this.logger.error({
@@ -1154,7 +1138,7 @@ export class ContestService {
         data: {
           contestId,
           entryId,
-          templateKey: message.templateKey,
+          templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'Failed to deliver contest entry confirmation email');

@@ -83,7 +83,7 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
 
   const prisma = getAppPrisma(fastify);
   const handlers = createSelectionHandlers(createSelectionService(prisma, fastify.log, {
-    mailDelivery: opts.mailDelivery,
+    email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
   }), createPredictionService(prisma, fastify.log));
   // #291 — the selection room shows every entry's picks, so reading it needs membership of the

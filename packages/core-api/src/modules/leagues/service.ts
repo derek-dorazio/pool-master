@@ -19,6 +19,7 @@ import type {
 import { ContestStatus, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
+import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface CreateLeagueInput {
@@ -95,6 +96,13 @@ export class LeagueService {
         hasDescription: Boolean(input.description?.trim()),
       },
     }, 'Creating league');
+    if (RESERVED_LEAGUE_CODES.has(input.leagueCode.toUpperCase())) {
+      this.logger?.warn({
+        action: 'league.create.reservedCode',
+        data: { createdBy: input.createdBy, leagueCode: input.leagueCode },
+      }, 'Rejected a league code that is an email role address');
+      throw new LeagueCodeReservedError(input.leagueCode);
+    }
     const existingLeague = await this.deps.leagues.findByCode(input.leagueCode);
     if (existingLeague) {
       this.logger?.warn({
@@ -539,6 +547,17 @@ export class LeagueCodeConflictError extends Error {
   constructor(leagueCode: string) {
     super(`League code is already in use: ${leagueCode}`);
     this.name = 'LeagueCodeConflictError';
+  }
+}
+
+/** The league's email comes from `<code>@…`, so a code can't be a role address such as ADMIN (#844). */
+export class LeagueCodeReservedError extends Error {
+  code: ApiErrorCode = 'LEAGUE_CODE_RESERVED';
+  statusCode = 400;
+
+  constructor(leagueCode: string) {
+    super(`League code ${leagueCode} is reserved. Choose another code.`);
+    this.name = 'LeagueCodeReservedError';
   }
 }
 

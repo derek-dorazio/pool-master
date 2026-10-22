@@ -23,7 +23,7 @@ import {
   PrismaSquaresRepository,
   PrismaUserRepository,
 } from '../../adapters';
-import type { MailDeliveryProvider } from '../email';
+import type { EmailService } from '../email';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
@@ -48,7 +48,7 @@ function createContestLeaderboardReadDeps(
 export function createContestService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
-  options?: { mailDelivery?: MailDeliveryProvider; appBaseUrl?: string },
+  options?: { email?: EmailService; appBaseUrl?: string },
 ): ContestService {
   return new ContestService({
     ...createContestLeaderboardReadDeps(prisma, logger),
@@ -64,7 +64,7 @@ export function createContestService(
     participants: new PrismaParticipantRepository(prisma),
     tiers: createSportEventTierService(prisma, logger),
     logger,
-    mailDelivery: options?.mailDelivery,
+    email: options?.email,
     appBaseUrl: options?.appBaseUrl,
   });
 }

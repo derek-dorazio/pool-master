@@ -18,11 +18,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
-import {
-  AccountEmailTemplateKey,
-  renderSystemEmailTemplate,
-  type MailDeliveryProvider,
-} from '../email';
+import { AccountEmailTemplateKey, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 
@@ -59,7 +55,7 @@ export class PasswordResetError extends Error {
 export interface PasswordResetServiceDeps {
   users: UserRepository;
   prisma: PrismaClient;
-  mailDelivery: MailDeliveryProvider;
+  email: EmailService;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
   now?: () => Date;
@@ -164,18 +160,14 @@ export class PasswordResetService {
       }, 'Issued password reset link');
 
       // Sent now, not queued: the link is dead in 10 minutes.
-      const message = renderSystemEmailTemplate(AccountEmailTemplateKey.PASSWORD_RESET, {
-        firstName: user.firstName,
-        username: user.username,
-        resetUrl: buildResetUrl(this.deps.appBaseUrl, token),
-        expiresInMinutes: PASSWORD_RESET_LINK_MINUTES,
-      });
-      const delivery = await this.deps.mailDelivery.send({
-        to: user.email,
-        subject: message.subject,
-        text: message.text,
-        html: message.html,
-        metadata: { templateKey: message.templateKey },
+      const delivery = await this.deps.email.send(AccountEmailTemplateKey.PASSWORD_RESET, {
+        to: { email: user.email, timeZone: user.timezone },
+        data: {
+          firstName: user.firstName,
+          username: user.username,
+          resetUrl: buildResetUrl(this.deps.appBaseUrl, token),
+          expiresInMinutes: PASSWORD_RESET_LINK_MINUTES,
+        },
       });
       if (delivery.skipped) {
         logger?.warn({

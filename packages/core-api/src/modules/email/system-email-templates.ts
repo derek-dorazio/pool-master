@@ -1,4 +1,5 @@
-import type { EmailTemplateKey } from '@poolmaster/shared/dto';
+import type { EmailConfig, EmailTemplateKey } from '@poolmaster/shared/dto';
+import { EmailCategory } from './email-categories';
 
 /**
  * Account emails (#847, plans/password-recovery.md Q4.1). EMAIL_CONFIG has no switch for them,
@@ -85,16 +86,50 @@ export interface SystemEmailTemplateDataByKey {
   PASSWORD_RESET: PasswordResetEmailData;
 }
 
+/** What a renderer knows about the person it renders for, beyond the template's own data. */
+export interface EmailRenderContext {
+  /** IANA time zone dates are shown in: the recipient's, or UTC when they have none. */
+  timeZone: string;
+}
+
 type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
   data: SystemEmailTemplateDataByKey[Key],
+  context: EmailRenderContext,
 ) => SystemEmailMessage;
 
-type TemplateRendererMap = {
-  [Key in SystemEmailTemplateKey]: TemplateRenderer<Key>;
+export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
+  /** Decides whether a member can turn the email off, and which unsubscribe link it carries. */
+  category: EmailCategory;
+  /**
+   * Whether EMAIL_CONFIG has a switch for this email, under its key. An email without one (an
+   * account email such as a password reset) follows only the overall switch.
+   */
+  settingsSwitch: boolean;
+  render: TemplateRenderer<Key>;
+}
+
+/**
+ * Whom each email is about. A LEAGUE email comes from that league's address and must be sent
+ * with the league; a PLATFORM email (account and root admin email) comes from the app. A type,
+ * not a registry field: EmailService.send requires `league` exactly for the LEAGUE ones, and a
+ * key missing here doesn't compile.
+ */
+export interface EmailTemplateScopeByKey {
+  LEAGUE_MEMBER_INVITE: 'LEAGUE';
+  LEAGUE_JOIN_SUCCESS: 'LEAGUE';
+  CONTEST_ENTRY_COMPLETED: 'LEAGUE';
+  CONTEST_STARTED_SUMMARY: 'LEAGUE';
+  PASSWORD_RESET: 'PLATFORM';
+}
+
+type EmailTemplateRegistry = {
+  [Key in SystemEmailTemplateKey]: EmailTemplateDefinition<Key>;
 };
 
 const BRAND_NAME = 'Prime Time Commissioner';
 const BRAND_TAGLINE = 'Ultimate Office Pool Manager';
+/** System email has no Reply-To (#844), so a reply bounces; the footer says so. */
+const NOT_MONITORED = 'Replies to this email aren\'t read.';
 
 const EMAIL_THEME = {
   canvas: '#f5f5f2',
@@ -110,26 +145,60 @@ const EMAIL_THEME = {
   subtleBorder: 'rgba(11, 30, 63, 0.10)',
 } as const;
 
+/** Whether EMAIL_CONFIG has a switch for `templateKey`, as the registry says. */
+export function hasSettingsSwitch(templateKey: SystemEmailTemplateKey): templateKey is keyof EmailConfig['templates'] {
+  return EMAIL_TEMPLATES[templateKey].settingsSwitch;
+}
+
+/** The app's sender name, for email that is not about one league. */
+export const PLATFORM_SENDER_NAME = BRAND_NAME;
+
 export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
   templateKey: Key,
   data: SystemEmailTemplateDataByKey[Key],
+  context: EmailRenderContext,
 ): SystemEmailMessage {
-  const renderer = SYSTEM_EMAIL_TEMPLATE_RENDERERS[templateKey] as TemplateRenderer<Key>;
-  return renderer(data);
+  const renderer = EMAIL_TEMPLATES[templateKey].render;
+  return renderer(data, context);
 }
 
-const SYSTEM_EMAIL_TEMPLATE_RENDERERS: TemplateRendererMap = {
-  LEAGUE_MEMBER_INVITE: renderLeagueMemberInviteEmail,
-  LEAGUE_JOIN_SUCCESS: renderLeagueJoinSuccessEmail,
-  CONTEST_ENTRY_COMPLETED: renderContestEntryCompletedEmail,
-  CONTEST_STARTED_SUMMARY: renderContestStartedSummaryEmail,
-  PASSWORD_RESET: renderPasswordResetEmail,
+/**
+ * Every system email: its category and its renderer. Adding a key to
+ * EmailTemplateKey without an entry here is a compile error.
+ */
+export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
+  LEAGUE_MEMBER_INVITE: {
+    category: EmailCategory.MEMBERSHIP,
+    settingsSwitch: true,
+    render: renderLeagueMemberInviteEmail,
+  },
+  LEAGUE_JOIN_SUCCESS: {
+    category: EmailCategory.MEMBERSHIP,
+    settingsSwitch: true,
+    render: renderLeagueJoinSuccessEmail,
+  },
+  CONTEST_ENTRY_COMPLETED: {
+    category: EmailCategory.RECEIPTS,
+    settingsSwitch: true,
+    render: renderContestEntryCompletedEmail,
+  },
+  CONTEST_STARTED_SUMMARY: {
+    category: EmailCategory.LIVE_STANDINGS,
+    settingsSwitch: true,
+    render: renderContestStartedSummaryEmail,
+  },
+  PASSWORD_RESET: {
+    category: EmailCategory.ACCOUNT,
+    settingsSwitch: false,
+    render: renderPasswordResetEmail,
+  },
 };
 
 function renderLeagueMemberInviteEmail(
   data: LeagueMemberInviteEmailData,
+  context: EmailRenderContext,
 ): SystemEmailMessage {
-  const expiresLine = formatDateTime(data.expiresAt);
+  const expiresLine = formatDateTime(data.expiresAt, context.timeZone);
   const subject = `${data.inviterName} invited you to ${data.leagueName}`;
   const bodyBlocks = [
     paragraph(`${escapeHtml(data.inviterName)} invited you to join ${strong(data.leagueName)}.`),
@@ -196,8 +265,9 @@ function renderLeagueJoinSuccessEmail(
 
 function renderContestEntryCompletedEmail(
   data: ContestEntryCompletedEmailData,
+  context: EmailRenderContext,
 ): SystemEmailMessage {
-  const submittedLine = formatDateTime(data.submittedAt);
+  const submittedLine = formatDateTime(data.submittedAt, context.timeZone);
   const subject = `Entry submitted: ${data.contestName}`;
   const tierRows = data.tiers
     .map((tier) => [
@@ -244,9 +314,10 @@ function renderContestEntryCompletedEmail(
 
 function renderContestStartedSummaryEmail(
   data: ContestStartedSummaryEmailData,
+  context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `${data.contestName} has started`;
-  const startedLine = formatDateTime(data.startedAt);
+  const startedLine = formatDateTime(data.startedAt, context.timeZone);
   const entryRows = data.entries.map((entry) => [
     entry.entryName,
     entry.teamName,
@@ -340,6 +411,8 @@ function buildMessage(input: {
       input.title,
       '',
       ...input.textLines,
+      '',
+      NOT_MONITORED,
     ].join('\n'),
     html: documentShell({
       preheader: input.preheader,
@@ -381,7 +454,7 @@ function documentShell(input: {
             </tr>
             <tr>
               <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:rgba(255,255,255,0.70);font-size:12px;line-height:1.5;">
-                Sent by ${BRAND_NAME}. Keep the office pool moving.
+                Sent by ${BRAND_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}
               </td>
             </tr>
           </table>
@@ -426,14 +499,19 @@ function strong(value: string): string {
   return `<strong style="color:${EMAIL_THEME.navy};">${escapeHtml(value)}</strong>`;
 }
 
-function formatDateTime(value?: Date | string): string | null {
+/** A date in the recipient's time zone, with the zone named, e.g. "Oct 22, 2026, 2:30 PM EDT". */
+function formatDateTime(value: Date | string | undefined, timeZone: string): string | null {
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
   return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'UTC',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone,
+    timeZoneName: 'short',
   }).format(date);
 }
 

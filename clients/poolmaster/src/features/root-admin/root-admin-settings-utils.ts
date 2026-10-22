@@ -52,7 +52,6 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
       label: 'Only send to',
       value: config.allowedRecipients.length > 0 ? config.allowedRecipients.join(', ') : 'Everyone',
     },
-    { id: 'replyTo', label: 'Reply-To', value: config.replyTo ?? 'The sender address' },
   ];
 }
 

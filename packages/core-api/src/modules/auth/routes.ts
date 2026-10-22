@@ -33,7 +33,7 @@ export function authModule(fastify: FastifyInstance, opts: MailModuleOptions): v
   const passwordResetService = new PasswordResetService({
     users,
     prisma,
-    mailDelivery: opts.mailDelivery,
+    email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
     logger: fastify.log,
   });

@@ -63,6 +63,19 @@ describe('LeagueService — creating a league', () => {
     expect(world.tables.memberships.where(() => true)).toHaveLength(0);
   });
 
+  it('refuses every email role address as a league code, since league email comes from <code>@, and creates nothing', async () => {
+    const world = inMemoryLeagueWorld();
+    const creator = world.addUser();
+    const service = serviceFor(world);
+
+    for (const leagueCode of ['NOREPLY', 'POSTMASTER', 'ABUSE', 'ADMIN', 'SUPPORT', 'SECURITY', 'BOUNCE', 'HOSTMASTER', 'WEBMASTER']) {
+      await expect(service.createLeague({ createdBy: creator.id, name: 'Role', leagueCode }))
+        .rejects.toMatchObject({ statusCode: 400, code: 'LEAGUE_CODE_RESERVED' });
+    }
+    expect(world.tables.leagues.where(() => true)).toHaveLength(0);
+    expect(world.tables.memberships.where(() => true)).toHaveLength(0);
+  });
+
   it('still creates the commissioner membership when squad repositories are not wired, without a team', async () => {
     const world = inMemoryLeagueWorld();
     const creator = world.addUser();

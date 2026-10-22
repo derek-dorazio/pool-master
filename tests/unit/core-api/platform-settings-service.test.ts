@@ -55,7 +55,7 @@ describe('PlatformSettingsService', () => {
 
     const saved = await service.save('EMAIL_CONFIG', {
       key: 'EMAIL_CONFIG',
-      value: { ...(current.state.value as object), replyTo: 'help@example.test' },
+      value: { ...(current.state.value as object), allowedRecipients: ['help@example.test'] },
       expectedUpdatedAt: null,
     }, ADMIN.id);
 
@@ -86,35 +86,35 @@ describe('PlatformSettingsService', () => {
     const { service } = await buildService();
     const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
     await service.save('EMAIL_CONFIG', {
-      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['help@example.test'] }, expectedUpdatedAt: null,
     }, ADMIN.id);
     await service.reset('EMAIL_CONFIG', '9a1f3c0e-0000-4000-8000-000000000000');
 
     const history = await service.history('EMAIL_CONFIG');
 
-    expect(history.map((view) => [(view.change.newJson as { replyTo: string | null }).replyTo, view.changedBy?.name ?? null]))
-      .toEqual([[null, null], ['help@example.test', 'Ada Admin']]);
+    expect(history.map((view) => [(view.change.newJson as { allowedRecipients: string[] }).allowedRecipients, view.changedBy?.name ?? null]))
+      .toEqual([[[], null], [['help@example.test'], 'Ada Admin']]);
   });
 
   it('publishes each change with its values typed by the group\'s schema, the first save\'s previous value as null', async () => {
     const { service } = await buildService();
     const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
     await service.save('EMAIL_CONFIG', {
-      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['help@example.test'] }, expectedUpdatedAt: null,
     }, ADMIN.id);
 
     const [change] = (await service.history('EMAIL_CONFIG')).map(toSettingsChangeDto);
 
     expect(change.key).toBe('EMAIL_CONFIG');
     expect(change.previousValue).toBeNull();
-    expect(change.newValue).toEqual(expect.objectContaining({ replyTo: 'help@example.test' }));
+    expect(change.newValue).toEqual(expect.objectContaining({ allowedRecipients: ['help@example.test'] }));
   });
 
   it('leaves a change whose stored value no longer validates out of the history and logs it, keeping the valid ones', async () => {
     const { logger, runtimeConfigs, service } = await buildService();
     const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
     await service.save('EMAIL_CONFIG', {
-      key: 'EMAIL_CONFIG', value: { ...defaults, replyTo: 'help@example.test' }, expectedUpdatedAt: null,
+      key: 'EMAIL_CONFIG', value: { ...defaults, allowedRecipients: ['help@example.test'] }, expectedUpdatedAt: null,
     }, ADMIN.id);
     runtimeConfigs.history.push({
       id: 'change-old-release',

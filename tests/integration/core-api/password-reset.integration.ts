@@ -16,6 +16,7 @@ import {
   createTestUser,
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
+import { emailServiceOver } from '../../support/email-service';
 import {
   PASSWORD_RESET_LINK_MINUTES,
   PasswordResetService,
@@ -59,7 +60,7 @@ function buildService(options: { now?: () => Date } = {}) {
   const service = new PasswordResetService({
     users: new PrismaUserRepository(prisma),
     prisma,
-    mailDelivery: mail,
+    email: emailServiceOver(mail),
     appBaseUrl: APP_BASE_URL,
     now: options.now,
   });

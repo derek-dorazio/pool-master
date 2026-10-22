@@ -136,7 +136,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: system emails', () => {
-  it('sends one league invite to the invited address, linking to that invitation, and one welcome linking to the league once they join', async () => {
+  it('sends one league invite to the invited address from the league\'s own address, linking to that invitation, and one welcome linking to the league once they join', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Inviting Commissioner',
       leagueName: `Email Invite League ${randomUUID().slice(0, 6)}`,
@@ -154,6 +154,7 @@ describe('SDK Functional: system emails', () => {
     const invitesSent = await sentMailTo(invitee.email);
     expect(invitesSent).toHaveLength(1);
     expect(invitesSent[0].to).toEqual([invitee.email]);
+    expect(invitesSent[0].from).toBe(`${league.leagueCode.toLowerCase()}@functional.test`);
     expect(invitesSent[0].subject).toBe(`Inviting Commissioner invited you to ${league.name}`);
     expect(linksIn(invitesSent[0])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/invite/${inviteCode}`]);
     // Nobody but the invitee is told about the invitation.

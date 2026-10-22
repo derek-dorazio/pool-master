@@ -68,7 +68,7 @@ describe('settings registry on Postgres', () => {
 
     await task.load();
 
-    expect(task.get(EMAIL_SETTINGS).replyTo).toBeNull();
+    expect(task.get(EMAIL_SETTINGS).allowedRecipients).toEqual([]);
     expect(await getPrisma().platformRuntimeConfig.count()).toBe(0);
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
@@ -82,13 +82,13 @@ describe('settings registry on Postgres', () => {
       method: 'PUT',
       url: '/api/v1/platform/settings/EMAIL_CONFIG',
       headers: rootAdmin.headers,
-      payload: { key: 'EMAIL_CONFIG', value: { ...secondTask.get(EMAIL_SETTINGS), replyTo: 'help@example.test' }, expectedUpdatedAt: null },
+      payload: { key: 'EMAIL_CONFIG', value: { ...secondTask.get(EMAIL_SETTINGS), allowedRecipients: ['help@example.test'] }, expectedUpdatedAt: null },
     });
 
     expect(saved.statusCode).toBe(200);
-    expect(secondTask.get(EMAIL_SETTINGS).replyTo).toBeNull();
+    expect(secondTask.get(EMAIL_SETTINGS).allowedRecipients).toEqual([]);
     await secondTask.refresh();
-    expect(secondTask.get(EMAIL_SETTINGS).replyTo).toBe('help@example.test');
+    expect(secondTask.get(EMAIL_SETTINGS).allowedRecipients).toEqual(['help@example.test']);
   });
 
   it('a sport override saved on one task survives a global schedule update made on a second task before its refresh', async () => {
@@ -114,20 +114,20 @@ describe('settings registry on Postgres', () => {
     await task.load();
     const defaults = task.get(EMAIL_SETTINGS);
 
-    await task.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'first@example.test' }, { changedById: admin.user.id });
-    await task.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'second@example.test' }, { changedById: admin.user.id });
+    await task.save(EMAIL_SETTINGS, { ...defaults, allowedRecipients: ['first@example.test'] }, { changedById: admin.user.id });
+    await task.save(EMAIL_SETTINGS, { ...defaults, allowedRecipients: ['second@example.test'] }, { changedById: admin.user.id });
 
     const history = await getPrisma().platformRuntimeConfigHistory.findMany({
       where: { configKey: EMAIL_SETTINGS.key },
       orderBy: { changedAt: 'asc' },
     });
     expect(history.map((change) => [
-      (change.previousJson as { replyTo?: string } | null)?.replyTo ?? null,
-      (change.newJson as { replyTo: string }).replyTo,
+      (change.previousJson as { allowedRecipients?: string[] } | null)?.allowedRecipients ?? null,
+      (change.newJson as { allowedRecipients: string[] }).allowedRecipients,
       change.changedById,
     ])).toEqual([
-      [null, 'first@example.test', admin.user.id],
-      ['first@example.test', 'second@example.test', admin.user.id],
+      [null, ['first@example.test'], admin.user.id],
+      [['first@example.test'], ['second@example.test'], admin.user.id],
     ]);
   });
 
@@ -140,14 +140,14 @@ describe('settings registry on Postgres', () => {
     const defaults = first.get(EMAIL_SETTINGS);
     const seenBySecond = second.getState(EMAIL_SETTINGS).updatedAt;
 
-    await first.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'first@example.test' }, { changedById: admin.user.id, expectedUpdatedAt: null });
+    await first.save(EMAIL_SETTINGS, { ...defaults, allowedRecipients: ['first@example.test'] }, { changedById: admin.user.id, expectedUpdatedAt: null });
 
-    await expect(second.save(EMAIL_SETTINGS, { ...defaults, replyTo: 'second@example.test' }, {
+    await expect(second.save(EMAIL_SETTINGS, { ...defaults, allowedRecipients: ['second@example.test'] }, {
       changedById: admin.user.id,
       expectedUpdatedAt: seenBySecond,
     })).rejects.toBeInstanceOf(SettingsConflictError);
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: EMAIL_SETTINGS.key } });
-    expect((stored?.configJson as { replyTo: string }).replyTo).toBe('first@example.test');
+    expect((stored?.configJson as { allowedRecipients: string[] }).allowedRecipients).toEqual(['first@example.test']);
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(1);
   });
 
@@ -162,7 +162,7 @@ describe('settings registry on Postgres', () => {
     const insertDone = new Promise<void>((resolve) => { inserted = resolve; });
     const winner = getPrisma().$transaction(async (tx) => {
       await tx.platformRuntimeConfig.create({
-        data: { configKey: EMAIL_SETTINGS.key, configJson: { replyTo: 'first@example.test' }, updatedById: admin.user.id },
+        data: { configKey: EMAIL_SETTINGS.key, configJson: { allowedRecipients: ['first@example.test'] }, updatedById: admin.user.id },
       });
       inserted();
       await held;
@@ -171,7 +171,7 @@ describe('settings registry on Postgres', () => {
 
     const losing = repository.save({
       configKey: EMAIL_SETTINGS.key,
-      configJson: { replyTo: 'second@example.test' },
+      configJson: { allowedRecipients: ['second@example.test'] },
       changedById: admin.user.id,
       expectedUpdatedAt: null,
     });
@@ -183,7 +183,7 @@ describe('settings registry on Postgres', () => {
     const result = await losing;
 
     expect(result.status).toBe('conflict');
-    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ replyTo: 'first@example.test' });
+    expect(result.status === 'conflict' && result.current?.configJson).toEqual({ allowedRecipients: ['first@example.test'] });
     expect(await getPrisma().platformRuntimeConfigHistory.count()).toBe(0);
   });
 
@@ -195,7 +195,7 @@ describe('settings registry on Postgres', () => {
 
     await task.load();
 
-    expect(task.get(EMAIL_SETTINGS).replyTo).toBeNull();
+    expect(task.get(EMAIL_SETTINGS).allowedRecipients).toEqual([]);
     const stored = await getPrisma().platformRuntimeConfig.findUnique({ where: { configKey: EMAIL_SETTINGS.key } });
     expect(stored?.configJson).toEqual({ enabled: 'yes' });
   });
@@ -223,11 +223,11 @@ describe('settings routes (contract verification)', () => {
     const before = (await getApp().inject({
       method: 'GET', url: '/api/v1/platform/settings/EMAIL_CONFIG', headers: rootAdmin.headers,
     })).json<SettingsGroup>();
-    const save = (replyTo: string) => getApp().inject({
+    const save = (recipient: string) => getApp().inject({
       method: 'PUT',
       url: '/api/v1/platform/settings/EMAIL_CONFIG',
       headers: rootAdmin.headers,
-      payload: { key: 'EMAIL_CONFIG', value: { ...before.value, replyTo }, expectedUpdatedAt: before.updatedAt },
+      payload: { key: 'EMAIL_CONFIG', value: { ...before.value, allowedRecipients: [recipient] }, expectedUpdatedAt: before.updatedAt },
     });
 
     const saved = await save('first@example.test');
@@ -241,14 +241,14 @@ describe('settings routes (contract verification)', () => {
     const savedGroup = saved.json<SettingsGroup>();
     expect(savedGroup.source).toBe('stored');
     expect(savedGroup.updatedBy).toEqual({ id: rootAdmin.user.id, name: 'Sam Saver' });
-    expect(savedGroup.value).toEqual({ ...before.value, replyTo: 'first@example.test' });
+    expect(savedGroup.value).toEqual({ ...before.value, allowedRecipients: ['first@example.test'] });
     expect(stale.statusCode).toBe(409);
     expect(ErrorEnvelopeSchema.safeParse(stale.json()).success).toBe(true);
     expect(stale.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_CONFLICT');
     expect(history.statusCode).toBe(200);
     expect(SettingsChangeListSchema.safeParse(history.json()).success).toBe(true);
-    expect(history.json<{ changes: Array<{ newValue: { replyTo: string | null } }> }>().changes.map((change) => change.newValue.replyTo))
-      .toEqual(['first@example.test']);
+    expect(history.json<{ changes: Array<{ newValue: { allowedRecipients: string[] } }> }>().changes.map((change) => change.newValue.allowedRecipients))
+      .toEqual([['first@example.test']]);
   });
 
   it('refuses an invalid value with 400 and an unknown key with 404, storing nothing', async () => {
@@ -262,7 +262,7 @@ describe('settings routes (contract verification)', () => {
         key: 'EMAIL_CONFIG',
         value: {
           enabled: true,
-          replyTo: 'not an address',
+          allowedRecipients: ['not an address'],
           templates: { LEAGUE_MEMBER_INVITE: true, LEAGUE_JOIN_SUCCESS: true, CONTEST_ENTRY_COMPLETED: true, CONTEST_STARTED_SUMMARY: true },
         },
         expectedUpdatedAt: null,
