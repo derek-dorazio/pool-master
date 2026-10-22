@@ -130,7 +130,7 @@ A starting point to react to, not a decision. Names follow Derek's message.
 | Results of this season's contests | ✓ | ✓ | ✓ | ✓ |
 | Sports league cups, FedEx-style (#841) | | ✓ | ✓ | ✓ |
 | League championship: calendar-year standings and trophy (#863) | | ✓ | ✓ | ✓ |
-| History: past years, all-time summary (#837) | see `plans/league-history.md` | | | |
+| History: past years, all-time summary (#837) | see `plans/season-cups.md` §7 | | | |
 | Emails (#845) | see `plans/email-notifications.md`, *Class* | | | |
 | Branding: logo, colours | | | ✓ | ✓ |
 | Export results (CSV) | | | | ✓ |
@@ -340,7 +340,7 @@ plan that gets it. Nothing is gated yet.
 |---|---|---|---|
 | Sports league cups (FedEx-style points race per sports league) | #841 | B (paid, from Pro): every cup view | `plans/season-cups.md` §9 |
 | League championship (calendar-year standings, trophy, medal tiles, finish matrix) | #863 | B (paid, from Pro): every championship view | `plans/season-cups.md` §9 |
-| League history (past years, drill to past contests, all-time summary) | #837 | Contest results Essential; past years follow the championship's and cups' class; all-time summary D | `plans/league-history.md` §5 |
+| League history (past years, drill to past contests, all-time summary) | #837 | Contest results Essential; past years follow the championship's and cups' class; all-time summary D | `plans/season-cups.md` §7 |
 | Email notifications | #845 | Per email | `plans/email-notifications.md`, *Class* |
 
 Pro and Premium leagues see the same cups and championship; Premium's bigger numbers on the

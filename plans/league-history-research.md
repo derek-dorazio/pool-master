@@ -2,9 +2,9 @@
 
 **Tracking issue:** #837
 
-Written 2026-10-21 as a companion to `plans/league-history.md`. Derek asked for research into how
+Written 2026-10-21 as a companion to the history design, now §5 of `plans/season-cups.md`. Derek asked for research into how
 office-pool and fantasy sites show league history, a few Poolmaster concept mockups drawn from
-it, and a comparison with the design in `plans/league-history.md`. That plan stays the design of
+it, and a comparison with the history design as it stood then. `plans/season-cups.md` is the design of
 record; this file is input to it and goes when #837 closes.
 
 The cloud session could search the web but could not open the sites themselves, so there are no
@@ -62,7 +62,7 @@ Three mockups, each published as a private page:
   the years, head to head against every other team, and an end-of-season awards card.
   <https://claude.ai/artifact/GBUAzGr5gTH9TptDNpziXk>
 
-## 4. Against plans/league-history.md
+## 4. Against the first history design
 
 The plan's model holds up: every concept is built from frozen standings, finish-based measures
 and the event-series key. Nothing here needs a summary table or score-based records.
