@@ -2,6 +2,7 @@ import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
   EmailService,
+  EntryReceiptKind,
   type EmailSendInput,
   type MailDeliveryProviderName,
 } from '../../../packages/core-api/src/modules/email';
@@ -51,8 +52,7 @@ function entryReceipt(userId: string | undefined): EmailSendInput<'CONTEST_ENTRY
       entryName: 'Entry 1',
       entryUrl: 'https://qa.example.com/entries/entry-1',
       submittedAt: '2026-10-22T12:00:00.000Z',
-      changeUntil: new Date('2026-10-23T12:00:00.000Z'),
-      tiers: [],
+      receipt: { kind: EntryReceiptKind.LINEUP, tiers: [], changeUntil: new Date('2026-10-23T12:00:00.000Z') },
     },
   };
 }

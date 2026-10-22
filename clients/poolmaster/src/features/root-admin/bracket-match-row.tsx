@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { MatchEnding, MatchSide, MatchStatus, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
+import { MatchEnding, MatchSide, MatchStatus, formatSpread, type SportMatchPeriods, type SportShootout, type SportVocabulary } from '@poolmaster/shared/domain';
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
-import { formatSpread } from '@/features/contests/pick-em-week';
 import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';

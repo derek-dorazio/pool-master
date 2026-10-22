@@ -277,7 +277,13 @@ old link stops working.
 Contest entry confirmation emails ("Entry submitted") are receipts, queued when a member
 submits an entry (#481), not when its picks or tiebreaker are saved. They go to every active
 owner of the entry's squad, and say until when the picks can still change (#845). A repeat
-submit of an already submitted entry sends nothing.
+submit of an already submitted entry sends nothing. Each entry type has its own receipt (#867):
+a roster lists its picks by tier, with the salary spent against the cap in a budget contest and
+the to-par tiebreaker in golf; a pick'em week lists each game's pick, with its spread against
+the spread and its value in a confidence pool, and the tiebreaker as the total score of its
+game; a bracket lists its last three rounds, the final first; a survivor week names the team and
+its game. A pick'em, bracket or survivor week that goes back to draft and is submitted again
+sends a new receipt.
 
 "New contest open" emails (#845) are queued when a commissioner opens a contest (`DRAFT` to
 `OPEN`), to every active league member: the contest's events, its rules in the same sentence

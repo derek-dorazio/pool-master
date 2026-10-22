@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { EmailCategory, NotificationClass } from '@poolmaster/shared/domain';
+import { EmailCategory, NotificationClass, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -34,6 +34,70 @@ export interface ContestEntryCompletedTierSelection {
   participantNames: string[];
 }
 
+/** What an entry receipt shows (#867): each entry type lists its own content. */
+export const EntryReceiptKind = {
+  /** A roster: its picks by tier, and in a budget contest what they cost against the cap. */
+  LINEUP: 'LINEUP',
+  /** A pick'em week: every game's pick. */
+  GAME_PICKS: 'GAME_PICKS',
+  /** A bracket: its picks for the last rounds, champion first. */
+  BRACKET: 'BRACKET',
+  /** A survivor week: the one team picked. */
+  SURVIVOR: 'SURVIVOR',
+} as const;
+export type EntryReceiptKind = (typeof EntryReceiptKind)[keyof typeof EntryReceiptKind];
+
+export interface LineupReceipt {
+  kind: typeof EntryReceiptKind.LINEUP;
+  tiers: ContestEntryCompletedTierSelection[];
+  /** A budget roster's total price against the salary cap. */
+  budget?: { spent: number; salaryCap: number };
+  /** When the event's picks close; until then the entry's owners can still change it. */
+  changeUntil: Date;
+}
+
+/** One game of a pick'em week as a receipt lists it. */
+export interface GamePickLine {
+  /** "Bears at Lions". */
+  matchup: string;
+  /** "Bears", "Bears -3.5" against the spread, or the sport's word for a tie. */
+  pick: string;
+  /** The pick's confidence value, in a confidence pool. */
+  confidence?: number;
+}
+
+export interface GamePicksReceipt {
+  kind: typeof EntryReceiptKind.GAME_PICKS;
+  eventName: string;
+  games: GamePickLine[];
+}
+
+export interface BracketReceipt {
+  kind: typeof EntryReceiptKind.BRACKET;
+  eventName: string;
+  /** The last rounds, the final first: "Championship: Duke", "Final Four: Duke, Houston". */
+  rounds: Array<{ name: string; picks: string[] }>;
+  /** When the bracket's picks lock: its starting round's first game. */
+  changeUntil: Date;
+}
+
+export interface SurvivorPickLine {
+  team: string;
+  /** "Bears at Lions". */
+  matchup: string;
+  /** The game's start: the pick locks then. */
+  kickoff: Date;
+}
+
+export interface SurvivorReceipt {
+  kind: typeof EntryReceiptKind.SURVIVOR;
+  eventName: string;
+  /** One pick a week, or more where the contest asks for more. */
+  picks: SurvivorPickLine[];
+}
+
+export type EntryReceipt = LineupReceipt | GamePicksReceipt | BracketReceipt | SurvivorReceipt;
+
 export interface ContestEntryCompletedEmailData {
   userName: string;
   leagueName: string;
@@ -42,10 +106,9 @@ export interface ContestEntryCompletedEmailData {
   entryName: string;
   entryUrl: string;
   submittedAt?: Date | string;
-  /** When the event's picks close; until then the entry's owners can still change it. */
-  changeUntil: Date;
+  /** The entry's tiebreaker in its sport's words; absent where the contest has none. */
   tiebreaker?: string;
-  tiers: ContestEntryCompletedTierSelection[];
+  receipt: EntryReceipt;
 }
 
 /** One event as a contest email lists it. */
@@ -394,18 +457,67 @@ function renderLeagueJoinSuccessEmail(
   });
 }
 
+/** A receipt's content: its sections, and when its picks can still change. */
+function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
+  sections: Array<{ title: string; rows: Array<[string, string]> }>;
+  changeLine: string;
+} {
+  switch (receipt.kind) {
+    case EntryReceiptKind.LINEUP:
+      return {
+        sections: [{
+          title: 'Selections',
+          rows: [
+            ...receipt.tiers.map((tier): [string, string] => [
+              tier.tierName,
+              tier.participantNames.length > 0 ? tier.participantNames.join(', ') : 'No selections',
+            ]),
+            ...(receipt.budget === undefined
+              ? []
+              : [['Salary', `${formatDollars(receipt.budget.spent)} of ${formatDollars(receipt.budget.salaryCap)}`] as [string, string]]),
+          ],
+        }],
+        changeLine: `You can change your picks until ${formatInstant(receipt.changeUntil, timeZone)}.`,
+      };
+    case EntryReceiptKind.GAME_PICKS:
+      return {
+        sections: [{
+          title: `${receipt.eventName} picks`,
+          rows: receipt.games.map((game): [string, string] => [
+            game.matchup,
+            game.confidence === undefined ? game.pick : `${game.pick} (${String(game.confidence)})`,
+          ]),
+        }],
+        changeLine: 'You can change each pick until its game starts.',
+      };
+    case EntryReceiptKind.BRACKET:
+      return {
+        sections: [{
+          title: `${receipt.eventName} bracket`,
+          rows: receipt.rounds.map((round): [string, string] => [round.name, round.picks.join(', ')]),
+        }],
+        changeLine: `You can change your bracket until ${formatInstant(receipt.changeUntil, timeZone)}.`,
+      };
+    case EntryReceiptKind.SURVIVOR:
+      return {
+        sections: [{
+          title: `${receipt.eventName} ${receipt.picks.length === 1 ? 'pick' : 'picks'}`,
+          rows: receipt.picks.map((pick): [string, string] => [pick.team, `${pick.matchup}, ${formatInstant(pick.kickoff, timeZone)}`]),
+        }],
+        changeLine: receipt.picks.length === 1
+          ? `You can change your pick until ${formatInstant(receipt.picks[0].kickoff, timeZone)}.`
+          : 'You can change each pick until its game starts.',
+      };
+  }
+}
+
 function renderContestEntryCompletedEmail(
   data: ContestEntryCompletedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const submittedLine = formatDateTime(data.submittedAt, context.timeZone);
-  const changeLine = `You can change your picks until ${formatInstant(data.changeUntil, context.timeZone)}.`;
+  const { sections, changeLine } = entryReceiptContent(data.receipt, context.timeZone);
   const subject = `Entry submitted: ${data.contestName}`;
-  const tierRows = data.tiers
-    .map((tier) => [
-      tier.tierName,
-      tier.participantNames.length > 0 ? tier.participantNames.join(', ') : 'No selections',
-    ] as [string, string]);
   const bodyBlocks = [
     paragraph(
       `${escapeHtml(data.userName)}, your ${strong(data.entryName)} entry was submitted for ${strong(
@@ -419,8 +531,7 @@ function renderContestEntryCompletedEmail(
       ...(submittedLine ? ([['Submitted', submittedLine]] as Array<[string, string]>) : []),
       ...(data.tiebreaker ? ([['Tiebreaker', data.tiebreaker]] as Array<[string, string]>) : []),
     ]),
-    sectionTitle('Selections'),
-    detailList(tierRows),
+    ...sections.flatMap((section) => [sectionTitle(section.title), detailList(section.rows)]),
     paragraph(escapeHtml(changeLine)),
     button('Review entry', data.entryUrl),
   ].join('');
@@ -430,8 +541,7 @@ function renderContestEntryCompletedEmail(
     `Playing as: ${data.teamName}`,
     ...(submittedLine ? [`Submitted: ${submittedLine}`] : []),
     ...(data.tiebreaker ? [`Tiebreaker: ${data.tiebreaker}`] : []),
-    'Selections:',
-    ...tierRows.map(([tierName, participants]) => `- ${tierName}: ${participants}`),
+    ...sections.flatMap((section) => [`${section.title}:`, ...section.rows.map(([label, value]) => `- ${label}: ${value}`)]),
     changeLine,
     `Review entry: ${data.entryUrl}`,
   ];

@@ -1,4 +1,4 @@
-import { ContestEntryStatus, PickEmMode, PredictedResult, SelectionType } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, PickEmMode, PredictedResult, SelectionType, formatSpread } from '@poolmaster/shared/domain';
 import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
 
 /**
@@ -21,14 +21,6 @@ export function gameTeams(game: PickEmGame): [PickEmTeam | null, PickEmTeam | nu
 export function describeMatchup(game: PickEmGame): string {
   const [away, home] = gameTeams(game);
   return `${away?.name ?? 'To be decided'} ${game.isNeutralSite ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
-}
-
-/** "-3.5", "+7", or "PK" for a pick'em line: a spread as a sportsbook prints it. */
-export function formatSpread(spread: number): string {
-  if (spread === 0) {
-    return 'PK';
-  }
-  return spread > 0 ? `+${spread}` : String(spread);
 }
 
 /**

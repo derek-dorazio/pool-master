@@ -2,6 +2,7 @@ import { EmailCategory, EmailTemplateKey, NotificationClass } from '@poolmaster/
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
+  EntryReceiptKind,
   EntryReminderKind,
   renderSystemEmailTemplate,
   type SystemEmailTemplateKey,
@@ -47,21 +48,28 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Open league');
   });
 
-  it('renders the contest entry completed email with tier selections and tiebreaker', () => {
+  const ENTRY = {
+    userName: 'Derek Dorazio',
+    leagueName: 'Mathworks',
+    teamName: 'Derek Dorazio',
+    entryName: 'Entry 1',
+    entryUrl: 'https://app.primetimecommissioner.com/entries/entry-1',
+    submittedAt: '2026-04-04T15:30:00.000Z',
+  };
+
+  it('renders a lineup receipt with each tier\'s selections, the tiebreaker and when picks close', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
-      userName: 'Derek Dorazio',
-      leagueName: 'Mathworks',
+      ...ENTRY,
       contestName: 'Masters Pick 6',
-      teamName: "Derek Dorazio",
-      entryName: 'Entry 1',
-      entryUrl: 'https://app.primetimecommissioner.com/entries/entry-1',
-      submittedAt: '2026-04-04T15:30:00.000Z',
-      changeUntil: new Date('2026-04-09T11:40:00.000Z'),
       tiebreaker: '-12',
-      tiers: [
-        { tierName: 'Tier A', participantNames: ['Rory McIlroy', 'Ludvig Aberg'] },
-        { tierName: 'Tier B', participantNames: ['Tommy Fleetwood', 'Robert MacIntyre'] },
-      ],
+      receipt: {
+        kind: EntryReceiptKind.LINEUP,
+        tiers: [
+          { tierName: 'Tier A', participantNames: ['Rory McIlroy', 'Ludvig Aberg'] },
+          { tierName: 'Tier B', participantNames: ['Tommy Fleetwood', 'Robert MacIntyre'] },
+        ],
+        changeUntil: new Date('2026-04-09T11:40:00.000Z'),
+      },
     }, UTC);
 
     expect(message.templateKey).toBe('CONTEST_ENTRY_COMPLETED');
@@ -69,9 +77,84 @@ describe('pool-master-98i system email templates', () => {
     expect(message.subject).toBe('Entry submitted: Masters Pick 6');
     expect(message.text).toContain('- Tier A: Rory McIlroy, Ludvig Aberg');
     expect(message.text).toContain('Tiebreaker: -12');
+    expect(message.text).not.toContain('Salary');
     expect(message.html).toContain('Entry completed');
     expect(message.html).toContain('Review entry');
     expect(message.html).toContain('Tommy Fleetwood, Robert MacIntyre');
+  });
+
+  it('adds what a budget lineup spent against the salary cap to its receipt', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'Masters Budget',
+      receipt: {
+        kind: EntryReceiptKind.LINEUP,
+        tiers: [{ tierName: 'Golfers', participantNames: ['Scottie Scheffler', 'Min Woo Lee'] }],
+        budget: { spent: 48_500, salaryCap: 50_000 },
+        changeUntil: new Date('2026-04-09T11:40:00.000Z'),
+      },
+    }, UTC);
+
+    expect(message.text).toContain('- Salary: $48,500 of $50,000');
+  });
+
+  it('renders a pick\'em receipt with each game\'s pick, its spread and its confidence, and says each pick changes until its game starts', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'NFL Pick\'em',
+      tiebreaker: '45 total points (Bills at Chiefs)',
+      receipt: {
+        kind: EntryReceiptKind.GAME_PICKS,
+        eventName: 'Week 1',
+        games: [
+          { matchup: 'Bills at Chiefs', pick: 'Chiefs -3.5', confidence: 2 },
+          { matchup: 'Bears at Lions', pick: 'Bears +7', confidence: 1 },
+        ],
+      },
+    }, UTC);
+
+    expect(message.text).toContain('Week 1 picks:');
+    expect(message.text).toContain('- Bills at Chiefs: Chiefs -3.5 (2)');
+    expect(message.text).toContain('- Bears at Lions: Bears +7 (1)');
+    expect(message.text).toContain('Tiebreaker: 45 total points (Bills at Chiefs)');
+    expect(message.text).toContain('You can change each pick until its game starts.');
+  });
+
+  it('renders a bracket receipt round by round, the final first, with when the bracket locks', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'March Madness',
+      receipt: {
+        kind: EntryReceiptKind.BRACKET,
+        eventName: 'NCAA Tournament',
+        rounds: [
+          { name: 'Championship', picks: ['Duke'] },
+          { name: 'Final Four', picks: ['Duke', 'Houston'] },
+        ],
+        changeUntil: new Date('2026-03-19T16:15:00.000Z'),
+      },
+    }, UTC);
+
+    expect(message.text).toContain('NCAA Tournament bracket:');
+    expect(message.text).toContain('- Championship: Duke');
+    expect(message.text).toContain('- Final Four: Duke, Houston');
+    expect(message.text).toContain('You can change your bracket until Mar 19, 2026, 4:15 PM UTC.');
+  });
+
+  it('renders a survivor receipt with the team, its game and when the pick locks', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'NFL Survivor',
+      receipt: {
+        kind: EntryReceiptKind.SURVIVOR,
+        eventName: 'Week 3',
+        picks: [{ team: 'Lions', matchup: 'Bears at Lions', kickoff: new Date('2026-09-20T17:00:00.000Z') }],
+      },
+    }, UTC);
+
+    expect(message.text).toContain('Week 3 pick:');
+    expect(message.text).toContain('- Lions: Bears at Lions, Sep 20, 2026, 5:00 PM UTC');
+    expect(message.text).toContain('You can change your pick until Sep 20, 2026, 5:00 PM UTC.');
   });
 
   it('renders the contest is live email with good luck, the event, the rules, the entry count and a Leaderboard button, and no entry list', () => {

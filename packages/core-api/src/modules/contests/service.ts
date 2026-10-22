@@ -49,6 +49,8 @@ import {
   SquadMembershipStatus,
   SurvivorWeekOutcome,
   PARTICIPANT_SCORING_DEFINITIONS,
+  ScoringFamily,
+  getSportDefinition,
 } from '@poolmaster/shared/domain';
 import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode } from '@poolmaster/shared/dto';
 import {
@@ -99,8 +101,10 @@ import {
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import {
+  EntryReceiptKind,
   buildEntryUrl,
   formatUserName,
+  type ContestEntryCompletedEmailData,
   type ContestEntryCompletedTierSelection,
   type EmailService,
 } from '../email';
@@ -1100,6 +1104,11 @@ export class ContestService {
       .filter((user): user is User => user !== null && user.isActive);
     const templateKey = 'CONTEST_ENTRY_COMPLETED';
     const league = entry.contest.league;
+    const [lineup, configuration] = await Promise.all([
+      this.buildEntryLineupForEmail(entry, sportEventId),
+      this.deps.configurations.findByContest(contestId),
+    ]);
+    const rules = configuration?.configJson;
     const data = {
       leagueName: league.name,
       contestName: entry.contest.name,
@@ -1107,15 +1116,21 @@ export class ContestService {
       entryName: entry.name,
       entryUrl: buildEntryUrl(this.appBaseUrl, league.leagueCode, contestId, entryId),
       submittedAt: entry.updatedAt,
-      // A roster contest's picks close when its event starts.
-      changeUntil: sportEvent.startDate,
-      // The tiebreaker is a predicted winning score relative to par. Submit does not require
-      // one, so a lineup submitted without it says so.
-      tiebreaker: entry.tiebreakerValue === null
-        ? 'None'
-        : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
-      tiers: await this.buildEntryTierSelectionsForEmail(entry, sportEventId),
-    };
+      // Only golf's roster has a tiebreaker: a predicted winning score relative to par. Submit
+      // does not require one, so a lineup submitted without it says so.
+      ...(getSportDefinition(sportEvent.sport).scoringFamily === ScoringFamily.STROKE_PLAY && {
+        tiebreaker: entry.tiebreakerValue === null
+          ? 'None'
+          : PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(entry.tiebreakerValue),
+      }),
+      receipt: {
+        kind: EntryReceiptKind.LINEUP,
+        tiers: lineup.tiers,
+        ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
+        // A roster contest's picks close when its event starts.
+        changeUntil: sportEvent.startDate,
+      },
+    } satisfies Omit<ContestEntryCompletedEmailData, 'userName'>;
     for (const user of owners) {
       try {
         await email.send(templateKey, {
@@ -1146,24 +1161,29 @@ export class ContestService {
   }
 
   /**
-   * Groups the entry's picks in the submitted event by the tier label SportEventTierService
-   * resolves for each golfer (#713: one event's picks per confirmation).
+   * The entry's picks in the submitted event grouped by the tier label SportEventTierService
+   * resolves for each golfer (#713: one event's picks per confirmation), and what they cost.
    */
-  private async buildEntryTierSelectionsForEmail(
+  private async buildEntryLineupForEmail(
     entry: ContestEntryReceiptData,
     sportEventId: string,
-  ): Promise<ContestEntryCompletedTierSelection[]> {
+  ): Promise<{ tiers: ContestEntryCompletedTierSelection[]; spent: number }> {
     const tierLabelBySportEventParticipantId = new Map<string, string>();
+    const priceBySportEventParticipantId = new Map<string, number>();
     const valuations = await this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId);
     for (const valuation of valuations) {
       if (valuation.tierLabel !== null) {
         tierLabelBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.tierLabel);
       }
+      if (valuation.price !== null) {
+        priceBySportEventParticipantId.set(valuation.sportEventParticipantId, valuation.price);
+      }
     }
-    return buildEntryTierSelections(
-      { ...entry, picks: entry.picks.filter((pick) => pick.sportEventId === sportEventId) },
-      tierLabelBySportEventParticipantId,
-    );
+    const picks = entry.picks.filter((pick) => pick.sportEventId === sportEventId);
+    return {
+      tiers: buildEntryTierSelections({ ...entry, picks }, tierLabelBySportEventParticipantId),
+      spent: picks.reduce((total, pick) => total + (priceBySportEventParticipantId.get(pick.sportEventParticipant.id) ?? 0), 0),
+    };
   }
 
   private async loadContestEntryReceiptData(
