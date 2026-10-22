@@ -120,40 +120,33 @@ Questions:
 
 ## 5. Service classes
 
-History exists to be worth paying for (Derek, 2026-10-22). Nothing is gated yet; each view
-carries a **feature class**, not a plan name, so `plans/monetization-strategy.md` only has to map
-classes to plans. The letters are the same as the email notification classes in
-`plans/email-notifications.md`, in Derek's order of plans (2026-10-22: free, then Pro, then
-Premium, then Platinum): Essential and A for every league, free included; B from the first paid
-tier (Pro); C from the second (Premium); D the top tier's (Platinum).
+History exists to be worth paying for (Derek, 2026-10-22). Nothing is gated yet. Derek doesn't
+want features forced into four levels (2026-10-22): the plans differ mostly by other levers
+(entries per contest, league size, number of sports leagues; `plans/monetization-strategy.md`).
+History needs only two classes of its own, using the shared `ServiceClass` letters
+(`plans/season-cups.md` Q9.1), plus one rule:
 
 | View | Class | Why |
 |---|---|---|
-| A past contest's final leaderboard, opened from the contest itself | Essential | A result never disappears. A league that drops a tier still sees every contest it played |
-| Contests page History view, this year: winners, year filter set to now | A | Hiding last week's winner reads as a bug (monetization plan) |
-| Past years of the championship board (year toggle) | C | The championship is a Premium feature (Derek); its own past years come with it |
-| Drill-through from the championship board, matrix cells included; earlier years on the Contests page History view | C | Same feature, one tap deeper |
-| Past seasons of the sports league cups (year toggle on Cups and Cup pages) | B | Cups are a Pro feature (Derek); a past season never sits below its own feature |
-| All-time summary across every year | D | Derek: the multi-year trend view is Platinum |
+| A past contest's final leaderboard; the Contests page History view with winners, any year | Essential | A result never disappears. A league that drops a plan still sees every contest it played |
+| Past years of the championship board, and its drill-through | The championship's own class | Past years come with the feature: a league that has the championship has its history |
+| Past seasons of the sports league cups | The cups' own class | Same rule |
+| All-time summary across every year | D (Platinum) | Derek: the multi-year trend view is Platinum |
 
-- **One rule for past years:** a past-year view needs at least the class of the feature it shows.
-  The championship's past years are C, a cup's past seasons B.
-- **Downgrades hide, never delete.** A lapsed league still has every row; views above its class
-  show a short locked note to everyone and the upgrade path to the commissioner (monetization
-  plan, History Q3 and Q4).
-- **Typed:** a `HistoryFeature` enum (`CONTEST_RESULT`, `CURRENT_YEAR_RESULTS`,
-  `CHAMPIONSHIP_PAST_YEARS`, `CHAMPIONSHIP_DRILL_THROUGH`, `CUP_PAST_SEASONS`,
-  `ALL_TIME_SUMMARY`) with a single map from feature to the shared `ServiceClass` enum (`ESSENTIAL`, `A` to `D`, `plans/season-cups.md` Q9.1) in `packages/shared/domain`. The
-  routes ask the entitlements function about the feature, never about a plan.
+- **Downgrades hide, never delete.** A league that loses a feature keeps every row; the views
+  above its plan show a short locked note to everyone and the upgrade path to the commissioner.
+- **Typed:** a `HistoryFeature` enum (`CONTEST_RESULTS`, `ALL_TIME_SUMMARY`) mapped to
+  `ServiceClass` in `packages/shared/domain`. Past-year views ask for the feature they show
+  (the championship's or the cups'), so they need no entry of their own. The routes ask the
+  entitlements function about the feature, never about a plan.
 
 Questions:
 
-- **Q5.1** These classes? Recommendation: as in the table. They follow Derek's split
-  (championship Premium, cups Pro, multi-year Platinum).
+- **Q5.1** These classes? Recommendation: as in the table.
 
 ## 6. Slices
 
-All after #841 and #863 have shipped the pages they extend. Each slice is one PR with its docs, its views' `HistoryFeature` values,
+All after #841 and #863 have shipped the pages they extend. Each slice is one PR with its docs, its views' feature checks,
 unit tests of the pure functions, integration tests for each new query (`rules/testing-rules.md`
 §9), contract verification for each new endpoint, and a browser journey row.
 
