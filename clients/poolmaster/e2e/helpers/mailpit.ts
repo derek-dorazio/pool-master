@@ -8,7 +8,7 @@ type MailpitSummary = { ID: string; Subject: string };
 type MailpitMessage = { Text: string };
 
 export function readMailpitUrl(): string {
-  const url = process.env.POOLMASTER_E2E_MAILPIT_URL;
+  const url = process.env['POOLMASTER_E2E_MAILPIT_URL'];
   if (!url) {
     throw new Error('POOLMASTER_E2E_MAILPIT_URL is not set: this spec reads email from the local stack\'s Mailpit.');
   }
