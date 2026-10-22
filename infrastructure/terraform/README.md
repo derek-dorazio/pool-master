@@ -61,3 +61,33 @@ Terraform can also model intentionally approved direct PostgreSQL access when QA
 - `db_publicly_accessible` controls whether the RDS instance should expose a public endpoint.
 - `db_allowed_cidr_blocks` is the allow-list of approved direct client CIDRs for PostgreSQL access.
 - Keep both disabled by default and only enable them explicitly in local `envs/*.tfvars` files for environments where that access is truly intended.
+
+## System email (SES)
+
+Terraform owns the SES side of system email for each environment: the sending domain identity
+(`qa.<domain_name>` on QA, the bare domain on prod), Easy DKIM, the custom MAIL FROM domain
+`bounce.<sending domain>`, SPF and DMARC records in Route 53, and a configuration set that
+suppresses addresses that bounced or complained. `docs/EMAIL-DELIVERY.md` describes what each
+one is for.
+
+One apply creates all of it. The DKIM CNAMEs are created with a count of three (Easy DKIM always
+issues three tokens), so the old two-pass `-target` apply (#120) is no longer needed.
+
+Set `dmarc_report_email` in the environment tfvars to receive DMARC aggregate reports. Leave it
+empty to publish DMARC without reports.
+
+After the first apply, by hand in the AWS console (SES, in the environment's region):
+
+1. **Check the identity.** Identities → the sending domain should show DKIM *Successful* and MAIL
+   FROM *Successful* within an hour of the records appearing.
+2. **Leave the sandbox** (once per AWS account and region). Account dashboard → Request
+   production access: mail type *Transactional*, the site URL, and a short description: members
+   of office pools get invitations, entry receipts and contest updates; bounces and complaints
+   are suppressed through the account suppression list and the app's own records; members can
+   turn off notification emails, and smoke users at reserved domains are never emailed. AWS
+   usually answers within a day.
+3. **Until then**, verify a few tester addresses under Identities, since a sandbox account sends
+   only to verified addresses (200 a day, one a second).
+4. **Turn email on** from the app, not Terraform: `/manage/settings` → Email. On QA, fill in
+   "Only send to" first (`docs/EMAIL-DELIVERY.md`, *Testing on QA Without Emailing Real People*).
+

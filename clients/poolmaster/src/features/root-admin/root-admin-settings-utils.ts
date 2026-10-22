@@ -47,6 +47,11 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
   return [
     { id: 'enabled', label: 'System email', value: config.enabled ? 'On' : 'Off' },
     { id: 'templates', label: 'Emails switched off', value: off.length > 0 ? off.join(', ') : 'None' },
+    {
+      id: 'allowedRecipients',
+      label: 'Only send to',
+      value: config.allowedRecipients.length > 0 ? config.allowedRecipients.join(', ') : 'Everyone',
+    },
     { id: 'replyTo', label: 'Reply-To', value: config.replyTo ?? 'The sender address' },
   ];
 }

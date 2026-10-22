@@ -3,9 +3,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { EmailConfigSchema } from '@poolmaster/shared/dto';
+import { EmailConfigSchema, EmailRecipientPatternSchema } from '@poolmaster/shared/dto';
 import { updateSettingsGroup, type EmailConfig, type SettingsGroup } from '@/lib/api';
-import { Alert, Button, Checkbox, FormField, Input } from '@/features/shared/ui';
+import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
@@ -13,14 +13,45 @@ import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
 
 type EmailSettingsGroup = Extract<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
 
-/** The stored shape, except that an empty Reply-To box means "none". */
+/** One allowed recipient per line; blank lines are ignored. */
+function recipientLines(text: string): string[] {
+  return text.split('\n').map((line) => line.trim()).filter(Boolean);
+}
+
+/**
+ * The stored shape, except that an empty Reply-To box means "none" and the allowed recipients
+ * are one box with one address or @domain per line.
+ */
 const EmailSettingsFormSchema = EmailConfigSchema.extend({
   replyTo: z.string().trim().email('Enter an email address, or leave it blank.').or(z.literal('')),
+  allowedRecipients: z.string().superRefine((text, context) => {
+    const lines = recipientLines(text);
+    const invalid = lines.find((line) => !EmailRecipientPatternSchema.safeParse(line).success);
+    if (invalid !== undefined) {
+      context.addIssue({ code: 'custom', message: `"${invalid}" is not an email address or @domain.` });
+    } else if (lines.length > 100) {
+      context.addIssue({ code: 'custom', message: 'List at most 100 addresses or domains.' });
+    }
+  }),
 });
 type EmailSettingsFormValues = z.infer<typeof EmailSettingsFormSchema>;
 
 function toFormValues(config: EmailConfig): EmailSettingsFormValues {
-  return { ...config, templates: { ...config.templates }, replyTo: config.replyTo ?? '' };
+  return {
+    ...config,
+    templates: { ...config.templates },
+    replyTo: config.replyTo ?? '',
+    allowedRecipients: config.allowedRecipients.join('\n'),
+  };
+}
+
+function toConfig(values: EmailSettingsFormValues): EmailConfig {
+  return {
+    ...values,
+    replyTo: values.replyTo === '' ? null : values.replyTo,
+    allowedRecipients: recipientLines(values.allowedRecipients)
+      .map((line) => EmailRecipientPatternSchema.parse(line)),
+  };
 }
 
 /**
@@ -42,7 +73,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
         path: { key: 'EMAIL_CONFIG' },
         body: {
           key: 'EMAIL_CONFIG',
-          value: { ...values, replyTo: values.replyTo === '' ? null : values.replyTo },
+          value: toConfig(values),
           expectedUpdatedAt: baseUpdatedAt,
         },
       });
@@ -108,6 +139,13 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
         label="Reply-To address"
       >
         <Input data-testid="root-admin-email-settings-reply-to" type="email" {...form.register('replyTo')} />
+      </FormField>
+      <FormField
+        error={form.formState.errors.allowedRecipients?.message}
+        helperText="One address or @domain per line. When the list is not empty, email goes only to these recipients and every other one is skipped. Leave it empty to email everyone."
+        label="Only send to"
+      >
+        <Textarea data-testid="root-admin-email-settings-allowed-recipients" rows={4} {...form.register('allowedRecipients')} />
       </FormField>
       {saveMutation.isError ? (
         <Alert

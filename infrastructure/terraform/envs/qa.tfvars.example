@@ -39,3 +39,6 @@ EOT
 domain_name         = "ultimateofficepoolmanager.com"
 acm_certificate_arn = "arn:aws:acm:us-east-2:614049083306:certificate/4d0fbf35-523d-4e71-bb33-3086aae9e4c8"
 route53_zone_id     = "Z020704038X1AEGE6QNM9"
+
+# System email sends from noreply@qa.<domain_name>. DMARC aggregate reports go here (optional).
+# dmarc_report_email = "you@example.com"

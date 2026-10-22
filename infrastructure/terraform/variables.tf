@@ -45,6 +45,12 @@ variable "route53_zone_id" {
   default     = ""
 }
 
+variable "dmarc_report_email" {
+  description = "Mailbox for DMARC aggregate reports on the sending domain. Leave empty to publish DMARC without reports."
+  type        = string
+  default     = ""
+}
+
 # --- Database ---
 
 variable "db_instance_class" {

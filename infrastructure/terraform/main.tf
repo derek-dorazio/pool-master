@@ -65,9 +65,13 @@ locals {
     staging = "stage."
     prod    = ""
   }
-  app_domain     = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
-  app_url        = local.app_domain != "" ? "https://${local.app_domain}" : "https://${aws_cloudfront_distribution.webapp.domain_name}"
-  ses_from_email = "noreply@${var.domain_name != "" ? var.domain_name : "poolmaster.dev"}"
+  app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
+  app_url    = local.app_domain != "" ? "https://${local.app_domain}" : "https://${aws_cloudfront_distribution.webapp.domain_name}"
+  # System email: each environment sends from its own subdomain identity (#844), like the app.
+  mail_domain      = local.app_domain
+  mail_from_domain = local.mail_domain != "" ? "bounce.${local.mail_domain}" : ""
+  manage_mail_dns  = local.mail_domain != "" && var.route53_zone_id != ""
+  ses_from_email   = "noreply@${local.mail_domain != "" ? local.mail_domain : "poolmaster.dev"}"
 
   # Port mapping for backend services
   service_ports = {
@@ -532,38 +536,103 @@ resource "aws_iam_role_policy" "ecs_task_ses_send" {
       Resource = concat(
         aws_ses_domain_identity.mail[*].arn,
         aws_ses_email_identity.sender[*].arn,
+        [aws_sesv2_configuration_set.mail.arn],
       )
     }]
   })
 }
 
-# --- SES identity for system email ---
+# --- SES identity for system email (#844) ---
+# Each environment sends from its own subdomain (QA: qa.<domain>, prod: the bare domain), so QA
+# bounces and test complaints never touch prod's sending reputation. The steps that need the
+# AWS console (production access) are in README.md, "System email (SES)".
 
 resource "aws_ses_domain_identity" "mail" {
-  count  = var.domain_name != "" ? 1 : 0
-  domain = var.domain_name
+  count  = local.mail_domain != "" ? 1 : 0
+  domain = local.mail_domain
 }
 
 resource "aws_ses_domain_dkim" "mail" {
-  count  = var.domain_name != "" ? 1 : 0
+  count  = local.mail_domain != "" ? 1 : 0
   domain = aws_ses_domain_identity.mail[0].domain
 }
 
+# Easy DKIM always issues three tokens. A count of three (not a for_each over the tokens, which
+# are unknown until the identity exists) lets one apply create the identity and its records (#120).
 resource "aws_route53_record" "ses_dkim" {
-  for_each = var.domain_name != "" && var.route53_zone_id != "" ? {
-    for token in aws_ses_domain_dkim.mail[0].dkim_tokens : token => token
-  } : {}
+  count = local.manage_mail_dns ? 3 : 0
 
   zone_id = var.route53_zone_id
-  name    = "${each.value}._domainkey.${var.domain_name}"
+  name    = "${aws_ses_domain_dkim.mail[0].dkim_tokens[count.index]}._domainkey.${local.mail_domain}"
   type    = "CNAME"
   ttl     = 600
-  records = ["${each.value}.dkim.amazonses.com"]
+  records = ["${aws_ses_domain_dkim.mail[0].dkim_tokens[count.index]}.dkim.amazonses.com"]
+}
+
+# Custom MAIL FROM, so SPF passes for our own domain and counts toward DMARC.
+resource "aws_ses_domain_mail_from" "mail" {
+  count            = local.mail_domain != "" ? 1 : 0
+  domain           = aws_ses_domain_identity.mail[0].domain
+  mail_from_domain = local.mail_from_domain
+}
+
+resource "aws_route53_record" "ses_mail_from_mx" {
+  count = local.manage_mail_dns ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = local.mail_from_domain
+  type    = "MX"
+  ttl     = 600
+  records = ["10 feedback-smtp.${var.region}.amazonses.com"]
+}
+
+resource "aws_route53_record" "ses_mail_from_spf" {
+  count = local.manage_mail_dns ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = local.mail_from_domain
+  type    = "TXT"
+  ttl     = 600
+  records = ["v=spf1 include:amazonses.com ~all"]
+}
+
+# DMARC starts at p=none; move to p=quarantine after a few weeks of clean aggregate reports.
+resource "aws_route53_record" "ses_dmarc" {
+  count = local.manage_mail_dns ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = "_dmarc.${local.mail_domain}"
+  type    = "TXT"
+  ttl     = 600
+  records = [
+    var.dmarc_report_email != ""
+    ? "v=DMARC1; p=none; rua=mailto:${var.dmarc_report_email}"
+    : "v=DMARC1; p=none",
+  ]
 }
 
 resource "aws_ses_email_identity" "sender" {
-  count = var.domain_name == "" ? 1 : 0
+  count = local.mail_domain == "" ? 1 : 0
   email = local.ses_from_email
+}
+
+# Every send names this configuration set. Its suppression options make SES refuse addresses on
+# the account suppression list that bounced or complained, without managing the account-wide
+# setting from one environment's state. Bounce and complaint events reach core-api in a later slice.
+resource "aws_sesv2_configuration_set" "mail" {
+  configuration_set_name = local.name_prefix
+
+  reputation_options {
+    reputation_metrics_enabled = true
+  }
+
+  sending_options {
+    sending_enabled = true
+  }
+
+  suppression_options {
+    suppressed_reasons = ["BOUNCE", "COMPLAINT"]
+  }
 }
 
 # --- CloudWatch Log Groups ---
@@ -617,11 +686,12 @@ resource "aws_ecs_task_definition" "core_api" {
     portMappings = [{ containerPort = 3000, protocol = "tcp" }]
     environment = concat(local.common_env, [
       { name = "PORT", value = "3000" },
-      # Whether email is sent (off on QA until #120) is the EMAIL_CONFIG app setting, not env (#450).
+      # Whether email is sent, and to whom on QA, is the EMAIL_CONFIG app setting, not env (#450, #844).
       { name = "EMAIL_PROVIDER", value = "ses" },
       { name = "APP_BASE_URL", value = local.app_url },
       { name = "AWS_REGION", value = var.region },
       { name = "SES_FROM_EMAIL", value = local.ses_from_email },
+      { name = "SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.mail.configuration_set_name },
       { name = "AUTO_START_SCHEDULER", value = "true" },
     ])
     # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.
