@@ -98,7 +98,8 @@ that category off for that user. It is an HMAC-SHA256 over both, keyed by a key 
 `JWT_SECRET` for this purpose alone (`UnsubscribeTokens`). It is deliberately not a JWT: access
 tokens are JWTs signed with `JWT_SECRET`, and a token that verified as one would sign its holder
 in. `POST /api/v1/email/unsubscribe` takes it with no session; a token this app did not issue,
-or one for a deleted account, is 400 `EMAIL_UNSUBSCRIBE_LINK_INVALID`.
+or one for a deleted account, is 400 `EMAIL_UNSUBSCRIBE_LINK_INVALID`. The request log records the
+URL with `token=[REDACTED]`.
 
 When the member's address is on the suppression list, the profile and the *Email notifications*
 dialog say no email reaches them and that changing their email starts it again (a new address

@@ -383,7 +383,7 @@ describe('email sender', () => {
 
     expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com']);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'email.sender.sweep_failure' }),
+      expect.objectContaining({ action: 'email.sender.sweepFailure' }),
       expect.any(String),
     );
   });

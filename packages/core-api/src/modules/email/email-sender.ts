@@ -238,9 +238,17 @@ export class EmailSender {
     const now = this.now().getTime();
     if (this.lastContentSweepAt !== undefined && now - this.lastContentSweepAt < CONTENT_SWEEP_EVERY_MS) return;
     this.lastContentSweepAt = now;
-    const cleared = await this.options.messages.clearContentCreatedBefore(new Date(now - CONTENT_KEPT_MS));
-    if (cleared > 0) {
-      this.options.logger?.info({ action: 'email.sender.contentCleared', data: { cleared } }, 'Cleared the content of old emails');
+    // A failed sweep is logged and left to the next hour; it never holds up this pass's sends.
+    try {
+      const cleared = await this.options.messages.clearContentCreatedBefore(new Date(now - CONTENT_KEPT_MS));
+      if (cleared > 0) {
+        this.options.logger?.info({ action: 'email.sender.contentCleared', data: { cleared } }, 'Cleared the content of old emails');
+      }
+    } catch (err) {
+      this.options.logger?.error({
+        action: 'email.sender.sweepFailure',
+        data: { error: describeError(err) },
+      }, 'Could not clear the content of old emails; the next sweep tries again');
     }
   }
 }
