@@ -239,7 +239,6 @@ export class EmailSender {
   }
 }
 
-/** Ids only: never the address or the content. */
 /** Templates with a send-by window, claimed ahead of the rest so a backlog never holds them. */
 const TIME_CRITICAL_TEMPLATE_KEYS: readonly EmailTemplateKey[] = (Object.keys(EMAIL_TEMPLATES) as EmailTemplateKey[])
   .filter((templateKey) => EMAIL_TEMPLATES[templateKey].sendWithinMs !== null);
@@ -249,6 +248,7 @@ function carriesSecret(message: EmailMessage): boolean {
   return !EMAIL_TEMPLATES[message.templateKey].keepsContent;
 }
 
+/** Ids only: never the address or the content. */
 function logRefs(message: EmailMessage) {
   return {
     emailMessageId: message.id,

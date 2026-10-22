@@ -752,14 +752,19 @@ export const EmailTemplateKey = {
   CONTEST_ENTRY_COMPLETED: 'CONTEST_ENTRY_COMPLETED',
   CONTEST_STARTED_SUMMARY: 'CONTEST_STARTED_SUMMARY',
   PASSWORD_RESET: 'PASSWORD_RESET',
+  PASSWORD_CHANGED: 'PASSWORD_CHANGED',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 
 /**
- * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset) have none:
- * switching one off would silently break password recovery. They still obey the overall switch.
+ * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset and the
+ * password-changed notice) have none: switching one off would silently break password recovery
+ * or hide a takeover. They still obey the overall switch.
  */
-export type SwitchableEmailTemplateKey = Exclude<EmailTemplateKey, typeof EmailTemplateKey.PASSWORD_RESET>;
+export type SwitchableEmailTemplateKey = Exclude<
+  EmailTemplateKey,
+  typeof EmailTemplateKey.PASSWORD_RESET | typeof EmailTemplateKey.PASSWORD_CHANGED
+>;
 
 /** Where one email in the outbox stands. */
 export const EmailMessageStatus = {

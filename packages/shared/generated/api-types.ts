@@ -11372,7 +11372,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "PASSWORD_RESET";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */

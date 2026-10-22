@@ -19,6 +19,7 @@ import {
   renderSystemEmailTemplate,
 } from '../../../packages/core-api/src/modules/email';
 import type { EmailConfig } from '../../../packages/shared/dto';
+import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
@@ -295,3 +296,80 @@ describe('PASSWORD_RESET email', () => {
   });
 });
 
+
+describe('PASSWORD_CHANGED email', () => {
+  it('says when the password changed and links to reset it again', () => {
+    const message = renderSystemEmailTemplate('PASSWORD_CHANGED', {
+      firstName: 'Riley',
+      username: 'riley',
+      changedAt: new Date('2026-10-22T14:05:00.000Z'),
+      forgotPasswordUrl: 'https://app.example.test/forgot-password',
+    }, { timeZone: 'UTC' });
+
+    expect(message.templateKey).toBe('PASSWORD_CHANGED');
+    expect(message.subject).toBe('Your Prime Time Commissioner password was changed');
+    expect(message.text).toContain('Hi Riley,');
+    expect(message.text).toContain('account (riley) was changed on Oct 22, 2026, 2:05 PM UTC.');
+    expect(message.text).toContain("If this wasn't you, reset your password now");
+    expect(message.text).toContain('https://app.example.test/forgot-password');
+    expect(message.html).toContain('href="https://app.example.test/forgot-password"');
+  });
+
+  it("shows the change time in the recipient's own time zone", () => {
+    const message = renderSystemEmailTemplate('PASSWORD_CHANGED', {
+      firstName: 'Riley',
+      username: 'riley',
+      changedAt: new Date('2026-10-22T14:05:00.000Z'),
+      forgotPasswordUrl: 'https://app.example.test/forgot-password',
+    }, { timeZone: 'America/New_York' });
+
+    expect(message.text).toContain('was changed on Oct 22, 2026, 10:05 AM EDT.');
+  });
+});
+
+describe('PasswordChangedNotifier', () => {
+  function notifierWith(config: EmailConfig = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' })) {
+    const logger = fakeLogger();
+    const outbox = inMemoryEmailMessages();
+    const notifier = new PasswordChangedNotifier(
+      fakeUserRepo({ findById: jest.fn().mockResolvedValue(USER) }),
+      new EmailService({
+        messages: outbox,
+        providerName: 'smtp',
+        readConfig: () => config,
+        senderAddress: 'noreply@poolmaster.test',
+      }),
+      'https://app.example.test',
+      logger,
+    );
+    return { notifier, outbox, logger };
+  }
+
+  it('logs the password changed email as skipped, not queued, when email is switched off in settings', async () => {
+    const { notifier, logger } = notifierWith({ ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), enabled: false });
+
+    await notifier.notify(USER.id, new Date('2026-10-22T12:00:00.000Z'));
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'authService.passwordChanged.emailSkipped' }),
+      expect.any(String),
+    );
+    expect(logger.info).not.toHaveBeenCalled();
+  });
+
+  it('queues one email per change to the account\'s address, so a second change is emailed too', async () => {
+    const { notifier, outbox, logger } = notifierWith();
+
+    await notifier.notify(USER.id, new Date('2026-10-22T12:00:00.000Z'));
+    await notifier.notify(USER.id, new Date('2026-10-22T12:05:00.000Z'));
+
+    expect(outbox.rows.map((row) => [row.templateKey, row.recipientEmail, row.recipientUserId, row.status])).toEqual([
+      ['PASSWORD_CHANGED', USER.email, USER.id, 'QUEUED'],
+      ['PASSWORD_CHANGED', USER.email, USER.id, 'QUEUED'],
+    ]);
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'authService.passwordChanged.emailQueued' }),
+      expect.any(String),
+    );
+  });
+});

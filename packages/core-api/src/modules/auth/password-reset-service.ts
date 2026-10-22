@@ -17,14 +17,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
-import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import { PASSWORD_RESET_LINK_MINUTES, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { EmailMessageStatus, EmailTemplateKey } from '@poolmaster/shared/domain';
-import { PASSWORD_RESET_LINK_MINUTES, type EmailService } from '../email';
+import type { EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
+import { PasswordChangedNotifier } from './password-changed-notifier';
 
-/** How long a reset link works; the email registry holds it, since its email has the same limit. */
-export { PASSWORD_RESET_LINK_MINUTES };
 /** Reset emails one account may be sent per hour. Over it the request still answers 202. */
 const RESET_EMAILS_PER_ACCOUNT_PER_HOUR = 3;
 /** An account's reset rows older than this are deleted on its next request. */
@@ -68,9 +67,16 @@ export class PasswordResetService {
   private readonly now: () => Date;
   private readonly requestLimiter: SlidingWindowRateLimiter;
   private readonly confirmLimiter: SlidingWindowRateLimiter;
+  private readonly passwordChanged: PasswordChangedNotifier;
 
   constructor(private readonly deps: PasswordResetServiceDeps) {
     this.now = deps.now ?? (() => new Date());
+    this.passwordChanged = new PasswordChangedNotifier(
+      deps.users,
+      deps.email,
+      deps.appBaseUrl,
+      deps.logger,
+    );
     const nowMs = () => this.now().getTime();
     this.requestLimiter = new SlidingWindowRateLimiter(
       deps.requestsPerMinute
@@ -238,6 +244,7 @@ export class PasswordResetService {
       action: 'authService.passwordReset.confirmed',
       data: { userId },
     }, 'Reset password with a reset link and signed the account out everywhere');
+    await this.passwordChanged.notify(userId, now);
   }
 
   private rejectDeadLink(): never {

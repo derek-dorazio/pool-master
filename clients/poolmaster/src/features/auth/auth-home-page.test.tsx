@@ -151,6 +151,16 @@ describe('AuthHomePage', () => {
     authState.clearSession.mockReset();
   });
 
+  it('offers a Forgot password? link on the sign in form, and not on the create account form', () => {
+    renderAuthHomePage();
+
+    expect(screen.getByRole('link', { name: 'Forgot password?' })).toHaveAttribute('href', '/forgot-password');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+
+    expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument();
+  });
+
   it('signs in successfully and navigates to the destination', async () => {
     loginUserMock.mockResolvedValue({
       data: {

@@ -25,6 +25,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import type { DateFormat, TimeFormat, User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
+import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import {
   cancelOpenPasswordResetTokens,
   countUserDeleteDependencies,
@@ -67,6 +68,7 @@ export class UserService {
   constructor(
     private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
+    private readonly passwordChanged: PasswordChangedNotifier,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -203,6 +205,7 @@ export class UserService {
     }
 
     const passwordHash = await bcrypt.hash(request.newPassword, BCRYPT_ROUNDS);
+    const changedAt = new Date();
 
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: targetUserId }, data: { passwordHash } });
@@ -219,12 +222,14 @@ export class UserService {
         data: { revokedAt: new Date() },
       });
       // A reset link sent before the change must not undo it (#847).
-      await cancelOpenPasswordResetTokens(tx, targetUserId, new Date());
+      await cancelOpenPasswordResetTokens(tx, targetUserId, changedAt);
     });
     this.logger?.info({
       action: 'userService.changePassword.success',
       data: { userId: targetUserId },
     }, 'Changed own password');
+    // After the commit, so a send failure can never undo the change (#848).
+    await this.passwordChanged.notify(targetUserId, changedAt);
   }
 
   /**

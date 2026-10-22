@@ -11505,7 +11505,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'PASSWORD_RESET';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
 
 /**
  * Whether and how system email is sent.

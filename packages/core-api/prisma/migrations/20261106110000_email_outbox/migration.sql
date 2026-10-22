@@ -2,7 +2,7 @@
 -- content and sent by the sender loop, or skipped with the reason. The idempotency key makes a
 -- retried action, a second sweep or a double click record the email once.
 -- CreateEnum
-CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JOIN_SUCCESS', 'CONTEST_ENTRY_COMPLETED', 'CONTEST_STARTED_SUMMARY', 'PASSWORD_RESET');
+CREATE TYPE "PrismaEmailTemplateKey" AS ENUM ('LEAGUE_MEMBER_INVITE', 'LEAGUE_JOIN_SUCCESS', 'CONTEST_ENTRY_COMPLETED', 'CONTEST_STARTED_SUMMARY', 'PASSWORD_RESET', 'PASSWORD_CHANGED');
 
 -- CreateEnum
 CREATE TYPE "PrismaEmailMessageStatus" AS ENUM ('QUEUED', 'SENDING', 'SENT', 'FAILED', 'SKIPPED');

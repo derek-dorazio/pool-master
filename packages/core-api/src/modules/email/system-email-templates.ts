@@ -1,4 +1,5 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
+import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import { EmailCategory } from './email-categories';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
@@ -68,12 +69,20 @@ export interface PasswordResetEmailData {
   expiresInMinutes: number;
 }
 
+export interface PasswordChangedEmailData {
+  firstName: string;
+  username: string;
+  changedAt: Date;
+  forgotPasswordUrl: string;
+}
+
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
+  PASSWORD_CHANGED: PasswordChangedEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -128,17 +137,12 @@ export interface EmailTemplateScopeByKey {
   CONTEST_ENTRY_COMPLETED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
+  PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
 
 type EmailTemplateRegistry = {
   [Key in SystemEmailTemplateKey]: EmailTemplateDefinition<Key>;
 };
-
-/**
- * How long a password reset link works (#847, Q2.2): short, so a forwarded or leaked link is soon
- * useless. Its email is never sent after that.
- */
-export const PASSWORD_RESET_LINK_MINUTES = 10;
 
 const BRAND_NAME = 'Prime Time Commissioner';
 const BRAND_TAGLINE = 'Ultimate Office Pool Manager';
@@ -213,8 +217,16 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     category: EmailCategory.ACCOUNT,
     settingsSwitch: false,
     keepsContent: false,
+    // A reset email is never sent after its link is dead.
     sendWithinMs: PASSWORD_RESET_LINK_MINUTES * 60_000,
     render: renderPasswordResetEmail,
+  },
+  PASSWORD_CHANGED: {
+    category: EmailCategory.ACCOUNT,
+    settingsSwitch: false,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderPasswordChangedEmail,
   },
 };
 
@@ -417,6 +429,37 @@ function renderPasswordResetEmail(
   });
 }
 
+function renderPasswordChangedEmail(
+  data: PasswordChangedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const subject = `Your ${BRAND_NAME} password was changed`;
+  const changedSentence = `The password for your ${BRAND_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context.timeZone)}.`;
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.firstName)},`),
+    paragraph(escapeHtml(changedSentence)),
+    paragraph("If this was you, there's nothing else to do. If this wasn't you, reset your password now."),
+    button('Reset your password', data.forgotPasswordUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.firstName},`,
+    '',
+    changedSentence,
+    '',
+    "If this was you, there's nothing else to do. If this wasn't you, reset your password now:",
+    data.forgotPasswordUrl,
+  ];
+
+  return buildMessage({
+    templateKey: 'PASSWORD_CHANGED',
+    subject,
+    preheader: `Your ${BRAND_NAME} password was changed.`,
+    title: 'Password changed',
+    bodyBlocks,
+    textLines,
+  });
+}
+
 function buildMessage(input: {
   templateKey: SystemEmailTemplateKey;
   subject: string;
@@ -528,6 +571,11 @@ function formatDateTime(value: Date | string | undefined, timeZone: string): str
   if (!value) return null;
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return null;
+  return formatInstant(date, timeZone);
+}
+
+/** A date that is always present, formatted as formatDateTime does. */
+function formatInstant(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',

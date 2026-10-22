@@ -95,8 +95,8 @@ holds:
 
 - `enabled`: whether any system email is sent. It defaults to off when `POOLMASTER_ENVIRONMENT=qa`
   and on everywhere else.
-- `templates`: one switch per system email, all on by default. Account emails (the password reset
-  email) have no switch: switching one off would silently break password recovery. They still
+- `templates`: one switch per system email, all on by default. Account emails (password reset and
+  password changed) have no switch: switching one off would silently break password recovery. They still
   obey `enabled` and "Only send to".
 - `allowedRecipients` ("Only send to"): when not empty, the only recipients email goes to, each
   a whole address or `@domain`, compared without case. Every other recipient is skipped. Empty
@@ -203,6 +203,10 @@ email carries the link, the outbox clears its subject and bodies the moment it i
 up on instead of keeping them for 30 days. The request route has already answered 202 by then,
 the same answer it gives when no account matches, so a failure is only logged (user id, never
 the address, token or link) and the person asks again.
+
+Password changed emails (#848) are queued after a reset by link and after a person changes their
+own password, not after a root admin's reset, once the password write commits. Like the reset,
+they have no switch in EMAIL_CONFIG. A failure to queue one is logged and never undoes the change.
 
 Contest started summary emails are queued when a sport event moves to `IN_PROGRESS` (a root
 admin's transition, or the lifecycle scheduler) and first moves its contests from `OPEN` to

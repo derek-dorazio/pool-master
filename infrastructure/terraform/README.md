@@ -54,6 +54,28 @@ Recommended usage:
 - Staging and prod bind explicitly to approved real providers later.
 - Do not use these variables to introduce silent fallback from real providers to the mock provider.
 
+## The ALB Admits CloudFront Only
+
+The ALB security group accepts port 80 from CloudFront's origin-facing prefix list
+(`com.amazonaws.global.cloudfront.origin-facing`) and nothing else, so the API is reached through
+CloudFront. That list covers every CloudFront distribution, other AWS accounts' included; a
+distribution cannot forge the `X-Forwarded-For` entry its own edge appends, so the caller address
+below stays honest, and a secret origin header checked by the ALB would close the rest (#860).
+core-api relies on this: `TRUSTED_PROXY_HOPS = 2` and `TRUSTED_PROXY_NETWORK = var.vpc_cidr` make
+it believe the `X-Forwarded-For` entry the ALB adds, so `request.ip`, which the per-address rate
+limits key on, is the real caller (#856). Opening the ALB to anything else would let a caller pick
+that address. The prefix list counts as about 55 rules against the group's quota of 60, so keep
+it to one rule.
+
+## How Terraform's Task Definition Env Reaches the Service
+
+The ECS services ignore task definition changes (`ignore_changes = [task_definition]`), because
+CI deploys every image. The deploy builds each new core-api revision from the family's **latest**
+revision and overrides only the image, `NODE_ENV`, `LOG_LEVEL` and `POOLMASTER_ENVIRONMENT`. So a
+`terraform apply` that changes core-api's env (for example the SES or `TRUSTED_PROXY_*`
+variables) registers a newer revision, and the next deploy (any merge to `main`) carries that env
+to the running service. Nothing reaches the service until that deploy.
+
 ## Direct QA Database Access
 
 Terraform can also model intentionally approved direct PostgreSQL access when QA operators need it.

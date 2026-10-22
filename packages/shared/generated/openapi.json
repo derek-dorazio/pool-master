@@ -26289,7 +26289,8 @@
           "LEAGUE_JOIN_SUCCESS",
           "CONTEST_ENTRY_COMPLETED",
           "CONTEST_STARTED_SUMMARY",
-          "PASSWORD_RESET"
+          "PASSWORD_RESET",
+          "PASSWORD_CHANGED"
         ],
         "description": "A system email template."
       },

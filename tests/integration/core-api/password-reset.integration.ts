@@ -16,12 +16,14 @@ import {
   createTestUser,
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
+import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import {
-  PASSWORD_RESET_LINK_MINUTES,
   PasswordResetService,
   hashResetToken,
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
+import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { PrismaEmailMessageRepository, PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import {
   EMAIL_SETTINGS,
@@ -47,6 +49,17 @@ class RecordingMailDelivery implements MailDeliveryProvider {
   to(address: string): MailDeliveryMessage[] {
     return this.sent.filter((message) => message.to === address);
   }
+
+  withSubject(address: string, subject: string): MailDeliveryMessage[] {
+    return this.to(address).filter((message) => message.subject === subject);
+  }
+}
+
+const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
+
+function buildUserService(mail: MailDeliveryProvider): UserService {
+  const users = new PrismaUserRepository(getPrisma());
+  return new UserService(users, getPrisma(), new PasswordChangedNotifier(users, emailServiceOver(mail), APP_BASE_URL));
 }
 
 /** The token from the link in a reset email's plain text. */
@@ -56,7 +69,7 @@ function tokenFrom(message: MailDeliveryMessage): string {
   return match[1];
 }
 
-/** The service over the real outbox; each request waits for its email to reach the transport. */
+/** The service over the real outbox; each call waits for its email to reach the transport. */
 class DeliveringPasswordResetService extends PasswordResetService {
   constructor(deps: ConstructorParameters<typeof PasswordResetService>[0], private readonly sender: EmailSender) {
     super(deps);
@@ -64,6 +77,11 @@ class DeliveringPasswordResetService extends PasswordResetService {
 
   override async requestReset(identifier: string): Promise<void> {
     await super.requestReset(identifier);
+    await this.sender.drain();
+  }
+
+  override async confirmReset(token: string, newPassword: string, confirmNewPassword: string): Promise<void> {
+    await super.confirmReset(token, newPassword, confirmNewPassword);
     await this.sender.drain();
   }
 }
@@ -284,7 +302,7 @@ describe('password changes cancel open reset links (#847)', () => {
     const { user } = await createTestUser({ password: 'OldPass-1234' });
     await service.requestReset(user.email);
     const token = tokenFrom(expectDefined(mail.to(user.email)[0]));
-    const users = new UserService(new PrismaUserRepository(getPrisma()), getPrisma());
+    const users = buildUserService(mail);
 
     await users.changeOwnPassword(
       { userId: user.id, isRootAdmin: false },
@@ -302,11 +320,67 @@ describe('password changes cancel open reset links (#847)', () => {
     const { user: admin } = await createTestUser({ isRootAdmin: true });
     await service.requestReset(user.email);
     const token = tokenFrom(expectDefined(mail.to(user.email)[0]));
-    const users = new UserService(new PrismaUserRepository(getPrisma()), getPrisma());
+    const users = buildUserService(mail);
 
     await users.resetPassword({ userId: admin.id, isRootAdmin: true }, user.id);
 
     await expect(service.confirmReset(token, 'NewPass-1234', 'NewPass-1234'))
       .rejects.toMatchObject({ code: 'PASSWORD_RESET_LINK_INVALID' });
+  });
+});
+
+describe('password changed email (#848)', () => {
+  it('tells the account its password was changed after a reset by link, with a way to reset again', async () => {
+    const { service, mail } = buildService();
+    const { user } = await createTestUser({ firstName: 'Riley' });
+    await service.requestReset(user.email);
+
+    await service.confirmReset(tokenFrom(expectDefined(mail.to(user.email)[0])), 'NewPass-1234', 'NewPass-1234');
+
+    const [changed] = mail.withSubject(user.email, CHANGED_SUBJECT);
+    expect(expectDefined(changed).text).toContain('Hi Riley,');
+    expect(expectDefined(changed).text).toContain(`${APP_BASE_URL}/forgot-password`);
+  });
+
+  it('tells the account its password was changed after the user changes it themselves', async () => {
+    const mail = new RecordingMailDelivery();
+    const { user } = await createTestUser({ password: 'OldPass-1234' });
+
+    await buildUserService(mail).changeOwnPassword(
+      { userId: user.id, isRootAdmin: false },
+      user.id,
+      { currentPassword: 'OldPass-1234', newPassword: 'Changed-1234', confirmNewPassword: 'Changed-1234' },
+    );
+    await deliverQueuedEmail();
+
+    expect(mail.withSubject(user.email, CHANGED_SUBJECT)).toHaveLength(1);
+  });
+
+  it('sends nothing when a root admin resets the password, because a person is already involved', async () => {
+    const mail = new RecordingMailDelivery();
+    const { user } = await createTestUser();
+    const { user: admin } = await createTestUser({ isRootAdmin: true });
+
+    await buildUserService(mail).resetPassword({ userId: admin.id, isRootAdmin: true }, user.id);
+    await deliverQueuedEmail();
+
+    expect(mail.to(user.email)).toHaveLength(0);
+  });
+
+  it('keeps the new password when the changed email cannot be sent', async () => {
+    const failing: MailDeliveryProvider = {
+      providerName: 'smtp',
+      send: () => Promise.reject(new Error('SMTP down')),
+    };
+    const { user } = await createTestUser({ password: 'OldPass-1234' });
+
+    await expect(buildUserService(failing).changeOwnPassword(
+      { userId: user.id, isRootAdmin: false },
+      user.id,
+      { currentPassword: 'OldPass-1234', newPassword: 'Changed-1234', confirmNewPassword: 'Changed-1234' },
+    )).resolves.toBeUndefined();
+
+    const stored = await getPrisma().user.findUniqueOrThrow({ where: { id: user.id } });
+    await expect(bcrypt.compare('Changed-1234', expectDefined(stored.passwordHash))).resolves.toBe(true);
   });
 });
