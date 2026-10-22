@@ -326,8 +326,10 @@ SES 4 and 5, then slices 2 to 6 here.
    "good luck", event and rules summary instead of the entry list, leaderboard link), D3 to
    every owner with "you can change picks until", and the web app's contest rules wording moved
    to the shared package so the emails say the same thing. 2b: D2 for survivor (live entries
-   only), random draw (members with no entry) and squares (members with no box), and the
-   draft's progress in the reminder ("4 of 6 picked"; slice 1 says only that a draft is saved).
+   only), random draw (members with no entry, "Entries close soon") and squares (members with
+   no box, "Boxes close soon"), and the draft's progress in the reminder ("4 of 6 picked" for a
+   member's only draft in a roster, pick'em or bracket contest; a member with several drafts is
+   told how many).
    2c (#867, Derek 2026-10-22): an entry receipt (D3) for every entry type, to every squad
    owner, each showing that entry's content: pick'em, bracket, survivor, random draw (at the
    draw) and squares.

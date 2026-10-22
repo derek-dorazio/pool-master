@@ -3,13 +3,17 @@
  * sweep never sends one twice. The contest world is in memory; the email service is the real one
  * over an in-memory outbox, so the tests assert on the emails recorded.
  */
+import type { ContestEntrySeasonPrediction } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
   ContestStatus,
   LeagueMembershipStatus,
+  MatchSide,
   MatchStatus,
+  PredictedResult,
   SelectionType,
   SportEventStatus,
+  type ContestEntrySquare,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
@@ -57,12 +61,16 @@ describe('EntryReminders.queueDue', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventMatch[];
+  let predictions: ContestEntrySeasonPrediction[];
+  let boxes: ContestEntrySquare[];
   let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     matches = [];
+    predictions = [];
+    boxes = [];
     logger = fakeLogger();
   });
 
@@ -81,8 +89,23 @@ describe('EntryReminders.queueDue', () => {
       contests: world.contestRepo(),
       sportEvents: world.sportEventRepo(),
       configurations: world.configurationRepo(),
-      matches: { findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId) },
+      matches: {
+        findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId),
+        findBySportEvents: async (sportEventIds) => matches.filter((match) => sportEventIds.includes(match.sportEventId)),
+      },
       entries: world.entryRepo(),
+      picks: world.pickRepo(),
+      predictions: {
+        findByEntriesAndEvent: async (entryIds, sportEventId) =>
+          predictions.filter((pick) => entryIds.includes(pick.contestEntryId) && pick.sportEventId === sportEventId),
+        findByEntriesAndEvents: async (entryIds, sportEventIds) =>
+          predictions.filter((pick) => entryIds.includes(pick.contestEntryId) && sportEventIds.includes(pick.sportEventId)),
+      },
+      tiers: {
+        getEffectiveTiersForSportEvent: async (sportEventId) =>
+          (world.eventTiers.get(sportEventId) ?? []).map((tier) => ({ ...tier, participants: [] })),
+      },
+      squares: { findSquares: async (contestId) => boxes.filter((box) => box.contestId === contestId) },
       leagues: world.leagueRepo(),
       memberships: world.membershipRepo(),
       squadMemberships: world.squadMembershipRepo(),
@@ -254,12 +277,9 @@ describe('EntryReminders.queueDue', () => {
     expect(outbox.rows[0]?.idempotencyKey).toContain(settled.id);
   });
 
-  it('leaves out survivor, random draw and squares contests, drawn contests and drafts not yet open', async () => {
+  it('leaves out drawn contests and contests not yet open', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
-    for (const selectionType of [SelectionType.SURVIVOR, SelectionType.RANDOM_DRAW, SelectionType.SQUARES]) {
-      world.addContest(league.id, { selectionType, sportEventIds: [event.id] });
-    }
     world.addContest(league.id, { drawnAt: new Date('2026-04-01T00:00:00.000Z'), sportEventIds: [event.id] });
     world.addContest(league.id, { status: ContestStatus.DRAFT, sportEventIds: [event.id] });
     member(league.id, 'Nora');
@@ -267,6 +287,193 @@ describe('EntryReminders.queueDue', () => {
     await reminders().queueDue(before(CLOSES_AT, 48, 1));
 
     expect(outbox.rows).toHaveLength(0);
+  });
+
+  function pick(entryId: string, sportEventId: string, sportEventMatchId: string, participantId: string): ContestEntrySeasonPrediction {
+    return {
+      id: `prediction-${String(predictions.length + 1)}`,
+      contestEntryId: entryId,
+      sportEventId,
+      sportEventMatchId,
+      predictedResult: PredictedResult.TEAM,
+      sportEventParticipantId: `field-${participantId}`,
+      participantId,
+      confidence: null,
+      pickedAt: new Date('2026-03-01T00:00:00.000Z'),
+      createdAt: new Date('2026-03-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-03-01T00:00:00.000Z'),
+    };
+  }
+
+  it('says how far along a member\'s only draft is: a tiered roster\'s picks of its size', async () => {
+    const league = world.addLeague();
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: CLOSES_AT });
+    const contest = world.addContest(league.id, { sportEventIds: [masters.id] });
+    world.addConfiguration(contest.id);
+    world.addEventTiers(masters.id, 6);
+    const dana = member(league.id, 'Dana');
+    const entry = await enter(contest.id, dana.squad.id);
+    for (const golfer of ['a', 'b', 'c', 'd']) world.addPick(entry.id, `golfer-${golfer}`, masters.id);
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(outbox.rows[0]?.textBody).toContain('Your The Masters entry is a draft with 4 of 6 picked.');
+  });
+
+  it('says how far along a pick\'em week\'s draft is, counting games not cancelled', async () => {
+    const league = world.addLeague();
+    const week = world.addSportEvent({ name: 'Week 7', startDate: CLOSES_AT });
+    const contest = world.addContest(league.id, { selectionType: SelectionType.PICK_EM, sportEventIds: [week.id] });
+    world.addConfiguration(contest.id, {
+      selectionType: SelectionType.PICK_EM,
+      configJson: { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false },
+    });
+    matches = [1, 2, 3].map((matchNumber) => ({
+      id: `game-${String(matchNumber)}`,
+      sportEventId: week.id,
+      roundNumber: 1,
+      matchNumber,
+      status: matchNumber === 3 ? MatchStatus.CANCELLED : MatchStatus.SCHEDULED,
+    }) as SportEventMatch);
+    const dana = member(league.id, 'Dana');
+    const entry = await enter(contest.id, dana.squad.id);
+    predictions = [pick(entry.id, week.id, 'game-1', 'bears')];
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(outbox.rows[0]?.textBody).toContain('Your Week 7 entry is a draft with 1 of 2 picked.');
+  });
+
+  it('counts a member\'s drafts instead of showing one draft\'s progress when they have two', async () => {
+    const league = world.addLeague();
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: CLOSES_AT });
+    const contest = world.addContest(league.id, { sportEventIds: [masters.id] });
+    world.addConfiguration(contest.id);
+    world.addEventTiers(masters.id, 6);
+    const bo = member(league.id, 'Bo');
+    const second = world.addSquad(league.id, 'Bo\'s Second Squad');
+    world.addSquadMember(second.id, bo.user.id);
+    await enter(contest.id, bo.squad.id);
+    await enter(contest.id, second.id);
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(remindedUserIds()).toEqual([bo.user.id]);
+    expect(outbox.rows[0]?.textBody).toContain('You have 2 draft entries for The Masters.');
+  });
+
+  it('reminds survivor entries still standing whose week is a draft, and nobody whose entries are out', async () => {
+    const league = world.addLeague();
+    const week1 = world.addSportEvent({ name: 'Week 1', status: SportEventStatus.COMPLETED, startDate: new Date('2026-04-02T17:00:00.000Z') });
+    const week2 = world.addSportEvent({ name: 'Week 2', startDate: CLOSES_AT });
+    const contest = world.addContest(league.id, {
+      status: ContestStatus.ACTIVE,
+      selectionType: SelectionType.SURVIVOR,
+      sportEventIds: [week1.id, week2.id],
+    });
+    matches = [{
+      id: 'week1-game',
+      sportEventId: week1.id,
+      roundNumber: 1,
+      status: MatchStatus.COMPLETED,
+      winnerSide: MatchSide.HOME,
+      homeSportEventParticipantId: 'field-bears',
+      awaySportEventParticipantId: 'field-lions',
+      scheduledDate: week1.startDate,
+    } as SportEventMatch, {
+      id: 'week2-game',
+      sportEventId: week2.id,
+      roundNumber: 1,
+      status: MatchStatus.SCHEDULED,
+      scheduledDate: CLOSES_AT,
+    } as SportEventMatch];
+    const standing = member(league.id, 'Sam');
+    const beaten = member(league.id, 'Lou');
+    const missed = member(league.id, 'Mo');
+    const survivor = await enter(contest.id, standing.squad.id, week1.id);
+    const loser = await enter(contest.id, beaten.squad.id, week1.id);
+    await enter(contest.id, missed.squad.id);
+    predictions = [pick(survivor.id, week1.id, 'week1-game', 'bears'), pick(loser.id, week1.id, 'week1-game', 'lions')];
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(remindedUserIds()).toEqual([standing.user.id]);
+    expect(outbox.rows[0]?.textBody).toContain('Your Week 2 entry is saved as a draft.');
+  });
+
+  it('asks only members not yet in a random draw to join it, while it takes entries', async () => {
+    const league = world.addLeague();
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: CLOSES_AT });
+    const contest = world.addContest(league.id, { name: 'Sweepstake', selectionType: SelectionType.RANDOM_DRAW, sportEventIds: [masters.id] });
+    const joined = member(league.id, 'Sam');
+    const nora = member(league.id, 'Nora');
+    await enter(contest.id, joined.squad.id);
+
+    await reminders().queueDue(before(CLOSES_AT, 48, 1));
+
+    expect(remindedUserIds()).toEqual([nora.user.id]);
+    expect(outbox.rows[0]?.textBody).toContain('Just join Sweepstake before entries close.');
+    expect(outbox.rows[0]?.textBody).toContain('Join the contest: ');
+  });
+
+  it('sends no squares reminder once every box on the grid is claimed, since there is nothing left to claim', async () => {
+    const league = world.addLeague();
+    const week = world.addSportEvent({ name: 'Super Bowl', startDate: new Date('2026-04-09T10:00:00.000Z') });
+    const contest = world.addContest(league.id, {
+      selectionType: SelectionType.SQUARES,
+      sportEventIds: [week.id],
+      squaresGameMatchId: 'big-game',
+    });
+    world.addConfiguration(contest.id, {
+      selectionType: SelectionType.SQUARES,
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 100 },
+    });
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventMatch];
+    const holder = member(league.id, 'Sam');
+    member(league.id, 'Nora');
+    const holding = await enter(contest.id, holder.squad.id);
+    boxes = Array.from({ length: 100 }, (_, index) => ({
+      contestId: contest.id,
+      contestEntryId: holding.id,
+      rowIndex: Math.floor(index / 10),
+      columnIndex: index % 10,
+      claimedByUserId: holder.user.id,
+      claimedAt: new Date(),
+    }));
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('asks squares members without a box to claim one before the game\'s kickoff, and nobody once the numbers are drawn', async () => {
+    const league = world.addLeague();
+    const week = world.addSportEvent({ name: 'Super Bowl', startDate: new Date('2026-04-09T10:00:00.000Z') });
+    const contest = world.addContest(league.id, {
+      name: 'Super Bowl Squares',
+      selectionType: SelectionType.SQUARES,
+      sportEventIds: [week.id],
+      squaresGameMatchId: 'big-game',
+    });
+    world.addConfiguration(contest.id, {
+      selectionType: SelectionType.SQUARES,
+      configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+    });
+    matches = [{ id: 'big-game', sportEventId: week.id, roundNumber: 1, status: MatchStatus.SCHEDULED, scheduledDate: CLOSES_AT } as SportEventMatch];
+    const holder = member(league.id, 'Sam');
+    const nora = member(league.id, 'Nora');
+    const holding = await enter(contest.id, holder.squad.id);
+    boxes = [{ contestId: contest.id, contestEntryId: holding.id, rowIndex: 0, columnIndex: 0, claimedByUserId: holder.user.id, claimedAt: new Date() }];
+
+    await reminders().queueDue(before(CLOSES_AT, 24, 1));
+
+    expect(remindedUserIds()).toEqual([nora.user.id]);
+    expect(outbox.rows[0]?.textBody).toContain('You haven\'t claimed a box on the Super Bowl Squares grid yet.');
+    expect(outbox.rows[0]?.textBody).toContain('Game starts: Apr 9, 2026');
+
+    world.contests.set(contest.id, { ...contest, drawnAt: new Date() });
+    await reminders().queueDue(before(CLOSES_AT, 3, 1));
+    expect(outbox.rows).toHaveLength(1);
   });
 
   it('sends nothing for an event whose picks have closed early because it has started', async () => {

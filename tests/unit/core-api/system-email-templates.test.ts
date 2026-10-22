@@ -2,6 +2,7 @@ import { EmailCategory, EmailTemplateKey, NotificationClass } from '@poolmaster/
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
+  EntryReminderKind,
   renderSystemEmailTemplate,
   type SystemEmailTemplateKey,
 } from '../../../packages/core-api/src/modules/email';
@@ -165,7 +166,7 @@ describe('pool-master-98i system email templates', () => {
       contestName: 'Masters Pick 6',
       eventName: 'The Masters',
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
-      hasDraft: false,
+      standing: { kind: EntryReminderKind.NOT_ENTERED },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
     }, { timeZone: 'America/New_York' });
 
@@ -183,12 +184,66 @@ describe('pool-master-98i system email templates', () => {
       contestName: 'NFL Pick\'em',
       eventName: 'Week 7',
       closesAt: new Date('2026-10-22T00:15:00.000Z'),
-      hasDraft: true,
+      standing: { kind: EntryReminderKind.DRAFT, drafts: 1 },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-2',
     }, UTC);
 
     expect(message.text).toContain('Your Week 7 entry is saved as a draft. It won\'t count until you submit it.');
     expect(message.text).not.toContain('haven\'t entered');
+  });
+
+  describe('entry reminder wording by why it goes to the reader', () => {
+    const base = {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'Office Pool',
+      eventName: 'The Masters',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      contestUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1',
+    };
+
+    it('says how far along a single draft is, as picks made of picks needed', () => {
+      const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+        ...base,
+        standing: { kind: EntryReminderKind.DRAFT, drafts: 1, progress: { made: 4, of: 6 } },
+      }, UTC);
+
+      expect(message.text).toContain('Your The Masters entry is a draft with 4 of 6 picked. It won\'t count until you submit it.');
+    });
+
+    it('counts a reader\'s drafts rather than one draft\'s progress when they have several', () => {
+      const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+        ...base,
+        standing: { kind: EntryReminderKind.DRAFT, drafts: 2 },
+      }, UTC);
+
+      expect(message.text).toContain('You have 2 draft entries for The Masters. They won\'t count until you submit them.');
+    });
+
+    it('asks a member not in a random draw to join it, since the draw deals the picks', () => {
+      const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+        ...base,
+        standing: { kind: EntryReminderKind.NOT_JOINED },
+      }, UTC);
+
+      expect(message.subject).toBe('Entries close soon: Office Pool');
+      expect(message.text).toContain('Just join Office Pool before entries close. It\'s a quick pick contest, so your picks are made for you.');
+      expect(message.text).toContain('Entries close: Apr 9, 2026');
+      expect(message.text).toContain(`Join the contest: ${base.contestUrl}`);
+      expect(message.text).not.toContain('Make your picks');
+    });
+
+    it('asks a squares member without a box to claim one before the game starts or the numbers are drawn', () => {
+      const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+        ...base,
+        standing: { kind: EntryReminderKind.NO_BOX },
+      }, UTC);
+
+      expect(message.subject).toBe('Boxes close soon: Office Pool');
+      expect(message.text).toContain('You haven\'t claimed a box on the Office Pool grid yet. Boxes close when the game starts, or sooner if the numbers are drawn first.');
+      expect(message.text).toContain('Game starts: Apr 9, 2026');
+      expect(message.text).toContain(`Claim your boxes: ${base.contestUrl}`);
+    });
   });
 
   it('ends an email with a "Stop these emails" link in both bodies when it is given one, and with none otherwise', () => {
