@@ -116,10 +116,10 @@ they don't fit). **Essential**: account, security and membership email, every le
 **A**: the basics, free plan too (a contest opening, receipts, final results, an event cancelled
 or moved). **B**: paid conveniences (reminders, commissioner nudges, the good luck and "you're
 out" emails, standings while an event is live, a commissioner's "remind everyone" button if
-built). An email about a feature that is itself gated, such as sports league cups, the league
-championship, season standings or trophies, follows that feature's gate rather than an email
-class; those rows come with #841, #863 and #837. The class is the `notificationClass` field of
-each `EMAIL_TEMPLATES` entry; nothing reads it yet.
+built). Emails about sports league cups, the league championship, season standings and
+trophies are **B** too, matching those features' class in `plans/season-cups.md` §7 (Derek
+2026-10-22); their rows come with #841, #863 and #837. The class is the `notificationClass`
+field of each `EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts
 
@@ -294,7 +294,7 @@ nothing to re-send. *Recommendation:* no email.
 
 Later, not now: cup standings and "crowned champion" emails belong to season cups (#841), and a
 season recap belongs to league history (#837). Each design adds its rows to this catalog when
-it is built.
+it is built, as class B.
 
 ---
 
