@@ -316,6 +316,8 @@ journey row once a page exists.
 
 ## 9. Parked ideas
 
+Dropped (Derek, 2026-10-22): a squad career page and an all-time table, which duplicate All years.
+
 From the research (`plans/league-history-research.md`) and the first history design, dropped
 when history became additive. None is in a slice; each is built from the same stored rows unless
 it says otherwise, and each needs Derek's yes and a ticket.
@@ -329,8 +331,6 @@ it says otherwise, and each needs Derek's yes and a ticket.
   plate per year's winner, linked by the contest's event series.
 - **Head to head.** For two squads, who finished higher in the contests both played. Shown only
   for rivals with five or more shared contests.
-- **Squad career page.** A team page section with a finish strip across the years and all-time
-  counts, and the medal tiles and finish matrix summed over every year as an all-time table.
 - **Contest medals on the trophy shelf.** A single contest's 1st to 3rd as small medals, so a
   season trophy still stands out.
 - **Season recap.** An end-of-year awards card per member, pushed by email (#845) or shown once
