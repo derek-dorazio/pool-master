@@ -371,6 +371,23 @@ describe('email sender', () => {
     expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com', 'member2@gmail.com']);
   });
 
+  it('still sends due email when clearing old content fails, logging the failed sweep', async () => {
+    const time = clock();
+    const outbox = inMemoryEmailMessages(time.now);
+    await outbox.record(queued(1));
+    outbox.clearContentCreatedBefore = () => Promise.reject(new Error('sweep timed out'));
+    const { transport, sent } = recordingTransport();
+    const logger = fakeLogger();
+
+    await sender({ outbox, transport, time, logger }).drain();
+
+    expect(sent.map((message) => message.to)).toEqual(['member1@gmail.com']);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'email.sender.sweep_failure' }),
+      expect.any(String),
+    );
+  });
+
   it('logs a failed pass and resolves, so the next tick tries again', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
