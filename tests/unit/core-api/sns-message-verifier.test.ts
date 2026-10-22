@@ -51,10 +51,27 @@ describe('SNS message verifier', () => {
       'https://sns.us-east-2.amazonaws.com:8443/cert.pem',
       'https://sns.us-east-2.amazonaws.com/cert.txt',
       'not a url',
+      // An SNS host, but not the one SNS signs this topic's messages from.
+      'https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-test.pem',
+      'https://sns.us-east-2.amazonaws.com/anything-else.pem',
     ].map((SigningCertURL) => verifier.verify(signer.sign({ Type: 'Notification', SigningCertURL }))));
 
-    expect(results).toEqual(Array(6).fill(false));
+    expect(results).toEqual(Array(8).fill(false));
     expect(fetchCertificate).not.toHaveBeenCalled();
+  });
+
+  it('refuses a genuinely signed message more than an hour old, as a replay rather than an SNS retry', async () => {
+    const signer = snsSigner();
+    const now = new Date('2026-10-22T12:00:00.000Z');
+    const verifier = new SnsMessageVerifier({ fetchCertificate: signer.fetchCertificate, now: () => now });
+
+    const results = await Promise.all([
+      verifier.verify(signer.sign({ Type: 'Notification', Timestamp: '2026-10-22T11:05:00.000Z' })),
+      verifier.verify(signer.sign({ Type: 'Notification', Timestamp: '2026-10-22T10:59:59.000Z' })),
+      verifier.verify(signer.sign({ Type: 'Notification', Timestamp: 'not a time' })),
+    ]);
+
+    expect(results).toEqual([true, false, false]);
   });
 
   it('fetches each certificate once, and again after a failed fetch', async () => {

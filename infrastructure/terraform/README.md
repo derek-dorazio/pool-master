@@ -125,9 +125,9 @@ applies:
    event destination and adds `SES_EVENTS_TOPIC_ARN` to the core-api task definition.
 2. **Let CI deploy core-api** (the next merge to `main`), so the running task has the variable.
 3. **Set `ses_events_subscribed = true` and apply again.** SNS posts a confirmation and core-api
-   confirms it. SNS → Topics → the topic → Subscriptions should show *Confirmed* within a minute.
-   If it stays *Pending confirmation*, check core-api's log for `email.deliveryEvent.unverified`,
-   then `terraform apply -replace='aws_sns_topic_subscription.ses_events[0]'` to send another.
+   confirms it; the apply waits for that and fails if it doesn't come within a minute. If it
+   fails, check core-api's log for `email.deliveryEvent.unverified`, then apply again to send
+   another confirmation.
 
 Until step 3, SES still sends; the app just doesn't hear about bounces, and the account
 suppression list still stops repeat sends to a bad address.

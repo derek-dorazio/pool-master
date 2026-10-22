@@ -131,7 +131,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     expect(screen.getByTestId('league-invitation-email-status-spam-1')).toHaveTextContent('Email marked as spam');
   });
 
-  it('says an invite email was not sent because the address bounced before, rather than the generic not-sent line', async () => {
+  it('says an invite email to a suppressed address can\'t be sent, without saying why, rather than the generic not-sent line', async () => {
     listLeagueInvitationsMock.mockResolvedValue({
       data: {
         invitations: [
@@ -143,7 +143,7 @@ describe('Commissioner tools › Invites: waiting on an answer', () => {
     renderInvitations();
 
     const status = await screen.findByTestId('league-invitation-email-status-suppressed-1');
-    expect(status).toHaveTextContent('Email not sent: this address bounced or marked an earlier email as spam.');
+    expect(status).toHaveTextContent('We can\'t email this address. Copy the link to share it.');
     expect(status).toHaveClass('text-destructive');
   });
 
@@ -433,7 +433,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     )).toBeInTheDocument();
   });
 
-  it('tells the commissioner no email went out because the address bounced or complained before', async () => {
+  it('tells the commissioner the address can\'t be emailed, without saying it bounced or complained, since that may have been another league\'s email', async () => {
     sendLeagueInvitationsMock.mockResolvedValue({
       data: {
         sent: [emailInvite({ emailStatus: 'SKIPPED', emailSkipReason: 'SUPPRESSED' })],
@@ -445,7 +445,7 @@ describe('Commissioner tools › Invites: invite people', () => {
     await sendInviteTo('friend@example.com');
 
     expect(await screen.findByText(
-      'Invitation made for friend@example.com, but no email was sent: earlier email to that address bounced or was marked as spam. Copy its link below to share it.',
+      'Invitation made for friend@example.com, but we can\'t email that address. Copy its link below to share it.',
     )).toBeInTheDocument();
   });
 

@@ -387,7 +387,9 @@ As built (slice 4): the route is `POST /api/v1/email/ses-events`, under the API'
 and believes only messages from `SES_EVENTS_TOPIC_ARN`. A suppressed address gets every email
 skipped with `SUPPRESSED`, account emails included, as the SES account list would refuse them
 anyway; a changed account address is a new address, so it is not suppressed. The invite list shows
-`emailSkipReason` beside `emailStatus`, so a commissioner sees "this address bounced". The member's
+`emailSkipReason` beside `emailStatus`; a suppressed address reads "We can't email this address",
+never why, since the list is platform-wide and the bounce or complaint may come from another
+league's email (leagues are tenants). The member's
 "fix your email" banner moved to slice 5, which builds the account page's email section it sits
 in. SNS confirms an https subscription only when it is created, and core-api can answer only once
 it runs with the topic variable, so the subscription is a second apply

@@ -14,7 +14,7 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/email-events.dto';
 import { sendError } from '../../core/error-handler';
 import type { EmailDeliveryEvents } from './email-delivery-events';
-import { isSnsUrl, type SnsMessageVerifier } from './sns-message-verifier';
+import { isSnsUrl, SNS_FETCH_TIMEOUT_MS, type SnsMessageVerifier } from './sns-message-verifier';
 
 export interface EmailEventsModuleOptions {
   deliveryEvents: EmailDeliveryEvents;
@@ -44,7 +44,7 @@ export function emailEventsModule(fastify: FastifyInstance, opts: EmailEventsMod
       tags: ['Email'],
       summary: 'Receive an SES delivery event from SNS',
       description:
-        'Public; called by Amazon SNS, never by the app. The message must come from this environment\'s SES events topic and carry a valid SNS signature from an sns.<region>.amazonaws.com certificate, or the answer is 403 EMAIL_EVENT_UNVERIFIED. A subscription confirmation is confirmed. A notification carries one SES event: a delivery marks the email DELIVERED; a permanent bounce marks it BOUNCED and a complaint COMPLAINED, and both stop the app from emailing that address again; a rejection marks it FAILED. A transient bounce, or an event for an email this environment did not send, changes nothing and still answers 200, so SNS does not retry it.',
+        'Public; called by Amazon SNS, never by the app. The message must come from this environment\'s SES events topic and carry a valid SNS signature from a certificate on the sns.<region>.amazonaws.com host of the topic\'s region, and be at most an hour old, or the answer is 403 EMAIL_EVENT_UNVERIFIED. A subscription confirmation is confirmed. A notification carries one SES event: a delivery marks the email DELIVERED; a permanent bounce marks it BOUNCED and a complaint COMPLAINED, and both stop the app from emailing that address again; a rejection marks it FAILED. A transient bounce changes nothing. An event for an email this environment did not send changes no email\'s status, though a permanent bounce or complaint still stops the app from emailing that address. Both still answer 200, so SNS does not retry them.',
       operationId: 'receiveSesEvent',
       body: schemaRef('SnsMessage'),
       response: {
@@ -85,6 +85,6 @@ export function emailEventsModule(fastify: FastifyInstance, opts: EmailEventsMod
 }
 
 async function visitSubscribeUrl(subscribeUrl: string): Promise<void> {
-  const response = await fetch(subscribeUrl);
+  const response = await fetch(subscribeUrl, { signal: AbortSignal.timeout(SNS_FETCH_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`Confirming the SNS subscription answered ${String(response.status)}`);
 }

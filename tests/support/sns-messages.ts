@@ -35,7 +35,8 @@ export function snsSigner(): SnsSigner {
         MessageId: randomUUID(),
         TopicArn: TEST_TOPIC_ARN,
         Message: '{}',
-        Timestamp: '2026-10-22T12:00:00.000Z',
+        // Now: the verifier refuses a message more than an hour old as a replay.
+        Timestamp: new Date().toISOString(),
         SignatureVersion: '2',
         Signature: '',
         SigningCertURL: TEST_SIGNING_CERT_URL,

@@ -690,13 +690,14 @@ resource "aws_sesv2_configuration_set_event_destination" "ses_events" {
 # SNS confirms an https subscription once, when it is created, by posting to the endpoint. core-api
 # answers only once its running task has SES_EVENTS_TOPIC_ARN, which CI deploys after this apply,
 # so the subscription is a second step: see infrastructure/terraform/README.md, System email (SES).
+# core-api confirms it itself, so the apply waits for that and fails loudly if it never comes.
 resource "aws_sns_topic_subscription" "ses_events" {
   count = var.ses_events_subscribed ? 1 : 0
 
   topic_arn              = aws_sns_topic.ses_events.arn
   protocol               = "https"
   endpoint               = "${local.app_url}/api/v1/email/ses-events"
-  endpoint_auto_confirms = false
+  endpoint_auto_confirms = true
   raw_message_delivery   = false
 }
 

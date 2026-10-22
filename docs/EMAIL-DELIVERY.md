@@ -56,13 +56,22 @@ Each event finds its email by the SES message id the sender stored:
 - a **permanent bounce** marks it `BOUNCED` and a **complaint** (marked as spam) `COMPLAINED`, and
   both put the address on `email_suppressions`; from then on `EmailService.send` records any email
   to that address as `SKIPPED` with the reason `SUPPRESSED`, and the commissioner's invites list
-  says the address bounced. The SES account suppression list does the same inside SES; this table
+  says "We can't email this address". It never says why: the list is platform-wide, and the
+  bounce or complaint may have come from another league's email (leagues are tenants). The SES account suppression list does the same inside SES; this table
   is the one the app can read and show;
 - a **transient bounce** is only logged, since SES retries it itself;
 - a **reject** marks it `FAILED`.
 
-An event never moves an email backwards (a late delivery after a bounce changes nothing), and an
-event for an email this environment didn't send is logged and answered 200 so SNS doesn't retry it.
+An event never moves an email backwards (a late delivery after a bounce changes nothing). An event
+for an email this environment didn't send changes no email's status, though a permanent bounce or
+complaint still suppresses the address; it is logged and answered 200 so SNS doesn't retry it.
+That also covers an event that arrives before the sender has stored the SES message id: the email
+then stays `SENT`, and a bounce still suppresses the address.
+
+The route believes a message only when it is from `SES_EVENTS_TOPIC_ARN`, signed with a
+certificate under `/SimpleNotificationService-` on the `sns.<region>.amazonaws.com` host of the
+topic's region, and at most an hour old (SNS retries within minutes, so anything older is a
+replay). Fetching a certificate or confirming the subscription times out after 5 seconds.
 
 ## Templates
 

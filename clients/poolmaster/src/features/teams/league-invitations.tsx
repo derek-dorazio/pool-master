@@ -86,7 +86,7 @@ function describeInviteResult(result: SendLeagueInvitationsResponse): string | n
   const sent = result.sent.at(0);
   if (sent) {
     if (sent.emailSkipReason === EmailSkipReason.SUPPRESSED) {
-      return `Invitation made for ${sent.email}, but no email was sent: earlier email to that address bounced or was marked as spam. Copy its link below to share it.`;
+      return `Invitation made for ${sent.email}, but we can't email that address. Copy its link below to share it.`;
     }
     return sent.emailStatus === EmailMessageStatus.SKIPPED
       ? `Invitation made for ${sent.email}, but no email was sent. Copy its link below to share it.`
@@ -115,8 +115,11 @@ const EMAIL_STATUS_LABELS: Record<EmailMessageStatus, string> = {
   [EmailMessageStatus.SKIPPED]: 'Email not sent. Copy the link to share it.',
 };
 
-/** Not sent because earlier email to the address bounced or was marked as spam. */
-const SUPPRESSED_LABEL = 'Email not sent: this address bounced or marked an earlier email as spam. Check the address, or copy the link to share it.';
+/**
+ * Not sent because the address is on the suppression list. That list is platform-wide, so the
+ * line never says why: the bounce or complaint may have come from another league's email.
+ */
+const SUPPRESSED_LABEL = 'We can\'t email this address. Copy the link to share it.';
 
 const EMAIL_PROBLEM_STATUSES: ReadonlySet<EmailMessageStatus> = new Set([
   EmailMessageStatus.FAILED,

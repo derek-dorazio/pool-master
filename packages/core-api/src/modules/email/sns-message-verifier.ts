@@ -21,6 +21,18 @@ const SIGNED_FIELDS = {
 
 const SIGNATURE_ALGORITHMS = { '1': 'RSA-SHA1', '2': 'RSA-SHA256' } as const;
 
+/** SNS serves its signing certificates under this path, on the topic's own region's host. */
+const CERTIFICATE_PATH_PREFIX = '/SimpleNotificationService-';
+
+/**
+ * How old a message may be. SNS retries a failed delivery within minutes, so anything older is a
+ * replay of a captured message, not a retry.
+ */
+export const SNS_MESSAGE_MAX_AGE_MS = 60 * 60 * 1000;
+
+/** How long fetching a certificate or confirming a subscription may take. */
+export const SNS_FETCH_TIMEOUT_MS = 5000;
+
 /** Whether `url` is an https URL on an SNS host, as a signing certificate or subscribe URL must be. */
 export function isSnsUrl(url: string, pathSuffix?: string): boolean {
   let parsed: URL;
@@ -38,19 +50,25 @@ export function isSnsUrl(url: string, pathSuffix?: string): boolean {
 export interface SnsMessageVerifierOptions {
   /** Fetches a signing certificate (PEM). The app's uses fetch; tests pass their own. */
   fetchCertificate?: (url: string) => Promise<string>;
+  now?: () => Date;
 }
 
 export class SnsMessageVerifier {
   private readonly certificates = new Map<string, Promise<string>>();
   private readonly fetchCertificate: (url: string) => Promise<string>;
+  private readonly now: () => Date;
 
   constructor(options: SnsMessageVerifierOptions = {}) {
     this.fetchCertificate = options.fetchCertificate ?? fetchText;
+    this.now = options.now ?? (() => new Date());
   }
 
-  /** True only for a message signed by SNS with a certificate from an SNS host. */
+  /**
+   * True only for a recent message signed by SNS with a certificate from the SNS host of its
+   * topic's region.
+   */
   async verify(message: SnsMessage): Promise<boolean> {
-    if (!isSnsUrl(message.SigningCertURL, '.pem')) return false;
+    if (!isCertificateUrlFor(message) || !this.isRecent(message.Timestamp)) return false;
     let certificate: string;
     try {
       certificate = await this.certificate(message.SigningCertURL);
@@ -66,6 +84,11 @@ export class SnsMessageVerifier {
     }
   }
 
+  private isRecent(timestamp: string): boolean {
+    const age = this.now().getTime() - Date.parse(timestamp);
+    return age <= SNS_MESSAGE_MAX_AGE_MS;
+  }
+
   /** Certificates rarely change, so each is fetched once; a failed fetch is tried again next time. */
   private certificate(url: string): Promise<string> {
     let pending = this.certificates.get(url);
@@ -76,6 +99,15 @@ export class SnsMessageVerifier {
     }
     return pending;
   }
+}
+
+/** The certificate URL must be SNS's own, on the host of the region the message's topic is in. */
+function isCertificateUrlFor(message: SnsMessage): boolean {
+  if (!isSnsUrl(message.SigningCertURL, '.pem')) return false;
+  const { hostname, pathname } = new URL(message.SigningCertURL);
+  // arn:aws:sns:<region>:<account>:<topic>
+  const topicRegion = message.TopicArn.split(':')[3];
+  return hostname === `sns.${topicRegion}.amazonaws.com` && pathname.startsWith(CERTIFICATE_PATH_PREFIX);
 }
 
 function stringToSign(message: SnsMessage): string {
@@ -89,7 +121,7 @@ function stringToSign(message: SnsMessage): string {
 }
 
 async function fetchText(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetch(url, { signal: AbortSignal.timeout(SNS_FETCH_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`Fetching ${url} answered ${String(response.status)}`);
   return response.text();
 }
