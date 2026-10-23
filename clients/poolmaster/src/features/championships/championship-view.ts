@@ -1,6 +1,6 @@
-import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount } from '@poolmaster/shared/domain';
-import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto } from '@/lib/api';
-import { formatCupPoints, formatOrdinalPlace, joinNames } from './cup-view';
+import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount, CupStatus, SummaryTile } from '@poolmaster/shared/domain';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, HistoryCupDto, HistoryYearDto } from '@/lib/api';
+import { CUP_SHOWN_FROM_COUNTED, formatCupPoints, formatOrdinalPlace, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
 export const FINISH_MATRIX_PLACES = CHAMPIONSHIP_MATRIX_PLACES;
@@ -105,4 +105,51 @@ export function describeContestResult(contest: ContestResultSummaryDto): Contest
     case ContestResultCount.NO_RESULT:
       return { badge: 'No result', note: 'Every event was cancelled, so nobody placed' };
   }
+}
+
+/** Each All years tile's label. A `Record`, so a new tile needs its label. */
+export const SUMMARY_TILE_LABELS: Record<SummaryTile, string> = {
+  [SummaryTile.MOST_CHAMPIONSHIPS]: 'Most championships',
+  [SummaryTile.MOST_CUPS]: 'Most cups',
+};
+
+/** A year as All years heads it: "2026 so far" while it runs. */
+export function historyYearTitle(year: Pick<HistoryYearDto, 'year' | 'isOver'>): string {
+  return year.isOver ? String(year.year) : `${year.year} so far`;
+}
+
+/** Who won the year's championship, or leads it while the year runs. */
+export function describeHistoryChampions(year: HistoryYearDto): string {
+  if (!year.champions.length) {
+    return 'No championship contest counted';
+  }
+  const names = joinNames(year.champions.map((squad) => squad.squadName));
+  if (!year.isOver) {
+    return `${names} ${year.champions.length > 1 ? 'lead' : 'leads'}`;
+  }
+  return year.champions.length > 1 ? `Champions: ${names}` : `Champion: ${names}`;
+}
+
+/** A cup's line on All years: its champions once crowned, its leaders while open, or nobody yet. */
+export function describeHistoryCup(cup: HistoryCupDto): string {
+  if (!cup.winners.length) {
+    return cup.status === CupStatus.CROWNED ? 'Crowned' : 'Nobody leads yet';
+  }
+  const names = joinNames(cup.winners.map((squad) => squad.squadName));
+  return cup.status === CupStatus.CROWNED ? `Won by ${names}` : `${names} ${cup.winners.length > 1 ? 'lead' : 'leads'}`;
+}
+
+/**
+ * The cups All years shows: every crowned cup, since the Most cups tile counts it, and an open cup
+ * once enough of its contests have counted, as on the Trophy case.
+ */
+export function historyCupsOnShow(cups: HistoryCupDto[]): HistoryCupDto[] {
+  return cups.filter((cup) => cup.status === CupStatus.CROWNED || cup.contestsCounted >= CUP_SHOWN_FROM_COUNTED);
+}
+
+/** The years All years lists, each with only its cups on show; a year with no champion and no such cup is skipped. */
+export function historyYearsOnShow(years: HistoryYearDto[]): HistoryYearDto[] {
+  return years
+    .map((year) => ({ ...year, cups: historyCupsOnShow(year.cups) }))
+    .filter((year) => year.champions.length > 0 || year.cups.length > 0);
 }

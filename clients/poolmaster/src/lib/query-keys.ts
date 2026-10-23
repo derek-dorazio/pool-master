@@ -140,6 +140,7 @@ export const QueryKeys = {
     all: ['poolmaster', 'championship'] as const,
     byYear: (leagueId: QueryKeyId, year: number) => ['poolmaster', 'championship', leagueId, year] as const,
     years: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'years'] as const,
+    summary: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'summary'] as const,
     contests: (leagueId: QueryKeyId, year: number | null, squadId: QueryKeyId | null, place: number | null) =>
       ['poolmaster', 'championship', leagueId, year, 'contests', squadId, place] as const,
   },
@@ -160,11 +161,6 @@ export const QueryKeys = {
     all: ['poolmaster', 'league-team-owner-invitations'] as const,
     byLeague: (leagueId: QueryKeyId) =>
       ['poolmaster', 'league-team-owner-invitations', leagueId] as const,
-  },
-  myTeamHistory: {
-    all: ['poolmaster', 'my-team-history'] as const,
-    byTeamAndContests: (teamId: QueryKeyId, contestIds: QueryKeyId) =>
-      ['poolmaster', 'my-team-history', teamId, contestIds] as const,
   },
   invitations: {
     all: ['poolmaster', 'invitation-preview'] as const,

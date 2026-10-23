@@ -30,7 +30,7 @@ export function buildLeagueMenuItems(
     { isActive: pathname === homePath, label: 'Home', testId: 'league-menu-home', to: homePath },
     { isActive: isUnder(contestsPath), label: 'Contests', testId: 'league-menu-contests', to: contestsPath },
     {
-      isActive: isUnder(buildLeagueChampionshipsPath(leagueCode)),
+      isActive: isUnder(buildLeagueChampionshipsPath(leagueCode)) || isUnder(buildLeagueHistoryPath(leagueCode)),
       label: 'Championships',
       testId: 'league-menu-championships',
       to: buildLeagueChampionshipsPath(leagueCode),
@@ -42,7 +42,7 @@ export function buildLeagueMenuItems(
       to: buildLeagueContestTypesPath(leagueCode),
     },
     {
-      isActive: isUnder(myTeamPath) || isUnder(buildLeagueHistoryPath(leagueCode)),
+      isActive: isUnder(myTeamPath),
       label: mySquadName || 'Yours',
       testId: 'league-menu-my-team',
       to: myTeamPath,

@@ -7,6 +7,7 @@ import { MyAccountPage } from '@/features/account/my-account-page';
 import { UserPage } from '@/features/account/user-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
+import { AllYearsPage } from '@/features/championships/all-years-page';
 import { ChampionshipPage } from '@/features/championships/championship-page';
 import { ChampionshipsLayout, ChampionshipsRedirect } from '@/features/championships/championships-layout';
 import { CupSquadPointsPage } from '@/features/championships/cup-squad-points-page';
@@ -67,7 +68,6 @@ import { RootAdminSettingsPage } from '@/features/root-admin/root-admin-settings
 import { RootAdminSyncDashboardPage } from '@/features/root-admin/root-admin-sync-dashboard-page';
 import { RootAdminUnmappedParticipantsPage } from '@/features/root-admin/root-admin-unmapped-participants-page';
 import { JoinTeamOwnerPage } from '@/features/teams/join-team-owner-page';
-import { MyTeamHistoryPage } from '@/features/teams/my-team-history-page';
 import { MyTeamEditPage } from '@/features/teams/my-team-edit-page';
 import { MyTeamPage } from '@/features/teams/my-team-page';
 import { TeamPage } from '@/features/teams/team-page';
@@ -241,7 +241,7 @@ export const router = createBrowserRouter([
           },
           {
             path: 'league/:leagueCode/history',
-            element: <MyTeamHistoryPage />,
+            element: <AllYearsPage />,
           },
           {
             path: 'league/:leagueCode/teams',
