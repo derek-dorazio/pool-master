@@ -283,6 +283,9 @@ export const API_ERROR_CODES = [
   'USER_NOT_FOUND',
   'USER_READ_FORBIDDEN',
   'USER_WRITE_FORBIDDEN',
+  'YEAR_REVIEW_ALREADY_SENT',
+  'YEAR_REVIEW_NOTHING_TO_SEND',
+  'YEAR_REVIEW_NOT_OPEN',
 ] as const;
 
 export type ApiErrorCode = (typeof API_ERROR_CODES)[number];

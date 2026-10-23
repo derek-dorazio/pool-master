@@ -29,7 +29,7 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getHistorySummaryMock: vi.fn(),
@@ -37,11 +37,13 @@ const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjecti
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
+  getYearReviewMock: vi.fn(),
   listChampionshipYearsMock: vi.fn(),
   listContestResultsMock: vi.fn(),
   listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
+  sendYearReviewMock: vi.fn(),
 }));
 
 bindApiMocks({
@@ -52,11 +54,13 @@ bindApiMocks({
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
+  getYearReview: getYearReviewMock,
   listChampionshipYears: listChampionshipYearsMock,
   listContestResults: listContestResultsMock,
   listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
   refreshToken: refreshTokenMock,
+  sendYearReview: sendYearReviewMock,
 });
 
 const NOW = new Date('2026-09-01T12:00:00.000Z');
@@ -103,6 +107,7 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   listCupSeasonsMock.mockResolvedValue(apiSuccess({ seasonYears: [2026, 2025] }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
+  getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'NOTHING_TO_SEND', sentAt: null, sentByName: null } }));
 }
 
 /** The year's final contests, newest first: a counted one, a not-counted one, one rained out. */
@@ -179,7 +184,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock, sendYearReviewMock]) {
     mock.mockReset();
   }
 });
@@ -516,6 +521,64 @@ describe('Championships › Trophy case', () => {
 
     expect(await screen.findByText('The cup cannot be crowned while Super Bowl Picks is not final.')).toBeInTheDocument();
     expect(screen.getByTestId('crown-cup-dialog-cup-nfl')).toBeInTheDocument();
+  });
+});
+
+describe('Championships › Year in review', () => {
+  const READY = { year: 2025, status: 'READY', sentAt: null, sentByName: null } as const;
+
+  it('offers the commissioner the year in review once last year is ready to send', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('year-review-ready')).toHaveTextContent('Your 2025 year in review is ready to send');
+    expect(screen.getByTestId('year-review-send')).toHaveTextContent('Send the 2025 year in review');
+  });
+
+  it('shows no year in review once it is sent, with nothing to send, or to a member', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { ...READY, status: 'SENT', sentAt: '2026-01-02T15:00:00.000Z', sentByName: 'Casey Commish' } }));
+    const { unmount } = renderChampionships('/league/BIGDAWGS/championships/2026');
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    await waitFor(() => expect(getYearReviewMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+    unmount();
+
+    getYearReviewMock.mockClear();
+    primeViewer();
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    expect(getYearReviewMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+  });
+
+  it('sends the year in review once the commissioner confirms, then says it is on its way', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+    sendYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { ...READY, status: 'SENT', sentAt: '2026-09-01T12:00:00.000Z', sentByName: 'Casey Commish' } }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    fireEvent.click(await screen.findByTestId('year-review-send'));
+    expect(screen.getByText('Every squad that placed in 2025 gets its year by email. It can be sent once.')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
+
+    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every squad.');
+    expect(sendYearReviewMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', year: '2025' } }));
+  });
+
+  it('says why when the year in review cannot be sent, keeping the dialog open', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+    sendYearReviewMock.mockResolvedValue({ error: { error: { code: 'YEAR_REVIEW_ALREADY_SENT', message: 'The 2025 year in review was already sent.' } } });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    fireEvent.click(await screen.findByTestId('year-review-send'));
+    fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
+
+    expect(await screen.findByText('The 2025 year in review was already sent.')).toBeInTheDocument();
+    expect(screen.getByTestId('year-review-dialog')).toBeInTheDocument();
   });
 });
 

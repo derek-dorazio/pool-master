@@ -21,7 +21,7 @@ import {
   type Squad,
 } from '@poolmaster/shared/domain';
 
-import type { ChampionshipService, ChampionshipStandingView } from '../championship/service';
+import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearView } from '../championship/service';
 import type { CupService, CupStandingView, CupView } from '../cups/service';
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
@@ -219,16 +219,7 @@ export class HistoryService {
     ]);
     const yearNumbers = [...new Set([...championshipYears.map((row) => row.year), ...seasonYears])].sort((left, right) => right - left);
     const years = await Promise.all(yearNumbers.map((year) => this.readSquadYear(leagueId, squad, year)));
-    const trophies = years.flatMap((year): SquadTrophyView[] => {
-      const { championship } = year;
-      const podium = championship !== null && championship.isOver
-        ? trophyForPlace(championship.standing.position, championship.standing.points)
-        : null;
-      return [
-        ...(podium === null || championship === null ? [] : [{ kind: TrophyKind.CHAMPIONSHIP, year: year.year, trophy: podium, cupName: championship.cupName }]),
-        ...year.cups.flatMap((cup) => cup.standing.trophy === null ? [] : [{ kind: TrophyKind.CUP, year: year.year, trophy: cup.standing.trophy, cup: cup.view }]),
-      ];
-    });
+    const trophies = years.flatMap(squadYearTrophies);
     this.deps.logger?.debug({ action: 'history.squadHistory', data: { leagueId, squadId, yearCount: years.length, trophyCount: trophies.length } }, 'Read a squad\'s history');
     return {
       squad,
@@ -252,39 +243,28 @@ export class HistoryService {
     return squad;
   }
 
+  /**
+   * Every active squad's year (#872 slice 4, the year in review), from one read of the year's
+   * championship and cups, by squad name.
+   */
+  async getLeagueSquadYears(leagueId: string, year: number): Promise<SquadYearView[]> {
+    const [squads, championship, cups] = await Promise.all([
+      this.deps.squads.findByLeague(leagueId),
+      this.deps.championship.getYear(leagueId, year),
+      this.deps.cups.listSeasonCups(leagueId, year),
+    ]);
+    return [...squads]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((squad) => squadYearFrom(squad, year, championship, cups));
+  }
+
   /** One year of a squad, from the same championship and cup reads as the league pages. */
   private async readSquadYear(leagueId: string, squad: Squad, year: number): Promise<SquadYearView> {
-    const squadId = squad.id;
     const [championship, cups] = await Promise.all([
       this.deps.championship.getYear(leagueId, year),
       this.deps.cups.listSeasonCups(leagueId, year),
     ]);
-    const standing = championship.standings.find((row) => row.squad.id === squadId);
-    const leaderPoints = championship.standings.at(0)?.points ?? 0;
-    const squadCups = cups
-      .flatMap((view): SquadCupView[] => {
-        const row = view.standings.find((candidate) => candidate.squad.id === squadId);
-        return row === undefined ? [] : [{
-          view,
-          contestsCounted: view.contests.filter((contest) => contest.count === CupContestCount.COUNTED).length,
-          standing: row,
-        }];
-      })
-      .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName));
-    return {
-      squad,
-      year,
-      championship: standing === undefined ? null : {
-        cupName: championship.cupName,
-        isOver: championship.isOver,
-        standing,
-        squadCount: championship.standings.length,
-        pointsBehindLeader: leaderPoints - standing.points,
-        contestsCounted: championship.contestsCounted,
-        contestsToGo: championship.contestsToGo,
-      },
-      cups: squadCups,
-    };
+    return squadYearFrom(squad, year, championship, cups);
   }
 
   /**
@@ -376,4 +356,47 @@ function mostOf(tile: SummaryTile, wins: readonly Squad[]): HistorySummaryTileVi
 /** How many times the squad finished in a place (0 for 1st) over its championship rows. */
 function sumFinishes(years: SquadYearView[], placeIndex: number): number {
   return years.reduce((total, year) => total + (year.championship?.standing.finishes[placeIndex] ?? 0), 0);
+}
+
+/** A squad's rows of a year's championship and cups. */
+function squadYearFrom(squad: Squad, year: number, championship: ChampionshipYearView, cups: readonly CupView[]): SquadYearView {
+  const squadId = squad.id;
+  const standing = championship.standings.find((row) => row.squad.id === squadId);
+  const leaderPoints = championship.standings.at(0)?.points ?? 0;
+  const squadCups = cups
+    .flatMap((view): SquadCupView[] => {
+      const row = view.standings.find((candidate) => candidate.squad.id === squadId);
+      return row === undefined ? [] : [{
+        view,
+        contestsCounted: view.contests.filter((contest) => contest.count === CupContestCount.COUNTED).length,
+        standing: row,
+      }];
+    })
+    .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName));
+  return {
+    squad,
+    year,
+    championship: standing === undefined ? null : {
+      cupName: championship.cupName,
+      isOver: championship.isOver,
+      standing,
+      squadCount: championship.standings.length,
+      pointsBehindLeader: leaderPoints - standing.points,
+      contestsCounted: championship.contestsCounted,
+      contestsToGo: championship.contestsToGo,
+    },
+    cups: squadCups,
+  };
+}
+
+/** The trophies a squad took in a year: its championship podium once the year is over, then its crowned cups'. */
+export function squadYearTrophies(year: SquadYearView): SquadTrophyView[] {
+  const { championship } = year;
+  const podium = championship !== null && championship.isOver
+    ? trophyForPlace(championship.standing.position, championship.standing.points)
+    : null;
+  return [
+    ...(podium === null || championship === null ? [] : [{ kind: TrophyKind.CHAMPIONSHIP, year: year.year, trophy: podium, cupName: championship.cupName }]),
+    ...year.cups.flatMap((cup) => cup.standing.trophy === null ? [] : [{ kind: TrophyKind.CUP, year: year.year, trophy: cup.standing.trophy, cup: cup.view }]),
+  ];
 }

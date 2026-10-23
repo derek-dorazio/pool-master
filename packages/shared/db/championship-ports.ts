@@ -1,4 +1,4 @@
-import type { LeagueYearFinish, SelectionType } from '../domain';
+import type { LeagueYearFinish, LeagueYearReview, SelectionType } from '../domain';
 
 /** A contest that went final, as a year's contest list names it (#837). */
 export interface FinalContest {
@@ -30,4 +30,11 @@ export interface ChampionshipRepository {
    * `contestIds` whenever they did (#837).
    */
   findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]>;
+}
+
+/** Whether a league's year in review was sent (#872 slice 4). */
+export interface LeagueYearReviewRepository {
+  findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null>;
+  /** Records the send; null when one is already recorded for the league and year. */
+  create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null>;
 }

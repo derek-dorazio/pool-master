@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { CupPointsScale, CupWeight, SelectionType, cupFinishPoints } from '@poolmaster/shared/domain';
-import { PrismaChampionshipRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaChampionshipRepository, PrismaLeagueYearReviewRepository } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
   createTestUser,
@@ -264,5 +264,23 @@ describe('PrismaChampionshipRepository (#863)', () => {
       ['Undated', null, sportLeague.sportLeague.name, SelectionType.TIERED],
     ]);
     await expect(repo.findFinalContests(randomUUID(), from, to, [undated.id])).resolves.toEqual([]);
+  });
+});
+
+describe('PrismaLeagueYearReviewRepository (#872)', () => {
+  it('records a league\'s year in review once and reads it back; a second record for the same year answers null and keeps the first', async () => {
+    const repo = new PrismaLeagueYearReviewRepository(getPrisma());
+    const { league } = await seedLeague();
+    const sender = await createTestUser({ firstName: 'Review', lastName: `Sender${randomUUID().slice(0, 8)}` });
+    const other = await createTestUser({ firstName: 'Second', lastName: `Press${randomUUID().slice(0, 8)}` });
+
+    expect(await repo.findByLeagueYear(league.id, 2025)).toBeNull();
+    const first = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
+    const again = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: other.user.id });
+
+    expect(first).toMatchObject({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
+    expect(again).toBeNull();
+    expect(await repo.findByLeagueYear(league.id, 2025)).toEqual(first);
+    expect(await repo.findByLeagueYear(league.id, 2024)).toBeNull();
   });
 });

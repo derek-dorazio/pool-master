@@ -282,6 +282,7 @@ The lifecycle scheduler sends each email on its first sweep after "finished" plu
 | F2 | Contest ended with no scores | Every event of the contest was cancelled | Commissioners and members with an entry | At once | "Every event was cancelled, so [contest] ends with no scores." | ✅ `CONTEST_RESULTS` (slice 4), for any contest that completes with no places; a one-event contest names its cancelled event; a squares game not played says only that it ended with no scores | P2 | A |
 | F3 | You won | The reader's entry finished first (or tied first) | That entry's owners | With F1, folded into it as a personal line | "Congratulations, [squad] won [contest]." | ✅ folded into F1 (slice 4) | P2 (part of F1) | A |
 | F4 | Settle up | The contest settles with prizes defined | The league's commissioners | With F1 | Prize table with each winner's squad and owners' names, reminder that payment is outside Poolmaster | | P3 | B |
+| F5 | Year in review | The commissioner presses Send the year in review, from 1 January for the year before (season-cups plan Q6) | Each active owner of an active squad that placed that year | Once per league and year | The squad's championship place and points, its contest 1sts, 2nds and 3rds, the cups it placed in, its trophies, See your year button | ✅ `YEAR_IN_REVIEW` (#872 slice 4), Results category | P2 | B |
 
 **Q3.12 Score corrections after settlement.** A settled result never changes, so there is
 nothing to re-send. *Recommendation:* no email.

@@ -815,6 +815,8 @@ export const EmailTemplateKey = {
   PASSWORD_CHANGED: 'PASSWORD_CHANGED',
   /** A root admin's test of the email setup, from the Email settings (#910). */
   EMAIL_TEST: 'EMAIL_TEST',
+  /** A squad's year in the league, sent by the commissioner after the year ends (#872). */
+  YEAR_IN_REVIEW: 'YEAR_IN_REVIEW',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 
@@ -970,6 +972,17 @@ export const TrophyKind = {
   CUP: 'CUP',
 } as const;
 export type TrophyKind = (typeof TrophyKind)[keyof typeof TrophyKind];
+
+/**
+ * Where a league's year in review (#872) stands for last year: nothing to send (no championship
+ * contest counted that year), ready for the commissioner to send, or sent.
+ */
+export const YearReviewStatus = {
+  NOTHING_TO_SEND: 'NOTHING_TO_SEND',
+  READY: 'READY',
+  SENT: 'SENT',
+} as const;
+export type YearReviewStatus = (typeof YearReviewStatus)[keyof typeof YearReviewStatus];
 
 /**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,

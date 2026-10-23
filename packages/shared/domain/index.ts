@@ -63,6 +63,7 @@ export type {
   Cup,
   CupStanding,
   LeagueYearFinish,
+  LeagueYearReview,
   ContestEntry,
   DomainEntity,
   InjuryStatus,
