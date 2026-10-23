@@ -373,7 +373,13 @@ year), linking to the squad page for that year. It is the same data at one momen
 email, not another page. Sent through the email outbox (#845), class B.
 
 - **Q6** (Derek, 2026-10-23) The commissioner sends it, with a "Send the 2026 year in review"
-  button on the Championships page from 1 January. No job runs. An automatic send can come later.
+  button on the Championships page from 1 January. No job runs.
+- **Telling the commissioner** (Derek, 2026-10-23): from 1 January until it is sent, the
+  commissioner sees a "Your 2026 year in review is ready to send" banner on league home and the
+  Championships page, like Ready to crown. It is worked out on read (the year is over and
+  nothing has been sent for it), so it needs no timer either. An email reminder, and later an
+  automatic send on 1 January around 2am US Eastern, come with a scheduled job (Derek's long-run
+  plan); the button and banner stay as the manual path.
 
 ### Slices (#872)
 
