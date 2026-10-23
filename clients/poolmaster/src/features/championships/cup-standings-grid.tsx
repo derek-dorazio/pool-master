@@ -1,9 +1,9 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import type { CupStandingRowDto } from '@/lib/api';
+import type { CupProjectedStandingDto, CupStandingRowDto } from '@/lib/api';
 import { cn, DataGrid } from '@/features/shared/ui';
 import { CupSquadName } from './cup-squad-name';
-import { describeMovement, formatCupPoints } from './cup-view';
+import { describeMovement, formatCupPoints, formatProjectedStanding } from './cup-view';
 
 const STANDINGS_PER_PAGE = 25;
 
@@ -17,14 +17,18 @@ const MOVEMENT_CLASS = {
  * A cup's standings: place, movement since the latest counted contest, squad, points, wins and
  * contests counted, with search and paging (rules/ux-rules.md §12 rule 7). A squad opens its
  * points contest by contest. `focusSquadId` marks one squad: the viewer's, or the squad whose page
- * shows it.
+ * shows it. With a projection, a greyed "If it ended now" column shows each squad's place and
+ * points if the live contests ended now.
  */
 export function CupStandingsGrid({
   focusSquadId,
+  projection,
   rows,
   squadPath,
 }: {
   focusSquadId: string | null;
+  /** Each squad's projected standing, by squad id, while a contest is live. */
+  projection?: ReadonlyMap<string, CupProjectedStandingDto>;
   rows: CupStandingRowDto[];
   squadPath: (squadId: string) => string;
 }) {
@@ -86,8 +90,22 @@ export function CupStandingsGrid({
         accessorFn: (row) => row.contestsCounted,
         enableGlobalFilter: false,
       },
+      ...(projection ? [{
+        id: 'projected',
+        header: 'If it ended now',
+        accessorFn: (row: CupStandingRowDto) => projection.get(row.squadId)?.position ?? Number.MAX_SAFE_INTEGER,
+        enableGlobalFilter: false,
+        cell: ({ row }: { row: { original: CupStandingRowDto } }) => {
+          const projected = projection.get(row.original.squadId);
+          return projected ? (
+            <span className="tabular-nums text-muted-foreground" data-testid={`cup-projected-${row.original.squadId}`}>
+              {formatProjectedStanding(projected)}
+            </span>
+          ) : null;
+        },
+      }] : []),
     ],
-    [focusSquadId, squadPath],
+    [focusSquadId, projection, squadPath],
   );
 
   return (

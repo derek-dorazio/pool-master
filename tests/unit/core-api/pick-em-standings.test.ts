@@ -336,3 +336,24 @@ describe('ContestService.getPickEmLeaderboard', () => {
     expect(error).toMatchObject({ code: 'CONTEST_FORMAT_MISMATCH' });
   });
 });
+
+describe('ContestService.livePositionsOf — pick\'em', () => {
+  it('ranks nobody in a live pick\'em contest before its first kickoff, so a cup projects nothing from it yet', async () => {
+    const context = setup();
+    context.setNow(BEFORE_KICKOFF);
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toEqual([]);
+  });
+
+  it('places each entry by its squad once a week is under way, from its played games', async () => {
+    const context = setup();
+    context.play(context.week1Games.g1, MatchSide.HOME, 24, 17);
+    const squadOf = (name: string) => expectDefined([...context.world.entries.values()].find((entry) => entry.name === name)).squadId;
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toEqual([
+      { squadId: squadOf('Alice'), position: 1 },
+      { squadId: squadOf('Bob'), position: 1 },
+      { squadId: squadOf('Cara'), position: 3 },
+    ]);
+  });
+});

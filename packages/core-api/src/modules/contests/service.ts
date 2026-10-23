@@ -30,6 +30,7 @@ import type {
   ContestEntry,
   LeagueMembership,
   ParticipantScoringDefinitionId,
+  RankedContestEntry,
   SportEvent,
   SportEventMatch,
   SquadMembership,
@@ -707,6 +708,45 @@ export class ContestService {
       },
       champions: new Map(standings.entries.flatMap(({ entry, champion }) => (champion ? [[entry.id, champion] as const] : []))),
     };
+  }
+
+  /**
+   * Each ranked entry's place in a contest as it stands, by squad: what a cup's "if it ended now"
+   * projection reads (#841), off the same leaderboard the contest page shows. Before any picks are
+   * revealed nothing is ranked yet, so it is empty, as it is for squares, whose grid has no places
+   * until the contest settles. An entry with nothing scored has no place and is left out.
+   */
+  async livePositionsOf(contestId: string): Promise<RankedContestEntry[]> {
+    const contest = await this.deps.contests.findById(contestId);
+    if (!contest) {
+      throw new ContestNotFoundError(contestId);
+    }
+    let entries: readonly { squadId: string; position: number | null }[];
+    try {
+      entries = await this.liveBoardOf(contest);
+    } catch (error) {
+      if (!(error instanceof ContestOperationError) || error.code !== 'CONTEST_LEADERBOARD_PICKS_HIDDEN') throw error;
+      this.logger.debug({ contestId }, 'live positions: picks are not revealed yet, so nothing is ranked');
+      return [];
+    }
+    return entries.flatMap(({ squadId, position }) => (position === null ? [] : [{ squadId, position }]));
+  }
+
+  private async liveBoardOf(contest: Contest): Promise<readonly { squadId: string; position: number | null }[]> {
+    switch (contest.selectionType) {
+      case SelectionType.TIERED:
+      case SelectionType.BUDGET_PICK:
+      case SelectionType.RANDOM_DRAW:
+        return (await this.leaderboardOf(contest)).entries;
+      case SelectionType.PICK_EM:
+        return (await this.pickEmLeaderboardOf(contest)).entries;
+      case SelectionType.SURVIVOR:
+        return (await this.survivorLeaderboardOf(contest)).entries;
+      case SelectionType.BRACKET:
+        return (await this.bracketStandingsOf(contest)).leaderboard.entries;
+      case SelectionType.SQUARES:
+        return [];
+    }
   }
 
   /**

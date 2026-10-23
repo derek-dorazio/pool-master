@@ -7,12 +7,15 @@ import {
   describeCupContest,
   describeCupStanding,
   describeMovement,
+  describeProjection,
   formatCupPoints,
   formatPlace,
+  formatProjectedStanding,
+  hasLiveContest,
   isReadyToCrown,
   nextContestToCount,
 } from './cup-view';
-import { buildCup, buildCupContest, buildCupStanding, buildRunningCup } from './test/fixtures';
+import { buildCup, buildCupContest, buildCupStanding, buildRunningCup, buildRunningCupProjection } from './test/fixtures';
 
 describe('cup view', () => {
   it('reads tenths of a point to one decimal, and whole points without one', () => {
@@ -129,5 +132,23 @@ describe('cup view', () => {
       { squadId: 'team-2', squadName: 'Birdie Bandits', points: [0, 800, 1800] },
       { squadId: 'team-1', squadName: 'Casey Crushers', points: [0, 1000, 1650] },
     ]);
+  });
+
+  it('has a projection only for an open cup with a counted contest live, not one whose live contest is not counted or a crowned one', () => {
+    const notCountedLive = buildCup({ contests: [buildCupContest({ status: 'ACTIVE', count: 'NOT_COUNTED', cupWeight: 'NOT_COUNTED', completedAt: null })] });
+    const crowned = buildCup({ ...buildRunningCup(), status: 'CROWNED', crownedAt: '2026-09-01T00:00:00.000Z' });
+
+    expect([hasLiveContest(buildRunningCup()), hasLiveContest(notCountedLive), hasLiveContest(crowned)]).toEqual([true, false, false]);
+  });
+
+  it('shows a projected place with its points, and names every live contest the projection counts', () => {
+    const projection = buildRunningCupProjection();
+
+    expect(formatProjectedStanding({ position: 2, displayPosition: 'T2', points: 725 })).toBe('T2 · 72.5');
+    expect(formatProjectedStanding({ position: 3, displayPosition: '3', points: 2000 })).toBe('3rd · 200');
+    expect(describeProjection({
+      ...projection,
+      contests: [...projection.contests, { contestId: 'contest-5', name: 'Wyndham Budget', cupWeight: 'BONUS' }],
+    })).toBe('The greyed column shows where each squad would stand if Tour Championship Tiers and Wyndham Budget ended now.');
   });
 });

@@ -146,6 +146,8 @@ export const QueryKeys = {
       ['poolmaster', 'cups', leagueId, seasonYear] as const,
     squadPoints: (leagueId: QueryKeyId, cupId: QueryKeyId, squadId: QueryKeyId) =>
       ['poolmaster', 'cups', leagueId, 'squad-points', cupId, squadId] as const,
+    projection: (leagueId: QueryKeyId, cupId: QueryKeyId) =>
+      ['poolmaster', 'cups', leagueId, 'projection', cupId] as const,
   },
   leagueInvitations: {
     byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-invitations', leagueId] as const,

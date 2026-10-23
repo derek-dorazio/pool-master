@@ -13,6 +13,7 @@ import {
   generateInviteLink,
   getChampionship,
   getCup,
+  getCupProjection,
   getCupSquadPoints,
   listChampionshipYears,
   listContestConfigTemplates,
@@ -34,6 +35,7 @@ import {
   ContestManagementResponseSchema,
   ChampionshipYearListResponseSchema,
   CupListResponseSchema,
+  CupProjectionResponseSchema,
   CupResponseSchema,
   CupSquadPointsResponseSchema,
   LeagueResponseSchema,
@@ -50,9 +52,11 @@ import { standardEventPricing } from '../support/budget-pricing';
 // The same settlements write the league championship (#863): its year shares 1st the same way.
 // Then the commissioner's settings (#841 slice 3): a third race's open contest is set to count
 // double, the settled ones refuse a new weight, and a custom points table rescores the cup at
-// once while the championship keeps the points its contests earned when they settled. Last,
-// crowning (#841 slice 4): refused while a counted contest is open, then the cup is crowned with
-// both squads sharing the trophy, and it keeps its points when the table changes again.
+// once while the championship keeps the points its contests earned when they settled. Then
+// the third race goes live and the cup's projection (#841 slice 5) counts it as if it ended now.
+// Last, crowning (#841 slice 4): refused while a counted contest is live, then the cup is crowned
+// with both squads sharing the trophy, has no projection, and keeps its points when the table
+// changes again.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -131,14 +135,8 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       return eventId;
     };
 
-    /** A contest on the race, both squads entered, settled on `finish` (runner to place). */
-    const runContest = async (eventId: string, name: string, finish: Record<string, number>) => {
-      const contestId = expectDefined((await createContest({
-        client: commissioner.client,
-        path: { id: league.id },
-        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
-      })).data).contest.id;
-      await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+    /** Both squads' entries in an open contest on the race, submitted. */
+    const enterSquads = async (eventId: string, contestId: string) => {
       const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
       const fieldRowOf = (runner: string) => expectDefined(field.find((row) => row.participant.name === `${runner} ${RUN}`)).id;
       for (const [client, lineup] of [[commissioner.client, COMMISSIONER_LINEUP], [member.client, MEMBER_LINEUP]] as const) {
@@ -148,7 +146,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         }
         expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
       }
-      await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } });
+    };
+
+    /** The race's official result: `finish` is runner to place. */
+    const applyResults = async (eventId: string, finish: Record<string, number>) => {
       const rows = RUNNERS.map((runner) => ({
         playerName: `${runner} ${RUN}`,
         resultStatus: 'FINISHED' as const,
@@ -157,6 +158,19 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         riderName: null,
       }));
       expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response.status).toBe(200);
+    };
+
+    /** A contest on the race, both squads entered, settled on `finish` (runner to place). */
+    const runContest = async (eventId: string, name: string, finish: Record<string, number>) => {
+      const contestId = expectDefined((await createContest({
+        client: commissioner.client,
+        path: { id: league.id },
+        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
+      })).data).contest.id;
+      await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+      await enterSquads(eventId, contestId);
+      await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } });
+      await applyResults(eventId, finish);
       expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
       return contestId;
     };
@@ -276,14 +290,31 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(keptChampionship.cupName).toBe('Harriers Shield');
     expect(keptChampionship.standings.map((row) => row.points)).toEqual([1800, 1800]);
 
-    // --- Crowning: only the commissioner, and not while the counted Coast contest is open ------
+    // --- Projected points: the Coast race's result is in with the member's Abdi in front, but
+    // the race is still in progress, so its x2 contest is live. The projection counts it as if it
+    // ended now: 20 more for the member, 10 for the
+    // commissioner, who drops from T1 to 2nd ---
+    await enterSquads(coast, coastContest);
+    await transitionEvent({ client: a, path: { eventId: coast }, body: { toStatus: 'IN_PROGRESS' } });
+    await applyResults(coast, { Abdi: 1, Kiplimo: 2, Kipruto: 3, Lemma: 4, Tola: 5 });
+    const projection = CupProjectionResponseSchema.parse(expectDefined((await getCupProjection({
+      client: member.client,
+      path: { id: league.id, cupId },
+    })).data)).projection;
+    expect(projection.contests).toEqual([{ contestId: coastContest, name: `Coast Picks ${RUN}`, cupWeight: CupWeight.DOUBLE }]);
+    expect(projection.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', row.displayPosition, row.points, row.gained, row.movement])).toEqual([
+      ['member', '1', 350, 200, 0],
+      ['commissioner', '2', 250, 100, -1],
+    ]);
+
+    // --- Crowning: only the commissioner, and not while the counted Coast contest is live ------
     const crown = (client: typeof member.client) => crownCup({ client, path: { id: league.id, cupId } });
     expect((await crown(member.client)).response.status).toBe(403);
     const early = await crown(commissioner.client);
     expect(early.response.status).toBe(409);
     expect(early.error?.error).toMatchObject({
       code: 'CUP_HAS_UNFINISHED_CONTESTS',
-      details: { contests: [{ contestId: coastContest, name: `Coast Picks ${RUN}`, status: 'OPEN' }] },
+      details: { contests: [{ contestId: coastContest, name: `Coast Picks ${RUN}`, status: 'ACTIVE' }] },
     });
     await setContestCupWeight({ client: commissioner.client, path: { id: league.id, contestId: coastContest }, body: { cupWeight: CupWeight.NOT_COUNTED } });
 
@@ -297,6 +328,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const twice = await crown(commissioner.client);
     expect(twice.response.status).toBe(409);
     expect(twice.error?.error.code).toBe('CUP_CROWNED');
+    // A crowned cup's standings are final, so it has no projection.
+    const crownedProjection = await getCupProjection({ client: member.client, path: { id: league.id, cupId } });
+    expect(crownedProjection.response.status).toBe(409);
+    expect(crownedProjection.error?.error.code).toBe('CUP_CROWNED');
 
     // A crowned cup keeps the points it was crowned with.
     await updateLeagueCupSettings({

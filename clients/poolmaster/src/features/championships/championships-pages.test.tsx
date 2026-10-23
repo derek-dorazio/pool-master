@@ -24,11 +24,13 @@ import {
   buildCupStanding,
   buildRunningChampionship,
   buildRunningCup,
+  buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
+  getCupProjectionMock: vi.fn(),
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
@@ -39,6 +41,7 @@ const { crownCupMock, getChampionshipMock, getCupSquadPointsMock, getCurrentUser
 bindApiMocks({
   crownCup: crownCupMock,
   getChampionship: getChampionshipMock,
+  getCupProjection: getCupProjectionMock,
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
@@ -84,6 +87,7 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
     { membership: buildLeagueMembership({ role }), squadMembership: buildLeagueSquadMember() },
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
+  getCupProjectionMock.mockResolvedValue(apiSuccess({ projection: buildRunningCupProjection() }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
 }
 
@@ -138,7 +142,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
     mock.mockReset();
   }
 });
@@ -404,6 +408,41 @@ describe('Championships › Points race', () => {
       'href',
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga/squads/team-1',
     );
+  });
+
+  it('greys where each squad would stand if the live contest ended now beside its place, naming the contest', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+
+    expect(await screen.findByTestId('cup-projected-team-1')).toHaveTextContent('1st · 265');
+    expect(screen.getByTestId('cup-projected-team-2')).toHaveTextContent('2nd · 260');
+    expect(screen.getByRole('columnheader', { name: /If it ended now/ })).toBeInTheDocument();
+    expect(screen.getByTestId('cup-projection-note')).toHaveTextContent(
+      'The greyed column shows where each squad would stand if Tour Championship Tiers ended now.',
+    );
+    expect(getCupProjectionMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', cupId: 'cup-pga' } }));
+  });
+
+  it('asks for no projection for a cup with no live contest, or a crowned one, and shows no projected column', async () => {
+    primeViewer([NFL_CUP, CROWNED_NFL_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-nfl');
+
+    expect(await screen.findByTestId('points-race')).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /If it ended now/ })).not.toBeInTheDocument();
+    expect(getCupProjectionMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the standings and says so when the projection cannot be worked out', async () => {
+    primeViewer();
+    getCupProjectionMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+
+    expect(await screen.findByTestId('cup-projection-error')).toBeInTheDocument();
+    expect(screen.getByTestId('cup-standing-team-2')).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: /If it ended now/ })).not.toBeInTheDocument();
   });
 
   it('draws the race of the top squads, the viewer\'s line heavier', async () => {

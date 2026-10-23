@@ -248,6 +248,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | `GET /cups?seasonYear=` | #841 | The season's cups, each with its full standings and contests (`CupDto`, the same shape `GET /cups/:cupId` answers). No viewer context (access rule A8): the client finds its own squad's row, and whether the commissioner can crown from its role and the contests' `count` |
 | `GET /cups/:cupId` | #841 | `CupStandingRowDto[]` (squad ref, position, points, wins, podiums, contests, movement, trophy) and `CupContestRowDto[]` (weight, `CupContestCount`: `COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`, winner) |
 | `GET /cups/:cupId/squads/:squadId` | #841 | One squad's points, contest by contest |
+| `GET /cups/:cupId/projection` | #841 | An open cup's standings if its live contests ended now, from their leaderboards as they stand; nothing stored |
 | `POST /cups/:cupId/crown` | #841 | Crown (section 2) |
 | `GET /championship/:year` | #863 | Trophy, podium, tiles, matrix |
 | `GET /championship` | #863 | Years with their champions |
@@ -314,7 +315,10 @@ journey row once a page exists.
    split a cup from the championship. Open cups keep scoring on the league's table as it stands
    (slice 3); crowning freezes the standings with that table on the cup, so a crowned cup's
    chart and squad breakdown keep matching its frozen points.
-5. **Projected points** from live contests, greyed as "if it ended now".
+5. **Projected points** from live contests, greyed as "if it ended now". `GET .../projection` scores each live
+   counted contest from its own leaderboard's places, at its own weight, on top of the counted
+   ones; Points race shows it as a greyed "If it ended now" column beside the standings while a
+   contest is live. A crowned cup has none (409 `CUP_CROWNED`).
 
 2 and 3 in parallel after 1; 4 and 5 after 2.
 

@@ -25,8 +25,10 @@ import {
   type Cup,
   type CupPointsTable,
   type CupStanding,
+  type RankedContestEntry,
   type Squad,
   type SquadContestFinish,
+  squadContestFinishes,
 } from '@poolmaster/shared/domain';
 
 type CupLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
@@ -131,8 +133,35 @@ export interface CupSquadPointsView {
   contests: CupSquadContestView[];
 }
 
+/** One squad's place in a cup if its live contests ended now. */
+export interface CupProjectedStandingView {
+  squad: Squad;
+  position: number;
+  displayPosition: string;
+  /** Tenths of a point, the live contests' included. */
+  points: number;
+  /** Tenths of a point the live contests would add. */
+  gained: number;
+  /** Places gained (positive) or lost against the standings as they are. */
+  movement: number;
+}
+
+/** A cup's standings if every live contest it counts ended now. */
+export interface CupProjectionView {
+  cup: Cup;
+  /** The live contests the projection counts, each at its own weight. */
+  contests: CupContest[];
+  standings: CupProjectedStandingView[];
+}
+
+/** A live contest's places as they stand, by entry: the contest's own leaderboard. */
+export interface CupLivePositions {
+  livePositionsOf(contestId: string): Promise<RankedContestEntry[]>;
+}
+
 export interface CupServiceDeps {
   cups: CupRepository;
+  liveContests: CupLivePositions;
   squads: SquadRepository;
   sportLeagues: SportLeagueRepository;
   logger?: CupLogger;
@@ -202,6 +231,44 @@ export class CupService {
       return { contest, weight, finish, points: finish === null ? 0 : cupFinishPoints(table, finish, weight) };
     });
     return { cup, squad, points: contests.reduce((sum, row) => sum + row.points, 0), contests };
+  }
+
+  /**
+   * An open cup's standings if every live contest it counts ended now: each live contest scores
+   * from its leaderboard's places as they stand, at its own weight, on top of the contests already
+   * counted. Nothing is stored; the page greys it as "if it ended now". A crowned cup's standings
+   * are frozen, so it has no projection.
+   */
+  async getProjection(leagueId: string, cupId: string): Promise<CupProjectionView> {
+    const cup = await this.requireLeagueCup(leagueId, cupId);
+    if (cup.status === CupStatus.CROWNED) {
+      this.deps.logger?.warn({ action: 'cup.projection.crowned', data: { leagueId, cupId } }, 'Cup projection refused: the cup is crowned');
+      throw new CupCrownedError(`Cup ${cup.id} is crowned, so its standings are final.`);
+    }
+    const [leagueSquads, season] = await Promise.all([this.deps.squads.findByLeague(leagueId, true), this.loadSeason(cup)]);
+    const live = season.contests.filter((contest) => contest.status === ContestStatus.ACTIVE && contest.cupWeight !== CupWeight.NOT_COUNTED);
+    const projected = await Promise.all(live.map(async (contest): Promise<SettledContest> => ({
+      contest,
+      weight: contest.cupWeight,
+      finishes: squadContestFinishes(await this.deps.liveContests.livePositionsOf(contest.id)),
+      recordedAt: null,
+    })));
+    const all = [...season.counted, ...projected];
+    const squads = cupSquads(leagueSquads, all);
+    const standingNow = new Map(rankCupTallies(tallyCup(season.table, squads, season.counted)).map((row) => [row.squadId, row]));
+    const standings = rankCupTallies(tallyCup(season.table, squads, all)).map((row) => {
+      const current = standingNow.get(row.squadId);
+      return {
+        squad: row.squad,
+        position: row.position,
+        displayPosition: row.displayPosition,
+        points: row.points,
+        gained: row.points - (current?.points ?? 0),
+        movement: (current?.position ?? row.position) - row.position,
+      };
+    });
+    this.deps.logger?.debug({ action: 'cup.projection', data: { leagueId, cupId, liveContestCount: live.length } }, 'Projected a cup from its live contests');
+    return { cup, contests: live, standings };
   }
 
   /**
