@@ -92,6 +92,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     entryCount: 18,
     cut: [{ entryName: 'Long Shots', names: ['Danny Willett', 'Mike Weir'] }],
     out: [],
+    champions: [],
     leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
   },
   PASSWORD_RESET: {

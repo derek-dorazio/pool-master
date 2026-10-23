@@ -339,7 +339,7 @@ Who is told depends on the format:
 - **Squares** ("Boxes close soon"): members holding no box, until the game starts or the numbers are drawn, and nobody once the grid is full.
 
 Live standings emails (`CONTEST_STANDINGS`, #877) are the same step's second kind. While a
-roster, pick'em or survivor contest is `ACTIVE`, one goes after each moment it can report on, once that moment is
+roster, pick'em, survivor or bracket contest is `ACTIVE`, one goes after each moment it can report on, once that moment is
 `standingsBufferMinutes` old, and none more than an hour after that:
 
 - **After a round** ("After round 2: Masters Pick 6"): a stroke-play round is finished when every
@@ -356,7 +356,13 @@ roster, pick'em or survivor contest is `ACTIVE`, one goes after each moment it c
   week's winners and lists the week's top 10 by its points above the season's; survivor says how
   many entries are still in and marks the ones out, and tells a reader whose entry went out that
   week which team it picked, or that it had no pick. It links to the contest to make next week's
-  picks for readers with an entry (in survivor, an entry still in). A playoff
+  picks for readers with an entry (in survivor, an entry still in).
+- **After a bracket round** ("After Sweet 16: March Madness"): every game of the round has its
+  result or was cancelled, at the latest time any of them was written (a game records no result
+  time of its own). Not after the final, and not for rounds before a second-chance bracket's
+  starting round. It names the round in the sport league's words, lists the leaders by points,
+  tells each reader whether their entries' champion picks are still alive and how many points
+  each entry can still reach, and gives the next round's first game time. A playoff
   that a survivor contest plays a week per round settles, and is reported, once, as the event.
 
 It goes to the league's active commissioners and every active member who owns an entry on the
@@ -365,7 +371,7 @@ placed below them, each with its total as the leaderboard shows it and its movem
 contest's last standings email. Each standings email records every entry's place
 (`contest_entries.last_standings_email_position`) after it is queued, for the next one to measure
 from. After a round it also names the reader's golfers who missed the cut in it. The
-idempotency key (contest, event, round, event or week, person) keeps a second sweep or task from
+idempotency key (contest, event, round, event, week or bracket round, person) keeps a second sweep or task from
 sending one twice.
 
 If the outbox cannot record a welcome, a receipt, a new contest or a contest-started email, the action that

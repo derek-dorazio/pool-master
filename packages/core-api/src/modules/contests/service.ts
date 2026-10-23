@@ -63,7 +63,7 @@ import {
 } from '../../mappers/contests.mapper';
 import type { BracketLeaderboardEntryRow, BracketLeaderboardModel } from '../../mappers/bracket-leaderboard.mapper';
 import type { PickEmLeaderboardEntryRow, PickEmLeaderboardModel } from '../../mappers/pick-em-leaderboard.mapper';
-import { BracketScoringUnavailableError, loadBracketStandings } from './bracket-standings';
+import { BracketScoringUnavailableError, loadBracketStandings, type BracketEntryStanding } from './bracket-standings';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames } from './pick-em-standings';
 import { loadSurvivorSeason, survivorWeekKey } from './survivor-standings';
 import type { SurvivorLeaderboardModel } from '../../mappers/survivor-leaderboard.mapper';
@@ -630,6 +630,19 @@ export class ContestService {
    */
   async getBracketLeaderboard(contestId: string, requesterUserId: string): Promise<BracketLeaderboardModel> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    return (await this.bracketStandingsOf(contest)).leaderboard;
+  }
+
+  /**
+   * The same bracket leaderboard for a contest already in hand, with no reader to check, and each
+   * entry's champion pick: what the bracket round emails read (#877).
+   */
+  async bracketStandingsOf(contest: Contest): Promise<{
+    leaderboard: BracketLeaderboardModel;
+    /** Each entry's pick to win the final, by entry id, for entries with one standing. */
+    champions: Map<string, NonNullable<BracketEntryStanding['champion']>>;
+  }> {
+    const contestId = contest.id;
     if (contest.selectionType !== SelectionType.BRACKET) {
       throw new ContestOperationError(
         'Only a bracket contest has a bracket leaderboard.',
@@ -675,12 +688,15 @@ export class ContestService {
       };
     }).sort((left, right) => left.position - right.position || left.entryNumber - right.entryNumber || left.entryName.localeCompare(right.entryName));
     return {
-      contestId,
-      sportEventId: event.id,
-      eventCancelled: standings.eventCancelled,
-      gameCount: standings.gameCount,
-      finalTotalPoints: standings.finalTotalPoints,
-      entries,
+      leaderboard: {
+        contestId,
+        sportEventId: event.id,
+        eventCancelled: standings.eventCancelled,
+        gameCount: standings.gameCount,
+        finalTotalPoints: standings.finalTotalPoints,
+        entries,
+      },
+      champions: new Map(standings.entries.flatMap(({ entry, champion }) => (champion ? [[entry.id, champion] as const] : []))),
     };
   }
 
