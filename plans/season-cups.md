@@ -106,7 +106,8 @@ CupStanding                         frozen at crowning; unique (cupId, squadId)
 ```
 
 - **Which contests count** is worked out on read: the league's contests in the cup's season and
-  sports league, not `NOT_COUNTED`. Open cup standings are computed from frozen places; only
+  sports league, not `NOT_COUNTED`. Open cup standings are computed from each final contest's
+  settled finish and weight (`LeagueYearFinish`), scored on the league's current table; only
   crowning stores them.
 - **Created, never set up.** Contest creation calls the cups service, which makes the cup if
   missing (`rules/architecture-rules.md` §4 *Service Topology*); the migration does it for every
@@ -141,7 +142,8 @@ CupStanding                         frozen at crowning; unique (cupId, squadId)
 
 `POST .../cups/:cupId/crown`, the commissioner, whenever the season is done (golf in September,
 NFL after the Super Bowl). Refused while a counted contest is Open or Live
-(`CUP_HAS_UNFINISHED_CONTESTS`, listing them); drafts never opened don't count. It writes
+(`CUP_HAS_UNFINISHED_CONTESTS`, listing them), and before any contest has counted
+(`CUP_NOTHING_COUNTED`); drafts never opened don't count. It writes
 `CupStanding`, hands out trophies (ties share), and sets `CROWNED`. A contest that goes Final
 later is listed "After the cup was crowned" and changes nothing.
 
@@ -254,7 +256,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | `PUT /cup-settings` | #841, #863 | The championship name and points table together (`cupName`, `cupPointsScale`, `cupCustomPoints`), apart from the league's details, as League settings edits them in their own section |
 | `PUT /contest-management/contests/:contestId/cup-weight` | #841 | A contest's `cupWeight`, until it is final |
 
-Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`, `CONTEST_FINAL`,
+Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`, `CUP_NOTHING_COUNTED`, `CONTEST_FINAL`,
 `SQUAD_DELETE_HAS_RESULTS`. Read cost: open cups read one league-season of frozen places per
 page; the championship and summary read a few hundred `LeagueYearFinish` rows a year. If a
 league ever gets slow, cache by its latest `settledAt`.

@@ -5,6 +5,7 @@ import { toCupDto, toCupSquadPointsDto } from '../../mappers/cups.mapper';
 import {
   CupCrownedError,
   CupHasUnfinishedContestsError,
+  CupNothingCountedError,
   CupNotFoundError,
   CupSquadNotFoundError,
   type CupService,
@@ -62,7 +63,7 @@ async function sendCupError(reply: FastifyReply, error: unknown): Promise<void> 
   if (error instanceof CupNotFoundError || error instanceof CupSquadNotFoundError) {
     return sendError(reply, 404, error.code, error.message);
   }
-  if (error instanceof CupCrownedError) {
+  if (error instanceof CupCrownedError || error instanceof CupNothingCountedError) {
     return sendError(reply, 409, error.code, error.message);
   }
   if (error instanceof CupHasUnfinishedContestsError) {

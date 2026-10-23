@@ -1059,7 +1059,7 @@ export const getCupSquadPoints = <ThrowOnError extends boolean = false>(options:
 /**
  * Crown a cup
  *
- * Allows a commissioner to crown a cup once its season is done: every squad's place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league's. Active commissioners only (root admins bypass).
+ * Allows a commissioner to crown a cup once its season is done: every squad's place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_NOTHING_COUNTED before any contest has counted toward it; 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league's. Active commissioners only (root admins bypass).
  */
 export const crownCup = <ThrowOnError extends boolean = false>(options: Options<CrownCupData, ThrowOnError>) => (options.client ?? client).post<CrownCupResponses, CrownCupErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

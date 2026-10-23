@@ -49,6 +49,15 @@ export class CupCrownedError extends Error {
   }
 }
 
+export class CupNothingCountedError extends Error {
+  readonly code = 'CUP_NOTHING_COUNTED';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'CupNothingCountedError';
+  }
+}
+
 export class CupHasUnfinishedContestsError extends Error {
   readonly code = 'CUP_HAS_UNFINISHED_CONTESTS';
 
@@ -198,8 +207,8 @@ export class CupService {
   /**
    * Crowns a cup, the commissioner's call once its season is done: freezes every squad's place and
    * the points table they were scored on, and hands the 1st, 2nd and 3rd trophies to the squads on
-   * them with points (ties share). Refused while a counted contest is still open or live, and for
-   * a cup already crowned. A contest that goes final later changes nothing.
+   * them with points (ties share). Refused while a counted contest is still open or live, before
+   * any contest has counted, and for a cup already crowned. A contest that goes final later changes nothing.
    */
   async crown(leagueId: string, cupId: string): Promise<CupView> {
     const cup = await this.requireLeagueCup(leagueId, cupId);
@@ -215,6 +224,10 @@ export class CupService {
         `The cup cannot be crowned while ${unfinished.map((contest) => contest.name).join(', ')} ${unfinished.length === 1 ? 'is' : 'are'} not final.`,
         unfinished,
       );
+    }
+    if (season.counted.length === 0) {
+      this.deps.logger?.warn({ action: 'cup.crown.nothingCounted', data: { leagueId, cupId } }, 'Cup crowning refused: no contest has counted');
+      throw new CupNothingCountedError('The cup cannot be crowned before a contest has counted toward it.');
     }
     const standings = rankCupTallies(tallyCup(season.table, cupSquads(leagueSquads, season.counted), season.counted))
       .map((row): CupStanding => ({

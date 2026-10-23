@@ -340,6 +340,17 @@ describe('CupService (#841)', () => {
       expect(cups.cups[0]?.status).toBe(CupStatus.OPEN);
     });
 
+    it('refuses with CUP_NOTHING_COUNTED a cup none of whose contests has counted, leaving it open', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('skins-game', [['eagles', 1]], { cupWeight: CupWeight.NOT_COUNTED });
+      contest('washed-out', []);
+
+      await expect(service.crown(LEAGUE, cups.cups[0]?.id ?? '')).rejects.toMatchObject({ code: 'CUP_NOTHING_COUNTED' });
+      expect(cups.cups[0]?.status).toBe(CupStatus.OPEN);
+      expect(cups.standings).toEqual([]);
+    });
+
     it('refuses to crown a cup twice with CUP_CROWNED', async () => {
       const { cups, service, contest } = build();
       await service.ensureCup(KEY);
