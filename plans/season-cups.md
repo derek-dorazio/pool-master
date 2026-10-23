@@ -305,8 +305,9 @@ journey row once a page exists.
    gate; this table is the categorization until then.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
-4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium; then the trophy
-   shelf in its own PR. Cups score each final contest from its `LeagueYearFinish` row's finish
+4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy
+   shelf moved to #872 slice 2, whose squad results endpoint and trophy case section are the same
+   thing; a shelf built here would need its own endpoint only to be replaced. Cups score each final contest from its `LeagueYearFinish` row's finish
    and weight, not the live `contest.cupWeight`, so a weight saved while settlement runs cannot
    split a cup from the championship. Open cups keep scoring on the league's table as it stands
    (slice 3); crowning freezes the standings with that table on the cup, so a crowned cup's
@@ -322,7 +323,7 @@ journey row once a page exists.
    slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
    second backfill.
 2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting (landed with #841 slice 3);
-   championship trophies on the shelf, which comes with the shelf itself in #841 slice 4. Builds the page shell if #841 slice 2 hasn't.
+   championship trophies on the shelf, which comes with the shelf itself in #872 slice 2. Builds the page shell if #841 slice 2 hasn't.
 
 **#837 history** (after both pages exist)
 
@@ -398,7 +399,8 @@ email, not another page. Sent through the email outbox (#845), class B.
 
 1. **Squad year.** The results endpoint; championship card, tiles, finish row, cups and contests
    on the squad page. After #863 slice 2 and #841 slice 2.
-2. **Trophies and all years.** Contest medals, the trophy case section, the All years strip and
+2. **Trophies and all years.** Contest medals, the trophy case section (the trophy shelf: every
+   top-3 cup finish from `CupStanding.trophy` and championship finish), the All years strip and
    the year picker. After #841 slice 4 and #837 slice 1.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
 4. **Year in review email.** After slice 1 and #845's outbox.
