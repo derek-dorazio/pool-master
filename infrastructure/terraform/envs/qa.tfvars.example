@@ -12,8 +12,10 @@ db_allocated_storage = 20
 # `db_password` or `jwt_secret` line here — tfvars-file precedence is higher than
 # TF_VAR_*, so an assignment here would silently override the env var.
 # Generate jwt_secret with: openssl rand -base64 48 | tr -d '\n'
-db_publicly_accessible = true
-db_allowed_cidr_blocks = ["YOUR_PUBLIC_IP/32"]
+# Operators reach the database through the SSM port forwarding host (README, Direct QA Database
+# Access). The RDS instance stays private: its subnets have no internet route, so a public
+# endpoint would not be reachable anyway.
+db_access_host_enabled = true
 
 # ECS
 ecs_cpu    = 256

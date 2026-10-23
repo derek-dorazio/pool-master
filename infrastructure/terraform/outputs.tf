@@ -52,6 +52,11 @@ output "rds_endpoint" {
   value       = aws_db_instance.postgres.endpoint
 }
 
+output "db_access_instance_id" {
+  description = "Instance ID of the SSM port forwarding host for operator database access (null when db_access_host_enabled is false)"
+  value       = one(aws_instance.db_access[*].id)
+}
+
 output "ecr_repository_urls" {
   description = "ECR repository URLs for each service"
   value = {

@@ -250,6 +250,20 @@ resource "aws_security_group" "database" {
     }
   }
 
+  # The SSM port forwarding host (db-access.tf). Inline like the rules above: mixing inline rules
+  # with aws_security_group_rule resources on one group makes each apply remove the other's.
+  dynamic "ingress" {
+    for_each = aws_security_group.db_access[*].id
+
+    content {
+      from_port       = 5432
+      to_port         = 5432
+      protocol        = "tcp"
+      security_groups = [ingress.value]
+      description     = "PostgreSQL from the SSM port forwarding host"
+    }
+  }
+
   tags = { Name = "${local.name_prefix}-db-sg" }
 }
 
