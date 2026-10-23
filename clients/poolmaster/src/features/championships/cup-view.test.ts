@@ -9,6 +9,7 @@ import {
   describeMovement,
   formatCupPoints,
   formatPlace,
+  isReadyToCrown,
   nextContestToCount,
 } from './cup-view';
 import { buildCup, buildCupContest, buildCupStanding, buildRunningCup } from './test/fixtures';
@@ -77,6 +78,39 @@ describe('cup view', () => {
     expect(describeCupStanding(cup, { squadId: 'team-3', isViewer: false })).toBe('Birdie Bandits leads · Bogey Men is 3rd');
     expect(describeCupStanding(cup, { squadId: null, isViewer: true })).toBe('Birdie Bandits leads');
     expect(describeCupStanding(buildCup(), { squadId: 'team-1', isViewer: true })).toBe('No contest has counted yet');
+  });
+
+  it('says who won a crowned cup and where the focus squad finished', () => {
+    const cup = buildCup({ ...buildRunningCup(), status: 'CROWNED', crownedAt: '2026-09-30T12:00:00.000Z' });
+    const shared = buildCup({
+      status: 'CROWNED',
+      standings: [
+        buildCupStanding({ squadId: 'a', squadName: 'Eagles', position: 1, displayPosition: 'T1', points: 100 }),
+        buildCupStanding({ squadId: 'b', squadName: 'Birdies', position: 1, displayPosition: 'T1', points: 100 }),
+      ],
+    });
+
+    expect(describeCupStanding(cup, { squadId: 'team-1', isViewer: true })).toBe('Birdie Bandits won · you were 2nd');
+    expect(describeCupStanding(cup, { squadId: 'team-3', isViewer: false })).toBe('Birdie Bandits won · Bogey Men was 3rd');
+    expect(describeCupStanding(shared, { squadId: null, isViewer: true })).toBe('Eagles and Birdies share the cup');
+  });
+
+  it('is ready to crown once a contest has counted and none still to count is open or live, and never once crowned', () => {
+    const counted = buildCupContest({ contestId: 'final' });
+    const ready = buildCup({ contests: [counted, buildCupContest({ contestId: 'side', count: 'NOT_COUNTED', status: 'ACTIVE' })] });
+
+    expect(isReadyToCrown(ready)).toBe(true);
+    expect(isReadyToCrown(buildCup({ contests: [counted, buildCupContest({ contestId: 'live', status: 'ACTIVE', count: 'NOT_FINAL' })] }))).toBe(false);
+    expect(isReadyToCrown(buildCup({ contests: [buildCupContest({ count: 'NO_RESULT' })] }))).toBe(false);
+    expect(isReadyToCrown({ ...ready, status: 'CROWNED' })).toBe(false);
+  });
+
+  it('marks a contest the cup was crowned before as changing nothing', () => {
+    expect(describeCupContest(buildCupContest({ count: 'AFTER_CROWNING' }))).toEqual({
+      label: 'After crowning',
+      tone: 'neutral',
+      note: 'The cup was crowned before it went final, so it changes nothing',
+    });
   });
 
   it('picks a live contest as the next to count before an open one that starts sooner', () => {

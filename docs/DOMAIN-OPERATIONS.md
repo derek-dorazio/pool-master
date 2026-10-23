@@ -938,23 +938,35 @@ up or deleted by hand; it goes with its league. Its name is built from season an
 A contest's season is its first event's year at creation (`Contest.seasonYear`), and its
 `cupWeight` (`NORMAL` x1, `BONUS` x1.5, `DOUBLE` x2, `NOT_COUNTED`) says how much it counts.
 
-Standings are worked out on every read from the frozen places (`ContestEntryStanding.position`)
-of the cup's `COMPLETED` contests that are not `NOT_COUNTED`: a squad scores from its best entry
-on the league's points table (`League.cupPointsScale`, `STANDARD` by default; `cupCustomPoints`
-only for `CUSTOM`, a database check), tied entries splitting the points of the places they
-cover, times the weight. Points travel in tenths. Squads rank on points, then wins, then podiums,
-and share a place when equal on all three. The pure rules are `@poolmaster/shared/domain/cup-points.ts`.
+While a cup is `OPEN`, its standings are worked out on every read from the finishes settlement
+wrote for its `COMPLETED` contests (`LeagueYearFinish`, the league championship's rows: each
+squad's best entry's place, and the weight the contest was settled at, so a weight saved while it
+settled changes nothing). Contests settled at `NOT_COUNTED` are left out. A squad scores on the
+league's points table as it stands (`League.cupPointsScale`, `STANDARD` by default;
+`cupCustomPoints` only for `CUSTOM`, a database check), tied entries splitting the points of the
+places they cover, times the weight. Points travel in tenths. Squads rank on points, then wins,
+then podiums, and share a place when equal on all three. The pure rules are
+`@poolmaster/shared/domain/cup-points.ts`.
+
+Crowning makes a cup `CROWNED`: each squad's place is frozen in `CupStanding`, with its trophy
+(`CHAMPION`, `RUNNER_UP`, `THIRD` for 1st to 3rd with points, ties sharing), and the cup keeps
+the points table it was crowned on (`Cup.crownedPointsScale`, `crownedCustomPoints`), so a later
+change to the league's table leaves it alone. It counts only the contests whose finishes were
+written before `crownedAt`; any other is `AFTER_CROWNING` and changes nothing.
 
 | Operation | Role | Notes |
 |---|---|---|
-| List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have; `pointsAfter`, the running total after each counted contest, which the race chart draws) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT` or `NOT_FINAL`, with its winners). No viewer context (A8): the client finds its own squad's row |
+| List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have; `pointsAfter`, the running total after each counted contest, which the race chart draws) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT`, `NOT_FINAL` or `AFTER_CROWNING`, with its winners); a crowned cup's frozen standings carry their `trophy`. No viewer context (A8): the client finds its own squad's row |
 | Read one cup | `member` | `getCup`, `GET /leagues/:id/cups/:cupId`; 404 `CUP_NOT_FOUND` for another league's cup |
 | Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
+| Crown a cup | `commissioner` | `crownCup`, `POST /leagues/:id/cups/:cupId/crown`: freezes the standings and hands out the trophies (above). 409 `CUP_HAS_UNFINISHED_CONTESTS` while a counted contest is `OPEN` or `ACTIVE`, `details.contests` listing each; 409 `CUP_CROWNED` once crowned, the write guarded on `OPEN` so two crownings never both land. Answers the crowned cup |
 
 The web app shows cups under the league menu's **Championships**
 (`/league/:code/championships/:year/trophies`): the Trophy case has a card per cup, and Points race one
 cup's standings, race chart and contests, a squad opening its cup points and a contest its
-leaderboard. League Home has a card of the year's cups once there is one. Commissioner tools'
+leaderboard. For the commissioner, the Trophy case shows "Ready to crown" with a Crown button
+(confirmed first) for each cup with a counted contest and none still open or live; a crowned
+cup's Points race shows its podium above the frozen standings. League Home has a card of the year's cups once there is one. Commissioner tools'
 League settings has a Championships section (name and points table, with a preview of what each
 place earns), and each contest's page its cup weight.
 

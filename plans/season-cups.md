@@ -96,6 +96,7 @@ Cup                                 unique (leagueId, seasonYear, sportLeagueId)
   leagueId, seasonYear, sportLeagueId
   status          CupStatus         OPEN | CROWNED
   crownedAt       DateTime?
+  crownedPointsScale, crownedCustomPoints   the league's points table at crowning
 
 CupStanding                         frozen at crowning; unique (cupId, squadId)
   position, displayPosition         "T2" for ties
@@ -304,10 +305,12 @@ journey row once a page exists.
    gate; this table is the categorization until then.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
-4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
-   Score each final contest from its frozen `LeagueYearFinish` weight and points, not the
-   live `contest.cupWeight`, so a weight saved while settlement runs cannot split a crowned cup
-   from the championship.
+4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium; then the trophy
+   shelf in its own PR. Cups score each final contest from its `LeagueYearFinish` row's finish
+   and weight, not the live `contest.cupWeight`, so a weight saved while settlement runs cannot
+   split a cup from the championship. Open cups keep scoring on the league's table as it stands
+   (slice 3); crowning freezes the standings with that table on the cup, so a crowned cup's
+   chart and squad breakdown keep matching its frozen points.
 5. **Projected points** from live contests, greyed as "if it ended now".
 
 2 and 3 in parallel after 1; 4 and 5 after 2.

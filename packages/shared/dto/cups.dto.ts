@@ -8,6 +8,8 @@ import { z } from 'zod';
 import {
   ContestStatus,
   CupContestCount,
+  CupStatus,
+  CupTrophy,
   CupWeight,
   SelectionType,
   TeamIconKey,
@@ -38,7 +40,8 @@ export const CupStandingRowDtoSchema = z.object({
   contestsCounted: z.number().int().describe('Counted contests the squad placed in.'),
   movement: z.number().int().nullable().describe('Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.'),
   pointsAfter: z.array(PointsSchema).describe('The squad\'s running total after each counted contest, in the order they went final (tenths): the race chart\'s line. Empty until a contest counts.'),
-}).describe('One squad\'s place in a cup. Every active squad has a row, at 0 points until it places.');
+  trophy: z.nativeEnum(CupTrophy).nullable().describe('The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.'),
+}).describe('One squad\'s place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup\'s rows are frozen at crowning.');
 export type CupStandingRowDto = z.infer<typeof CupStandingRowDtoSchema>;
 
 export const CupWinnerDtoSchema = z.object({
@@ -52,8 +55,8 @@ export const CupContestRowDtoSchema = z.object({
   name: z.string(),
   status: z.nativeEnum(ContestStatus).describe('The contest\'s status; drafts are never listed.'),
   selectionType: z.nativeEnum(SelectionType),
-  cupWeight: z.nativeEnum(CupWeight).describe('How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.'),
-  count: z.nativeEnum(CupContestCount).describe('COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.'),
+  cupWeight: z.nativeEnum(CupWeight).describe('How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.'),
+  count: z.nativeEnum(CupContestCount).describe('COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.'),
   firstEventStartsAt: DateTimeSchema.describe('When its first event starts (instant).'),
   completedAt: DateTimeSchema.nullable().describe('When it went final (instant); null before.'),
   winners: z.array(CupWinnerDtoSchema).describe('The squads that won it; empty unless it counted.'),
@@ -67,6 +70,8 @@ export const CupDtoSchema = z.object({
   sportLeagueId: z.string().uuid(),
   sportLeagueName: z.string().describe('The sports league, such as "PGA Tour".'),
   name: z.string().describe('The cup\'s name, built from season and sports league: "2026 PGA Tour Cup".'),
+  status: z.nativeEnum(CupStatus).describe('OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.'),
+  crownedAt: DateTimeSchema.nullable().describe('When it was crowned (instant); null while open.'),
   standings: z.array(CupStandingRowDtoSchema).describe('Best first; squads sharing a place in name order.'),
   contests: z.array(CupContestRowDtoSchema).describe('Every contest of the season and sports league, drafts left out, by first event start.'),
 }).describe('A sports league cup in a league: one per season and sports league, made with its first contest.');

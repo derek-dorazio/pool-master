@@ -2,10 +2,16 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ListCupsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
 import { toCupDto, toCupSquadPointsDto } from '../../mappers/cups.mapper';
-import { CupNotFoundError, CupSquadNotFoundError, type CupService } from './service';
+import {
+  CupCrownedError,
+  CupHasUnfinishedContestsError,
+  CupNotFoundError,
+  CupSquadNotFoundError,
+  type CupService,
+} from './service';
 
 export function createCupHandlers(service: CupService) {
-  return { listCups, getCup, getCupSquadPoints };
+  return { listCups, getCup, getCupSquadPoints, crownCup };
 
   async function listCups(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListCupsQuery }>,
@@ -38,11 +44,31 @@ export function createCupHandlers(service: CupService) {
       return sendCupError(reply, error);
     }
   }
+
+  async function crownCup(
+    request: FastifyRequest<{ Params: { id: string; cupId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const cup = await service.crown(request.params.id, request.params.cupId);
+      return reply.send({ cup: toCupDto(cup) });
+    } catch (error) {
+      return sendCupError(reply, error);
+    }
+  }
 }
 
 async function sendCupError(reply: FastifyReply, error: unknown): Promise<void> {
   if (error instanceof CupNotFoundError || error instanceof CupSquadNotFoundError) {
     return sendError(reply, 404, error.code, error.message);
+  }
+  if (error instanceof CupCrownedError) {
+    return sendError(reply, 409, error.code, error.message);
+  }
+  if (error instanceof CupHasUnfinishedContestsError) {
+    return sendError(reply, 409, error.code, error.message, {
+      contests: error.contests.map((contest) => ({ contestId: contest.id, name: contest.name, status: contest.status })),
+    });
   }
   throw error;
 }

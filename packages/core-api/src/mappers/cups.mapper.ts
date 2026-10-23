@@ -14,6 +14,8 @@ export function toCupDto(view: CupView): CupDto {
     sportLeagueId: view.cup.sportLeagueId,
     sportLeagueName: view.sportLeagueName,
     name: cupName(view.cup.seasonYear, view.sportLeagueName),
+    status: view.cup.status,
+    crownedAt: view.cup.crownedAt?.toISOString() ?? null,
     standings: view.standings.map((row) => ({
       squadId: row.squad.id,
       squadName: row.squad.name,
@@ -27,13 +29,14 @@ export function toCupDto(view: CupView): CupDto {
       contestsCounted: row.contestsCounted,
       movement: row.movement,
       pointsAfter: row.pointsAfter,
+      trophy: row.trophy,
     })),
     contests: view.contests.map((row) => ({
       contestId: row.contest.id,
       name: row.contest.name,
       status: row.contest.status,
       selectionType: row.contest.selectionType,
-      cupWeight: row.contest.cupWeight,
+      cupWeight: row.weight,
       count: row.count,
       firstEventStartsAt: row.contest.firstEventStartsAt.toISOString(),
       completedAt: row.contest.completedAt?.toISOString() ?? null,
@@ -51,7 +54,7 @@ export function toCupSquadPointsDto(view: CupSquadPointsView): CupSquadPointsDto
     contests: view.contests.map((row) => ({
       contestId: row.contest.id,
       name: row.contest.name,
-      cupWeight: row.contest.cupWeight,
+      cupWeight: row.weight,
       completedAt: row.contest.completedAt?.toISOString() ?? null,
       place: row.finish?.place ?? null,
       displayPlace: row.finish === null ? null : row.finish.tiedCount > 1 ? `T${row.finish.place}` : String(row.finish.place),

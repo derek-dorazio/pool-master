@@ -7,6 +7,7 @@
  * until they are rebuilt or removed.
  */
 
+import type { CupPointsTable } from './cup-points';
 import type { PredictedChoice } from './predicted-choice';
 import type {
   AuthProvider,
@@ -14,6 +15,8 @@ import type {
   ContestStatus,
   ContestFormat,
   CupPointsScale,
+  CupStatus,
+  CupTrophy,
   CupWeight,
   DateFormat,
   EmailMessageStatus,
@@ -281,15 +284,35 @@ export interface Contest extends DomainEntity {
 
 /**
  * One sports league's season-long points race in a league (#841): the 2026 PGA Tour Cup. Made
- * with the league's first contest of the season and sports league, never deleted; its standings
- * are worked out from its contests' frozen places.
+ * with the league's first contest of the season and sports league, never deleted; while OPEN its
+ * standings are worked out from its contests' frozen places.
  */
 export interface Cup {
   id: string;
   leagueId: string;
   seasonYear: number;
   sportLeagueId: string;
+  status: CupStatus;
+  /** When the commissioner crowned it; null while OPEN. */
+  crownedAt: Date | null;
+  /** The league's points table as it stood at crowning, which a crowned cup keeps scoring on; null while OPEN. */
+  crownedPointsTable: CupPointsTable | null;
   createdAt: Date;
+}
+
+/** One squad's frozen place in a crowned cup (#841), written once at crowning. */
+export interface CupStanding {
+  cupId: string;
+  squadId: string;
+  position: number;
+  displayPosition: string;
+  /** Tenths of a point. */
+  points: number;
+  wins: number;
+  podiums: number;
+  contestsCounted: number;
+  /** Its trophy for 1st, 2nd or 3rd; null below the podium or at 0 points. */
+  trophy: CupTrophy | null;
 }
 
 /**

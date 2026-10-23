@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { CupPointsScale } from '@poolmaster/shared/domain';
+import { CupPointsScale, CupStatus, CupTrophy, CupWeight } from '@poolmaster/shared/domain';
 import { PrismaCupRepository } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
@@ -240,5 +240,53 @@ describe('PrismaCupRepository (#841)', () => {
     await prisma.league.update({ where: { id: league.id }, data: { cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 5] } });
     await expect(repo.findPointsTable(league.id)).resolves.toEqual({ scale: CupPointsScale.CUSTOM, customPoints: [10, 5] });
     await expect(repo.findPointsTable(randomUUID())).resolves.toBeNull();
+  });
+
+  it('reads each squad\'s settled finish in the contests, with the weight it was settled at and when it was written', async () => {
+    const prisma = getPrisma();
+    const repo = new PrismaCupRepository(prisma);
+    const { league, squads, contest } = await seedLeague();
+    const { contest: masters } = await contest('Masters');
+    const settledAt = new Date('2026-04-12T23:00:00.000Z');
+    await prisma.leagueYearFinish.createMany({
+      data: [
+        { leagueId: league.id, year: 2026, squadId: squads.eagles.id, contestId: masters.id, place: 1, tiedCount: 1, rankedEntryCount: 3, selectionType: 'TIERED', weight: 'BONUS', points: 1500, settledAt },
+        { leagueId: league.id, year: 2026, squadId: squads.birdies.id, contestId: masters.id, place: 2, tiedCount: 2, rankedEntryCount: 3, selectionType: 'TIERED', weight: 'BONUS', points: 1088, settledAt },
+      ],
+    });
+
+    const finishes = await repo.findFinishes([masters.id]);
+
+    expect(finishes.map(({ recordedAt, ...finish }) => ({ ...finish, recorded: recordedAt instanceof Date })).sort((left, right) => left.place - right.place)).toEqual([
+      { contestId: masters.id, squadId: squads.eagles.id, place: 1, tiedCount: 1, rankedEntryCount: 3, weight: CupWeight.BONUS, recorded: true },
+      { contestId: masters.id, squadId: squads.birdies.id, place: 2, tiedCount: 2, rankedEntryCount: 3, weight: CupWeight.BONUS, recorded: true },
+    ]);
+    await expect(repo.findFinishes([])).resolves.toEqual([]);
+  });
+
+  it('crowns an open cup once, freezing its standings and points table, and refuses a crowned cup without a crowning date', async () => {
+    const prisma = getPrisma();
+    const repo = new PrismaCupRepository(prisma);
+    const { league, squads, contest } = await seedLeague();
+    const { sportLeagueId } = await contest('Masters');
+    const cup = await repo.ensure({ leagueId: league.id, seasonYear: 2026, sportLeagueId });
+    const crownedAt = new Date('2026-09-30T12:00:00.000Z');
+    const standing = (squadId: string, position: number, points: number, trophy: CupTrophy | null) => ({
+      cupId: cup.id, squadId, position, displayPosition: String(position), points, wins: position === 1 ? 1 : 0, podiums: 1, contestsCounted: 1, trophy,
+    });
+    const standings = [standing(squads.eagles.id, 1, 1000, CupTrophy.CHAMPION), standing(squads.birdies.id, 2, 800, CupTrophy.RUNNER_UP)];
+    const table = { scale: CupPointsScale.CUSTOM, customPoints: [10, 5] };
+
+    expect(cup).toMatchObject({ status: CupStatus.OPEN, crownedAt: null, crownedPointsTable: null });
+    await expect(repo.findStandings(cup.id)).resolves.toEqual([]);
+    await expect(prisma.cup.update({ where: { id: cup.id }, data: { status: 'CROWNED' } })).rejects.toThrow();
+
+    const crowned = await repo.crown(cup.id, { crownedAt, pointsTable: table, standings });
+    const again = await repo.crown(cup.id, { crownedAt, pointsTable: table, standings });
+
+    expect(crowned).toMatchObject({ id: cup.id, status: CupStatus.CROWNED, crownedAt, crownedPointsTable: table });
+    expect(again).toBeNull();
+    await expect(repo.findById(cup.id)).resolves.toMatchObject({ status: CupStatus.CROWNED, crownedPointsTable: table });
+    await expect(repo.findStandings(cup.id)).resolves.toEqual(standings);
   });
 });

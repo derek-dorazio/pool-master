@@ -1,6 +1,6 @@
 /**
  * Cups module (#841) — a league's sports league cups, under /api/v1/leagues/:id/cups. Members of
- * the league read them (root admins bypass).
+ * the league read them and its commissioner crowns them (root admins bypass).
  */
 import type { FastifyInstance } from 'fastify';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -9,7 +9,7 @@ import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
-import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
+import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../leagues/permissions';
 import { createCupHandlers } from './handler';
 import { createCupService } from './wiring';
 
@@ -19,7 +19,8 @@ export function cupsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const membersOnly = requireMemberOfLeague(new PrismaLeagueMembershipRepository(prisma), leagueFromPath);
+  const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
+  const membersOnly = requireMemberOfLeague(membershipRepo, leagueFromPath);
   const handlers = createCupHandlers(createCupService(prisma, fastify.log));
 
   fastify.get('/', {
@@ -73,5 +74,24 @@ export function cupsModule(fastify: FastifyInstance): void {
     },
     preHandler: membersOnly,
     handler: handlers.getCupSquadPoints,
+  });
+
+  fastify.post('/:cupId/crown', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'Crown a cup',
+      description:
+        'Allows a commissioner to crown a cup once its season is done: every squad\'s place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league\'s. Active commissioners only (root admins bypass).',
+      operationId: 'crownCup',
+      response: {
+        200: schemaRef('CupResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.crownCup,
   });
 }

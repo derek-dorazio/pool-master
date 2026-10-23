@@ -26,7 +26,8 @@ import {
   buildRunningCup,
 } from './test/fixtures';
 
-const { getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+  crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
@@ -36,6 +37,7 @@ const { getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagu
 }));
 
 bindApiMocks({
+  crownCup: crownCupMock,
   getChampionship: getChampionshipMock,
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -74,12 +76,12 @@ function renderChampionships(path: string) {
   );
 }
 
-function primeViewer(cups = [buildRunningCup()], championship = buildRunningChampionship()) {
+function primeViewer(cups = [buildRunningCup()], championship = buildRunningChampionship(), role: 'MEMBER' | 'COMMISSIONER' = 'MEMBER') {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague(),
-    { membership: buildLeagueMembership({ role: 'MEMBER' }), squadMembership: buildLeagueSquadMember() },
+    { membership: buildLeagueMembership({ role }), squadMembership: buildLeagueSquadMember() },
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
@@ -95,6 +97,18 @@ const NFL_CUP = buildCup({
     buildCupContest({ contestId: 'nfl-1', winners: [{ squadId: 'team-1', squadName: 'Casey Crushers' }] }),
     buildCupContest({ contestId: 'nfl-2', winners: [{ squadId: 'team-1', squadName: 'Casey Crushers' }] }),
   ],
+});
+
+/** The NFL cup once crowned: the viewer's Casey Crushers champions, Birdie Bandits runners-up. */
+const CROWNED_NFL_CUP = buildCup({
+  ...NFL_CUP,
+  status: 'CROWNED',
+  crownedAt: '2026-02-12T15:00:00.000Z',
+  standings: [
+    buildCupStanding({ points: 2000, wins: 2, contestsCounted: 2, pointsAfter: [1000, 2000], trophy: 'CHAMPION' }),
+    buildCupStanding({ squadId: 'team-2', squadName: 'Birdie Bandits', position: 2, displayPosition: '2', points: 1600, pointsAfter: [800, 1600], trophy: 'RUNNER_UP' }),
+  ],
+  contests: [...NFL_CUP.contests, buildCupContest({ contestId: 'nfl-3', name: 'Pro Bowl Picks', count: 'AFTER_CROWNING' })],
 });
 
 /** A cup with one counted contest, which the Trophy case doesn't show yet. */
@@ -124,7 +138,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
     mock.mockReset();
   }
 });
@@ -291,6 +305,54 @@ describe('Championships › Trophy case', () => {
 
     expect(await screen.findByTestId('trophy-case-error')).toBeInTheDocument();
   });
+
+  it('offers the commissioner Ready to crown for a cup whose contests are all final, and none for one with a live contest', async () => {
+    primeViewer([buildRunningCup(), NFL_CUP], undefined, 'COMMISSIONER');
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('ready-to-crown-cup-nfl')).toHaveTextContent('2026 NFL Cup is ready to crownAll 2 NFL contests are final.');
+    expect(screen.queryByTestId('ready-to-crown-cup-pga')).not.toBeInTheDocument();
+  });
+
+  it('never offers a member Ready to crown', async () => {
+    primeViewer([NFL_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('cup-card-cup-nfl')).toBeInTheDocument();
+    expect(screen.queryByTestId('ready-to-crown-cup-nfl')).not.toBeInTheDocument();
+  });
+
+  it('crowns the cup once the commissioner confirms, naming the winner first, and then shows it won', async () => {
+    primeViewer([NFL_CUP], undefined, 'COMMISSIONER');
+    crownCupMock.mockResolvedValue(apiSuccess({ cup: CROWNED_NFL_CUP }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+    fireEvent.click(await screen.findByTestId('crown-cup-cup-nfl'));
+
+    expect(screen.getByText(/^Casey Crushers takes the cup\. Crowning fixes the standings/)).toBeInTheDocument();
+    listCupsMock.mockResolvedValue(apiSuccess({ cups: [CROWNED_NFL_CUP] }));
+    fireEvent.click(screen.getByTestId('crown-cup-dialog-cup-nfl-confirm'));
+
+    expect(await screen.findByText('Casey Crushers won · you were 1st')).toBeInTheDocument();
+    expect(crownCupMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', cupId: 'cup-nfl' } }));
+    expect(screen.queryByTestId('ready-to-crown-cup-nfl')).not.toBeInTheDocument();
+  });
+
+  it('says why when the cup cannot be crowned, keeping the dialog open', async () => {
+    primeViewer([NFL_CUP], undefined, 'COMMISSIONER');
+    crownCupMock.mockResolvedValue({
+      error: { error: { code: 'CUP_HAS_UNFINISHED_CONTESTS', message: 'The cup cannot be crowned while Super Bowl Picks is not final.' } },
+    });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+    fireEvent.click(await screen.findByTestId('crown-cup-cup-nfl'));
+    fireEvent.click(screen.getByTestId('crown-cup-dialog-cup-nfl-confirm'));
+
+    expect(await screen.findByText('The cup cannot be crowned while Super Bowl Picks is not final.')).toBeInTheDocument();
+    expect(screen.getByTestId('crown-cup-dialog-cup-nfl')).toBeInTheDocument();
+  });
 });
 
 describe('Championships › Points race', () => {
@@ -389,6 +451,19 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-contest-contest-3')).toHaveTextContent('Not counted');
     expect(screen.getByTestId('cup-contest-contest-4')).toHaveTextContent('Live');
     expect(screen.getByTestId('cup-contest-contest-4')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-4/leaderboard');
+  });
+
+  it('puts a crowned cup\'s podium above its standings, with its champion and crowning date, and no next contest', async () => {
+    primeViewer([CROWNED_NFL_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-nfl');
+
+    expect(await screen.findByTestId('cup-podium-1')).toHaveTextContent('Casey Crushers');
+    expect(screen.getByTestId('cup-podium-2')).toHaveTextContent('Birdie Bandits');
+    expect(screen.getByTestId('points-race-summary')).toHaveTextContent(/^NFL · Crowned /);
+    expect(screen.getByText('Champion')).toBeInTheDocument();
+    expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
+    expect(screen.getByTestId('cup-contest-nfl-3')).toHaveTextContent('After crowning');
   });
 
   it('says the league has no such cup for a sports league it has none in that year', async () => {

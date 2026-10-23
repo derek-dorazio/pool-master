@@ -1,4 +1,4 @@
-import { ContestStatus, CupContestCount, CupWeight } from '@poolmaster/shared/domain';
+import { ContestStatus, CupContestCount, CupStatus, CupWeight } from '@poolmaster/shared/domain';
 import type { CupContestRowDto, CupDto, CupStandingRowDto } from '@/lib/api';
 
 /** How many squads the race chart draws. */
@@ -79,7 +79,19 @@ export function describeCupContest(contest: CupContestRowDto): CupContestState {
       return contest.status === ContestStatus.ACTIVE
         ? { label: 'Live', tone: 'live', note: 'Counts once it is final' }
         : { label: 'Open', tone: 'active', note: 'Counts once it is final' };
+    case CupContestCount.AFTER_CROWNING:
+      return { label: 'After crowning', tone: 'neutral', note: 'The cup was crowned before it went final, so it changes nothing' };
   }
+}
+
+/**
+ * Whether the commissioner can crown a cup now: it is open, at least one contest has counted, and
+ * none it counts is still open or live.
+ */
+export function isReadyToCrown(cup: CupDto): boolean {
+  return cup.status === CupStatus.OPEN
+    && cup.contests.some((contest) => contest.count === CupContestCount.COUNTED)
+    && !cup.contests.some((contest) => contest.count === CupContestCount.NOT_FINAL);
 }
 
 /** How many counted contests a cup needs before it is shown, so one side contest doesn't make a cup. */
@@ -128,20 +140,24 @@ export function buildRaceSeries(cup: CupDto, squads = RACE_CHART_SQUADS): RaceSe
 }
 
 /**
- * One line on where a cup stands: who leads, and the focus squad's place ("you are 6th", or the
- * squad by name on a squad's own page). Before anything has counted, it says so.
+ * One line on where a cup stands: who leads, or who won it once crowned, and the focus squad's
+ * place ("you are 6th", or the squad by name on a squad's own page). Before anything has counted,
+ * it says so.
  */
 export function describeCupStanding(cup: CupDto, focus: { squadId: string | null; isViewer: boolean }): string {
   const leaders = cupLeaders(cup);
   if (!leaders.length) {
     return 'No contest has counted yet';
   }
+  const names = joinNames(leaders.map((row) => row.squadName));
+  const isCrowned = cup.status === CupStatus.CROWNED;
   const leaderText = leaders.length === 1
-    ? `${leaders[0]?.squadName} leads`
-    : `${joinNames(leaders.map((row) => row.squadName))} share the lead`;
+    ? `${names} ${isCrowned ? 'won' : 'leads'}`
+    : `${names} ${isCrowned ? 'share the cup' : 'share the lead'}`;
   const focusRow = cup.standings.find((row) => row.squadId === focus.squadId);
   if (!focusRow) {
     return leaderText;
   }
-  return `${leaderText} · ${focus.isViewer ? 'you are' : `${focusRow.squadName} is`} ${formatPlace(focusRow)}`;
+  const verb = focus.isViewer ? (isCrowned ? 'you were' : 'you are') : `${focusRow.squadName} ${isCrowned ? 'was' : 'is'}`;
+  return `${leaderText} · ${verb} ${formatPlace(focusRow)}`;
 }
