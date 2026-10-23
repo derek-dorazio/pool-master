@@ -12,7 +12,7 @@ import {
 } from './service';
 
 export function createCupHandlers(service: CupService) {
-  return { listCups, getCup, getCupSquadPoints, getCupProjection, crownCup };
+  return { listCups, listCupSeasons, getCup, getCupSquadPoints, getCupProjection, crownCup };
 
   async function listCups(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListCupsQuery }>,
@@ -20,6 +20,13 @@ export function createCupHandlers(service: CupService) {
   ): Promise<void> {
     const cups = await service.listSeasonCups(request.params.id, request.query.seasonYear);
     return reply.send({ cups: cups.map(toCupDto) });
+  }
+
+  async function listCupSeasons(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    return reply.send({ seasonYears: await service.listSeasonYears(request.params.id) });
   }
 
   async function getCup(

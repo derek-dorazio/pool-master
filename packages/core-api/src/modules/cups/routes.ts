@@ -42,6 +42,22 @@ export function cupsModule(fastify: FastifyInstance): void {
     handler: handlers.listCups,
   });
 
+  fastify.get('/seasons', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'List the seasons with cups',
+      description: `The seasons in which the league has a contest a cup lists (drafts left out), newest first: with the championship's years, the years the Championships page offers. ${MEMBERS_ONLY}`,
+      operationId: 'listCupSeasons',
+      response: {
+        200: schemaRef('CupSeasonListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listCupSeasons,
+  });
+
   fastify.get('/:cupId', {
     schema: {
       tags: ['Cups'],

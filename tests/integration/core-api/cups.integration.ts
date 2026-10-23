@@ -214,6 +214,17 @@ describe('PrismaCupRepository (#841)', () => {
     ]);
   });
 
+  it('reads the seasons the league has a listed contest in, newest first and each once, leaving out a season with only a draft', async () => {
+    const repo = new PrismaCupRepository(getPrisma());
+    const { league, contest } = await seedLeague();
+    await contest('Masters');
+    await contest('Open', { status: 'ACTIVE' });
+    await contest('Last season', { seasonYear: 2025 });
+    await contest('Next season draft', { seasonYear: 2027, status: 'DRAFT' });
+
+    await expect(repo.findSeasonYears(league.id)).resolves.toEqual([2026, 2025]);
+  });
+
   it('reads every entry with a frozen place, with its squad, and none without one', async () => {
     const repo = new PrismaCupRepository(getPrisma());
     const { squads, contest } = await seedLeague();

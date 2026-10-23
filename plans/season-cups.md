@@ -246,6 +246,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | Route | Ticket | Returns |
 |---|---|---|
 | `GET /cups?seasonYear=` | #841 | The season's cups, each with its full standings and contests (`CupDto`, the same shape `GET /cups/:cupId` answers). No viewer context (access rule A8): the client finds its own squad's row, and whether the commissioner can crown from its role and the contests' `count` |
+| `GET /cups/seasons` | #837 | The seasons with a cup to show, newest first: the year picker's cup years |
 | `GET /cups/:cupId` | #841 | `CupStandingRowDto[]` (squad ref, position, points, wins, podiums, contests, movement, trophy) and `CupContestRowDto[]` (weight, `CupContestCount`: `COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`, winner) |
 | `GET /cups/:cupId/squads/:squadId` | #841 | One squad's points, contest by contest |
 | `GET /cups/:cupId/projection` | #841 | An open cup's standings if its live contests ended now, from their leaderboards as they stand; nothing stored |
@@ -333,7 +334,11 @@ journey row once a page exists.
 
 **#837 history** (after both pages exist)
 
-1. **Past years.** The year picker on every tab, live parts hidden. Mostly web.
+1. **Past years.** The year picker on every tab, live parts hidden. Mostly web. Built with
+   `GET /cups/seasons` for the cup years. A cup's live parts go once its season is over (a past
+   year and nothing open or live), not on the year alone, so a 2025 NFL Cup keeps them through
+   February; Ready to crown stays for the commissioner on a past cup, so one never crowned can
+   still be.
 2. **Drill-through.** `GET /history/contests`, the Contests list, squad and cell filters, past
    race rows opening leaderboards, the Contests page History view.
 3. **All years.** `GET /history/summary` and the page; delete `my-team-history-page.tsx` (Q3).

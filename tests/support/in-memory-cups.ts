@@ -58,6 +58,13 @@ export class InMemoryCups implements CupRepository {
     return this.cups.filter((cup) => cup.leagueId === leagueId && cup.seasonYear === seasonYear);
   }
 
+  async findSeasonYears(leagueId: string): Promise<number[]> {
+    const years = this.contests
+      .filter((contest) => contest.leagueId === leagueId && contest.status !== ContestStatus.DRAFT)
+      .map((contest) => contest.seasonYear);
+    return [...new Set(years)].sort((left, right) => right - left);
+  }
+
   async findContests(key: CupKey): Promise<CupContest[]> {
     return this.contests
       .filter((contest) => sameKey(contest, key) && contest.status !== ContestStatus.DRAFT)

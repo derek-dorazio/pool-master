@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCupProjection, getCupSquadPoints, listCups, type CupDto, type CupProjectionDto, type CupSquadPointsDto } from '@/lib/api';
+import { getCupProjection, getCupSquadPoints, listCupSeasons, listCups, type CupDto, type CupProjectionDto, type CupSquadPointsDto } from '@/lib/api';
 import { CONTEST_POLL_INTERVAL_MS } from '@/features/contests/contest-status';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -41,6 +41,24 @@ export function useCupProjectionQuery(leagueId: string, cupId: string, isLive: b
     enabled: Boolean(leagueId && cupId) && isLive,
     // A projection that failed stays failed until the page is opened again, rather than asking every 30s.
     refetchInterval: (query) => (isLive && query.state.status !== 'error' ? CONTEST_POLL_INTERVAL_MS : false),
+    retry: false,
+  });
+}
+
+/** The seasons the league has a cup to show in, newest first. */
+export function useCupSeasonsQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.cups.seasons(leagueId),
+    queryFn: async (): Promise<number[]> => {
+      const response = await listCupSeasons({ path: { id: leagueId } });
+
+      if (!response.data?.seasonYears) {
+        throwApiError(response.error, 'Cup seasons response is missing data.');
+      }
+
+      return response.data.seasonYears;
+    },
+    enabled: Boolean(leagueId),
     retry: false,
   });
 }
