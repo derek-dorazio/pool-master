@@ -12,7 +12,8 @@
  *
  * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. Each email
  * is queued once: its outbox idempotency key is the event and league (C1, C2) or the contest
- * (C4) and the person, and a league or contest already told is skipped before any work.
+ * (C4) and the person, and a league or contest already told is skipped before any work. So if a
+ * send fails partway through a league's commissioners, the rest of that league is not told.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -85,7 +86,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
 type EventNoticeKey = 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS';
 
 /** The event email due for `sportEvent` now, or null. */
-export function dueEventNotice(sportEvent: SportEvent, now: Date): EventNoticeKey | null {
+function dueEventNotice(sportEvent: SportEvent, now: Date): EventNoticeKey | null {
   if (!UPCOMING_STATUSES.includes(sportEvent.status)) return null;
   const startsIn = sportEvent.startDate.getTime() - now.getTime();
   if (startsIn <= 0 || startsIn > COMING_UP_MS) return null;
@@ -188,14 +189,15 @@ export class CommissionerNotices implements DueNotifications {
     }
   }
 
-  /** Each of `leagueIds`' settled contests on the event's previous edition, with their winners. */
+  /** Each of `leagueIds`' settled one-event contests on the event's previous edition, with their winners. */
   private async lastYearWinners(sportEvent: SportEvent, leagueIds: Set<string>): Promise<Map<string, PreviousContestWinners[]>> {
     const previous = (await this.deps.sportEvents.findAll({ sportLeagueId: sportEvent.sportLeagueId, eventYear: sportEvent.eventYear - 1 }))
       .find((candidate) => candidate.eventSeriesId === sportEvent.eventSeriesId);
     const byLeague = new Map<string, PreviousContestWinners[]>();
     if (!previous) return byLeague;
     const contests = (await this.deps.contests.findBySportEvent(previous.id, { statuses: [ContestStatus.COMPLETED] }))
-      .filter((contest) => leagueIds.has(contest.leagueId));
+      // A season contest that included the edition didn't make anyone its winner.
+      .filter((contest) => leagueIds.has(contest.leagueId) && contest.sportEventIds.length === 1);
     for (const contest of contests) {
       const winners = (await this.deps.finalStandings.finalStandingsOf(contest)).entries
         .filter((entry) => entry.position === 1)

@@ -120,7 +120,7 @@ describe('CommissionerNotices', () => {
       expect(text).not.toContain('Last year');
     });
 
-    it("names last year's winners of each league's own contests on the event's previous edition, and nothing for a league that had none", async () => {
+    it("names last year's winners of each league's own one-event contests on the event's previous edition, not a season contest that included it, and nothing for a league that had none", async () => {
       const office = world.addLeague({ name: 'Office League' });
       const family = world.addLeague({ name: 'Family League' });
       const casey = person(office.id, 'Casey');
@@ -131,12 +131,16 @@ describe('CommissionerNotices', () => {
       const tied = world.addContest(office.id, { name: 'Masters Salary Cap', status: ContestStatus.COMPLETED, sportEventIds: [previous.id] });
       finals.set(pick6.id, standings([['Green Jackets', 1], ['Amen Corner', 2]]));
       finals.set(tied.id, standings([['Azalea', 1], ['Magnolia', 1], ['Rae\'s Creek', 3]]));
+      const otherMajor = event({ name: 'The Open', eventYear: 2025, status: SportEventStatus.COMPLETED, startDate: new Date('2025-07-17T12:00:00.000Z') });
+      const season = world.addContest(office.id, { name: 'Majors Pool', status: ContestStatus.COMPLETED, sportEventIds: [previous.id, otherMajor.id] });
+      finals.set(season.id, standings([['Season Champs', 1]]));
       event({ name: 'The Masters', startDate: inDays(9) });
 
       await notices().queueDue(NOW);
 
       const text = textTo('EVENT_COMING_UP', casey.id, office);
       expect(text).toContain('Last year:\nGreen Jackets won Masters Pick 6.\nAzalea and Magnolia tied for Masters Salary Cap.');
+      expect(text).not.toContain('Majors Pool');
       expect(text).not.toContain("It isn't open for contests yet");
       expect(textTo('EVENT_COMING_UP', jordan.id, family)).not.toContain('Last year');
     });
