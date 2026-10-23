@@ -9,9 +9,11 @@
  *
  * Each goes once its moment is a buffer old (EMAIL_CONFIG.standingsBufferMinutes, Q3.11), so a
  * late correction lands first, and only within the hour after that: past it the moment is gone.
- * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep; the outbox
- * idempotency key (the contest, the moment and the person) keeps a later sweep from sending it
- * twice.
+ * The lifecycle scheduler's "notifications due" step calls `queueDue` on every sweep. The first
+ * sweep in that hour queues the email and records the board's places; later sweeps find the email
+ * already in the outbox and leave both alone, so the next email's movement is measured from the
+ * places this one showed, whatever a correction changes after it. The outbox idempotency key (the
+ * contest, the moment and the person) keeps two sweeps that overlap from sending it twice.
  *
  * It goes to every active league member who owns an entry on the board, plus the league's
  * commissioners, each once. It shows the top 10 (and anyone tied with the 10th), the reader's
@@ -32,7 +34,6 @@ import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   ContestFormat,
   ContestStatus,
-  LeagueMembershipStatus,
   LeagueRole,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantRoundStatus,
@@ -57,7 +58,7 @@ import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { lastFinishedRound } from '../scoring-families/stroke-play/finished-rounds';
-import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
+import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 
 /** How late a standings email may still go after its time, as for entry reminders. */
 const STANDINGS_GRACE_MS = 60 * 60_000;
@@ -76,7 +77,7 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   positions: StandingsEmailPositionRepository;
   leagues: Pick<LeagueRepository, 'findById'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
-  email: Pick<EmailService, 'send'>;
+  email: Pick<EmailService, 'send' | 'hasRecordedForContest'>;
   readConfig: () => Pick<EmailConfig, 'standingsBufferMinutes'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
@@ -204,6 +205,7 @@ export class LiveStandings implements DueNotifications {
 
   private async queueStandings(due: DueStandings): Promise<void> {
     const { contest, sportEvent, moment } = due;
+    if (await this.deps.email.hasRecordedForContest('CONTEST_STANDINGS', contest.id, due.about)) return;
     const league = await this.deps.leagues.findById(contest.leagueId);
     if (!league) return;
     const [leaderboard, lastPositions] = await Promise.all([
@@ -248,33 +250,27 @@ export class LiveStandings implements DueNotifications {
         }, 'Failed to queue a live standings email');
       }
     }));
-    // After the emails, so a sweep that stops part way still measures the rest from the last email.
+    // After the emails: the places they showed are the next email's baseline.
     await this.deps.positions.record(leaderboard.entries.map((row) => ({ contestEntryId: row.entryId, position: row.position })));
-    // Debug: the email stays due for its grace hour, so every sweep in it gets here; each email
-    // newly queued is logged once, at info, as email.send.queued.
-    this.deps.logger?.debug({
-      action: 'email.liveStandings.due',
+    this.deps.logger?.info({
+      action: 'email.liveStandings.queued',
       data: { contestId: contest.id, leagueId: league.id, sportEventId: sportEvent.id, moment: moment.kind, recipients: recipients.length },
-    }, 'Live standings email due; recorded for each recipient');
+    }, 'Live standings email queued for each recipient');
   }
 
   /** The league's active commissioners and the active members who own an entry on the board, each once. */
   private async recipients(league: League, leaderboard: ContestLeaderboardModel): Promise<Array<{ user: User; squadIds: Set<string> }>> {
-    const [members, memberships, owners] = await Promise.all([
-      activeLeagueMembers(this.deps, league.id),
-      this.deps.memberships.findByLeague(league.id),
+    const [members, owners] = await Promise.all([
+      activeLeagueMembersWithRoles(this.deps, league.id),
       this.deps.squadMemberships.findBySquads([...new Set(leaderboard.entries.map((row) => row.squadId))]),
     ]);
-    const commissioners = new Set(memberships
-      .filter((membership) => membership.role === LeagueRole.COMMISSIONER && membership.status === LeagueMembershipStatus.ACTIVE)
-      .map((membership) => membership.userId));
     const squadsByOwner = new Map<string, Set<string>>();
     for (const owner of owners) {
       squadsByOwner.set(owner.userId, (squadsByOwner.get(owner.userId) ?? new Set<string>()).add(owner.squadId));
     }
     return members
-      .filter((user) => commissioners.has(user.id) || squadsByOwner.has(user.id))
-      .map((user) => ({ user, squadIds: squadsByOwner.get(user.id) ?? new Set<string>() }));
+      .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || squadsByOwner.has(user.id))
+      .map(({ user }) => ({ user, squadIds: squadsByOwner.get(user.id) ?? new Set<string>() }));
   }
 }
 
@@ -302,7 +298,7 @@ function toLine(
     score: row.score === null ? null : format(row.score),
     movement: last === undefined || row.position === null ? null : last - row.position,
     isYours: false,
-    ...(result && { eventResult: `${result.displayPosition ?? '-'}, ${result.score === null ? '-' : format(result.score)}` }),
+    ...(result && { eventResult: { place: result.displayPosition, score: result.score === null ? null : format(result.score) } }),
   };
 }
 

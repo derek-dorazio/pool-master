@@ -8,6 +8,7 @@ import {
   PrismaContestEntryRepository,
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
+  PrismaEmailMessageRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
@@ -717,6 +718,34 @@ describe('StandingsEmailPositionRepository (#877)', () => {
     // Entry receipts read the entry's update time; a standings email is not an update to it.
     const stored = await getPrisma().contestEntry.findUniqueOrThrow({ where: { id: leader.id } });
     expect(stored.updatedAt).toEqual(leader.updatedAt);
+  });
+});
+
+describe('EmailMessageRepository.existsForContest (#877)', () => {
+  it('finds a contest\'s email of the template under the key prefix, for anyone and in any state, and nothing for another contest, template or moment', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Outbox');
+    const other = await createContest(league.id, event.id, 'Other Outbox');
+    const outbox = new PrismaEmailMessageRepository(getPrisma());
+    const about = `${contest.id}:${event.id}:round-1`;
+    await outbox.record({
+      templateKey: 'CONTEST_STANDINGS',
+      contestId: contest.id,
+      recipientEmail: `standings-${suffix}@integration.test`,
+      idempotencyKey: `CONTEST_STANDINGS:${about}:user-${suffix}`,
+      fromName: 'Contest Repo League',
+      fromAddress: 'league@integration.test',
+      status: 'SKIPPED',
+      skipReason: 'OPTED_OUT',
+    });
+    const exists = (contestId: string, templateKey: 'CONTEST_STANDINGS' | 'CONTEST_OPENED', keyPrefix: string) =>
+      outbox.existsForContest({ contestId, templateKey, keyPrefix });
+
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${about}:`)).resolves.toBe(true);
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${contest.id}:${event.id}:round-2:`)).resolves.toBe(false);
+    await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${contest.id}:${event.id}:round-10:`)).resolves.toBe(false);
+    await expect(exists(contest.id, 'CONTEST_OPENED', `CONTEST_OPENED:${about}:`)).resolves.toBe(false);
+    await expect(exists(other.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${about}:`)).resolves.toBe(false);
   });
 });
 

@@ -237,8 +237,8 @@ export interface StandingsLine {
   movement: number | null;
   /** Whether a squad the reader owns holds the entry. */
   isYours: boolean;
-  /** In a season contest, the entry's place and score in the event that just finished, such as "T2, -6". */
-  eventResult?: string;
+  /** In a season contest, the entry's place and score in the event that just finished; null for either not decided. */
+  eventResult?: { place: string | null; score: string | null };
 }
 
 /** Which of an entry's picks went out in the round: golfers who missed the cut. */
@@ -871,12 +871,17 @@ function movementMark(movement: number | null): string {
   return movement > 0 ? `▲${String(movement)}` : `▼${String(-movement)}`;
 }
 
+/** "T2, -6", with a dash for a part not decided. */
+function formatEventResult(result: { place: string | null; score: string | null }): string {
+  return `${result.place ?? '-'}, ${result.score ?? '-'}`;
+}
+
 function standingsTextLine(line: StandingsLine): string {
   const movement = describeMovement(line.movement);
   return [
     `${line.place ?? '-'}. ${line.entryName} (${line.squadName})${line.isYours ? ', yours' : ''}`,
     line.score ?? 'no score yet',
-    ...(line.eventResult ? [`this event ${line.eventResult}`] : []),
+    ...(line.eventResult ? [`this event ${formatEventResult(line.eventResult)}`] : []),
     ...(movement ? [movement] : []),
   ].join(', ');
 }
@@ -885,7 +890,7 @@ function standingsTable(lines: StandingsLine[]): string {
   const cell = `padding:10px 12px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:14px;line-height:1.4;color:${EMAIL_THEME.navy};vertical-align:top;`;
   const rows = lines.map((line) => `<tr>
         <td style="${cell}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
-        <td style="${cell}">${line.isYours ? strong(line.entryName) : escapeHtml(line.entryName)}${line.isYours ? ` <span style="color:${EMAIL_THEME.muted};">(yours)</span>` : ''}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(line.eventResult)}` : ''}</span></td>
+        <td style="${cell}">${line.isYours ? strong(line.entryName) : escapeHtml(line.entryName)}${line.isYours ? ` <span style="color:${EMAIL_THEME.muted};">(yours)</span>` : ''}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(formatEventResult(line.eventResult))}` : ''}</span></td>
         <td style="${cell}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}</td>
         <td style="${cell}text-align:right;color:${EMAIL_THEME.muted};">${escapeHtml(movementMark(line.movement))}</td>
       </tr>`).join('');

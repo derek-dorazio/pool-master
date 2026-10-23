@@ -360,7 +360,7 @@ describe('pool-master-98i system email templates', () => {
           eventName: 'The Masters',
           nextEvent: { name: 'PGA Championship', startsAt: new Date('2026-05-14T11:00:00.000Z'), picksCloseAt: new Date('2026-05-14T11:00:00.000Z') },
         },
-        top: [{ place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-20', movement: null, isYours: false, eventResult: 'T2, -9' }],
+        top: [{ place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-20', movement: null, isYours: false, eventResult: { place: 'T2', score: '-9' } }],
         yours: [],
         entryCount: 1,
         cut: [],

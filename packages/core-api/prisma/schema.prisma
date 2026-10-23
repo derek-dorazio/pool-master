@@ -721,6 +721,7 @@ model EmailMessage {
   @@index([invitationId, createdAt])
   @@index([createdAt])
   @@index([providerMessageId])
+  @@index([contestId, templateKey])
   @@map("email_messages")
 }
 

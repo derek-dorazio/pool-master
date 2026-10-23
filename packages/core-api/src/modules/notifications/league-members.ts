@@ -1,5 +1,5 @@
 import type { LeagueMembershipRepository, UserRepository } from '@poolmaster/shared/db';
-import { LeagueMembershipStatus, type User } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus, type LeagueRole, type User } from '@poolmaster/shared/domain';
 
 export interface LeagueMemberDeps {
   memberships: Pick<LeagueMembershipRepository, 'findByLeague'>;
@@ -11,12 +11,23 @@ export interface LeagueMemberDeps {
  * each once, commissioners included.
  */
 export async function activeLeagueMembers(deps: LeagueMemberDeps, leagueId: string): Promise<User[]> {
+  return (await activeLeagueMembersWithRoles(deps, leagueId)).map(({ user }) => user);
+}
+
+/** The same people, each with their role in the league, for an email commissioners get too. */
+export async function activeLeagueMembersWithRoles(
+  deps: LeagueMemberDeps,
+  leagueId: string,
+): Promise<Array<{ user: User; role: LeagueRole }>> {
   const [memberships, users] = await Promise.all([
     deps.memberships.findByLeague(leagueId),
     deps.users.findByLeague(leagueId),
   ]);
-  const active = new Set(memberships
+  const roles = new Map(memberships
     .filter((membership) => membership.status === LeagueMembershipStatus.ACTIVE)
-    .map((membership) => membership.userId));
-  return users.filter((user) => user.isActive && active.has(user.id));
+    .map((membership) => [membership.userId, membership.role]));
+  return users.flatMap((user) => {
+    const role = roles.get(user.id);
+    return user.isActive && role !== undefined ? [{ user, role }] : [];
+  });
 }

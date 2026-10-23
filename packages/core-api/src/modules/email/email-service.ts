@@ -113,7 +113,7 @@ export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
 export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
 
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'findLatestStateByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
   suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
   /** Categories each user turned off: their email in one is skipped, not queued. */
@@ -163,7 +163,7 @@ export class EmailService {
       ...refs,
       recipientUserId: input.to.userId,
       recipientEmail: address,
-      idempotencyKey: `${templateKey}:${input.about}:${input.to.userId ?? address.toLowerCase()}`,
+      idempotencyKey: `${idempotencyKeyPrefix(templateKey, input.about)}${input.to.userId ?? address.toLowerCase()}`,
       fromName: from.name,
       fromAddress: from.address,
     };
@@ -208,6 +208,15 @@ export class EmailService {
       this.options.logger?.debug({ action: 'email.send.duplicate', data: logRefs(refs) }, 'Email already recorded; not queued again');
     }
     return message;
+  }
+
+  /**
+   * Whether an email of `templateKey` about `about` is already recorded for anyone in the contest,
+   * sent or skipped. A clock-driven email whose moment stays due for a while asks it, to do the
+   * work that goes with queueing it only once.
+   */
+  async hasRecordedForContest(templateKey: SystemEmailTemplateKey, contestId: string, about: string): Promise<boolean> {
+    return this.options.messages.existsForContest({ contestId, templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
   }
 
   /** Whether the recipient turned off the category this email sits in; only users can. */
@@ -320,4 +329,9 @@ function isReservedDomain(domain: string): boolean {
 function optionalCategoryOf(templateKey: SystemEmailTemplateKey): OptionalEmailCategory | undefined {
   const category = EMAIL_TEMPLATES[templateKey].category;
   return isOptionalEmailCategory(category) ? category : undefined;
+}
+
+/** What every idempotency key of one email about one subject starts with; the recipient follows. */
+function idempotencyKeyPrefix(templateKey: SystemEmailTemplateKey, about: string): string {
+  return `${templateKey}:${about}:`;
 }

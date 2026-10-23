@@ -265,6 +265,21 @@ describe('LiveStandings.queueDue', () => {
     expect(outbox.rows).toHaveLength(0);
   });
 
+  it('keeps the places the queued email showed as the next one\'s baseline, though the board changes in the rest of its hour', async () => {
+    const { league, contest } = liveMasters();
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    boards.set(contest.id, [row('e1', ana.squad, 1, -6), row('e2', ben.squad, 2, -3)]);
+    const service = standings();
+    await service.queueDue(after(ROUND_1_DONE, 31));
+
+    // A score correction later in the hour reorders the board.
+    boards.set(contest.id, [row('e2', ben.squad, 1, -7), row('e1', ana.squad, 2, -6)]);
+    await service.queueDue(after(ROUND_1_DONE, 36));
+
+    expect(positions).toEqual(new Map([['e1', 1], ['e2', 2]]));
+  });
+
   it('waits the buffer the settings name', async () => {
     const { league, contest } = liveMasters();
     const ana = member(league.id, 'Ana');
