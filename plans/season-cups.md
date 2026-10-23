@@ -225,8 +225,8 @@ History adds three things to the Championships page; it stores nothing new.
 2. **Drill-through.** Under the matrix, a Contests list: every contest that went Final that year,
    newest first, with sport, date, winner (co-winners on ties), entries, and "Not counted" or "No
    result". The squad's year and a matrix cell filter it. Past Points race rows open leaderboards
-   the same way. The Contests page History view gains the year filter and winner line and pages
-   25 at a time.
+   the same way. The Contests page History view gains the year filter and winner line, one year
+   at a time.
 3. **All years (mockup C, no tabs).** Tiles for most championships and most cups won; then each
    year newest first with its champion and cup champions ("2026 so far" for the current year).
    My team's "Contest history" link points here (Q3).
@@ -246,7 +246,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | `POST /cups/:cupId/crown` | #841 | Crown (section 2) |
 | `GET /championship/:year` | #863 | Trophy, podium, tiles, matrix |
 | `GET /championship` | #863 | Years with their champions |
-| `GET /history/contests?year=&squadId=&place=&page=` | #837 | `ContestResultSummaryDto` pages, read from `LeagueYearFinish` so a cell's list matches its count |
+| `GET /history/contests?year=&squadId=&place=` | #837 | `ContestResultSummaryDto[]` for one year (no paging, `rules/domain-model-conventions-rules.md` §16), read from `LeagueYearFinish` so a cell's list matches its count |
 | `GET /history/summary` | #837 | Tile counts (`SummaryTile`: `MOST_CHAMPIONSHIPS`, `MOST_CUPS`) and each year's champions |
 | `PATCH /leagues/:leagueId`, contest settings | #841, #863 | Gain `cupPointsScale`, `cupCustomPoints`, `cupName`; `cupWeight` |
 
@@ -356,7 +356,7 @@ Squad header: icon · name · owners · year picker "2026 ▾"
 - **One request per page:** `GET /leagues/:leagueId/squads/:squadId/results?year=` returning
   `SquadYearResultsDto`. The server calls the same service functions the league pages use
   (championship standings, cup standings, records) and keeps the squad's row, so the squad page
-  and the league page can never disagree. The contest list pages through the existing
+  and the league page can never disagree. The contest list reads the existing
   `GET /history/contests?squadId=`.
 - **Contest medals** (Derek's idea 6) are small counts of contest 1sts, 2nds and 3rds, all time,
   from `LeagueYearFinish`, so a cup trophy still stands out.
