@@ -28,3 +28,19 @@ export function buildEntryUrl(appBaseUrl: string, leagueCode: string, contestId:
 export function buildLeaderboardUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
   return `${buildContestUrl(appBaseUrl, leagueCode, contestId)}/leaderboard`;
 }
+
+/** The league's contests page for its commissioners. */
+export function buildLeagueAdminContestsUrl(appBaseUrl: string, leagueCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/admin/contests`;
+}
+
+/** Create contest, started on one contest template when given. */
+export function buildCreateContestUrl(appBaseUrl: string, leagueCode: string, templateId?: string): string {
+  const url = `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/new`;
+  return templateId === undefined ? url : `${url}?template=${encodeURIComponent(templateId)}`;
+}
+
+/** One contest's commissioner page, where it is opened. */
+export function buildContestAdminUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
+  return `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/${encodeURIComponent(contestId)}`;
+}

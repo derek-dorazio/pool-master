@@ -113,7 +113,7 @@ export const UNSUBSCRIBE_PAGE_PATH = '/email/unsubscribe';
 export const ONE_CLICK_UNSUBSCRIBE_PATH = '/api/v1/email/unsubscribe';
 
 export interface EmailServiceOptions {
-  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLatestStateByInvitations'>;
+  messages: Pick<EmailMessageRepository, 'record' | 'existsForContest' | 'findLeagueIdsRecorded' | 'findLatestStateByInvitations'>;
   /** Addresses that bounced for good or complained: their email is skipped, not queued. */
   suppressions: Pick<EmailSuppressionRepository, 'findByEmail'>;
   /** Categories each user turned off: their email in one is skipped, not queued. */
@@ -217,6 +217,15 @@ export class EmailService {
    */
   async hasRecordedForContest(templateKey: SystemEmailTemplateKey, contestId: string, about: string): Promise<boolean> {
     return this.options.messages.existsForContest({ contestId, templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
+  }
+
+  /**
+   * The leagues an email of `templateKey` about `about` is already recorded from, for anyone,
+   * sent or skipped. An email every league sends about one subject, such as an event coming up,
+   * asks it to tell each league once.
+   */
+  async leaguesRecorded(templateKey: SystemEmailTemplateKey, about: string): Promise<Set<string>> {
+    return this.options.messages.findLeagueIdsRecorded({ templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
   }
 
   /** Whether the recipient turned off the category this email sits in; only users can. */

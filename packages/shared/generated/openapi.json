@@ -26582,6 +26582,9 @@
           "CONTEST_STANDINGS",
           "CONTEST_RESULTS",
           "CONTEST_EVENT_CHANGED",
+          "EVENT_COMING_UP",
+          "EVENT_READY_FOR_CONTESTS",
+          "CONTEST_NOT_OPEN",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED"
         ],
@@ -26670,6 +26673,18 @@
               "CONTEST_EVENT_CHANGED": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "EVENT_COMING_UP": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "EVENT_READY_FOR_CONTESTS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_NOT_OPEN": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
@@ -26681,7 +26696,10 @@
               "CONTEST_OPENED",
               "CONTEST_STANDINGS",
               "CONTEST_RESULTS",
-              "CONTEST_EVENT_CHANGED"
+              "CONTEST_EVENT_CHANGED",
+              "EVENT_COMING_UP",
+              "EVENT_READY_FOR_CONTESTS",
+              "CONTEST_NOT_OPEN"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28131,6 +28149,18 @@
                       "CONTEST_EVENT_CHANGED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "EVENT_COMING_UP": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "EVENT_READY_FOR_CONTESTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_NOT_OPEN": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28142,7 +28172,10 @@
                       "CONTEST_OPENED",
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
-                      "CONTEST_EVENT_CHANGED"
+                      "CONTEST_EVENT_CHANGED",
+                      "EVENT_COMING_UP",
+                      "EVENT_READY_FOR_CONTESTS",
+                      "CONTEST_NOT_OPEN"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28242,6 +28275,18 @@
                       "CONTEST_EVENT_CHANGED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "EVENT_COMING_UP": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "EVENT_READY_FOR_CONTESTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_NOT_OPEN": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28253,7 +28298,10 @@
                       "CONTEST_OPENED",
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
-                      "CONTEST_EVENT_CHANGED"
+                      "CONTEST_EVENT_CHANGED",
+                      "EVENT_COMING_UP",
+                      "EVENT_READY_FOR_CONTESTS",
+                      "CONTEST_NOT_OPEN"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29196,6 +29244,18 @@
                             "CONTEST_EVENT_CHANGED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "EVENT_COMING_UP": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "EVENT_READY_FOR_CONTESTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_NOT_OPEN": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -29207,7 +29267,10 @@
                             "CONTEST_OPENED",
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
-                            "CONTEST_EVENT_CHANGED"
+                            "CONTEST_EVENT_CHANGED",
+                            "EVENT_COMING_UP",
+                            "EVENT_READY_FOR_CONTESTS",
+                            "CONTEST_NOT_OPEN"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29307,6 +29370,18 @@
                             "CONTEST_EVENT_CHANGED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "EVENT_COMING_UP": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "EVENT_READY_FOR_CONTESTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_NOT_OPEN": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -29318,7 +29393,10 @@
                             "CONTEST_OPENED",
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
-                            "CONTEST_EVENT_CHANGED"
+                            "CONTEST_EVENT_CHANGED",
+                            "EVENT_COMING_UP",
+                            "EVENT_READY_FOR_CONTESTS",
+                            "CONTEST_NOT_OPEN"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29919,6 +29997,18 @@
                       "CONTEST_EVENT_CHANGED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "EVENT_COMING_UP": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "EVENT_READY_FOR_CONTESTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_NOT_OPEN": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -29930,7 +30020,10 @@
                       "CONTEST_OPENED",
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
-                      "CONTEST_EVENT_CHANGED"
+                      "CONTEST_EVENT_CHANGED",
+                      "EVENT_COMING_UP",
+                      "EVENT_READY_FOR_CONTESTS",
+                      "CONTEST_NOT_OPEN"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30731,6 +30824,18 @@
                       "CONTEST_EVENT_CHANGED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "EVENT_COMING_UP": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "EVENT_READY_FOR_CONTESTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_NOT_OPEN": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30742,7 +30847,10 @@
                       "CONTEST_OPENED",
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
-                      "CONTEST_EVENT_CHANGED"
+                      "CONTEST_EVENT_CHANGED",
+                      "EVENT_COMING_UP",
+                      "EVENT_READY_FOR_CONTESTS",
+                      "CONTEST_NOT_OPEN"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30842,6 +30950,18 @@
                       "CONTEST_EVENT_CHANGED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "EVENT_COMING_UP": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "EVENT_READY_FOR_CONTESTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "CONTEST_NOT_OPEN": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30853,7 +30973,10 @@
                       "CONTEST_OPENED",
                       "CONTEST_STANDINGS",
                       "CONTEST_RESULTS",
-                      "CONTEST_EVENT_CHANGED"
+                      "CONTEST_EVENT_CHANGED",
+                      "EVENT_COMING_UP",
+                      "EVENT_READY_FOR_CONTESTS",
+                      "CONTEST_NOT_OPEN"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31754,6 +31877,18 @@
                             "CONTEST_EVENT_CHANGED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "EVENT_COMING_UP": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "EVENT_READY_FOR_CONTESTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_NOT_OPEN": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31765,7 +31900,10 @@
                             "CONTEST_OPENED",
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
-                            "CONTEST_EVENT_CHANGED"
+                            "CONTEST_EVENT_CHANGED",
+                            "EVENT_COMING_UP",
+                            "EVENT_READY_FOR_CONTESTS",
+                            "CONTEST_NOT_OPEN"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31865,6 +32003,18 @@
                             "CONTEST_EVENT_CHANGED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "EVENT_COMING_UP": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "EVENT_READY_FOR_CONTESTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "CONTEST_NOT_OPEN": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31876,7 +32026,10 @@
                             "CONTEST_OPENED",
                             "CONTEST_STANDINGS",
                             "CONTEST_RESULTS",
-                            "CONTEST_EVENT_CHANGED"
+                            "CONTEST_EVENT_CHANGED",
+                            "EVENT_COMING_UP",
+                            "EVENT_READY_FOR_CONTESTS",
+                            "CONTEST_NOT_OPEN"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."

@@ -398,5 +398,26 @@ event of ends with no scores. The cancellation is told before the event's contes
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
 
+Commissioner event emails (#845 C1, C2 and C4) are the "notifications due" step's third kind,
+in the Commissioner updates category:
+
+- **Coming up soon** (`EVENT_COMING_UP`): an event of any sport league, released or still a
+  draft, starts in 7 to 10 days. It gives the start, says when a draft event isn't open for
+  contests yet, names last year's winners of the league's own contests on the event's previous
+  edition (same series, the year before), and links to the league's contests page.
+- **Ready for contests** (`EVENT_READY_FOR_CONTESTS`): a released event starts within 7 days, at
+  the later of its release and 7 days before it starts, and the league has no contest on it. It
+  gives the start, the field size and the default contest setups offered on the event, each
+  linking to Create contest started on it.
+- **Your contest isn't open yet** (`CONTEST_NOT_OPEN`): a draft contest's picks close within 48
+  hours. Not for a contest created in the last 6 hours. It goes to the contest's league's
+  commissioners and links to the contest's commissioner page.
+
+C1 and C2 go to every active commissioner of every active league, each league sending its own;
+a league that joins after the others were told is told on the next sweep. A sport league whose
+events are weeks (each NFL week its own event) is told of its season's first week only. The
+idempotency key (event, league, person; for C4, contest, person) sends each once, and a league or
+contest already told is skipped before its email is built.
+
 If the outbox cannot record a welcome, a receipt, a new contest, a contest-started, a final results or an event changed email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

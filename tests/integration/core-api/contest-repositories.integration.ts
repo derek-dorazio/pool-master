@@ -10,6 +10,7 @@ import {
   PrismaContestRepository,
   PrismaEmailMessageRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaSportEventRepository,
   PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
@@ -759,6 +760,66 @@ describe('EmailMessageRepository.existsForContest (#877)', () => {
     await expect(exists(contest.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${contest.id}:${event.id}:round-10:`)).resolves.toBe(false);
     await expect(exists(contest.id, 'CONTEST_OPENED', `CONTEST_OPENED:${about}:`)).resolves.toBe(false);
     await expect(exists(other.id, 'CONTEST_STANDINGS', `CONTEST_STANDINGS:${about}:`)).resolves.toBe(false);
+  });
+});
+
+describe('EmailMessageRepository.findLeagueIdsRecorded (#893)', () => {
+  it('lists each league with an email of the template under the key prefix once, in any state, and no league for another template or subject', async () => {
+    const first = await createLeagueAndEvent();
+    const second = await createLeagueAndEvent();
+    const third = await createLeagueAndEvent();
+    const outbox = new PrismaEmailMessageRepository(getPrisma());
+    const record = (templateKey: 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS', leagueId: string, about: string, user: string) => outbox.record({
+      templateKey,
+      leagueId,
+      recipientEmail: `${user}-${first.suffix}@integration.test`,
+      idempotencyKey: `${templateKey}:${about}:${user}-${first.suffix}`,
+      fromName: 'Contest Repo League',
+      fromAddress: 'league@integration.test',
+      status: 'SKIPPED',
+      skipReason: 'OPTED_OUT',
+    });
+    const eventId = first.event.id;
+    await record('EVENT_COMING_UP', first.league.id, `${eventId}:${first.league.id}`, 'casey');
+    await record('EVENT_COMING_UP', first.league.id, `${eventId}:${first.league.id}`, 'jordan');
+    await record('EVENT_COMING_UP', second.league.id, `${eventId}:${second.league.id}`, 'casey');
+    await record('EVENT_COMING_UP', third.league.id, `${second.event.id}:${third.league.id}`, 'casey');
+    await record('EVENT_READY_FOR_CONTESTS', third.league.id, `${eventId}:${third.league.id}`, 'casey');
+
+    await expect(outbox.findLeagueIdsRecorded({ templateKey: 'EVENT_COMING_UP', keyPrefix: `EVENT_COMING_UP:${eventId}:` }))
+      .resolves.toEqual(new Set([first.league.id, second.league.id]));
+    await expect(outbox.findLeagueIdsRecorded({ templateKey: 'EVENT_READY_FOR_CONTESTS', keyPrefix: `EVENT_READY_FOR_CONTESTS:${second.event.id}:` }))
+      .resolves.toEqual(new Set());
+  });
+});
+
+describe('SportEventRepository.findAll start bounds (#893)', () => {
+  it('finds the events starting from the first moment and before the second, leaving out one starting exactly at the second', async () => {
+    const prisma = getPrisma();
+    const suffix = randomUUID().slice(0, 8);
+    const create = async (day: string) => prisma.sportEvent.create({
+      data: {
+        ...(await freshEventEdition(prisma)),
+        externalId: `start-bounds-${day}-${suffix}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Start Bounds ${day} ${suffix}`,
+        startDate: new Date(`2026-06-${day}T12:00:00.000Z`),
+        status: 'SCHEDULED',
+      },
+    });
+    await create('01');
+    const from = await create('04');
+    const middle = await create('07');
+    await create('10');
+
+    const found = await new PrismaSportEventRepository(prisma).findAll({
+      q: suffix,
+      startsFrom: from.startDate,
+      startsBefore: new Date('2026-06-10T12:00:00.000Z'),
+    });
+
+    expect(found.map((event) => event.id)).toEqual([from.id, middle.id]);
   });
 });
 

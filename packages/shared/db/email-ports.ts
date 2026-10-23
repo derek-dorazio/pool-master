@@ -93,6 +93,11 @@ export interface EmailMessageRepository {
    * starting with `keyPrefix`: for anyone, in any state.
    */
   existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; keyPrefix: string }): Promise<boolean>;
+  /**
+   * The leagues an email of `templateKey` is recorded from under an idempotency key starting
+   * with `keyPrefix`: for anyone, in any state.
+   */
+  findLeagueIdsRecorded(query: { templateKey: EmailTemplateKey; keyPrefix: string }): Promise<Set<string>>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
   findLatestStateByInvitations(
     invitationIds: string[],
