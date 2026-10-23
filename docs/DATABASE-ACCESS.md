@@ -70,6 +70,30 @@ in `infrastructure/terraform/README.md` *Direct QA Database Access*. It can read
 including password hashes and reset and refresh tokens, so guard its password like the master's.
 Use the master user only for administrative work.
 
+## Rotating the master password
+
+The master password is the `db_password` Terraform variable. An apply sets it on RDS at once and
+writes a new `DATABASE_URL` into new core-api and migrate task definition revisions, but the
+running service picks those up only on its next deploy (`infrastructure/terraform/README.md`
+*How Terraform's Task Definition Env Reaches the Service*). Until then the app cannot open new
+database connections, so apply shortly before a merge to `main`, or run the deploy workflow
+straight after.
+
+From `infrastructure/terraform`, with `TF_VAR_jwt_secret` set to the existing value:
+
+```bash
+NEWPW=$(openssl rand -hex 24)
+sed -i '' "s/^db_password .*/db_password            = \"$NEWPW\"/" envs/<env>.tfvars
+echo "$NEWPW" | pbcopy
+terraform plan -var-file=envs/<env>.tfvars -out=rotate.plan
+```
+
+`sed` rewrites the existing `db_password` line in your local, uncommitted tfvars file, and
+`pbcopy` puts the new password on the clipboard for your password manager. Hex keeps it safe
+inside `DATABASE_URL` without URL encoding. The plan should change only the RDS password and the
+core-api and migrate task definitions; apply it with `terraform apply rotate.plan`. The read-only
+user's password is separate and unaffected.
+
 ## Troubleshooting
 
 | Message | Cause |
