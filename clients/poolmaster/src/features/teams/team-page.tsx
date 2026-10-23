@@ -2,7 +2,7 @@ import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
-import { SquadYearSection } from '@/features/championships/squad-year-section';
+import { SquadHistorySection } from '@/features/championships/squad-history-section';
 import {
   buildLeagueAdminTeamPath,
   buildLeagueTeamPath,
@@ -102,7 +102,7 @@ export function TeamPage() {
         )}
       </section>
 
-      <SquadYearSection leagueCode={leagueCode} leagueId={leagueId} squad={team} />
+      <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={team} />
     </section>
   );
 }

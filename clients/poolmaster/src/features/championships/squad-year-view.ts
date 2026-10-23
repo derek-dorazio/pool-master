@@ -1,5 +1,6 @@
-import { CupTrophy } from '@poolmaster/shared/domain';
-import type { ChampionshipStandingRowDto, SquadChampionshipDto, SquadCupDto } from '@/lib/api';
+import { CupTrophy, TrophyKind } from '@poolmaster/shared/domain';
+import type { ChampionshipStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadTrophyDto, SquadYearDto } from '@/lib/api';
+import { historyCupsOnShow, historyYearTitle } from './championship-view';
 import { formatCupPoints, formatPlace } from './cup-view';
 
 /** The squad's own counts, as the Championship tab's tiles count them for every squad. */
@@ -40,4 +41,35 @@ export function describeSquadChampionship(championship: SquadChampionshipDto): s
 export function describeSquadCup(cup: SquadCupDto): string {
   const line = `${formatPlace(cup.standing)} of ${cup.squadCount} · ${formatCupPoints(cup.standing.points)} points`;
   return cup.standing.trophy === null ? line : `${line} · ${CUP_TROPHY_LABELS[cup.standing.trophy]}`;
+}
+
+/** A trophy on the squad's shelf: "2025 NFL Cup · Champion". */
+export function describeSquadTrophy(trophy: SquadTrophyDto): string {
+  return `${trophy.name} · ${CUP_TROPHY_LABELS[trophy.trophy]}`;
+}
+
+/** Whether a trophy is a league championship's, for its icon and link. */
+export function isChampionshipTrophy(trophy: SquadTrophyDto): boolean {
+  return trophy.kind === TrophyKind.CHAMPIONSHIP;
+}
+
+/** The cups on show that the squad placed in: every active squad has a 0-point row, which the strip leaves out. */
+function cupsPlacedOnShow(cups: SquadCupDto[]): SquadCupDto[] {
+  return historyCupsOnShow(cups).filter((cup) => cup.standing.contestsCounted > 0);
+}
+
+/** The years the squad's All years strip lists: each one it placed in the championship or in a cup on show. */
+export function squadYearsPlaced(years: SquadYearDto[]): SquadYearDto[] {
+  return years.filter((year) => (year.championship?.standing.played ?? 0) > 0 || cupsPlacedOnShow(year.cups).length > 0);
+}
+
+/** A year's line in the strip: its championship place, then each cup on show it placed in, with its trophy or place. */
+export function describeSquadYearLine(year: SquadYearDto, currentYear: number): { title: string; detail: string } {
+  const parts = [
+    ...(year.championship && year.championship.standing.played > 0
+      ? [`Championship ${formatPlace(year.championship.standing)} of ${year.championship.squadCount}`]
+      : []),
+    ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : CUP_TROPHY_LABELS[cup.standing.trophy].toLowerCase()}`),
+  ];
+  return { title: historyYearTitle({ year: year.year, isOver: year.year < currentYear }), detail: parts.join(' · ') };
 }

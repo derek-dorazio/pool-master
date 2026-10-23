@@ -426,6 +426,11 @@ email, not another page. Sent through the email outbox (#845), class B.
 2. **Trophies and all years.** Contest medals, the trophy case section (the trophy shelf: every
    top-3 cup finish from `CupStanding.trophy` and championship finish), the All years strip and
    the year picker. After #841 slice 4 and #837 slice 1.
+   Built as `GET /leagues/:id/history/squads/:squadId/years` (`getSquadHistory`): the medals, the
+   shelf and every year's `SquadYearDto`. A championship trophy is a podium with points in a year
+   that is over (`TrophyKind`; `trophyForPlace` is shared with crowning). The year picker is
+   `?year=` on the squad page; the strip lists only the years, and the cups, the squad placed in. Perpetual
+   trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
 4. **Year in review email.** After slice 1 and #845's outbox.
 

@@ -143,6 +143,8 @@ export const QueryKeys = {
     summary: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'summary'] as const,
     squadYear: (leagueId: QueryKeyId, squadId: QueryKeyId, year: number) =>
       ['poolmaster', 'championship', leagueId, year, 'squad', squadId] as const,
+    squadHistory: (leagueId: QueryKeyId, squadId: QueryKeyId) =>
+      ['poolmaster', 'championship', leagueId, 'squad', squadId] as const,
     contests: (leagueId: QueryKeyId, year: number | null, squadId: QueryKeyId | null, place: number | null) =>
       ['poolmaster', 'championship', leagueId, year, 'contests', squadId, place] as const,
   },

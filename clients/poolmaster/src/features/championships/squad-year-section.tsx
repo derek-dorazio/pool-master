@@ -6,13 +6,13 @@ import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/feature
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
-import { describeContestResultFilter, historyCupsOnShow, historyYearTitle, type ContestResultFilter } from './championship-view';
+import { describeContestResultFilter, historyCupsOnShow, type ContestResultFilter } from './championship-view';
 import { describeMovement } from './cup-view';
 import { SQUAD_MEDAL_TILES, describeSquadChampionship, describeSquadCup } from './squad-year-view';
 import { useChampionshipContestsQuery, useSquadYearQuery } from './use-championship-query';
 
 /**
- * A squad's year on its squad page (#872, mockup E): its cut of the Championships views, read
+ * One year of a squad on its squad page (#872, mockup E): its cut of the Championships views, read
  * from the same rows the league pages show. Its championship place, its own medal counts, its
  * finish matrix row (a count narrows its contests), its place in each cup on show, and the
  * counted contests it placed in, each opening its final leaderboard.
@@ -21,22 +21,23 @@ export function SquadYearSection({
   leagueCode,
   leagueId,
   squad,
+  year,
 }: {
   leagueCode: string;
   leagueId: string;
   squad: Pick<SquadDto, 'id' | 'name'>;
+  year: number;
 }) {
-  const year = championshipYear(new Date());
   const squadYearQuery = useSquadYearQuery(leagueId, squad.id, year);
   const [place, setPlace] = useState<number | null>(null);
   const filter = useMemo<ContestResultFilter>(() => ({ squadId: squad.id, place }), [squad.id, place]);
   const contestsQuery = useChampionshipContestsQuery(leagueId, year, filter);
   const championship = squadYearQuery.data?.championship ?? null;
   const cups = historyCupsOnShow(squadYearQuery.data?.cups ?? []);
+  const isOver = year < championshipYear(new Date());
 
   return (
-    <section className="space-y-4" data-testid="squad-year">
-      <h2 className="text-lg font-semibold text-foreground">{historyYearTitle({ year, isOver: false })}</h2>
+    <div className="space-y-4" data-testid="squad-year">
       {squadYearQuery.isError ? (
         <ErrorState body="We couldn't load this squad's year." testId="squad-year-error" />
       ) : !squadYearQuery.data ? (
@@ -122,12 +123,12 @@ export function SquadYearSection({
         ) : (
           <ChampionshipContestList
             contests={contestsQuery.data}
-            emptyBody={`${squad.name} hasn't placed in a counted contest in ${year} yet.`}
+            emptyBody={isOver ? `${squad.name} didn't place in a counted contest in ${year}.` : `${squad.name} hasn't placed in a counted contest in ${year} yet.`}
             leagueCode={leagueCode}
             testIdPrefix="squad-year-contest"
           />
         )}
       </Tile>
-    </section>
+    </div>
   );
 }

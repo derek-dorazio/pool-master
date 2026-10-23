@@ -12,8 +12,10 @@ import {
   CupTrophy,
   CupWeight,
   SummaryTile,
+  TrophyKind,
   championshipYear,
   championshipYearStart,
+  trophyForPlace,
   type SelectionType,
   type LeagueYearFinish,
   type Squad,
@@ -120,6 +122,22 @@ export interface SquadYearView {
   cups: SquadCupView[];
 }
 
+/** A trophy on a squad's shelf: a championship finished on the podium in a year that is over, or a crowned cup's trophy. */
+export type SquadTrophyView =
+  | { kind: typeof TrophyKind.CHAMPIONSHIP; year: number; trophy: CupTrophy; cupName: string }
+  | { kind: typeof TrophyKind.CUP; year: number; trophy: CupTrophy; cup: CupView };
+
+/** A squad's whole history in the league: contest medals, its trophy shelf, and every year's rows. */
+export interface SquadHistoryView {
+  squad: Squad;
+  /** Counted contests it finished 1st, 2nd and 3rd in, all time. */
+  medals: { firsts: number; seconds: number; thirds: number };
+  /** Newest first; within a year the championship first, then cups by sports league. */
+  trophies: SquadTrophyView[];
+  /** Every year the league has a championship or a cup season, newest first. */
+  years: SquadYearView[];
+}
+
 export interface HistoryServiceDeps {
   finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
@@ -182,11 +200,61 @@ export class HistoryService {
    * season, read through the same services the league pages use, so the two can never disagree.
    */
   async getSquadYear(leagueId: string, squadId: string, year: number): Promise<SquadYearView> {
+    const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadYear.squadNotFound');
+    const view = await this.readSquadYear(leagueId, squad, year);
+    this.deps.logger?.debug({ action: 'history.squadYear', data: { leagueId, squadId, year, cupCount: view.cups.length } }, 'Read a squad\'s year');
+    return view;
+  }
+
+  /**
+   * A squad's whole history for its squad page (#872): its contest medals all time, its trophy
+   * shelf (championship podiums in years that are over, crowned cups' trophies), and its rows of
+   * every year the league has a championship or a cup season in, newest first.
+   */
+  async getSquadHistory(leagueId: string, squadId: string): Promise<SquadHistoryView> {
+    const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadHistory.squadNotFound');
+    const [championshipYears, seasonYears] = await Promise.all([
+      this.deps.championship.listYears(leagueId),
+      this.deps.cups.listSeasonYears(leagueId),
+    ]);
+    const yearNumbers = [...new Set([...championshipYears.map((row) => row.year), ...seasonYears])].sort((left, right) => right - left);
+    const years = await Promise.all(yearNumbers.map((year) => this.readSquadYear(leagueId, squad, year)));
+    const trophies = years.flatMap((year): SquadTrophyView[] => {
+      const { championship } = year;
+      const podium = championship !== null && championship.isOver
+        ? trophyForPlace(championship.standing.position, championship.standing.points)
+        : null;
+      return [
+        ...(podium === null || championship === null ? [] : [{ kind: TrophyKind.CHAMPIONSHIP, year: year.year, trophy: podium, cupName: championship.cupName }]),
+        ...year.cups.flatMap((cup) => cup.standing.trophy === null ? [] : [{ kind: TrophyKind.CUP, year: year.year, trophy: cup.standing.trophy, cup: cup.view }]),
+      ];
+    });
+    this.deps.logger?.debug({ action: 'history.squadHistory', data: { leagueId, squadId, yearCount: years.length, trophyCount: trophies.length } }, 'Read a squad\'s history');
+    return {
+      squad,
+      // Summed from the years' championship rows, so they always match the Championship tab.
+      medals: {
+        firsts: sumFinishes(years, 0),
+        seconds: sumFinishes(years, 1),
+        thirds: sumFinishes(years, 2),
+      },
+      trophies,
+      years,
+    };
+  }
+
+  private async requireLeagueSquad(leagueId: string, squadId: string, action: string): Promise<Squad> {
     const squad = await this.deps.squads.findById(squadId);
     if (squad === null || squad.leagueId !== leagueId) {
-      this.deps.logger?.warn({ action: 'history.squadYear.squadNotFound', data: { leagueId, squadId, year } }, 'Squad year asked for a squad outside the league');
+      this.deps.logger?.warn({ action, data: { leagueId, squadId } }, 'Squad history asked for a squad outside the league');
       throw new HistorySquadNotFoundError(`Squad ${squadId} is not in this league.`);
     }
+    return squad;
+  }
+
+  /** One year of a squad, from the same championship and cup reads as the league pages. */
+  private async readSquadYear(leagueId: string, squad: Squad, year: number): Promise<SquadYearView> {
+    const squadId = squad.id;
     const [championship, cups] = await Promise.all([
       this.deps.championship.getYear(leagueId, year),
       this.deps.cups.listSeasonCups(leagueId, year),
@@ -203,7 +271,6 @@ export class HistoryService {
         }];
       })
       .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName));
-    this.deps.logger?.debug({ action: 'history.squadYear', data: { leagueId, squadId, year, cupCount: squadCups.length } }, 'Read a squad\'s year');
     return {
       squad,
       year,
@@ -304,4 +371,9 @@ function mostOf(tile: SummaryTile, wins: readonly Squad[]): HistorySummaryTileVi
     count,
     squads: byName([...counts.values()].filter((row) => row.count === count && count > 0).map((row) => row.squad)),
   };
+}
+
+/** How many times the squad finished in a place (0 for 1st) over its championship rows. */
+function sumFinishes(years: SquadYearView[], placeIndex: number): number {
+  return years.reduce((total, year) => total + (year.championship?.standing.finishes[placeIndex] ?? 0), 0);
 }

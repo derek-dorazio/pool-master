@@ -17,6 +17,7 @@ import {
   getCupProjection,
   getCupSquadPoints,
   getHistorySummary,
+  getSquadHistory,
   getSquadYear,
   listChampionshipYears,
   listContestConfigTemplates,
@@ -34,7 +35,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, TrophyKind, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -47,6 +48,7 @@ import {
   CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueResponseSchema,
+  SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
@@ -68,7 +70,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // with both squads sharing the trophy, has no projection, and keeps its points when the table
 // changes again. All years (#837) then lists the cup's season with its two champions and this
 // year's championship so far, and counts the shared cup for both squads. Last, the member's squad
-// page (#872) reads its own championship row and its crowned cup row.
+// page (#872) reads its own championship row and its crowned cup row, and its history shelves
+// the crowned cup.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -409,6 +412,16 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const seasonYear = await squadYear(SEASON);
     expect(seasonYear.cups.map((row) => [row.name, row.status, row.standing.displayPosition, row.squadCount, row.standing.points, row.standing.trophy])).toEqual([
       [`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 'T1', 2, 150, CupTrophy.CHAMPION],
+    ]);
+    const history = SquadHistoryResponseSchema.parse(expectDefined((await getSquadHistory({
+      client: member.client,
+      path: { id: league.id, squadId: memberSquadId },
+    })).data)).squadHistory;
+    expect(history.years.map((row) => row.year)).toEqual([SEASON, year]);
+    expect(history.medals).toEqual({ firsts: 1, seconds: 1, thirds: 0 });
+    // The shared crowned cup is on the shelf; this year's running championship is not.
+    expect(history.trophies.map((row) => [row.kind, row.year, row.trophy, row.name])).toEqual([
+      [TrophyKind.CUP, SEASON, CupTrophy.CHAMPION, `${SEASON} World Marathon Majors (men) Cup`],
     ]);
     const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });
     expect(unknownSquad.response.status).toBe(404);

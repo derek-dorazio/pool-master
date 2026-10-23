@@ -18,7 +18,7 @@ import {
   ContestStatus,
   CupContestCount,
   CupStatus,
-  CupTrophy,
+  type CupTrophy,
   CupWeight,
   cupFinishPoints,
   rankCupTallies,
@@ -29,6 +29,7 @@ import {
   type Squad,
   type SquadContestFinish,
   squadContestFinishes,
+  trophyForPlace,
 } from '@poolmaster/shared/domain';
 
 type CupLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
@@ -311,7 +312,7 @@ export class CupService {
         wins: row.wins,
         podiums: row.podiums,
         contestsCounted: row.contestsCounted,
-        trophy: row.points > 0 ? TROPHY_BY_POSITION.get(row.position) ?? null : null,
+        trophy: trophyForPlace(row.position, row.points),
       }));
     const crowned = await this.deps.cups.crown(cup.id, { crownedAt: this.now(), pointsTable: season.table, standings });
     if (crowned === null) {
@@ -403,13 +404,6 @@ export class CupService {
     };
   }
 }
-
-/** Places 1st to 3rd and the trophy each takes. */
-const TROPHY_BY_POSITION = new Map<number, CupTrophy>([
-  [1, CupTrophy.CHAMPION],
-  [2, CupTrophy.RUNNER_UP],
-  [3, CupTrophy.THIRD],
-]);
 
 /** The squads a cup shows: every active squad, at 0 until it places, and an inactive one once it has placed. */
 function cupSquads(leagueSquads: readonly Squad[], counted: readonly SettledContest[]): Squad[] {

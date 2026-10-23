@@ -6,7 +6,7 @@
  * Points are carried in tenths of a point: two squads tied for 2nd on the STANDARD table each
  * earn (80 + 65) / 2 = 72.5, stored as 725, summed exactly and shown to one decimal.
  */
-import { CupPointsScale, CupWeight } from './enums';
+import { CupPointsScale, CupTrophy, CupWeight } from './enums';
 import { assertNever } from './assert-never';
 
 /** STANDARD points for 1st to 20th: 100 ... 27 to 10th, then 25 down by 2 to 7 for 11th to 20th. */
@@ -135,4 +135,18 @@ export function rankTallies<T>(tallies: readonly T[], compare: (left: T, right: 
 export function rankCupTallies<T extends CupTally>(tallies: readonly T[]): RankedCupTally<T>[] {
   return rankTallies(tallies, (left, right) =>
     right.points - left.points || right.wins - left.wins || right.podiums - left.podiums);
+}
+
+const TROPHY_BY_POSITION = new Map<number, CupTrophy>([
+  [1, CupTrophy.CHAMPION],
+  [2, CupTrophy.RUNNER_UP],
+  [3, CupTrophy.THIRD],
+]);
+
+/**
+ * The trophy a final place takes, for a crowned cup and a championship year that is over alike:
+ * 1st, 2nd and 3rd (ties share), and nothing at 0 points or below the podium.
+ */
+export function trophyForPlace(position: number, points: number): CupTrophy | null {
+  return points > 0 ? TROPHY_BY_POSITION.get(position) ?? null : null;
 }

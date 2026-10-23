@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getChampionship,
   getHistorySummary,
+  getSquadHistory,
   getSquadYear,
   listChampionshipYears,
   listContestResults,
@@ -9,6 +10,7 @@ import {
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
   type HistorySummaryDto,
+  type SquadHistoryDto,
   type SquadYearDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -110,6 +112,24 @@ export function useSquadYearQuery(leagueId: string, squadId: string, year: numbe
       }
 
       return response.data.squadYear;
+    },
+    enabled: Boolean(leagueId) && Boolean(squadId),
+    retry: false,
+  });
+}
+
+/** One squad's whole history (#872): its contest medals, trophy shelf, and every year's rows. */
+export function useSquadHistoryQuery(leagueId: string, squadId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.squadHistory(leagueId, squadId),
+    queryFn: async (): Promise<SquadHistoryDto> => {
+      const response = await getSquadHistory({ path: { id: leagueId, squadId } });
+
+      if (!response.data?.squadHistory) {
+        throwApiError(response.error, 'Squad history response is missing data.');
+      }
+
+      return response.data.squadHistory;
     },
     enabled: Boolean(leagueId) && Boolean(squadId),
     retry: false,

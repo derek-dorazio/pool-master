@@ -1,4 +1,4 @@
-import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadYearDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadHistoryDto, SquadYearDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -220,7 +220,7 @@ export function buildSquadCup(
     status: 'OPEN',
     contestsCounted: 3,
     squadCount: 3,
-    standing: buildCupStanding({ points: 1600, ...standing }),
+    standing: buildCupStanding({ points: 1600, contestsCounted: 2, ...standing }),
     ...overrides,
   };
 }
@@ -231,6 +231,27 @@ export function buildSquadYear(overrides: Partial<SquadYearDto> = {}): SquadYear
     year: 2026,
     championship: buildSquadChampionship(),
     cups: [buildSquadCup()],
+    ...overrides,
+  };
+}
+
+/** Casey Crushers' history: one contest win, a 2025 runner-up championship and a crowned NFL Cup. */
+export function buildSquadHistory(overrides: Partial<SquadHistoryDto> = {}): SquadHistoryDto {
+  return {
+    squadId: 'team-1',
+    medals: { firsts: 4, seconds: 2, thirds: 1 },
+    trophies: [
+      { kind: 'CHAMPIONSHIP', year: 2025, trophy: 'RUNNER_UP', name: '2025 Derek\'s Pool Cup', cupId: null, sportLeagueId: null },
+      { kind: 'CUP', year: 2025, trophy: 'CHAMPION', name: '2025 NFL Cup', cupId: 'cup-nfl', sportLeagueId: 'nfl' },
+    ],
+    years: [
+      buildSquadYear({ championship: buildSquadChampionship({}, { played: 0 }), cups: [] }),
+      buildSquadYear({
+        year: 2025,
+        championship: buildSquadChampionship({ name: '2025 Derek\'s Pool Cup', isOver: true, squadCount: 12 }),
+        cups: [buildSquadCup({ cupId: 'cup-nfl', sportLeagueId: 'nfl', name: '2025 NFL Cup', status: 'CROWNED' }, { trophy: 'CHAMPION' })],
+      }),
+    ],
     ...overrides,
   };
 }
