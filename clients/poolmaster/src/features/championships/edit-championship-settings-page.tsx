@@ -118,8 +118,8 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       syncLeagueCaches(queryClient, updated);
       navigate(settingsPath);
     },
-    // Open cups score on the table as it stands, so their standings change with it.
-    invalidates: [QueryKeys.cups.all],
+    // Open cups score on the table as it stands, and the championship is named by the cup name.
+    invalidates: [QueryKeys.cups.all, QueryKeys.championship.all],
   });
 
   return (

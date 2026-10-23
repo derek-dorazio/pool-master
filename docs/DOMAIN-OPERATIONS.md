@@ -952,7 +952,7 @@ and share a place when equal on all three. The pure rules are `@poolmaster/share
 | Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
 
 The web app shows cups under the league menu's **Championships**
-(`/league/:code/championships/:year`): the Trophy case has a card per cup, and Points race one
+(`/league/:code/championships/:year/trophies`): the Trophy case has a card per cup, and Points race one
 cup's standings, race chart and contests, a squad opening its cup points and a contest its
 leaderboard. League Home has a card of the year's cups once there is one. Commissioner tools'
 League settings has a Championships section (name and points table, with a preview of what each
@@ -976,6 +976,10 @@ contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pur
 |---|---|---|
 | List the championship's years | `member` | `listChampionshipYears`, `GET /leagues/:id/championship`: each year with a counted contest, newest first, with `isOver` and its `leaders` (the squads in 1st: champions once the year is over) |
 | Read a championship year | `member` | `getChampionship`, `GET /leagues/:id/championship/:year`: standings (every active squad, at 0 until it places; an inactive squad once it has placed) with each squad's finish matrix row (1st to 10th), podiums, top tens and contests played; the medal tiles (`MOST_FIRSTS`, `MOST_SECONDS`, `MOST_THIRDS`, `MOST_PODIUMS`, `MOST_TOP_TENS`, `MOST_PLAYED`, ties naming each); `contestsCounted`, and for the current year `contestsToGo` (open and live counted contests) |
+
+The web app's Championships page lands on the year's **Championship** tab
+(`/league/:code/championships/:year`): the championship's name and who leads it, or, once the
+year is over, the trophy and the podium; the medal tiles; and the finish matrix.
 
 ### Squares — `selections`
 

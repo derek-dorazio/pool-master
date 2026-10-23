@@ -136,6 +136,10 @@ export const QueryKeys = {
     all: ['poolmaster', 'league-teams'] as const,
     byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-teams', leagueId] as const,
   },
+  championship: {
+    all: ['poolmaster', 'championship'] as const,
+    byYear: (leagueId: QueryKeyId, year: number) => ['poolmaster', 'championship', leagueId, year] as const,
+  },
   cups: {
     all: ['poolmaster', 'cups'] as const,
     bySeason: (leagueId: QueryKeyId, seasonYear: number) =>

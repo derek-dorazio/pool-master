@@ -10,6 +10,7 @@ export function useChampionshipsRoute() {
   const { leagueCode = '', year: yearParam } = useParams<{ leagueCode: string; year: string }>();
   const { league, viewer } = useLeagueContext(leagueCode);
   return {
+    league,
     leagueCode,
     leagueId: league?.id ?? '',
     viewer,
