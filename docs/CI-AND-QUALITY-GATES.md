@@ -102,6 +102,12 @@ still count), and stops it only when time is running out. Every step, including 
 `dpkg --configure -a` repair, has its own limit, so the 11 minutes is a hard cap. The browser download is cached per
 Playwright version, so only the system packages still come from the mirror.
 
+Most runs never touch the mirror. The browser download is restored from the cache, and the
+runner image already has every library Chromium links against, so the script first installs
+the browser alone and checks it with `ldd`; it runs the apt install above only when a library
+is missing. On 2026-10-23 a slow mirror failed four main runs in one day while apt fetched
+fonts and upgrades the tests do not need.
+
 ## Repository setup — branch protection
 
 The CI gates only enforce discipline if `main` cannot be reached without going
