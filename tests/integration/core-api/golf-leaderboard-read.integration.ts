@@ -146,6 +146,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
+        seasonYear: 2026,
         sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         name: `Golf Leaderboard Contest ${suffix}`,
         status: 'ACTIVE',

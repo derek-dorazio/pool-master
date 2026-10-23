@@ -225,8 +225,8 @@ History adds three things to the Championships page; it stores nothing new.
 2. **Drill-through.** Under the matrix, a Contests list: every contest that went Final that year,
    newest first, with sport, date, winner (co-winners on ties), entries, and "Not counted" or "No
    result". The squad's year and a matrix cell filter it. Past Points race rows open leaderboards
-   the same way. The Contests page History view gains the year filter and winner line and pages
-   25 at a time.
+   the same way. The Contests page History view gains the year filter and winner line, one year
+   at a time.
 3. **All years (mockup C, no tabs).** Tiles for most championships and most cups won; then each
    year newest first with its champion and cup champions ("2026 so far" for the current year).
    My team's "Contest history" link points here (Q3).
@@ -240,13 +240,13 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 
 | Route | Ticket | Returns |
 |---|---|---|
-| `GET /cups?seasonYear=` | #841 | The season's cups, each with leader and the viewer's place, `canCrown`, `unfinishedContests` |
+| `GET /cups?seasonYear=` | #841 | The season's cups, each with its full standings and contests (`CupDto`, the same shape `GET /cups/:cupId` answers). No viewer context (access rule A8): the client finds its own squad's row, and whether the commissioner can crown from its role and the contests' `count` |
 | `GET /cups/:cupId` | #841 | `CupStandingRowDto[]` (squad ref, position, points, wins, podiums, contests, movement, trophy) and `CupContestRowDto[]` (weight, `CupContestCount`: `COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`, winner) |
 | `GET /cups/:cupId/squads/:squadId` | #841 | One squad's points, contest by contest |
 | `POST /cups/:cupId/crown` | #841 | Crown (section 2) |
 | `GET /championship/:year` | #863 | Trophy, podium, tiles, matrix |
 | `GET /championship` | #863 | Years with their champions |
-| `GET /history/contests?year=&squadId=&place=&page=` | #837 | `ContestResultSummaryDto` pages, read from `LeagueYearFinish` so a cell's list matches its count |
+| `GET /history/contests?year=&squadId=&place=` | #837 | `ContestResultSummaryDto[]` for one year (no paging, `rules/domain-model-conventions-rules.md` §16), read from `LeagueYearFinish` so a cell's list matches its count |
 | `GET /history/summary` | #837 | Tile counts (`SummaryTile`: `MOST_CHAMPIONSHIPS`, `MOST_CUPS`) and each year's champions |
 | `PATCH /leagues/:leagueId`, contest settings | #841, #863 | Gain `cupPointsScale`, `cupCustomPoints`, `cupName`; `cupWeight` |
 
@@ -289,10 +289,11 @@ journey row once a page exists.
 
 **#841 cups**
 
-1. **Model and read API.** `seasonYear` (backfilled), `Cup`, `CupStanding`, points settings,
-   `cupWeight` and enums; cups made on contest create and by migration; `cup-points.ts`;
-   `GET /cups`, `/cups/:cupId`, the squad breakdown. Plus the guard and best-entry function if
-   #863 slice 1 hasn't landed them.
+1. **Model and read API.** `seasonYear` (backfilled), `Cup`, points settings, `cupWeight` and
+   enums; cups made on contest create and by migration; `cup-points.ts`; `GET /cups`,
+   `/cups/:cupId`, the squad breakdown. Plus the guard and best-entry function if #863 slice 1
+   hasn't landed them. `CupStanding`, `Cup.status` and `crownedAt`, and the `AFTER_CROWNING` count
+   come with crowning (slice 4), so no table or value sits unwritten before then.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
    movement and race chart, the squad sheet, the league home card.
 3. **Commissioner settings.** Points table with preview; cup weight.
@@ -355,7 +356,7 @@ Squad header: icon · name · owners · year picker "2026 ▾"
 - **One request per page:** `GET /leagues/:leagueId/squads/:squadId/results?year=` returning
   `SquadYearResultsDto`. The server calls the same service functions the league pages use
   (championship standings, cup standings, records) and keeps the squad's row, so the squad page
-  and the league page can never disagree. The contest list pages through the existing
+  and the league page can never disagree. The contest list reads the existing
   `GET /history/contests?squadId=`.
 - **Contest medals** (Derek's idea 6) are small counts of contest 1sts, 2nds and 3rds, all time,
   from `LeagueYearFinish`, so a cup trophy still stands out.
@@ -371,10 +372,14 @@ snapshot as of 31 December (championship place, tiles, best finish, cups, trophi
 year), linking to the squad page for that year. It is the same data at one moment, so it is an
 email, not another page. Sent through the email outbox (#845), class B.
 
-- **Q6 (open, Derek)** What sends it? Recommendation: the commissioner, with a "Send the 2026
-  year in review" button on the Championships page from 1 January, like crowning. No job runs,
-  and the commissioner picks the moment (after the last cup is crowned, say). The other way is
-  the existing event lifecycle sweep sending it on its first pass after 1 January.
+- **Q6** (Derek, 2026-10-23) The commissioner sends it, with a "Send the 2026 year in review"
+  button on the Championships page from 1 January. No job runs.
+- **Telling the commissioner** (Derek, 2026-10-23): from 1 January until it is sent, the
+  commissioner sees a "Your 2026 year in review is ready to send" banner on league home and the
+  Championships page, like Ready to crown. It is worked out on read (the year is over and
+  nothing has been sent for it), so it needs no timer either. An email reminder, and later an
+  automatic send on 1 January around 2am US Eastern, come with a scheduled job (Derek's long-run
+  plan); the button and banner stay as the manual path.
 
 ### Slices (#872)
 

@@ -615,6 +615,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
   const contest = await db.contest.create({
     data: {
       leagueId: league.id,
+      seasonYear: 2026,
       sportEvents: { create: { sportEventId, sequence: 1 } },
       name: `Provider Linked Contest ${RUN} ${suffix}`,
       status: 'ACTIVE',

@@ -13,6 +13,7 @@ import type {
   ContestEntryStatus,
   ContestStatus,
   ContestFormat,
+  CupWeight,
   DateFormat,
   EmailMessageStatus,
   EmailSkipReason,
@@ -265,6 +266,23 @@ export interface Contest extends DomainEntity {
    * Absent for every other contest. The squares digits' draw sets `drawnAt` too.
    */
   squaresGameMatchId?: string;
+  /** The season whose cup the contest counts toward (#841): its first event's year when created. */
+  seasonYear: number;
+  /** How much the contest counts toward its cup and the league championship (#841). */
+  cupWeight: CupWeight;
+}
+
+/**
+ * One sports league's season-long points race in a league (#841): the 2026 PGA Tour Cup. Made
+ * with the league's first contest of the season and sports league, never deleted; its standings
+ * are worked out from its contests' frozen places.
+ */
+export interface Cup {
+  id: string;
+  leagueId: string;
+  seasonYear: number;
+  sportLeagueId: string;
+  createdAt: Date;
 }
 
 /** Tier definition used for tiered contest-selection modes. */

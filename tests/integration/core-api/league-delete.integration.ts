@@ -60,7 +60,7 @@ describe('Deleting an inactive league', () => {
 
     // A contest and a league invitation, so every league-owned table the delete clears has a row.
     await getPrisma().contest.create({
-      data: { leagueId: league.id, name: 'Doomed Contest', selectionType: 'TIERED' },
+      data: { leagueId: league.id, seasonYear: 2026, name: 'Doomed Contest', selectionType: 'TIERED' },
     });
     await getPrisma().leagueInvitation.create({
       data: { leagueId: league.id, inviteCode: `delete-${league.id.slice(0, 8)}`, invitedBy: commissioner.user.id },

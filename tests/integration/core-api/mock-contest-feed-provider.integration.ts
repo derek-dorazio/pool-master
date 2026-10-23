@@ -354,6 +354,7 @@ async function createGolfLiveVerificationContests(input: {
   const directContest = await prisma.contest.create({
     data: {
       leagueId: league.id,
+      seasonYear: 2026,
       sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
       name: `Direct Golf Live E2E ${suffix}`,
       status: 'ACTIVE',

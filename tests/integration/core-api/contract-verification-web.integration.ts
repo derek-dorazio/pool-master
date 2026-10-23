@@ -746,6 +746,7 @@ describe('Contract verification (web)', () => {
     const contest = await getPrisma().contest.create({
       data: {
         leagueId,
+        seasonYear: 2026,
         name: 'Contract Draft Contest',
         status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
@@ -809,6 +810,7 @@ describe('Contract verification (web)', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId,
+        seasonYear: 2026,
         name: 'Contract Draw Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.ROSTER,
@@ -884,6 +886,7 @@ describe('Contract verification (web)', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId,
+        seasonYear: 2026,
         name: 'Contract Pickem Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.PREDICTION,

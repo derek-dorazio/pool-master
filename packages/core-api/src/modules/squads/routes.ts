@@ -172,7 +172,7 @@ export function squadsModule(fastify: FastifyInstance): void {
       tags: ['Squads'],
       summary: 'Permanently delete an inactive squad',
       description:
-        'Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app.',
+        'Permanently deletes an inactive squad and cascades related squad-owned data. This route is root-admin only and exists to support QA cleanup flows from the web app. Refused with 400 SQUAD_DELETE_REQUIRES_INACTIVE for an active squad, and with 400 SQUAD_DELETE_HAS_RESULTS for a squad with a place in a finished contest, whose results cups and championships keep.',
       operationId: 'deleteLeagueSquad',
       response: {
         200: schemaRef('SuccessResponse'),

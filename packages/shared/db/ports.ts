@@ -344,11 +344,11 @@ export interface ContestStatusTransition {
 /** A new contest; `sportEventIds` are its events in sequence order. */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId'
+  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'seasonYear'
 >;
 
 /** What can change on a contest row itself; its events change through `replaceSportEvents`. */
-export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt'>>;
+export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt' | 'seasonYear'>>;
 
 /** A new entry; it is born a DRAFT in every event of its contest. */
 export type ContestEntryCreate = Pick<ContestEntry, 'contestId' | 'squadId' | 'entryNumber' | 'name' | 'tiebreakerValue'>;

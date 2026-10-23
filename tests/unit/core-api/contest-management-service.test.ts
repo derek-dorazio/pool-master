@@ -1,6 +1,7 @@
 import { expect } from '@jest/globals';
 import {
   ContestFormat,
+  CupWeight,
   ContestStatus,
   type ContestScoringSettings,
   MatchSide,
@@ -41,6 +42,7 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestRepository,
+  CupKey,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -49,6 +51,7 @@ import {
   type ContestCreateSportEventReader,
 } from '../../../packages/core-api/src/modules/contest-management/service';
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
+import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
 import { createContestSportEventReader } from '../../../packages/core-api/src/modules/contest-management/wiring';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
@@ -74,16 +77,28 @@ function createContestRepo(): ContestRepository {
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
       selectionType: 'TIERED',
+      seasonYear: 2026,
+      cupWeight: CupWeight.NORMAL,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
     create: mockFn<ContestRepository['create']>(async (contest) => ({
       id: 'contest-1',
       ...contest,
+      cupWeight: CupWeight.NORMAL,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     })),
   });
+}
+
+/** The cups contest creation asks for (#841): each key handed to `ensureCup` lands in `asked`. */
+function createCupKeeper(asked: CupKey[] = []): Pick<CupService, 'ensureCup'> {
+  return {
+    ensureCup: async (key) => {
+      asked.push(key);
+    },
+  };
 }
 
 // NOT migrated to tests/support/repo-fakes.ts (#208), deliberately. This is a stateful
@@ -231,6 +246,7 @@ function createSportEventReader(overrides?: Partial<{
   startDate: Date;
   sport: Sport;
   sportLeagueId: string;
+  eventYear: number;
   tournamentFormat: TournamentFormat;
   participantCount: number | null;
   loadedParticipantCount: number;
@@ -267,6 +283,7 @@ function createSportEventReader(overrides?: Partial<{
       startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
       sport: overrides?.sport ?? Sport.GOLF,
       sportLeagueId: overrides?.sportLeagueId ?? PGA_TOUR_LEAGUE_ID,
+      eventYear: overrides?.eventYear ?? 2026,
       tournamentFormat:
         overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
       participantCount: overrides?.participantCount ?? 72,
@@ -288,21 +305,22 @@ describe('ContestManagementService', () => {
     jest.useRealTimers();
   });
 
-  it('creates a golf tiered contest as a DRAFT and derives internal scoring rules automatically', async () => {
+  it('creates a golf tiered contest as a DRAFT in its event\'s season, makes that season\'s cup and derives internal scoring rules automatically', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
+    const cupsAsked: CupKey[] = [];
 
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      contestConfigTemplateRepo,
-      contestConfigurationRepo,
-      participantContestScoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: contestConfigTemplateRepo,
+      configurations: contestConfigurationRepo,
+      scoringRules: participantContestScoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(cupsAsked),
+    });
 
     const result = await service.createContest(
       { leagueId: 'league-1' },
@@ -327,8 +345,11 @@ describe('ContestManagementService', () => {
       selectionType: 'TIERED',
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.DRAFT,
+      seasonYear: 2026,
     });
     expect(result).toBe('contest-1');
+    // Its season is its event's year, and its league gets that season's PGA Tour cup (#841).
+    expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2026, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
         templateId: undefined,
@@ -349,18 +370,18 @@ describe('ContestManagementService', () => {
 
   it('refuses to create a tiered contest whose countedScores exceeds the event\'s tier count times picksPerTier, writing nothing', async () => {
     const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(2),
-      undefined,
-      createSportEventReader({
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(2),
+      sportEventReader: createSportEventReader({
         participantCount: 80,
         loadedParticipantCount: 80,
       }),
-    );
+      cups: createCupKeeper(),
+    });
 
     await expect(
       service.createContest(
@@ -389,15 +410,15 @@ describe('ContestManagementService', () => {
     function tieredService(tierCount: number) {
       const contestConfigurationRepo = createContestConfigurationRepo();
       const contestCoreRepo = createContestRepo();
-      const service = new ContestManagementService(
-        contestCoreRepo,
-        createContestConfigTemplateRepo(),
-        contestConfigurationRepo,
-        createParticipantScoringRuleRepo(),
-        createSportEventTierServiceStub(tierCount),
-        undefined,
-        createSportEventReader({ participantCount: 80, loadedParticipantCount: 80 }),
-      );
+      const service = new ContestManagementService({
+        contests: contestCoreRepo,
+        configTemplates: createContestConfigTemplateRepo(),
+        configurations: contestConfigurationRepo,
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(tierCount),
+        sportEventReader: createSportEventReader({ participantCount: 80, loadedParticipantCount: 80 }),
+        cups: createCupKeeper(),
+      });
       const create = (rules: { tiersUsed: number; countedScores: number }) => service.createContest(
         { leagueId: 'league-1' },
         {
@@ -445,18 +466,18 @@ describe('ContestManagementService', () => {
   it('creates a tiered contest whose countedScores equals the event\'s tier count times picksPerTier, storing picksPerTier and no roster size', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(2),
-      undefined,
-      createSportEventReader({
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(2),
+      sportEventReader: createSportEventReader({
         participantCount: 80,
         loadedParticipantCount: 80,
       }),
-    );
+      cups: createCupKeeper(),
+    });
 
     await expect(
       service.createContest(
@@ -494,15 +515,15 @@ describe('ContestManagementService', () => {
   ])('refuses a configuration edit with 409 CONTEST_CONFIGURATION_LOCKED once the contest is %s, writing nothing', async (status) => {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
     const contest = await contestCoreRepo.findById('contest-1');
 
     (contestCoreRepo.findById as jest.Mock).mockResolvedValueOnce({ ...contest, status });
@@ -519,15 +540,15 @@ describe('ContestManagementService', () => {
       const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
       if (!template) throw new Error('The template fake holds one template');
       jest.mocked(templateRepo.findById).mockResolvedValue({ ...template, sportLeagueId: templateLeagueId });
-      const service = new ContestManagementService(
-        contestCoreRepo,
-        templateRepo,
-        createContestConfigurationRepo(),
-        createParticipantScoringRuleRepo(),
-        createSportEventTierServiceStub(),
-        undefined,
-        createSportEventReader({ sportLeagueId: eventLeagueId }),
-      );
+      const service = new ContestManagementService({
+        contests: contestCoreRepo,
+        configTemplates: templateRepo,
+        configurations: createContestConfigurationRepo(),
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(),
+        sportEventReader: createSportEventReader({ sportLeagueId: eventLeagueId }),
+        cups: createCupKeeper(),
+      });
       const created = service.createContest({ leagueId: 'league-1' }, {
         name: 'Major Pick 6',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
@@ -589,17 +610,17 @@ describe('ContestManagementService', () => {
         draft.status = ContestStatus.OPEN;
         return true;
       });
-      const service = new ContestManagementService(
-        contestCoreRepo,
-        createContestConfigTemplateRepo(),
-        createContestConfigurationRepo(),
-        createParticipantScoringRuleRepo(),
-        createSportEventTierServiceStub(options?.tierCount ?? 0),
-        undefined,
-        options?.reader ?? createSportEventReader(),
-        options?.contestOpened,
-        () => CONTEST_MANAGEMENT_TEST_NOW,
-      );
+      const service = new ContestManagementService({
+        contests: contestCoreRepo,
+        configTemplates: createContestConfigTemplateRepo(),
+        configurations: createContestConfigurationRepo(),
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(options?.tierCount ?? 0),
+        sportEventReader: options?.reader ?? createSportEventReader(),
+        contestOpened: options?.contestOpened,
+        now: () => CONTEST_MANAGEMENT_TEST_NOW,
+        cups: createCupKeeper(),
+      });
       return { service, contestCoreRepo };
     }
 
@@ -707,15 +728,15 @@ describe('ContestManagementService', () => {
   it('updates the persisted typed contest configuration shape', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      participantContestScoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: participantContestScoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     const result = await service.updateContestConfiguration('contest-1', {
       maxEntriesPerSquad: 2,
@@ -748,18 +769,18 @@ describe('ContestManagementService', () => {
 
   it('refuses a tiered contest update whose countedScores exceeds the event\'s tier count times picksPerTier, writing nothing', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(2),
-      undefined,
-      createSportEventReader({
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(2),
+      sportEventReader: createSportEventReader({
         participantCount: 80,
         loadedParticipantCount: 80,
       }),
-    );
+      cups: createCupKeeper(),
+    });
 
     await expect(
       service.updateContestConfiguration('contest-1', {
@@ -777,18 +798,18 @@ describe('ContestManagementService', () => {
 
   it('accepts a tiered contest update whose countedScores equals the event\'s tier count times picksPerTier', async () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(2),
-      undefined,
-      createSportEventReader({
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(2),
+      sportEventReader: createSportEventReader({
         participantCount: 80,
         loadedParticipantCount: 80,
       }),
-    );
+      cups: createCupKeeper(),
+    });
 
     const result = await service.updateContestConfiguration('contest-1', {
       maxEntriesPerSquad: 2,
@@ -805,15 +826,15 @@ describe('ContestManagementService', () => {
   });
 
   it('returns contest management detail by contest id', async () => {
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     const result = await service.getContest('contest-1');
 
@@ -828,15 +849,15 @@ describe('ContestManagementService', () => {
 
   it('pool-master-41t echoes the linked event\'s effective tiers read-only on the management detail', async () => {
     const golfTierService = createSportEventTierServiceStub(2, true);
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      golfTierService,
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: golfTierService,
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     const result = await service.getContest('contest-1');
 
@@ -879,15 +900,15 @@ describe('ContestManagementService', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const participantContestScoringRuleRepo = createParticipantScoringRuleRepo();
 
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      contestConfigTemplateRepo,
-      contestConfigurationRepo,
-      participantContestScoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: contestConfigTemplateRepo,
+      configurations: contestConfigurationRepo,
+      scoringRules: participantContestScoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     const result = await service.createContest(
       { leagueId: 'league-1' },
@@ -924,15 +945,15 @@ describe('ContestManagementService', () => {
   it('creates from a template with a supplied configuration replacing the template configuration', async () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      createContestRepo(),
-      contestConfigTemplateRepo,
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: contestConfigTemplateRepo,
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     await service.createContest(
       { leagueId: 'league-1' },
@@ -963,15 +984,15 @@ describe('ContestManagementService', () => {
   // route's refine in front of it.
   it('rejects a create naming neither a template nor a configuration', async () => {
     const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     await expect(
       service.createContest(
@@ -997,15 +1018,15 @@ describe('ContestManagementService', () => {
       selectionType: 'BUDGET_PICK',
     });
     const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      contestConfigTemplateRepo,
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: contestConfigTemplateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     await expect(
       service.createContest(
@@ -1029,15 +1050,15 @@ describe('ContestManagementService', () => {
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
     (contestConfigTemplateRepo.findById as jest.Mock).mockResolvedValueOnce(null);
 
-    const service = new ContestManagementService(
-      createContestRepo(),
-      contestConfigTemplateRepo,
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: contestConfigTemplateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     let thrown: unknown;
     try {
@@ -1063,15 +1084,15 @@ describe('ContestManagementService', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValueOnce(null);
 
-    const service = new ContestManagementService(
-      createContestRepo(),
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader(),
-    );
+    const service = new ContestManagementService({
+      contests: createContestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+    });
 
     let thrown: unknown;
     try {
@@ -1086,18 +1107,18 @@ describe('ContestManagementService', () => {
 
   it('rejects contest creation when the sporting event field has not loaded yet', async () => {
     const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader({
         participantCount: 72,
         loadedParticipantCount: 0,
       }),
-    );
+      cups: createCupKeeper(),
+    });
 
     await expect(service.createContest(
       { leagueId: 'league-1' },
@@ -1141,15 +1162,15 @@ describe('ContestManagementService', () => {
     },
   ])('createContest $name, creating nothing', async ({ event, code, message }) => {
     const contestCoreRepo = createContestRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({ ...event, loadedParticipantCount: 72 }),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader({ ...event, loadedParticipantCount: 72 }),
+      cups: createCupKeeper(),
+    });
 
     await expect(service.createContest(
       { leagueId: 'league-1' },
@@ -1187,17 +1208,16 @@ describe('ContestManagementService', () => {
     } = {}) {
       const contestRepo = options.contestRepo ?? createContestRepo();
       const configurationRepo = options.configurationRepo ?? createContestConfigurationRepo();
-      const service = new ContestManagementService(
-        contestRepo,
-        options.templateRepo ?? createContestConfigTemplateRepo(),
-        configurationRepo,
-        createParticipantScoringRuleRepo(),
-        createSportEventTierServiceStub(),
-        undefined,
-        options.reader ?? createSportEventReader(),
-        undefined,
-        () => CONTEST_MANAGEMENT_TEST_NOW,
-      );
+      const service = new ContestManagementService({
+        contests: contestRepo,
+        configTemplates: options.templateRepo ?? createContestConfigTemplateRepo(),
+        configurations: configurationRepo,
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(),
+        sportEventReader: options.reader ?? createSportEventReader(),
+        now: () => CONTEST_MANAGEMENT_TEST_NOW,
+        cups: createCupKeeper(),
+      });
       return { service, contestRepo, configurationRepo };
     }
 
@@ -1346,15 +1366,15 @@ describe('ContestManagementService budget rules (#93)', () => {
   function budgetService(reader: ReturnType<typeof createSportEventReader>) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      reader,
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: reader,
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
 
@@ -1481,15 +1501,15 @@ describe('ContestManagementService random-draw rules (#601)', () => {
   function drawService() {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({ salaryCap: null }),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader({ salaryCap: null }),
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
 
@@ -1570,15 +1590,15 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     }]);
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      templateRepo,
-      createContestConfigurationRepo(),
-      scoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({ sport: Sport.HORSE_RACING, tournamentFormat: TournamentFormat.RACE }),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: templateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: scoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, tournamentFormat: TournamentFormat.RACE }),
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, scoringRuleRepo, service };
   }
 
@@ -1625,15 +1645,15 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
   function basketballService(rounds: number, bracketProblem: string | null = null) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      createContestConfigurationRepo(),
-      scoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: scoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, scoringRuleRepo, service };
   }
 
@@ -1768,6 +1788,7 @@ describe('ContestManagementService — a contest of several events', () => {
     storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
   } = {}) {
     const contestRepo = createContestRepo();
+    const cupsAsked: CupKey[] = [];
     if (options.contest) {
       (contestRepo.findById as jest.Mock).mockResolvedValue({
         id: 'contest-1',
@@ -1777,6 +1798,8 @@ describe('ContestManagementService — a contest of several events', () => {
         status: ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
+        seasonYear: 2026,
+        cupWeight: CupWeight.NORMAL,
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
         ...options.contest,
@@ -1794,21 +1817,20 @@ describe('ContestManagementService — a contest of several events', () => {
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
       });
     }
-    const service = new ContestManagementService(
-      contestRepo,
-      createContestConfigTemplateRepo(),
-      configurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      options.reader ?? multiEventReader(READER_EVENTS),
-      undefined,
-      () => CONTEST_MANAGEMENT_TEST_NOW,
-    );
+    const service = new ContestManagementService({
+      contests: contestRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: configurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
+      now: () => CONTEST_MANAGEMENT_TEST_NOW,
+      cups: createCupKeeper(cupsAsked),
+    });
     jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
       { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
     ]);
-    return { service, contestRepo, configurationRepo };
+    return { service, contestRepo, configurationRepo, cupsAsked };
   }
 
   const tiered = (sportEventIds: string[]): CreateContestRequest => ({
@@ -1892,6 +1914,28 @@ describe('ContestManagementService — a contest of several events', () => {
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS]))
       .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+  });
+
+  it('moves a draft swapped onto next year\'s edition into that season: its season year becomes 2027 and the 2027 cup is made', async () => {
+    const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
+    const { service, contestRepo, cupsAsked } = build({
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', eventYear: 2027 }]),
+      contest: { status: ContestStatus.DRAFT },
+    });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]);
+
+    expect(contestRepo.update).toHaveBeenCalledWith('contest-1', { seasonYear: 2027 });
+    expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2027, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
+  });
+
+  it('keeps a contest whose events stay in the same year in its season, asking for no cup', async () => {
+    const { service, contestRepo, cupsAsked } = build({ contest: { status: ContestStatus.OPEN } });
+
+    await service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]);
+
+    expect(contestRepo.update).not.toHaveBeenCalled();
+    expect(cupsAsked).toEqual([]);
   });
 
   it('removes an event from a contest none of whose events has started', async () => {
@@ -2054,15 +2098,15 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       undecidedGameCount: options.undecidedGameCount,
       gamesWithoutSpreadCount: options.gamesWithoutSpreadCount,
     });
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      scoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      reader,
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: scoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: reader,
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, contestConfigurationRepo, reader, scoringRuleRepo, service };
   }
 
@@ -2279,15 +2323,15 @@ describe('ContestManagementService bracket rules (#721)', () => {
       gameCount: 15,
       bracketProblem: options.bracketProblem ?? null,
     });
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      reader,
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: reader,
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
 
@@ -2380,23 +2424,22 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
       }),
     });
     let now = NOW;
-    const service = new ContestManagementService(
-      world.contestRepo(),
-      createContestConfigTemplateRepo(),
-      configurationRepo,
-      scoringRuleRepo,
-      createSportEventTierServiceStub(),
-      undefined,
-      createContestSportEventReader({
+    const service = new ContestManagementService({
+      contests: world.contestRepo(),
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: configurationRepo,
+      scoringRules: scoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createContestSportEventReader({
         sportEvents: store.sportEventRepo(),
         sports: store.sportRepo(),
         field: store.fieldRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),
-      undefined,
-      () => now,
-    );
+      now: () => now,
+      cups: createCupKeeper(),
+    });
     const request = (startsAtRound: number): CreateContestRequest => ({
       name: 'Second chance',
       sportEventIds: [event.id],
@@ -2521,15 +2564,15 @@ describe('ContestManagementService squares rules (#711)', () => {
     const reader = createSportEventReader({ sport: Sport.AMERICAN_FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventMatchId: string) =>
       sportEventId === EVENT_ID && sportEventMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
-    const service = new ContestManagementService(
-      contestCoreRepo,
-      createContestConfigTemplateRepo(),
-      contestConfigurationRepo,
-      createParticipantScoringRuleRepo(),
-      createSportEventTierServiceStub(),
-      undefined,
-      reader,
-    );
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: reader,
+      cups: createCupKeeper(),
+    });
     return { contestCoreRepo, contestConfigurationRepo, reader, service };
   }
 

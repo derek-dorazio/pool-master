@@ -428,6 +428,24 @@ enum PrismaSelectionType {
   SQUARES
 }
 
+/// How much a contest counts toward its cup and the league championship (#841). Mirrors the
+/// domain `CupWeight`.
+enum PrismaCupWeight {
+  NORMAL
+  BONUS
+  DOUBLE
+  NOT_COUNTED
+}
+
+/// A league's points table for cups and the championship (#841). Mirrors the domain
+/// `CupPointsScale`.
+enum PrismaCupPointsScale {
+  STANDARD
+  TOP_TEN
+  FIELD_BEATEN
+  CUSTOM
+}
+
 enum PrismaPrizePayoutType {
   FIXED_AMOUNT
   PERCENTAGE
@@ -551,16 +569,21 @@ model PasswordResetToken {
 // =============================================================================
 
 model League {
-  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueCode  String              @unique @map("league_code") @db.VarChar(16)
-  name        String
-  description String?
-  isActive    Boolean             @default(true) @map("is_active")
-  iconKey     PrismaLeagueIconKey @default(TROPHY) @map("icon_key")
-  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueCode      String               @unique @map("league_code") @db.VarChar(16)
+  name            String
+  description     String?
+  isActive        Boolean              @default(true) @map("is_active")
+  iconKey         PrismaLeagueIconKey  @default(TROPHY) @map("icon_key")
+  /// The points table every cup and the championship score with (#841).
+  cupPointsScale  PrismaCupPointsScale @default(STANDARD) @map("cup_points_scale")
+  /// The commissioner's points for 1st, 2nd ... ; set only for CUSTOM, empty otherwise (database check).
+  cupCustomPoints Int[]                @default([]) @map("cup_custom_points")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships           LeagueMembership[]
+  cups                  Cup[]
   squads                Squad[]
   squadMemberships      SquadMembership[]
   contests              Contest[]
@@ -810,6 +833,7 @@ model SportLeague {
   affiliations           ParticipantLeagueAffiliation[]
   eventSeries            EventSeries[]
   contestConfigTemplates ContestConfigTemplate[]
+  cups                   Cup[]
 
   @@unique([sportId, name])
   @@map("sport_leagues")
@@ -924,6 +948,10 @@ model Contest {
   openedAt      DateTime?           @map("opened_at") @db.Timestamptz
   startsAt      DateTime?           @map("starts_at") @db.Timestamptz
   endsAt        DateTime?           @map("ends_at") @db.Timestamptz
+  /// The season whose cup the contest counts toward (#841): its first event's year at creation.
+  seasonYear    Int                 @map("season_year")
+  /// How much it counts toward its cup and the championship (#841); fixed once COMPLETED.
+  cupWeight     PrismaCupWeight     @default(NORMAL) @map("cup_weight")
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -941,8 +969,28 @@ model Contest {
   emailMessages       EmailMessage[]
 
   @@index([leagueId])
+  @@index([leagueId, seasonYear])
   @@index([status])
   @@map("contests")
+}
+
+/// One sports league's season-long points race in a league (#841): "2026 PGA Tour Cup". Made when
+/// the league's first contest of that season and sports league is created, and never deleted. Which
+/// contests count is worked out on read: the league's contests of the season and sports league,
+/// not NOT_COUNTED. Its name is built from the season and the sports league; there is no column.
+model Cup {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId      String   @map("league_id") @db.Uuid
+  seasonYear    Int      @map("season_year")
+  sportLeagueId String   @map("sport_league_id") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // A cup is the league's, so it goes with the league; nothing else deletes one.
+  league      League      @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  sportLeague SportLeague @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, seasonYear, sportLeagueId])
+  @@map("cups")
 }
 
 // One event a contest covers (#713). Every contest has at least one: a golf or race contest has

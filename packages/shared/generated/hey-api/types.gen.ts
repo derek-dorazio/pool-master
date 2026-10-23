@@ -15590,6 +15590,530 @@ export type ClaimSquaresBoxRequest = {
 };
 
 /**
+ * Which season's cups to list.
+ */
+export type ListCupsQuery = {
+    /**
+     * The season whose cups to list, such as 2026.
+     */
+    seasonYear: number;
+};
+
+/**
+ * One squad's place in a cup. Every active squad has a row, at 0 points until it places.
+ */
+export type CupStandingRowDto = {
+    squadId: string;
+    /**
+     * The squad's current name.
+     */
+    squadName: string;
+    /**
+     * The squad's built-in team icon.
+     */
+    squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+    /**
+     * False for an inactive squad, shown because it placed in a counted contest.
+     */
+    squadIsActive: boolean;
+    /**
+     * Place in the cup, 1 best. Squads equal on points, wins and podiums share it.
+     */
+    position: number;
+    /**
+     * The place as shown: "T2" for a shared 2nd.
+     */
+    displayPosition: string;
+    /**
+     * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+     */
+    points: number;
+    /**
+     * Counted contests the squad won, alone or tied.
+     */
+    wins: number;
+    /**
+     * Counted contests the squad finished 1st, 2nd or 3rd.
+     */
+    podiums: number;
+    /**
+     * Counted contests the squad placed in.
+     */
+    contestsCounted: number;
+    /**
+     * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
+     */
+    movement: number | null;
+};
+
+/**
+ * A squad that won a contest; a tie for 1st lists each.
+ */
+export type CupWinnerDto = {
+    squadId: string;
+    squadName: string;
+};
+
+/**
+ * One of the league's contests in the cup's season and sports league.
+ */
+export type CupContestRowDto = {
+    contestId: string;
+    name: string;
+    /**
+     * The contest's status; drafts are never listed.
+     */
+    status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+    /**
+     * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+     */
+    cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+    /**
+     * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+     */
+    count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+    /**
+     * When its first event starts (instant).
+     */
+    firstEventStartsAt: string;
+    /**
+     * When it went final (instant); null before.
+     */
+    completedAt: string | null;
+    /**
+     * The squads that won it; empty unless it counted.
+     */
+    winners: Array<{
+        squadId: string;
+        squadName: string;
+    }>;
+};
+
+/**
+ * A sports league cup in a league: one per season and sports league, made with its first contest.
+ */
+export type CupDto = {
+    id: string;
+    leagueId: string;
+    seasonYear: number;
+    sportLeagueId: string;
+    /**
+     * The sports league, such as "PGA Tour".
+     */
+    sportLeagueName: string;
+    /**
+     * The cup's name, built from season and sports league: "2026 PGA Tour Cup".
+     */
+    name: string;
+    /**
+     * Best first; squads sharing a place in name order.
+     */
+    standings: Array<{
+        squadId: string;
+        /**
+         * The squad's current name.
+         */
+        squadName: string;
+        /**
+         * The squad's built-in team icon.
+         */
+        squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        /**
+         * False for an inactive squad, shown because it placed in a counted contest.
+         */
+        squadIsActive: boolean;
+        /**
+         * Place in the cup, 1 best. Squads equal on points, wins and podiums share it.
+         */
+        position: number;
+        /**
+         * The place as shown: "T2" for a shared 2nd.
+         */
+        displayPosition: string;
+        /**
+         * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+         */
+        points: number;
+        /**
+         * Counted contests the squad won, alone or tied.
+         */
+        wins: number;
+        /**
+         * Counted contests the squad finished 1st, 2nd or 3rd.
+         */
+        podiums: number;
+        /**
+         * Counted contests the squad placed in.
+         */
+        contestsCounted: number;
+        /**
+         * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
+         */
+        movement: number | null;
+    }>;
+    /**
+     * Every contest of the season and sports league, drafts left out, by first event start.
+     */
+    contests: Array<{
+        contestId: string;
+        name: string;
+        /**
+         * The contest's status; drafts are never listed.
+         */
+        status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+        /**
+         * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+         */
+        cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+        /**
+         * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+         */
+        count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+        /**
+         * When its first event starts (instant).
+         */
+        firstEventStartsAt: string;
+        /**
+         * When it went final (instant); null before.
+         */
+        completedAt: string | null;
+        /**
+         * The squads that won it; empty unless it counted.
+         */
+        winners: Array<{
+            squadId: string;
+            squadName: string;
+        }>;
+    }>;
+};
+
+/**
+ * A season's cups.
+ */
+export type CupListResponse = {
+    /**
+     * The season's cups, oldest first.
+     */
+    cups: Array<{
+        id: string;
+        leagueId: string;
+        seasonYear: number;
+        sportLeagueId: string;
+        /**
+         * The sports league, such as "PGA Tour".
+         */
+        sportLeagueName: string;
+        /**
+         * The cup's name, built from season and sports league: "2026 PGA Tour Cup".
+         */
+        name: string;
+        /**
+         * Best first; squads sharing a place in name order.
+         */
+        standings: Array<{
+            squadId: string;
+            /**
+             * The squad's current name.
+             */
+            squadName: string;
+            /**
+             * The squad's built-in team icon.
+             */
+            squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+            /**
+             * False for an inactive squad, shown because it placed in a counted contest.
+             */
+            squadIsActive: boolean;
+            /**
+             * Place in the cup, 1 best. Squads equal on points, wins and podiums share it.
+             */
+            position: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPosition: string;
+            /**
+             * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+             */
+            points: number;
+            /**
+             * Counted contests the squad won, alone or tied.
+             */
+            wins: number;
+            /**
+             * Counted contests the squad finished 1st, 2nd or 3rd.
+             */
+            podiums: number;
+            /**
+             * Counted contests the squad placed in.
+             */
+            contestsCounted: number;
+            /**
+             * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
+             */
+            movement: number | null;
+        }>;
+        /**
+         * Every contest of the season and sports league, drafts left out, by first event start.
+         */
+        contests: Array<{
+            contestId: string;
+            name: string;
+            /**
+             * The contest's status; drafts are never listed.
+             */
+            status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+            selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+            /**
+             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             */
+            cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+            /**
+             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             */
+            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+            /**
+             * When its first event starts (instant).
+             */
+            firstEventStartsAt: string;
+            /**
+             * When it went final (instant); null before.
+             */
+            completedAt: string | null;
+            /**
+             * The squads that won it; empty unless it counted.
+             */
+            winners: Array<{
+                squadId: string;
+                squadName: string;
+            }>;
+        }>;
+    }>;
+};
+
+/**
+ * One cup.
+ */
+export type CupResponse = {
+    /**
+     * A sports league cup in a league: one per season and sports league, made with its first contest.
+     */
+    cup: {
+        id: string;
+        leagueId: string;
+        seasonYear: number;
+        sportLeagueId: string;
+        /**
+         * The sports league, such as "PGA Tour".
+         */
+        sportLeagueName: string;
+        /**
+         * The cup's name, built from season and sports league: "2026 PGA Tour Cup".
+         */
+        name: string;
+        /**
+         * Best first; squads sharing a place in name order.
+         */
+        standings: Array<{
+            squadId: string;
+            /**
+             * The squad's current name.
+             */
+            squadName: string;
+            /**
+             * The squad's built-in team icon.
+             */
+            squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+            /**
+             * False for an inactive squad, shown because it placed in a counted contest.
+             */
+            squadIsActive: boolean;
+            /**
+             * Place in the cup, 1 best. Squads equal on points, wins and podiums share it.
+             */
+            position: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPosition: string;
+            /**
+             * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+             */
+            points: number;
+            /**
+             * Counted contests the squad won, alone or tied.
+             */
+            wins: number;
+            /**
+             * Counted contests the squad finished 1st, 2nd or 3rd.
+             */
+            podiums: number;
+            /**
+             * Counted contests the squad placed in.
+             */
+            contestsCounted: number;
+            /**
+             * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
+             */
+            movement: number | null;
+        }>;
+        /**
+         * Every contest of the season and sports league, drafts left out, by first event start.
+         */
+        contests: Array<{
+            contestId: string;
+            name: string;
+            /**
+             * The contest's status; drafts are never listed.
+             */
+            status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
+            selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+            /**
+             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             */
+            cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+            /**
+             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             */
+            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+            /**
+             * When its first event starts (instant).
+             */
+            firstEventStartsAt: string;
+            /**
+             * When it went final (instant); null before.
+             */
+            completedAt: string | null;
+            /**
+             * The squads that won it; empty unless it counted.
+             */
+            winners: Array<{
+                squadId: string;
+                squadName: string;
+            }>;
+        }>;
+    };
+};
+
+/**
+ * One counted contest in a squad's cup points.
+ */
+export type CupSquadContestDto = {
+    contestId: string;
+    name: string;
+    cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+    /**
+     * When it went final (instant).
+     */
+    completedAt: string | null;
+    /**
+     * The squad's best entry's place, 1 best; null when it had no ranked entry.
+     */
+    place: number | null;
+    /**
+     * The place as shown: "T2" for a shared 2nd; null when it had no ranked entry.
+     */
+    displayPlace: string | null;
+    /**
+     * Entries ranked in the contest.
+     */
+    rankedEntryCount: number;
+    /**
+     * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+     */
+    points: number;
+};
+
+/**
+ * One squad's cup points, contest by contest.
+ */
+export type CupSquadPointsDto = {
+    cupId: string;
+    squadId: string;
+    squadName: string;
+    /**
+     * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+     */
+    points: number;
+    /**
+     * Every counted contest, in the order they went final.
+     */
+    contests: Array<{
+        contestId: string;
+        name: string;
+        cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+        /**
+         * When it went final (instant).
+         */
+        completedAt: string | null;
+        /**
+         * The squad's best entry's place, 1 best; null when it had no ranked entry.
+         */
+        place: number | null;
+        /**
+         * The place as shown: "T2" for a shared 2nd; null when it had no ranked entry.
+         */
+        displayPlace: string | null;
+        /**
+         * Entries ranked in the contest.
+         */
+        rankedEntryCount: number;
+        /**
+         * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+         */
+        points: number;
+    }>;
+};
+
+/**
+ * One squad's cup points.
+ */
+export type CupSquadPointsResponse = {
+    /**
+     * One squad's cup points, contest by contest.
+     */
+    squadPoints: {
+        cupId: string;
+        squadId: string;
+        squadName: string;
+        /**
+         * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+         */
+        points: number;
+        /**
+         * Every counted contest, in the order they went final.
+         */
+        contests: Array<{
+            contestId: string;
+            name: string;
+            cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+            /**
+             * When it went final (instant).
+             */
+            completedAt: string | null;
+            /**
+             * The squad's best entry's place, 1 best; null when it had no ranked entry.
+             */
+            place: number | null;
+            /**
+             * The place as shown: "T2" for a shared 2nd; null when it had no ranked entry.
+             */
+            displayPlace: string | null;
+            /**
+             * Entries ranked in the contest.
+             */
+            rankedEntryCount: number;
+            /**
+             * Points in tenths of a point: 725 is 72.5. Show to one decimal.
+             */
+            points: number;
+        }>;
+    };
+};
+
+/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
@@ -19485,6 +20009,119 @@ export type EnterContestResponses = {
 };
 
 export type EnterContestResponse = EnterContestResponses[keyof EnterContestResponses];
+
+export type ListCupsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        /**
+         * The season whose cups to list, such as 2026.
+         */
+        seasonYear: number;
+    };
+    url: '/api/v1/leagues/{id}/cups/';
+};
+
+export type ListCupsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListCupsError = ListCupsErrors[keyof ListCupsErrors];
+
+export type ListCupsResponses = {
+    /**
+     * A season's cups.
+     */
+    200: CupListResponse;
+};
+
+export type ListCupsResponse = ListCupsResponses[keyof ListCupsResponses];
+
+export type GetCupData = {
+    body?: never;
+    path: {
+        id: string;
+        cupId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cups/{cupId}';
+};
+
+export type GetCupErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetCupError = GetCupErrors[keyof GetCupErrors];
+
+export type GetCupResponses = {
+    /**
+     * One cup.
+     */
+    200: CupResponse;
+};
+
+export type GetCupResponse = GetCupResponses[keyof GetCupResponses];
+
+export type GetCupSquadPointsData = {
+    body?: never;
+    path: {
+        id: string;
+        cupId: string;
+        squadId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}';
+};
+
+export type GetCupSquadPointsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetCupSquadPointsError = GetCupSquadPointsErrors[keyof GetCupSquadPointsErrors];
+
+export type GetCupSquadPointsResponses = {
+    /**
+     * One squad's cup points.
+     */
+    200: CupSquadPointsResponse;
+};
+
+export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
 
 export type ListContestConfigTemplatesData = {
     body?: never;

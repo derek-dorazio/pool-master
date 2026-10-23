@@ -15,6 +15,7 @@ export * from './tournament-format';
 export * from './sports';
 export * from './squares';
 export * from './predicted-choice';
+export * from './cup-points';
 export { assertNever } from './assert-never';
 export {
   compareScores,
@@ -58,6 +59,7 @@ export type {
 } from './contest-management-types';
 export type {
   Contest,
+  Cup,
   ContestEntry,
   DomainEntity,
   InjuryStatus,
