@@ -45,6 +45,14 @@ const config: Config = {
           500: "var(--color-red-500)",
           600: "var(--color-red-600)",
         },
+        chart: {
+          1: "var(--chart-series-1)",
+          2: "var(--chart-series-2)",
+          3: "var(--chart-series-3)",
+          4: "var(--chart-series-4)",
+          5: "var(--chart-series-5)",
+          grid: "var(--chart-grid)",
+        },
         paper: "var(--color-paper)",
         ink: "var(--color-ink)",
         surface: {

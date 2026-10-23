@@ -181,6 +181,9 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     // The commissioner's squad climbed from 2nd to T1; the member's held 1st.
     expect(Object.fromEntries(cup.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', row.movement])))
       .toEqual({ member: 0, commissioner: 1 });
+    // The race chart's lines: each squad's running total after each counted contest.
+    expect(Object.fromEntries(cup.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', row.pointsAfter])))
+      .toEqual({ member: [1000, 1800], commissioner: [800, 1800] });
     expect(cup.contests.map((row) => [row.contestId, row.count, row.cupWeight, row.winners.length])).toEqual([
       [harbourContest, CupContestCount.COUNTED, CupWeight.NORMAL, 1],
       [valleyContest, CupContestCount.COUNTED, CupWeight.NORMAL, 1],

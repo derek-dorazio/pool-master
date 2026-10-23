@@ -297,7 +297,10 @@ journey row once a page exists.
    hasn't landed them. `CupStanding`, `Cup.status` and `crownedAt`, and the `AFTER_CROWNING` count
    come with crowning (slice 4), so no table or value sits unwritten before then.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
-   movement and race chart, the squad sheet, the league home card.
+   movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
+   a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
+   slice 2 adds the Championship tab. The `ChampionshipFeature` map in code waits for the first
+   gate; this table is the categorization until then.
 3. **Commissioner settings.** Points table with preview; cup weight.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
 5. **Projected points** from live contests, greyed as "if it ended now".

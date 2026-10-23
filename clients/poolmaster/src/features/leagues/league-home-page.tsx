@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
@@ -17,7 +17,7 @@ import { parseRouteState } from '@/routes/route-state';
 import { useLeagueContextGuard } from './league-context-guard';
 import type { MyEntriesState } from '@/features/contests/my-contest-entry';
 import { pickUpNextContest } from './league-home';
-import { LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCard } from './league-home-cards';
+import { CupsCard, LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCard } from './league-home-cards';
 import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -180,6 +180,12 @@ export function LeagueHomePage() {
             {liveContest ? (
               <LiveStandingsCard contest={liveContest} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
             ) : null}
+            <CupsCard
+              leagueCode={leagueCode}
+              leagueId={leagueId}
+              mySquadId={viewer.mySquadId}
+              year={championshipYear(now)}
+            />
             {viewer.isMember ? (
               <YourTeamCard isLoading={squadsQuery.isLoading} leagueCode={leagueCode} team={myTeam} />
             ) : null}

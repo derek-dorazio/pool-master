@@ -20,8 +20,10 @@ account-scope only — see `domain-concepts.md`.
 ## League Context — the league menu
 
 Inside a league, one menu under the app bar serves every member: **Home**,
-**Contests**, the viewer's own squad — shown by its name, **Yours** until they
-have one — and **Members**. Home is the landing page. The viewer's own entry is
+**Contests**, **Championships**, **Contest types**, the viewer's own squad —
+shown by its name, **Yours** until they have one — and **Members**. Home is the
+landing page. Championships is the year's cups and league championship
+(`plans/season-cups.md`), opening on the current year. The viewer's own entry is
 scoped to the signed-in user (their squad, their entries, their history);
 Home, Contests and Members are scoped to the whole league and are read-only for
 members.

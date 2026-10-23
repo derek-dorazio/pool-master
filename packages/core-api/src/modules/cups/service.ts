@@ -59,6 +59,8 @@ export interface CupStandingView {
   contestsCounted: number;
   /** Places gained (positive) or lost since before the latest counted contest; null until two have counted. */
   movement: number | null;
+  /** Tenths of a point after each counted contest, in the order they went final: the race chart's line. */
+  pointsAfter: number[];
 }
 
 /** One contest of a cup's season and sports league, and whether it counts. */
@@ -193,6 +195,7 @@ export class CupService {
     const before = counted.length >= 2 ? rankCupTallies(tallyCup(table, squads, counted.slice(0, -1))) : null;
     const squadById = new Map(leagueSquads.map((squad) => [squad.id, squad]));
     const countedIds = new Map(counted.map((row) => [row.contest.id, row]));
+    const pointsAfter = runningPoints(table, squads, counted);
 
     return {
       cup,
@@ -208,6 +211,7 @@ export class CupService {
           podiums: row.podiums,
           contestsCounted: row.contestsCounted,
           movement: previous === undefined ? null : previous.position - row.position,
+          pointsAfter: pointsAfter.get(row.squadId) ?? [],
         };
       }),
       contests: contests.map((contest) => {
@@ -240,6 +244,18 @@ function contestCount(contest: CupContest, placed: boolean): CupContestCount {
     return CupContestCount.NOT_FINAL;
   }
   return placed ? CupContestCount.COUNTED : CupContestCount.NO_RESULT;
+}
+
+/** Each squad's running total after each counted contest, in the order they went final. */
+function runningPoints(table: CupPointsTable, squads: readonly Squad[], counted: readonly CountedContest[]): Map<string, number[]> {
+  return new Map(squads.map((squad) => {
+    let total = 0;
+    return [squad.id, counted.map(({ contest, finishes }) => {
+      const finish = finishes.find((candidate) => candidate.squadId === squad.id);
+      total += finish === undefined ? 0 : cupFinishPoints(table, finish, contest.cupWeight);
+      return total;
+    })];
+  }));
 }
 
 /** Each squad's points, wins, podiums and counted contests over the contests given. */

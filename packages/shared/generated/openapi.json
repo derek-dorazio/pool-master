@@ -34246,6 +34246,14 @@
               "null"
             ],
             "description": "Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted."
+          },
+          "pointsAfter": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+            },
+            "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
           }
         },
         "required": [
@@ -34259,7 +34267,8 @@
           "wins",
           "podiums",
           "contestsCounted",
-          "movement"
+          "movement",
+          "pointsAfter"
         ],
         "additionalProperties": false,
         "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
@@ -34564,6 +34573,14 @@
                     "null"
                   ],
                   "description": "Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted."
+                },
+                "pointsAfter": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+                  },
+                  "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
                 }
               },
               "required": [
@@ -34577,7 +34594,8 @@
                 "wins",
                 "podiums",
                 "contestsCounted",
-                "movement"
+                "movement",
+                "pointsAfter"
               ],
               "additionalProperties": false,
               "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
@@ -34889,6 +34907,14 @@
                           "null"
                         ],
                         "description": "Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted."
+                      },
+                      "pointsAfter": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer",
+                          "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+                        },
+                        "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
                       }
                     },
                     "required": [
@@ -34902,7 +34928,8 @@
                       "wins",
                       "podiums",
                       "contestsCounted",
-                      "movement"
+                      "movement",
+                      "pointsAfter"
                     ],
                     "additionalProperties": false,
                     "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
@@ -35221,6 +35248,14 @@
                         "null"
                       ],
                       "description": "Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted."
+                    },
+                    "pointsAfter": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+                      },
+                      "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
                     }
                   },
                   "required": [
@@ -35234,7 +35269,8 @@
                     "wins",
                     "podiums",
                     "contestsCounted",
-                    "movement"
+                    "movement",
+                    "pointsAfter"
                   ],
                   "additionalProperties": false,
                   "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."

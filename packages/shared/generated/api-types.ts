@@ -14228,6 +14228,8 @@ export interface components {
             contestsCounted: number;
             /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
             movement: number | null;
+            /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+            pointsAfter: number[];
         };
         /** @description A squad that won a contest; a tie for 1st lists each. */
         CupWinnerDto: {
@@ -14314,6 +14316,8 @@ export interface components {
                 contestsCounted: number;
                 /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
                 movement: number | null;
+                /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                pointsAfter: number[];
             }[];
             /** @description Every contest of the season and sports league, drafts left out, by first event start. */
             contests: {
@@ -14397,6 +14401,8 @@ export interface components {
                     contestsCounted: number;
                     /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
                     movement: number | null;
+                    /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                    pointsAfter: number[];
                 }[];
                 /** @description Every contest of the season and sports league, drafts left out, by first event start. */
                 contests: {
@@ -14481,6 +14487,8 @@ export interface components {
                     contestsCounted: number;
                     /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
                     movement: number | null;
+                    /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                    pointsAfter: number[];
                 }[];
                 /** @description Every contest of the season and sports league, drafts left out, by first event start. */
                 contests: {

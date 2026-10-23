@@ -7,6 +7,10 @@ import { MyAccountPage } from '@/features/account/my-account-page';
 import { UserPage } from '@/features/account/user-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
+import { ChampionshipsLayout, ChampionshipsRedirect } from '@/features/championships/championships-layout';
+import { CupSquadPointsPage } from '@/features/championships/cup-squad-points-page';
+import { PointsRacePage } from '@/features/championships/points-race-page';
+import { TrophyCasePage } from '@/features/championships/trophy-case-page';
 import { HowToPlayPage } from '@/features/contest-types/how-to-play-page';
 import { LeagueContestTypesPage } from '@/features/contest-types/league-contest-types-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
@@ -231,6 +235,37 @@ export const router = createBrowserRouter([
           {
             path: 'league/:leagueCode/teams',
             element: <TeamsPage />,
+          },
+          {
+            path: 'league/:leagueCode/championships',
+            element: <ChampionshipsRedirect />,
+          },
+          {
+            path: 'league/:leagueCode/championships/:year',
+            element: <ChampionshipsLayout />,
+            children: [
+              {
+                // The Championship tab (#863 slice 2) becomes the landing tab; until then, the Trophy case.
+                index: true,
+                element: <Navigate replace to="trophies" />,
+              },
+              {
+                path: 'trophies',
+                element: <TrophyCasePage />,
+              },
+              {
+                path: 'race',
+                element: <PointsRacePage />,
+              },
+              {
+                path: 'race/:sportLeagueId',
+                element: <PointsRacePage />,
+              },
+              {
+                path: 'race/:sportLeagueId/squads/:squadId',
+                element: <CupSquadPointsPage />,
+              },
+            ],
           },
           {
             path: 'league/:leagueCode/contest-types',
