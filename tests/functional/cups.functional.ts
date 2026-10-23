@@ -16,6 +16,7 @@ import {
   getCup,
   getCupProjection,
   getCupSquadPoints,
+  getHistorySummary,
   listChampionshipYears,
   listContestConfigTemplates,
   listContestResults,
@@ -32,7 +33,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -43,6 +44,7 @@ import {
   CupResponseSchema,
   CupSeasonListResponseSchema,
   CupSquadPointsResponseSchema,
+  HistorySummaryResponseSchema,
   LeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
@@ -62,7 +64,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // the third race goes live and the cup's projection (#841 slice 5) counts it as if it ended now.
 // Last, crowning (#841 slice 4): refused while a counted contest is live, then the cup is crowned
 // with both squads sharing the trophy, has no projection, and keeps its points when the table
-// changes again.
+// changes again. All years (#837) then lists the cup's season with its two champions and this
+// year's championship so far, and counts the shared cup for both squads.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -373,6 +376,17 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const kept = CupResponseSchema.parse(expectDefined((await getCup({ client: member.client, path: { id: league.id, cupId } })).data)).cup;
     expect(Object.fromEntries(kept.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', [row.points, row.pointsAfter, row.trophy]])))
       .toEqual({ member: [150, [100, 150], CupTrophy.CHAMPION], commissioner: [150, [50, 150], CupTrophy.CHAMPION] });
+
+    // --- All years: the 2099 season with its crowned cup, then this year's championship so far ---
+    const summary = HistorySummaryResponseSchema.parse(expectDefined((await getHistorySummary({ client: member.client, path: { id: league.id } })).data)).summary;
+    expect(summary.years.map((row) => [row.year, row.isOver, row.champions.length, row.cups.map((cup) => [cup.name, cup.status, cup.contestsCounted, cup.winners.length])])).toEqual([
+      [SEASON, false, 0, [[`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 2, 2]]],
+      [year, false, 2, []],
+    ]);
+    expect(summary.tiles.map((tile) => [tile.tile, tile.count, tile.squads.length])).toEqual([
+      [SummaryTile.MOST_CHAMPIONSHIPS, 0, 0],
+      [SummaryTile.MOST_CUPS, 1, 2],
+    ]);
   });
 
   it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {

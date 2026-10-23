@@ -116,7 +116,7 @@ export function MyTeamPage() {
             to={buildLeagueHistoryPath(leagueCode)}
             variant="secondary"
           >
-            Contest history
+            All years
           </LinkButton>
         </div>
       </div>

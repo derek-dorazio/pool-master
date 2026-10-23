@@ -39,6 +39,7 @@ the one people read.
 | Why a durable decision was made | [`docs/adr/`](docs/adr/) |
 | What each domain object permits, and to whom | [`docs/DOMAIN-OPERATIONS.md`](docs/DOMAIN-OPERATIONS.md) |
 | CI jobs, branch protection, and gate failures | [`docs/CI-AND-QUALITY-GATES.md`](docs/CI-AND-QUALITY-GATES.md) |
+| Querying an environment's database from a laptop (tunnel, psql aliases, read-only user) | [`docs/DATABASE-ACCESS.md`](docs/DATABASE-ACCESS.md) |
 | Runtime logs and how to query them | [`docs/LOGGING-OPERATIONS.md`](docs/LOGGING-OPERATIONS.md) |
 | Email providers by environment | [`docs/EMAIL-DELIVERY.md`](docs/EMAIL-DELIVERY.md) |
 | Setting up an event by hand and running it through its lifecycle (a golf tournament on a simulated live round, a knockout bracket, cancelling an event) | [`docs/EVENT-SETUP-PROCEDURES.md`](docs/EVENT-SETUP-PROCEDURES.md) |

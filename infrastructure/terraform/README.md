@@ -78,11 +78,36 @@ to the running service. Nothing reaches the service until that deploy.
 
 ## Direct QA Database Access
 
-Terraform can also model intentionally approved direct PostgreSQL access when QA operators need it.
+RDS lives in the private subnets, whose only route out is the NAT gateway, so nothing outside the
+VPC can connect to it, whatever `db_publicly_accessible` says. Operators reach it through a small
+SSM port forwarding host (`db-access.tf`), turned on with `db_access_host_enabled = true`. The
+host has no inbound rules and no SSH key; Session Manager authorises each session with the
+operator's own IAM credentials, and the database security group admits only that host and the
+ECS tasks.
 
-- `db_publicly_accessible` controls whether the RDS instance should expose a public endpoint.
-- `db_allowed_cidr_blocks` is the allow-list of approved direct client CIDRs for PostgreSQL access.
-- Keep both disabled by default and only enable them explicitly in local `envs/*.tfvars` files for environments where that access is truly intended.
+`docs/DATABASE-ACCESS.md` has the operator steps: the tunnel (`scripts/db-tunnel.sh`), the psql
+aliases and a GUI client.
+
+The read-only role is created once per environment, as the master user, through the tunnel. Set
+its password with psql's `\password`, which sends it already hashed, so it never lands in shell
+history or the server log. Keep it in a password manager and never commit it:
+
+```sql
+CREATE ROLE <read-only user> LOGIN;
+GRANT pg_read_all_data TO <read-only user>;
+ALTER ROLE <read-only user> SET default_transaction_read_only = on;
+\password <read-only user>
+```
+
+`pg_read_all_data` grants reads only, and covers tables that later migrations create, so the
+grant never needs refreshing. `default_transaction_read_only` is just a default a session can
+switch off; the role is read-only because it has no write privileges. It can still read every
+table, password hashes and reset and refresh tokens included, so treat its password like the
+master's. The master user's password is the `db_password` Terraform variable; it is also part
+of `DATABASE_URL` in the core-api task definition.
+
+`db_publicly_accessible` and `db_allowed_cidr_blocks` remain for a future environment with
+public subnets for its database. Leave both off.
 
 ## System email (SES)
 

@@ -553,6 +553,16 @@ describe('Championship settings', () => {
     expect(screen.getByTestId('edit-championships-page')).toBeInTheDocument();
   });
 
+  it('warns that a new points table rescores open cups while the championship and crowned cups keep their points', async () => {
+    primeMocks();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    expect(await screen.findByTestId('championship-points-change-note')).toHaveTextContent(
+      'A new table rescores open cups at once, every contest in them included. The championship and crowned cups keep the points their contests earned when they went final, so after a change an open cup and this year\'s championship can show different totals for the same contests.',
+    );
+  });
+
   it('sends a commissioner who opens Edit championships on an inactive league back to the read-only settings', async () => {
     primeMocks({ isActive: false });
 

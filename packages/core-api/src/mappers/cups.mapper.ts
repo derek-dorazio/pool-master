@@ -2,7 +2,7 @@ import type { CupDto, CupProjectionDto, CupSquadPointsDto } from '@poolmaster/sh
 import type { CupProjectionView, CupSquadPointsView, CupView } from '../modules/cups/service';
 
 /** The cup's name, built from its season and sports league: "2026 PGA Tour Cup". */
-function cupName(seasonYear: number, sportLeagueName: string): string {
+export function cupName(seasonYear: number, sportLeagueName: string): string {
   return `${seasonYear} ${sportLeagueName} Cup`;
 }
 

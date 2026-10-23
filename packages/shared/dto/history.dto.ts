@@ -1,10 +1,10 @@
 /**
  * League history (#837): the contests that went final in a championship year, for the drill-through
- * under the finish matrix. Read from each contest's stored finishes, so a squad's list or a matrix
- * cell's list holds exactly as many contests as the matrix counts.
+ * under the finish matrix, read from each contest's stored finishes so a squad's list or a matrix
+ * cell's list holds exactly as many contests as the matrix counts; and the All years summary.
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, SelectionType } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, SelectionType, SummaryTile } from '@poolmaster/shared/domain';
 import { ChampionshipSquadDtoSchema } from './championship.dto';
 import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
@@ -41,7 +41,48 @@ export const ContestResultListResponseSchema = z.object({
 }).describe('A year\'s final contests.');
 export type ContestResultListResponse = z.infer<typeof ContestResultListResponseSchema>;
 
+export const HistorySummaryTileDtoSchema = z.object({
+  tile: z.nativeEnum(SummaryTile).describe('MOST_CHAMPIONSHIPS: league championships won, years over only. MOST_CUPS: crowned cups won.'),
+  count: z.number().int().describe('The most any squad has; 0 while nobody has any.'),
+  squads: z.array(ChampionshipSquadDtoSchema).describe('Every squad holding the most, in name order; empty while nobody has any.'),
+}).describe('One All years tile.');
+export type HistorySummaryTileDto = z.infer<typeof HistorySummaryTileDtoSchema>;
+
+export const HistoryCupDtoSchema = z.object({
+  cupId: z.string().uuid(),
+  sportLeagueId: z.string().uuid(),
+  name: z.string().describe('The cup\'s name: "2026 PGA Tour Cup".'),
+  status: z.nativeEnum(CupStatus),
+  contestsCounted: z.number().int().describe('Its contests that counted, so the client can leave off a cup not yet on show.'),
+  winners: z.array(ChampionshipSquadDtoSchema).describe('A crowned cup\'s champions; an open cup\'s leaders (1st, with points). Several on a tie, in name order.'),
+}).describe('One cup of a season, with who won or leads it.');
+export type HistoryCupDto = z.infer<typeof HistoryCupDtoSchema>;
+
+export const HistoryYearDtoSchema = z.object({
+  year: z.number().int(),
+  isOver: z.boolean().describe('True once the year has ended in US Eastern; false for the current year, "so far".'),
+  champions: z.array(ChampionshipSquadDtoSchema).describe('The league championship\'s 1st: its champions once the year is over, its leaders before. Empty when nothing counted.'),
+  cups: z.array(HistoryCupDtoSchema).describe('The cups of the season with this year, by sports league name.'),
+}).describe('One year of the league, with its champions.');
+export type HistoryYearDto = z.infer<typeof HistoryYearDtoSchema>;
+
+export const HistorySummaryDtoSchema = z.object({
+  tiles: z.array(HistorySummaryTileDtoSchema).describe('In display order: most championships, most cups.'),
+  years: z.array(HistoryYearDtoSchema).describe('Every year with a counted championship contest or a cup, newest first.'),
+}).describe('The league\'s All years summary.');
+export type HistorySummaryDto = z.infer<typeof HistorySummaryDtoSchema>;
+
+export const HistorySummaryResponseSchema = z.object({
+  summary: HistorySummaryDtoSchema,
+}).describe('The league\'s All years summary.');
+export type HistorySummaryResponse = z.infer<typeof HistorySummaryResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
 registerSchema('ContestResultListResponse', ContestResultListResponseSchema);
+registerSchema('HistorySummaryTileDto', HistorySummaryTileDtoSchema);
+registerSchema('HistoryCupDto', HistoryCupDtoSchema);
+registerSchema('HistoryYearDto', HistoryYearDtoSchema);
+registerSchema('HistorySummaryDto', HistorySummaryDtoSchema);
+registerSchema('HistorySummaryResponse', HistorySummaryResponseSchema);

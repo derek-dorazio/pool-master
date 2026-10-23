@@ -25,6 +25,7 @@ export function buildLeagueTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/teams`;
 }
 
+/** All years (#837): every year's champions, under Championships. */
 export function buildLeagueHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/history`;
 }
