@@ -26,12 +26,15 @@ BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"
 cd "$(dirname "$0")/../clients/poolmaster"
 
 # True when at least one installed Chromium binary was found and none of them lacks a
-# shared library. No binary found counts as false, so the full install runs.
+# shared library. No binary found, or an ldd that fails, counts as false, so the full
+# install runs. The output is collected before matching: under pipefail, piping into
+# `grep -q` lets a failing ldd or a SIGPIPE turn a missing library into success.
 browser_libraries_present() {
-  local binaries
+  local binaries output
   binaries=$(find "$BROWSERS_PATH" -maxdepth 3 -type f \( -name chrome -o -name chrome-headless-shell \) 2>/dev/null)
   [ -n "$binaries" ] || return 1
-  ! printf '%s\n' "$binaries" | while read -r BINARY; do ldd "$BINARY"; done | grep -q 'not found'
+  output=$(while read -r BINARY; do ldd "$BINARY" 2>&1 || echo "not found: ldd failed on $BINARY"; done <<< "$binaries")
+  [[ $output != *"not found"* ]]
 }
 
 if timeout --kill-after=15 "$ATTEMPT_SECONDS" npx playwright install chromium && browser_libraries_present; then
