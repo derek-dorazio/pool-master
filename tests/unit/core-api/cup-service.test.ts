@@ -12,6 +12,7 @@ import {
   CupWeight,
   SelectionType,
   TeamIconKey,
+  type RankedContestEntry,
   type Squad,
 } from '@poolmaster/shared/domain';
 import { CupService } from '../../../packages/core-api/src/modules/cups/service';
@@ -45,8 +46,11 @@ const BOGEYS = squad('bogeys', 'Bogeys');
 function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
   const cups = new InMemoryCups();
   cups.addLeague(LEAGUE);
+  /** Each live contest's leaderboard places as they stand. */
+  const live = new Map<string, RankedContestEntry[]>();
   const service = new CupService({
     cups,
+    liveContests: { livePositionsOf: async (contestId: string) => live.get(contestId) ?? [] },
     squads: fakeSquadRepo({
       findByLeague: jest.fn().mockResolvedValue(squads),
       findById: jest.fn().mockImplementation(async (id: string) => squads.find((candidate) => candidate.id === id) ?? null),
@@ -57,7 +61,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     now: () => CROWNED_AT,
   });
   let day = 0;
-  /** A contest of the 2026 PGA Tour season, final on the next day unless told otherwise, with its ranked entries. */
+  /** A contest of the 2026 PGA Tour season, final on the next day unless told otherwise, with its ranked entries: its places as they stand while it is live. */
   const contest = (id: string, places: Array<[squadId: string, position: number]>, overrides: Partial<InMemoryCupContest> = {}) => {
     day += 1;
     const status = overrides.status ?? ContestStatus.COMPLETED;
@@ -73,6 +77,9 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
       ...overrides,
     });
     cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
+    if (status === ContestStatus.ACTIVE) {
+      live.set(id, places.map(([squadId, position]) => ({ squadId, position })));
+    }
     const completedAt = cups.contests.at(-1)?.completedAt ?? null;
     if (completedAt !== null) {
       cups.settle(id, completedAt);
@@ -259,6 +266,52 @@ describe('CupService (#841)', () => {
     expect(cup.standings.map((row) => row.points)).toEqual([1000, 800, 0]);
     expect(cup.contests.map((row) => row.weight)).toEqual([CupWeight.NORMAL]);
     expect(breakdown.contests.map((row) => [row.weight, row.points])).toEqual([[CupWeight.NORMAL, 1000]]);
+  });
+
+  describe('projection', () => {
+    it('ranks squads as if every live contest ended now, at its own weight on top of the counted ones, with the points each gains and the places it moves', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1], ['birdies', 2], ['bogeys', 3]]);
+      contest('open', [['bogeys', 1], ['birdies', 2], ['eagles', 3]], { status: ContestStatus.ACTIVE, cupWeight: CupWeight.DOUBLE });
+
+      const projection = await service.getProjection(LEAGUE, cups.cups[0]?.id ?? '');
+
+      expect(projection.contests.map((row) => row.id)).toEqual(['open']);
+      expect(projection.standings.map((row) => [row.squad.name, row.displayPosition, row.points, row.gained, row.movement])).toEqual([
+        ['Bogeys', '1', 2650, 2000, 2],
+        ['Birdies', '2', 2400, 1600, 0],
+        ['Eagles', '3', 2300, 1300, -2],
+      ]);
+    });
+
+    it('leaves out a live contest that is not counted and one still taking entries, so with nothing live it matches the standings', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1], ['birdies', 2]]);
+      contest('skins-game', [['birdies', 1]], { status: ContestStatus.ACTIVE, cupWeight: CupWeight.NOT_COUNTED });
+      contest('open', [], { status: ContestStatus.OPEN });
+
+      const projection = await service.getProjection(LEAGUE, cups.cups[0]?.id ?? '');
+
+      expect(projection.contests).toEqual([]);
+      expect(projection.standings.map((row) => [row.squad.name, row.displayPosition, row.points, row.gained, row.movement])).toEqual([
+        ['Eagles', '1', 1000, 0, 0],
+        ['Birdies', '2', 800, 0, 0],
+        ['Bogeys', '3', 0, 0, 0],
+      ]);
+    });
+
+    it('refuses a crowned cup with CUP_CROWNED, its standings being final, and another league\'s cup with CUP_NOT_FOUND', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1]]);
+      const cupId = cups.cups[0]?.id ?? '';
+      await service.crown(LEAGUE, cupId);
+
+      await expect(service.getProjection(LEAGUE, cupId)).rejects.toMatchObject({ code: 'CUP_CROWNED' });
+      await expect(service.getProjection('league-2', cupId)).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
+    });
   });
 
   describe('crowning', () => {

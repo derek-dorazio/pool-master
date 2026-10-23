@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { getCupSquadPoints, listCups, type CupDto, type CupSquadPointsDto } from '@/lib/api';
+import { getCupProjection, getCupSquadPoints, listCups, type CupDto, type CupProjectionDto, type CupSquadPointsDto } from '@/lib/api';
+import { CONTEST_POLL_INTERVAL_MS } from '@/features/contests/contest-status';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
@@ -17,6 +18,28 @@ export function useSeasonCupsQuery(leagueId: string, seasonYear: number) {
       return response.data.cups;
     },
     enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/**
+ * An open cup's standings if its live contests ended now: read only while one is live, and
+ * refreshed as often as a live leaderboard.
+ */
+export function useCupProjectionQuery(leagueId: string, cupId: string, isLive: boolean) {
+  return useQuery({
+    queryKey: QueryKeys.cups.projection(leagueId, cupId),
+    queryFn: async (): Promise<CupProjectionDto> => {
+      const response = await getCupProjection({ path: { id: leagueId, cupId } });
+
+      if (!response.data?.projection) {
+        throwApiError(response.error, 'Cup projection response is missing data.');
+      }
+
+      return response.data.projection;
+    },
+    enabled: Boolean(leagueId && cupId) && isLive,
+    refetchInterval: isLive ? CONTEST_POLL_INTERVAL_MS : false,
     retry: false,
   });
 }

@@ -113,6 +113,35 @@ export const CupSquadPointsResponseSchema = z.object({
 }).describe('One squad\'s cup points.');
 export type CupSquadPointsResponse = z.infer<typeof CupSquadPointsResponseSchema>;
 
+export const CupProjectedStandingDtoSchema = z.object({
+  squadId: z.string().uuid(),
+  position: z.number().int().min(1).describe('Place in the cup if the live contests ended now, 1 best; ties share it as in the standings.'),
+  displayPosition: z.string().describe('The place as shown: "T2" for a shared 2nd.'),
+  points: PointsSchema.describe('Points if the live contests ended now (tenths), the counted contests\' included.'),
+  gained: PointsSchema.describe('Points the live contests would add (tenths).'),
+  movement: z.number().int().describe('Places gained (positive) or lost (negative) against the standings as they are.'),
+}).describe('One squad\'s place in a cup if its live contests ended now.');
+export type CupProjectedStandingDto = z.infer<typeof CupProjectedStandingDtoSchema>;
+
+export const CupLiveContestDtoSchema = z.object({
+  contestId: z.string().uuid(),
+  name: z.string(),
+  cupWeight: z.nativeEnum(CupWeight).describe('The weight the projection scores it at: its own, until it settles.'),
+}).describe('A live contest a cup projection counts.');
+export type CupLiveContestDto = z.infer<typeof CupLiveContestDtoSchema>;
+
+export const CupProjectionDtoSchema = z.object({
+  cupId: z.string().uuid(),
+  contests: z.array(CupLiveContestDtoSchema).describe('The live contests counted as if they ended now, by first event start; empty when none is live.'),
+  standings: z.array(CupProjectedStandingDtoSchema).describe('Best first, one row per squad the standings show.'),
+}).describe('An open cup\'s standings if every live contest it counts ended now, scored from each contest\'s leaderboard as it stands. Nothing is stored: show it greyed, as "if it ended now".');
+export type CupProjectionDto = z.infer<typeof CupProjectionDtoSchema>;
+
+export const CupProjectionResponseSchema = z.object({
+  projection: CupProjectionDtoSchema,
+}).describe('A cup\'s projected standings.');
+export type CupProjectionResponse = z.infer<typeof CupProjectionResponseSchema>;
+
 registerSchema('ListCupsQuery', ListCupsQuerySchema);
 registerSchema('CupStandingRowDto', CupStandingRowDtoSchema);
 registerSchema('CupWinnerDto', CupWinnerDtoSchema);
@@ -123,3 +152,7 @@ registerSchema('CupResponse', CupResponseSchema);
 registerSchema('CupSquadContestDto', CupSquadContestDtoSchema);
 registerSchema('CupSquadPointsDto', CupSquadPointsDtoSchema);
 registerSchema('CupSquadPointsResponse', CupSquadPointsResponseSchema);
+registerSchema('CupProjectedStandingDto', CupProjectedStandingDtoSchema);
+registerSchema('CupLiveContestDto', CupLiveContestDtoSchema);
+registerSchema('CupProjectionDto', CupProjectionDtoSchema);
+registerSchema('CupProjectionResponse', CupProjectionResponseSchema);

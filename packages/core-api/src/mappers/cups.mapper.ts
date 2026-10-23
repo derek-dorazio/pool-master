@@ -1,5 +1,5 @@
-import type { CupDto, CupSquadPointsDto } from '@poolmaster/shared/dto';
-import type { CupSquadPointsView, CupView } from '../modules/cups/service';
+import type { CupDto, CupProjectionDto, CupSquadPointsDto } from '@poolmaster/shared/dto';
+import type { CupProjectionView, CupSquadPointsView, CupView } from '../modules/cups/service';
 
 /** The cup's name, built from its season and sports league: "2026 PGA Tour Cup". */
 function cupName(seasonYear: number, sportLeagueName: string): string {
@@ -60,6 +60,21 @@ export function toCupSquadPointsDto(view: CupSquadPointsView): CupSquadPointsDto
       displayPlace: row.finish === null ? null : row.finish.tiedCount > 1 ? `T${row.finish.place}` : String(row.finish.place),
       rankedEntryCount: row.finish?.rankedEntryCount ?? 0,
       points: row.points,
+    })),
+  };
+}
+
+export function toCupProjectionDto(view: CupProjectionView): CupProjectionDto {
+  return {
+    cupId: view.cup.id,
+    contests: view.contests.map((contest) => ({ contestId: contest.id, name: contest.name, cupWeight: contest.cupWeight })),
+    standings: view.standings.map((row) => ({
+      squadId: row.squad.id,
+      position: row.position,
+      displayPosition: row.displayPosition,
+      points: row.points,
+      gained: row.gained,
+      movement: row.movement,
     })),
   };
 }

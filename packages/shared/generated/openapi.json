@@ -36188,6 +36188,271 @@
         "additionalProperties": false,
         "description": "One squad's cup points."
       },
+      "CupProjectedStandingDto": {
+        "type": "object",
+        "properties": {
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Place in the cup if the live contests ended now, 1 best; ties share it as in the standings."
+          },
+          "displayPosition": {
+            "type": "string",
+            "description": "The place as shown: \"T2\" for a shared 2nd."
+          },
+          "points": {
+            "type": "integer",
+            "description": "Points if the live contests ended now (tenths), the counted contests' included."
+          },
+          "gained": {
+            "type": "integer",
+            "description": "Points the live contests would add (tenths)."
+          },
+          "movement": {
+            "type": "integer",
+            "description": "Places gained (positive) or lost (negative) against the standings as they are."
+          }
+        },
+        "required": [
+          "squadId",
+          "position",
+          "displayPosition",
+          "points",
+          "gained",
+          "movement"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's place in a cup if its live contests ended now."
+      },
+      "CupLiveContestDto": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "cupWeight": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "BONUS",
+              "DOUBLE",
+              "NOT_COUNTED"
+            ],
+            "description": "The weight the projection scores it at: its own, until it settles."
+          }
+        },
+        "required": [
+          "contestId",
+          "name",
+          "cupWeight"
+        ],
+        "additionalProperties": false,
+        "description": "A live contest a cup projection counts."
+      },
+      "CupProjectionDto": {
+        "type": "object",
+        "properties": {
+          "cupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contestId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "cupWeight": {
+                  "type": "string",
+                  "enum": [
+                    "NORMAL",
+                    "BONUS",
+                    "DOUBLE",
+                    "NOT_COUNTED"
+                  ],
+                  "description": "The weight the projection scores it at: its own, until it settles."
+                }
+              },
+              "required": [
+                "contestId",
+                "name",
+                "cupWeight"
+              ],
+              "additionalProperties": false,
+              "description": "A live contest a cup projection counts."
+            },
+            "description": "The live contests counted as if they ended now, by first event start; empty when none is live."
+          },
+          "standings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Place in the cup if the live contests ended now, 1 best; ties share it as in the standings."
+                },
+                "displayPosition": {
+                  "type": "string",
+                  "description": "The place as shown: \"T2\" for a shared 2nd."
+                },
+                "points": {
+                  "type": "integer",
+                  "description": "Points if the live contests ended now (tenths), the counted contests' included."
+                },
+                "gained": {
+                  "type": "integer",
+                  "description": "Points the live contests would add (tenths)."
+                },
+                "movement": {
+                  "type": "integer",
+                  "description": "Places gained (positive) or lost (negative) against the standings as they are."
+                }
+              },
+              "required": [
+                "squadId",
+                "position",
+                "displayPosition",
+                "points",
+                "gained",
+                "movement"
+              ],
+              "additionalProperties": false,
+              "description": "One squad's place in a cup if its live contests ended now."
+            },
+            "description": "Best first, one row per squad the standings show."
+          }
+        },
+        "required": [
+          "cupId",
+          "contests",
+          "standings"
+        ],
+        "additionalProperties": false,
+        "description": "An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as \"if it ended now\"."
+      },
+      "CupProjectionResponse": {
+        "type": "object",
+        "properties": {
+          "projection": {
+            "type": "object",
+            "properties": {
+              "cupId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "contests": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "contestId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "cupWeight": {
+                      "type": "string",
+                      "enum": [
+                        "NORMAL",
+                        "BONUS",
+                        "DOUBLE",
+                        "NOT_COUNTED"
+                      ],
+                      "description": "The weight the projection scores it at: its own, until it settles."
+                    }
+                  },
+                  "required": [
+                    "contestId",
+                    "name",
+                    "cupWeight"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A live contest a cup projection counts."
+                },
+                "description": "The live contests counted as if they ended now, by first event start; empty when none is live."
+              },
+              "standings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "squadId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "position": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Place in the cup if the live contests ended now, 1 best; ties share it as in the standings."
+                    },
+                    "displayPosition": {
+                      "type": "string",
+                      "description": "The place as shown: \"T2\" for a shared 2nd."
+                    },
+                    "points": {
+                      "type": "integer",
+                      "description": "Points if the live contests ended now (tenths), the counted contests' included."
+                    },
+                    "gained": {
+                      "type": "integer",
+                      "description": "Points the live contests would add (tenths)."
+                    },
+                    "movement": {
+                      "type": "integer",
+                      "description": "Places gained (positive) or lost (negative) against the standings as they are."
+                    }
+                  },
+                  "required": [
+                    "squadId",
+                    "position",
+                    "displayPosition",
+                    "points",
+                    "gained",
+                    "movement"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One squad's place in a cup if its live contests ended now."
+                },
+                "description": "Best first, one row per squad the standings show."
+              }
+            },
+            "required": [
+              "cupId",
+              "contests",
+              "standings"
+            ],
+            "additionalProperties": false,
+            "description": "An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as \"if it ended now\"."
+          }
+        },
+        "required": [
+          "projection"
+        ],
+        "additionalProperties": false,
+        "description": "A cup's projected standings."
+      },
       "ChampionshipSquadDto": {
         "type": "object",
         "properties": {
@@ -45948,6 +46213,86 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/cups/{cupId}/projection": {
+      "get": {
+        "operationId": "getCupProjection",
+        "summary": "Project a cup from its live contests",
+        "tags": [
+          "Cups"
+        ],
+        "description": "An open cup's standings if every live contest it counts ended now: each scores from its leaderboard's places as they stand, at its own weight, on top of the contests already counted. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. Nothing is stored. 409 CUP_CROWNED for a crowned cup, whose standings are final; 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "cupId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A cup's projected standings.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CupProjectionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

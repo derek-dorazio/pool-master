@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ListCupsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { toCupDto, toCupSquadPointsDto } from '../../mappers/cups.mapper';
+import { toCupDto, toCupProjectionDto, toCupSquadPointsDto } from '../../mappers/cups.mapper';
 import {
   CupCrownedError,
   CupHasUnfinishedContestsError,
@@ -12,7 +12,7 @@ import {
 } from './service';
 
 export function createCupHandlers(service: CupService) {
-  return { listCups, getCup, getCupSquadPoints, crownCup };
+  return { listCups, getCup, getCupSquadPoints, getCupProjection, crownCup };
 
   async function listCups(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListCupsQuery }>,
@@ -41,6 +41,18 @@ export function createCupHandlers(service: CupService) {
     try {
       const points = await service.getSquadPoints(request.params.id, request.params.cupId, request.params.squadId);
       return reply.send({ squadPoints: toCupSquadPointsDto(points) });
+    } catch (error) {
+      return sendCupError(reply, error);
+    }
+  }
+
+  async function getCupProjection(
+    request: FastifyRequest<{ Params: { id: string; cupId: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const projection = await service.getProjection(request.params.id, request.params.cupId);
+      return reply.send({ projection: toCupProjectionDto(projection) });
     } catch (error) {
       return sendCupError(reply, error);
     }

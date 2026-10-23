@@ -1,5 +1,5 @@
 import { ContestStatus, CupContestCount, CupStatus, CupWeight } from '@poolmaster/shared/domain';
-import type { CupContestRowDto, CupDto, CupStandingRowDto } from '@/lib/api';
+import type { CupContestRowDto, CupDto, CupProjectedStandingDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 
 /** How many squads the race chart draws. */
 export const RACE_CHART_SQUADS = 5;
@@ -52,6 +52,23 @@ export function formatOrdinalPlace(position: number): string {
 /** A place as a sentence reads it: "6th", or "T2" for a shared 2nd. */
 export function formatPlace(row: Pick<CupStandingRowDto, 'displayPosition' | 'position'>): string {
   return row.displayPosition.startsWith('T') ? row.displayPosition : formatOrdinalPlace(row.position);
+}
+
+/** Whether a cup has a projection to show: it is open and a contest it counts is live. */
+export function hasLiveContest(cup: CupDto): boolean {
+  return cup.status === CupStatus.OPEN
+    && cup.contests.some((contest) => contest.status === ContestStatus.ACTIVE && contest.count === CupContestCount.NOT_FINAL);
+}
+
+/** What the greyed "If it ended now" column shows for a squad: "2nd · 25", "T1 · 72.5". */
+export function formatProjectedStanding(row: Pick<CupProjectedStandingDto, 'displayPosition' | 'position' | 'points'>): string {
+  return `${formatPlace(row)} · ${formatCupPoints(row.points)}`;
+}
+
+/** The line over the standings that says what the greyed column is. */
+export function describeProjection(projection: CupProjectionDto): string {
+  const names = joinNames(projection.contests.map((contest) => contest.name));
+  return `The greyed column shows where each squad would stand if ${names} ended now.`;
 }
 
 /** Names as a sentence lists them: "A", "A and B", "A, B and C". */

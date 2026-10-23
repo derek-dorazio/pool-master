@@ -1,5 +1,5 @@
 import { ContestStatus, CupStatus } from '@poolmaster/shared/domain';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
@@ -23,13 +23,15 @@ import {
   cupLeaders,
   cupProgress,
   cupsOnShow,
+  describeProjection,
   formatCupPoints,
   formatPlace,
+  hasLiveContest,
   nextContestToCount,
 } from './cup-view';
 import { Podium } from './podium';
 import { useChampionshipsRoute } from './use-championships-route';
-import { useSeasonCupsQuery } from './use-cups-query';
+import { useCupProjectionQuery, useSeasonCupsQuery } from './use-cups-query';
 
 /** The year's cups as chips, one per sports league, scrolling sideways when there are many. */
 function CupChips({ cups, leagueCode, selectedId, year }: { cups: CupDto[]; leagueCode: string; selectedId: string; year: number }) {
@@ -92,8 +94,9 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
 
 /**
  * Points race: one sports league cup's standings, how the top squads got there, and every contest
- * in it; a crowned cup's podium above its frozen standings. A squad opens its points contest by
- * contest; a contest opens its leaderboard.
+ * in it; a crowned cup's podium above its frozen standings. While a contest it counts is live, the
+ * standings carry a greyed "If it ended now" column. A squad opens its points contest by contest;
+ * a contest opens its leaderboard.
  */
 export function PointsRacePage() {
   const { sportLeagueId } = useParams<{ sportLeagueId: string }>();
@@ -102,6 +105,13 @@ export function PointsRacePage() {
   const squadPath = useCallback(
     (squadId: string) => buildLeagueCupSquadPath(leagueCode, year, sportLeagueId ?? '', squadId),
     [leagueCode, sportLeagueId, year],
+  );
+  const cup = cupsQuery.data?.find((candidate) => candidate.sportLeagueId === sportLeagueId);
+  const projectionQuery = useCupProjectionQuery(leagueId, cup?.id ?? '', cup !== undefined && hasLiveContest(cup));
+  const projection = projectionQuery.data;
+  const projectedBySquad = useMemo(
+    () => (projection?.contests.length ? new Map(projection.standings.map((row) => [row.squadId, row])) : undefined),
+    [projection],
   );
 
   if (cupsQuery.isLoading) {
@@ -119,7 +129,6 @@ export function PointsRacePage() {
       ? <Navigate replace to={buildLeaguePointsRacePath(leagueCode, year, firstCup.sportLeagueId)} />
       : <EmptyState body={`No sports league has two counted contests in ${year} yet.`} testId="points-race-empty" title="No cups yet" />;
   }
-  const cup = allCups.find((candidate) => candidate.sportLeagueId === sportLeagueId);
   if (!cup) {
     return (
       <EmptyState
@@ -148,7 +157,13 @@ export function PointsRacePage() {
           <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
         ) : null}
         <CupStatTiles cup={cup} mySquadId={viewer.mySquadId} />
-        <CupStandingsGrid focusSquadId={viewer.mySquadId} rows={cup.standings} squadPath={squadPath} />
+        {projection && projectedBySquad ? (
+          <p className="text-sm text-muted-foreground" data-testid="cup-projection-note">{describeProjection(projection)}</p>
+        ) : null}
+        {projectionQuery.isError ? (
+          <p className="text-sm text-muted-foreground" data-testid="cup-projection-error">{'We couldn\'t work out where squads would stand if the live contests ended now.'}</p>
+        ) : null}
+        <CupStandingsGrid focusSquadId={viewer.mySquadId} projection={projectedBySquad} rows={cup.standings} squadPath={squadPath} />
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div>

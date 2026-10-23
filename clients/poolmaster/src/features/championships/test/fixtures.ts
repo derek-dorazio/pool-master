@@ -1,4 +1,4 @@
-import type { ChampionshipDto, ChampionshipStandingRowDto, CupContestRowDto, CupDto, CupStandingRowDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -88,6 +88,22 @@ export function buildRunningCup(): CupDto {
       }),
     ],
   });
+}
+
+/**
+ * The running cup if its live Tour Championship Tiers ended now: the viewer's Casey Crushers win
+ * it and pass Birdie Bandits.
+ */
+export function buildRunningCupProjection(): CupProjectionDto {
+  return {
+    cupId: 'cup-pga',
+    contests: [{ contestId: 'contest-4', name: 'Tour Championship Tiers', cupWeight: 'NORMAL' }],
+    standings: [
+      { squadId: 'team-1', position: 1, displayPosition: '1', points: 2650, gained: 1000, movement: 1 },
+      { squadId: 'team-2', position: 2, displayPosition: '2', points: 2600, gained: 800, movement: -1 },
+      { squadId: 'team-3', position: 3, displayPosition: '3', points: 2000, gained: 650, movement: 0 },
+    ],
+  };
 }
 
 export function buildChampionshipStanding(overrides: Partial<ChampionshipStandingRowDto> = {}): ChampionshipStandingRowDto {

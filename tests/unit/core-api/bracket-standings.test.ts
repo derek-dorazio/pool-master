@@ -399,3 +399,40 @@ describe('ContestService — roster reads and writes a prediction contest refuse
     expect(contestEntryEventTiebreaker(expectDefined(context.world.entries.get('entry-alice')), context.sportEvent.id)).toBe(140);
   });
 });
+
+describe('ContestService.livePositionsOf', () => {
+  const squadOf = (context: ReturnType<typeof setup>, entryId: string) => expectDefined(context.world.entries.get(entryId)).squadId;
+
+  it('places each ranked entry by its squad as the live leaderboard ranks it, ties sharing, and leaves out an entry not submitted', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+
+    const positions = await context.contestService.livePositionsOf(context.contest.id);
+
+    expect(positions).toEqual([
+      { squadId: squadOf(context, 'entry-alice'), position: 1 },
+      { squadId: squadOf(context, 'entry-bob'), position: 1 },
+      { squadId: squadOf(context, 'entry-cara'), position: 3 },
+    ]);
+  });
+
+  it('ranks nobody while picks are hidden, rather than refusing, since a contest not under way has no places yet', async () => {
+    const context = setup({ contestStatus: ContestStatus.OPEN });
+    context.setNow(BEFORE_START);
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toEqual([]);
+  });
+
+  it('ranks nobody in a squares contest, whose grid has no places until it settles', async () => {
+    const context = setup();
+    context.world.contests.set(context.contest.id, { ...context.contest, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES });
+
+    expect(await context.contestService.livePositionsOf(context.contest.id)).toEqual([]);
+  });
+
+  it('refuses a contest that does not exist with CONTEST_NOT_FOUND', async () => {
+    const context = setup();
+
+    await expect(context.contestService.livePositionsOf('contest-missing')).rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND' });
+  });
+});
