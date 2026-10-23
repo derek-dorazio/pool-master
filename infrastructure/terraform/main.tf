@@ -531,20 +531,38 @@ resource "aws_iam_role_policy" "ecs_task_ses_send" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "ses:SendEmail",
-        "ses:SendRawEmail",
-      ]
-      Resource = concat(
-        aws_ses_domain_identity.mail[*].arn,
-        aws_ses_email_identity.sender[*].arn,
-        [aws_sesv2_configuration_set.mail.arn],
-      )
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+        ]
+        Resource = concat(
+          aws_ses_domain_identity.mail[*].arn,
+          aws_ses_email_identity.sender[*].arn,
+          [aws_sesv2_configuration_set.mail.arn],
+        )
+      },
+      # In the SES sandbox, AWS also checks the send against the recipient's verified identity
+      # (e.g. identity/tester@gmail.com), so without this every send is AccessDenied. It still
+      # only allows mail from this environment's sending domain.
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+        ]
+        Resource = "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/*"
+        Condition = {
+          StringLike = { "ses:FromAddress" = "*@${split("@", local.ses_from_email)[1]}" }
+        }
+      },
+    ]
   })
 }
+
+data "aws_caller_identity" "current" {}
 
 # --- SES identity for system email (#844) ---
 # Each environment sends from its own subdomain (QA: qa.<domain>, prod: the bare domain), so QA
