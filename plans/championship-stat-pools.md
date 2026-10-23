@@ -4,9 +4,8 @@
 
 Written 2026-10-23 for Derek's idea: a pool on a championship series that plays like a golf
 tournament. Each game is a round, each player is a participant, and the sport's one named
-composite score stands in for strokes, except that more is better. Status: design. The
-questions in section 8 carry a recommendation each. The ones Derek has answered are marked
-**Decided**.
+composite score stands in for strokes, except that more is better. Status: designed; Derek
+answered every question in section 8 on 2026-10-23.
 
 ---
 
@@ -108,13 +107,14 @@ the sport data file loader and its two workflows.
 - **The composite per sport** in the sport definition: `composite: { name, stats, score(line) }`.
   Each sport's component stats are one typed enum. The name, the formula and its description
   live there together, so the copy and the scoring read one place.
-- **A player-stats kind of sport league.** Baseball, basketball, hockey and American football are
-  team sports, whose fields are teams. Rather than change that, each gets one more sport league
-  whose field is players and whose scoring family is composite: "World Series players", "NBA
-  Finals players", "Stanley Cup Final players" and "NFL Championship players". `SportLeague`
-  gains `participantType` and `scoringFamily` overrides, null meaning the sport's (Q7). Players
-  are new `Participant` rows with `role` (position) and `teamAffiliation` (their team), which
-  the table already has.
+- **A player-stats kind of sport league (Q7, Decided).** Baseball, basketball, hockey and
+  American football are team sports, whose fields are teams. Rather than change that, each
+  championship gets its own sport league, named for the event, whose field is players and whose
+  scoring family is composite: **World Series** under Baseball, **NBA Finals** under Basketball,
+  **Stanley Cup Final** under Hockey, and **Championship Weekend** and **Super Bowl** under
+  American football. Each holds one event a season. `SportLeague` gains `participantType` and
+  `scoringFamily` overrides, null meaning the sport's. Players are new `Participant` rows with
+  `role` (position) and `teamAffiliation` (their team), which the table already has.
 - **Contest templates** per new league: one default per format (Tiered, Budget, Quick pick),
   each scored on the league's composite.
 
@@ -171,10 +171,10 @@ thrown away at launch.
 
 1. **Model and scoring.** The `COMPOSITE` family and definition, the composites and stat enums
    in the sport definitions, `SportEventParticipantStatLine`, the sport league overrides, the
-   four new sport leagues, and templates. Unit tests for every composite formula, and
+   five new sport leagues, and templates. Unit tests for every composite formula, and
    integration tests for rescoring.
 2. **Loader and admin.** `STATS` content in the data file and loader, the admin stat grid, and
-   the four test data files (five events) with real box scores.
+   the five test data files with real box scores.
 3. **Contest screens.** The formula on Create contest, the entry page's composite column,
    leaderboard game columns with the component breakdown, and copy (How to Play, blurbs).
 4. **First real load.** The 2027 NFL Conference Championship weekend and Super Bowl LXI fields
@@ -198,7 +198,7 @@ beside slice 2.
 
 ## 8. Questions
 
-Each has a recommendation. The ones Derek has already answered are marked **Decided**.
+All answered by Derek on 2026-10-23.
 
 - **Q0. Composite names. Decided:** Box Score (baseball), Triple Threat (NBA), Power Play
   (hockey), Redzone (NFL).
@@ -214,9 +214,9 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
 - **Q6. When do scores update? Decided:** live from a data provider at launch. Until then, after
   each game, through the workflows. *Recommend that a thread prepares each game's box score file
   and Derek says "Load" once per game, which keeps the rule that a load runs only on his go.*
-- **Q7. Player leagues as sport leagues, or a new sport?** *Recommend a sport league with
-  participant-type and scoring-family overrides. A new sport ("Baseball players") would split
-  baseball's pages and copy in two.*
+- **Q7. Player leagues as sport leagues, or a new sport? Decided:** a sport league per
+  championship, named for the event with no "players": World Series, NBA Finals, Stanley Cup
+  Final, Championship Weekend and Super Bowl (section 3).
 - **Q8. Which leagues? Decided:** MLB, NBA, NHL and NFL. No WNBA.
 - **Q9. Roster size and counted players. Decided:** Tiered: one player from each of six tiers,
   best four count. Budget: six players under the cap, best four count. Quick pick: three players
