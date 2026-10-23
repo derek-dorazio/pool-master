@@ -409,7 +409,52 @@ describe('ContestNotices', () => {
       expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
-    it('tells the commissioners and members with a submitted entry of each open or live contest on a cancelled event, and nobody about a draft or finished contest', async () => {
+    it('sends no event changed email when a cancelled event was the last of a contest\'s events still to play, and the no-scores result is the only email', async () => {
+      const league = world.addLeague();
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const open = world.addSportEvent({ name: 'The Open', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const contest = world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, open.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(open, { kind: ContestEventChangeKind.CANCELLED });
+      await notices().contestSettled(contest);
+
+      expect(outbox.rows.map((row) => [row.templateKey, row.recipientUserId])).toEqual([['CONTEST_RESULTS', commissioner.user.id]]);
+      expect(textTo(commissioner.user.id)).toContain('Every event was cancelled, so Majors Pool ends with no scores.');
+    });
+
+    it('tells a member with submitted entries in two contests on a cancelled event once for each contest', async () => {
+      const league = world.addLeague();
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const open = world.addSportEvent({ name: 'The Open', startDate: STARTS_AT });
+      const majors = world.addContest(league.id, { name: 'Majors Pool', sportEventIds: [masters.id, open.id] });
+      const season = world.addContest(league.id, { name: 'Season Pool', sportEventIds: [masters.id, open.id] });
+      const entrant = member(league.id, 'Nora');
+      await enter(majors.id, entrant, masters.id, true);
+      await enter(season.id, entrant, masters.id, true);
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+
+      const told = outbox.rows.map((row) => [row.templateKey, row.recipientUserId, row.contestId]);
+      expect(told).toHaveLength(2);
+      expect(told).toEqual(expect.arrayContaining([
+        ['CONTEST_EVENT_CHANGED', entrant.user.id, majors.id],
+        ['CONTEST_EVENT_CHANGED', entrant.user.id, season.id],
+      ]));
+    });
+
+    it('tells no commissioner of a draft contest that its event was postponed', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const drafting = world.addLeague();
+      world.addContest(drafting.id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] });
+      member(drafting.id, 'Draft', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(outbox.rows).toEqual([]);
+    });
+
+    it('tells the commissioners of each open or live contest on a cancelled event, and nobody about a draft or finished contest', async () => {
       const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
       const open = world.addSportEvent({ name: 'The Open', startDate: STARTS_AT });
       const office = world.addLeague();
