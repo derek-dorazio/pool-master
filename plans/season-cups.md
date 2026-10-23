@@ -348,7 +348,8 @@ journey row once a page exists.
 3. **All years.** `GET /history/summary` and the page; delete `my-team-history-page.tsx` (Q3).
    Built as one PR: All years sits under the Championships menu (the header has an All years
    link, and My team's history link now opens it); a year's cups follow the Trophy case rule
-   (crowned ones, and open ones with two counted contests).
+   (crowned ones, and open ones with two counted contests), and a year with neither a champion
+   nor such a cup is skipped.
 
 1 and 2 in parallel; 3 after 1.
 

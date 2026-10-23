@@ -13,8 +13,8 @@ import {
   SUMMARY_TILE_LABELS,
   describeHistoryChampions,
   describeHistoryCup,
-  historyCupsOnShow,
   historyYearTitle,
+  historyYearsOnShow,
 } from './championship-view';
 import { useHistorySummaryQuery } from './use-championship-query';
 
@@ -42,6 +42,7 @@ export function AllYearsPage() {
   if (leagueContext.state === 'blocked') {
     return leagueContext.element;
   }
+  const years = summaryQuery.data ? historyYearsOnShow(summaryQuery.data.years) : [];
 
   return (
     <section className="space-y-6" data-testid="all-years-page">
@@ -72,9 +73,9 @@ export function AllYearsPage() {
             ))}
           </MetricGrid>
 
-          {summaryQuery.data.years.length ? (
+          {years.length ? (
             <div className="space-y-3" data-testid="all-years-list">
-              {summaryQuery.data.years.map((year) => (
+              {years.map((year) => (
                 <Tile className="space-y-2" data-testid={`all-years-year-${year.year}`} key={year.year} padding="sm" radius="lg">
                   <Link
                     className="flex flex-wrap items-baseline justify-between gap-2 hover:underline"
@@ -84,9 +85,9 @@ export function AllYearsPage() {
                     <h2 className="text-lg font-semibold text-foreground">{historyYearTitle(year)}</h2>
                     <span className="text-sm text-muted-foreground">{describeHistoryChampions(year)}</span>
                   </Link>
-                  {historyCupsOnShow(year.cups).length ? (
+                  {year.cups.length ? (
                     <ul className="space-y-1 text-sm">
-                      {historyCupsOnShow(year.cups).map((cup) => (
+                      {year.cups.map((cup) => (
                         <li key={cup.cupId}>
                           <Link
                             className="flex flex-wrap justify-between gap-2 hover:underline"

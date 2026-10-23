@@ -139,7 +139,17 @@ export function describeHistoryCup(cup: HistoryCupDto): string {
   return cup.status === CupStatus.CROWNED ? `Won by ${names}` : `${names} ${cup.winners.length > 1 ? 'lead' : 'leads'}`;
 }
 
-/** The cups All years shows: as on the Trophy case, a cup once enough of its contests have counted. */
+/**
+ * The cups All years shows: every crowned cup, since the Most cups tile counts it, and an open cup
+ * once enough of its contests have counted, as on the Trophy case.
+ */
 export function historyCupsOnShow(cups: HistoryCupDto[]): HistoryCupDto[] {
-  return cups.filter((cup) => cup.contestsCounted >= CUP_SHOWN_FROM_COUNTED);
+  return cups.filter((cup) => cup.status === CupStatus.CROWNED || cup.contestsCounted >= CUP_SHOWN_FROM_COUNTED);
+}
+
+/** The years All years lists, each with only its cups on show; a year with no champion and no such cup is skipped. */
+export function historyYearsOnShow(years: HistoryYearDto[]): HistoryYearDto[] {
+  return years
+    .map((year) => ({ ...year, cups: historyCupsOnShow(year.cups) }))
+    .filter((year) => year.champions.length > 0 || year.cups.length > 0);
 }

@@ -7,6 +7,7 @@ import {
   describeHistoryChampions,
   describeHistoryCup,
   historyCupsOnShow,
+  historyYearsOnShow,
   historyYearTitle,
   parseContestResultFilter,
 } from './championship-view';
@@ -128,6 +129,21 @@ describe('All years lines', () => {
   });
 
   it('shows a cup once two of its contests have counted, as the Trophy case does', () => {
-    expect(historyCupsOnShow([cup, { ...cup, cupId: 'cup-2', contestsCounted: 1 }]).map((row) => row.cupId)).toEqual(['cup-1']);
+    const open = { ...cup, status: 'OPEN' as const };
+    expect(historyCupsOnShow([open, { ...open, cupId: 'cup-2', contestsCounted: 1 }]).map((row) => row.cupId)).toEqual(['cup-1']);
+  });
+
+  it('always shows a crowned cup, even one crowned after a single counted contest, so the Most cups tile matches the list', () => {
+    expect(historyCupsOnShow([{ ...cup, contestsCounted: 1 }]).map((row) => row.cupId)).toEqual(['cup-1']);
+  });
+
+  it('skips a year with no champion and no cup on show, and keeps the others with only their cups on show', () => {
+    const quietCup = { ...cup, cupId: 'cup-2', status: 'OPEN' as const, contestsCounted: 1, winners: [] };
+    const years = historyYearsOnShow([
+      { year: 2027, isOver: false, champions: [], cups: [quietCup] },
+      { year: 2026, isOver: false, champions: [bandits], cups: [quietCup] },
+      { year: 2025, isOver: true, champions: [], cups: [cup, quietCup] },
+    ]);
+    expect(years.map((row) => [row.year, row.cups.map((shown) => shown.cupId)])).toEqual([[2026, []], [2025, ['cup-1']]]);
   });
 });

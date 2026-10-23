@@ -1003,7 +1003,8 @@ Contests › History reads the same list one year at a time (`?year=2025`, the n
 completed contest by default), each row naming its winner and opening the contest.
 All years (`/league/:code/history`, linked from the Championships header and from My team)
 shows the summary's tiles and one line per year, which opens that year's Championship tab; each
-cup line opens its Points race.
+cup line opens its Points race. It shows every crowned cup and an open one once two of its contests
+have counted, and skips a year with neither a champion nor such a cup.
 
 ### Squares — `selections`
 
