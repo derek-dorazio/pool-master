@@ -2727,6 +2727,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/email/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test email
+         * @description Root admin only. Sends one fixed test email to `to` the way every system email goes: it obeys "Send system email" and "Only send to", skips a suppressed address, and goes through the outbox and the configured provider. Waits for the sender's first try and returns where the email stands: SENT, SKIPPED with the reason, or QUEUED with the provider's error when that try failed and a retry is due.
+         */
+        post: operations["sendTestEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ingestion/providers": {
         parameters: {
             query?: never;
@@ -11752,7 +11772,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -12052,6 +12072,29 @@ export interface components {
              * @enum {string}
              */
             category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+        };
+        /** @description Where to send a test email. */
+        EmailTestRequest: {
+            /**
+             * Format: email
+             * @description The one address the test email goes to.
+             */
+            to: string;
+        };
+        /** @description What happened to a test email. */
+        EmailTestResponse: {
+            /**
+             * @description Where the test email stands once the sender has had its try: SENT when the provider took it, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error), or FAILED.
+             * @enum {string}
+             */
+            status: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED";
+            /**
+             * @description Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, NOT_ALLOWED_IN_ENVIRONMENT when the address is not in "Only send to" or is a reserved domain, SUPPRESSED when the address bounced or complained before.
+             * @enum {string|null}
+             */
+            skipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
+            /** @description The provider's error from the last failed try, or null. */
+            error: string | null;
         };
         /**
          * @description The stored key of a settings group.
@@ -25282,6 +25325,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendTestEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailTestRequest"];
+            };
+        };
+        responses: {
+            /** @description What happened to a test email. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTestResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */

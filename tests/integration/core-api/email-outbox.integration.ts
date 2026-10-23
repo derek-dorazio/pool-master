@@ -107,6 +107,16 @@ describe('email outbox: recording', () => {
   });
 });
 
+describe('email outbox: reading one email', () => {
+  it('finds a recorded email by its id as it stands, and nothing for an id never recorded', async () => {
+    const { message } = await repository().record(queued());
+    await repository().markSent(message.id, { providerMessageId: `ses-find-${RUN}`, sentAt: DUE, clearContent: false });
+
+    expect(await repository().findById(message.id)).toMatchObject({ id: message.id, status: 'SENT', providerMessageId: `ses-find-${RUN}` });
+    expect(await repository().findById(randomUUID())).toBeUndefined();
+  });
+});
+
 describe('email outbox: claiming', () => {
   it('claims due emails oldest due first, up to the limit, each now SENDING with one more attempt and held until the claim lapses', async () => {
     const later = await repository().record(queued({ dueAt: new Date(DUE.getTime() + MINUTE) }));

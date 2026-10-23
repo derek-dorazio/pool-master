@@ -26589,7 +26589,8 @@
           "CONTEST_NOT_OPEN",
           "EVENT_STILL_DRAFT",
           "PASSWORD_RESET",
-          "PASSWORD_CHANGED"
+          "PASSWORD_CHANGED",
+          "EMAIL_TEST"
         ],
         "description": "A system email template."
       },
@@ -27441,6 +27442,72 @@
         ],
         "additionalProperties": false,
         "description": "The category the unsubscribe link turned off."
+      },
+      "EmailTestRequest": {
+        "type": "object",
+        "properties": {
+          "to": {
+            "type": "string",
+            "format": "email",
+            "description": "The one address the test email goes to.",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "to"
+        ],
+        "additionalProperties": false,
+        "description": "Where to send a test email."
+      },
+      "EmailTestResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "SENDING",
+              "SENT",
+              "DELIVERED",
+              "BOUNCED",
+              "COMPLAINED",
+              "FAILED",
+              "SKIPPED"
+            ],
+            "description": "Where the test email stands once the sender has had its try: SENT when the provider took it, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error), or FAILED."
+          },
+          "skipReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "EMAIL_DISABLED",
+              "TEMPLATE_DISABLED",
+              "NOT_ALLOWED_IN_ENVIRONMENT",
+              "SUPPRESSED",
+              "OPTED_OUT",
+              null
+            ],
+            "description": "Why it was skipped, or null: EMAIL_DISABLED when \"Send system email\" is off, NOT_ALLOWED_IN_ENVIRONMENT when the address is not in \"Only send to\" or is a reserved domain, SUPPRESSED when the address bounced or complained before."
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider's error from the last failed try, or null."
+          }
+        },
+        "required": [
+          "status",
+          "skipReason",
+          "error"
+        ],
+        "additionalProperties": false,
+        "description": "What happened to a test email."
       },
       "SettingsGroupKey": {
         "type": "string",
@@ -53222,6 +53289,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IngestionScheduleConfig"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/email/test": {
+      "post": {
+        "operationId": "sendTestEmail",
+        "summary": "Send a test email",
+        "tags": [
+          "Platform"
+        ],
+        "description": "Root admin only. Sends one fixed test email to `to` the way every system email goes: it obeys \"Send system email\" and \"Only send to\", skips a suppressed address, and goes through the outbox and the configured provider. Waits for the sender's first try and returns where the email stands: SENT, SKIPPED with the reason, or QUEUED with the provider's error when that try failed and a retry is due.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What happened to a test email.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }

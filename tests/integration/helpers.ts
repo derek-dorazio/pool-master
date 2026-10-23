@@ -52,6 +52,7 @@ import {
   createEmailOutbox,
   emailEventsModule,
   emailUnsubscribeModule,
+  emailTestModule,
   type EmailSender,
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
@@ -208,6 +209,7 @@ async function buildTestApp(): Promise<FastifyInstance> {
     },
   });
   testApp.register(emailUnsubscribeModule, { prefix: '/api/v1/email', preferences: outbox.preferences });
+  testApp.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest: outbox.test });
 
   await testApp.ready();
   return testApp;

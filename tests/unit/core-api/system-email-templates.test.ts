@@ -572,8 +572,19 @@ describe('pool-master-98i system email templates', () => {
   });
 });
 
+describe('the test email', () => {
+  it('names the environment and the root admin who sent it, and says email from the site is working', () => {
+    const message = renderSystemEmailTemplate('EMAIL_TEST', EMAIL_TEMPLATE_FIXTURES.EMAIL_TEST, UTC);
+
+    expect(message.subject).toBe('Prime Time Commissioner test email (qa)');
+    expect(message.text).toContain('poolmaster-admin sent this test from the qa Email settings on');
+    expect(message.text).toContain('It reached you, so email from this site is working.');
+    expect(message.html).toContain('It reached you, so email from this site is working.');
+  });
+});
+
 describe('the email template registry', () => {
-  it('gives every template key a category, with invitations, welcomes and the password reset and password changed emails ones a member can\'t turn off', () => {
+  it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails and the root admin\'s test email ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(Object.values(EmailTemplateKey).sort());
     expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.category]))).toEqual({
       LEAGUE_MEMBER_INVITE: EmailCategory.MEMBERSHIP,
@@ -593,6 +604,7 @@ describe('the email template registry', () => {
       SQUAD_OWNER_ADDED: EmailCategory.MEMBERSHIP,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
+      EMAIL_TEST: EmailCategory.ROOT_ADMIN,
     });
   });
 
@@ -615,6 +627,7 @@ describe('the email template registry', () => {
       SQUAD_OWNER_ADDED: ServiceClass.ESSENTIAL,
       PASSWORD_RESET: ServiceClass.ESSENTIAL,
       PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
+      EMAIL_TEST: ServiceClass.ESSENTIAL,
     });
   });
 

@@ -195,4 +195,9 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     changedAt: new Date('2026-10-22T14:05:00.000Z'),
     forgotPasswordUrl: 'https://app.example.com/forgot-password',
   },
+  EMAIL_TEST: {
+    environment: 'qa',
+    requestedBy: 'poolmaster-admin',
+    requestedAt: new Date('2026-10-23T16:20:00.000Z'),
+  },
 };

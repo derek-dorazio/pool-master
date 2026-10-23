@@ -11,3 +11,5 @@ export * from './email-events-routes';
 export * from './unsubscribe-tokens';
 export * from './email-preferences-service';
 export * from './email-unsubscribe-routes';
+export * from './email-test-service';
+export * from './email-test-routes';

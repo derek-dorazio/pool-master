@@ -195,6 +195,7 @@ enum PrismaEmailTemplateKey {
   EVENT_STILL_DRAFT
   SQUAD_OWNER_INVITE
   SQUAD_OWNER_ADDED
+  EMAIL_TEST
 }
 
 enum PrismaEmailMessageStatus {
