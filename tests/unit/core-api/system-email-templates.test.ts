@@ -584,12 +584,13 @@ describe('the email template registry', () => {
       CONTEST_OPENED: EmailCategory.CONTEST_UPDATES,
       CONTEST_STANDINGS: EmailCategory.LIVE_STANDINGS,
       CONTEST_RESULTS: EmailCategory.RESULTS,
+      CONTEST_EVENT_CHANGED: EmailCategory.CONTEST_UPDATES,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });
   });
 
-  it('gives every template a service class: account and membership email essential, the contest opening, receipts and final results on the free class, reminders, the live email and live standings on the first paid class', () => {
+  it('gives every template a service class: account and membership email essential, the contest opening, receipts, final results and event changes on the free class, reminders, the live email and live standings on the first paid class', () => {
     expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.serviceClass]))).toEqual({
       LEAGUE_MEMBER_INVITE: ServiceClass.ESSENTIAL,
       LEAGUE_JOIN_SUCCESS: ServiceClass.ESSENTIAL,
@@ -599,6 +600,7 @@ describe('the email template registry', () => {
       CONTEST_OPENED: ServiceClass.A,
       CONTEST_STANDINGS: ServiceClass.B,
       CONTEST_RESULTS: ServiceClass.A,
+      CONTEST_EVENT_CHANGED: ServiceClass.A,
       PASSWORD_RESET: ServiceClass.ESSENTIAL,
       PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
     });
