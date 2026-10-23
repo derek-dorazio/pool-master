@@ -19,6 +19,11 @@ export function buildLeagueHomeUrl(appBaseUrl: string, leagueCode: string): stri
   return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}`;
 }
 
+/** Where a league invitation is accepted. */
+export function buildLeagueInviteUrl(appBaseUrl: string, inviteCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
+}
+
 /** Where a co-owner invitation is accepted. */
 export function buildSquadOwnerInviteUrl(appBaseUrl: string, inviteCode: string): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/team-invite/${encodeURIComponent(inviteCode)}`;

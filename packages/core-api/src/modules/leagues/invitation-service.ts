@@ -29,6 +29,7 @@ import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { LeagueNotFoundError } from './service';
 import {
   buildLeagueHomeUrl,
+  buildLeagueInviteUrl,
   type EmailLeague,
   type EmailService,
 } from '../email';
@@ -211,7 +212,7 @@ export class InvitationService {
         inviterName: input.inviterName,
         leagueName: input.league.name,
         leagueCode: input.league.leagueCode,
-        inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
+        inviteUrl: buildLeagueInviteUrl(this.appBaseUrl, input.inviteCode),
         message: input.message,
         expiresAt: input.expiresAt,
       },
@@ -727,10 +728,6 @@ function isOutstanding(invitation: LeagueInvitation): boolean {
 /** Generates a short, URL-safe invite code. */
 function generateInviteCode(): string {
   return randomUUID().replace(/-/g, '').slice(0, 12);
-}
-
-function buildInviteUrl(appBaseUrl: string, inviteCode: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
 }
 
 export class InvitationNotFoundError extends Error {

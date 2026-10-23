@@ -37,6 +37,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueCode: 'OFFICE24',
     inviteUrl: 'http://localhost:5173/team-invite/abc123def456',
     expiresAt: '2026-04-04T18:30:00.000Z',
+    soleOwner: false,
   },
   SQUAD_OWNER_ADDED: {
     userName: 'Jordan Player',
@@ -45,6 +46,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueName: 'Office League',
     leagueCode: 'OFFICE24',
     leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
+    soleOwner: false,
   },
   CONTEST_ENTRY_COMPLETED: {
     userName: 'Morgan Member',

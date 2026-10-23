@@ -16,6 +16,9 @@ import {
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { inMemoryEmailMessages, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
 import { emailServiceInto } from '../../support/email-service';
+import { fakeLogger } from '../../support/fake-logger';
+import type { EmailService } from '../../../packages/core-api/src/modules/email';
+import type { FastifyBaseLogger } from 'fastify';
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -37,6 +40,8 @@ interface League3 {
   service: SquadOwnerInvitationService;
   /** Every email the service queued: co-owner invitations (B4) and "you were added" (B5). */
   outbox: InMemoryEmailMessages;
+  email: EmailService;
+  logger: jest.Mocked<FastifyBaseLogger>;
 }
 
 /** A league with a commissioner on their own team and one member who owns a team alone. */
@@ -53,6 +58,8 @@ function leagueWithTwoTeams(): League3 {
     },
   });
   const outbox = inMemoryEmailMessages();
+  const email = emailServiceInto(outbox);
+  const logger = fakeLogger();
   const service = new SquadOwnerInvitationService({
     squadOwnerInvitations: world.ownerInvitations,
     leagueMemberships: world.memberships,
@@ -61,10 +68,11 @@ function leagueWithTwoTeams(): League3 {
     membershipTransaction: world.transaction,
     users: world.users,
     prisma,
-    email: emailServiceInto(outbox),
+    email,
     appBaseUrl: 'https://app.example.test/',
+    logger,
   });
-  return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service, outbox };
+  return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service, outbox, email, logger };
 }
 
 function seedOwnerInvitation(
@@ -337,6 +345,82 @@ describe('SquadOwnerInvitationService — co-owner emails', () => {
     });
 
     expect(sent(setup).map((email) => [email.templateKey, email.to])).toEqual([['SQUAD_OWNER_INVITE', 'replacement@example.com']]);
+  });
+
+  it('tells a replacement who already has an account they were added, and sends no invitation', async () => {
+    const setup = leagueWithTwoTeams();
+    const coOwner = setup.world.addUser({ firstName: 'Cody', lastName: 'CoOwner' });
+    setup.world.addMember({ league: setup.league, user: coOwner, squadId: setup.ownerSquad.id });
+    const pat = setup.world.addUser({ email: 'pat@example.com' });
+
+    await setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.commissioner.id,
+      targetUserId: coOwner.id,
+      email: 'pat@example.com',
+    });
+
+    expect(sent(setup).map((email) => [email.templateKey, email.userId])).toEqual([['SQUAD_OWNER_ADDED', pat.id]]);
+  });
+
+  it('invites the replacement of a squad\'s only owner to own it, not co-own it, without mentioning other owners', async () => {
+    const setup = leagueWithTwoTeams();
+
+    await setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.commissioner.id,
+      targetUserId: setup.owner.id,
+      email: 'replacement@example.com',
+    });
+
+    const [email, ...others] = sent(setup);
+    expect(others).toEqual([]);
+    expect(email.templateKey).toBe('SQUAD_OWNER_INVITE');
+    expect(email.text).toContain(`Casey Commish invited you to own ${setup.ownerSquad.name} in Office Pool.`);
+    expect(email.text).not.toMatch(/co-own|Co-owners share/);
+  });
+
+  it('tells an existing account that replaces a squad\'s only owner that they now own it, without mentioning other owners', async () => {
+    const setup = leagueWithTwoTeams();
+    setup.world.addUser({ email: 'pat@example.com' });
+
+    await setup.service.replaceOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.commissioner.id,
+      targetUserId: setup.owner.id,
+      email: 'pat@example.com',
+    });
+
+    const [email, ...others] = sent(setup);
+    expect(others).toEqual([]);
+    expect(email.templateKey).toBe('SQUAD_OWNER_ADDED');
+    expect(email.text).toContain(`Casey Commish made you the owner of ${setup.ownerSquad.name} in Office Pool.`);
+    expect(email.text).not.toMatch(/co-owner|other owners/);
+  });
+
+  it('keeps the invitation and logs the failure when the email cannot be queued', async () => {
+    const setup = leagueWithTwoTeams();
+    jest.spyOn(setup.email, 'send').mockRejectedValue(new Error('outbox unavailable'));
+
+    const invitation = await setup.service.inviteOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      email: 'pat@example.com',
+    });
+
+    expect(invitation.status).toBe(SquadOwnerInvitationStatus.PENDING);
+    expect(setup.world.tables.ownerInvitations.where(() => true).map((row) => row.email)).toEqual(['pat@example.com']);
+    expect(setup.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'squadOwnerInvitation.email.failed',
+        data: expect.objectContaining({ invitationId: invitation.id, error: 'outbox unavailable' }),
+      }),
+      'Failed to queue the co-owner email',
+    );
   });
 
   it('sends nothing when seating an existing account fails part way', async () => {

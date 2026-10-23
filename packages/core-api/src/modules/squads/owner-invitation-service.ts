@@ -277,15 +277,18 @@ export class SquadOwnerInvitationService {
     addedUser: User | null,
   ): Promise<void> {
     try {
-      const [league, inviter] = await Promise.all([
+      const [league, inviter, owners] = await Promise.all([
         this.prisma.league.findUnique({ where: { id: invitation.leagueId } }),
         this.users.findById(actorUserId),
+        this.squadMembershipRepo.findBySquad(squad.id),
       ]);
       if (!league || !inviter) {
         throw new Error(league ? `Inviter not found: ${actorUserId}` : `League not found: ${invitation.leagueId}`);
       }
       const emailLeague = { id: league.id, name: league.name, leagueCode: league.leagueCode };
       const inviterName = formatUserName(inviter);
+      // Replacing a squad's sole owner leaves the invitee as its only owner, not a co-owner.
+      const soleOwner = owners.every((owner) => owner.userId === addedUser?.id);
       if (addedUser) {
         await this.email.send('SQUAD_OWNER_ADDED', {
           to: { email: addedUser.email, userId: addedUser.id, timeZone: addedUser.timezone },
@@ -298,6 +301,7 @@ export class SquadOwnerInvitationService {
             leagueName: league.name,
             leagueCode: league.leagueCode,
             leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, league.leagueCode),
+            soleOwner,
           },
         });
         return;
@@ -314,6 +318,7 @@ export class SquadOwnerInvitationService {
           leagueCode: league.leagueCode,
           inviteUrl: buildSquadOwnerInviteUrl(this.appBaseUrl, invitation.inviteCode),
           expiresAt: invitation.expiresAt,
+          soleOwner,
         },
       });
     } catch (error) {

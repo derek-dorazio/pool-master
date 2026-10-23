@@ -38,6 +38,8 @@ export interface SquadOwnerInviteEmailData {
   leagueCode: string;
   inviteUrl: string;
   expiresAt?: Date | string;
+  /** Accepting makes them the squad's only owner: a replacement for its sole owner. */
+  soleOwner: boolean;
 }
 
 /** B5: someone with an account was made a co-owner of a squad straight away. */
@@ -48,6 +50,8 @@ export interface SquadOwnerAddedEmailData {
   leagueName: string;
   leagueCode: string;
   leagueHomeUrl: string;
+  /** They are the squad's only owner: they replaced its sole owner. */
+  soleOwner: boolean;
 }
 
 export interface ContestEntryCompletedTierSelection {
@@ -857,8 +861,9 @@ function renderSquadOwnerInviteEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const expiresLine = formatDateTime(data.expiresAt, context.timeZone);
-  const intro = `${data.inviterName} invited you to co-own ${data.squadName} in ${data.leagueName}.`;
-  const shared = 'Co-owners share the squad: its entries, picks and results.';
+  const own = data.soleOwner ? 'own' : 'co-own';
+  const intro = `${data.inviterName} invited you to ${own} ${data.squadName} in ${data.leagueName}.`;
+  const shared = data.soleOwner ? [] : ['Co-owners share the squad: its entries, picks and results.'];
   const details: Array<[string, string]> = [
     ['League code', data.leagueCode],
     ['Invite email', data.recipientEmail],
@@ -866,18 +871,18 @@ function renderSquadOwnerInviteEmail(
   ];
   return buildMessage(context, {
     templateKey: 'SQUAD_OWNER_INVITE',
-    subject: `${data.inviterName} invited you to co-own ${data.squadName}`,
+    subject: `${data.inviterName} invited you to ${own} ${data.squadName}`,
     preheader: intro,
-    title: 'Co-owner invitation',
+    title: data.soleOwner ? 'Squad invitation' : 'Co-owner invitation',
     bodyBlocks: [
-      paragraph(`${escapeHtml(data.inviterName)} invited you to co-own ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
-      paragraph(escapeHtml(shared)),
+      paragraph(`${escapeHtml(data.inviterName)} invited you to ${own} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
+      ...shared.map((line) => paragraph(escapeHtml(line))),
       detailList(details),
       button('Accept invitation', data.inviteUrl),
     ].join(''),
     textLines: [
       intro,
-      shared,
+      ...shared,
       ...details.map(([label, value]) => `${label}: ${value}`),
       `Accept invitation: ${data.inviteUrl}`,
     ],
@@ -888,17 +893,18 @@ function renderSquadOwnerAddedEmail(
   data: SquadOwnerAddedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const added = `${data.inviterName} added you as a co-owner of ${data.squadName} in ${data.leagueName}.`;
-  const shared = 'You share the squad with its other owners: its entries, picks and results.';
+  const role = data.soleOwner ? 'made you the owner of' : 'added you as a co-owner of';
+  const added = `${data.inviterName} ${role} ${data.squadName} in ${data.leagueName}.`;
+  const shared = data.soleOwner ? [] : ['You share the squad with its other owners: its entries, picks and results.'];
   return buildMessage(context, {
     templateKey: 'SQUAD_OWNER_ADDED',
-    subject: `You're a co-owner of ${data.squadName}`,
+    subject: data.soleOwner ? `You own ${data.squadName}` : `You're a co-owner of ${data.squadName}`,
     preheader: added,
-    title: 'You are a co-owner',
+    title: data.soleOwner ? 'You own a squad' : 'You are a co-owner',
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
-      paragraph(`${escapeHtml(data.inviterName)} added you as a co-owner of ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
-      paragraph(escapeHtml(shared)),
+      paragraph(`${escapeHtml(data.inviterName)} ${role} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
+      ...shared.map((line) => paragraph(escapeHtml(line))),
       detailList([['League code', data.leagueCode]]),
       button('Open league', data.leagueHomeUrl),
     ].join(''),
@@ -906,7 +912,7 @@ function renderSquadOwnerAddedEmail(
       `Hi ${data.userName},`,
       '',
       added,
-      shared,
+      ...shared,
       `League code: ${data.leagueCode}`,
       `Open league: ${data.leagueHomeUrl}`,
     ],
