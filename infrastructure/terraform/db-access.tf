@@ -40,17 +40,29 @@ resource "aws_iam_instance_profile" "db_access" {
   role  = aws_iam_role.db_access[0].name
 }
 
-# No ingress: Session Manager traffic arrives over the agent's own outbound connection.
+# No ingress: Session Manager traffic arrives over the agent's own outbound connection. Egress is
+# only what the host needs. DNS goes to the VPC resolver, which security groups do not filter.
 resource "aws_security_group" "db_access" {
   count       = var.db_access_host_enabled ? 1 : 0
   name_prefix = "${local.name_prefix}-db-access-"
   vpc_id      = aws_vpc.main.id
 
   egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    description = "SSM agent and package updates"
+  }
+
+  # Subnet ranges, not the database security group: that group already references this one, and
+  # referencing it back would be a dependency cycle.
+  egress {
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = aws_subnet.private[*].cidr_block
+    description = "PostgreSQL"
   }
 
   tags = { Name = "${local.name_prefix}-db-access-sg" }
