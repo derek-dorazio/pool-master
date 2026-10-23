@@ -161,7 +161,7 @@ export function PointsRacePage() {
           <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
         ) : isSeasonOver ? (
           <p className="text-sm text-muted-foreground" data-testid="cup-not-crowned">
-            This cup was never crowned, so it has no trophies. These are its final standings.
+            {'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'}
           </p>
         ) : null}
         <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />

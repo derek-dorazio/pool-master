@@ -566,7 +566,7 @@ describe('Championships › Points race', () => {
 
     renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-pga');
 
-    expect(await screen.findByTestId('cup-not-crowned')).toHaveTextContent('never crowned');
+    expect(await screen.findByTestId('cup-not-crowned')).toHaveTextContent('hasn\'t been crowned');
     expect(screen.getByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
     expect(screen.getByTestId('points-race')).toHaveTextContent('Finished 1stBirdie Bandits');
     expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
