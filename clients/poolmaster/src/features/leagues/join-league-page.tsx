@@ -9,6 +9,7 @@ import {
   Button,
   Chip,
   FormField,
+  IconPalette,
   Input,
   LinkButton,
   PublicInviteJoinPage,
@@ -294,10 +295,12 @@ export function JoinLeaguePage() {
         Review the invitation, choose your name and icon in this league, and join when you&apos;re ready.
       </p>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_1fr]">
-        <div className="rounded-[1.5rem] border border-border bg-background p-5 text-sm text-muted-foreground">
-          {invitationQuery.isLoading ? 'Loading invitation...' : null}
-          {invitationQuery.isError ? 'We could not load this invitation.' : null}
+      {/* One column at every width: the page is a narrow card, so a side-by-side split
+          squeezed the icon palette into tiles too small for their labels. */}
+      <div className="mt-6 space-y-5">
+        <div className="space-y-4 text-sm text-muted-foreground">
+          {invitationQuery.isLoading ? <p>Loading invitation...</p> : null}
+          {invitationQuery.isError ? <p>We could not load this invitation.</p> : null}
           {invitationQuery.data ? (
             <InvitationContextCard
               inviteCode={invitationQuery.data.inviteCode}
@@ -306,13 +309,13 @@ export function JoinLeaguePage() {
               title="Ready to join"
             />
           ) : null}
-          {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}
-          {acceptMutation.isPending ? <p className="mt-4">Accepting invitation...</p> : null}
-          {acceptMutation.isError ? <p className="mt-4">{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
-          {acceptMutation.isSuccess ? <p className="mt-4">Invitation accepted. Redirecting you to the league...</p> : null}
+          {unusableInvitationMessage ? <p>{unusableInvitationMessage}</p> : null}
+          {acceptMutation.isPending ? <p>Accepting invitation...</p> : null}
+          {acceptMutation.isError ? <p>{extractErrorMessage(acceptMutation.error, { fallback: 'We could not accept this invitation. Please try again.' })}</p> : null}
+          {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
         </div>
 
-        <div className="rounded-[1.5rem] border border-border bg-background p-5">
+        <div className="rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
           <h3 className="text-base font-semibold text-foreground">Your name and icon</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Every member plays in the league under a name and an icon. Choose yours now; you can change both later.
@@ -328,44 +331,33 @@ export function JoinLeaguePage() {
               />
             </FormField>
 
-            <div className="space-y-3">
-              <div className="text-sm font-medium text-foreground">Your icon</div>
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium text-foreground">Your icon</legend>
               <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1rem] ${selectedIcon.themeClass}`}>
+                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1rem] ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={selectedIconKey} size="lg" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <div className="text-xs uppercase text-muted-foreground">
                     Selected icon
                   </div>
                   <div className="mt-1 text-base font-medium text-foreground">{selectedIcon.label}</div>
                 </div>
               </div>
-              <div className="grid gap-3 sm:grid-cols-4">
-                {TEAM_ICON_OPTIONS.map((icon) => {
-                  const isSelected = selectedIconKey === icon.key;
-                  return (
-                    <Button
-                      className={`rounded-[1.1rem] border px-3 py-4 text-center transition ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 text-foreground'
-                          : 'border-border bg-card text-muted-foreground hover:bg-muted/40'
-                      }`}
-                      data-testid={`join-league-team-icon-${icon.key}`}
-                      key={icon.key}
-                      onClick={() => setSelectedIconKey(icon.key)}
-                      size="auto"
-                      type="button"
-                    >
-                      <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.themeClass}`}>
-                        <TeamIcon iconKey={icon.key} size="md" />
-                      </div>
-                      <div className="mt-3 text-xs font-medium">{icon.label}</div>
-                    </Button>
-                  );
-                })}
-              </div>
-            </div>
+              <IconPalette
+                aria-label="Your icon"
+                onSelect={setSelectedIconKey}
+                optionTestIdPrefix="join-league-team-icon"
+                options={TEAM_ICON_OPTIONS}
+                renderOptionIcon={(icon) => (
+                  <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.themeClass}`}>
+                    <TeamIcon iconKey={icon.key} size="md" />
+                  </div>
+                )}
+                testId="join-league-icon-palette"
+                value={selectedIconKey}
+              />
+            </fieldset>
           </div>
         </div>
       </div>
