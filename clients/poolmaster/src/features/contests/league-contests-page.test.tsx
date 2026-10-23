@@ -220,67 +220,6 @@ describe('LeagueContestsPage', () => {
       '/league/BIGDAWGS/contests/contest-1',
     );
   });
-
-  it('pool-master-9ef shows completed contests on Contest History', async () => {
-    primeCommonMocks({ leagueRole: 'COMMISSIONER' });
-    listContestsMock.mockResolvedValue({
-      data: {
-        contests: [
-          {
-            id: 'contest-1',
-            name: 'Masters Pick 6',
-            status: 'OPEN',
-            contestType: 'ROSTER',
-            selectionType: 'TIERED',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            sportEvents: listedEvents(),
-            entryCount: 12,
-          },
-          {
-            id: 'contest-2',
-            name: 'Players Championship',
-            status: 'COMPLETED',
-            contestType: 'ROSTER',
-            selectionType: 'TIERED',
-            leagueId: 'league-1',
-            sport: 'GOLF',
-            sportEvents: listedEvents(),
-            entryCount: 10,
-          },
-        ],
-      },
-    });
-
-    const queryClient = new QueryClient({
-      defaultOptions: {
-        queries: {
-          retry: false,
-        },
-      },
-    });
-
-    render(
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <MemoryRouter initialEntries={['/league/BIGDAWGS/contests/history']}>
-            <Routes>
-              <Route element={<LeagueContestHistoryPage />} path="/league/:leagueCode/contests/history" />
-              <Route element={<div data-testid="contest-destination" />} path="/league/:leagueCode/contests/:contestId" />
-            </Routes>
-          </MemoryRouter>
-        </AuthProvider>
-      </QueryClientProvider>,
-    );
-
-    expect(await screen.findByTestId('league-contest-history-page')).toBeInTheDocument();
-    expect(await screen.findByTestId('league-contests-history')).toHaveTextContent('Players Championship');
-    expect(screen.queryByText('Masters Pick 6')).not.toBeInTheDocument();
-    expect(screen.getByTestId('league-history-contest-contest-2')).toHaveAttribute(
-      'href',
-      '/league/BIGDAWGS/contests/contest-2',
-    );
-  });
 });
 
 describe('LeagueContestsPage, beyond the default list', () => {

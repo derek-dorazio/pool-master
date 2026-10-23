@@ -49,14 +49,17 @@ export function useChampionshipQuery(leagueId: string, year: number) {
 
 /**
  * The contests that went final in a championship year (#837), newest first: every one, or one
- * squad's counted contests, or one cell of its matrix row.
+ * squad's counted contests, or one cell of its matrix row. Asks for nothing until a year is chosen.
  */
-export function useChampionshipContestsQuery(leagueId: string, year: number, filter: ContestResultFilter | null) {
+export function useChampionshipContestsQuery(leagueId: string, year: number | null, filter: ContestResultFilter | null) {
   const squadId = filter?.squadId ?? null;
   const place = filter?.place ?? null;
   return useQuery({
     queryKey: QueryKeys.championship.contests(leagueId, year, squadId, place),
     queryFn: async (): Promise<ContestResultSummaryDto[]> => {
+      if (year === null) {
+        throw new Error('Championship contests asked for without a year.');
+      }
       const response = await listContestResults({
         path: { id: leagueId },
         query: { year, ...(squadId === null ? {} : { squadId }), ...(place === null ? {} : { place }) },
@@ -68,7 +71,7 @@ export function useChampionshipContestsQuery(leagueId: string, year: number, fil
 
       return response.data.contests;
     },
-    enabled: Boolean(leagueId),
+    enabled: Boolean(leagueId) && year !== null,
     retry: false,
   });
 }
