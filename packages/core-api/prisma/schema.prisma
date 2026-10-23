@@ -855,6 +855,10 @@ model SportLeague {
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.
   noun               PrismaSportLeagueNoun?   @map("noun")
+  /// What screens call the sport league away from its sport's own pages, when its name alone
+  /// does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null:
+  /// the name. Reference data, set by the migration that seeds the league.
+  displayName        String?                  @map("display_name") @db.VarChar(255)
   createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

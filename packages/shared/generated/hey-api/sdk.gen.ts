@@ -1793,7 +1793,7 @@ export const listSports = <ThrowOnError extends boolean = false>(options?: Optio
 /**
  * List sport leagues
  *
- * Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.
+ * Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.
  */
 export const listSportLeagues = <ThrowOnError extends boolean = false>(options?: Options<ListSportLeaguesData, ThrowOnError>) => (options?.client ?? client).get<ListSportLeaguesResponses, ListSportLeaguesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -2383,7 +2383,7 @@ export interface paths {
         };
         /**
          * List sport leagues
-         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.
+         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.
          */
         get: operations["listSportLeagues"];
         put?: never;
@@ -7784,6 +7784,11 @@ export interface components {
              * @description The sport this sport league belongs to.
              */
             sportId: string;
+            /**
+             * @description The sport this sport league belongs to, as the sport enum.
+             * @enum {string}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
             /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7811,6 +7816,8 @@ export interface components {
              * @enum {string|null}
              */
             noun: "LEAGUE" | null;
+            /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+            displayName: string | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -7850,6 +7857,11 @@ export interface components {
                  * @description The sport this sport league belongs to.
                  */
                 sportId: string;
+                /**
+                 * @description The sport this sport league belongs to, as the sport enum.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7877,6 +7889,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                displayName: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -7907,6 +7921,11 @@ export interface components {
                  * @description The sport this sport league belongs to.
                  */
                 sportId: string;
+                /**
+                 * @description The sport this sport league belongs to, as the sport enum.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7934,6 +7953,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                displayName: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */

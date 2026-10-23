@@ -138,8 +138,10 @@ In order:
    definition adds its contest-setup inputs to `SCORING_SETTINGS_UI`. Both are exhaustive
    records. Use the `add-frontend-feature` skill.
    The public How to Play page and each league's Contest types page (the commissioner's menu
-   of contest types) read the contest templates, so the sport's leagues and formats appear
-   there once their templates exist. The hand-written parts are the sport's line in
+   of contest types) read the contest templates and sport leagues, so the sport's leagues and
+   formats appear there once their templates exist. A league whose name is shared with another
+   sport's ("NCAA Division I Men") gets a `display_name` in its migration, so its How to Play
+   chip says the sport. The hand-written parts are the sport's line in
    `SPORT_BLURBS` and, for a new sport, its picture in the How to Play illustrations (the
    typecheck asks for it); a new way to play also needs its picture and its guide. Write the
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a

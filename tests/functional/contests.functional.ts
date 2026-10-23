@@ -5,10 +5,12 @@ import {
   getContest,
   getContestEntry,
   getContestConfiguration,
+  getSportLeague,
   leaveContest,
   listContestEntries,
   listContestConfigTemplates,
   listContests,
+  listSportLeagues,
   openContest,
   updateContestEntry,
   updateContest,
@@ -464,6 +466,24 @@ describe('SDK Functional: Contests and Entries', () => {
     const templates = expectDefined(response.data).templates;
     expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(Object.values(Sport)));
     expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
+  });
+
+  it('lets a signed-out visitor list the sport leagues, each with its sport and the name screens show beside other sports\' leagues', async () => {
+    const response = await listSportLeagues({ client: getSdkClient() });
+
+    expect(response.response.status).toBe(200);
+    const sportLeagues = expectDefined(response.data).sportLeagues;
+    const named = (sport: Sport, name: string) => sportLeagues.find((sportLeague) => sportLeague.sport === sport && sportLeague.name === name);
+    expect(named(Sport.AMERICAN_FOOTBALL, 'NFL')?.displayName).toBeNull();
+    expect(named(Sport.BASKETBALL, 'NCAA Division I Women')?.displayName).toBe('NCAA Women\'s Basketball');
+    expect(named(Sport.HOCKEY, 'NCAA Division I Men')?.displayName).toBe('NCAA Men\'s Hockey');
+  });
+
+  it('still refuses a signed-out visitor one sport league\'s own read with 401', async () => {
+    const list = expectDefined((await listSportLeagues({ client: getSdkClient() })).data).sportLeagues;
+    const response = await getSportLeague({ client: getSdkClient(), path: { sportLeagueId: expectDefined(list[0]).id } });
+
+    expect(response.response.status).toBe(401);
   });
 
   it('rejects invalid contest creation requests through the generated SDK', async () => {

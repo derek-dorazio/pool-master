@@ -3,7 +3,8 @@
  * affiliations (#236). A sport league's events are reached through the event list,
  * filtered by sport league and event year (plans/147). Before #236 the same operations were reachable
  * only as `adminGetGolfLeagueRoster` and siblings, golf-named doors onto cross-sport
- * services. Reads need a signed-in user; writes need the root-admin claim (A10).
+ * services. Reads need a signed-in user, except the list, which the public How to Play page reads;
+ * writes need the root-admin claim (A10).
  */
 import type { FastifyInstance } from 'fastify';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -39,7 +40,7 @@ export function sportLeaguesModule(fastify: FastifyInstance): void {
     schema: {
       tags: TAGS,
       summary: 'List sport leagues',
-      description: 'Every sport league, or one sport\'s, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.',
+      description: 'Every sport league, or one sport\'s, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport\'s leagues from it.',
       operationId: 'listSportLeagues',
       querystring: schemaRef('SportLeagueListQuery'),
       response: { 200: schemaRef('SportLeagueListResponse'), ...errors(404) },

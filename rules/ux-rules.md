@@ -281,8 +281,11 @@ administration area (root admin included), reusing the same shared components.
     format whose default sorts first. The seeded-template integration test
     checks all of it. The same names and descriptions are the contest types
     menu (#803): the public How to Play page shows each way to play once, as an
-    illustrated card, with chips that narrow it to one sport and show that
-    sport's picture, line and default templates (#878); a league's Contest
+    illustrated card, with chips naming the sport leagues people know (the NFL,
+    the PGA TOUR), grouped under their sport, that narrow it to one league or
+    sport and show the sport's picture and line and the league's default
+    templates (#878). A league whose name alone doesn't say the sport ("NCAA
+    Division I Men") gets a `displayName` with its reference data; a league's Contest
     types page shows every sport league's tiles, with "Create this contest"
     links for its commissioners. Both read the templates, so a new template or
     sport shows up there with no copy change. The hand-written parts are

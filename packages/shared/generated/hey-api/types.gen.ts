@@ -6292,6 +6292,10 @@ export type SportLeagueDto = {
      */
     sportId: string;
     /**
+     * The sport this sport league belongs to, as the sport enum.
+     */
+    sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
      * Sport league name, e.g. "PGA Tour".
      */
     name: string;
@@ -6327,6 +6331,10 @@ export type SportLeagueDto = {
      * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
      */
     noun: 'LEAGUE' | null;
+    /**
+     * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+     */
+    displayName: string | null;
     /**
      * Participants currently affiliated with the sport league.
      */
@@ -6376,6 +6384,10 @@ export type SportLeagueListResponse = {
          */
         sportId: string;
         /**
+         * The sport this sport league belongs to, as the sport enum.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
@@ -6411,6 +6423,10 @@ export type SportLeagueListResponse = {
          * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
          */
         noun: 'LEAGUE' | null;
+        /**
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         */
+        displayName: string | null;
         /**
          * Participants currently affiliated with the sport league.
          */
@@ -6447,6 +6463,10 @@ export type SportLeagueResponse = {
          */
         sportId: string;
         /**
+         * The sport this sport league belongs to, as the sport enum.
+         */
+        sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
          * Sport league name, e.g. "PGA Tour".
          */
         name: string;
@@ -6482,6 +6502,10 @@ export type SportLeagueResponse = {
          * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
          */
         noun: 'LEAGUE' | null;
+        /**
+         * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
+         */
+        displayName: string | null;
         /**
          * Participants currently affiliated with the sport league.
          */

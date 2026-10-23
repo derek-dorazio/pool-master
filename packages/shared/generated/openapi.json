@@ -14861,6 +14861,23 @@
             "format": "uuid",
             "description": "The sport this sport league belongs to."
           },
+          "sport": {
+            "type": "string",
+            "enum": [
+              "GOLF",
+              "HORSE_RACING",
+              "AUTO_RACING",
+              "CYCLING",
+              "RUNNING",
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL",
+              "HOCKEY",
+              "BASEBALL",
+              "SOCCER",
+              "TENNIS"
+            ],
+            "description": "The sport this sport league belongs to, as the sport enum."
+          },
           "name": {
             "type": "string",
             "description": "Sport league name, e.g. \"PGA Tour\"."
@@ -14930,6 +14947,13 @@
             ],
             "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request."
           },
+          "displayName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -14952,6 +14976,7 @@
         "required": [
           "id",
           "sportId",
+          "sport",
           "name",
           "matchKeyword",
           "currentEventYear",
@@ -14961,6 +14986,7 @@
           "matchPeriodLayout",
           "squaresFromRound",
           "noun",
+          "displayName",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -15014,6 +15040,23 @@
                   "type": "string",
                   "format": "uuid",
                   "description": "The sport this sport league belongs to."
+                },
+                "sport": {
+                  "type": "string",
+                  "enum": [
+                    "GOLF",
+                    "HORSE_RACING",
+                    "AUTO_RACING",
+                    "CYCLING",
+                    "RUNNING",
+                    "BASKETBALL",
+                    "AMERICAN_FOOTBALL",
+                    "HOCKEY",
+                    "BASEBALL",
+                    "SOCCER",
+                    "TENNIS"
+                  ],
+                  "description": "The sport this sport league belongs to, as the sport enum."
                 },
                 "name": {
                   "type": "string",
@@ -15084,6 +15127,13 @@
                   ],
                   "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request."
                 },
+                "displayName": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -15106,6 +15156,7 @@
               "required": [
                 "id",
                 "sportId",
+                "sport",
                 "name",
                 "matchKeyword",
                 "currentEventYear",
@@ -15115,6 +15166,7 @@
                 "matchPeriodLayout",
                 "squaresFromRound",
                 "noun",
+                "displayName",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -15147,6 +15199,23 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The sport this sport league belongs to."
+              },
+              "sport": {
+                "type": "string",
+                "enum": [
+                  "GOLF",
+                  "HORSE_RACING",
+                  "AUTO_RACING",
+                  "CYCLING",
+                  "RUNNING",
+                  "BASKETBALL",
+                  "AMERICAN_FOOTBALL",
+                  "HOCKEY",
+                  "BASEBALL",
+                  "SOCCER",
+                  "TENNIS"
+                ],
+                "description": "The sport this sport league belongs to, as the sport enum."
               },
               "name": {
                 "type": "string",
@@ -15217,6 +15286,13 @@
                 ],
                 "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request."
               },
+              "displayName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -15239,6 +15315,7 @@
             "required": [
               "id",
               "sportId",
+              "sport",
               "name",
               "matchKeyword",
               "currentEventYear",
@@ -15248,6 +15325,7 @@
               "matchPeriodLayout",
               "squaresFromRound",
               "noun",
+              "displayName",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -53469,7 +53547,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.",
+        "description": "Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.",
         "parameters": [
           {
             "schema": {

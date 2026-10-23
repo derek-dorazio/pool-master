@@ -1,5 +1,5 @@
 import { SUPPORTED_SPORTS, getSportDefinition, type SelectionType, type Sport } from '@poolmaster/shared/domain';
-import type { ContestConfigTemplateDto } from '@/lib/api';
+import type { ContestConfigTemplateDto, SportLeagueDto } from '@/lib/api';
 
 /**
  * One contest type on the contest types pages (#803): a format as one sport league offers it, on
@@ -80,20 +80,72 @@ export function buildLeagueContestCatalog(
   });
 }
 
+/** A sport league on the public How to Play page: the formats it offers, its own and its sport's. */
+export interface PublicCatalogLeague {
+  sportLeagueId: string;
+  /** What the page calls it beside other sports' leagues: "NCAA Men's Basketball", not "NCAA Division I Men". */
+  name: string;
+  /** Its name in the page's link: `?sport=basketball&league=wnba`. */
+  slug: string;
+  groups: ContestTypeTile[];
+}
+
+export interface PublicCatalogSport extends ContestCatalogSport<ContestTypeTile> {
+  leagues: PublicCatalogLeague[];
+}
+
+/** A name as the page's link spells it: `NCAA Division I Men` is `ncaa-division-i-men`, `Copa América` is `copa-america`. */
+export function catalogSlug(name: string) {
+  return name.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+}
+
+/**
+ * One tile per format, in the sport's format order, each led by the default of the templates
+ * `preferred` puts first, with no variations.
+ */
+function toFormatTiles(
+  key: string,
+  templates: readonly ContestConfigTemplateDto[],
+  selectionTypes: readonly SelectionType[],
+  preferred: (template: ContestConfigTemplateDto) => boolean,
+): ContestTypeTile[] {
+  return groupBy(templates, (template) => template.selectionType)
+    .map((group) => {
+      const [featured] = [...group].sort((left, right) => Number(preferred(right)) - Number(preferred(left)) || byFeaturedOrder(left, right)) as [ContestConfigTemplateDto, ...ContestConfigTemplateDto[]];
+      return { key: `${key}/${featured.selectionType}`, selectionType: featured.selectionType, featured, variations: [] };
+    })
+    .sort((left, right) => selectionTypes.indexOf(left.selectionType) - selectionTypes.indexOf(right.selectionType));
+}
+
 /**
  * The public How to Play page's catalog: each sport's formats, one tile each, led by the format's
- * default of the first sport league to offer it, with no variations. Sport leagues go unnamed, so
- * the page needs no sign-in to read them.
+ * default of the first sport league to offer it; then each of its active sport leagues by name,
+ * with the formats it offers, its own templates leading its sport's. A sport league that offers
+ * none is left out, as is a sport with no templates.
  */
-export function buildPublicContestCatalog(templates: readonly ContestConfigTemplateDto[]): ContestCatalogSport<ContestTypeTile>[] {
+export function buildPublicContestCatalog(
+  templates: readonly ContestConfigTemplateDto[],
+  sportLeagues: readonly SportLeagueDto[],
+): PublicCatalogSport[] {
   return SUPPORTED_SPORTS.flatMap((sport) => {
     const definition = getSportDefinition(sport);
-    const groups = groupBy(templates.filter((template) => template.sport === sport), (template) => template.selectionType)
-      .map((group) => {
-        const [featured] = [...group].sort(byFeaturedOrder) as [ContestConfigTemplateDto, ...ContestConfigTemplateDto[]];
-        return { key: `${sport}/${featured.selectionType}`, selectionType: featured.selectionType, featured, variations: [] };
-      })
-      .sort((left, right) => definition.selectionTypes.indexOf(left.selectionType) - definition.selectionTypes.indexOf(right.selectionType));
-    return groups.length ? [{ sport, name: definition.name, groups }] : [];
+    const sportTemplates = templates.filter((template) => template.sport === sport);
+    const groups = toFormatTiles(sport, sportTemplates, definition.selectionTypes, () => false);
+    const leagues = sportLeagues
+      .filter((sportLeague) => sportLeague.sport === sport && sportLeague.isActive)
+      .map((sportLeague) => ({
+        sportLeagueId: sportLeague.id,
+        name: sportLeague.displayName ?? sportLeague.name,
+        slug: catalogSlug(sportLeague.name),
+        groups: toFormatTiles(
+          `${sport}/${sportLeague.id}`,
+          sportTemplates.filter((template) => template.sportLeagueId === null || template.sportLeagueId === sportLeague.id),
+          definition.selectionTypes,
+          (template) => template.sportLeagueId === sportLeague.id,
+        ),
+      }))
+      .filter((league) => league.groups.length > 0)
+      .sort((left, right) => left.name.localeCompare(right.name));
+    return groups.length ? [{ sport, name: definition.name, groups, leagues }] : [];
   });
 }
