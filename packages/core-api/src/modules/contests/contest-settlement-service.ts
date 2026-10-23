@@ -531,7 +531,6 @@ export class ContestSettlementService {
     return { standingsUpserted, completed };
   }
 
-  /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
   /**
    * Completes a contest whose places are frozen. Its league championship finishes (#863) are
    * written first, so a failure there leaves the contest unsettled, to be settled again, rather
@@ -546,6 +545,7 @@ export class ContestSettlementService {
     });
   }
 
+  /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
   private async allEventsFinished(contest: Contest): Promise<boolean> {
     const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
     return events.length === contest.sportEventIds.length
