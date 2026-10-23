@@ -43,6 +43,8 @@ export interface ChampionshipStandingView {
   podiums: number;
   topTens: number;
   played: number;
+  /** Places gained (positive) or lost since before the year's latest counted contest; null until two have counted, and once the year is over. */
+  movement: number | null;
 }
 
 export interface ChampionshipTileView {
@@ -146,6 +148,8 @@ export class ChampionshipService {
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));
     const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
     const ranked = rankChampionshipTallies(tallies);
+    // A year that is over is final, as a crowned cup is: no movement.
+    const before = year < currentYear ? null : positionsBeforeLatest(squads.map((squad) => squad.id), counted);
     this.deps.logger?.debug({ action: 'championship.year', data: { leagueId, year, finishCount: finishes.length } }, 'Read a championship year');
     return {
       leagueId,
@@ -165,6 +169,7 @@ export class ChampionshipService {
           podiums: row.podiums,
           topTens: row.topTens,
           played: row.played,
+          movement: before === null ? null : (before.get(row.squadId) ?? row.position) - row.position,
         }];
       }),
       // Tiles name leaders in standings order.
@@ -200,4 +205,19 @@ export class ChampionshipService {
     this.deps.logger?.debug({ action: 'championship.years', data: { leagueId, yearCount: years.length } }, 'Listed championship years');
     return years;
   }
+}
+
+/** Each squad's place before the year's latest counted contest went final; null until two have counted. */
+function positionsBeforeLatest(squadIds: readonly string[], counted: readonly LeagueYearFinish[]): Map<string, number> | null {
+  const latest = counted.reduce<LeagueYearFinish | null>((best, finish) => (
+    best === null || finish.settledAt.getTime() > best.settledAt.getTime()
+      || (finish.settledAt.getTime() === best.settledAt.getTime() && finish.contestId > best.contestId)
+      ? finish
+      : best
+  ), null);
+  if (latest === null || new Set(counted.map((finish) => finish.contestId)).size < 2) {
+    return null;
+  }
+  const earlier = counted.filter((finish) => finish.contestId !== latest.contestId);
+  return new Map(rankChampionshipTallies(tallyChampionship(squadIds, earlier)).map((row) => [row.squadId, row.position]));
 }

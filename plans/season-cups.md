@@ -418,6 +418,11 @@ email, not another page. Sent through the email outbox (#845), class B.
 
 1. **Squad year.** The results endpoint; championship card, tiles, finish row, cups and contests
    on the squad page. After #863 slice 2 and #841 slice 2.
+   Built as `GET /leagues/:id/history/squads/:squadId?year=` in the `history` module (`getSquadYear`),
+   not under `/squads`, so the squad's cut sits beside the league views it reads. The championship
+   now works out each squad's movement the way a cup does. The contests are the counted ones it
+   placed in; live ones stay in My team's My entries with their current place. The year is the
+   current one until slice 2 adds the picker.
 2. **Trophies and all years.** Contest medals, the trophy case section (the trophy shelf: every
    top-3 cup finish from `CupStanding.trophy` and championship finish), the All years strip and
    the year picker. After #841 slice 4 and #837 slice 1.

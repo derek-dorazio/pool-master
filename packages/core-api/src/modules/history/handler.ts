@@ -1,11 +1,26 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { ListContestResultsQuery } from '@poolmaster/shared/dto';
+import type { GetSquadYearQuery, ListContestResultsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { toContestResultSummaryDto, toHistorySummaryDto } from '../../mappers/history.mapper';
+import { toContestResultSummaryDto, toHistorySummaryDto, toSquadYearDto } from '../../mappers/history.mapper';
 import { HistorySquadNotFoundError, HistorySquadRequiredError, type HistoryService } from './service';
 
 export function createHistoryHandlers(service: HistoryService) {
-  return { listContestResults, getHistorySummary };
+  return { listContestResults, getHistorySummary, getSquadYear };
+
+  async function getSquadYear(
+    request: FastifyRequest<{ Params: { id: string; squadId: string }; Querystring: GetSquadYearQuery }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const view = await service.getSquadYear(request.params.id, request.params.squadId, request.query.year);
+      return reply.send({ squadYear: toSquadYearDto(view) });
+    } catch (error) {
+      if (error instanceof HistorySquadNotFoundError) {
+        return sendError(reply, 404, error.code, error.message);
+      }
+      throw error;
+    }
+  }
 
   async function getHistorySummary(
     request: FastifyRequest<{ Params: { id: string } }>,

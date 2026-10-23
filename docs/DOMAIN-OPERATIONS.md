@@ -995,6 +995,7 @@ contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pur
 | Read a championship year | `member` | `getChampionship`, `GET /leagues/:id/championship/:year`: standings (every active squad, at 0 until it places; an inactive squad once it has placed) with each squad's finish matrix row (1st to 10th), podiums, top tens and contests played; the medal tiles (`MOST_FIRSTS`, `MOST_SECONDS`, `MOST_THIRDS`, `MOST_PODIUMS`, `MOST_TOP_TENS`, `MOST_PLAYED`, ties naming each); `contestsCounted`, and for the current year `contestsToGo` (open and live counted contests) |
 | List a year's final contests | `member` | `listContestResults`, `GET /leagues/:id/history/contests?year=&squadId=&place=` (#837, the `history` module): every contest that went final in the championship year (US Eastern), newest first, with its sports league, date, winners (co-winners on a tie), ranked entries and `count` (`ContestResultCount`: `COUNTED`, `NOT_COUNTED`, `NO_RESULT`). With `squadId`, only the counted contests that squad placed in, each with its `squadFinish` (place and points), matching its Played count; with `place` as well, only those it finished in that place, matching its matrix cell. Read from `LeagueYearFinish`, so a list always holds what the matrix counts. `place` without `squadId` is 400 `SQUAD_ID_REQUIRED`; a squad of another league is 404 `SQUAD_NOT_FOUND`. No paging |
 | Get the All years summary | `member` | `getHistorySummary`, `GET /leagues/:id/history/summary` (#837): tiles for the most championships won (years that are over) and the most cups won (crowned cups), with every squad tied at the top; then each year with a championship or a cup season, newest first, with `isOver`, its champions and its cups (crowned ones with their CHAMPION holders, open ones with whoever leads on points). No paging |
+| Get a squad's year | `member` | `getSquadYear`, `GET /leagues/:id/history/squads/:squadId?year=` (#872): the squad's row of the championship year (place of N, points, points behind 1st, movement since before the latest counted contest, finish matrix row, and the year's counted and still-to-go contests) and its row of each cup of the season with that year (place of N, points, movement, trophy). Read through the same services as the Championship and Points race tabs, so the squad page and the league pages agree. `championship` is null for an inactive squad that placed in nothing. A squad of another league is 404 `SQUAD_NOT_FOUND` |
 
 The web app's Championships page lands on the year's **Championship** tab
 (`/league/:code/championships/:year`): the championship's name and who leads it, or, once the
@@ -1008,6 +1009,10 @@ All years (`/league/:code/history`, linked from the Championships header and fro
 shows the summary's tiles and one line per year, which opens that year's Championship tab; each
 cup line opens its Points race. It shows every crowned cup and an open one once two of its contests
 have counted, and skips a year with neither a champion nor such a cup.
+Each squad's page (My team, and another team's page) shows its year under its owners: its
+championship place with the gap to 1st and its movement (opening the Championship tab), its own
+medal counts, its finish matrix row, whose counts narrow its contests below, its place in each cup
+on show (opening its points in that cup), and the counted contests it placed in.
 
 ### Squares — `selections`
 

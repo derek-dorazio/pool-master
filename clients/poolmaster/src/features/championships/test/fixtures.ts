@@ -1,4 +1,4 @@
-import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadYearDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -119,6 +119,7 @@ export function buildChampionshipStanding(overrides: Partial<ChampionshipStandin
     podiums: 0,
     topTens: 0,
     played: 0,
+    movement: null,
     ...overrides,
   };
 }
@@ -176,6 +177,60 @@ export function buildContestResult(overrides: Partial<ContestResultSummaryDto> =
     count: 'COUNTED',
     winners: [{ squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' }],
     squadFinish: null,
+    ...overrides,
+  };
+}
+
+/** A squad's place in the championship: Casey Crushers 2nd of 3, 6 points behind 1st. */
+export function buildSquadChampionship(
+  overrides: Partial<Omit<SquadChampionshipDto, 'standing'>> = {},
+  standing: Partial<ChampionshipStandingRowDto> = {},
+): SquadChampionshipDto {
+  return {
+    name: '2026 Derek\'s Pool Cup',
+    isOver: false,
+    squadCount: 3,
+    pointsBehindLeader: 60,
+    contestsCounted: 3,
+    contestsToGo: 1,
+    standing: buildChampionshipStanding({
+      position: 2,
+      displayPosition: '2',
+      points: 1800,
+      finishes: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      podiums: 2,
+      topTens: 2,
+      played: 2,
+      movement: 1,
+      ...standing,
+    }),
+    ...overrides,
+  };
+}
+
+/** Casey Crushers' place in an open PGA Tour cup with three contests counted: 1st of 3. */
+export function buildSquadCup(
+  overrides: Partial<Omit<SquadCupDto, 'standing'>> = {},
+  standing: Partial<CupStandingRowDto> = {},
+): SquadCupDto {
+  return {
+    cupId: 'cup-1',
+    sportLeagueId: 'pga-tour',
+    name: '2026 PGA Tour Cup',
+    status: 'OPEN',
+    contestsCounted: 3,
+    squadCount: 3,
+    standing: buildCupStanding({ points: 1600, ...standing }),
+    ...overrides,
+  };
+}
+
+export function buildSquadYear(overrides: Partial<SquadYearDto> = {}): SquadYearDto {
+  return {
+    squadId: 'team-1',
+    year: 2026,
+    championship: buildSquadChampionship(),
+    cups: [buildSquadCup()],
     ...overrides,
   };
 }
