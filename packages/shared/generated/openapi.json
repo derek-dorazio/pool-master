@@ -26580,6 +26580,7 @@
           "CONTEST_ENTRY_REMINDER",
           "CONTEST_OPENED",
           "CONTEST_STANDINGS",
+          "CONTEST_RESULTS",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED"
         ],
@@ -26660,6 +26661,10 @@
               "CONTEST_STANDINGS": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "CONTEST_RESULTS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
@@ -26669,7 +26674,8 @@
               "CONTEST_STARTED_SUMMARY",
               "CONTEST_ENTRY_REMINDER",
               "CONTEST_OPENED",
-              "CONTEST_STANDINGS"
+              "CONTEST_STANDINGS",
+              "CONTEST_RESULTS"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28111,6 +28117,10 @@
                       "CONTEST_STANDINGS": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_RESULTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28120,7 +28130,8 @@
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
                       "CONTEST_OPENED",
-                      "CONTEST_STANDINGS"
+                      "CONTEST_STANDINGS",
+                      "CONTEST_RESULTS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28212,6 +28223,10 @@
                       "CONTEST_STANDINGS": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_RESULTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28221,7 +28236,8 @@
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
                       "CONTEST_OPENED",
-                      "CONTEST_STANDINGS"
+                      "CONTEST_STANDINGS",
+                      "CONTEST_RESULTS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29156,6 +29172,10 @@
                             "CONTEST_STANDINGS": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_RESULTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -29165,7 +29185,8 @@
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
                             "CONTEST_OPENED",
-                            "CONTEST_STANDINGS"
+                            "CONTEST_STANDINGS",
+                            "CONTEST_RESULTS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29257,6 +29278,10 @@
                             "CONTEST_STANDINGS": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_RESULTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -29266,7 +29291,8 @@
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
                             "CONTEST_OPENED",
-                            "CONTEST_STANDINGS"
+                            "CONTEST_STANDINGS",
+                            "CONTEST_RESULTS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29859,6 +29885,10 @@
                       "CONTEST_STANDINGS": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_RESULTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -29868,7 +29898,8 @@
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
                       "CONTEST_OPENED",
-                      "CONTEST_STANDINGS"
+                      "CONTEST_STANDINGS",
+                      "CONTEST_RESULTS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30661,6 +30692,10 @@
                       "CONTEST_STANDINGS": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_RESULTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30670,7 +30705,8 @@
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
                       "CONTEST_OPENED",
-                      "CONTEST_STANDINGS"
+                      "CONTEST_STANDINGS",
+                      "CONTEST_RESULTS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30762,6 +30798,10 @@
                       "CONTEST_STANDINGS": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_RESULTS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30771,7 +30811,8 @@
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
                       "CONTEST_OPENED",
-                      "CONTEST_STANDINGS"
+                      "CONTEST_STANDINGS",
+                      "CONTEST_RESULTS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31664,6 +31705,10 @@
                             "CONTEST_STANDINGS": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_RESULTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31673,7 +31718,8 @@
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
                             "CONTEST_OPENED",
-                            "CONTEST_STANDINGS"
+                            "CONTEST_STANDINGS",
+                            "CONTEST_RESULTS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31765,6 +31811,10 @@
                             "CONTEST_STANDINGS": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_RESULTS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31774,7 +31824,8 @@
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
                             "CONTEST_OPENED",
-                            "CONTEST_STANDINGS"
+                            "CONTEST_STANDINGS",
+                            "CONTEST_RESULTS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."

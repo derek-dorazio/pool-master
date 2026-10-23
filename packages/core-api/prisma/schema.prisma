@@ -187,6 +187,7 @@ enum PrismaEmailTemplateKey {
   CONTEST_ENTRY_REMINDER
   CONTEST_OPENED
   CONTEST_STANDINGS
+  CONTEST_RESULTS
 }
 
 enum PrismaEmailMessageStatus {

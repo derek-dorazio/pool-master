@@ -47,6 +47,7 @@ import {
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
 import type { ChampionshipService } from '../championship/service';
+import type { ContestSettledNotice } from '../notifications/contest-notices';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -95,6 +96,8 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   eventStandings: ContestEntryEventStandingRepository;
   squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
   championship: Pick<ChampionshipService, 'recordContest'>;
+  /** The final results email (#845 F1, F2), queued once a contest completes. */
+  contestSettled?: ContestSettledNotice;
   logger?: LifecycleLogger;
 }
 
@@ -538,11 +541,26 @@ export class ContestSettlementService {
    */
   private async complete(contest: Contest, completedAt: Date): Promise<boolean> {
     await this.deps.championship.recordContest(contest, completedAt);
-    return this.deps.contests.transitionStatus(contest.id, {
+    const completed = await this.deps.contests.transitionStatus(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
       endsAt: completedAt,
     });
+    if (completed) await this.tellContestSettled(contest);
+    return completed;
+  }
+
+  /** F1 or F2, the final results: queued for the league, never failing the settlement. */
+  private async tellContestSettled(contest: Contest): Promise<void> {
+    try {
+      await this.deps.contestSettled?.contestSettled(contest);
+    } catch (err) {
+      this.logger.error({
+        contestId: contest.id,
+        leagueId: contest.leagueId,
+        error: err instanceof Error ? err.message : String(err),
+      }, 'Failed to queue final results emails');
+    }
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */

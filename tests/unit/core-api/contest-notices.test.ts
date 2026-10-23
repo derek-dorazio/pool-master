@@ -1,11 +1,12 @@
 /**
- * The contest milestone emails (#845): "New contest open" (D1) and "Contest is live, good luck"
- * (E1). The contest world is in memory; the email service is the real one over an in-memory
+ * The contest milestone emails (#845): "New contest open" (D1), "Contest is live, good luck"
+ * (E1) and "Final results" (F1 with F3, and F2). The contest world is in memory; the email service is the real one over an in-memory
  * outbox, so the tests assert on the emails recorded.
  */
 import {
   ContestEntryStatus,
   LeagueMembershipStatus,
+  LeagueRole,
   MatchStatus,
   SelectionType,
   Sport,
@@ -13,6 +14,7 @@ import {
   type SportEventMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
+import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestNotices } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
@@ -28,6 +30,7 @@ describe('ContestNotices', () => {
   let matches: SportEventMatch[];
   let roundNames: string[];
   let tierCount: number;
+  let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
@@ -36,6 +39,7 @@ describe('ContestNotices', () => {
     matches = [];
     roundNames = [];
     tierCount = 6;
+    final = { scoringDefinitionId: null, entries: [] };
     logger = fakeLogger();
   });
 
@@ -66,6 +70,7 @@ describe('ContestNotices', () => {
       memberships: world.membershipRepo(),
       squadMemberships: world.squadMembershipRepo(),
       users: world.userRepo(),
+      finalStandings: { finalStandingsOf: async () => final },
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
@@ -73,9 +78,9 @@ describe('ContestNotices', () => {
   }
 
   /** A member of the league who owns a squad of their own. */
-  function member(leagueId: string, firstName: string, options: { membership?: LeagueMembershipStatus; isActive?: boolean } = {}) {
+  function member(leagueId: string, firstName: string, options: { membership?: LeagueMembershipStatus; isActive?: boolean; role?: LeagueRole } = {}) {
     const user = world.addUser({ firstName, lastName: 'Member', isActive: options.isActive ?? true });
-    world.addMember(leagueId, user.id, { status: options.membership ?? LeagueMembershipStatus.ACTIVE });
+    world.addMember(leagueId, user.id, { status: options.membership ?? LeagueMembershipStatus.ACTIVE, role: options.role ?? LeagueRole.MEMBER });
     const squad = world.addSquad(leagueId, `${firstName}'s Squad`);
     world.addSquadMember(squad.id, user.id);
     return { user, squad };
@@ -239,6 +244,123 @@ describe('ContestNotices', () => {
       await notices().contestStarted(contest, event);
 
       expect(outbox.rows).toHaveLength(0);
+    });
+  });
+
+  describe('contestSettled (F1, F2, F3)', () => {
+    /** A settled place for an entry of the squad, as `finalStandingsOf` answers it. */
+    function place(squad: { id: string; name: string }, entryName: string, position: number, displayPosition: string, score: number) {
+      return { entryId: `entry-${entryName}`, entryName, squadId: squad.id, squadName: squad.name, position, displayPosition, score };
+    }
+
+    it('tells every active member who won, the final leaders in the contest\'s own scoring and where their entries finished, once each', async () => {
+      const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+      const masters = world.addSportEvent({ startDate: STARTS_AT });
+      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+      const nora = member(league.id, 'Nora');
+      const dana = member(league.id, 'Dana');
+      const onlooker = member(league.id, 'Sam');
+      member(league.id, 'Gone', { membership: LeagueMembershipStatus.INACTIVE });
+      member(world.addLeague().id, 'Other');
+      final = {
+        scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+        entries: [
+          place(nora.squad, 'Green Jackets', 1, '1', -14),
+          ...Array.from({ length: 10 }, (_, index) => place(dana.squad, `Dana ${String(index + 1)}`, index + 2, String(index + 2), index - 9)),
+          place(nora.squad, 'Long Shots', 12, '12', 3),
+        ],
+      };
+
+      await notices().contestSettled(contest);
+      await notices().contestSettled(contest);
+
+      expect(recipientIds()).toEqual([nora.user.id, dana.user.id, onlooker.user.id].sort());
+      expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_RESULTS' && row.fromName === 'Office League')).toBe(true);
+      const toDana = textTo(dana.user.id);
+      expect(toDana).toContain('Masters Pick 6 is over. Green Jackets (Nora\'s Squad) won.');
+      expect(toDana).toContain('Final top 10 of 12:');
+      expect(toDana).toContain('1. Green Jackets (Nora\'s Squad), -14');
+      expect(toDana).not.toContain('Long Shots');
+      expect(toDana).toContain('Your entry:\n11. Dana 10 (Dana\'s Squad), yours, E');
+      expect(toDana).not.toContain('Congratulations');
+      expect(toDana).toContain(`Final leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      const toNora = textTo(nora.user.id);
+      expect(toNora).toContain('Congratulations, Nora\'s Squad won Masters Pick 6 with Green Jackets!');
+      expect(toNora).toContain('Your entry:');
+      expect(toNora).toContain('12. Long Shots (Nora\'s Squad), yours, +3');
+      expect(textTo(onlooker.user.id)).not.toContain('Your entr');
+    });
+
+    it('names every entry tied for first and congratulates each of their owners on the tie', async () => {
+      const league = world.addLeague();
+      const event = world.addSportEvent({ startDate: STARTS_AT });
+      const contest = world.addContest(league.id, { name: 'Week 1 Pick\'em', sportEventIds: [event.id] });
+      const nora = member(league.id, 'Nora');
+      const dana = member(league.id, 'Dana');
+      const sam = member(league.id, 'Sam');
+      final = {
+        scoringDefinitionId: null,
+        entries: [place(nora.squad, 'Chalk', 1, 'T1', 12), place(dana.squad, 'Upsets', 1, 'T1', 12), place(sam.squad, 'Coin Flip', 3, '3', 9)],
+      };
+
+      await notices().contestSettled(contest);
+
+      expect(textTo(sam.user.id)).toContain('Week 1 Pick\'em is over. Chalk (Nora\'s Squad) and Upsets (Dana\'s Squad) tied for first.');
+      expect(textTo(sam.user.id)).toContain('Final standings:');
+      expect(textTo(sam.user.id)).toContain('3. Coin Flip (Sam\'s Squad), yours, 9');
+      expect(textTo(sam.user.id)).not.toContain('Congratulations');
+      expect(textTo(nora.user.id)).toContain('Congratulations, Nora\'s Squad tied for first in Week 1 Pick\'em with Chalk!');
+      expect(textTo(dana.user.id)).toContain('Congratulations, Dana\'s Squad tied for first in Week 1 Pick\'em with Upsets!');
+    });
+
+    it('tells only the commissioners and the members with a submitted entry, not a draft, that a contest whose every event was cancelled ended with no scores', async () => {
+      const league = world.addLeague({ leagueCode: 'OFFICE24' });
+      const event = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [event.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+      const entrant = member(league.id, 'Nora');
+      const drafting = member(league.id, 'Dana');
+      const onlooker = member(league.id, 'Sam');
+      for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
+        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+        if (created.status !== 'created') throw new Error('entry not created');
+        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
+      }
+
+      await notices().contestSettled(contest);
+
+      expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id].sort());
+      expect(recipientIds()).not.toContain(drafting.user.id);
+      expect(recipientIds()).not.toContain(onlooker.user.id);
+      const text = textTo(entrant.user.id);
+      expect(outbox.rows[0]?.subject).toBe('Masters Pick 6 ended with no scores');
+      expect(text).toContain('Every event was cancelled, so Masters Pick 6 ends with no scores.');
+      expect(text).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+    });
+
+    it('says only that the contest ended with no scores when some of its events were played', async () => {
+      const league = world.addLeague();
+      const played = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.COMPLETED });
+      const cancelled = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const contest = world.addContest(league.id, { name: 'Super Bowl Squares', sportEventIds: [played.id, cancelled.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().contestSettled(contest);
+
+      expect(textTo(commissioner.user.id)).toContain('Super Bowl Squares has ended with no scores.');
+    });
+
+    it('sends nothing, and says why, when the contest\'s league is gone', async () => {
+      const event = world.addSportEvent({ startDate: STARTS_AT });
+      const contest = world.addContest('no-such-league', { sportEventIds: [event.id] });
+
+      await notices().contestSettled(contest);
+
+      expect(outbox.rows).toHaveLength(0);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'email.contestSettled.skipped' }),
+        expect.any(String),
+      );
     });
   });
 });

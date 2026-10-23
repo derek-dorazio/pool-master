@@ -277,9 +277,9 @@ The lifecycle scheduler sends each email on its first sweep after "finished" plu
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
 |---|---|---|---|---|---|---|---|---|
-| F1 | Final results and winners | The contest settles (`ACTIVE` → `COMPLETED`) with scores | Every active league member | At once | Winners (places 1–3 and ties), prizes as set (paid outside Poolmaster), final top 10, the reader's entries' places, Final leaderboard button | | P1 | A |
-| F2 | Contest ended with no scores | Every event of the contest was cancelled | Commissioners and members with an entry | At once | "Every event was cancelled, so [contest] ends with no scores." | | P2 | A |
-| F3 | You won | The reader's entry finished first (or tied first) | That entry's owners | With F1, folded into it as a personal line | "Congratulations, [squad] won [contest]." | | P2 (part of F1) | A |
+| F1 | Final results and winners | The contest settles (`ACTIVE` → `COMPLETED`) with scores | Every active league member | At once | Winners (places 1–3 and ties), prizes as set (paid outside Poolmaster), final top 10, the reader's entries' places, Final leaderboard button | ✅ `CONTEST_RESULTS` (slice 4): names the entries placed first, then the final top 10 and the reader's entries below it; no prizes yet (F4) | P1 | A |
+| F2 | Contest ended with no scores | Every event of the contest was cancelled | Commissioners and members with an entry | At once | "Every event was cancelled, so [contest] ends with no scores." | ✅ `CONTEST_RESULTS` (slice 4), for any contest that completes with no places; a squares game not played says only that it ended with no scores | P2 | A |
+| F3 | You won | The reader's entry finished first (or tied first) | That entry's owners | With F1, folded into it as a personal line | "Congratulations, [squad] won [contest]." | ✅ folded into F1 (slice 4) | P2 (part of F1) | A |
 | F4 | Settle up | The contest settles with prizes defined | The league's commissioners | With F1 | Prize table with each winner's squad and owners' names, reminder that payment is outside Poolmaster | | P3 | B |
 
 **Q3.12 Score corrections after settlement.** A settled result never changes, so there is
@@ -340,7 +340,8 @@ SES 4 and 5, then slices 2 to 6 here.
    standings buffer in `EMAIL_CONFIG`, each entry's place recorded with every standings email so
    the next one shows movement, E2 round and E6 season event. Part 2: E3 week and E5
    eliminations. Part 3: E4 bracket round. Each with the top 10 and the reader's entries.
-4. **Final results.** F1 with F3 folded in, F2.
+4. **Final results.** F1 with F3 folded in, F2: one `CONTEST_RESULTS` email, queued by
+   `ContestSettlementService` the moment it completes a contest.
 5. **Commissioner event emails.** C1, C2, C4, C6, C7, G1, to every commissioner. Choosing sport leagues is #851.
 6. **League and account gaps.** B4 and B5 co-owner emails, B3 with open contests, B6, A5. A1
    and A2 come with password recovery.

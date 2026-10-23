@@ -1,4 +1,5 @@
 import {
+  ContestResultsKind,
   EntryReceiptKind,
   EntryReminderKind,
   StandingsMomentKind,
@@ -94,6 +95,27 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     out: [],
     champions: [],
     leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+  },
+  CONTEST_RESULTS: {
+    userName: 'Morgan Member',
+    leagueName: 'Office League',
+    contestName: 'Masters Pick 6',
+    outcome: {
+      kind: ContestResultsKind.SCORED,
+      winners: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
+      top: [
+        { place: '1', entryName: 'Green Jackets', squadName: 'Morgan Member', score: '-14', movement: null, isYours: true },
+        { place: '2', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-12', movement: null, isYours: false },
+        { place: '3', entryName: 'Azalea', squadName: 'The Fourballs', score: '-9', movement: null, isYours: false },
+      ],
+      yours: [
+        { place: '14', entryName: 'Long Shots', squadName: 'Morgan Member', score: '+3', movement: null, isYours: true },
+      ],
+      entryCount: 18,
+      yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
+    },
+    leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
   },
   PASSWORD_RESET: {
     firstName: 'Morgan',
