@@ -97,7 +97,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     drawSeed: () => 'seed',
   });
   const deps = world.contestServiceDeps({ matches: games.matchRepo(), participants: games.participantRepo(), eventParticipants: games.fieldService() });
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: squares.repo(), championship: { recordContest: async () => 0 } });
 
   const actor = (name: string, isRootAdmin = false): SquaresActor => ({ userId: expectDefined(users.get(name)), isRootAdmin });
   const updateGame = (changes: Partial<SportEventMatch>) => {

@@ -590,7 +590,7 @@ async function buildGolfContestFixture(sportEventId: string): Promise<string> {
 
   const league = await db.league.create({
     data: {
-      leagueCode: `CS8${suffix.toUpperCase()}`,
+      cupName: 'Test Cup', leagueCode: `CS8${suffix.toUpperCase()}`,
       name: `Provider Linked ${RUN} ${suffix}`,
     },
   });

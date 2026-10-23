@@ -53,6 +53,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     id,
     leagueCode: `LEAGUE${id.slice(-4)}`,
     name: `League ${id}`,
+    cupName: `League ${id} Cup`,
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
     createdAt: new Date('2026-01-01'),

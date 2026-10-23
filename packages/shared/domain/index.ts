@@ -16,6 +16,7 @@ export * from './sports';
 export * from './squares';
 export * from './predicted-choice';
 export * from './cup-points';
+export * from './championship';
 export { assertNever } from './assert-never';
 export {
   compareScores,
@@ -60,6 +61,7 @@ export type {
 export type {
   Contest,
   Cup,
+  LeagueYearFinish,
   ContestEntry,
   DomainEntity,
   InjuryStatus,

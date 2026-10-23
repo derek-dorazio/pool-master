@@ -115,19 +115,24 @@ export interface CupTally {
 }
 
 /** A tally with its place: `position` 1 is best, shared on a tie, and `displayPosition` reads "T2" for one. */
-export type RankedCupTally<T extends CupTally> = T & { position: number; displayPosition: string };
+export type Ranked<T> = T & { position: number; displayPosition: string };
+export type RankedCupTally<T extends CupTally> = Ranked<T>;
 
 /**
- * Ranks squads on their totals: more points, then more wins, then more podiums; squads equal on
- * all three share the place. The input order breaks no tie, but is kept among squads sharing one.
+ * Ranks tallies best first by `compare` (negative when the left is ahead); tallies it calls equal
+ * share the place. The input order breaks no tie, but is kept among tallies sharing one.
  */
-export function rankCupTallies<T extends CupTally>(tallies: readonly T[]): RankedCupTally<T>[] {
-  const compare = (left: CupTally, right: CupTally) =>
-    right.points - left.points || right.wins - left.wins || right.podiums - left.podiums;
+export function rankTallies<T>(tallies: readonly T[], compare: (left: T, right: T) => number): Ranked<T>[] {
   const sorted = [...tallies].sort(compare);
   return sorted.map((tally) => {
     const position = 1 + sorted.filter((other) => compare(other, tally) < 0).length;
     const shared = sorted.filter((other) => compare(other, tally) === 0).length > 1;
     return { ...tally, position, displayPosition: shared ? `T${position}` : String(position) };
   });
+}
+
+/** Ranks squads in a cup: more points, then more wins, then more podiums; squads equal on all three share the place. */
+export function rankCupTallies<T extends CupTally>(tallies: readonly T[]): RankedCupTally<T>[] {
+  return rankTallies(tallies, (left, right) =>
+    right.points - left.points || right.wins - left.wins || right.podiums - left.podiums);
 }

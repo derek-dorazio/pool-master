@@ -313,7 +313,7 @@ async function createGolfLiveVerificationContests(input: {
   const suffix = randomUUID().slice(0, 8).toUpperCase();
   const league = await prisma.league.create({
     data: {
-      leagueCode: `GLE${suffix}`,
+      cupName: 'Test Cup', leagueCode: `GLE${suffix}`,
       name: `Golf Live E2E League ${suffix}`,
     },
   });

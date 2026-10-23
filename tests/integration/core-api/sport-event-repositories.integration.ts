@@ -565,7 +565,7 @@ async function createContestFixture(sportEventId: string) {
   const { user } = await createTestUser();
   const suffix = randomUUID().slice(0, 8);
   const league = await prisma.league.create({
-    data: { leagueCode: `REPO${suffix.toUpperCase()}`, name: `Repository League ${suffix}`, iconKey: 'TROPHY' },
+    data: { cupName: 'Test Cup', leagueCode: `REPO${suffix.toUpperCase()}`, name: `Repository League ${suffix}`, iconKey: 'TROPHY' },
   });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },

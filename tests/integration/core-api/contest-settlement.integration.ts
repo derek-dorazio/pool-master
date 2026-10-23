@@ -35,7 +35,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     });
     const league = await prisma.league.create({
       data: {
-        leagueCode: `GST${suffix.toUpperCase()}`,
+        cupName: 'Test Cup', leagueCode: `GST${suffix.toUpperCase()}`,
         name: `Golf Settlement League ${suffix}`,
       },
     });
@@ -245,7 +245,7 @@ describe('golf contest settlement — which contests settle', () => {
       update: {},
     });
     const league = await prisma.league.create({
-      data: { leagueCode: `GSD${suffix.toUpperCase()}`, name: `Golf Settlement Draft League ${suffix}` },
+      data: { cupName: 'Test Cup', leagueCode: `GSD${suffix.toUpperCase()}`, name: `Golf Settlement Draft League ${suffix}` },
     });
     const event = await prisma.sportEvent.create({
       data: {
@@ -353,7 +353,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       update: {},
     });
     const league = await prisma.league.create({
-      data: { leagueCode: `GSU${suffix.toUpperCase()}`, name: `Golf Unplayed League ${suffix}` },
+      data: { cupName: 'Test Cup', leagueCode: `GSU${suffix.toUpperCase()}`, name: `Golf Unplayed League ${suffix}` },
     });
     const squad = await prisma.squad.create({
       data: { leagueId: league.id, createdBy: owner.user.id, name: `Unplayed ${suffix}` },

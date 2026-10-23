@@ -35,7 +35,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     });
     const league = await prisma.league.create({
       data: {
-        leagueCode: `GLB${suffix.toUpperCase()}`,
+        cupName: 'Test Cup', leagueCode: `GLB${suffix.toUpperCase()}`,
         name: `Golf Leaderboard League ${suffix}`,
       },
     });

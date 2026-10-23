@@ -46,6 +46,7 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
+import type { ChampionshipService } from '../championship/service';
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
 
@@ -93,6 +94,7 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   standings: ContestEntryStandingRepository;
   eventStandings: ContestEntryEventStandingRepository;
   squares: Pick<ContestSquaresRepository, 'findSquares' | 'findDraw' | 'replaceWinners'>;
+  championship: Pick<ChampionshipService, 'recordContest'>;
   logger?: LifecycleLogger;
 }
 
@@ -246,11 +248,7 @@ export class ContestSettlementService {
       }
       standingsUpserted += await this.settleContestTotals(contest, countingRule.count, scoringDefinition.direction, completedAt);
 
-      const completed = await this.deps.contests.transitionStatus(contest.id, {
-        from: SETTLEABLE,
-        to: ContestStatus.COMPLETED,
-        endsAt: completedAt,
-      });
+      const completed = await this.complete(contest, completedAt);
       if (completed) {
         contestsCompleted++;
       }
@@ -350,11 +348,7 @@ export class ContestSettlementService {
       }
       standingsUpserted = holders.length;
     }
-    const completed = await this.deps.contests.transitionStatus(contest.id, {
-      from: SETTLEABLE,
-      to: ContestStatus.COMPLETED,
-      endsAt: completedAt,
-    });
+    const completed = await this.complete(contest, completedAt);
     this.logger.info({
       contestId: contest.id,
       sportEventId: sportEvent.id,
@@ -381,11 +375,7 @@ export class ContestSettlementService {
   ): Promise<{ standingsUpserted: number; completed: boolean } | null> {
     const sportEventId = sportEvent.id;
     if (sportEvent.status === SportEventStatus.CANCELLED) {
-      const completed = await this.deps.contests.transitionStatus(contest.id, {
-        from: SETTLEABLE,
-        to: ContestStatus.COMPLETED,
-        endsAt: completedAt,
-      });
+      const completed = await this.complete(contest, completedAt);
       this.logger.info({ contestId: contest.id, sportEventId, completed }, 'Completed a bracket contest whose event was cancelled, with no standings');
       return { standingsUpserted: 0, completed };
     }
@@ -413,11 +403,7 @@ export class ContestSettlementService {
       await this.deps.eventStandings.upsert({ ...frozen, sportEventId });
       await this.deps.standings.upsert(frozen);
     }
-    const completed = await this.deps.contests.transitionStatus(contest.id, {
-      from: SETTLEABLE,
-      to: ContestStatus.COMPLETED,
-      endsAt: completedAt,
-    });
+    const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, entryCount: standings.entries.length, completed }, 'Settled a bracket contest');
     return { standingsUpserted: standings.entries.length, completed };
   }
@@ -472,11 +458,7 @@ export class ContestSettlementService {
     const gameCountByWeek = new Map(weeks.map((standing) => [standing.sportEventId, standing.countingPickLimit]));
     const seasonGameCount = [...gameCountByWeek.values()].reduce((sum, count) => sum + count, 0);
     const standingsUpserted = await this.settleContestTotals(contest, seasonGameCount, 'HIGHER_IS_BETTER', completedAt);
-    const completed = await this.deps.contests.transitionStatus(contest.id, {
-      from: SETTLEABLE,
-      to: ContestStatus.COMPLETED,
-      endsAt: completedAt,
-    });
+    const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a pick\'em contest\'s season after its last week');
     return { standingsUpserted, completed };
   }
@@ -544,13 +526,23 @@ export class ContestSettlementService {
       score: run.weeksSurvived,
       scoredPickCount: run.weeks.filter(({ outcome }) => outcome === SurvivorWeekOutcome.SURVIVED || outcome === SurvivorWeekOutcome.ELIMINATED).length,
     })), playedWeeks, completedAt, completedAt);
-    const completed = await this.deps.contests.transitionStatus(contest.id, {
+    const completed = await this.complete(contest, completedAt);
+    this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a survivor contest\'s season after its last week');
+    return { standingsUpserted, completed };
+  }
+
+  /**
+   * Completes a contest whose places are frozen. Its league championship finishes (#863) are
+   * written first, so a failure there leaves the contest unsettled, to be settled again, rather
+   * than final with no finishes.
+   */
+  private async complete(contest: Contest, completedAt: Date): Promise<boolean> {
+    await this.deps.championship.recordContest(contest, completedAt);
+    return this.deps.contests.transitionStatus(contest.id, {
       from: SETTLEABLE,
       to: ContestStatus.COMPLETED,
       endsAt: completedAt,
     });
-    this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a survivor contest\'s season after its last week');
-    return { standingsUpserted, completed };
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */

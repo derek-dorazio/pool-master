@@ -48,7 +48,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
     },
   });
   const league = await prisma.league.create({
-    data: { leagueCode: `DRW${suffix.toUpperCase()}`, name: `Draw League ${suffix}`, iconKey: 'TROPHY' },
+    data: { cupName: 'Test Cup', leagueCode: `DRW${suffix.toUpperCase()}`, name: `Draw League ${suffix}`, iconKey: 'TROPHY' },
   });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },

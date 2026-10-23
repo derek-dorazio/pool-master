@@ -133,7 +133,7 @@ async function createPickEmContest(sportEventIds: string[]) {
   const suffix = randomUUID().slice(0, 8);
   const owner = await createTestUser({ displayName: `Pickem Board ${suffix}` });
   const league = await prisma.league.create({
-    data: { leagueCode: `PBRD${suffix.toUpperCase()}`, name: `Pickem Board League ${suffix}` },
+    data: { cupName: 'Test Cup', leagueCode: `PBRD${suffix.toUpperCase()}`, name: `Pickem Board League ${suffix}` },
   });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },

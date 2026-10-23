@@ -602,7 +602,7 @@ describe('Contract verification (root admin)', () => {
     });
     const league = await getPrisma().league.create({
       data: {
-        leagueCode: 'ADMINLIFE1',
+        cupName: 'Test Cup', leagueCode: 'ADMINLIFE1',
         name: 'Root Admin Lifecycle League',
         description: 'Managed through contract verification.',
         isActive: true,

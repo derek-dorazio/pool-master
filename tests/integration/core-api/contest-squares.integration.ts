@@ -44,7 +44,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
     data: { email: `squares-${suffix}@integration.test`, username: `squares-${suffix}`, firstName: 'Squares', lastName: 'Commissioner', isActive: true },
   });
   const league = await prisma.league.create({
-    data: { leagueCode: `SQR${suffix.toUpperCase()}`, name: `Squares League ${suffix}`, iconKey: 'TROPHY' },
+    data: { cupName: 'Test Cup', leagueCode: `SQR${suffix.toUpperCase()}`, name: `Squares League ${suffix}`, iconKey: 'TROPHY' },
   });
   const squads = await Promise.all([1, 2].map((number) => prisma.squad.create({
     data: { leagueId: league.id, name: `Squares Squad ${number} ${suffix}`, createdBy: user.id },
