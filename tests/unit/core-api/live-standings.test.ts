@@ -1,5 +1,5 @@
 /**
- * Live standings emails (#877, catalog rows E2 and E6): when a stroke-play round counts as
+ * Live standings emails (#877, catalog rows E2, E3, E5 and E6): when a stroke-play round counts as
  * finished, which standings email is due, who gets it, what it shows, and that a second sweep
  * never sends one twice. The contest world is in memory and the leaderboard is a fixed board;
  * the email service is the real one over an in-memory outbox, so the tests assert on the emails
@@ -15,10 +15,13 @@ import {
   ParticipantStandingStatus,
   SelectionType,
   SportEventStatus,
+  SurvivorWeekOutcome,
   type Contest,
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import type { ContestLeaderboardEntryRow, ContestLeaderboardModel } from '../../../packages/core-api/src/mappers/contests.mapper';
+import type { PickEmLeaderboardModel } from '../../../packages/core-api/src/mappers/pick-em-leaderboard.mapper';
+import type { SurvivorLeaderboardModel } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { LiveStandings } from '../../../packages/core-api/src/modules/notifications/live-standings';
@@ -118,6 +121,8 @@ describe('LiveStandings.queueDue', () => {
   let logger: ReturnType<typeof fakeLogger>;
   let fields: Map<string, SportEventParticipantView[]>;
   let boards: Map<string, ContestLeaderboardEntryRow[]>;
+  let pickEmBoards: Map<string, PickEmLeaderboardModel>;
+  let survivorBoards: Map<string, SurvivorLeaderboardModel>;
   let positions: Map<string, number | null>;
   let failingContestId: string | null;
 
@@ -127,6 +132,8 @@ describe('LiveStandings.queueDue', () => {
     logger = fakeLogger();
     fields = new Map();
     boards = new Map();
+    pickEmBoards = new Map();
+    survivorBoards = new Map();
     positions = new Map();
     failingContestId = null;
   });
@@ -161,10 +168,24 @@ describe('LiveStandings.queueDue', () => {
             asOf: null,
           };
         },
+        pickEmLeaderboardOf: async (contest: Contest) => {
+          const board = pickEmBoards.get(contest.id);
+          if (!board) throw new Error('no pick\'em board');
+          return board;
+        },
+        survivorLeaderboardOf: async (contest: Contest) => {
+          const board = survivorBoards.get(contest.id);
+          if (!board) throw new Error('no survivor board');
+          return board;
+        },
       },
       positions: {
         findByContest: async (contestId) => new Map(
-          (boards.get(contestId) ?? []).flatMap((row) => {
+          [
+            ...(boards.get(contestId) ?? []),
+            ...(pickEmBoards.get(contestId)?.entries ?? []),
+            ...(survivorBoards.get(contestId)?.entries ?? []),
+          ].flatMap((row) => {
             const position = positions.get(row.entryId);
             return position === undefined || position === null ? [] : [[row.entryId, position] as const];
           }),
@@ -427,6 +448,218 @@ describe('LiveStandings.queueDue', () => {
     });
     await standings().queueDue(after(pgaSettledAt, 31));
     expect(outbox.rows).toHaveLength(0);
+  });
+
+  /** A live prediction contest of three weeks whose first week settled at `settledAt`. */
+  async function liveWeeks(selectionType: typeof SelectionType.PICK_EM | typeof SelectionType.SURVIVOR, settledAt: Date) {
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const week1 = world.addSportEvent({ name: 'Week 1', startDate: new Date('2026-09-11T00:20:00.000Z'), status: SportEventStatus.COMPLETED });
+    const week2 = world.addSportEvent({ name: 'Week 2', startDate: new Date('2026-09-18T00:15:00.000Z'), status: SportEventStatus.SCHEDULED });
+    const week3 = world.addSportEvent({ name: 'Week 3', startDate: new Date('2026-09-25T00:15:00.000Z'), status: SportEventStatus.SCHEDULED });
+    const contest = world.addContest(league.id, {
+      name: selectionType === SelectionType.PICK_EM ? 'NFL Pick\'em' : 'Last One Standing',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType,
+      sportEventIds: [week1.id, week2.id, week3.id],
+    });
+    await settle(contest.id, week1.id, 'e1', settledAt);
+    return { league, contest, week1, week2, week3 };
+  }
+
+  async function settle(contestId: string, sportEventId: string, contestEntryId: string, settledAt: Date) {
+    await world.eventStandingRepo().upsert({
+      contestId,
+      contestEntryId,
+      sportEventId,
+      position: 1,
+      displayPosition: '1',
+      countingPickLimit: 1,
+      scoredPickCount: 1,
+      totalScore: 1,
+      asOf: settledAt,
+      settledAt,
+    });
+  }
+
+  function pickEmBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; total: number; week1: { position: number; points: number; display?: string } | null }>): PickEmLeaderboardModel {
+    return {
+      contestId,
+      mode: 'STRAIGHT_UP',
+      againstTheSpread: false,
+      weeks: weekIds.map((sportEventId, index) => ({
+        sportEventId,
+        name: `Week ${String(index + 1)}`,
+        startDate: new Date(0),
+        status: index === 0 ? SportEventStatus.COMPLETED : SportEventStatus.SCHEDULED,
+        started: index === 0,
+        settled: index === 0,
+        gameCount: 16,
+        tiebreakerTotalPoints: null,
+        winnerEntryIds: index === 0 ? entries.filter((entry) => entry.week1?.position === 1).map((entry) => entry.entryId) : [],
+      })),
+      entries: entries.map((entry) => ({
+        entryId: entry.entryId,
+        entryName: `Entry ${entry.entryId}`,
+        entryNumber: 1,
+        squadId: entry.squad.id,
+        squadName: entry.squad.name,
+        position: entry.position,
+        displayPosition: String(entry.position),
+        totalPoints: entry.total,
+        weeks: weekIds.map((sportEventId, index) => ({
+          sportEventId,
+          submitted: index === 0 && entry.week1 !== null,
+          points: index === 0 ? entry.week1?.points ?? null : null,
+          position: index === 0 ? entry.week1?.position ?? null : null,
+          displayPosition: index === 0 && entry.week1 ? entry.week1.display ?? String(entry.week1.position) : null,
+          weeklyWinner: index === 0 && entry.week1?.position === 1,
+        })),
+      })),
+    } as PickEmLeaderboardModel;
+  }
+
+  it('sends a settled pick\'em week\'s results once the buffer has passed: the week\'s winner and leaders, the season, next week and a picks link for readers with an entry, but not after the last week', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.PICK_EM, settledAt);
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    const casey = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+    const watcher = member(league.id, 'Wes');
+    pickEmBoards.set(contest.id, pickEmBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, total: 12, week1: { position: 1, points: 12 } },
+      { entryId: 'e2', squad: ben.squad, position: 2, total: 9, week1: { position: 2, points: 9 } },
+      { entryId: 'e3', squad: ben.squad, position: 3, total: 0, week1: null },
+    ]));
+
+    await standings().queueDue(after(settledAt, 29));
+    expect(outbox.rows).toHaveLength(0);
+    await standings().queueDue(after(settledAt, 31));
+
+    expect(outbox.rows.map((email) => email.recipientUserId ?? '').sort((left, right) => left.localeCompare(right)))
+      .toEqual([ana.user.id, ben.user.id, casey.user.id].sort((left, right) => left.localeCompare(right)));
+    expect(emailsTo(watcher.user.id)).toHaveLength(0);
+    const [toBen] = emailsTo(ben.user.id);
+    expect(toBen.subject).toBe('After Week 1: NFL Pick\'em');
+    expect(toBen.idempotencyKey).toBe(`CONTEST_STANDINGS:${contest.id}:${week1.id}:week:${ben.user.id}`);
+    expect(toBen.textBody).toContain('Week 1 is done. Entry e1 (Ana\'s Squad) won the week.');
+    expect(toBen.textBody).toContain('Week 1, everyone:\n1. Entry e1 (Ana\'s Squad), 12\n2. Entry e2 (Ben\'s Squad), yours, 9\n');
+    expect(toBen.textBody).toContain('Season standings, by points:\n1. Entry e1 (Ana\'s Squad), 12\n2. Entry e2 (Ben\'s Squad), yours, 9\n3. Entry e3 (Ben\'s Squad), yours, 0');
+    expect(toBen.textBody).toContain('Next week: Week 2, first kickoff');
+    expect(toBen.textBody).toContain(`Make picks for next week: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);
+    const [toCasey] = emailsTo(casey.user.id);
+    expect(toCasey.textBody).not.toContain('Make picks for next week');
+    expect(positions).toEqual(new Map([['e1', 1], ['e2', 2], ['e3', 3]]));
+
+    outbox.rows.length = 0;
+    const lastSettledAt = new Date('2026-09-29T04:00:00.000Z');
+    world.sportEvents.set(week2.id, { ...week2, status: SportEventStatus.COMPLETED });
+    world.sportEvents.set(week3.id, { ...week3, status: SportEventStatus.COMPLETED });
+    await settle(contest.id, week2.id, 'e1', after(lastSettledAt, -60));
+    await settle(contest.id, week3.id, 'e1', lastSettledAt);
+    await standings().queueDue(after(lastSettledAt, 31));
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('counts a week that finished with nothing to settle, as one no entry submitted, as played rather than still to come, so the last settled week sends nothing', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.PICK_EM, settledAt);
+    const ana = member(league.id, 'Ana');
+    pickEmBoards.set(contest.id, pickEmBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, total: 12, week1: { position: 1, points: 12 } },
+    ]));
+    world.sportEvents.set(week2.id, { ...week2, status: SportEventStatus.COMPLETED });
+    world.sportEvents.set(week3.id, { ...week3, status: SportEventStatus.COMPLETED });
+    const week3SettledAt = new Date('2026-09-29T04:00:00.000Z');
+    await settle(contest.id, week3.id, 'e1', week3SettledAt);
+
+    await standings().queueDue(after(week3SettledAt, 31));
+
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  function survivorBoard(contestId: string, weekIds: string[], entries: Array<{ entryId: string; squad: { id: string; name: string }; position: number; displayPosition?: string; weeksSurvived: number; outInWeek1?: { team: string | null } }>): SurvivorLeaderboardModel {
+    return {
+      contestId,
+      weeks: weekIds.map((sportEventId, index) => ({
+        sportEventId,
+        weekNumber: index + 1,
+        roundNumber: 1,
+        roundCount: 1,
+        name: `Week ${String(index + 1)}`,
+        startDate: new Date(0),
+        status: index === 0 ? SportEventStatus.COMPLETED : SportEventStatus.SCHEDULED,
+        started: index === 0,
+        aliveCount: index === 0 ? entries.filter((entry) => !entry.outInWeek1).length : 0,
+      })),
+      entries: entries.map((entry) => ({
+        entryId: entry.entryId,
+        entryName: `Entry ${entry.entryId}`,
+        entryNumber: 1,
+        squadId: entry.squad.id,
+        squadName: entry.squad.name,
+        alive: !entry.outInWeek1,
+        eliminatedInWeek: entry.outInWeek1 ? 1 : null,
+        weeksSurvived: entry.weeksSurvived,
+        position: entry.position,
+        displayPosition: entry.displayPosition ?? String(entry.position),
+        weeks: weekIds.map((sportEventId, index) => ({
+          sportEventId,
+          roundNumber: 1,
+          outcome: index === 0 ? (entry.outInWeek1 ? SurvivorWeekOutcome.ELIMINATED : SurvivorWeekOutcome.SURVIVED) : null,
+          team: index === 0 ? (entry.outInWeek1 ? entry.outInWeek1.team : 'Kansas City Chiefs') : null,
+        })),
+      })),
+    };
+  }
+
+  it('sends a settled survivor week\'s results with how many are still in, telling each reader whose entry went out how, and a picks link only to readers with an entry still in', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.SURVIVOR, settledAt);
+    const ana = member(league.id, 'Ana');
+    const ben = member(league.id, 'Ben');
+    survivorBoards.set(contest.id, survivorBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, weeksSurvived: 1 },
+      { entryId: 'e2', squad: ben.squad, position: 2, displayPosition: 'T2', weeksSurvived: 0, outInWeek1: { team: 'Chicago Bears' } },
+      { entryId: 'e3', squad: ben.squad, position: 2, displayPosition: 'T2', weeksSurvived: 0, outInWeek1: { team: null } },
+    ]));
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toBen] = emailsTo(ben.user.id);
+    expect(toBen.subject).toBe('After Week 1: Last One Standing');
+    expect(toBen.textBody).toContain('Week 1 is done. 1 of 3 entries is still in Last One Standing.');
+    expect(toBen.textBody).toContain('Entry e2 is out: Chicago Bears didn\'t win in Week 1.');
+    expect(toBen.textBody).toContain('Entry e3 is out: it had no pick in Week 1.');
+    expect(toBen.textBody).toContain('Standings, by weeks survived:\n1. Entry e1 (Ana\'s Squad), 1\nT2. Entry e2 (Ben\'s Squad), yours, 0, out');
+    expect(toBen.textBody).not.toContain('Make picks for next week');
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).not.toContain(' is out:');
+    expect(toAna.textBody).toContain('Make picks for next week: ');
+  });
+
+  it('names as a season contest\'s next event the one still to play, passing over an event that finished but has not settled', async () => {
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const open = world.addSportEvent({ name: 'The Open', startDate: new Date('2026-07-16T06:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const contest = world.addContest(league.id, {
+      name: 'Majors Pool',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.ROSTER,
+      selectionType: SelectionType.TIERED,
+      sportEventIds: [masters.id, pga.id, open.id],
+    });
+    const ana = member(league.id, 'Ana');
+    const settledAt = new Date('2026-04-13T00:00:00.000Z');
+    await settle(contest.id, masters.id, 'e1', settledAt);
+    boards.set(contest.id, [row('e1', ana.squad, 1, -9)]);
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).toContain('Next event: The Open');
+    expect(toAna.textBody).not.toContain('PGA Championship');
   });
 
   it('logs a contest whose standings fail and still sends the others', async () => {

@@ -177,8 +177,8 @@ holds:
   (14 a second when production access is granted).
 - `entryReminderHours` ("Entry reminders"): how many hours before a contest's picks close each
   entry reminder goes, `[48, 24, 3]` by default, one to five whole numbers from 1 to 168.
-- `standingsBufferMinutes` ("Standings email delay"): how many minutes after a round or event
-  finishes its live standings email goes, 30 by default, from 0 to 240, so a late score
+- `standingsBufferMinutes` ("Standings email delay"): how many minutes after a round, event or
+  week finishes its live standings email goes, 30 by default, from 0 to 240, so a late score
   correction lands first.
 
 Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
@@ -339,7 +339,7 @@ Who is told depends on the format:
 - **Squares** ("Boxes close soon"): members holding no box, until the game starts or the numbers are drawn, and nobody once the grid is full.
 
 Live standings emails (`CONTEST_STANDINGS`, #877) are the same step's second kind. While a
-roster contest is `ACTIVE`, one goes after each moment it can report on, once that moment is
+roster, pick'em or survivor contest is `ACTIVE`, one goes after each moment it can report on, once that moment is
 `standingsBufferMinutes` old, and none more than an hour after that:
 
 - **After a round** ("After round 2: Masters Pick 6"): a stroke-play round is finished when every
@@ -351,6 +351,13 @@ roster contest is `ACTIVE`, one goes after each moment it can report on, once th
   standings settled and another event of the contest remains to play. It shows each entry's
   result in that event and the next event, with when its picks close. Not after the last event:
   the final results cover it.
+- **After a pick'em or survivor week** ("After Week 3: NFL Pick'em"): the week's standings
+  settled and another week remains to play, with next week's first kickoff. Pick'em names the
+  week's winners and lists the week's top 10 by its points above the season's; survivor says how
+  many entries are still in and marks the ones out, and tells a reader whose entry went out that
+  week which team it picked, or that it had no pick. It links to the contest to make next week's
+  picks for readers with an entry (in survivor, an entry still in). A playoff
+  that a survivor contest plays a week per round settles, and is reported, once, as the event.
 
 It goes to the league's active commissioners and every active member who owns an entry on the
 board, once each. It lists the top 10, and anyone tied with the 10th, then the reader's entries
@@ -358,7 +365,7 @@ placed below them, each with its total as the leaderboard shows it and its movem
 contest's last standings email. Each standings email records every entry's place
 (`contest_entries.last_standings_email_position`) after it is queued, for the next one to measure
 from. After a round it also names the reader's golfers who missed the cut in it. The
-idempotency key (contest, event, round or event, person) keeps a second sweep or task from
+idempotency key (contest, event, round, event or week, person) keeps a second sweep or task from
 sending one twice.
 
 If the outbox cannot record a welcome, a receipt, a new contest or a contest-started email, the action that
