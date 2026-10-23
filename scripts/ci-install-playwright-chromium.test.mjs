@@ -25,13 +25,13 @@ describe('ci-install-playwright-chromium', () => {
     chmodSync(path, 0o755);
   }
 
-  function run({ lddOutput, browsers = ['chromium-1/chrome-linux64/chrome'] }) {
+  function run({ lddOutput, lddBody, browsers = ['chromium-1/chrome-linux64/chrome'] }) {
     for (const browser of browsers) {
       const path = join(work, 'browsers', browser);
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, '');
     }
-    stub('ldd', `printf '%s\\n' "${lddOutput}"`);
+    stub('ldd', lddBody ?? `printf '%s\\n' "${lddOutput}"`);
     return spawnSync('bash', [SCRIPT, '3', '30', '120'], {
       encoding: 'utf8',
       env: {
@@ -70,6 +70,26 @@ describe('ci-install-playwright-chromium', () => {
 
   it('installs the system packages when the browser is missing a library', () => {
     const result = run({ lddOutput: '\tlibgbm.so.1 => not found' });
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(recorded().includes('npx playwright install --with-deps chromium'));
+  });
+
+  it('installs the system packages when one of two browsers is missing a library and ldd fails on both', () => {
+    const result = run({
+      lddBody: 'case "$1" in *headless*) echo "\tlibx.so => not found";; esac\nexit 1',
+      browsers: [
+        'chromium-1/chrome-linux64/chrome',
+        'chromium_headless_shell-1/chrome-headless-shell-linux64/chrome-headless-shell',
+      ],
+    });
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.ok(recorded().includes('npx playwright install --with-deps chromium'));
+  });
+
+  it('installs the system packages when ldd cannot read a browser binary', () => {
+    const result = run({ lddBody: 'echo "not a dynamic executable" >&2\nexit 1' });
 
     assert.equal(result.status, 0, result.stderr);
     assert.ok(recorded().includes('npx playwright install --with-deps chromium'));
