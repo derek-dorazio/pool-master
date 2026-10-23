@@ -11,6 +11,7 @@ import {
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
+import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -24,7 +25,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     const prisma = getPrisma();
     const contests = createContestService(prisma, fakeLogger());
     // What the final results email reads, read when settlement tells it the contest completed.
-    const told: Array<{ contestId: string; final: Awaited<ReturnType<typeof contests.finalStandingsOf>> }> = [];
+    const told: Array<{ contestId: string; final: ContestFinalStandings }> = [];
     const service = createContestSettlementService(prisma, undefined, {
       contestSettled: { contestSettled: async (contest: Contest) => { told.push({ contestId: contest.id, final: await contests.finalStandingsOf(contest) }); } },
     });

@@ -171,7 +171,10 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         this.deps.sportEvents.findByIds(contest.sportEventIds),
         this.deps.entries.findByContest(contest.id),
       ]);
-      const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(entries.map((entry) => entry.squadId))]))
+      // An entry counts once it was submitted for any of the contest's events, as E1 counts them.
+      const submitted = entries.filter((entry) => contest.sportEventIds
+        .some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
+      const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
         .map((owner) => owner.userId));
       const outcome: ContestResultsOutcome = {
         kind: ContestResultsKind.NO_SCORES,

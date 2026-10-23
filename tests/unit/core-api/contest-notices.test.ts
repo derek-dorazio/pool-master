@@ -14,7 +14,7 @@ import {
   type SportEventMatch,
   type SportLeague,
 } from '@poolmaster/shared/domain';
-import type { ContestService } from '../../../packages/core-api/src/modules/contests/service';
+import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestNotices } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
@@ -24,15 +24,13 @@ import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
 
-type FinalStandings = Awaited<ReturnType<ContestService['finalStandingsOf']>>;
-
 describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
   let outbox: InMemoryEmailMessages;
   let matches: SportEventMatch[];
   let roundNames: string[];
   let tierCount: number;
-  let final: FinalStandings;
+  let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
 
   beforeEach(() => {
@@ -315,19 +313,24 @@ describe('ContestNotices', () => {
       expect(textTo(dana.user.id)).toContain('Congratulations, Dana\'s Squad tied for first in Week 1 Pick\'em with Upsets!');
     });
 
-    it('tells only the commissioners and the members with an entry that a contest whose every event was cancelled ended with no scores', async () => {
+    it('tells only the commissioners and the members with a submitted entry, not a draft, that a contest whose every event was cancelled ended with no scores', async () => {
       const league = world.addLeague({ leagueCode: 'OFFICE24' });
       const event = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
       const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [event.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
       const entrant = member(league.id, 'Nora');
+      const drafting = member(league.id, 'Dana');
       const onlooker = member(league.id, 'Sam');
-      const created = await world.entryRepo().create({ contestId: contest.id, squadId: entrant.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
-      if (created.status !== 'created') throw new Error('entry not created');
+      for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
+        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+        if (created.status !== 'created') throw new Error('entry not created');
+        if (submitted) await world.entryRepo().setEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
+      }
 
       await notices().contestSettled(contest);
 
       expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id].sort());
+      expect(recipientIds()).not.toContain(drafting.user.id);
       expect(recipientIds()).not.toContain(onlooker.user.id);
       const text = textTo(entrant.user.id);
       expect(outbox.rows[0]?.subject).toBe('Masters Pick 6 ended with no scores');

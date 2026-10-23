@@ -197,6 +197,14 @@ export interface ContestServiceDeps {
   now?: () => Date;
 }
 
+/** A settled contest's final places, as `ContestService.finalStandingsOf` reads them. */
+export interface ContestFinalStandings {
+  /** A roster contest's scoring definition, whose format writes its totals; null for a count. */
+  scoringDefinitionId: ParticipantScoringDefinitionId | null;
+  /** Best first. */
+  entries: Array<{ entryId: string; entryName: string; squadId: string; squadName: string; position: number | null; displayPosition: string | null; score: number | null }>;
+}
+
 export class ContestService {
   private readonly logger: LifecycleLogger;
   private readonly appBaseUrl: string;
@@ -707,10 +715,7 @@ export class ContestService {
    * roster contest names its scoring definition, whose format writes its totals; every other
    * format's totals are counts (points, weeks survived, quarters won).
    */
-  async finalStandingsOf(contest: Contest): Promise<{
-    scoringDefinitionId: ParticipantScoringDefinitionId | null;
-    entries: Array<{ entryId: string; entryName: string; squadId: string; squadName: string; position: number | null; displayPosition: string | null; score: number | null }>;
-  }> {
+  async finalStandingsOf(contest: Contest): Promise<ContestFinalStandings> {
     const [standings, entries] = await Promise.all([
       this.deps.standings.findByContest(contest.id),
       this.deps.entries.findByContestWithSquad(contest.id),
