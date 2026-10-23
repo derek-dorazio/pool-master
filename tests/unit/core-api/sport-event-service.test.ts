@@ -321,6 +321,20 @@ describe('SportEventService.releaseEvent (#431)', () => {
     await expect(service.releaseEvent(event.id)).resolves.toMatchObject({ event: { status: SportEventStatus.SCHEDULED } });
   });
 
+  it('lists what a draft still needs before release in the refusal\'s words, a bracket sport\'s bracket included, and nothing once it is ready', async () => {
+    const { store, service, sportLeague } = setup(Sport.BASKETBALL);
+    const unready = await draftWithField(store, 3, 2, { sport: Sport.BASKETBALL, sportLeagueId: sportLeague.id }, null);
+    const golf = setup();
+    const ready = await draftWithField(golf.store, 3, 3);
+
+    await expect(service.releaseBlockersOf(unready.id)).resolves.toEqual([
+      '1 active participant(s) have no tier',
+      'its prices have not been assigned',
+      expect.stringContaining('its bracket is not loaded'),
+    ]);
+    await expect(golf.service.releaseBlockersOf(ready.id)).resolves.toEqual([]);
+  });
+
   it('refuses a draft whose field is empty with 422 SPORT_EVENT_NOT_READY, leaving it a draft', async () => {
     const { store, service } = setup();
     const event = await draftWithField(store, 0, 0);

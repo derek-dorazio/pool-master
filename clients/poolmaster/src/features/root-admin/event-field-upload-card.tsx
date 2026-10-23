@@ -1,4 +1,4 @@
-import { getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import { applyEventParticipantUpload, previewEventParticipantUpload } from '@/lib/api';
 import { BulkUploadPanel, Button, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -6,7 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventParticipantDto } from '@/lib/api';
-import { capitalize, sportPathSegment } from './manage-navigation';
+import { capitalize } from './manage-navigation';
 import {
   EVENT_FIELD_UPLOAD_HEADERS,
   formatEventFieldUploadValues,

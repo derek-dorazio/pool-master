@@ -12,12 +12,13 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { ParticipantLeagueAffiliationUploadPreviewResponse } from '@/lib/api';
+import { sportPathSegment } from '@poolmaster/shared/domain';
 import {
   ROSTER_UPLOAD_HEADERS,
   parseRosterUpload,
   type RosterUploadRow,
 } from './sport-admin-utils';
-import { capitalize, sportPathSegment } from './manage-navigation';
+import { capitalize } from './manage-navigation';
 import { useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 

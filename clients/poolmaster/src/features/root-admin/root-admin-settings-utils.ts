@@ -48,6 +48,7 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
   ['EVENT_COMING_UP', 'Event coming up (commissioners)'],
   ['EVENT_READY_FOR_CONTESTS', 'Event ready for contests (commissioners)'],
   ['CONTEST_NOT_OPEN', 'Contest not open yet (commissioners)'],
+  ['EVENT_STILL_DRAFT', 'Event still in draft (root admins)'],
 ];
 
 /** The entry reminder offsets as a reader sees them, e.g. "48, 24, 3 hours before picks close". */

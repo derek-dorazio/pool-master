@@ -35,6 +35,8 @@ export interface UserSearchFilters {
    */
   search?: string;
   isActive?: boolean;
+  /** Only root admins (true) or only everyone else (false). */
+  isRootAdmin?: boolean;
 }
 
 /**

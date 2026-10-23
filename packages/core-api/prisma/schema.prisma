@@ -192,6 +192,7 @@ enum PrismaEmailTemplateKey {
   EVENT_COMING_UP
   EVENT_READY_FOR_CONTESTS
   CONTEST_NOT_OPEN
+  EVENT_STILL_DRAFT
 }
 
 enum PrismaEmailMessageStatus {
