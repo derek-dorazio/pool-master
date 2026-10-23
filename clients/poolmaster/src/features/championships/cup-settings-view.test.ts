@@ -10,6 +10,7 @@ describe('parseCustomPoints', () => {
   it.each([
     ['nothing typed', '  ', 'Enter the points for 1st place at least.'],
     ['a fraction', '10, 2.5', "Each place's points must be a whole number from 0 to 1000."],
+    ['numbers written another way', '10, 1e1, 0x5', "Each place's points must be a whole number from 0 to 1000."],
     ['a word', '10, lots', "Each place's points must be a whole number from 0 to 1000."],
     ['more than the cap', '1001', "Each place's points must be a whole number from 0 to 1000."],
     ['more than 50 places', Array.from({ length: 51 }, () => '1').join(','), 'Enter points for no more than 50 places.'],

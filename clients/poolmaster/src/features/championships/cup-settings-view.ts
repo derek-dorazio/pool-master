@@ -74,8 +74,9 @@ export function parseCustomPoints(text: string): { points: number[]; error: null
   if (parts.length > CUP_CUSTOM_POINTS_MAX_PLACES) {
     return { points: null, error: `Enter points for no more than ${CUP_CUSTOM_POINTS_MAX_PLACES} places.` };
   }
-  const points = parts.map(Number);
-  if (points.some((value) => !Number.isInteger(value) || value < 0 || value > CUP_CUSTOM_POINTS_MAX)) {
+  // Plain digits only: Number() would also read 1e1 and 0x5.
+  const points = parts.map((part) => (/^\d+$/.test(part) ? Number(part) : Number.NaN));
+  if (points.some((value) => !Number.isInteger(value) || value > CUP_CUSTOM_POINTS_MAX)) {
     return { points: null, error: `Each place's points must be a whole number from 0 to ${CUP_CUSTOM_POINTS_MAX}.` };
   }
   return { points, error: null };

@@ -305,6 +305,9 @@ journey row once a page exists.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
+   Score each final contest from its frozen `LeagueYearFinish` weight and points, not the
+   live `contest.cupWeight`, so a weight saved while settlement runs cannot split a crowned cup
+   from the championship.
 5. **Projected points** from live contests, greyed as "if it ended now".
 
 2 and 3 in parallel after 1; 4 and 5 after 2.
