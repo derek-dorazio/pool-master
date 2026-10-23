@@ -16454,6 +16454,138 @@ export type CupSquadPointsResponse = {
 };
 
 /**
+ * One squad's place in a cup if its live contests ended now.
+ */
+export type CupProjectedStandingDto = {
+    squadId: string;
+    /**
+     * Place in the cup if the live contests ended now, 1 best; ties share it as in the standings.
+     */
+    position: number;
+    /**
+     * The place as shown: "T2" for a shared 2nd.
+     */
+    displayPosition: string;
+    /**
+     * Points if the live contests ended now (tenths), the counted contests' included.
+     */
+    points: number;
+    /**
+     * Points the live contests would add (tenths).
+     */
+    gained: number;
+    /**
+     * Places gained (positive) or lost (negative) against the standings as they are.
+     */
+    movement: number;
+};
+
+/**
+ * A live contest a cup projection counts.
+ */
+export type CupLiveContestDto = {
+    contestId: string;
+    name: string;
+    /**
+     * The weight the projection scores it at: its own, until it settles.
+     */
+    cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+};
+
+/**
+ * An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as "if it ended now".
+ */
+export type CupProjectionDto = {
+    cupId: string;
+    /**
+     * The live contests counted as if they ended now, by first event start; empty when none is live.
+     */
+    contests: Array<{
+        contestId: string;
+        name: string;
+        /**
+         * The weight the projection scores it at: its own, until it settles.
+         */
+        cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+    }>;
+    /**
+     * Best first, one row per squad the standings show.
+     */
+    standings: Array<{
+        squadId: string;
+        /**
+         * Place in the cup if the live contests ended now, 1 best; ties share it as in the standings.
+         */
+        position: number;
+        /**
+         * The place as shown: "T2" for a shared 2nd.
+         */
+        displayPosition: string;
+        /**
+         * Points if the live contests ended now (tenths), the counted contests' included.
+         */
+        points: number;
+        /**
+         * Points the live contests would add (tenths).
+         */
+        gained: number;
+        /**
+         * Places gained (positive) or lost (negative) against the standings as they are.
+         */
+        movement: number;
+    }>;
+};
+
+/**
+ * A cup's projected standings.
+ */
+export type CupProjectionResponse = {
+    /**
+     * An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as "if it ended now".
+     */
+    projection: {
+        cupId: string;
+        /**
+         * The live contests counted as if they ended now, by first event start; empty when none is live.
+         */
+        contests: Array<{
+            contestId: string;
+            name: string;
+            /**
+             * The weight the projection scores it at: its own, until it settles.
+             */
+            cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+        }>;
+        /**
+         * Best first, one row per squad the standings show.
+         */
+        standings: Array<{
+            squadId: string;
+            /**
+             * Place in the cup if the live contests ended now, 1 best; ties share it as in the standings.
+             */
+            position: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPosition: string;
+            /**
+             * Points if the live contests ended now (tenths), the counted contests' included.
+             */
+            points: number;
+            /**
+             * Points the live contests would add (tenths).
+             */
+            gained: number;
+            /**
+             * Places gained (positive) or lost (negative) against the standings as they are.
+             */
+            movement: number;
+        }>;
+    };
+};
+
+/**
  * A squad named on the championship: a leader, a champion or a tile holder.
  */
 export type ChampionshipSquadDto = {
@@ -20936,6 +21068,46 @@ export type GetCupSquadPointsResponses = {
 };
 
 export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
+
+export type GetCupProjectionData = {
+    body?: never;
+    path: {
+        id: string;
+        cupId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cups/{cupId}/projection';
+};
+
+export type GetCupProjectionErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type GetCupProjectionError = GetCupProjectionErrors[keyof GetCupProjectionErrors];
+
+export type GetCupProjectionResponses = {
+    /**
+     * A cup's projected standings.
+     */
+    200: CupProjectionResponse;
+};
+
+export type GetCupProjectionResponse = GetCupProjectionResponses[keyof GetCupProjectionResponses];
 
 export type CrownCupData = {
     body?: never;

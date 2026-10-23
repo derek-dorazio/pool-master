@@ -1449,6 +1449,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cups/{cupId}/projection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Project a cup from its live contests
+         * @description An open cup's standings if every live contest it counts ended now: each scores from its leaderboard's places as they stand, at its own weight, on top of the contests already counted. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. Nothing is stored. 409 CUP_CROWNED for a crowned cup, whose standings are final; 404 CUP_NOT_FOUND for a cup that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getCupProjection"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/cups/{cupId}/crown": {
         parameters: {
             query?: never;
@@ -14933,6 +14953,97 @@ export interface components {
                 }[];
             };
         };
+        /** @description One squad's place in a cup if its live contests ended now. */
+        CupProjectedStandingDto: {
+            /** Format: uuid */
+            squadId: string;
+            /** @description Place in the cup if the live contests ended now, 1 best; ties share it as in the standings. */
+            position: number;
+            /** @description The place as shown: "T2" for a shared 2nd. */
+            displayPosition: string;
+            /** @description Points if the live contests ended now (tenths), the counted contests' included. */
+            points: number;
+            /** @description Points the live contests would add (tenths). */
+            gained: number;
+            /** @description Places gained (positive) or lost (negative) against the standings as they are. */
+            movement: number;
+        };
+        /** @description A live contest a cup projection counts. */
+        CupLiveContestDto: {
+            /** Format: uuid */
+            contestId: string;
+            name: string;
+            /**
+             * @description The weight the projection scores it at: its own, until it settles.
+             * @enum {string}
+             */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+        };
+        /** @description An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as "if it ended now". */
+        CupProjectionDto: {
+            /** Format: uuid */
+            cupId: string;
+            /** @description The live contests counted as if they ended now, by first event start; empty when none is live. */
+            contests: {
+                /** Format: uuid */
+                contestId: string;
+                name: string;
+                /**
+                 * @description The weight the projection scores it at: its own, until it settles.
+                 * @enum {string}
+                 */
+                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+            }[];
+            /** @description Best first, one row per squad the standings show. */
+            standings: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description Place in the cup if the live contests ended now, 1 best; ties share it as in the standings. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points if the live contests ended now (tenths), the counted contests' included. */
+                points: number;
+                /** @description Points the live contests would add (tenths). */
+                gained: number;
+                /** @description Places gained (positive) or lost (negative) against the standings as they are. */
+                movement: number;
+            }[];
+        };
+        /** @description A cup's projected standings. */
+        CupProjectionResponse: {
+            /** @description An open cup's standings if every live contest it counts ended now, scored from each contest's leaderboard as it stands. Nothing is stored: show it greyed, as "if it ended now". */
+            projection: {
+                /** Format: uuid */
+                cupId: string;
+                /** @description The live contests counted as if they ended now, by first event start; empty when none is live. */
+                contests: {
+                    /** Format: uuid */
+                    contestId: string;
+                    name: string;
+                    /**
+                     * @description The weight the projection scores it at: its own, until it settles.
+                     * @enum {string}
+                     */
+                    cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                }[];
+                /** @description Best first, one row per squad the standings show. */
+                standings: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description Place in the cup if the live contests ended now, 1 best; ties share it as in the standings. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points if the live contests ended now (tenths), the counted contests' included. */
+                    points: number;
+                    /** @description Points the live contests would add (tenths). */
+                    gained: number;
+                    /** @description Places gained (positive) or lost (negative) against the standings as they are. */
+                    movement: number;
+                }[];
+            };
+        };
         /** @description A squad named on the championship: a leader, a champion or a tile holder. */
         ChampionshipSquadDto: {
             /** Format: uuid */
@@ -20371,6 +20482,65 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getCupProjection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                cupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A cup's projected standings. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupProjectionResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

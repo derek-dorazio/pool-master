@@ -76,6 +76,24 @@ export function cupsModule(fastify: FastifyInstance): void {
     handler: handlers.getCupSquadPoints,
   });
 
+  fastify.get('/:cupId/projection', {
+    schema: {
+      tags: ['Cups'],
+      summary: 'Project a cup from its live contests',
+      description: `An open cup's standings if every live contest it counts ended now: each scores from its leaderboard's places as they stand, at its own weight, on top of the contests already counted. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. Nothing is stored. 409 CUP_CROWNED for a crowned cup, whose standings are final; 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY}`,
+      operationId: 'getCupProjection',
+      response: {
+        200: schemaRef('CupProjectionResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getCupProjection,
+  });
+
   fastify.post('/:cupId/crown', {
     schema: {
       tags: ['Cups'],
