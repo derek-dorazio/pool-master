@@ -235,6 +235,7 @@ export async function seedContestFixture(leagueId: string, options: {
   const contest = await prisma.contest.create({
     data: {
       leagueId,
+      seasonYear: 2026,
       name: options.name,
       status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',

@@ -42,7 +42,7 @@ async function seedLeagueWithEntry() {
     data: { leagueId: league.id, name: `Lock Team ${suffix}`, createdBy: commissioner.user.id, isActive: false },
   });
   const contest = await prisma.contest.create({
-    data: { leagueId: league.id, name: `Lock Contest ${suffix}`, status: 'OPEN', selectionType: 'RANDOM_DRAW' },
+    data: { leagueId: league.id, seasonYear: 2026, name: `Lock Contest ${suffix}`, status: 'OPEN', selectionType: 'RANDOM_DRAW' },
   });
   const entry = await prisma.contestEntry.create({
     data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Lock Entry ${suffix}` },

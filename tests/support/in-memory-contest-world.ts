@@ -46,6 +46,7 @@ import type {
 import {
   ContestFormat,
   ContestStatus,
+  CupWeight,
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
@@ -182,6 +183,8 @@ export class InMemoryContestWorld {
       leagueId,
       sportEventIds: [],
       name: 'Masters Pool',
+      seasonYear: 2026,
+      cupWeight: CupWeight.NORMAL,
       status: ContestStatus.OPEN,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,

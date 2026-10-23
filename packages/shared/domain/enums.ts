@@ -859,3 +859,46 @@ export const EmailSuppressionReason = {
   COMPLAINT: 'COMPLAINT',
 } as const;
 export type EmailSuppressionReason = (typeof EmailSuppressionReason)[keyof typeof EmailSuppressionReason];
+
+// --- Cups (#841) ---
+
+/**
+ * How much a contest counts toward its cup and the league championship (#841), set on the
+ * contest and fixed once it is COMPLETED: x1, x1.5, x2, or not at all. Every contest starts
+ * NORMAL, so a commissioner never has to touch it.
+ */
+export const CupWeight = {
+  NORMAL: 'NORMAL',
+  BONUS: 'BONUS',
+  DOUBLE: 'DOUBLE',
+  NOT_COUNTED: 'NOT_COUNTED',
+} as const;
+export type CupWeight = (typeof CupWeight)[keyof typeof CupWeight];
+
+/**
+ * The league's points table for cups and the championship (#841): what each finishing place in a
+ * contest earns. STANDARD 100, 80, 65 ... down to 5 for every place after 20th; TOP_TEN 25, 18,
+ * 15 ... 1 and nothing after 10th; FIELD_BEATEN one point per entry finished behind, plus one;
+ * CUSTOM the commissioner's own list, places past it scoring nothing.
+ */
+export const CupPointsScale = {
+  STANDARD: 'STANDARD',
+  TOP_TEN: 'TOP_TEN',
+  FIELD_BEATEN: 'FIELD_BEATEN',
+  CUSTOM: 'CUSTOM',
+} as const;
+export type CupPointsScale = (typeof CupPointsScale)[keyof typeof CupPointsScale];
+
+/**
+ * Whether one contest of a cup's season and sports league counts toward it (#841). COUNTED: it is
+ * COMPLETED with places, which earn points. NOT_COUNTED: the commissioner set its weight to not
+ * counted. NO_RESULT: it is COMPLETED with nobody placed (every event cancelled). NOT_FINAL: it is
+ * open or live, and counts once it is COMPLETED. Drafts never opened are not listed at all.
+ */
+export const CupContestCount = {
+  COUNTED: 'COUNTED',
+  NOT_COUNTED: 'NOT_COUNTED',
+  NO_RESULT: 'NO_RESULT',
+  NOT_FINAL: 'NOT_FINAL',
+} as const;
+export type CupContestCount = (typeof CupContestCount)[keyof typeof CupContestCount];

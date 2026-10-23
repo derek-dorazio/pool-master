@@ -98,6 +98,7 @@ describe('LeagueService.countLeagueActivity', () => {
     await prisma.contest.createMany({
       data: statuses.map((status) => ({
         leagueId: busy.league.id,
+        seasonYear: 2026,
         name: `Contest ${status}`,
         status,
         selectionType: 'TIERED' as const,

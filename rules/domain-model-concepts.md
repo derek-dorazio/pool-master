@@ -183,6 +183,7 @@ Shown By Its Name*.
 | `ContestSquaresGame`, `ContestEntrySquare`, `ContestSquaresDraw`, `ContestSquaresWinner` | squares game, box, numbers, winner | A squares contest's one game (#711); one claimed box of its grid, held by an entry; its drawn digits (`rowDigits` the away team's, `columnDigits` the home team's, with the seed); and, frozen at settlement, each scoring moment's winning box and entry, or none | A pick (`ContestEntryPick`, `ContestEntryMatchPrediction`): a box picks no team |
 | `ContestEntryEventStanding` | event result | An entry's result in one event, frozen when that event settles | `ContestEntryStanding`, the contest total |
 | `ContestEntryStanding` | standings, final result | An entry's contest total (the sum of its event results), frozen when the contest settles | `SportEventParticipantStanding`, a field member's position in the event |
+| `Cup` | cup, "2026 PGA Tour Cup", points race | One sports league's season-long points race in a league (#841): its standings are worked out from the frozen places of the league's contests of that season and sports league | The league championship, which counts every contest of a calendar year |
 
 ### Words that mean more than one thing
 

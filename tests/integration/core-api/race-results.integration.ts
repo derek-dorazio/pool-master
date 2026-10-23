@@ -162,7 +162,7 @@ describe('horse racing contest — read and settled from the finishing order', (
     })));
     const contest = await prisma.contest.create({
       data: {
-        leagueId: league.id, sportEvents: { create: { sportEventId: event.id, sequence: 1 } }, name: `Win Place Show ${suffix}`,
+        leagueId: league.id, seasonYear: 2026, sportEvents: { create: { sportEventId: event.id, sequence: 1 } }, name: `Win Place Show ${suffix}`,
         status: 'ACTIVE', contestFormat: 'ROSTER', selectionType: 'BUDGET_PICK',
       },
     });

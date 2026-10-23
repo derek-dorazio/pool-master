@@ -17,3 +17,4 @@ export * from './ingestion.mapper';
 export * from './selections.mapper';
 export * from './game-picks.mapper';
 export * from './platform-settings.mapper';
+export * from './cups.mapper';

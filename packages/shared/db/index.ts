@@ -119,3 +119,9 @@ export type {
   EmailOptOutRepository,
   EmailSuppressionRepository,
 } from './email-ports';
+export type {
+  CupContest,
+  CupKey,
+  CupRankedEntry,
+  CupRepository,
+} from './cup-ports';

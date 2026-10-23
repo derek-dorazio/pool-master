@@ -240,7 +240,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 
 | Route | Ticket | Returns |
 |---|---|---|
-| `GET /cups?seasonYear=` | #841 | The season's cups, each with leader and the viewer's place, `canCrown`, `unfinishedContests` |
+| `GET /cups?seasonYear=` | #841 | The season's cups, each with its full standings and contests (`CupDto`, the same shape `GET /cups/:cupId` answers). No viewer context (access rule A8): the client finds its own squad's row, and whether the commissioner can crown from its role and the contests' `count` |
 | `GET /cups/:cupId` | #841 | `CupStandingRowDto[]` (squad ref, position, points, wins, podiums, contests, movement, trophy) and `CupContestRowDto[]` (weight, `CupContestCount`: `COUNTED`, `NO_RESULT`, `NOT_FINAL`, `AFTER_CROWNING`, winner) |
 | `GET /cups/:cupId/squads/:squadId` | #841 | One squad's points, contest by contest |
 | `POST /cups/:cupId/crown` | #841 | Crown (section 2) |
@@ -289,10 +289,11 @@ journey row once a page exists.
 
 **#841 cups**
 
-1. **Model and read API.** `seasonYear` (backfilled), `Cup`, `CupStanding`, points settings,
-   `cupWeight` and enums; cups made on contest create and by migration; `cup-points.ts`;
-   `GET /cups`, `/cups/:cupId`, the squad breakdown. Plus the guard and best-entry function if
-   #863 slice 1 hasn't landed them.
+1. **Model and read API.** `seasonYear` (backfilled), `Cup`, points settings, `cupWeight` and
+   enums; cups made on contest create and by migration; `cup-points.ts`; `GET /cups`,
+   `/cups/:cupId`, the squad breakdown. Plus the guard and best-entry function if #863 slice 1
+   hasn't landed them. `CupStanding`, `Cup.status` and `crownedAt`, and the `AFTER_CROWNING` count
+   come with crowning (slice 4), so no table or value sits unwritten before then.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
    movement and race chart, the squad sheet, the league home card.
 3. **Commissioner settings.** Points table with preview; cup weight.

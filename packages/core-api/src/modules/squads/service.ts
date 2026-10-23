@@ -8,6 +8,7 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import {
+  ContestStatus,
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
@@ -433,6 +434,21 @@ export class SquadService {
       // takes them in, so a delete racing a draw waits for it instead of deadlocking (#646).
       const entries = await tx.contestEntry.findMany({ where: { squadId }, select: { id: true, contestId: true } });
       await lockContestRows(tx, entries.map((entry) => entry.contestId));
+      // A place in a finished contest is a cup's and a championship year's input (#841): the team
+      // that earned it stays, inactive, so no past standing loses a finisher.
+      const finishedPlaces = await tx.contestEntryStanding.count({
+        where: { contestEntry: { squadId }, contest: { status: ContestStatus.COMPLETED }, position: { not: null } },
+      });
+      if (finishedPlaces > 0) {
+        this.logger?.warn({
+          action: 'squad.delete.hasResults',
+          data: { leagueId, squadId, userId, finishedPlaces },
+        }, 'Rejected squad delete because the team has places in finished contests');
+        throw new SquadOperationError(
+          `${squad.name} has finished contests behind it, so it stays in the league's results. It can stay inactive instead.`,
+          'SQUAD_DELETE_HAS_RESULTS',
+        );
+      }
       const entryIds = entries.map((entry) => entry.id);
 
       if (entryIds.length > 0) {

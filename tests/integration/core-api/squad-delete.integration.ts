@@ -90,6 +90,7 @@ async function seedLeagueWithContestHistory() {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
+      seasonYear: 2026,
       sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
       name: `Delete Team Contest ${suffix}`,
       status: 'OPEN',
@@ -203,5 +204,25 @@ describe('Permanently deleting an inactive team', () => {
     expect(response.statusCode).toBe(400);
     expect(response.json()).toMatchObject({ error: { code: 'SQUAD_DELETE_REQUIRES_INACTIVE' } });
     await expect(prisma.contestEntry.count({ where: { squadId: seeded.ownerSquad.id } })).resolves.toBe(1);
+  });
+
+  it('refuses to delete an inactive team with a place in a finished contest with 400 SQUAD_DELETE_HAS_RESULTS, so no cup or past year loses a finisher', async () => {
+    const prisma = getPrisma();
+    const app = getApp();
+    const seeded = await seedLeagueWithContestHistory();
+    const admin = await createTestUser({ isRootAdmin: true });
+    await prisma.contest.update({ where: { id: seeded.ownerEntry.contestId }, data: { status: 'COMPLETED' } });
+    await prisma.squad.update({ where: { id: seeded.ownerSquad.id }, data: { isActive: false } });
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: API_ROUTES.squads.detail(seeded.league.id, seeded.ownerSquad.id),
+      headers: withoutJsonBodyHeaders(admin.headers),
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: { code: 'SQUAD_DELETE_HAS_RESULTS' } });
+    await expect(prisma.squad.findUnique({ where: { id: seeded.ownerSquad.id } })).resolves.not.toBeNull();
+    await expect(prisma.contestEntryStanding.count({ where: { contestEntryId: seeded.ownerEntry.id } })).resolves.toBe(1);
   });
 });
