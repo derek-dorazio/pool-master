@@ -1,4 +1,4 @@
-import { EmailMessageStatus } from '@poolmaster/shared/domain';
+import { EmailMessageStatus, type User } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   EmailSender,
@@ -17,7 +17,17 @@ import {
 } from '../../support/in-memory-email-messages';
 
 const NOW = new Date('2026-10-23T16:20:00.000Z');
-const ADMIN = { id: 'admin-1', firstName: 'Testing', lastName: 'Admin', username: 'testing-admin', email: 'admin@example.com' };
+const ADMIN: User = {
+  id: 'admin-1',
+  firstName: 'Testing',
+  lastName: 'Admin',
+  username: 'testing-admin',
+  email: 'admin@example.com',
+  isActive: true,
+  isRootAdmin: true,
+  createdAt: NOW,
+  updatedAt: NOW,
+};
 
 function testService(send: MailDeliveryProvider['send'], now: () => Date = () => NOW) {
   const messages = inMemoryEmailMessages(now);
@@ -34,7 +44,7 @@ function testService(send: MailDeliveryProvider['send'], now: () => Date = () =>
     senderAddress: 'noreply@qa.example.com',
     now,
   });
-  const users = { findById: (id: string) => Promise.resolve(id === ADMIN.id ? ADMIN : undefined) };
+  const users = { findById: (id: string) => Promise.resolve(id === ADMIN.id ? ADMIN : null) };
   return new EmailTestService({ email, sender, messages, users, environment: 'qa', now });
 }
 
