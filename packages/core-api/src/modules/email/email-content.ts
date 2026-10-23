@@ -44,3 +44,9 @@ export function buildCreateContestUrl(appBaseUrl: string, leagueCode: string, te
 export function buildContestAdminUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
   return `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/${encodeURIComponent(contestId)}`;
 }
+
+/** A sport event's root admin page, under the sport's Manage pages. */
+export function buildSportEventAdminUrl(appBaseUrl: string, sport: string, sportEventId: string): string {
+  const sportSegment = sport.toLowerCase().replace(/_/g, '-');
+  return `${appBaseUrl.replace(/\/+$/, '')}/manage/sports/${sportSegment}/events/${encodeURIComponent(sportEventId)}`;
+}

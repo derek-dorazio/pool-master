@@ -152,6 +152,7 @@ function buildUserWhere(filters: UserSearchFilters): Prisma.UserWhereInput {
       }
       : {}),
     ...(typeof filters.isActive === 'boolean' ? { isActive: filters.isActive } : {}),
+    ...(typeof filters.isRootAdmin === 'boolean' ? { isRootAdmin: filters.isRootAdmin } : {}),
   };
 }
 

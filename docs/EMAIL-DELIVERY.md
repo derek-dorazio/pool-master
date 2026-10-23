@@ -419,5 +419,12 @@ events are weeks (each NFL week its own event) is told of its season's first wee
 idempotency key (event, league, person; for C4, contest, person) sends each once, and a league or
 contest already told is skipped before its email is built.
 
+Event still in draft emails (`EVENT_STILL_DRAFT`, #845 G1, category Root admin, which can't be
+turned off) are the step's fourth kind. While an event starts within 7 days and is still a draft,
+every active root admin is told once a day, from the app rather than a league: when it starts,
+what it still needs before release (the release refusal's own list: field, tiers, prices, a
+bracket), or that it only needs releasing, with a link to its Manage page. The idempotency key
+(event, start, whole days left, person) sends one a day and stops once it is released or starts.
+
 If the outbox cannot record a welcome, a receipt, a new contest, a contest-started, a final results or an event changed email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

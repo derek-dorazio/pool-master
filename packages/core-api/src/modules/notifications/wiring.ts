@@ -27,9 +27,10 @@ import {
 } from '../../adapters';
 import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
-import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
+import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
 import { ContestNotices } from './contest-notices';
+import { DraftEventNotices } from './draft-event-notices';
 import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
 import { LiveStandings } from './live-standings';
@@ -95,6 +96,20 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     finalStandings: createContestService(prisma, options.logger),
+    ...options,
+  });
+}
+
+export function createDraftEventNotices(prisma: PrismaClient, options: {
+  email: EmailService;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+}): DraftEventNotices {
+  return new DraftEventNotices({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    // Read-only: only release readiness is asked, so its own lifecycle is never used.
+    releaseReadiness: createSportEventServices(prisma, options.logger).sportEvents,
+    users: new PrismaUserRepository(prisma),
     ...options,
   });
 }

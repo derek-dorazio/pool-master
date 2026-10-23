@@ -395,7 +395,7 @@ export class SportEventService {
         409,
       );
     }
-    const missing = [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(event)];
+    const missing = await this.releaseBlockersFor(summary);
     if (missing.length > 0) {
       this.deps.logger?.warn(
         {
@@ -438,6 +438,19 @@ export class SportEventService {
     }
     await this.deps.sportEvents.delete(sportEventId);
     this.deps.logger?.info({ sportEventId }, 'Deleted sport event');
+  }
+
+  /**
+   * What a draft event still needs before it can be released, in the words the release refusal
+   * uses ("its field is not loaded"); empty when it is ready. The "event still in draft" email
+   * lists them.
+   */
+  async releaseBlockersOf(sportEventId: string): Promise<string[]> {
+    return this.releaseBlockersFor(await this.requireSummary(sportEventId));
+  }
+
+  private async releaseBlockersFor(summary: SportEventSummary): Promise<string[]> {
+    return [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(summary.event)];
   }
 
   /** `releasedOnly` hides a DRAFT as if it did not exist: only a root admin sees drafts (#431). */
