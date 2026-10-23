@@ -53,7 +53,6 @@ import {
   SelectionType,
   SportEventStatus,
   eventRoundLabel,
-  getSportDefinition,
   type Contest,
   type League,
   type SportEvent,
@@ -299,11 +298,11 @@ export class LiveStandings implements DueNotifications {
     if (!finished || finished.roundNumber >= lastRound || !isDue(finished.finishedAt)) return [];
     const roundNumber = finished.roundNumber;
     const roundNames = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
-    const roundCount = Math.max(sportEvent.rounds ?? getSportDefinition(sportEvent.sport).defaultRounds, lastRound);
+    // Its games tell its round count where the event stores none, as entry receipts read it.
+    const roundCount = Math.max(sportEvent.rounds ?? 0, lastRound);
     const roundName = (round: number): string => eventRoundLabel(sportEvent.sport, roundNames, round, roundCount);
     const nextStart = matches
-      .filter((match) => match.roundNumber === roundNumber + 1 && match.scheduledDate !== null)
-      .map((match) => match.scheduledDate?.getTime() ?? 0)
+      .flatMap((match) => (match.roundNumber === roundNumber + 1 && match.scheduledDate !== null ? [match.scheduledDate.getTime()] : []))
       .sort((left, right) => left - right)
       .at(0);
     const moment: StandingsMoment = {

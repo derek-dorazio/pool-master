@@ -157,6 +157,7 @@ describe('LiveStandings.queueDue', () => {
   let survivorBoards: Map<string, SurvivorLeaderboardModel>;
   let bracketBoards: Map<string, { entries: BracketLeaderboardEntryRow[]; champions: Map<string, { name: string; outcome: PickOutcome }> }>;
   let matches: Map<string, SportEventMatch[]>;
+  let roundNames: string[];
   let positions: Map<string, number | null>;
   let failingContestId: string | null;
 
@@ -170,6 +171,7 @@ describe('LiveStandings.queueDue', () => {
     survivorBoards = new Map();
     bracketBoards = new Map();
     matches = new Map();
+    roundNames = ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'];
     positions = new Map();
     failingContestId = null;
   });
@@ -225,7 +227,7 @@ describe('LiveStandings.queueDue', () => {
       },
       matches: { findBySportEvent: async (sportEventId) => matches.get(sportEventId) ?? [] },
       configurations: world.configurationRepo(),
-      sportLeagues: { findById: async () => ({ roundNames: ['First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship'] }) as unknown as SportLeague },
+      sportLeagues: { findById: async () => ({ roundNames }) as unknown as SportLeague },
       positions: {
         findByContest: async (contestId) => new Map(
           [
@@ -760,6 +762,27 @@ describe('LiveStandings.queueDue', () => {
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).toContain('Entry e1: your champion, Duke, is still alive, with 190 points possible.');
     expect(positions).toEqual(new Map([['e1', 1], ['e2', 2]]));
+  });
+
+  it('names a bracket\'s rounds from its own games when its event stores no round count, so a four-round playoff is named in its league\'s words', async () => {
+    const done = new Date('2026-04-30T04:30:00.000Z');
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const playoffs = world.addSportEvent({ name: 'NBA Playoffs', sport: 'BASKETBALL', startDate: new Date('2026-04-18T17:00:00.000Z'), status: SportEventStatus.IN_PROGRESS } as Partial<SportEvent> & { startDate: Date });
+    const contest = world.addContest(league.id, { name: 'Playoff Bracket', status: ContestStatus.ACTIVE, contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET, sportEventIds: [playoffs.id] });
+    roundNames = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
+    matches.set(playoffs.id, [
+      game(1, MatchStatus.COMPLETED, after(done, -2880)),
+      game(2, MatchStatus.COMPLETED, done),
+      game(3, MatchStatus.SCHEDULED, new Date(0)),
+      game(4, MatchStatus.SCHEDULED, new Date(0)),
+    ]);
+    const ana = member(league.id, 'Ana');
+    bracketBoards.set(contest.id, { entries: [bracketRow('e1', ana.squad, 1, 30, 190)], champions: new Map() });
+
+    await standings().queueDue(after(done, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.subject).toBe('After Conference Semifinals: Playoff Bracket');
   });
 
   it('sends nothing after a bracket\'s final, which the final results cover, nor for rounds before a second-chance bracket starts', async () => {
