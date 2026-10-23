@@ -372,10 +372,8 @@ snapshot as of 31 December (championship place, tiles, best finish, cups, trophi
 year), linking to the squad page for that year. It is the same data at one moment, so it is an
 email, not another page. Sent through the email outbox (#845), class B.
 
-- **Q6 (open, Derek)** What sends it? Recommendation: the commissioner, with a "Send the 2026
-  year in review" button on the Championships page from 1 January, like crowning. No job runs,
-  and the commissioner picks the moment (after the last cup is crowned, say). The other way is
-  the existing event lifecycle sweep sending it on its first pass after 1 January.
+- **Q6** (Derek, 2026-10-23) The commissioner sends it, with a "Send the 2026 year in review"
+  button on the Championships page from 1 January. No job runs. An automatic send can come later.
 
 ### Slices (#872)
 
