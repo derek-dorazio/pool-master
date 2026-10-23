@@ -67,7 +67,7 @@ event, so a player's round is simply their game.
 Each composite is a fixed formula of whole-number stats, so it is a whole number per game.
 Nobody edits it (Q3, Decided).
 
-| Sport | Composite | Formula (proposed, Q11) |
+| Sport | Composite | Formula (Q11, Decided for now) |
 |---|---|---|
 | Baseball | **Box Score** | Total bases + Runs + RBI + Walks + Stolen bases |
 | Basketball (NBA) | **Triple Threat** | Points + Rebounds + Assists |
@@ -218,15 +218,13 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
   participant-type and scoring-family overrides. A new sport ("Baseball players") would split
   baseball's pages and copy in two.*
 - **Q8. Which leagues? Decided:** MLB, NBA, NHL and NFL. No WNBA.
-- **Q9. Roster size and counted players.** *Recommend Tiered: one player from each of six tiers,
+- **Q9. Roster size and counted players. Decided:** Tiered: one player from each of six tiers,
   best four count. Budget: six players under the cap, best four count. Quick pick: three players
-  each.* All are editable by the commissioner, as today.
-- **Q10. Which live data provider?** *Recommend its own research ticket before slice 5:
+  each. All are editable by the commissioner, as today.
+- **Q10. Which live data provider? Decided:** its own research ticket before slice 5:
   Sportradar, SportsDataIO and Stats Perform all cover the four leagues' player stats live.
   Compare price, licence terms for a pool site, and push versus polling, then pick one for
-  every sport, golf included.*
-- **Q11. The formulas.** Now that each sport has one score, its formula matters more. *Recommend
-  the table in section 2. Box Score rewards getting on base and producing runs. Triple Threat is
-  the betting world's familiar points + rebounds + assists. Power Play weights a goal double an
-  assist, with shots so a quiet game still scores. Redzone is close to standard fantasy points,
-  kept to whole numbers.*
+  every sport, golf included.
+- **Q11. The formulas. Decided for now:** the table in section 2; Derek may revisit them. Each
+  formula lives in its sport definition, so changing one is a small code change, and contests
+  already settled keep their standings.
