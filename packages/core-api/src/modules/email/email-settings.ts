@@ -32,6 +32,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
       CONTEST_ENTRY_REMINDER: true,
       CONTEST_OPENED: true,
       CONTEST_STANDINGS: true,
+      CONTEST_RESULTS: true,
     },
   }),
 });

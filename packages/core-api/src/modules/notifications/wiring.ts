@@ -59,7 +59,7 @@ export function createEntryReminders(prisma: PrismaClient, options: {
 export function createContestNotices(prisma: PrismaClient, options: {
   email: EmailService;
   appBaseUrl: string;
-  logger?: FastifyBaseLogger;
+  logger: FastifyBaseLogger;
 }): ContestNotices {
   return new ContestNotices({
     contests: new PrismaContestRepository(prisma),
@@ -73,6 +73,7 @@ export function createContestNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
+    finalStandings: createContestService(prisma, options.logger),
     ...options,
   });
 }

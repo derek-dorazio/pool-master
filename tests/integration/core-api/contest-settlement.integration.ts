@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
-import { Sport } from '@poolmaster/shared/domain';
-import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
+import { Sport, type Contest } from '@poolmaster/shared/domain';
+import { createContestService, createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import {
   cleanupTestData,
   createTestUser,
@@ -10,6 +10,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { freshEventEdition } from '../../support/event-edition';
+import { fakeLogger } from '../../support/fake-logger';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -19,9 +20,14 @@ afterAll(async () => {
 });
 
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
-  it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, and is idempotent', async () => {
+  it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, tells the league its final places once per completion, and is idempotent', async () => {
     const prisma = getPrisma();
-    const service = createContestSettlementService(prisma);
+    const contests = createContestService(prisma, fakeLogger());
+    // What the final results email reads, read when settlement tells it the contest completed.
+    const told: Array<{ contestId: string; final: Awaited<ReturnType<typeof contests.finalStandingsOf>> }> = [];
+    const service = createContestSettlementService(prisma, undefined, {
+      contestSettled: { contestSettled: async (contest: Contest) => { told.push({ contestId: contest.id, final: await contests.finalStandingsOf(contest) }); } },
+    });
     const suffix = randomUUID().slice(0, 8);
     const owner = await createTestUser({ displayName: `Golf Settlement ${suffix}` });
     const sport = await prisma.sport.upsert({
@@ -153,6 +159,16 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     expect(statuses.find((contest) => contest.id === directContest.id)?.endsAt)
       .toEqual(new Date('2026-05-31T22:00:00.000Z'));
     await expect(prisma.contestEntryStanding.count({ where: { contestId: noRuleContest.id } })).resolves.toBe(0);
+    expect(told).toEqual([{
+      contestId: directContest.id,
+      final: {
+        scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+        entries: [
+          { entryId: directEntries.winner.id, entryName: 'Winner', squadId: squadOne.id, squadName: squadOne.name, position: 1, displayPosition: '1', score: -9 },
+          { entryId: directEntries.runnerUp.id, entryName: 'Runner Up', squadId: squadTwo.id, squadName: squadTwo.name, position: 2, displayPosition: '2', score: 1 },
+        ],
+      },
+    }]);
 
     const readStandings = async () => (await prisma.contestEntryStanding.findMany({
       where: { contestId: directContest.id },
@@ -207,6 +223,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       where: { id: directContest.id },
       select: { status: true, endsAt: true },
     })).resolves.toEqual({ status: 'COMPLETED', endsAt: new Date('2026-05-31T22:00:00.000Z') });
+    expect(told).toHaveLength(1);
 
     // The event's own standings froze at the first settlement too (#713).
     await expect(prisma.contestEntryEventStanding.count({ where: { contestId: directContest.id, sportEventId: event.id } }))
@@ -230,6 +247,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       [-9, '1'],
       [1, '2'],
     ]);
+    expect(told.map((notice) => notice.contestId)).toEqual([directContest.id, directContest.id]);
     // Still one row per entry: the resettle updated the standings in place.
     await expect(prisma.contestEntryStanding.count({ where: { contestId: directContest.id } })).resolves.toBe(2);
   });
@@ -310,6 +328,26 @@ describe('golf contest settlement — which contests settle', () => {
     await expect(prisma.contest.findUniqueOrThrow({ where: { id: retiredKeys.id }, select: { status: true } }))
       .resolves.toEqual({ status: 'COMPLETED' });
     await expect(prisma.contestEntryStanding.count({ where: { contestId: invalidSettings.id } })).resolves.toBe(0);
+  });
+
+  it('still completes a contest whose final results email cannot be queued, and logs the failure', async () => {
+    const prisma = getPrisma();
+    const logger = fakeLogger();
+    const service = createContestSettlementService(prisma, logger, {
+      contestSettled: { contestSettled: async () => Promise.reject(new Error('outbox unavailable')) },
+    });
+    const { league, event, suffix } = await seedCompletedEvent();
+    const active = await createSettlementContest({ leagueId: league.id, sportEventId: event.id, name: `Mail Down ${suffix}` });
+
+    const summary = await service.settleFinishedSportEvent(event.id);
+
+    expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1 });
+    await expect(prisma.contest.findUniqueOrThrow({ where: { id: active.id }, select: { status: true } }))
+      .resolves.toEqual({ status: 'COMPLETED' });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ contestId: active.id, error: 'outbox unavailable' }),
+      'Failed to queue final results emails',
+    );
   });
 
   it('settles nothing while the event is not yet COMPLETED', async () => {
