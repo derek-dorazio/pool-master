@@ -50,11 +50,12 @@ section 8 carry a recommendation each, and none is answered yet except the ones 
 5. Games that are never played (a sweep) score nothing for anyone. When the series ends and the
    last box score is in, the contest settles and goes Final. Ties are allowed, as everywhere.
 
-The NFL's version (Derek, 2026-10-23) is one event of two rounds: conference championship
-weekend (AFC and NFC games together), then the Super Bowl. The field is the four teams' players.
-The two teams that lose in round 1 play no round 2, so their players stop scoring, which works
-like golf's cut. Picking a player from the AFC and NFC losers is a real risk, and that is what
-makes it interesting.
+The NFL's version (Decided, Derek 2026-10-23) is two events of one round each, a week apiece.
+**Conference Championship weekend** has the AFC and NFC title games together, its field the
+four teams' players and its one round both games. The **Super Bowl** is its own event, its field
+the two teams' players. A commissioner runs a pool on either one, or one contest over both, since
+a contest can already cover several events (#713). Each game is played once, so a player's
+round is simply their game.
 
 ---
 
@@ -89,10 +90,9 @@ the sport data file loader and its two workflows.
 **Reused with one new case:**
 - `SportEventRound` and `SportEventParticipantRound`: a game is a round, and a player's game is
   their participant round, exactly as a golfer's round is.
-- `ParticipantInactiveReason`: a player whose team is out (the NFL's round 1 losers) is
-  eliminated, as a golfer who misses the cut is. An injured player is withdrawn.
-- The leaderboard's per-round columns (R1 to R4) read Game 1 to Game 7, or Conference and Super
-  Bowl, from the event's round labels.
+- `ParticipantInactiveReason`: an injured or scratched player is withdrawn, as a golfer is.
+- The leaderboard's per-round columns (R1 to R4) read Game 1 to Game 7 from the event's round
+  labels. An NFL event has one round, so it shows the single game's score.
 
 **New:**
 - **Scoring family `STAT_TOTAL`**, beside stroke play, finish position and head to head, with one
@@ -147,7 +147,7 @@ thrown away at launch.
   rescores, as golf's score corrections do (an admin enters every value).
 - **Test data:** every new sport league needs its last-season test data file
   (`rules/architecture-rules.md` §6). Those are the 2025 World Series, the 2025 NBA Finals, the
-  2025 Stanley Cup Final and the 2026 NFL conference championships plus Super Bowl LX, as played,
+  2025 Stanley Cup Final and the 2026 NFL Conference Championship weekend and Super Bowl LX (two events), as played,
   with real box scores. They are also how the pools get tried before a real series.
 
 ---
@@ -178,7 +178,8 @@ thrown away at launch.
    the four test data files with real box scores.
 3. **Contest screens.** The Stat picker, the entry page's stat column, leaderboard game columns,
    and copy (How to Play, blurbs).
-4. **First real load.** The 2027 NFL conference championship field and box scores through the
+4. **First real load.** The 2027 NFL Conference Championship weekend and Super Bowl LXI fields
+   and box scores through the
    workflows, with a `docs/SPORT-DATA-SOURCES.md` row per sport.
 5. **Live provider (before launch).** The provider's adapter, the stat-line live-score category
    and the family's writer, after Q10 picks the provider.
