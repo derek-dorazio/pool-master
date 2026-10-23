@@ -105,7 +105,8 @@
     --chart-series-4: var(--color-navy-300);
     --chart-series-5: var(--color-navy-200);
     --chart-grid: rgba(11, 30, 63, 0.1);
-    /* Podium steps, 1st to 3rd: gold, silver, bronze, each with the text that reads on it. */
+    /* Podium steps, 1st to 3rd: gold, silver, bronze, each with the text that reads on it.
+       Medal colours are the same in both themes, so `.dark` does not redefine them. */
     --podium-1-surface: var(--color-gold-400);
     --podium-1-text: var(--color-navy-600);
     --podium-2-surface: var(--color-navy-100);

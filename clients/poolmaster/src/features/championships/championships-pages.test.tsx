@@ -225,6 +225,18 @@ describe('Championships › Championship', () => {
     expect(screen.getByText(/Points table: Standard\./)).toBeInTheDocument();
   });
 
+  it('narrows the standings to the squads whose name matches the search', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.change(await screen.findByTestId('championship-standings-search'), { target: { value: 'fore' } });
+
+    expect(screen.getByTestId('championship-standing-team-3')).toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standing-team-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standing-team-2')).not.toBeInTheDocument();
+  });
+
   it('says nobody leads before any contest has counted', async () => {
     primeViewer([], buildRunningChampionship({
       contestsCounted: 0,

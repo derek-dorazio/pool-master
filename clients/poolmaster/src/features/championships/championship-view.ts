@@ -16,7 +16,7 @@ export const CHAMPIONSHIP_TILE_LABELS: Record<ChampionshipTile, string> = {
 };
 
 /** The squads in 1st, once any contest has counted; nobody leads a championship still at 0. */
-export function championshipLeaders(championship: ChampionshipDto): ChampionshipStandingRowDto[] {
+function championshipLeaders(championship: ChampionshipDto): ChampionshipStandingRowDto[] {
   return championship.standings.filter((row) => row.position === 1 && row.points > 0);
 }
 
