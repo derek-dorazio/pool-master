@@ -54,7 +54,8 @@ export function formatPlace(row: Pick<CupStandingRowDto, 'displayPosition' | 'po
   return row.displayPosition.startsWith('T') ? row.displayPosition : formatOrdinalPlace(row.position);
 }
 
-function joinNames(names: string[]) {
+/** Names as a sentence lists them: "A", "A and B", "A, B and C". */
+export function joinNames(names: string[]) {
   return names.length <= 2 ? names.join(' and ') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 }
 

@@ -1,4 +1,4 @@
-import type { CupContestRowDto, CupDto, CupStandingRowDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, CupContestRowDto, CupDto, CupStandingRowDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -85,4 +85,62 @@ export function buildRunningCup(): CupDto {
       }),
     ],
   });
+}
+
+export function buildChampionshipStanding(overrides: Partial<ChampionshipStandingRowDto> = {}): ChampionshipStandingRowDto {
+  return {
+    squadId: 'team-1',
+    squadName: 'Casey Crushers',
+    squadIconKey: 'CAPTAIN_SMILE_FIELD',
+    squadIsActive: true,
+    position: 1,
+    displayPosition: '1',
+    points: 0,
+    finishes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    podiums: 0,
+    topTens: 0,
+    played: 0,
+    ...overrides,
+  };
+}
+
+/**
+ * A 2026 championship three contests in, two to go: Birdie Bandits lead the viewer's Casey
+ * Crushers by 15 points, with Fore Play 3rd.
+ */
+export function buildRunningChampionship(overrides: Partial<ChampionshipDto> = {}): ChampionshipDto {
+  const bandits = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' as const };
+  const crushers = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' as const };
+  return {
+    leagueId: 'league-1',
+    year: 2026,
+    cupName: 'Big Dawgs Cup',
+    name: '2026 Big Dawgs Cup',
+    isOver: false,
+    contestsCounted: 3,
+    contestsToGo: 2,
+    standings: [
+      buildChampionshipStanding({
+        ...bandits, position: 1, displayPosition: '1', points: 2450,
+        finishes: [2, 0, 1, 0, 0, 0, 0, 0, 0, 0], podiums: 3, topTens: 3, played: 3,
+      }),
+      buildChampionshipStanding({
+        ...crushers, position: 2, displayPosition: '2', points: 2300,
+        finishes: [1, 2, 0, 0, 0, 0, 0, 0, 0, 0], podiums: 3, topTens: 3, played: 3,
+      }),
+      buildChampionshipStanding({
+        squadId: 'team-3', squadName: 'Fore Play', squadIconKey: 'CAPTAIN_SMILE_SUNSET', position: 3, displayPosition: '3', points: 1950,
+        finishes: [0, 1, 2, 0, 0, 0, 0, 0, 0, 0], podiums: 3, topTens: 3, played: 3,
+      }),
+    ],
+    tiles: [
+      { tile: 'MOST_FIRSTS', count: 2, squads: [bandits] },
+      { tile: 'MOST_SECONDS', count: 2, squads: [crushers] },
+      { tile: 'MOST_THIRDS', count: 2, squads: [{ squadId: 'team-3', squadName: 'Fore Play', squadIconKey: 'CAPTAIN_SMILE_SUNSET' }] },
+      { tile: 'MOST_PODIUMS', count: 3, squads: [bandits, crushers] },
+      { tile: 'MOST_TOP_TENS', count: 3, squads: [bandits, crushers] },
+      { tile: 'MOST_PLAYED', count: 3, squads: [bandits, crushers] },
+    ],
+    ...overrides,
+  };
 }

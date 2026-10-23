@@ -319,7 +319,7 @@ journey row once a page exists.
    slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
    second backfill.
 2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting (landed with #841 slice 3);
-   championship trophies on the shelf. Builds the page shell if #841 slice 2 hasn't.
+   championship trophies on the shelf, which comes with the shelf itself in #841 slice 4. Builds the page shell if #841 slice 2 hasn't.
 
 **#837 history** (after both pages exist)
 

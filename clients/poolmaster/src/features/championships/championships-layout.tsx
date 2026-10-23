@@ -11,7 +11,7 @@ import { PageHeader, SegmentedControl } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { championshipsTitle, parseChampionshipYearParam } from './championship-year';
 
-type ChampionshipsTab = 'trophies' | 'race';
+type ChampionshipsTab = 'championship' | 'trophies' | 'race';
 
 /** Championships with no year opens the current one. */
 export function ChampionshipsRedirect() {
@@ -21,8 +21,9 @@ export function ChampionshipsRedirect() {
 
 /**
  * Championships (#841, #863): one header for the year and a segmented sub-menu between its pages
- * (rules/ux-rules.md §12 rule 9). Trophy case has a card per sports league cup; Points race is one
- * cup's standings, race chart and contests.
+ * (rules/ux-rules.md §12 rule 9). Championship, where every year lands, is the league championship
+ * across every sport; Trophy case has a card per sports league cup; Points race is one cup's
+ * standings, race chart and contests.
  */
 export function ChampionshipsLayout() {
   const { leagueCode = '', year: yearParam } = useParams<{ leagueCode: string; year: string }>();
@@ -51,10 +52,13 @@ export function ChampionshipsLayout() {
 
   const yearPath = buildLeagueChampionshipsPath(leagueCode, year);
   const paths: Record<ChampionshipsTab, string> = {
+    championship: yearPath,
     trophies: buildLeagueTrophyCasePath(leagueCode, year),
     race: `${yearPath}/race`,
   };
-  const tab: ChampionshipsTab = pathname.startsWith(paths.race) ? 'race' : 'trophies';
+  const tab: ChampionshipsTab = pathname.startsWith(paths.race)
+    ? 'race'
+    : pathname.startsWith(paths.trophies) ? 'trophies' : 'championship';
 
   return (
     <section className="space-y-6" data-testid="championships-page">
@@ -64,6 +68,7 @@ export function ChampionshipsLayout() {
             aria-label="Championship views"
             onChange={(next) => navigate(paths[next as ChampionshipsTab])}
             options={[
+              { label: 'Championship', testId: 'championships-tab-championship', value: 'championship' },
               { label: 'Trophy case', testId: 'championships-tab-trophies', value: 'trophies' },
               { label: 'Points race', testId: 'championships-tab-race', value: 'race' },
             ]}

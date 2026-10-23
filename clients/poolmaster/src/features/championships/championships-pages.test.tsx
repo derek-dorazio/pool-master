@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -12,13 +12,22 @@ import {
   buildLeagueSquadMember,
   getLeagueByCodeData,
 } from '@/features/leagues/test/fixtures';
+import { ChampionshipPage } from './championship-page';
 import { ChampionshipsLayout, ChampionshipsRedirect } from './championships-layout';
 import { CupSquadPointsPage } from './cup-squad-points-page';
 import { PointsRacePage } from './points-race-page';
 import { TrophyCasePage } from './trophy-case-page';
-import { buildCup, buildCupContest, buildCupStanding, buildRunningCup } from './test/fixtures';
+import {
+  buildChampionshipStanding,
+  buildCup,
+  buildCupContest,
+  buildCupStanding,
+  buildRunningChampionship,
+  buildRunningCup,
+} from './test/fixtures';
 
-const { getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+  getChampionshipMock: vi.fn(),
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
@@ -27,6 +36,7 @@ const { getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCups
 }));
 
 bindApiMocks({
+  getChampionship: getChampionshipMock,
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
@@ -50,7 +60,7 @@ function renderChampionships(path: string) {
           <Routes>
             <Route element={<ChampionshipsRedirect />} path="/league/:leagueCode/championships" />
             <Route element={<ChampionshipsLayout />} path="/league/:leagueCode/championships/:year">
-              <Route element={<Navigate replace to="trophies" />} index />
+              <Route element={<ChampionshipPage />} index />
               <Route element={<TrophyCasePage />} path="trophies" />
               <Route element={<PointsRacePage />} path="race" />
               <Route element={<PointsRacePage />} path="race/:sportLeagueId" />
@@ -64,7 +74,7 @@ function renderChampionships(path: string) {
   );
 }
 
-function primeViewer(cups = [buildRunningCup()]) {
+function primeViewer(cups = [buildRunningCup()], championship = buildRunningChampionship()) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
@@ -72,6 +82,7 @@ function primeViewer(cups = [buildRunningCup()]) {
     { membership: buildLeagueMembership({ role: 'MEMBER' }), squadMembership: buildLeagueSquadMember() },
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
+  getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
 }
 
 const NFL_CUP = buildCup({
@@ -113,20 +124,21 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [getChampionshipMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
     mock.mockReset();
   }
 });
 
 describe('Championships', () => {
-  it('opens the current year\'s Trophy case from the menu link, titled as the year\'s race', async () => {
+  it('opens the current year\'s Championship from the menu link, titled as the year\'s race', async () => {
     primeViewer();
 
     renderChampionships('/league/BIGDAWGS/championships');
 
     expect(await screen.findByRole('heading', { name: '2026 Championship Race' })).toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/championships/2026/trophies');
-    expect(listCupsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { seasonYear: 2026 } }));
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/league\/BIGDAWGS\/championships\/2026$/);
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    expect(getChampionshipMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', year: '2026' } }));
   });
 
   it('titles a year that is over as its championships', async () => {
@@ -143,7 +155,108 @@ describe('Championships', () => {
     renderChampionships('/league/BIGDAWGS/championships/latest/trophies');
 
     expect(await screen.findByRole('heading', { name: '2026 Championship Race' })).toBeInTheDocument();
-    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/championships/2026/trophies');
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/league\/BIGDAWGS\/championships\/2026$/);
+  });
+});
+
+describe('Championships › Championship', () => {
+  it('names who leads the running year and by how much, with the contests still to count, and no podium yet', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-name')).toHaveTextContent('2026 Big Dawgs Cup');
+    expect(screen.getByTestId('championship-standing')).toHaveTextContent('Birdie Bandits leads by 15 points with 2 contests to go.');
+    expect(screen.getByText('The trophy is presented on 1 January. Contests still live then count toward 2027.')).toBeInTheDocument();
+    expect(screen.queryByTestId('championship-podium')).not.toBeInTheDocument();
+  });
+
+  it('presents the trophy to the champion once the year is over, with 2nd and 3rd on the podium', async () => {
+    primeViewer([], buildRunningChampionship({ year: 2025, name: '2025 Big Dawgs Cup', isOver: true, contestsToGo: 0 }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2025');
+
+    expect(await screen.findByTestId('championship-standing')).toHaveTextContent('Birdie Bandits won with 245 points.');
+    expect(screen.getByText('Champion')).toBeInTheDocument();
+    const podium = within(screen.getByTestId('championship-podium'));
+    expect(podium.getByTestId('championship-podium-1')).toHaveTextContent('Birdie Bandits');
+    expect(podium.getByTestId('championship-podium-2')).toHaveTextContent('Casey Crushers');
+    expect(podium.getByTestId('championship-podium-3')).toHaveTextContent('Fore Play');
+  });
+
+  it('puts squads tied for 1st on one step as champions, leaving out the 2nd step nobody holds', async () => {
+    primeViewer([], buildRunningChampionship({
+      isOver: true,
+      contestsToGo: 0,
+      standings: [
+        buildChampionshipStanding({ squadId: 'team-2', squadName: 'Birdie Bandits', position: 1, displayPosition: 'T1', points: 1800 }),
+        buildChampionshipStanding({ squadId: 'team-1', squadName: 'Casey Crushers', position: 1, displayPosition: 'T1', points: 1800 }),
+        buildChampionshipStanding({ squadId: 'team-3', squadName: 'Fore Play', position: 3, displayPosition: '3', points: 900 }),
+      ],
+    }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-standing')).toHaveTextContent('Birdie Bandits and Casey Crushers share the championship.');
+    expect(screen.getByText('Champions')).toBeInTheDocument();
+    expect(screen.getByTestId('championship-podium-1')).toHaveTextContent('Birdie Bandits and Casey Crushers');
+    expect(screen.queryByTestId('championship-podium-2')).not.toBeInTheDocument();
+    expect(screen.getByTestId('championship-podium-3')).toHaveTextContent('Fore Play');
+  });
+
+  it('shows each medal tile with its count and every squad holding it', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-tile-MOST_FIRSTS')).toHaveTextContent('Most 1sts2Birdie Bandits');
+    expect(screen.getByTestId('championship-tile-MOST_PODIUMS')).toHaveTextContent('Most podiums3Birdie Bandits and Casey Crushers');
+  });
+
+  it('ranks the squads with points and their finishes 1st to 10th, the viewer marked', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    const row = within(await screen.findByTestId('championship-standing-team-1'));
+    expect(row.getByText('230')).toBeInTheDocument();
+    expect(row.getByText('You')).toBeInTheDocument();
+    expect(screen.getByTestId('championship-progress')).toHaveTextContent('3 contests final');
+    expect(screen.getByText(/Points table: Standard\./)).toBeInTheDocument();
+  });
+
+  it('narrows the standings to the squads whose name matches the search', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.change(await screen.findByTestId('championship-standings-search'), { target: { value: 'fore' } });
+
+    expect(screen.getByTestId('championship-standing-team-3')).toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standing-team-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standing-team-2')).not.toBeInTheDocument();
+  });
+
+  it('says nobody leads before any contest has counted', async () => {
+    primeViewer([], buildRunningChampionship({
+      contestsCounted: 0,
+      standings: [buildChampionshipStanding()],
+      tiles: [{ tile: 'MOST_FIRSTS', count: 0, squads: [] }],
+    }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-standing')).toHaveTextContent('No contest has counted in 2026 yet.');
+    expect(screen.getByTestId('championship-tile-MOST_FIRSTS')).toHaveTextContent('Nobody yet');
+  });
+
+  it('says so when the championship cannot be loaded', async () => {
+    primeViewer();
+    getChampionshipMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-error')).toBeInTheDocument();
   });
 });
 
