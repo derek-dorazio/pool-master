@@ -5,6 +5,8 @@ import { cn } from '@/features/shared/ui';
 /** The illustration palette, from the theme layer's `--illustration-*` tokens. */
 const ink = 'var(--illustration-ink)';
 const paper = 'var(--illustration-paper)';
+/** Marks drawn on paper (a ball's pattern, a flag's squares): dark in both themes, as paper stays light. */
+const paperInk = 'var(--illustration-paper-ink)';
 const gold = 'var(--illustration-gold)';
 const goldInk = 'var(--illustration-gold-ink)';
 const sky = 'var(--illustration-sky)';
@@ -30,15 +32,19 @@ const muted = 'var(--illustration-muted)';
 
 interface Scene {
   background: string;
-  label: string;
   art: ReactNode;
+}
+
+/** A sport's scene is announced where it stands alone, so it carries a label. */
+interface SportScene extends Scene {
+  label: string;
 }
 
 function checker(columns: number, rows: number, size: number) {
   return Array.from({ length: rows * columns }, (_, index) => {
     const row = Math.floor(index / columns);
     const column = index % columns;
-    return <rect fill={(row + column) % 2 ? paper : ink} height={size} key={index} width={size} x={column * size} y={row * size} />;
+    return <rect fill={(row + column) % 2 ? paper : paperInk} height={size} key={index} width={size} x={column * size} y={row * size} />;
   });
 }
 
@@ -47,7 +53,7 @@ function pill(x: number, y: number, width: number, fill: string, key?: string | 
 }
 
 /** Each sport's scene. A `Record` over the sports, so a new sport needs its picture (#878). */
-const SPORT_SCENES: Record<Sport, Scene> = {
+const SPORT_SCENES: Record<Sport, SportScene> = {
   GOLF: {
     background: sky,
     label: 'A golf flag on the green',
@@ -59,7 +65,7 @@ const SPORT_SCENES: Record<Sport, Scene> = {
         <ellipse cx="96" cy="66" fill={ink} rx="9" ry="3" />
         <line stroke={ink} strokeWidth="2.5" x1="96" x2="96" y1="66" y2="20" />
         <path d="M97 20 L122 27 L97 35Z" fill={gold} />
-        <circle cx="70" cy="70" fill={paper} r="4.5" stroke={ink} strokeWidth="1.2" />
+        <circle cx="70" cy="70" fill={paper} r="4.5" stroke={paperInk} strokeWidth="1.2" />
       </>
     ),
   },
@@ -89,7 +95,7 @@ const SPORT_SCENES: Record<Sport, Scene> = {
         <line stroke={ink} strokeWidth="3" x1="44" x2="44" y1="14" y2="74" />
         <g transform="translate(45 15) skewY(8)">
           {checker(6, 4, 9)}
-          <rect fill="none" height="36" stroke={ink} strokeWidth="1" width="54" />
+          <rect fill="none" height="36" stroke={paperInk} strokeWidth="1" width="54" />
         </g>
         <circle cx="128" cy="26" fill={red} r="9" />
       </>
@@ -132,7 +138,7 @@ const SPORT_SCENES: Record<Sport, Scene> = {
     label: 'A basketball and hoop',
     art: (
       <>
-        <rect fill={paper} height="42" rx="3" stroke={ink} strokeWidth="2.5" width="62" x="84" y="10" />
+        <rect fill={paper} height="42" rx="3" stroke={paperInk} strokeWidth="2.5" width="62" x="84" y="10" />
         <rect fill="none" height="16" stroke={red} strokeWidth="2" width="22" x="104" y="28" />
         <ellipse cx="115" cy="54" fill="none" rx="14" ry="3.5" stroke={orange} strokeWidth="3" />
         <path d="M102 55 L107 74 M110 57 L111 75 M120 57 L119 75 M128 55 L123 74 M104 64 L126 64" opacity=".7" stroke={ink} strokeWidth="1" />
@@ -183,7 +189,7 @@ const SPORT_SCENES: Record<Sport, Scene> = {
         {[[80, 88], [46, 54], [80, 20], [114, 54]].map(([x, y]) => (
           <rect fill={paper} height="8" key={`${x}-${y}`} transform={`rotate(45 ${x} ${y})`} width="8" x={x - 4} y={y - 4} />
         ))}
-        <circle cx="128" cy="76" fill={paper} r="18" stroke={ink} strokeWidth="1" />
+        <circle cx="128" cy="76" fill={paper} r="18" stroke={paperInk} strokeWidth="1" />
         <path d="M116 62 Q124 76 116 90 M140 62 Q132 76 140 90" fill="none" stroke={red} strokeDasharray="2 2.5" strokeWidth="2" />
       </>
     ),
@@ -197,9 +203,9 @@ const SPORT_SCENES: Record<Sport, Scene> = {
         <path d="M18 70 V20 H142 V70" fill="none" stroke={paper} strokeWidth="4" />
         {[38, 58, 78, 98, 118].map((x) => <line key={x} opacity=".6" stroke={paper} strokeWidth=".8" x1={x} x2={x} y1="20" y2="70" />)}
         {[32, 44, 56].map((y) => <line key={y} opacity=".6" stroke={paper} strokeWidth=".8" x1="18" x2="142" y1={y} y2={y} />)}
-        <circle cx="80" cy="72" fill={paper} r="20" stroke={ink} strokeWidth="1.5" />
-        <path d="M80 64 L87.6 69.5 L84.7 78.5 L75.3 78.5 L72.4 69.5Z" fill={ink} />
-        <path d="M80 64 V54 M87.6 69.5 L98 66 M84.7 78.5 L91 87 M75.3 78.5 L69 87 M72.4 69.5 L62 66" stroke={ink} strokeWidth="1.5" />
+        <circle cx="80" cy="72" fill={paper} r="20" stroke={paperInk} strokeWidth="1.5" />
+        <path d="M80 64 L87.6 69.5 L84.7 78.5 L75.3 78.5 L72.4 69.5Z" fill={paperInk} />
+        <path d="M80 64 V54 M87.6 69.5 L98 66 M84.7 78.5 L91 87 M75.3 78.5 L69 87 M72.4 69.5 L62 66" stroke={paperInk} strokeWidth="1.5" />
       </>
     ),
   },
@@ -233,7 +239,6 @@ const DIGITS = [3, 7, 0, 9, 4, 1, 8, 2, 6, 5];
 const FORMAT_SCENES: Record<SelectionType, Scene> = {
   TIERED: {
     background: tint,
-    label: 'One pick from each tier',
     art: (
       <>
         {['A', 'B', 'C'].map((tier, row) => (
@@ -248,7 +253,6 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   BUDGET_PICK: {
     background: tint,
-    label: 'A lineup under a salary cap',
     art: (
       <>
         {['$11.2k', '$8.4k', '$6.1k'].map((price, index) => (
@@ -266,17 +270,16 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   RANDOM_DRAW: {
     background: tint,
-    label: 'Picks drawn from a hat',
     art: (
       <>
-        <ellipse cx="80" cy="84" fill={ink} rx="34" ry="7" />
-        <path d="M54 84 L58 50 H102 L106 84Z" fill={ink} />
+        <ellipse cx="80" cy="84" fill={court} rx="34" ry="7" />
+        <path d="M54 84 L58 50 H102 L106 84Z" fill={court} />
         <rect fill={red} height="6" width="52" x="54" y="48" />
         {[[60, 20, -18], [86, 12, 10], [108, 26, 26]].map(([x, y, angle]) => (
           <g key={x} transform={`rotate(${angle} ${x + 12} ${y + 8})`}>
-            <rect fill={paper} height="17" rx="2" stroke={ink} strokeWidth="1" width="26" x={x} y={y} />
-            <line stroke={ink} x1={x + 5} x2={x + 21} y1={y + 7} y2={y + 7} />
-            <line stroke={ink} x1={x + 5} x2={x + 16} y1={y + 11} y2={y + 11} />
+            <rect fill={paper} height="17" rx="2" stroke={paperInk} strokeWidth="1" width="26" x={x} y={y} />
+            <line stroke={paperInk} x1={x + 5} x2={x + 21} y1={y + 7} y2={y + 7} />
+            <line stroke={paperInk} x1={x + 5} x2={x + 16} y1={y + 11} y2={y + 11} />
           </g>
         ))}
         <path d="M30 30 l3 -8 l3 8 l8 3 l-8 3 l-3 8 l-3 -8 l-8 -3Z" fill={gold} />
@@ -285,7 +288,6 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   PICK_EM: {
     background: tint,
-    label: 'A weekly slate with winners picked',
     art: (
       <>
         <rect fill={card} height="84" rx="8" stroke={line} width="112" x="24" y="8" />
@@ -301,7 +303,6 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   BRACKET: {
     background: tint,
-    label: 'A bracket leading to a trophy',
     art: (
       <>
         <path d="M10 14 H28 V26 H10 M10 38 H28 V26 H44 V50 H56 M10 62 H28 V74 H10 M28 74 H44 V50" fill="none" stroke={ink} strokeWidth="2" />
@@ -315,7 +316,6 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   SURVIVOR: {
     background: tint,
-    label: 'One entry left standing',
     art: (
       <>
         {[0, 1, 2, 3, 4].map((index) => {
@@ -339,7 +339,6 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
   },
   SQUARES: {
     background: tint,
-    label: 'A 10 by 10 squares grid with a winning square',
     art: (
       <>
         {DIGITS.flatMap((_, row) => DIGITS.map((__, column) => {
@@ -375,7 +374,6 @@ export type StepPicture = 'league' | 'contest' | 'live';
 const STEP_SCENES: Record<StepPicture, Scene> = {
   league: {
     background: tint,
-    label: 'Friends joining a league',
     art: (
       <>
         {([[52, court], [80, gold], [108, red]] as const).map(([x, fill]) => (
@@ -391,7 +389,6 @@ const STEP_SCENES: Record<StepPicture, Scene> = {
   },
   contest: {
     background: tint,
-    label: 'A contest on the calendar',
     art: (
       <>
         <rect fill={card} height="74" rx="8" stroke={line} width="80" x="40" y="14" />
@@ -406,7 +403,6 @@ const STEP_SCENES: Record<StepPicture, Scene> = {
   },
   live: {
     background: tint,
-    label: 'A live leaderboard',
     art: (
       <>
         {[0, 1, 2].map((row) => (
@@ -425,14 +421,15 @@ const STEP_SCENES: Record<StepPicture, Scene> = {
   },
 };
 
-function Illustration({ scene, className, decorative }: { scene: Scene; className?: string; decorative: boolean }) {
+/** A scene's svg: announced by `label` when given, otherwise hidden beside its name. */
+function Illustration({ scene, className, label }: { scene: Scene; className?: string; label?: string }) {
   return (
     <svg
-      aria-hidden={decorative || undefined}
-      aria-label={decorative ? undefined : scene.label}
+      aria-hidden={label === undefined || undefined}
+      aria-label={label}
       className={cn('block', className)}
       preserveAspectRatio="xMidYMid slice"
-      role={decorative ? undefined : 'img'}
+      role={label === undefined ? undefined : 'img'}
       viewBox="0 0 160 100"
     >
       <rect fill={scene.background} height="100" width="160" />
@@ -443,15 +440,15 @@ function Illustration({ scene, className, decorative }: { scene: Scene; classNam
 
 /** A sport's picture; `decorative` when the sport's name sits beside it. */
 export function SportIllustration({ sport, className, decorative = false }: { sport: Sport; className?: string; decorative?: boolean }) {
-  return <Illustration className={className} decorative={decorative} scene={SPORT_SCENES[sport]} />;
+  return <Illustration className={className} label={decorative ? undefined : SPORT_SCENES[sport].label} scene={SPORT_SCENES[sport]} />;
 }
 
 /** A way to play's picture, always beside its name. */
 export function FormatIllustration({ selectionType, className }: { selectionType: SelectionType; className?: string }) {
-  return <Illustration className={className} decorative scene={FORMAT_SCENES[selectionType]} />;
+  return <Illustration className={className} scene={FORMAT_SCENES[selectionType]} />;
 }
 
 /** A how-it-works step's picture, always beside the step's title. */
 export function StepIllustration({ step, className }: { step: StepPicture; className?: string }) {
-  return <Illustration className={className} decorative scene={STEP_SCENES[step]} />;
+  return <Illustration className={className} scene={STEP_SCENES[step]} />;
 }

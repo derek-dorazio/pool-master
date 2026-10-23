@@ -1117,7 +1117,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
   });
 });
 
-describe('Commissioner tools › Contests › Create contest › Random draw format', () => {
+describe('Commissioner tools › Contests › Create contest › Quick pick format', () => {
   const DRAW_TEMPLATES = [
     {
       id: '66666666-6666-4666-8666-666666666666',
@@ -1162,7 +1162,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     listEventsMock.mockReset();
   });
 
-  it('switches to Random draw with its sweepstake presets, and creates random-draw rules with golfers dealt per entry', async () => {
+  it('switches to Quick pick with its sweepstake presets, and creates quick pick rules with golfers dealt per entry', async () => {
     await primeDrawMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-draw' } } });
 

@@ -32,7 +32,7 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     summary: 'No homework. Your picks are drawn for you.',
     steps: [
       'Join the contest. There is nothing to research.',
-      'When entries close, the draw deals every entry its picks at random.',
+      'When the commissioner runs the draw, every entry is dealt its picks at random.',
       'Cheer on whoever you got.',
     ],
   },
@@ -41,14 +41,14 @@ export const FORMAT_GUIDES: Record<SelectionType, FormatGuide> = {
     steps: [
       'Each week, pick a winner in every game.',
       'Change a pick any time before its game kicks off.',
-      'The most right picks wins the week.',
+      'Whoever gets the most picks right wins the week.',
     ],
   },
   BRACKET: {
     summary: 'Fill in the whole tournament before it starts.',
     steps: [
       'Pick every game, from the first round to the final.',
-      'Later rounds are worth more, and upsets earn a bonus.',
+      'Later rounds are worth more, and some contests add a bonus for upsets.',
       'Watch your bracket hold up, round by round.',
     ],
   },

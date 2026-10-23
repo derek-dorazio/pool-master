@@ -143,6 +143,7 @@
     /* How to Play illustrations (#878): each sport's scene and each way to play's sheet. */
     --illustration-ink: #0c2341;
     --illustration-paper: #ffffff;
+    --illustration-paper-ink: #0c2341;
     --illustration-gold: #f5b800;
     --illustration-gold-ink: #0c2341;
     --illustration-sky: #dbe7f3;
