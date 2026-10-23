@@ -28,6 +28,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
   return {
     id: sportLeague.id,
     sportId: sportLeague.sportId,
+    sport: sportLeague.sport,
     name: sportLeague.name,
     matchKeyword: sportLeague.matchKeyword,
     currentEventYear: sportLeague.currentEventYear,
@@ -37,6 +38,7 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     matchPeriodLayout: sportLeague.matchPeriodLayout,
     squaresFromRound: sportLeague.squaresFromRound,
     noun: sportLeague.noun,
+    displayName: sportLeague.displayName,
     affiliationCount: sportLeague.affiliationCount,
     sportEventCount: sportLeague.sportEventCount,
     createdAt: sportLeague.createdAt.toISOString(),

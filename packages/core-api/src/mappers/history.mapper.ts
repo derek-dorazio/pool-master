@@ -1,7 +1,7 @@
-import type { ContestResultSummaryDto, HistorySummaryDto } from '@poolmaster/shared/dto';
-import type { ContestResultView, HistorySummaryView } from '../modules/history/service';
-import { toChampionshipSquadDto } from './championship.mapper';
-import { cupName } from './cups.mapper';
+import type { ContestResultSummaryDto, HistorySummaryDto, SquadYearDto } from '@poolmaster/shared/dto';
+import type { ContestResultView, HistorySummaryView, SquadYearView } from '../modules/history/service';
+import { championshipName, toChampionshipSquadDto, toChampionshipStandingRowDto } from './championship.mapper';
+import { cupName, toCupStandingRowDto } from './cups.mapper';
 
 export function toContestResultSummaryDto(view: ContestResultView): ContestResultSummaryDto {
   return {
@@ -36,6 +36,32 @@ export function toHistorySummaryDto(view: HistorySummaryView): HistorySummaryDto
         contestsCounted: cup.contestsCounted,
         winners: cup.winners.map(toChampionshipSquadDto),
       })),
+    })),
+  };
+}
+
+export function toSquadYearDto(view: SquadYearView): SquadYearDto {
+  const { championship } = view;
+  return {
+    squadId: view.squad.id,
+    year: view.year,
+    championship: championship === null ? null : {
+      name: championshipName(view.year, championship.cupName),
+      isOver: championship.isOver,
+      squadCount: championship.squadCount,
+      pointsBehindLeader: championship.pointsBehindLeader,
+      contestsCounted: championship.contestsCounted,
+      contestsToGo: championship.contestsToGo,
+      standing: toChampionshipStandingRowDto(championship.standing),
+    },
+    cups: view.cups.map((cup) => ({
+      cupId: cup.view.cup.id,
+      sportLeagueId: cup.view.cup.sportLeagueId,
+      name: cupName(cup.view.cup.seasonYear, cup.view.sportLeagueName),
+      status: cup.view.cup.status,
+      contestsCounted: cup.contestsCounted,
+      squadCount: cup.view.standings.length,
+      standing: toCupStandingRowDto(cup.standing),
     })),
   };
 }

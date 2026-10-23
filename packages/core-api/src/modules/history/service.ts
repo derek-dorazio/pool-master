@@ -19,8 +19,8 @@ import {
   type Squad,
 } from '@poolmaster/shared/domain';
 
-import type { ChampionshipService } from '../championship/service';
-import type { CupService, CupView } from '../cups/service';
+import type { ChampionshipService, ChampionshipStandingView } from '../championship/service';
+import type { CupService, CupStandingView, CupView } from '../cups/service';
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -94,10 +94,36 @@ export interface HistorySummaryView {
   years: HistoryYearView[];
 }
 
+/** One squad's row of a championship year, with what the squad page needs around it. */
+export interface SquadChampionshipView {
+  cupName: string;
+  isOver: boolean;
+  standing: ChampionshipStandingView;
+  squadCount: number;
+  /** Tenths of a point behind 1st. */
+  pointsBehindLeader: number;
+  contestsCounted: number;
+  contestsToGo: number;
+}
+
+/** One squad's row of a cup. */
+export interface SquadCupView {
+  view: CupView;
+  contestsCounted: number;
+  standing: CupStandingView;
+}
+
+export interface SquadYearView {
+  squad: Squad;
+  year: number;
+  championship: SquadChampionshipView | null;
+  cups: SquadCupView[];
+}
+
 export interface HistoryServiceDeps {
   finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
-  championship: Pick<ChampionshipService, 'listYears'>;
+  championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
   logger?: HistoryLogger;
   now?: () => Date;
@@ -148,6 +174,49 @@ export class HistoryService {
     return {
       tiles: [mostOf(SummaryTile.MOST_CHAMPIONSHIPS, championships), mostOf(SummaryTile.MOST_CUPS, cupWins)],
       years,
+    };
+  }
+
+  /**
+   * One squad's year for its squad page (#872): its row of the championship and of each cup of the
+   * season, read through the same services the league pages use, so the two can never disagree.
+   */
+  async getSquadYear(leagueId: string, squadId: string, year: number): Promise<SquadYearView> {
+    const squad = await this.deps.squads.findById(squadId);
+    if (squad === null || squad.leagueId !== leagueId) {
+      this.deps.logger?.warn({ action: 'history.squadYear.squadNotFound', data: { leagueId, squadId, year } }, 'Squad year asked for a squad outside the league');
+      throw new HistorySquadNotFoundError(`Squad ${squadId} is not in this league.`);
+    }
+    const [championship, cups] = await Promise.all([
+      this.deps.championship.getYear(leagueId, year),
+      this.deps.cups.listSeasonCups(leagueId, year),
+    ]);
+    const standing = championship.standings.find((row) => row.squad.id === squadId);
+    const leaderPoints = championship.standings.at(0)?.points ?? 0;
+    const squadCups = cups
+      .flatMap((view): SquadCupView[] => {
+        const row = view.standings.find((candidate) => candidate.squad.id === squadId);
+        return row === undefined ? [] : [{
+          view,
+          contestsCounted: view.contests.filter((contest) => contest.count === CupContestCount.COUNTED).length,
+          standing: row,
+        }];
+      })
+      .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName));
+    this.deps.logger?.debug({ action: 'history.squadYear', data: { leagueId, squadId, year, cupCount: squadCups.length } }, 'Read a squad\'s year');
+    return {
+      squad,
+      year,
+      championship: standing === undefined ? null : {
+        cupName: championship.cupName,
+        isOver: championship.isOver,
+        standing,
+        squadCount: championship.standings.length,
+        pointsBehindLeader: leaderPoints - standing.points,
+        contestsCounted: championship.contestsCounted,
+        contestsToGo: championship.contestsToGo,
+      },
+      cups: squadCups,
     };
   }
 

@@ -1,9 +1,27 @@
-import type { CupDto, CupProjectionDto, CupSquadPointsDto } from '@poolmaster/shared/dto';
-import type { CupProjectionView, CupSquadPointsView, CupView } from '../modules/cups/service';
+import type { CupDto, CupProjectionDto, CupSquadPointsDto, CupStandingRowDto } from '@poolmaster/shared/dto';
+import type { CupProjectionView, CupSquadPointsView, CupStandingView, CupView } from '../modules/cups/service';
 
 /** The cup's name, built from its season and sports league: "2026 PGA Tour Cup". */
 export function cupName(seasonYear: number, sportLeagueName: string): string {
   return `${seasonYear} ${sportLeagueName} Cup`;
+}
+
+export function toCupStandingRowDto(row: CupStandingView): CupStandingRowDto {
+  return {
+    squadId: row.squad.id,
+    squadName: row.squad.name,
+    squadIconKey: row.squad.iconKey,
+    squadIsActive: row.squad.isActive,
+    position: row.position,
+    displayPosition: row.displayPosition,
+    points: row.points,
+    wins: row.wins,
+    podiums: row.podiums,
+    contestsCounted: row.contestsCounted,
+    movement: row.movement,
+    pointsAfter: row.pointsAfter,
+    trophy: row.trophy,
+  };
 }
 
 export function toCupDto(view: CupView): CupDto {
@@ -16,21 +34,7 @@ export function toCupDto(view: CupView): CupDto {
     name: cupName(view.cup.seasonYear, view.sportLeagueName),
     status: view.cup.status,
     crownedAt: view.cup.crownedAt?.toISOString() ?? null,
-    standings: view.standings.map((row) => ({
-      squadId: row.squad.id,
-      squadName: row.squad.name,
-      squadIconKey: row.squad.iconKey,
-      squadIsActive: row.squad.isActive,
-      position: row.position,
-      displayPosition: row.displayPosition,
-      points: row.points,
-      wins: row.wins,
-      podiums: row.podiums,
-      contestsCounted: row.contestsCounted,
-      movement: row.movement,
-      pointsAfter: row.pointsAfter,
-      trophy: row.trophy,
-    })),
+    standings: view.standings.map(toCupStandingRowDto),
     contests: view.contests.map((row) => ({
       contestId: row.contest.id,
       name: row.contest.name,

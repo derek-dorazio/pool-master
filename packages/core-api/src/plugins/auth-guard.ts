@@ -85,6 +85,10 @@ const PUBLIC_ROUTES = new Set([
   // product copy, identical for every viewer and tied to no league or user, so a visitor deciding
   // whether to sign up may read what contests PoolMaster runs. Their update stays root-admin only.
   'GET /api/v1/contest-config-templates',
+  // The sport league list, read by How to Play to name each sport's leagues (the NFL, the PGA
+  // TOUR). Platform reference data, identical for every viewer and tied to no league or user, as
+  // the templates are. Reading one sport league, and every write, still need a session.
+  'GET /api/v1/sport-leagues',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [

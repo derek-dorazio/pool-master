@@ -1,21 +1,23 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { bindApiMocks } from '@/test/msw-api';
 import { HowToPlayPage } from './how-to-play-page';
 
-const { authState, listContestConfigTemplatesMock, mockLogger } = vi.hoisted(() => {
+const { authState, listContestConfigTemplatesMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockImplementation(() => logger);
   return {
     authState: { isAuthenticated: false, isLoading: false, isRootAdmin: false, user: null },
     listContestConfigTemplatesMock: vi.fn(),
+    listSportLeaguesMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
-bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock });
+bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock, listSportLeagues: listSportLeaguesMock });
 
 vi.mock('@/features/auth/auth-context', () => ({ useAuth: () => authState }));
 
@@ -67,10 +69,23 @@ const GOLF_AND_FOOTBALL = [
   template('golf-tiered-pick-12', { isDefault: false, sortOrder: 2 }),
   template('nfl-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl' }),
   template('nfl-squares', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'nfl', selectionType: 'SQUARES', contestFormat: 'SQUARES', configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 } }),
+  template('cfp-tiered', { sport: 'AMERICAN_FOOTBALL', sportLeagueId: 'cfp' }),
 ];
+
+const SPORT_LEAGUES = [
+  sportLeagueFixture({ id: 'pga', sport: 'GOLF', name: 'PGA TOUR' }),
+  sportLeagueFixture({ id: 'lpga', sport: 'GOLF', name: 'LPGA Tour' }),
+  sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL' }),
+  sportLeagueFixture({ id: 'cfp', sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff' }),
+];
+
+beforeEach(() => {
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: SPORT_LEAGUES } });
+});
 
 afterEach(() => {
   listContestConfigTemplatesMock.mockReset();
+  listSportLeaguesMock.mockReset();
   authState.isAuthenticated = false;
 });
 
@@ -125,6 +140,46 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
   });
 
+  it('names each sport\'s leagues as chips grouped under their sport, in the platform\'s sport order and by name within one', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage();
+
+    const golf = await screen.findByTestId('how-to-play-sport-group-GOLF');
+    expect(within(golf).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['Golf', 'LPGA Tour', 'PGA TOUR']);
+    const football = screen.getByTestId('how-to-play-sport-group-AMERICAN_FOOTBALL');
+    expect(within(football).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['American football', 'College Football Playoff', 'NFL']);
+    expect(golf.compareDocumentPosition(football) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('narrows the page to a chosen league: its name over its sport\'s picture, only the ways to play it offers, and its own template inside each, kept in the link', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('how-to-play-league-AMERICAN_FOOTBALL-college-football-playoff'));
+    expect(screen.getByTestId('location')).toHaveTextContent('/how-to-play?sport=american-football&league=college-football-playoff');
+    expect(screen.getByTestId('how-to-play-league-AMERICAN_FOOTBALL-college-football-playoff')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('how-to-play-sport-AMERICAN_FOOTBALL')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('College Football Playoff');
+    expect(screen.queryByTestId('how-to-play-format-SQUARES')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('how-to-play-format-TIERED-toggle'));
+    expect(screen.getByTestId('how-to-play-format-TIERED-details')).toHaveTextContent('cfp-tiered name. cfp-tiered description.');
+  });
+
+  it('opens on the league its link names, and choosing the league\'s sport widens the page to every league of it', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage('/how-to-play?sport=american-football&league=nfl');
+
+    expect(await screen.findByTestId('how-to-play-sport-banner')).toHaveTextContent('NFL');
+    expect(screen.getByTestId('how-to-play-league-AMERICAN_FOOTBALL-nfl')).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(screen.getByTestId('how-to-play-sport-AMERICAN_FOOTBALL'));
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/how-to-play\?sport=american-football$/);
+    expect(screen.getByTestId('how-to-play-sport-AMERICAN_FOOTBALL')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('how-to-play-league-AMERICAN_FOOTBALL-nfl')).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('how-to-play-sport-banner')).toHaveTextContent('American football');
+  });
+
   it('shows every sport when the link names a sport with no contest types', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage('/how-to-play?sport=curling');
@@ -146,6 +201,14 @@ describe('How to Play', () => {
 
   it('says the contest types could not be loaded when the template list fails', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
+    renderPage();
+
+    expect(await screen.findByText('Contest types unavailable')).toBeInTheDocument();
+  });
+
+  it('says the contest types could not be loaded when the sport league list fails', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    listSportLeaguesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
     renderPage();
 
     expect(await screen.findByText('Contest types unavailable')).toBeInTheDocument();

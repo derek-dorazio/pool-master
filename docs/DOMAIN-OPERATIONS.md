@@ -337,8 +337,10 @@ of the contest: the template is where it came from, not what it is.
 ### What this rule does not do
 
 - **Global is not public.** A valid session is still required. A11 moves an object from
-  `rootAdmin` to `authenticated`, never to anonymous. The one exception is the
-  `ContestConfigTemplate` list (#803). Its rows are product copy, names and descriptions written
+  `rootAdmin` to `authenticated`, never to anonymous. The exceptions are the
+  `ContestConfigTemplate` list (#803) and the `SportLeague` list, which the same page reads to
+  name each sport's leagues (the NFL, the PGA TOUR): reference data with nothing about a league
+  or a user. Reading one sport league still needs a session. Its rows are product copy, names and descriptions written
   to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
   what PoolMaster runs before signing up. Retired (inactive) templates are public too: they are
   the same kind of copy, with nothing about a league or a user. It was opened for that reason, not
@@ -557,7 +559,8 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 | Operation | Role | Notes |
 |---|---|---|
-| List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and event counts and its `currentEventYear` |
+| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
+| Read one | `authenticated` | `getSportLeague` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
 | Set how brackets advance | `rootAdmin` | `bracketAdvancement` on create or update (#722): `FIXED` (the default) sends each winner to the match its link names; `RESEED_BY_SEED` lets a round's matches link nowhere, so the admin places their winners by seed (the NFL after Wild Card weekend). 422 `SPORT_LEAGUE_NOT_BRACKET` for `RESEED_BY_SEED` on a sport not played as a bracket. A change is 409 `SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED` while any event of the sport league, in any year, has its bracket loaded (#730): the bracket's links were drawn for the rule it has, and a fixed rule would strand the winners of games that link nowhere. Sending the rule it already has changes nothing |
@@ -992,6 +995,7 @@ contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pur
 | Read a championship year | `member` | `getChampionship`, `GET /leagues/:id/championship/:year`: standings (every active squad, at 0 until it places; an inactive squad once it has placed) with each squad's finish matrix row (1st to 10th), podiums, top tens and contests played; the medal tiles (`MOST_FIRSTS`, `MOST_SECONDS`, `MOST_THIRDS`, `MOST_PODIUMS`, `MOST_TOP_TENS`, `MOST_PLAYED`, ties naming each); `contestsCounted`, and for the current year `contestsToGo` (open and live counted contests) |
 | List a year's final contests | `member` | `listContestResults`, `GET /leagues/:id/history/contests?year=&squadId=&place=` (#837, the `history` module): every contest that went final in the championship year (US Eastern), newest first, with its sports league, date, winners (co-winners on a tie), ranked entries and `count` (`ContestResultCount`: `COUNTED`, `NOT_COUNTED`, `NO_RESULT`). With `squadId`, only the counted contests that squad placed in, each with its `squadFinish` (place and points), matching its Played count; with `place` as well, only those it finished in that place, matching its matrix cell. Read from `LeagueYearFinish`, so a list always holds what the matrix counts. `place` without `squadId` is 400 `SQUAD_ID_REQUIRED`; a squad of another league is 404 `SQUAD_NOT_FOUND`. No paging |
 | Get the All years summary | `member` | `getHistorySummary`, `GET /leagues/:id/history/summary` (#837): tiles for the most championships won (years that are over) and the most cups won (crowned cups), with every squad tied at the top; then each year with a championship or a cup season, newest first, with `isOver`, its champions and its cups (crowned ones with their CHAMPION holders, open ones with whoever leads on points). No paging |
+| Get a squad's year | `member` | `getSquadYear`, `GET /leagues/:id/history/squads/:squadId?year=` (#872): the squad's row of the championship year (place of N, points, points behind 1st, movement since before the latest counted contest, finish matrix row, and the year's counted and still-to-go contests) and its row of each cup of the season with that year (place of N, points, movement, trophy). Read through the same services as the Championship and Points race tabs, so the squad page and the league pages agree. `championship` is null for an inactive squad that placed in nothing. A squad of another league is 404 `SQUAD_NOT_FOUND` |
 
 The web app's Championships page lands on the year's **Championship** tab
 (`/league/:code/championships/:year`): the championship's name and who leads it, or, once the
@@ -1005,6 +1009,10 @@ All years (`/league/:code/history`, linked from the Championships header and fro
 shows the summary's tiles and one line per year, which opens that year's Championship tab; each
 cup line opens its Points race. It shows every crowned cup and an open one once two of its contests
 have counted, and skips a year with neither a champion nor such a cup.
+Each squad's page (My team, and another team's page) shows its year under its owners: its
+championship place with the gap to 1st and its movement (opening the Championship tab), its own
+medal counts, its finish matrix row, whose counts narrow its contests below, its place in each cup
+on show (opening its points in that cup), and the counted contests it placed in.
 
 ### Squares — `selections`
 

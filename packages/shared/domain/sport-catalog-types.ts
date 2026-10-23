@@ -51,6 +51,12 @@ export interface SportLeague extends DomainEntity {
    * `sportLeagueNounOf`. Reference data, set where the league is seeded.
    */
   noun: SportLeagueNoun | null;
+  /**
+   * What screens call it away from its sport's own pages, when its name alone does not say the
+   * sport ("NCAA Men's Basketball" for basketball's NCAA Division I Men); null shows the name.
+   * Reference data, set where the league is seeded.
+   */
+  displayName: string | null;
 }
 
 /**

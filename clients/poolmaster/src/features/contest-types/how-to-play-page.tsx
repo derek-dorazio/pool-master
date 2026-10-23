@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SelectionType, formatSelectionTypeName, type Sport } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
 import { Button, ErrorState, LinkButton, LoadingState, PageHeader, SectionHeader, Tile, cn } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { buildPublicContestCatalog, type ContestCatalogSport, type ContestTypeTile } from './contest-catalog';
+import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
 import { FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
 import { SPORT_BLURBS } from './sport-blurbs';
+import { useSportLeaguesQuery } from './use-sport-leagues-query';
 
 /** How a pool runs, in three steps, each with its picture. */
 const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string }[] = [
@@ -19,8 +20,6 @@ const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string
 
 /** The ways to play in the order the page lists them. */
 const FORMAT_ORDER = Object.values(SelectionType);
-
-type CatalogSport = ContestCatalogSport<ContestTypeTile>;
 
 /** A sport as the page's link names it: `?sport=horse-racing`. */
 function sportSlug(sport: Sport) {
@@ -34,8 +33,9 @@ function SportThumb({ sport, className }: { sport: Sport; className?: string }) 
 interface FormatCardProps {
   selectionType: SelectionType;
   /** The sports that offer it; with a sport chosen, only that one. */
-  sports: CatalogSport[];
-  chosen: CatalogSport | null;
+  sports: PublicCatalogSport[];
+  /** The formats of the chosen sport or sport league, or null with every sport shown. */
+  chosen: ContestTypeTile[] | null;
   isOpen: boolean;
   onToggle: () => void;
   onChooseSport: (sport: Sport) => void;
@@ -44,7 +44,7 @@ interface FormatCardProps {
 /** One way to play: its diagram and summary, opening to its steps and where to play it. */
 function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseSport }: FormatCardProps) {
   const guide = FORMAT_GUIDES[selectionType];
-  const featured = chosen?.groups.find((tile) => tile.selectionType === selectionType)?.featured;
+  const featured = chosen?.find((tile) => tile.selectionType === selectionType)?.featured;
   return (
     <Tile
       className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
@@ -102,35 +102,115 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
   );
 }
 
+interface SportLeagueChipsProps {
+  catalog: PublicCatalogSport[];
+  chosenSport: PublicCatalogSport | null;
+  chosenLeague: PublicCatalogLeague | null;
+  onChoose: (sport: Sport | null, league?: PublicCatalogLeague) => void;
+}
+
+/**
+ * The sport leagues people know, the NFL and the PGA TOUR, as chips in groups by sport. Each
+ * group opens with its sport, which chooses every league of it. On a phone the groups scroll
+ * sideways as one row; wider, they wrap.
+ */
+function SportLeagueChips({ catalog, chosenSport, chosenLeague, onChoose }: SportLeagueChipsProps) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  // On a phone the chosen chip may sit past the edge of the row, as when a link names the WNBA:
+  // scroll the row so it shows. Wider, the row wraps and does not scroll.
+  useEffect(() => {
+    const row = rowRef.current;
+    const chip = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (row && chip) {
+      row.scrollLeft = chip.offsetLeft - row.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
+    }
+  }, [chosenLeague, chosenSport]);
+
+  return (
+    <div aria-label="Sport league" ref={rowRef} className="-mx-1 flex items-center gap-x-3 gap-y-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:gap-x-5 md:overflow-visible" role="group">
+      <Button
+        aria-pressed={chosenSport === null}
+        className="shrink-0 rounded-full"
+        data-testid="how-to-play-sport-all"
+        onClick={() => onChoose(null)}
+        size="sm"
+        variant={chosenSport === null ? 'primary' : 'secondary'}
+      >
+        All sports
+      </Button>
+      {catalog.map((sport) => {
+        const isSportChosen = chosenSport?.sport === sport.sport;
+        return (
+          <div className="flex shrink-0 items-center gap-1.5 border-l border-border pl-3 md:shrink md:flex-wrap md:border-0 md:pl-0" data-testid={`how-to-play-sport-group-${sport.sport}`} key={sport.sport}>
+            <Button
+              aria-pressed={isSportChosen && chosenLeague === null}
+              className={cn('h-auto gap-1.5 rounded-full py-1 pl-1 pr-2 text-xs font-semibold uppercase', isSportChosen && chosenLeague === null ? 'text-foreground underline decoration-primary decoration-2 underline-offset-4' : 'text-muted-foreground')}
+              data-testid={`how-to-play-sport-${sport.sport}`}
+              onClick={() => onChoose(sport.sport)}
+              size="auto"
+              variant="ghost"
+            >
+              <SportThumb className="h-7 w-7" sport={sport.sport} />
+              {sport.name}
+            </Button>
+            {sport.leagues.map((league) => (
+              <Button
+                aria-pressed={chosenLeague?.sportLeagueId === league.sportLeagueId}
+                className="shrink-0 rounded-full"
+                data-testid={`how-to-play-league-${sport.sport}-${league.slug}`}
+                key={league.sportLeagueId}
+                onClick={() => onChoose(sport.sport, league)}
+                size="sm"
+                variant={chosenLeague?.sportLeagueId === league.sportLeagueId ? 'primary' : 'secondary'}
+              >
+                {league.name}
+              </Button>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
  * How to Play (#803, #878): open to every visitor. What a pool is, then the ways to play, each
- * offered by some sport's contest templates. A sport chip narrows them to one sport and shows
- * its picture and line, and the chosen sport is kept in the link.
+ * offered by some sport's contest templates. A sport league chip, grouped by sport, narrows them
+ * to what that league offers, and a sport to what any of its leagues does; either shows the
+ * sport's picture and line, and the choice is kept in the link.
  */
 export function HowToPlayPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'how-to-play-page' }), []);
   const auth = useAuth();
   const templatesQuery = useActiveContestTemplatesQuery();
-  const catalog = useMemo(() => buildPublicContestCatalog(templatesQuery.data ?? []), [templatesQuery.data]);
+  const sportLeaguesQuery = useSportLeaguesQuery();
+  const catalog = useMemo(
+    () => buildPublicContestCatalog(templatesQuery.data ?? [], sportLeaguesQuery.data ?? []),
+    [sportLeaguesQuery.data, templatesQuery.data],
+  );
   const [searchParams, setSearchParams] = useSearchParams();
-  const chosen = catalog.find((sport) => sportSlug(sport.sport) === searchParams.get('sport')) ?? null;
+  const chosenSport = catalog.find((sport) => sportSlug(sport.sport) === searchParams.get('sport')) ?? null;
+  const chosenLeague = chosenSport?.leagues.find((league) => league.slug === searchParams.get('league')) ?? null;
+  const chosen = chosenLeague?.groups ?? chosenSport?.groups ?? null;
   const [openFormat, setOpenFormat] = useState<SelectionType | null>(null);
 
+  const isError = templatesQuery.isError || sportLeaguesQuery.isError;
   useEffect(() => {
-    if (templatesQuery.isError) {
-      logger.warn({ action: 'howToPlay.templates.failed', err: templatesQuery.error }, 'How to Play failed to load contest types');
+    if (isError) {
+      logger.warn({ action: 'howToPlay.catalog.failed', err: templatesQuery.error ?? sportLeaguesQuery.error }, 'How to Play failed to load contest types');
     }
-  }, [logger, templatesQuery.error, templatesQuery.isError]);
+  }, [isError, logger, sportLeaguesQuery.error, templatesQuery.error]);
 
-  const chooseSport = (sport: Sport | null) => {
+  const choose = (sport: Sport | null, league?: PublicCatalogLeague) => {
     setOpenFormat(null);
-    setSearchParams(sport ? { sport: sportSlug(sport) } : {}, { replace: true });
+    setSearchParams(sport ? { sport: sportSlug(sport), ...(league ? { league: league.slug } : {}) } : {}, { replace: true });
   };
 
   const sportsOffering = (selectionType: SelectionType) => catalog.filter((sport) => sport.groups.some((tile) => tile.selectionType === selectionType));
   const formats = FORMAT_ORDER.filter((selectionType) => chosen
-    ? chosen.groups.some((tile) => tile.selectionType === selectionType)
+    ? chosen.some((tile) => tile.selectionType === selectionType)
     : sportsOffering(selectionType).length > 0);
+  const chosenName = chosenLeague?.name ?? chosenSport?.name;
 
   const callToAction = auth.isAuthenticated ? (
     <LinkButton data-testid="how-to-play-leagues" to="/welcome">Go to your leagues</LinkButton>
@@ -160,49 +240,26 @@ export function HowToPlayPage() {
         ))}
       </ol>
 
-      {templatesQuery.isLoading ? (
+      {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
         <LoadingState body="Loading the ways to play..." />
-      ) : templatesQuery.isError ? (
+      ) : isError ? (
         <ErrorState body="We couldn't load the contest types. Try again in a moment." title="Contest types unavailable" />
       ) : (
         <section className="space-y-4" data-testid="how-to-play-formats">
           <SectionHeader
-            description={chosen ? `Every way to play ${chosen.name.toLowerCase()}. Tap one to see how it works.` : 'Tap one to see how it works, or pick a sport.'}
+            description={chosenLeague
+              ? `Every way to play ${chosenLeague.name}. Tap one to see how it works.`
+              : chosenSport ? `Every way to play ${chosenSport.name.toLowerCase()}. Tap one to see how it works.` : 'Tap one to see how it works, or pick a league.'}
             title="Ways to play"
           />
-          <div aria-label="Sport" className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="group">
-            <Button
-              aria-pressed={chosen === null}
-              className="shrink-0 rounded-full"
-              data-testid="how-to-play-sport-all"
-              onClick={() => chooseSport(null)}
-              size="sm"
-              variant={chosen === null ? 'primary' : 'secondary'}
-            >
-              All sports
-            </Button>
-            {catalog.map((sport) => (
-              <Button
-                aria-pressed={chosen?.sport === sport.sport}
-                className="shrink-0 gap-1.5 rounded-full pl-1"
-                data-testid={`how-to-play-sport-${sport.sport}`}
-                key={sport.sport}
-                onClick={() => chooseSport(sport.sport)}
-                size="sm"
-                variant={chosen?.sport === sport.sport ? 'primary' : 'secondary'}
-              >
-                <SportThumb className="h-7 w-7" sport={sport.sport} />
-                {sport.name}
-              </Button>
-            ))}
-          </div>
+          <SportLeagueChips catalog={catalog} chosenLeague={chosenLeague} chosenSport={chosenSport} onChoose={choose} />
 
-          {chosen ? (
+          {chosenSport ? (
             <Tile className="overflow-hidden md:flex" data-testid="how-to-play-sport-banner" padding="none" radius="md">
-              <SportIllustration className="aspect-[16/10] w-full md:w-80" sport={chosen.sport} />
+              <SportIllustration className="aspect-[16/10] w-full md:w-80" sport={chosenSport.sport} />
               <div className="p-4">
-                <h3 className="font-display text-xl font-bold text-foreground">{chosen.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{SPORT_BLURBS[chosen.sport]}</p>
+                <h3 className="font-display text-xl font-bold text-foreground">{chosenName}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{SPORT_BLURBS[chosenSport.sport]}</p>
               </div>
             </Tile>
           ) : null}
@@ -213,10 +270,10 @@ export function HowToPlayPage() {
                 chosen={chosen}
                 isOpen={openFormat === selectionType}
                 key={selectionType}
-                onChooseSport={chooseSport}
+                onChooseSport={choose}
                 onToggle={() => setOpenFormat((open) => (open === selectionType ? null : selectionType))}
                 selectionType={selectionType}
-                sports={chosen ? [chosen] : sportsOffering(selectionType)}
+                sports={chosenSport ? [chosenSport] : sportsOffering(selectionType)}
               />
             ))}
           </div>

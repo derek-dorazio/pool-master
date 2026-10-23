@@ -4,6 +4,7 @@ import { buildLeagueHistoryPath, buildLeagueTeamEditPath, buildLeagueTeamsPath }
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
+import { SquadYearSection } from '@/features/championships/squad-year-section';
 import {
   Alert,
   EmptyState,
@@ -24,8 +25,9 @@ import { useLeagueSquadsQuery } from './use-league-squads-query';
 import { useMyTeamOwners } from './use-my-team-owners';
 
 /**
- * My team: the viewer's own team in this league, with Edit team, its owners, and Leave league
- * as the member's one danger action. A member with no team yet creates one here.
+ * My team: the viewer's own team in this league, with Edit team, its owners, its year in the
+ * championship and cups (#872), and Leave league as the member's one danger action. A member with
+ * no team yet creates one here.
  */
 export function MyTeamPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -139,6 +141,8 @@ export function MyTeamPage() {
         team={myTeam}
         testId="my-team-owners"
       />
+
+      <SquadYearSection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
 
       {viewer.isMember ? <LeaveLeagueSection league={league} /> : null}
     </section>
