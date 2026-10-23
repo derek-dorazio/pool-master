@@ -1,11 +1,18 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { ListContestResultsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { toContestResultSummaryDto } from '../../mappers/history.mapper';
+import { toContestResultSummaryDto, toHistorySummaryDto } from '../../mappers/history.mapper';
 import { HistorySquadNotFoundError, HistorySquadRequiredError, type HistoryService } from './service';
 
 export function createHistoryHandlers(service: HistoryService) {
-  return { listContestResults };
+  return { listContestResults, getHistorySummary };
+
+  async function getHistorySummary(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    return reply.send({ summary: toHistorySummaryDto(await service.getSummary(request.params.id)) });
+  }
 
   async function listContestResults(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListContestResultsQuery }>,

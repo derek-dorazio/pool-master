@@ -952,6 +952,16 @@ export const CupTrophy = {
 export type CupTrophy = (typeof CupTrophy)[keyof typeof CupTrophy];
 
 /**
+ * The All years page's tiles (#837): the squads with the most league championships won (years
+ * over only) and the most cups won (crowned cups' champions). Ties name every squad.
+ */
+export const SummaryTile = {
+  MOST_CHAMPIONSHIPS: 'MOST_CHAMPIONSHIPS',
+  MOST_CUPS: 'MOST_CUPS',
+} as const;
+export type SummaryTile = (typeof SummaryTile)[keyof typeof SummaryTile];
+
+/**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,
  * 2nd or 3rd; PLAYED counts the counted contests a squad placed in.
  */

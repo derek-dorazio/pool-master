@@ -192,3 +192,9 @@ variable "internal_service_discovery_domain" {
   type        = string
   default     = "poolmaster.internal"
 }
+
+variable "db_access_host_enabled" {
+  description = "Create the small SSM port forwarding host operators use to reach PostgreSQL from a laptop (db-access.tf). It has no inbound rules or SSH key; access is through Session Manager with the operator's IAM credentials."
+  type        = bool
+  default     = false
+}

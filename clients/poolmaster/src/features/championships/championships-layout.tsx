@@ -4,10 +4,11 @@ import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-rou
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueChampionshipsPath,
+  buildLeagueHistoryPath,
   buildLeagueTrophyCasePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { PageHeader, SegmentedControl, Select } from '@/features/shared/ui';
+import { LinkButton, PageHeader, SegmentedControl, Select } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { championshipsTitle, championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
 import { useChampionshipYearsQuery } from './use-championship-query';
@@ -95,6 +96,9 @@ export function ChampionshipsLayout() {
               ]}
               value={tab}
             />
+            <LinkButton data-testid="championships-all-years" size="sm" to={buildLeagueHistoryPath(leagueCode)} variant="secondary">
+              All years
+            </LinkButton>
           </>
         )}
         title={championshipsTitle(year, new Date())}

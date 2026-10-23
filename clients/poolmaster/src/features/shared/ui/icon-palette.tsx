@@ -18,7 +18,8 @@ type IconPaletteProps<Key extends string, Option extends IconPaletteOption<Key>>
   value: Key;
 };
 
-/** A grid of icons to choose one from; the chosen one is pressed. */
+/** A grid of icons to choose one from; the chosen one is pressed. Tiles keep a minimum width
+ *  and the grid fits as many columns as its container allows, so labels never overflow. */
 export function IconPalette<Key extends string, Option extends IconPaletteOption<Key>>({
   "aria-label": ariaLabel,
   className,
@@ -33,7 +34,7 @@ export function IconPalette<Key extends string, Option extends IconPaletteOption
   return (
     <div
       aria-label={ariaLabel}
-      className={cn("grid max-h-80 grid-cols-3 gap-2 overflow-y-auto pr-1 sm:grid-cols-4", className)}
+      className={cn("grid max-h-80 grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2 overflow-y-auto pr-1", className)}
       data-testid={testId}
       role="group"
     >
@@ -55,7 +56,7 @@ export function IconPalette<Key extends string, Option extends IconPaletteOption
             type="button"
           >
             {renderOptionIcon(icon)}
-            <div className="mt-2 text-xs font-medium">{icon.label}</div>
+            <div className="mt-2 break-words text-xs font-medium">{icon.label}</div>
           </button>
         );
       })}

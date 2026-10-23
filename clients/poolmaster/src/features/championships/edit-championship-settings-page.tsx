@@ -195,9 +195,10 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
         <PointsPreview customPoints={customPoints} scale={scale} />
       </div>
 
-      <p className="text-xs text-muted-foreground">
-        Open cups rescore on the new table at once. Contests already final keep the points they
-        earned in the championship.
+      <p className="text-xs text-muted-foreground" data-testid="championship-points-change-note">
+        A new table rescores open cups at once, every contest in them included. The championship and
+        crowned cups keep the points their contests earned when they went final, so after a change an
+        open cup and this year&apos;s championship can show different totals for the same contests.
       </p>
     </FormPage>
   );

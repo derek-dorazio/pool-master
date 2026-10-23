@@ -1,11 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import {
   getChampionship,
+  getHistorySummary,
   listChampionshipYears,
   listContestResults,
   type ChampionshipDto,
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
+  type HistorySummaryDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -72,6 +74,24 @@ export function useChampionshipContestsQuery(leagueId: string, year: number | nu
       return response.data.contests;
     },
     enabled: Boolean(leagueId) && year !== null,
+    retry: false,
+  });
+}
+
+/** All years (#837): each year's champions and cups, and the most championships and cups won. */
+export function useHistorySummaryQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.summary(leagueId),
+    queryFn: async (): Promise<HistorySummaryDto> => {
+      const response = await getHistorySummary({ path: { id: leagueId } });
+
+      if (!response.data?.summary) {
+        throwApiError(response.error, 'History summary response is missing data.');
+      }
+
+      return response.data.summary;
+    },
+    enabled: Boolean(leagueId),
     retry: false,
   });
 }
