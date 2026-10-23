@@ -1281,7 +1281,7 @@ function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone:
         title: 'Event cancelled',
         sentences: change.endsContest
           ? [`${data.eventName} has been cancelled, so ${data.contestName} ends with no scores.`]
-          : [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}, which goes on with its other events.`],
+          : [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}.`],
       };
   }
 }

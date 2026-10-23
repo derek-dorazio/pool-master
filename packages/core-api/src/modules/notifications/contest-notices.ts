@@ -25,6 +25,7 @@ import {
   type SportEvent,
   type User,
 } from '@poolmaster/shared/domain';
+import { areEventPicksOpen } from '../contests/entry-window';
 import type { ContestService } from '../contests/service';
 import {
   ContestEventChangeKind,
@@ -52,6 +53,8 @@ export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps 
   email: Pick<EmailService, 'send'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
+  /** The clock that says whether an event's picks are still open; the real one by default. */
+  now?: () => Date;
 }
 
 /** The contest-opened seam ContestManagementService calls. */
@@ -240,10 +243,12 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
    */
   async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
     const contests = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
-    // The about names the change, and a move its new start, so a second move is told again.
+    // The about names the change and the start it leaves, and a move both starts, so a second
+    // postponement or a move back to an earlier new date is told again.
     const about = change.kind === ContestEventChangeKind.RESCHEDULED
-      ? `${sportEvent.id}:starts-${sportEvent.startDate.toISOString()}`
-      : `${sportEvent.id}:${change.kind.toLowerCase()}`;
+      ? `${sportEvent.id}:moved-${change.previousStart.toISOString()}-to-${sportEvent.startDate.toISOString()}`
+      : `${sportEvent.id}:${change.kind.toLowerCase()}-${sportEvent.startDate.toISOString()}`;
+    const now = this.deps.now?.() ?? new Date();
     await Promise.all(contests.map(async (contest) => {
       const [league, members, entrants] = await Promise.all([
         this.deps.leagues.findById(contest.leagueId),
@@ -254,7 +259,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
         return;
       }
-      const picksOpen = contest.status === ContestStatus.OPEN;
+      const picksOpen = areEventPicksOpen(contest, sportEvent, now);
       const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
         ? { kind: change.kind, endsContest: contest.sportEventIds.length === 1 }
         : change.kind === ContestEventChangeKind.RESCHEDULED

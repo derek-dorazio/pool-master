@@ -30,6 +30,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
+import { ContestEventChangeKind } from '../email';
 import type { ContestStartedNotice, SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
@@ -153,11 +154,11 @@ export class EventLifecycleService {
       await this.activateContestsPastCutoff(updated);
     }
     if (input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED) {
-      await this.tellSportEventChanged(updated, { kind: 'POSTPONED' });
+      await this.tellSportEventChanged(updated, { kind: ContestEventChangeKind.POSTPONED });
     }
     // C7 goes before settlement, which finishes the contests it is told to.
     if (input.toStatus === SportEventStatus.CANCELLED && fromStatus !== SportEventStatus.CANCELLED) {
-      await this.tellSportEventChanged(updated, { kind: 'CANCELLED' });
+      await this.tellSportEventChanged(updated, { kind: ContestEventChangeKind.CANCELLED });
     }
     // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
     // hold a contest open.
@@ -174,7 +175,7 @@ export class EventLifecycleService {
 
   /** C6: a released event's start moved, as an admin's edit reports it. */
   async sportEventRescheduled(sportEvent: SportEvent, previousStart: Date): Promise<void> {
-    await this.tellSportEventChanged(sportEvent, { kind: 'RESCHEDULED', previousStart });
+    await this.tellSportEventChanged(sportEvent, { kind: ContestEventChangeKind.RESCHEDULED, previousStart });
   }
 
   /** C6 or C7: queued for the leagues on the event, never failing the change. */
