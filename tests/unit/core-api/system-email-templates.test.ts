@@ -373,6 +373,87 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Next event: PGA Championship, May 14, 2026, 7:00 AM EDT');
       expect(message.text).toContain('Picks close: May 14, 2026, 7:00 AM EDT');
     });
+
+    it('reports a settled pick\'em week with its winners, its leaders by the week\'s points, the season by points, next week\'s first kickoff and a picks button', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        contestName: 'NFL Pick\'em',
+        moment: {
+          kind: StandingsMomentKind.PICK_EM_WEEK,
+          eventName: 'Week 3',
+          winners: [{ entryName: 'Upset City', squadName: 'Casey & Co' }, { entryName: 'Chalk', squadName: 'Pat' }],
+          weekLeaders: [
+            { place: 'T1', entryName: 'Upset City', squadName: 'Casey & Co', score: '13', movement: null, isYours: false },
+            { place: 'T1', entryName: 'Chalk', squadName: 'Pat', score: '13', movement: null, isYours: false },
+          ],
+          weekEntryCount: 9,
+          nextWeek: { name: 'Week 4', firstKickoffAt: new Date('2026-09-25T00:15:00.000Z') },
+        },
+        top: [{ place: '1', entryName: 'Chalk', squadName: 'Pat', score: '38', movement: 1, isYours: false }],
+        yours: [],
+        entryCount: 9,
+        cut: [],
+        picksUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+      }, { timeZone: 'America/New_York' });
+
+      expect(message.subject).toBe('After Week 3: NFL Pick\'em');
+      expect(message.text).toContain('Week 3 is done. Upset City (Casey & Co) and Chalk (Pat) tied for the week. Here\'s where NFL Pick\'em stands.');
+      expect(message.text).toContain('Week 3, top 2 of 9:\nT1. Upset City (Casey & Co), 13\nT1. Chalk (Pat), 13');
+      expect(message.text).toContain('Season top 1 of 9, by points:\n1. Chalk (Pat), 38, up 1');
+      expect(message.text).toContain('Next week: Week 4, first kickoff Sep 24, 2026, 8:15 PM EDT');
+      expect(message.text).toContain('Make picks for next week: http://localhost:5173/league/OFFICE24/contests/contest-1');
+      expect(message.html).toContain('Make picks for next week');
+    });
+
+    it('names a pick\'em week\'s single winner as having won it', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        moment: { kind: StandingsMomentKind.PICK_EM_WEEK, eventName: 'Week 3', winners: [{ entryName: 'Chalk', squadName: 'Pat' }], weekLeaders: [], weekEntryCount: 1 },
+        cut: [],
+      }, UTC);
+
+      expect(message.text).toContain('Week 3 is done. Chalk (Pat) won the week.');
+      expect(message.text).not.toContain('Make picks for next week');
+    });
+
+    it('reports a settled survivor week with how many are still in, which entries are out, and the reader\'s entries that went out and why', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        contestName: 'Last One Standing',
+        moment: { kind: StandingsMomentKind.SURVIVOR_WEEK, eventName: 'Week 5', stillIn: 1, nextWeek: { name: 'Week 6', firstKickoffAt: new Date('2026-10-09T00:15:00.000Z') } },
+        top: [
+          { place: '1', entryName: 'Iron Man', squadName: 'Casey & Co', score: '5', movement: 0, isYours: false },
+          { place: 'T2', entryName: 'Bears Believer', squadName: 'Morgan Member', score: '4', movement: null, isYours: true, isOut: true },
+          { place: 'T2', entryName: 'Sleepy', squadName: 'Morgan Member', score: '4', movement: null, isYours: true, isOut: true },
+        ],
+        yours: [],
+        entryCount: 3,
+        cut: [],
+        out: [
+          { entryName: 'Bears Believer', team: 'Chicago Bears', roundNumber: null },
+          { entryName: 'Sleepy', team: null, roundNumber: null },
+        ],
+      }, UTC);
+
+      expect(message.subject).toBe('After Week 5: Last One Standing');
+      expect(message.text).toContain('Week 5 is done. 1 of 3 entries is still in Last One Standing.');
+      expect(message.text).toContain('Bears Believer is out: Chicago Bears didn\'t win in Week 5.');
+      expect(message.text).toContain('Sleepy is out: it had no pick in Week 5.');
+      expect(message.text).toContain('Standings, by weeks survived:\n1. Iron Man (Casey & Co), 5, no change\nT2. Bears Believer (Morgan Member), yours, 4, out');
+      expect(message.text).toContain('Next week: Week 6, first kickoff');
+      expect(message.text).not.toContain('Make picks for next week');
+    });
+
+    it('names the round a survivor entry went out in when the event is a playoff of several rounds', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        moment: { kind: StandingsMomentKind.SURVIVOR_WEEK, eventName: 'NFL Playoffs', stillIn: 4 },
+        cut: [],
+        out: [{ entryName: 'Bears Believer', team: 'Chicago Bears', roundNumber: 2 }],
+      }, UTC);
+
+      expect(message.text).toContain('Bears Believer is out: Chicago Bears didn\'t win in round 2 of NFL Playoffs.');
+    });
   });
 
   describe('entry reminder wording by why it goes to the reader', () => {

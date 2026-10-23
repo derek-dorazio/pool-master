@@ -693,6 +693,12 @@ export class ContestService {
    */
   async getPickEmLeaderboard(contestId: string, requesterUserId: string): Promise<PickEmLeaderboardModel> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    return this.pickEmLeaderboardOf(contest);
+  }
+
+  /** The same pick'em leaderboard for a contest already in hand, with no reader to check: what the week results emails read (#877). */
+  async pickEmLeaderboardOf(contest: Contest): Promise<PickEmLeaderboardModel> {
+    const contestId = contest.id;
     if (contest.selectionType !== SelectionType.PICK_EM) {
       throw new ContestOperationError(
         'Only a pick\'em contest has a pick\'em leaderboard.',
@@ -817,6 +823,12 @@ export class ContestService {
    */
   async getSurvivorLeaderboard(contestId: string, requesterUserId: string): Promise<SurvivorLeaderboardModel> {
     const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    return this.survivorLeaderboardOf(contest);
+  }
+
+  /** The same survivor leaderboard for a contest already in hand, with no reader to check: what the week results emails read (#877). */
+  async survivorLeaderboardOf(contest: Contest): Promise<SurvivorLeaderboardModel> {
+    const contestId = contest.id;
     if (contest.selectionType !== SelectionType.SURVIVOR) {
       throw new ContestOperationError(
         'Only a survivor contest has a survivor leaderboard.',
