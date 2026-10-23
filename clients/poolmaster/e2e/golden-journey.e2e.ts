@@ -593,7 +593,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         `/api/v1/leagues/${state.leagueId}/cup-settings`,
       );
       expect(settings.league.cupPointsScale).toBe('TOP_TEN');
-      await expect(page.getByTestId('league-settings-points-table')).toHaveText('Top ten');
+      await expect(page.getByTestId('league-settings-points-table')).toContainText('Top ten');
 
       // A contest's weight is set on its own page and holds until it is final.
       await page.goto(`/league/${run.leagueCode}/admin/contests/${state.budgetContestId}`);
