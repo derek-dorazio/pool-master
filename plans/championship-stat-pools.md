@@ -22,12 +22,12 @@ section 8 carry a recommendation each, and none is answered yet except the ones 
   budget and quick pick rosters, per-round scores with a counted total. What is new is a fourth
   scoring family, *stat total*, where higher is better and every stat a player had in each game
   is stored. Plus a kind of sport league whose field is players.
-- **The real cost is the stats.** About 26 players a side over up to seven games, with five or
-  six stats each, is too much to type in. They come from box-score feeds (MLB Stats API, ESPN,
-  NHL) through the fetch and load workflows we already have, cross-checked as every sport data
-  file is.
+- **The stats come from a feed (Decided).** At launch, a live data provider feeds every
+  player's stats in-game, through the ingestion module's provider seam. Until then, box scores
+  are loaded after each game with the "Fetch sport sources" and "Load sport data" workflows, so
+  the pools can be built and tried first. Both paths write the same stat lines.
 - **Scope (Decided):** championship rounds only, and only major sports that fit well.
-- **Size:** four slices. The first deadline is the NFL conference championships in late
+- **Size:** five slices, the fifth the live provider before launch. The first deadline is the NFL conference championships in late
   January 2027, then the NBA Finals and the Stanley Cup Final in June and the World Series in
   October.
 
@@ -44,8 +44,8 @@ section 8 carry a recommendation each, and none is answered yet except the ones 
 3. Members pick their players before the first pitch, tip-off, puck drop or kickoff of Game 1.
    Picks close for the whole event at that point, as they do at a golf tournament's first tee
    time.
-4. After each game its box score is loaded (Q6), and each player's line becomes that round's
-   score: Game 1, Game 2 and so on, beside one another as golf's R1 to R4 are. Each entry's
+4. As each game is played, its stats come in (live from the provider at launch, after the game
+   from a loaded box score until then), and each player's line becomes that round's score: Game 1, Game 2 and so on, beside one another as golf's R1 to R4 are. Each entry's
    counted players' totals give the leaderboard.
 5. Games that are never played (a sweep) score nothing for anyone. When the series ends and the
    last box score is in, the contest settles and goes Final. Ties are allowed, as everywhere.
@@ -124,13 +124,22 @@ the sport data file loader and its two workflows.
 
 ## 4. Data: fields and box scores
 
-Both go through the admin API via the sport data file loader, per
-`rules/architecture-rules.md` §6, and cross-check two sources, per the `load-sport-data` skill.
+**At launch (Decided):** a live data provider feeds the stats. It plugs into the ingestion
+module as golf's live scores do. The provider seam (`ingestion/core/provider-interface.ts`)
+gains a stat-line live-score category, and the stat total family registers a `LiveScoreWriter`
+for it that writes `SportEventParticipantStatLine` rows while the game is played. Choosing the
+provider is its own ticket (Q10).
+
+**Until then, for testing (Decided):** the same rows are written by the sport data file loader,
+through the admin API per `rules/architecture-rules.md` §6, from pages fetched by the "Fetch
+sport sources" workflow and cross-checked against two sources per the `load-sport-data` skill.
+Scoring reads the rows and never knows which path wrote them, so nothing built for testing is
+thrown away at launch.
 
 - **The field** (one load when both teams are known): rosters from the league's API (MLB Stats
   API rosters, ESPN team rosters, NHL's roster API), with each player's regular-season stat for
   ranking. The file uses today's `PLAYERS` and `FIELDS` contents.
-- **Box scores** (one load per game): a new `STATS` content, each match's player lines.
+- **Box scores** (interim, one load per game): a new `STATS` content, each match's player lines.
   Sources: MLB Stats API `game/<pk>/boxscore` against the ESPN game summary; ESPN against
   NBA.com for basketball; NHL's `api-web.nhle.com` gamecenter boxscore against ESPN; ESPN against
   the NFL's game book for football. A stat the two sources disagree on is left out and listed,
@@ -170,8 +179,10 @@ Both go through the admin API via the sport data file loader, per
    the four test data files with real box scores.
 3. **Contest screens.** The Stat picker, the entry page's stat column, leaderboard game columns,
    and copy (How to Play, blurbs).
-4. **First real load.** The 2027 NFL conference championship field and box scores, with a
-   `docs/SPORT-DATA-SOURCES.md` row per sport.
+4. **First real load.** The 2027 NFL conference championship field and box scores through the
+   workflows, with a `docs/SPORT-DATA-SOURCES.md` row per sport.
+5. **Live provider (before launch).** The provider's adapter, the stat-line live-score category
+   and the family's writer, after Q10 picks the provider.
 
 Each slice is a normal PR. Slices 1 and 2 can go in parallel once slice 1's schema is merged.
 
@@ -180,7 +191,6 @@ Each slice is a normal PR. Slices 1 and 2 can go in parallel once slice 1's sche
 ## 7. Out of scope
 
 - Earlier playoff rounds: championship series only (Decided).
-- Live, in-game scoring: a game scores when its box score is loaded after it ends (Q6).
 - Pitchers, goalies, defensive players and kickers (Q5).
 - Commissioner-built composites with their own weights (Q3).
 - The WNBA Finals, the PWHL Final and college championships (Q8).
@@ -205,10 +215,9 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
 - **Q5. Who is in the field?** *Recommend position players, all NBA players, skaters, and
   QB/RB/WR/TE, as in section 2. Pitchers and goalies need their own stats and could be a later
   stat set.*
-- **Q6. When do scores update?** *Recommend after each game, when an admin runs "Load sport data"
-  with that game's box score, prepared by a thread. A scheduled fetch and load is a later step,
-  once the feeds have proved reliable.* This keeps the rule that a load runs only on Derek's
-  explicit go, which would then be one go per game.
+- **Q6. When do scores update? Decided:** live from a data provider at launch. Until then, after
+  each game, through the workflows. *Recommend that a thread prepares each game's box score file
+  and Derek says "Load" once per game, which keeps the rule that a load runs only on his go.*
 - **Q7. Player leagues as sport leagues, or a new sport?** *Recommend a sport league with
   participant-type and scoring-family overrides. A new sport ("Baseball players") would split
   baseball's pages and copy in two.*
@@ -218,3 +227,7 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
 - **Q9. Roster size and counted players.** *Recommend Tiered: one player from each of six tiers,
   best four count. Budget: six players under the cap, best four count. Quick pick: three players
   each.* All are editable by the commissioner, as today.
+- **Q10. Which live data provider?** *Recommend its own research ticket before slice 5:
+  Sportradar, SportsDataIO and Stats Perform all cover the four leagues' player stats live.
+  Compare price, licence terms for a pool site, and push versus polling, then pick one for
+  every sport, golf included.*
