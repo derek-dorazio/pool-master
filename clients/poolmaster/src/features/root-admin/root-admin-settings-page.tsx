@@ -14,6 +14,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
 import { BudgetPricingSettingsForm } from './root-admin-budget-pricing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
+import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
 import { ManagePageIntro } from './manage-page-intro';
 import { SETTINGS_PATH } from './manage-navigation';
@@ -72,7 +73,12 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
         <SettingsRow key={item.id} label={item.label} value={item.value} />
       ))}
       <div className="space-y-5 px-5 py-4">
-        {group.key === 'EMAIL_CONFIG' ? <EmailSettingsForm group={group} /> : null}
+        {group.key === 'EMAIL_CONFIG' ? (
+          <>
+            <EmailSettingsForm group={group} />
+            <EmailTestForm />
+          </>
+        ) : null}
         {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
         <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
           {group.updatedAt ? (

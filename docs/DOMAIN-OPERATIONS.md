@@ -1064,6 +1064,7 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
 | Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history. Each value is typed by its group's schema; a change whose stored values no longer validate is logged and left out |
 | Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
+| Send a test email | `rootAdmin` | `sendTestEmail` (#910) — one fixed email to one address through the outbox and the saved `EMAIL_CONFIG`; waits for the sender's first try and returns `SENT`, `SKIPPED` with the reason, or `QUEUED` with the provider's error. The Email card of `/manage/settings` |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
 | Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |
 

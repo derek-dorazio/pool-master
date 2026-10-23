@@ -75,6 +75,7 @@ import {
 } from './modules/email';
 import { emailEventsModule } from './modules/email/email-events-routes';
 import { emailUnsubscribeModule } from './modules/email/email-unsubscribe-routes';
+import { emailTestModule } from './modules/email/email-test-routes';
 
 export function buildApp() {
   const app = Fastify({
@@ -98,7 +99,7 @@ export function buildApp() {
     logger: app.log,
   });
   // One email outbox for the whole app; EMAIL_CONFIG decides on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences } = createEmailOutbox({
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest } = createEmailOutbox({
     prisma,
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     env: process.env,
@@ -226,6 +227,7 @@ export function buildApp() {
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
+  app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });
   app.register(ingestionModule, { prefix: '/api/v1/ingestion', ingestionService, providerRegistry: registry });
   app.register(clientLogsModule, { prefix: '/api/v1/client-logs' });
   app.register(emailEventsModule, {

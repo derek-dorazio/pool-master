@@ -13,11 +13,12 @@ import {
   PrismaEmailSuppressionRepository,
   PrismaUserRepository,
 } from '../../adapters';
-import { readJwtSecret } from '../../core/config';
+import { readAppEnv, readJwtSecret } from '../../core/config';
 import { EmailDeliveryEvents } from './email-delivery-events';
 import { EmailPreferencesService } from './email-preferences-service';
 import { EmailSender } from './email-sender';
 import { EmailService } from './email-service';
+import { EmailTestService } from './email-test-service';
 import { createMailDeliveryProvider, readApplicationBaseUrl, readMailDeliveryConfig } from './mail-delivery';
 import { UnsubscribeTokens } from './unsubscribe-tokens';
 
@@ -28,6 +29,8 @@ export interface EmailOutbox {
   deliveryEvents: EmailDeliveryEvents;
   /** Which categories of email each user gets, and the unsubscribe their links lead to. */
   preferences: EmailPreferencesService;
+  /** The root admin's test email from the Email settings. */
+  test: EmailTestService;
 }
 
 export function createEmailOutbox(options: {
@@ -60,12 +63,14 @@ export function createEmailOutbox(options: {
     logger: options.logger,
   });
   const deliveryEvents = new EmailDeliveryEvents({ messages, suppressions, logger: options.logger });
+  const users = new PrismaUserRepository(options.prisma);
   const preferences = new EmailPreferencesService({
-    users: new PrismaUserRepository(options.prisma),
+    users,
     optOuts,
     suppressions,
     tokens: unsubscribeTokens,
     logger: options.logger,
   });
-  return { email, sender, deliveryEvents, preferences };
+  const test = new EmailTestService({ email, sender, messages, users, environment: readAppEnv(options.env ?? process.env) });
+  return { email, sender, deliveryEvents, preferences, test };
 }
