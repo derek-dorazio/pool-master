@@ -117,9 +117,23 @@ Each template's data is a TypeScript type, so a missing token can't merge, and e
 HTML-escaped. Dates are shown in the recipient's time zone (their account setting), with the
 zone named, or in UTC when they have none.
 
+### Previewing Emails
+
 `npm run email:preview` renders every template with the examples in
-`tests/support/email-template-fixtures.ts` into `tmp/email-preview/` (HTML and plain text);
-`npm run email:preview -- --send` also sends each one to local Mailpit.
+`tests/support/email-template-fixtures.ts` into `tmp/email-preview/` (HTML and plain text).
+Options:
+
+- `-- --send` also sends each one to local Mailpit.
+- `-- --to you@example.com` sends each one to that address through the provider the
+  environment configures (`EMAIL_PROVIDER`, `SES_*`, `AWS_*`). Each subject starts with the
+  template key, such as `[CONTEST_OPENED]`.
+- `-- --category RESULTS` keeps only one category's emails (`ALL` keeps every one).
+
+The **Send email previews** workflow (Actions, manual) runs it with `--to` through QA's SES, so
+the previews land in a real inbox. It sends straight through SES with the repository's AWS
+credentials: the "Send system email" switch and "Only send to" don't apply, and nothing goes
+into QA's outbox. While the account is in the SES sandbox, the address must be verified in SES.
+The credentials' IAM user needs `ses:SendEmail` on the QA identity.
 
 ## Sender
 
