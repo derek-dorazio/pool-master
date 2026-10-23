@@ -1549,6 +1549,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/history/contests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a year's final contests
+         * @description Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listContestResults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/contest-config-templates/": {
         parameters: {
             query?: never;
@@ -15327,6 +15347,116 @@ export interface components {
                 }[];
             }[];
         };
+        /** @description Which year's contests to list, and for which squad or matrix cell. */
+        ListContestResultsQuery: {
+            /** @description The championship year, US Eastern, the contests went final in, such as 2026. */
+            year: number;
+            /**
+             * Format: uuid
+             * @description Only the counted contests this squad placed in: its Played count.
+             */
+            squadId?: string;
+            /** @description With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED). */
+            place?: number;
+        };
+        /** @description The filtered squad's finish in one contest. */
+        ContestResultSquadFinishDto: {
+            /** @description The squad's place from its best entry, 1 best. */
+            place: number;
+            /** @description The place as shown: "T2" for a shared 2nd. */
+            displayPlace: string;
+            /** @description Championship points in tenths of a point, as earned at settlement: 725 is 72.5. */
+            points: number;
+        };
+        /** @description One contest that went final in the year, with who won it. */
+        ContestResultSummaryDto: {
+            /** Format: uuid */
+            contestId: string;
+            name: string;
+            /** @description The sports league its events are in, such as "PGA Tour". */
+            sportLeagueName: string;
+            /** @enum {string} */
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+            /**
+             * Format: date-time
+             * @description When it went final (instant).
+             */
+            completedAt: string;
+            /** @description Entries ranked in it; 0 when nobody placed. */
+            rankedEntryCount: number;
+            /**
+             * @description COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.
+             * @enum {string}
+             */
+            count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT";
+            /** @description The squads that finished 1st, several on a tie, in name order; empty when nobody placed. */
+            winners: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            }[];
+            /** @description With a squadId filter, that squad's finish; null otherwise. */
+            squadFinish: {
+                /** @description The squad's place from its best entry, 1 best. */
+                place: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPlace: string;
+                /** @description Championship points in tenths of a point, as earned at settlement: 725 is 72.5. */
+                points: number;
+            } | null;
+        };
+        /** @description A year's final contests. */
+        ContestResultListResponse: {
+            /** @description Newest final first. Unfiltered: every contest that went final in the year, counted or not. Filtered by squad or cell: only the counted contests the matrix counts there. */
+            contests: {
+                /** Format: uuid */
+                contestId: string;
+                name: string;
+                /** @description The sports league its events are in, such as "PGA Tour". */
+                sportLeagueName: string;
+                /** @enum {string} */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /**
+                 * Format: date-time
+                 * @description When it went final (instant).
+                 */
+                completedAt: string;
+                /** @description Entries ranked in it; 0 when nobody placed. */
+                rankedEntryCount: number;
+                /**
+                 * @description COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.
+                 * @enum {string}
+                 */
+                count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT";
+                /** @description The squads that finished 1st, several on a tie, in name order; empty when nobody placed. */
+                winners: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                }[];
+                /** @description With a squadId filter, that squad's finish; null otherwise. */
+                squadFinish: {
+                    /** @description The squad's place from its best entry, 1 best. */
+                    place: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPlace: string;
+                    /** @description Championship points in tenths of a point, as earned at settlement: 725 is 72.5. */
+                    points: number;
+                } | null;
+            }[];
+        };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
             /** @description Feed types to run for a specific event sync request. */
@@ -20754,6 +20884,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ChampionshipResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listContestResults: {
+        parameters: {
+            query: {
+                /** @description The championship year, US Eastern, the contests went final in, such as 2026. */
+                year: number;
+                /** @description Only the counted contests this squad placed in: its Played count. */
+                squadId?: string;
+                /** @description With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED). */
+                place?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A year's final contests. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestResultListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

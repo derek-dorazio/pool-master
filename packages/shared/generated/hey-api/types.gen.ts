@@ -17027,6 +17027,159 @@ export type ChampionshipYearListResponse = {
 };
 
 /**
+ * Which year's contests to list, and for which squad or matrix cell.
+ */
+export type ListContestResultsQuery = {
+    /**
+     * The championship year, US Eastern, the contests went final in, such as 2026.
+     */
+    year: number;
+    /**
+     * Only the counted contests this squad placed in: its Played count.
+     */
+    squadId?: string;
+    /**
+     * With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).
+     */
+    place?: number;
+};
+
+/**
+ * The filtered squad's finish in one contest.
+ */
+export type ContestResultSquadFinishDto = {
+    /**
+     * The squad's place from its best entry, 1 best.
+     */
+    place: number;
+    /**
+     * The place as shown: "T2" for a shared 2nd.
+     */
+    displayPlace: string;
+    /**
+     * Championship points in tenths of a point, as earned at settlement: 725 is 72.5.
+     */
+    points: number;
+};
+
+/**
+ * One contest that went final in the year, with who won it.
+ */
+export type ContestResultSummaryDto = {
+    contestId: string;
+    name: string;
+    /**
+     * The sports league its events are in, such as "PGA Tour".
+     */
+    sportLeagueName: string;
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+    /**
+     * When it went final (instant).
+     */
+    completedAt: string;
+    /**
+     * Entries ranked in it; 0 when nobody placed.
+     */
+    rankedEntryCount: number;
+    /**
+     * COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.
+     */
+    count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT';
+    /**
+     * The squads that finished 1st, several on a tie, in name order; empty when nobody placed.
+     */
+    winners: Array<{
+        squadId: string;
+        /**
+         * The squad's current name.
+         */
+        squadName: string;
+        /**
+         * The squad's built-in team icon.
+         */
+        squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+    }>;
+    /**
+     * With a squadId filter, that squad's finish; null otherwise.
+     */
+    squadFinish: {
+        /**
+         * The squad's place from its best entry, 1 best.
+         */
+        place: number;
+        /**
+         * The place as shown: "T2" for a shared 2nd.
+         */
+        displayPlace: string;
+        /**
+         * Championship points in tenths of a point, as earned at settlement: 725 is 72.5.
+         */
+        points: number;
+    } | null;
+};
+
+/**
+ * A year's final contests.
+ */
+export type ContestResultListResponse = {
+    /**
+     * Newest final first. Unfiltered: every contest that went final in the year, counted or not. Filtered by squad or cell: only the counted contests the matrix counts there.
+     */
+    contests: Array<{
+        contestId: string;
+        name: string;
+        /**
+         * The sports league its events are in, such as "PGA Tour".
+         */
+        sportLeagueName: string;
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+        /**
+         * When it went final (instant).
+         */
+        completedAt: string;
+        /**
+         * Entries ranked in it; 0 when nobody placed.
+         */
+        rankedEntryCount: number;
+        /**
+         * COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.
+         */
+        count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT';
+        /**
+         * The squads that finished 1st, several on a tie, in name order; empty when nobody placed.
+         */
+        winners: Array<{
+            squadId: string;
+            /**
+             * The squad's current name.
+             */
+            squadName: string;
+            /**
+             * The squad's built-in team icon.
+             */
+            squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        }>;
+        /**
+         * With a squadId filter, that squad's finish; null otherwise.
+         */
+        squadFinish: {
+            /**
+             * The squad's place from its best entry, 1 best.
+             */
+            place: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPlace: string;
+            /**
+             * Championship points in tenths of a point, as earned at settlement: 725 is 72.5.
+             */
+            points: number;
+        } | null;
+    }>;
+};
+
+/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
@@ -21303,6 +21456,58 @@ export type GetChampionshipResponses = {
 };
 
 export type GetChampionshipResponse = GetChampionshipResponses[keyof GetChampionshipResponses];
+
+export type ListContestResultsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        /**
+         * The championship year, US Eastern, the contests went final in, such as 2026.
+         */
+        year: number;
+        /**
+         * Only the counted contests this squad placed in: its Played count.
+         */
+        squadId?: string;
+        /**
+         * With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).
+         */
+        place?: number;
+    };
+    url: '/api/v1/leagues/{id}/history/contests';
+};
+
+export type ListContestResultsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListContestResultsError = ListContestResultsErrors[keyof ListContestResultsErrors];
+
+export type ListContestResultsResponses = {
+    /**
+     * A year's final contests.
+     */
+    200: ContestResultListResponse;
+};
+
+export type ListContestResultsResponse = ListContestResultsResponses[keyof ListContestResultsResponses];
 
 export type ListContestConfigTemplatesData = {
     body?: never;

@@ -1,23 +1,28 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ChampionshipStandingRowDto } from '@/lib/api';
-import { DataGrid } from '@/features/shared/ui';
+import { Button, DataGrid, cn } from '@/features/shared/ui';
 import { CupSquadName } from './cup-squad-name';
 import { formatCupPoints, formatOrdinalPlace } from './cup-view';
-import { FINISH_MATRIX_PLACES } from './championship-view';
+import { FINISH_MATRIX_PLACES, type ContestResultFilter } from './championship-view';
 
 const STANDINGS_PER_PAGE = 25;
 
 /**
  * The finish matrix: each squad's place and points, then how many counted contests it finished
  * 1st, 2nd ... 10th in, with search and paging (rules/ux-rules.md §12 rule 7). `focusSquadId`
- * marks one squad: the viewer's, or the squad whose page shows it.
+ * marks one squad: the viewer's, or the squad whose page shows it. A count opens the contests
+ * behind it (#837): a cell those the squad finished in that place, Played all it placed in.
  */
 export function ChampionshipStandingsGrid({
+  filter,
   focusSquadId,
+  onFilter,
   rows,
 }: {
+  filter: ContestResultFilter | null;
   focusSquadId: string | null;
+  onFilter: (filter: ContestResultFilter) => void;
   rows: ChampionshipStandingRowDto[];
 }) {
   const columns = useMemo<ColumnDef<ChampionshipStandingRowDto, string | number>[]>(
@@ -58,7 +63,15 @@ export function ChampionshipStandingsGrid({
         cell: ({ row }) => {
           const count = row.original.finishes[index] ?? 0;
           return count
-            ? <span className="tabular-nums">{count}</span>
+            ? (
+                <CountButton
+                  count={count}
+                  isActive={filter?.squadId === row.original.squadId && filter.place === index + 1}
+                  label={`Show the contests ${row.original.squadName} finished ${formatOrdinalPlace(index + 1)}`}
+                  onClick={() => onFilter({ squadId: row.original.squadId, place: index + 1 })}
+                  testId={`championship-cell-${row.original.squadId}-${index + 1}`}
+                />
+              )
             : <span aria-label="None" className="text-muted-foreground">·</span>;
         },
       })),
@@ -67,9 +80,20 @@ export function ChampionshipStandingsGrid({
         header: 'Played',
         accessorFn: (row) => row.played,
         enableGlobalFilter: false,
+        cell: ({ row }) => (row.original.played
+          ? (
+              <CountButton
+                count={row.original.played}
+                isActive={filter?.squadId === row.original.squadId && filter.place === null}
+                label={`Show the contests ${row.original.squadName} played`}
+                onClick={() => onFilter({ squadId: row.original.squadId, place: null })}
+                testId={`championship-played-${row.original.squadId}`}
+              />
+            )
+          : <span className="tabular-nums">0</span>),
       },
     ],
-    [focusSquadId],
+    [filter, focusSquadId, onFilter],
   );
 
   return (
@@ -84,5 +108,34 @@ export function ChampionshipStandingsGrid({
       showColumnFilters={false}
       tableTestId="championship-standings"
     />
+  );
+}
+
+/** A matrix count that opens the contests behind it; pressed while the list shows them. */
+function CountButton({
+  count,
+  isActive,
+  label,
+  onClick,
+  testId,
+}: {
+  count: number;
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+  testId: string;
+}) {
+  return (
+    <Button
+      aria-label={label}
+      aria-pressed={isActive}
+      className={cn('font-semibold tabular-nums', !isActive && 'text-primary underline-offset-2 hover:underline')}
+      data-testid={testId}
+      onClick={onClick}
+      size="xs"
+      variant={isActive ? 'primary' : 'ghost'}
+    >
+      {count}
+    </Button>
   );
 }

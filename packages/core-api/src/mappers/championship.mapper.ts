@@ -2,7 +2,7 @@ import type { ChampionshipDto, ChampionshipSquadDto, ChampionshipYearDto } from 
 import type { Squad } from '@poolmaster/shared/domain';
 import type { ChampionshipYearSummaryView, ChampionshipYearView } from '../modules/championship/service';
 
-function toChampionshipSquadDto(squad: Squad): ChampionshipSquadDto {
+export function toChampionshipSquadDto(squad: Squad): ChampionshipSquadDto {
   return { squadId: squad.id, squadName: squad.name, squadIconKey: squad.iconKey };
 }
 

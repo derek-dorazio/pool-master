@@ -1,7 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { getChampionship, listChampionshipYears, type ChampionshipDto, type ChampionshipYearDto } from '@/lib/api';
+import {
+  getChampionship,
+  listChampionshipYears,
+  listContestResults,
+  type ChampionshipDto,
+  type ChampionshipYearDto,
+  type ContestResultSummaryDto,
+} from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
+import type { ContestResultFilter } from './championship-view';
 
 /** The league championship's years with a counted contest, newest first (#863). */
 export function useChampionshipYearsQuery(leagueId: string) {
@@ -33,6 +41,32 @@ export function useChampionshipQuery(leagueId: string, year: number) {
       }
 
       return response.data.championship;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/**
+ * The contests that went final in a championship year (#837), newest first: every one, or one
+ * squad's counted contests, or one cell of its matrix row.
+ */
+export function useChampionshipContestsQuery(leagueId: string, year: number, filter: ContestResultFilter | null) {
+  const squadId = filter?.squadId ?? null;
+  const place = filter?.place ?? null;
+  return useQuery({
+    queryKey: QueryKeys.championship.contests(leagueId, year, squadId, place),
+    queryFn: async (): Promise<ContestResultSummaryDto[]> => {
+      const response = await listContestResults({
+        path: { id: leagueId },
+        query: { year, ...(squadId === null ? {} : { squadId }), ...(place === null ? {} : { place }) },
+      });
+
+      if (!response.data?.contests) {
+        throwApiError(response.error, 'Championship contests response is missing data.');
+      }
+
+      return response.data.contests;
     },
     enabled: Boolean(leagueId),
     retry: false,

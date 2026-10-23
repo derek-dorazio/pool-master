@@ -340,7 +340,11 @@ journey row once a page exists.
    February; Ready to crown stays for the commissioner on a past cup, so one never crowned can
    still be.
 2. **Drill-through.** `GET /history/contests`, the Contests list, squad and cell filters, past
-   race rows opening leaderboards, the Contests page History view.
+   race rows opening leaderboards, the Contests page History view. Built in two PRs: the
+   endpoint with the Championship tab's list and filters first (a matrix count narrows it, kept in
+   the link as `?squad=…&place=…`), then the Contests page History view. Points race rows already
+   opened their leaderboards in any year (#841 slice 2). The squad filter lists only counted
+   contests, as Played counts them; the unfiltered list shows every contest that went final.
 3. **All years.** `GET /history/summary` and the page; delete `my-team-history-page.tsx` (Q3).
 
 1 and 2 in parallel; 3 after 1.

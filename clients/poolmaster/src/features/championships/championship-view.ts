@@ -1,6 +1,6 @@
-import { ChampionshipTile } from '@poolmaster/shared/domain';
-import type { ChampionshipDto, ChampionshipStandingRowDto } from '@/lib/api';
-import { formatCupPoints, joinNames } from './cup-view';
+import { ChampionshipTile, ContestResultCount } from '@poolmaster/shared/domain';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto } from '@/lib/api';
+import { formatCupPoints, formatOrdinalPlace, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
 export const FINISH_MATRIX_PLACES = 10;
@@ -64,4 +64,45 @@ export function describeChampionshipStanding(championship: ChampionshipDto): str
       : `${names} leads`;
   const toGo = championship.contestsToGo;
   return toGo ? `${lead} with ${toGo} ${toGo === 1 ? 'contest' : 'contests'} to go.` : `${lead}.`;
+}
+
+/** What narrows a year's contest list: one squad's counted contests, or with a place one cell of its matrix row. */
+export type ContestResultFilter = { squadId: string; place: number | null };
+
+/**
+ * The contest list's filter from the page's search (`?squad=…&place=…`), so a filtered list can be
+ * shared. Only a squad in the standings counts, and a place only from 1st to 10th.
+ */
+export function parseContestResultFilter(search: URLSearchParams, standings: ChampionshipStandingRowDto[]): ContestResultFilter | null {
+  const squadId = search.get('squad');
+  if (squadId === null || !standings.some((row) => row.squadId === squadId)) {
+    return null;
+  }
+  const place = Number(search.get('place'));
+  return { squadId, place: Number.isInteger(place) && place >= 1 && place <= FINISH_MATRIX_PLACES ? place : null };
+}
+
+/** The contest list's heading: the year's contests, a squad's, or those it finished in one place. */
+export function describeContestResultFilter(filter: ContestResultFilter | null, squadName: string, year: number): string {
+  if (filter === null) {
+    return `Contests in ${year}`;
+  }
+  return filter.place === null
+    ? `Contests ${squadName} played in ${year}`
+    : `Contests ${squadName} finished ${formatOrdinalPlace(filter.place)} in ${year}`;
+}
+
+export type ContestResultState = { badge: string | null; note: string };
+
+/** A final contest's line: who won it and how many entries, or why it has no winner; and whether it counted. */
+export function describeContestResult(contest: ContestResultSummaryDto): ContestResultState {
+  const won = `Won by ${joinNames(contest.winners.map((winner) => winner.squadName))} · ${contest.rankedEntryCount} ${contest.rankedEntryCount === 1 ? 'entry' : 'entries'}`;
+  switch (contest.count) {
+    case ContestResultCount.COUNTED:
+      return { badge: null, note: won };
+    case ContestResultCount.NOT_COUNTED:
+      return { badge: 'Not counted', note: won };
+    case ContestResultCount.NO_RESULT:
+      return { badge: 'No result', note: 'Every event was cancelled, so nobody placed' };
+  }
 }

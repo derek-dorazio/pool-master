@@ -1,4 +1,4 @@
-import type { ChampionshipDto, ChampionshipStandingRowDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -160,6 +160,22 @@ export function buildRunningChampionship(overrides: Partial<ChampionshipDto> = {
       { tile: 'MOST_TOP_TENS', count: 3, squads: [bandits, crushers] },
       { tile: 'MOST_PLAYED', count: 3, squads: [bandits, crushers] },
     ],
+    ...overrides,
+  };
+}
+
+/** A contest that went final in 2026: the Masters, won by Birdie Bandits from 12 entries. */
+export function buildContestResult(overrides: Partial<ContestResultSummaryDto> = {}): ContestResultSummaryDto {
+  return {
+    contestId: 'contest-1',
+    name: 'Masters Tiers',
+    sportLeagueName: 'PGA Tour',
+    selectionType: 'TIERED',
+    completedAt: '2026-04-13T22:00:00.000Z',
+    rankedEntryCount: 12,
+    count: 'COUNTED',
+    winners: [{ squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' }],
+    squadFinish: null,
     ...overrides,
   };
 }
