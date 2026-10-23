@@ -15,6 +15,7 @@ export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): Cu
     contestsCounted: 0,
     movement: null,
     pointsAfter: [],
+    trophy: null,
     ...overrides,
   };
 }
@@ -42,6 +43,8 @@ export function buildCup(overrides: Partial<CupDto> = {}): CupDto {
     sportLeagueId: 'sport-league-pga',
     sportLeagueName: 'PGA Tour',
     name: '2026 PGA Tour Cup',
+    status: 'OPEN',
+    crownedAt: null,
     standings: [],
     contests: [],
     ...overrides,

@@ -123,6 +123,7 @@ export type {
 } from './email-ports';
 export type {
   CupContest,
+  CupContestFinish,
   CupKey,
   CupRankedEntry,
   CupRepository,

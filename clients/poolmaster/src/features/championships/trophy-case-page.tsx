@@ -1,11 +1,15 @@
 import { buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import { EmptyState, ErrorState, ListStack, LoadingState } from '@/features/shared/ui';
+import { CrownCupBanner } from './crown-cup-banner';
 import { CupSummaryCard } from './cup-summary-card';
 import { useChampionshipsRoute } from './use-championships-route';
-import { cupsOnShow } from './cup-view';
+import { cupsOnShow, isReadyToCrown } from './cup-view';
 import { useSeasonCupsQuery } from './use-cups-query';
 
-/** Trophy case: a card per sports league cup of the year, with its leader and the viewer's place. */
+/**
+ * Trophy case: a card per sports league cup of the year, with its leader or champion and the
+ * viewer's place. The commissioner sees "Ready to crown" above for each cup that can be crowned.
+ */
 export function TrophyCasePage() {
   const { leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
   const cupsQuery = useSeasonCupsQuery(leagueId, year);
@@ -29,6 +33,9 @@ export function TrophyCasePage() {
 
   return (
     <ListStack data-testid="trophy-case">
+      {viewer.isCommissioner
+        ? cups.filter(isReadyToCrown).map((cup) => <CrownCupBanner cup={cup} key={`crown-${cup.id}`} leagueId={leagueId} />)
+        : null}
       {cups.map((cup) => (
         <CupSummaryCard
           cup={cup}

@@ -896,15 +896,35 @@ export type CupPointsScale = (typeof CupPointsScale)[keyof typeof CupPointsScale
  * Whether one contest of a cup's season and sports league counts toward it (#841). COUNTED: it is
  * COMPLETED with places, which earn points. NOT_COUNTED: the commissioner set its weight to not
  * counted. NO_RESULT: it is COMPLETED with nobody placed (every event cancelled). NOT_FINAL: it is
- * open or live, and counts once it is COMPLETED. Drafts never opened are not listed at all.
+ * open or live, and counts once it is COMPLETED. AFTER_CROWNING: the cup was crowned before it went
+ * final, so it changes nothing. Drafts never opened are not listed at all.
  */
 export const CupContestCount = {
   COUNTED: 'COUNTED',
   NOT_COUNTED: 'NOT_COUNTED',
   NO_RESULT: 'NO_RESULT',
   NOT_FINAL: 'NOT_FINAL',
+  AFTER_CROWNING: 'AFTER_CROWNING',
 } as const;
 export type CupContestCount = (typeof CupContestCount)[keyof typeof CupContestCount];
+
+/**
+ * A cup's state (#841): OPEN while its standings are worked out on read; CROWNED once the
+ * commissioner crowns it, its standings frozen and its trophies handed out.
+ */
+export const CupStatus = {
+  OPEN: 'OPEN',
+  CROWNED: 'CROWNED',
+} as const;
+export type CupStatus = (typeof CupStatus)[keyof typeof CupStatus];
+
+/** The trophy a squad takes from a crowned cup (#841): 1st, 2nd or 3rd. Squads sharing a place share its trophy. */
+export const CupTrophy = {
+  CHAMPION: 'CHAMPION',
+  RUNNER_UP: 'RUNNER_UP',
+  THIRD: 'THIRD',
+} as const;
+export type CupTrophy = (typeof CupTrophy)[keyof typeof CupTrophy];
 
 /**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,

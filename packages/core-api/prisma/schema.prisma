@@ -448,6 +448,19 @@ enum PrismaCupPointsScale {
   CUSTOM
 }
 
+/// A cup's state (#841). Mirrors the domain `CupStatus`.
+enum PrismaCupStatus {
+  OPEN
+  CROWNED
+}
+
+/// The trophy a squad takes from a crowned cup (#841). Mirrors the domain `CupTrophy`.
+enum PrismaCupTrophy {
+  CHAMPION
+  RUNNER_UP
+  THIRD
+}
+
 enum PrismaPrizePayoutType {
   FIXED_AMOUNT
   PERCENTAGE
@@ -633,6 +646,7 @@ model Squad {
   entries          ContestEntry[]
   ownerInvitations SquadOwnerInvitation[]
   yearFinishes     LeagueYearFinish[]
+  cupStandings     CupStanding[]
 
   @@unique([leagueId, name])
   @@index([leagueId, isActive])
@@ -988,18 +1002,49 @@ model Contest {
 /// contests count is worked out on read: the league's contests of the season and sports league,
 /// not NOT_COUNTED. Its name is built from the season and the sports league; there is no column.
 model Cup {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId      String   @map("league_id") @db.Uuid
-  seasonYear    Int      @map("season_year")
-  sportLeagueId String   @map("sport_league_id") @db.Uuid
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId            String                @map("league_id") @db.Uuid
+  seasonYear          Int                   @map("season_year")
+  sportLeagueId       String                @map("sport_league_id") @db.Uuid
+  status              PrismaCupStatus       @default(OPEN)
+  /// Set with CROWNED (database check), like the points table frozen with it.
+  crownedAt           DateTime?             @map("crowned_at") @db.Timestamptz
+  crownedPointsScale  PrismaCupPointsScale? @map("crowned_points_scale")
+  crownedCustomPoints Int[]                 @default([]) @map("crowned_custom_points")
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz
 
   // A cup is the league's, so it goes with the league; nothing else deletes one.
-  league      League      @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  sportLeague SportLeague @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  league      League        @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  sportLeague SportLeague   @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  standings   CupStanding[]
 
   @@unique([leagueId, seasonYear, sportLeagueId])
   @@map("cups")
+}
+
+/// One squad's frozen place in a crowned cup (#841), written once at crowning.
+model CupStanding {
+  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  cupId           String           @map("cup_id") @db.Uuid
+  squadId         String           @map("squad_id") @db.Uuid
+  position        Int
+  /// "T2" for a shared 2nd.
+  displayPosition String           @map("display_position")
+  /// Tenths of a point.
+  points          Int
+  wins            Int
+  podiums         Int
+  contestsCounted Int              @map("contests_counted")
+  trophy          PrismaCupTrophy?
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  // The squad delete guard keeps a squad with results; the cascades let a league go whole.
+  cup   Cup   @relation(fields: [cupId], references: [id], onDelete: Cascade)
+  squad Squad @relation(fields: [squadId], references: [id], onDelete: Cascade)
+
+  @@unique([cupId, squadId])
+  @@index([squadId])
+  @@map("cup_standings")
 }
 
 /// One squad's finish in one settled contest, for the league championship (#863): written once,

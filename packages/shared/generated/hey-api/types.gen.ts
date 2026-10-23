@@ -15764,7 +15764,7 @@ export type ListCupsQuery = {
 };
 
 /**
- * One squad's place in a cup. Every active squad has a row, at 0 points until it places.
+ * One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning.
  */
 export type CupStandingRowDto = {
     squadId: string;
@@ -15812,6 +15812,10 @@ export type CupStandingRowDto = {
      * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
      */
     pointsAfter: Array<number>;
+    /**
+     * The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+     */
+    trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
 };
 
 /**
@@ -15834,13 +15838,13 @@ export type CupContestRowDto = {
     status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
     /**
-     * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+     * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
      */
     cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
     /**
-     * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+     * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
      */
-    count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+    count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL' | 'AFTER_CROWNING';
     /**
      * When its first event starts (instant).
      */
@@ -15874,6 +15878,14 @@ export type CupDto = {
      * The cup's name, built from season and sports league: "2026 PGA Tour Cup".
      */
     name: string;
+    /**
+     * OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+     */
+    status: 'OPEN' | 'CROWNED';
+    /**
+     * When it was crowned (instant); null while open.
+     */
+    crownedAt: string | null;
     /**
      * Best first; squads sharing a place in name order.
      */
@@ -15923,6 +15935,10 @@ export type CupDto = {
          * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
          */
         pointsAfter: Array<number>;
+        /**
+         * The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+         */
+        trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
     }>;
     /**
      * Every contest of the season and sports league, drafts left out, by first event start.
@@ -15936,13 +15952,13 @@ export type CupDto = {
         status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
         /**
-         * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+         * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
          */
         cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
         /**
-         * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+         * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
          */
-        count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+        count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL' | 'AFTER_CROWNING';
         /**
          * When its first event starts (instant).
          */
@@ -15981,6 +15997,14 @@ export type CupListResponse = {
          * The cup's name, built from season and sports league: "2026 PGA Tour Cup".
          */
         name: string;
+        /**
+         * OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+         */
+        status: 'OPEN' | 'CROWNED';
+        /**
+         * When it was crowned (instant); null while open.
+         */
+        crownedAt: string | null;
         /**
          * Best first; squads sharing a place in name order.
          */
@@ -16030,6 +16054,10 @@ export type CupListResponse = {
              * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
              */
             pointsAfter: Array<number>;
+            /**
+             * The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+             */
+            trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
         }>;
         /**
          * Every contest of the season and sports league, drafts left out, by first event start.
@@ -16043,13 +16071,13 @@ export type CupListResponse = {
             status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
             selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
             /**
-             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
              */
             cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
             /**
-             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
              */
-            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL' | 'AFTER_CROWNING';
             /**
              * When its first event starts (instant).
              */
@@ -16090,6 +16118,14 @@ export type CupResponse = {
          */
         name: string;
         /**
+         * OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+         */
+        status: 'OPEN' | 'CROWNED';
+        /**
+         * When it was crowned (instant); null while open.
+         */
+        crownedAt: string | null;
+        /**
          * Best first; squads sharing a place in name order.
          */
         standings: Array<{
@@ -16138,6 +16174,10 @@ export type CupResponse = {
              * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
              */
             pointsAfter: Array<number>;
+            /**
+             * The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+             */
+            trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
         }>;
         /**
          * Every contest of the season and sports league, drafts left out, by first event start.
@@ -16151,13 +16191,13 @@ export type CupResponse = {
             status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
             selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
             /**
-             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             * How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
              */
             cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
             /**
-             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             * COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
              */
-            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL';
+            count: 'COUNTED' | 'NOT_COUNTED' | 'NO_RESULT' | 'NOT_FINAL' | 'AFTER_CROWNING';
             /**
              * When its first event starts (instant).
              */
@@ -20776,6 +20816,46 @@ export type GetCupSquadPointsResponses = {
 };
 
 export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
+
+export type CrownCupData = {
+    body?: never;
+    path: {
+        id: string;
+        cupId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cups/{cupId}/crown';
+};
+
+export type CrownCupErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type CrownCupError = CrownCupErrors[keyof CrownCupErrors];
+
+export type CrownCupResponses = {
+    /**
+     * One cup.
+     */
+    200: CupResponse;
+};
+
+export type CrownCupResponse = CrownCupResponses[keyof CrownCupResponses];
 
 export type ListChampionshipYearsData = {
     body?: never;

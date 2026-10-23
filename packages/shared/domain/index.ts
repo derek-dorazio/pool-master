@@ -61,6 +61,7 @@ export type {
 export type {
   Contest,
   Cup,
+  CupStanding,
   LeagueYearFinish,
   ContestEntry,
   DomainEntity,

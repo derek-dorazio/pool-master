@@ -6,6 +6,7 @@ import {
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
+  crownCup,
   createEvent,
   createParticipant,
   enterContest,
@@ -27,7 +28,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, CupContestCount, CupPointsScale, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, CupContestCount, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -49,7 +50,9 @@ import { standardEventPricing } from '../support/budget-pricing';
 // The same settlements write the league championship (#863): its year shares 1st the same way.
 // Then the commissioner's settings (#841 slice 3): a third race's open contest is set to count
 // double, the settled ones refuse a new weight, and a custom points table rescores the cup at
-// once while the championship keeps the points its contests earned when they settled.
+// once while the championship keeps the points its contests earned when they settled. Last,
+// crowning (#841 slice 4): refused while a counted contest is open, then the cup is crowned with
+// both squads sharing the trophy, and it keeps its points when the table changes again.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -272,6 +275,38 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     })).data)).championship;
     expect(keptChampionship.cupName).toBe('Harriers Shield');
     expect(keptChampionship.standings.map((row) => row.points)).toEqual([1800, 1800]);
+
+    // --- Crowning: only the commissioner, and not while the counted Coast contest is open ------
+    const crown = (client: typeof member.client) => crownCup({ client, path: { id: league.id, cupId } });
+    expect((await crown(member.client)).response.status).toBe(403);
+    const early = await crown(commissioner.client);
+    expect(early.response.status).toBe(409);
+    expect(early.error?.error).toMatchObject({
+      code: 'CUP_HAS_UNFINISHED_CONTESTS',
+      details: { contests: [{ contestId: coastContest, name: `Coast Picks ${RUN}`, status: 'OPEN' }] },
+    });
+    await setContestCupWeight({ client: commissioner.client, path: { id: league.id, contestId: coastContest }, body: { cupWeight: CupWeight.NOT_COUNTED } });
+
+    const crowned = CupResponseSchema.parse(expectDefined((await crown(commissioner.client)).data)).cup;
+    expect(crowned.status).toBe(CupStatus.CROWNED);
+    expect(crowned.crownedAt).not.toBeNull();
+    expect(crowned.standings.map((row) => [row.displayPosition, row.points, row.trophy, row.movement])).toEqual([
+      ['T1', 150, CupTrophy.CHAMPION, null],
+      ['T1', 150, CupTrophy.CHAMPION, null],
+    ]);
+    const twice = await crown(commissioner.client);
+    expect(twice.response.status).toBe(409);
+    expect(twice.error?.error.code).toBe('CUP_CROWNED');
+
+    // A crowned cup keeps the points it was crowned with.
+    await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [] },
+    });
+    const kept = CupResponseSchema.parse(expectDefined((await getCup({ client: member.client, path: { id: league.id, cupId } })).data)).cup;
+    expect(Object.fromEntries(kept.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', [row.points, row.pointsAfter, row.trophy]])))
+      .toEqual({ member: [150, [100, 150], CupTrophy.CHAMPION], commissioner: [150, [50, 150], CupTrophy.CHAMPION] });
   });
 
   it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {

@@ -34656,6 +34656,19 @@
               "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
             },
             "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
+          },
+          "trophy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "CHAMPION",
+              "RUNNER_UP",
+              "THIRD",
+              null
+            ],
+            "description": "The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points."
           }
         },
         "required": [
@@ -34670,10 +34683,11 @@
           "podiums",
           "contestsCounted",
           "movement",
-          "pointsAfter"
+          "pointsAfter",
+          "trophy"
         ],
         "additionalProperties": false,
-        "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
+        "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning."
       },
       "CupWinnerDto": {
         "type": "object",
@@ -34733,7 +34747,7 @@
               "DOUBLE",
               "NOT_COUNTED"
             ],
-            "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all."
+            "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with."
           },
           "count": {
             "type": "string",
@@ -34741,9 +34755,10 @@
               "COUNTED",
               "NOT_COUNTED",
               "NO_RESULT",
-              "NOT_FINAL"
+              "NOT_FINAL",
+              "AFTER_CROWNING"
             ],
-            "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final."
+            "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing."
           },
           "firstEventStartsAt": {
             "type": "string",
@@ -34820,6 +34835,22 @@
           "name": {
             "type": "string",
             "description": "The cup's name, built from season and sports league: \"2026 PGA Tour Cup\"."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CROWNED"
+            ],
+            "description": "OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen."
+          },
+          "crownedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When it was crowned (instant); null while open."
           },
           "standings": {
             "type": "array",
@@ -34983,6 +35014,19 @@
                     "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
                   },
                   "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
+                },
+                "trophy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "CHAMPION",
+                    "RUNNER_UP",
+                    "THIRD",
+                    null
+                  ],
+                  "description": "The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points."
                 }
               },
               "required": [
@@ -34997,10 +35041,11 @@
                 "podiums",
                 "contestsCounted",
                 "movement",
-                "pointsAfter"
+                "pointsAfter",
+                "trophy"
               ],
               "additionalProperties": false,
-              "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
+              "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning."
             },
             "description": "Best first; squads sharing a place in name order."
           },
@@ -35046,7 +35091,7 @@
                     "DOUBLE",
                     "NOT_COUNTED"
                   ],
-                  "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all."
+                  "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with."
                 },
                 "count": {
                   "type": "string",
@@ -35054,9 +35099,10 @@
                     "COUNTED",
                     "NOT_COUNTED",
                     "NO_RESULT",
-                    "NOT_FINAL"
+                    "NOT_FINAL",
+                    "AFTER_CROWNING"
                   ],
-                  "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final."
+                  "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing."
                 },
                 "firstEventStartsAt": {
                   "type": "string",
@@ -35118,6 +35164,8 @@
           "sportLeagueId",
           "sportLeagueName",
           "name",
+          "status",
+          "crownedAt",
           "standings",
           "contests"
         ],
@@ -35154,6 +35202,22 @@
                 "name": {
                   "type": "string",
                   "description": "The cup's name, built from season and sports league: \"2026 PGA Tour Cup\"."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "OPEN",
+                    "CROWNED"
+                  ],
+                  "description": "OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen."
+                },
+                "crownedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time",
+                  "description": "When it was crowned (instant); null while open."
                 },
                 "standings": {
                   "type": "array",
@@ -35317,6 +35381,19 @@
                           "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
                         },
                         "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
+                      },
+                      "trophy": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "CHAMPION",
+                          "RUNNER_UP",
+                          "THIRD",
+                          null
+                        ],
+                        "description": "The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points."
                       }
                     },
                     "required": [
@@ -35331,10 +35408,11 @@
                       "podiums",
                       "contestsCounted",
                       "movement",
-                      "pointsAfter"
+                      "pointsAfter",
+                      "trophy"
                     ],
                     "additionalProperties": false,
-                    "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
+                    "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning."
                   },
                   "description": "Best first; squads sharing a place in name order."
                 },
@@ -35380,7 +35458,7 @@
                           "DOUBLE",
                           "NOT_COUNTED"
                         ],
-                        "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all."
+                        "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with."
                       },
                       "count": {
                         "type": "string",
@@ -35388,9 +35466,10 @@
                           "COUNTED",
                           "NOT_COUNTED",
                           "NO_RESULT",
-                          "NOT_FINAL"
+                          "NOT_FINAL",
+                          "AFTER_CROWNING"
                         ],
-                        "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final."
+                        "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing."
                       },
                       "firstEventStartsAt": {
                         "type": "string",
@@ -35452,6 +35531,8 @@
                 "sportLeagueId",
                 "sportLeagueName",
                 "name",
+                "status",
+                "crownedAt",
                 "standings",
                 "contests"
               ],
@@ -35495,6 +35576,22 @@
               "name": {
                 "type": "string",
                 "description": "The cup's name, built from season and sports league: \"2026 PGA Tour Cup\"."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "OPEN",
+                  "CROWNED"
+                ],
+                "description": "OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen."
+              },
+              "crownedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When it was crowned (instant); null while open."
               },
               "standings": {
                 "type": "array",
@@ -35658,6 +35755,19 @@
                         "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
                       },
                       "description": "The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts."
+                    },
+                    "trophy": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "CHAMPION",
+                        "RUNNER_UP",
+                        "THIRD",
+                        null
+                      ],
+                      "description": "The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points."
                     }
                   },
                   "required": [
@@ -35672,10 +35782,11 @@
                     "podiums",
                     "contestsCounted",
                     "movement",
-                    "pointsAfter"
+                    "pointsAfter",
+                    "trophy"
                   ],
                   "additionalProperties": false,
-                  "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places."
+                  "description": "One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning."
                 },
                 "description": "Best first; squads sharing a place in name order."
               },
@@ -35721,7 +35832,7 @@
                         "DOUBLE",
                         "NOT_COUNTED"
                       ],
-                      "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all."
+                      "description": "How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with."
                     },
                     "count": {
                       "type": "string",
@@ -35729,9 +35840,10 @@
                         "COUNTED",
                         "NOT_COUNTED",
                         "NO_RESULT",
-                        "NOT_FINAL"
+                        "NOT_FINAL",
+                        "AFTER_CROWNING"
                       ],
-                      "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final."
+                      "description": "COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing."
                     },
                     "firstEventStartsAt": {
                       "type": "string",
@@ -35793,6 +35905,8 @@
               "sportLeagueId",
               "sportLeagueName",
               "name",
+              "status",
+              "crownedAt",
               "standings",
               "contests"
             ],
@@ -45834,6 +45948,86 @@
             }
           },
           "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/cups/{cupId}/crown": {
+      "post": {
+        "operationId": "crownCup",
+        "summary": "Crown a cup",
+        "tags": [
+          "Cups"
+        ],
+        "description": "Allows a commissioner to crown a cup once its season is done: every squad's place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_NOTHING_COUNTED before any contest has counted toward it; 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league's. Active commissioners only (root admins bypass).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "cupId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One cup.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CupResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
