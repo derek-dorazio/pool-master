@@ -1,4 +1,5 @@
 import {
+  ContestEventChangeKind,
   ContestResultsKind,
   EntryReceiptKind,
   EntryReminderKind,
@@ -115,6 +116,19 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       yourWins: [{ entryName: 'Green Jackets', squadName: 'Morgan Member' }],
     },
     leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
+    contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+  },
+  CONTEST_EVENT_CHANGED: {
+    userName: 'Morgan Member',
+    leagueName: 'Office League',
+    contestName: 'Masters Pick 6',
+    eventName: 'The Masters',
+    change: {
+      kind: ContestEventChangeKind.RESCHEDULED,
+      previousStart: new Date('2027-04-08T12:00:00.000Z'),
+      newStart: new Date('2027-04-15T12:00:00.000Z'),
+      picksOpen: true,
+    },
     contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
   },
   PASSWORD_RESET: {

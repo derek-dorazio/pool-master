@@ -109,6 +109,7 @@ export function buildApp() {
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     contestStarted: contestNotices,
+    sportEventChanged: contestNotices,
     contestSettlement,
     releasedEditionContests: createContestManagementService(prisma, app.log),
   });

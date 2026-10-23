@@ -113,10 +113,13 @@ export interface SportEventServiceDeps {
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
-  lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition'>;
+  lifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'sportEventRescheduled'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
+
+/** The statuses whose start moving is told to the leagues on the event (#845 C6). */
+const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
 
 export class SportEventService {
   constructor(private readonly deps: SportEventServiceDeps) {}
@@ -341,7 +344,7 @@ export class SportEventService {
    * read the schedule the admin now sees.
    */
   async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
-    const { startDate: startedAt, rounds: roundCount } = await this.requireEvent(sportEventId);
+    const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
     // Three writes, not one transaction: a failure after the first leaves the rounds behind the
     // event's new dates. The round writes only reject a round the event lacks, and they read the
     // event's rounds first, so in practice they don't fail here.
@@ -353,6 +356,10 @@ export class SportEventService {
     }
     if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
       await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });
+    }
+    // A draft's commissioners can't see it yet, and a started event's picks are closed.
+    if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status)) {
+      await this.deps.lifecycle.sportEventRescheduled(await this.requireEvent(sportEventId), startedAt);
     }
     return this.requireSummary(sportEventId);
   }

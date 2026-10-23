@@ -30,7 +30,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming, type EventTiming } from '../contests/entry-window';
 import { hasSportEventStarted } from './operational-timing';
-import type { ContestStartedNotice } from '../notifications/contest-notices';
+import type { ContestStartedNotice, SportEventChange, SportEventChangedNotice } from '../notifications/contest-notices';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export interface FinishedSportEventSettlement {
@@ -106,6 +106,7 @@ export class EventLifecycleService {
     private readonly contestStarted?: ContestStartedNotice,
     private readonly contestSettlement?: FinishedSportEventSettlement,
     private readonly releasedEditionContests?: ReleasedEditionContests,
+    private readonly sportEventChanged?: SportEventChangedNotice,
   ) {}
 
   async applySportEventStatusTransition(
@@ -151,6 +152,13 @@ export class EventLifecycleService {
     if (input.toStatus === SportEventStatus.IN_PROGRESS) {
       await this.activateContestsPastCutoff(updated);
     }
+    if (input.toStatus === SportEventStatus.POSTPONED && fromStatus !== SportEventStatus.POSTPONED) {
+      await this.tellSportEventChanged(updated, { kind: 'POSTPONED' });
+    }
+    // C7 goes before settlement, which finishes the contests it is told to.
+    if (input.toStatus === SportEventStatus.CANCELLED && fromStatus !== SportEventStatus.CANCELLED) {
+      await this.tellSportEventChanged(updated, { kind: 'CANCELLED' });
+    }
     // A cancelled event settles its contests too (#743): it counts for nothing, so it must not
     // hold a contest open.
     if (input.toStatus === SportEventStatus.COMPLETED || input.toStatus === SportEventStatus.CANCELLED) {
@@ -162,6 +170,24 @@ export class EventLifecycleService {
       fromStatus,
       toStatus: input.toStatus,
     };
+  }
+
+  /** C6: a released event's start moved, as an admin's edit reports it. */
+  async sportEventRescheduled(sportEvent: SportEvent, previousStart: Date): Promise<void> {
+    await this.tellSportEventChanged(sportEvent, { kind: 'RESCHEDULED', previousStart });
+  }
+
+  /** C6 or C7: queued for the leagues on the event, never failing the change. */
+  private async tellSportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
+    try {
+      await this.sportEventChanged?.sportEventChanged(sportEvent, change);
+    } catch (err) {
+      this.logger?.error({
+        sportEventId: sportEvent.id,
+        change: change.kind,
+        error: err instanceof Error ? err.message : String(err),
+      }, 'Failed to queue event changed emails');
+    }
   }
 
   /**

@@ -9,7 +9,7 @@ import {
   EventLifecycleService,
   type EventLifecycleContestDeps,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import type { ContestStartedNotice } from '../../../packages/core-api/src/modules/notifications';
+import type { ContestStartedNotice, SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { buildContest } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
@@ -400,6 +400,83 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     });
 
     expect(contests.contests.transitionStatus).toHaveBeenCalledWith('contest-1', expect.objectContaining({ to: ContestStatus.ACTIVE }));
+  });
+});
+
+describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
+  /** An event-changed notice that records what it was told, and the order against settlement. */
+  function changedNotice(order: string[] = []): SportEventChangedNotice & { sportEventChanged: jest.Mock } {
+    return {
+      sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async (_sportEvent, change) => { order.push(`told ${change.kind}`); }),
+    };
+  }
+
+  it('tells the leagues an event was postponed when it first goes POSTPONED, and not again on a repeated call', async () => {
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const notice = changedNotice();
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice);
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
+
+    expect(notice.sportEventChanged).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChanged).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', status: SportEventStatus.POSTPONED }), { kind: 'POSTPONED' });
+  });
+
+  it('tells the leagues an event was cancelled before its contests settle', async () => {
+    const order: string[] = [];
+    const settlement = {
+      settleFinishedSportEvent: jest.fn(async () => { order.push('settled'); return { sportEventId: 'sport-event-1', contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 0 }; }),
+      settleFinishedGame: jest.fn().mockResolvedValue(0),
+    };
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, settlement, undefined, changedNotice(order));
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } });
+
+    expect(order).toEqual(['told CANCELLED', 'settled']);
+  });
+
+  it('tells nothing when an event starts or completes', async () => {
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const notice = changedNotice();
+    const service = new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice);
+
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'SYSTEM' } });
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.COMPLETED, actor: { type: 'SYSTEM' } });
+
+    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+  });
+
+  it('tells the leagues a moved event\'s previous start', async () => {
+    const { sportEvents, storedEvent } = seededEvents();
+    const notice = changedNotice();
+    const previousStart = new Date('2026-04-25T20:00:00.000Z');
+
+    await new EventLifecycleService(contestDeps(), sportEvents, fakeLogger(), undefined, undefined, undefined, notice)
+      .sportEventRescheduled(storedEvent(), previousStart);
+
+    expect(notice.sportEventChanged).toHaveBeenCalledWith(storedEvent(), { kind: 'RESCHEDULED', previousStart });
+  });
+
+  it('still cancels the event and settles its contests, and logs it, when the event changed emails cannot be queued', async () => {
+    const logger = fakeLogger();
+    const settlement = {
+      settleFinishedSportEvent: jest.fn().mockResolvedValue({ contestsCompleted: 1 }),
+      settleFinishedGame: jest.fn().mockResolvedValue(0),
+    };
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const notice = { sportEventChanged: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+    const service = new EventLifecycleService(contestDeps(), sportEvents, logger, undefined, settlement, undefined, notice);
+
+    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.CANCELLED, actor: { type: 'ROOT_ADMIN' } }))
+      .resolves.toMatchObject({ toStatus: SportEventStatus.CANCELLED });
+
+    expect(settlement.settleFinishedSportEvent).toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ sportEventId: 'sport-event-1', change: 'CANCELLED', error: 'database unavailable' }),
+      'Failed to queue event changed emails',
+    );
   });
 });
 

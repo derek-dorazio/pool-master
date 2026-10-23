@@ -370,6 +370,44 @@ export interface ContestResultsEmailData {
   contestUrl: string;
 }
 
+/** What happened to an event a contest is on (#845 C6, C7). */
+export const ContestEventChangeKind = {
+  /** It goes `POSTPONED`, with no new date yet. */
+  POSTPONED: 'POSTPONED',
+  /** A released event's start moved. */
+  RESCHEDULED: 'RESCHEDULED',
+  /** It goes `CANCELLED`: it counts for nothing. */
+  CANCELLED: 'CANCELLED',
+} as const;
+export type ContestEventChangeKind = (typeof ContestEventChangeKind)[keyof typeof ContestEventChangeKind];
+
+export type ContestEventChange =
+  | {
+    kind: typeof ContestEventChangeKind.POSTPONED;
+    /** The contest still takes picks, which stay open until the event starts. */
+    picksOpen: boolean;
+  }
+  | {
+    kind: typeof ContestEventChangeKind.RESCHEDULED;
+    previousStart: Date;
+    newStart: Date;
+    picksOpen: boolean;
+  }
+  | {
+    kind: typeof ContestEventChangeKind.CANCELLED;
+    /** The event was the contest's only one, so the contest ends with no scores (F2 is not sent). */
+    endsContest: boolean;
+  };
+
+export interface ContestEventChangedEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  eventName: string;
+  change: ContestEventChange;
+  contestUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -393,6 +431,7 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_OPENED: ContestOpenedEmailData;
   CONTEST_STANDINGS: ContestStandingsEmailData;
   CONTEST_RESULTS: ContestResultsEmailData;
+  CONTEST_EVENT_CHANGED: ContestEventChangedEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -459,6 +498,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_OPENED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STANDINGS: typeof EmailTemplateScope.LEAGUE;
   CONTEST_RESULTS: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_EVENT_CHANGED: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -572,6 +612,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestResultsEmail,
+  },
+  CONTEST_EVENT_CHANGED: {
+    category: EmailCategory.CONTEST_UPDATES,
+    serviceClass: ServiceClass.A,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestEventChangedEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -1201,6 +1249,59 @@ function renderContestResultsEmail(
     title: 'Final results',
     bodyBlocks,
     textLines,
+  });
+}
+
+/** The subject, title and sentences an event change email says, by what happened. */
+function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone: string): { subject: string; title: string; sentences: string[] } {
+  const { change } = data;
+  const picksLine = `Picks for ${data.contestName} stay open until it starts.`;
+  switch (change.kind) {
+    case ContestEventChangeKind.POSTPONED:
+      return {
+        subject: `Postponed: ${data.eventName}`,
+        title: 'Event postponed',
+        sentences: [
+          `${data.eventName} has been postponed, with no new date yet.`,
+          change.picksOpen ? picksLine : `${data.contestName} carries on when it resumes.`,
+        ],
+      };
+    case ContestEventChangeKind.RESCHEDULED:
+      return {
+        subject: `New date: ${data.eventName}`,
+        title: 'Event moved',
+        sentences: [
+          `${data.eventName} has moved from ${formatInstant(change.previousStart, timeZone)} to ${formatInstant(change.newStart, timeZone)}.`,
+          ...(change.picksOpen ? [`Picks for ${data.contestName} stay open until the new start.`] : []),
+        ],
+      };
+    case ContestEventChangeKind.CANCELLED:
+      return {
+        subject: `Cancelled: ${data.eventName}`,
+        title: 'Event cancelled',
+        sentences: change.endsContest
+          ? [`${data.eventName} has been cancelled, so ${data.contestName} ends with no scores.`]
+          : [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}, which goes on with its other events.`],
+      };
+  }
+}
+
+function renderContestEventChangedEmail(
+  data: ContestEventChangedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const { subject, title, sentences } = contestEventChangeWording(data, context.timeZone);
+  return buildMessage(context, {
+    templateKey: 'CONTEST_EVENT_CHANGED',
+    subject,
+    preheader: sentences[0] ?? subject,
+    title,
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
+      button('View contest', data.contestUrl),
+    ].join(''),
+    textLines: [`Hi ${data.userName},`, '', ...sentences, '', `View contest: ${data.contestUrl}`],
   });
 }
 

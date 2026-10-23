@@ -195,6 +195,7 @@ describe('EMAIL_CONFIG defaults', () => {
         CONTEST_OPENED: true,
         CONTEST_STANDINGS: true,
         CONTEST_RESULTS: true,
+        CONTEST_EVENT_CHANGED: true,
       },
     });
   });

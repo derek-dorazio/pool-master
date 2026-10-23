@@ -3,7 +3,8 @@
  * commissioner opens it, "Contest is live, good luck" (E1) when it goes live at its cutoff, and
  * "Final results" (F1, with F3 for its winners) when it settles. All three go to every active
  * member of the contest's league, and to no other league. A contest that ends with no scores
- * (F2) tells only its commissioners and the members with an entry.
+ * (F2) tells only its commissioners and the members with an entry, and so does an event on it
+ * being postponed, moved or cancelled (C6, C7).
  *
  * Each email is queued once per person: its outbox idempotency key is the contest (and for E1
  * the event) and the person, so a retried call finds it recorded and skips.
@@ -13,6 +14,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { ContestEntryRepository, ContestRepository, LeagueRepository, SquadMembershipRepository } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
+  ContestStatus,
   LeagueRole,
   PARTICIPANT_SCORING_DEFINITIONS,
   SportEventStatus,
@@ -25,11 +27,13 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ContestService } from '../contests/service';
 import {
+  ContestEventChangeKind,
   ContestResultsKind,
   buildContestUrl,
   buildLeaderboardUrl,
   formatUserName,
   type ContestEmailEvent,
+  type ContestEventChange,
   type ContestResultsOutcome,
   type EmailService,
   type StandingsLine,
@@ -39,7 +43,7 @@ import { activeLeagueMembers, activeLeagueMembersWithRoles, type LeagueMemberDep
 import { leaderCount } from './live-standings';
 
 export interface ContestNoticeDeps extends ContestSummaryDeps, LeagueMemberDeps {
-  contests: Pick<ContestRepository, 'findById'>;
+  contests: Pick<ContestRepository, 'findById' | 'findBySportEvent'>;
   leagues: Pick<LeagueRepository, 'findById'>;
   entries: Pick<ContestEntryRepository, 'findByContest'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
@@ -69,7 +73,21 @@ export interface ContestSettledNotice {
   contestSettled(contest: Contest): Promise<void>;
 }
 
-export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice, ContestSettledNotice {
+/** What happened to an event, as EventLifecycleService and SportEventService report it. */
+export type SportEventChange =
+  | { kind: typeof ContestEventChangeKind.POSTPONED }
+  | { kind: typeof ContestEventChangeKind.RESCHEDULED; previousStart: Date }
+  | { kind: typeof ContestEventChangeKind.CANCELLED };
+
+/** The event-changed seam EventLifecycleService calls. */
+export interface SportEventChangedNotice {
+  sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
+}
+
+/** A contest that is finished already hears nothing more about its events. */
+const TOLD_OF_EVENT_CHANGES = [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE];
+
+export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice, ContestSettledNotice, SportEventChangedNotice {
   constructor(private readonly deps: ContestNoticeDeps) {}
 
   /** D1: tells every active member the contest is open, with its rules and when picks close. */
@@ -167,15 +185,12 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     });
 
     if (final.entries.length === 0) {
-      const [sportEvents, entries] = await Promise.all([
+      const [sportEvents, entrants] = await Promise.all([
         this.deps.sportEvents.findByIds(contest.sportEventIds),
-        this.deps.entries.findByContest(contest.id),
+        this.entrantsOf(contest),
       ]);
-      // An entry counts once it was submitted for any of the contest's events, as E1 counts them.
-      const submitted = entries.filter((entry) => contest.sportEventIds
-        .some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
-      const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
-        .map((owner) => owner.userId));
+      // C7 already told them a one-event contest's cancelled event ended it with no scores.
+      if (contest.sportEventIds.length === 1 && sportEvents.at(0)?.status === SportEventStatus.CANCELLED) return;
       const outcome: ContestResultsOutcome = {
         kind: ContestResultsKind.NO_SCORES,
         allEventsCancelled: sportEvents.length > 0 && sportEvents.every((sportEvent) => sportEvent.status === SportEventStatus.CANCELLED),
@@ -215,6 +230,56 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
           .map((entry) => ({ entryName: entry.entryName, squadName: entry.squadName })),
       });
     });
+  }
+
+  /**
+   * C6 and C7: tells each league with an unfinished contest on the event, its commissioners and
+   * the members with a submitted entry, one email per contest. A postponed or moved event keeps
+   * an open contest's picks open until it starts; a cancelled one counts for nothing, and ends a
+   * contest it was the only event of.
+   */
+  async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
+    const contests = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
+    // The about names the change, and a move its new start, so a second move is told again.
+    const about = change.kind === ContestEventChangeKind.RESCHEDULED
+      ? `${sportEvent.id}:starts-${sportEvent.startDate.toISOString()}`
+      : `${sportEvent.id}:${change.kind.toLowerCase()}`;
+    await Promise.all(contests.map(async (contest) => {
+      const [league, members, entrants] = await Promise.all([
+        this.deps.leagues.findById(contest.leagueId),
+        activeLeagueMembersWithRoles(this.deps, contest.leagueId),
+        this.entrantsOf(contest),
+      ]);
+      if (!league) {
+        this.skipped('email.sportEventChanged.skipped', contest, 'Skipped the event changed email because its league is gone');
+        return;
+      }
+      const picksOpen = contest.status === ContestStatus.OPEN;
+      const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
+        ? { kind: change.kind, endsContest: contest.sportEventIds.length === 1 }
+        : change.kind === ContestEventChangeKind.RESCHEDULED
+          ? { kind: change.kind, previousStart: change.previousStart, newStart: sportEvent.startDate, picksOpen }
+          : { kind: change.kind, picksOpen };
+      const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+      const recipients = members
+        .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
+        .map(({ user }) => user);
+      await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => this.deps.email.send('CONTEST_EVENT_CHANGED', {
+        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        about: `${contest.id}:${about}`,
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+        refs: { contestId: contest.id },
+        data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, eventName: sportEvent.name, change: contestChange, contestUrl },
+      }));
+    }));
+  }
+
+  /** The people owning an entry submitted for any of the contest's events, as E1 counts entrants. */
+  private async entrantsOf(contest: Contest): Promise<Set<string>> {
+    const submitted = (await this.deps.entries.findByContest(contest.id)).filter((entry) => contest.sportEventIds
+      .some((sportEventId) => contestEntryEventStatus(entry, sportEventId) === ContestEntryStatus.SUBMITTED));
+    return new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
+      .map((owner) => owner.userId));
   }
 
   /**
