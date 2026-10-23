@@ -1,5 +1,4 @@
 import { Trophy } from 'lucide-react';
-import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
@@ -18,8 +17,7 @@ import { useChampionshipsRoute } from './use-championships-route';
  * podium once the year is over, the leader before; then the medal tiles and the finish matrix.
  */
 export function ChampionshipPage() {
-  const { leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
-  const { league } = useLeagueContext(leagueCode);
+  const { league, leagueId, viewer, year } = useChampionshipsRoute();
   const championshipQuery = useChampionshipQuery(leagueId, year);
 
   if (championshipQuery.isLoading) {
