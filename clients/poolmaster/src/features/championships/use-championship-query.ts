@@ -2,12 +2,14 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getChampionship,
   getHistorySummary,
+  getSquadYear,
   listChampionshipYears,
   listContestResults,
   type ChampionshipDto,
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
   type HistorySummaryDto,
+  type SquadYearDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -92,6 +94,24 @@ export function useHistorySummaryQuery(leagueId: string) {
       return response.data.summary;
     },
     enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/** One squad's year for its squad page (#872): its championship row and its cup rows. */
+export function useSquadYearQuery(leagueId: string, squadId: string, year: number) {
+  return useQuery({
+    queryKey: QueryKeys.championship.squadYear(leagueId, squadId, year),
+    queryFn: async (): Promise<SquadYearDto> => {
+      const response = await getSquadYear({ path: { id: leagueId, squadId }, query: { year } });
+
+      if (!response.data?.squadYear) {
+        throwApiError(response.error, 'Squad year response is missing data.');
+      }
+
+      return response.data.squadYear;
+    },
+    enabled: Boolean(leagueId) && Boolean(squadId),
     retry: false,
   });
 }

@@ -17553,6 +17553,357 @@ export type HistorySummaryResponse = {
 };
 
 /**
+ * Which year of the squad to read.
+ */
+export type GetSquadYearQuery = {
+    /**
+     * The championship year, US Eastern, such as 2026; the cups read are the season with this year.
+     */
+    year: number;
+};
+
+/**
+ * One squad's row of a championship year.
+ */
+export type SquadChampionshipDto = {
+    /**
+     * The championship's name: "2026 Derek's Pool Cup".
+     */
+    name: string;
+    /**
+     * True once the year has ended in US Eastern: the place is final.
+     */
+    isOver: boolean;
+    /**
+     * The squad's place, 1 best, as on the Championship tab.
+     */
+    position: number;
+    /**
+     * The place as shown: "T2" for a shared 2nd.
+     */
+    displayPosition: string;
+    /**
+     * Squads in the standings, for "3rd of 12".
+     */
+    squadCount: number;
+    /**
+     * Points in tenths of a point: 725 is 72.5.
+     */
+    points: number;
+    /**
+     * Tenths of a point behind 1st; 0 for a squad in 1st.
+     */
+    pointsBehindLeader: number;
+    /**
+     * Places gained (positive) or lost since before the year's latest counted contest; null until two have counted.
+     */
+    movement: number | null;
+    /**
+     * Its finish matrix row: index 0 counts 1sts.
+     */
+    finishes: [
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number,
+        number
+    ];
+    podiums: number;
+    topTens: number;
+    /**
+     * Counted contests the squad placed in.
+     */
+    played: number;
+    /**
+     * Counted contests that went final in the year, league-wide.
+     */
+    contestsCounted: number;
+    /**
+     * For the current year, the league's open and live contests that will count once final; 0 for any other year.
+     */
+    contestsToGo: number;
+};
+
+/**
+ * One squad's row of a cup.
+ */
+export type SquadCupDto = {
+    cupId: string;
+    sportLeagueId: string;
+    /**
+     * The cup's name: "2026 PGA Tour Cup".
+     */
+    name: string;
+    status: 'OPEN' | 'CROWNED';
+    /**
+     * The cup's contests that counted, so the client can leave off a cup not yet on show.
+     */
+    contestsCounted: number;
+    /**
+     * The squad's place in the cup, 1 best.
+     */
+    position: number;
+    /**
+     * The place as shown: "T2" for a shared 2nd.
+     */
+    displayPosition: string;
+    /**
+     * Squads in the cup's standings.
+     */
+    squadCount: number;
+    /**
+     * Points in tenths of a point.
+     */
+    points: number;
+    /**
+     * Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup.
+     */
+    movement: number | null;
+    /**
+     * The trophy the squad took from a crowned cup; null while open and below 3rd.
+     */
+    trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
+};
+
+/**
+ * One squad's year: its championship row and its cup rows, the same rows the league pages show.
+ */
+export type SquadYearDto = {
+    squadId: string;
+    year: number;
+    /**
+     * Its championship row; null for an inactive squad that placed in nothing that year.
+     */
+    championship: {
+        /**
+         * The championship's name: "2026 Derek's Pool Cup".
+         */
+        name: string;
+        /**
+         * True once the year has ended in US Eastern: the place is final.
+         */
+        isOver: boolean;
+        /**
+         * The squad's place, 1 best, as on the Championship tab.
+         */
+        position: number;
+        /**
+         * The place as shown: "T2" for a shared 2nd.
+         */
+        displayPosition: string;
+        /**
+         * Squads in the standings, for "3rd of 12".
+         */
+        squadCount: number;
+        /**
+         * Points in tenths of a point: 725 is 72.5.
+         */
+        points: number;
+        /**
+         * Tenths of a point behind 1st; 0 for a squad in 1st.
+         */
+        pointsBehindLeader: number;
+        /**
+         * Places gained (positive) or lost since before the year's latest counted contest; null until two have counted.
+         */
+        movement: number | null;
+        /**
+         * Its finish matrix row: index 0 counts 1sts.
+         */
+        finishes: [
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number,
+            number
+        ];
+        podiums: number;
+        topTens: number;
+        /**
+         * Counted contests the squad placed in.
+         */
+        played: number;
+        /**
+         * Counted contests that went final in the year, league-wide.
+         */
+        contestsCounted: number;
+        /**
+         * For the current year, the league's open and live contests that will count once final; 0 for any other year.
+         */
+        contestsToGo: number;
+    } | null;
+    /**
+     * Every cup of the season the squad has a row in, by sports league name.
+     */
+    cups: Array<{
+        cupId: string;
+        sportLeagueId: string;
+        /**
+         * The cup's name: "2026 PGA Tour Cup".
+         */
+        name: string;
+        status: 'OPEN' | 'CROWNED';
+        /**
+         * The cup's contests that counted, so the client can leave off a cup not yet on show.
+         */
+        contestsCounted: number;
+        /**
+         * The squad's place in the cup, 1 best.
+         */
+        position: number;
+        /**
+         * The place as shown: "T2" for a shared 2nd.
+         */
+        displayPosition: string;
+        /**
+         * Squads in the cup's standings.
+         */
+        squadCount: number;
+        /**
+         * Points in tenths of a point.
+         */
+        points: number;
+        /**
+         * Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup.
+         */
+        movement: number | null;
+        /**
+         * The trophy the squad took from a crowned cup; null while open and below 3rd.
+         */
+        trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
+    }>;
+};
+
+/**
+ * One squad's year.
+ */
+export type SquadYearResponse = {
+    /**
+     * One squad's year: its championship row and its cup rows, the same rows the league pages show.
+     */
+    squadYear: {
+        squadId: string;
+        year: number;
+        /**
+         * Its championship row; null for an inactive squad that placed in nothing that year.
+         */
+        championship: {
+            /**
+             * The championship's name: "2026 Derek's Pool Cup".
+             */
+            name: string;
+            /**
+             * True once the year has ended in US Eastern: the place is final.
+             */
+            isOver: boolean;
+            /**
+             * The squad's place, 1 best, as on the Championship tab.
+             */
+            position: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPosition: string;
+            /**
+             * Squads in the standings, for "3rd of 12".
+             */
+            squadCount: number;
+            /**
+             * Points in tenths of a point: 725 is 72.5.
+             */
+            points: number;
+            /**
+             * Tenths of a point behind 1st; 0 for a squad in 1st.
+             */
+            pointsBehindLeader: number;
+            /**
+             * Places gained (positive) or lost since before the year's latest counted contest; null until two have counted.
+             */
+            movement: number | null;
+            /**
+             * Its finish matrix row: index 0 counts 1sts.
+             */
+            finishes: [
+                number,
+                number,
+                number,
+                number,
+                number,
+                number,
+                number,
+                number,
+                number,
+                number
+            ];
+            podiums: number;
+            topTens: number;
+            /**
+             * Counted contests the squad placed in.
+             */
+            played: number;
+            /**
+             * Counted contests that went final in the year, league-wide.
+             */
+            contestsCounted: number;
+            /**
+             * For the current year, the league's open and live contests that will count once final; 0 for any other year.
+             */
+            contestsToGo: number;
+        } | null;
+        /**
+         * Every cup of the season the squad has a row in, by sports league name.
+         */
+        cups: Array<{
+            cupId: string;
+            sportLeagueId: string;
+            /**
+             * The cup's name: "2026 PGA Tour Cup".
+             */
+            name: string;
+            status: 'OPEN' | 'CROWNED';
+            /**
+             * The cup's contests that counted, so the client can leave off a cup not yet on show.
+             */
+            contestsCounted: number;
+            /**
+             * The squad's place in the cup, 1 best.
+             */
+            position: number;
+            /**
+             * The place as shown: "T2" for a shared 2nd.
+             */
+            displayPosition: string;
+            /**
+             * Squads in the cup's standings.
+             */
+            squadCount: number;
+            /**
+             * Points in tenths of a point.
+             */
+            points: number;
+            /**
+             * Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup.
+             */
+            movement: number | null;
+            /**
+             * The trophy the squad took from a crowned cup; null while open and below 3rd.
+             */
+            trophy: 'CHAMPION' | 'RUNNER_UP' | 'THIRD' | null;
+        }>;
+    };
+};
+
+/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
@@ -21860,6 +22211,51 @@ export type GetHistorySummaryResponses = {
 };
 
 export type GetHistorySummaryResponse = GetHistorySummaryResponses[keyof GetHistorySummaryResponses];
+
+export type GetSquadYearData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query: {
+        /**
+         * The championship year, US Eastern, such as 2026; the cups read are the season with this year.
+         */
+        year: number;
+    };
+    url: '/api/v1/leagues/{id}/history/squads/{squadId}';
+};
+
+export type GetSquadYearErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetSquadYearError = GetSquadYearErrors[keyof GetSquadYearErrors];
+
+export type GetSquadYearResponses = {
+    /**
+     * One squad's year.
+     */
+    200: SquadYearResponse;
+};
+
+export type GetSquadYearResponse = GetSquadYearResponses[keyof GetSquadYearResponses];
 
 export type ListContestResultsData = {
     body?: never;

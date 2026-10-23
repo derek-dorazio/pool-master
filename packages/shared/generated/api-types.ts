@@ -1569,6 +1569,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/history/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's year
+         * @description One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getSquadYear"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/history/contests": {
         parameters: {
             query?: never;
@@ -15746,6 +15766,197 @@ export interface components {
                 }[];
             };
         };
+        /** @description Which year of the squad to read. */
+        GetSquadYearQuery: {
+            /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+            year: number;
+        };
+        /** @description One squad's row of a championship year. */
+        SquadChampionshipDto: {
+            /** @description The championship's name: "2026 Derek's Pool Cup". */
+            name: string;
+            /** @description True once the year has ended in US Eastern: the place is final. */
+            isOver: boolean;
+            /** @description The squad's place, 1 best, as on the Championship tab. */
+            position: number;
+            /** @description The place as shown: "T2" for a shared 2nd. */
+            displayPosition: string;
+            /** @description Squads in the standings, for "3rd of 12". */
+            squadCount: number;
+            /** @description Points in tenths of a point: 725 is 72.5. */
+            points: number;
+            /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+            pointsBehindLeader: number;
+            /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
+            movement: number | null;
+            /** @description Its finish matrix row: index 0 counts 1sts. */
+            finishes: number[];
+            podiums: number;
+            topTens: number;
+            /** @description Counted contests the squad placed in. */
+            played: number;
+            /** @description Counted contests that went final in the year, league-wide. */
+            contestsCounted: number;
+            /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+            contestsToGo: number;
+        };
+        /** @description One squad's row of a cup. */
+        SquadCupDto: {
+            /** Format: uuid */
+            cupId: string;
+            /** Format: uuid */
+            sportLeagueId: string;
+            /** @description The cup's name: "2026 PGA Tour Cup". */
+            name: string;
+            /** @enum {string} */
+            status: "OPEN" | "CROWNED";
+            /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+            contestsCounted: number;
+            /** @description The squad's place in the cup, 1 best. */
+            position: number;
+            /** @description The place as shown: "T2" for a shared 2nd. */
+            displayPosition: string;
+            /** @description Squads in the cup's standings. */
+            squadCount: number;
+            /** @description Points in tenths of a point. */
+            points: number;
+            /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
+            movement: number | null;
+            /**
+             * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
+             * @enum {string|null}
+             */
+            trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+        };
+        /** @description One squad's year: its championship row and its cup rows, the same rows the league pages show. */
+        SquadYearDto: {
+            /** Format: uuid */
+            squadId: string;
+            year: number;
+            /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+            championship: {
+                /** @description The championship's name: "2026 Derek's Pool Cup". */
+                name: string;
+                /** @description True once the year has ended in US Eastern: the place is final. */
+                isOver: boolean;
+                /** @description The squad's place, 1 best, as on the Championship tab. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Squads in the standings, for "3rd of 12". */
+                squadCount: number;
+                /** @description Points in tenths of a point: 725 is 72.5. */
+                points: number;
+                /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                pointsBehindLeader: number;
+                /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
+                movement: number | null;
+                /** @description Its finish matrix row: index 0 counts 1sts. */
+                finishes: number[];
+                podiums: number;
+                topTens: number;
+                /** @description Counted contests the squad placed in. */
+                played: number;
+                /** @description Counted contests that went final in the year, league-wide. */
+                contestsCounted: number;
+                /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                contestsToGo: number;
+            } | null;
+            /** @description Every cup of the season the squad has a row in, by sports league name. */
+            cups: {
+                /** Format: uuid */
+                cupId: string;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** @description The cup's name: "2026 PGA Tour Cup". */
+                name: string;
+                /** @enum {string} */
+                status: "OPEN" | "CROWNED";
+                /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                contestsCounted: number;
+                /** @description The squad's place in the cup, 1 best. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Squads in the cup's standings. */
+                squadCount: number;
+                /** @description Points in tenths of a point. */
+                points: number;
+                /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
+                movement: number | null;
+                /**
+                 * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
+                 * @enum {string|null}
+                 */
+                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+            }[];
+        };
+        /** @description One squad's year. */
+        SquadYearResponse: {
+            /** @description One squad's year: its championship row and its cup rows, the same rows the league pages show. */
+            squadYear: {
+                /** Format: uuid */
+                squadId: string;
+                year: number;
+                /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+                championship: {
+                    /** @description The championship's name: "2026 Derek's Pool Cup". */
+                    name: string;
+                    /** @description True once the year has ended in US Eastern: the place is final. */
+                    isOver: boolean;
+                    /** @description The squad's place, 1 best, as on the Championship tab. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Squads in the standings, for "3rd of 12". */
+                    squadCount: number;
+                    /** @description Points in tenths of a point: 725 is 72.5. */
+                    points: number;
+                    /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                    pointsBehindLeader: number;
+                    /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
+                    movement: number | null;
+                    /** @description Its finish matrix row: index 0 counts 1sts. */
+                    finishes: number[];
+                    podiums: number;
+                    topTens: number;
+                    /** @description Counted contests the squad placed in. */
+                    played: number;
+                    /** @description Counted contests that went final in the year, league-wide. */
+                    contestsCounted: number;
+                    /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                    contestsToGo: number;
+                } | null;
+                /** @description Every cup of the season the squad has a row in, by sports league name. */
+                cups: {
+                    /** Format: uuid */
+                    cupId: string;
+                    /** Format: uuid */
+                    sportLeagueId: string;
+                    /** @description The cup's name: "2026 PGA Tour Cup". */
+                    name: string;
+                    /** @enum {string} */
+                    status: "OPEN" | "CROWNED";
+                    /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                    contestsCounted: number;
+                    /** @description The squad's place in the cup, 1 best. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Squads in the cup's standings. */
+                    squadCount: number;
+                    /** @description Points in tenths of a point. */
+                    points: number;
+                    /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
+                    movement: number | null;
+                    /**
+                     * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
+                     * @enum {string|null}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                }[];
+            };
+        };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
             /** @description Feed types to run for a specific event sync request. */
@@ -21244,6 +21455,68 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSquadYear: {
+        parameters: {
+            query: {
+                /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+                year: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One squad's year. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquadYearResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

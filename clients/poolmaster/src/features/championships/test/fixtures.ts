@@ -1,4 +1,4 @@
-import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
+import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto, CupContestRowDto, CupDto, CupProjectionDto, CupStandingRowDto, SquadChampionshipDto, SquadCupDto, SquadYearDto } from '@/lib/api';
 
 /** A cup standings row; points in tenths. */
 export function buildCupStanding(overrides: Partial<CupStandingRowDto> = {}): CupStandingRowDto {
@@ -176,6 +176,55 @@ export function buildContestResult(overrides: Partial<ContestResultSummaryDto> =
     count: 'COUNTED',
     winners: [{ squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' }],
     squadFinish: null,
+    ...overrides,
+  };
+}
+
+/** A squad's championship row: 2nd of 3, 6 points behind 1st. */
+export function buildSquadChampionship(overrides: Partial<SquadChampionshipDto> = {}): SquadChampionshipDto {
+  return {
+    name: '2026 Derek\'s Pool Cup',
+    isOver: false,
+    position: 2,
+    displayPosition: '2',
+    squadCount: 3,
+    points: 1800,
+    pointsBehindLeader: 60,
+    movement: 1,
+    finishes: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    podiums: 2,
+    topTens: 2,
+    played: 2,
+    contestsCounted: 3,
+    contestsToGo: 1,
+    ...overrides,
+  };
+}
+
+/** A squad's row of an open PGA Tour cup with three contests counted. */
+export function buildSquadCup(overrides: Partial<SquadCupDto> = {}): SquadCupDto {
+  return {
+    cupId: 'cup-1',
+    sportLeagueId: 'pga-tour',
+    name: '2026 PGA Tour Cup',
+    status: 'OPEN',
+    contestsCounted: 3,
+    position: 1,
+    displayPosition: '1',
+    squadCount: 3,
+    points: 1600,
+    movement: null,
+    trophy: null,
+    ...overrides,
+  };
+}
+
+export function buildSquadYear(overrides: Partial<SquadYearDto> = {}): SquadYearDto {
+  return {
+    squadId: 'team-1',
+    year: 2026,
+    championship: buildSquadChampionship(),
+    cups: [buildSquadCup()],
     ...overrides,
   };
 }

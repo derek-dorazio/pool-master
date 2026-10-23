@@ -17,6 +17,7 @@ import {
   getCupProjection,
   getCupSquadPoints,
   getHistorySummary,
+  getSquadYear,
   listChampionshipYears,
   listContestConfigTemplates,
   listContestResults,
@@ -46,6 +47,7 @@ import {
   CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueResponseSchema,
+  SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -65,7 +67,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // Last, crowning (#841 slice 4): refused while a counted contest is live, then the cup is crowned
 // with both squads sharing the trophy, has no projection, and keeps its points when the table
 // changes again. All years (#837) then lists the cup's season with its two champions and this
-// year's championship so far, and counts the shared cup for both squads.
+// year's championship so far, and counts the shared cup for both squads. Last, the member's squad
+// page (#872) reads its own championship row and its crowned cup row.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -387,6 +390,32 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       [SummaryTile.MOST_CHAMPIONSHIPS, 0, 0],
       [SummaryTile.MOST_CUPS, 1, 2],
     ]);
+
+    // --- The member's squad page (#872): its championship row this year, and its 2099 cup row ---
+    const squadYear = async (forYear: number) => SquadYearResponseSchema.parse(expectDefined((await getSquadYear({
+      client: member.client,
+      path: { id: league.id, squadId: memberSquadId },
+      query: { year: forYear },
+    })).data)).squadYear;
+    const thisYear = await squadYear(year);
+    expect(thisYear.championship).toMatchObject({
+      name: `${year} Harriers Shield`,
+      displayPosition: 'T1',
+      squadCount: 2,
+      points: 1800,
+      pointsBehindLeader: 0,
+      movement: 0,
+      played: 2,
+      contestsCounted: 2,
+    });
+    expect(thisYear.cups).toEqual([]);
+    const seasonYear = await squadYear(SEASON);
+    expect(seasonYear.cups.map((row) => [row.name, row.status, row.displayPosition, row.squadCount, row.points, row.trophy])).toEqual([
+      [`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 'T1', 2, 150, CupTrophy.CHAMPION],
+    ]);
+    const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });
+    expect(unknownSquad.response.status).toBe(404);
+    expect(unknownSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
   });
 
   it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {

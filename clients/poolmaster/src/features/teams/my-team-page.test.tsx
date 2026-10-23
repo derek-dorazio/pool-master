@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TeamIconKey } from '@poolmaster/shared/domain';
+import { TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -16,6 +16,7 @@ import {
   listLeagueSquadsData,
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
+import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadYear } from '@/features/championships/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { MyTeamEditPage } from './my-team-edit-page';
@@ -26,6 +27,8 @@ const createLeagueSquadMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
+const getSquadYearMock = vi.fn();
+const listContestResultsMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -42,6 +45,8 @@ bindApiMocks({
   createSquadOwnerInvitation: createSquadOwnerInvitationMock,
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
+  getSquadYear: getSquadYearMock,
+  listContestResults: listContestResultsMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -135,6 +140,8 @@ function primeTeam({
   }));
   listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [] }));
   listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+  getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: null, cups: [] }) }));
+  listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [] }));
 }
 
 function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED') {
@@ -190,7 +197,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listContestEntriesMock, listContestsMock,
+    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, listContestResultsMock,
   ]) {
     mock.mockReset();
   }
@@ -337,6 +344,90 @@ describe('My team › My entries', () => {
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-entries-error')).toBeInTheDocument();
+  });
+});
+
+describe('My team › This year', () => {
+  const YEAR = championshipYear(new Date());
+
+  it('shows the squad\'s championship place of N, its gap and movement, its own medal counts and matrix row, its cups on show and its counted contests', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({
+      squadYear: buildSquadYear({
+        cups: [
+          buildSquadCup(),
+          buildSquadCup({ cupId: 'cup-2', sportLeagueId: 'nfl', name: '2026 NFL Cup', status: 'CROWNED', contestsCounted: 1, trophy: 'CHAMPION' }),
+          buildSquadCup({ cupId: 'cup-3', sportLeagueId: 'nba', name: '2026 NBA Cup', contestsCounted: 1 }),
+        ],
+      }),
+    }));
+    listContestResultsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContestResult({ squadFinish: { place: 2, displayPlace: '2', points: 800 } })],
+    }));
+
+    renderTeamRoutes();
+
+    const standing = await screen.findByTestId('squad-year-championship-standing');
+    expect(screen.getByText(`${YEAR} so far`)).toBeInTheDocument();
+    expect(standing).toHaveTextContent('2nd of 3 · 180 points · 6 behind 1st');
+    expect(screen.getByTestId('squad-year-championship')).toHaveAttribute('href', `/league/BIGDAWGS/championships/${YEAR}`);
+    expect(screen.getByTestId('squad-year-championship')).toHaveTextContent('▲1');
+    expect(screen.getByTestId('squad-year-tile-firsts')).toHaveTextContent('1');
+    expect(screen.getByTestId('squad-year-tile-played')).toHaveTextContent('2');
+    expect(screen.getByTestId('championship-standing-team-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standings-search')).not.toBeInTheDocument();
+    // A crowned cup always shows; an open one only once two of its contests have counted.
+    expect(screen.getByTestId('squad-year-cup-cup-1')).toHaveTextContent('1st of 3 · 160 points');
+    expect(screen.getByTestId('squad-year-cup-cup-1')).toHaveAttribute('href', `/league/BIGDAWGS/championships/${YEAR}/race/pga-tour/squads/team-1`);
+    expect(screen.getByTestId('squad-year-cup-cup-2')).toHaveTextContent('Champion');
+    expect(screen.queryByTestId('squad-year-cup-cup-3')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('squad-year-contest-contest-1')).toHaveTextContent('2 · 80 pts');
+    expect(screen.getByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers played in ${YEAR}`);
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: YEAR, squadId: 'team-1' } }));
+  });
+
+  it('narrows its contests to one place when a count in its matrix row is tapped, and shows them all again', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear() }));
+
+    renderTeamRoutes();
+
+    fireEvent.click(await screen.findByTestId('championship-cell-team-1-2'));
+
+    expect(await screen.findByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers finished 2nd in ${YEAR}`);
+    await waitFor(() => expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: YEAR, squadId: 'team-1', place: 2 } })));
+    fireEvent.click(screen.getByTestId('squad-year-contests-clear'));
+    expect(await screen.findByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers played in ${YEAR}`);
+  });
+
+  it('says when nothing has counted yet, and leaves the championship card off for a squad with no row', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: buildSquadChampionship({ contestsCounted: 0, pointsBehindLeader: 0, played: 0 }), cups: [] }) }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toHaveTextContent('No championship contest has counted yet');
+    expect(await screen.findByTestId('squad-year-contests-empty')).toHaveTextContent(`Casey Crushers hasn't placed in a counted contest in ${YEAR} yet.`);
+  });
+
+  it('says the squad\'s year could not load rather than showing an empty one', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-year-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('squad-year-championship')).not.toBeInTheDocument();
+  });
+
+  it('shows another team\'s year on its page, read for that team', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ position: 1, displayPosition: '1', pointsBehindLeader: 0 }) }) }));
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toHaveTextContent('1st of 3 · 180 points · Leads');
+    expect(getSquadYearMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' }, query: { year: YEAR } }));
   });
 });
 

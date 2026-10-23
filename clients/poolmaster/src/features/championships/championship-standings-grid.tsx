@@ -12,18 +12,21 @@ const STANDINGS_PER_PAGE = 25;
  * The finish matrix: each squad's place and points, then how many counted contests it finished
  * 1st, 2nd ... 10th in, with search and paging (rules/ux-rules.md §12 rule 7). `focusSquadId`
  * marks one squad: the viewer's, or the squad whose page shows it. A count opens the contests
- * behind it (#837): a cell those the squad finished in that place, Played all it placed in.
+ * behind it (#837): a cell those the squad finished in that place, Played all it placed in. A
+ * squad page shows its one row without the search (#872).
  */
 export function ChampionshipStandingsGrid({
   filter,
   focusSquadId,
   onFilter,
   rows,
+  searchable = true,
 }: {
   filter: ContestResultFilter | null;
   focusSquadId: string | null;
   onFilter: (filter: ContestResultFilter) => void;
   rows: ChampionshipStandingRowDto[];
+  searchable?: boolean;
 }) {
   const columns = useMemo<ColumnDef<ChampionshipStandingRowDto, string | number>[]>(
     () => [
@@ -104,7 +107,7 @@ export function ChampionshipStandingsGrid({
       getRowId={(row) => row.squadId}
       pageSize={STANDINGS_PER_PAGE}
       rowTestId={(row) => `championship-standing-${row.squadId}`}
-      search={{ label: 'Find a squad', testId: 'championship-standings-search' }}
+      search={searchable ? { label: 'Find a squad', testId: 'championship-standings-search' } : undefined}
       showColumnFilters={false}
       tableTestId="championship-standings"
     />

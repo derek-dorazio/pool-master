@@ -38,6 +38,25 @@ export function historyModule(fastify: FastifyInstance): void {
     handler: handlers.getHistorySummary,
   });
 
+  fastify.get('/squads/:squadId', {
+    schema: {
+      tags: ['History'],
+      summary: 'Get a squad\'s year',
+      description: `One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are \`listContestResults\` with its squadId. A squad of another league is 404 SQUAD_NOT_FOUND. ${MEMBERS_ONLY}`,
+      operationId: 'getSquadYear',
+      querystring: schemaRef('GetSquadYearQuery'),
+      response: {
+        200: schemaRef('SquadYearResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getSquadYear,
+  });
+
   fastify.get('/contests', {
     schema: {
       tags: ['History'],

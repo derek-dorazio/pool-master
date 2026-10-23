@@ -40466,6 +40466,584 @@
         "additionalProperties": false,
         "description": "The league's All years summary."
       },
+      "GetSquadYearQuery": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 9999,
+            "description": "The championship year, US Eastern, such as 2026; the cups read are the season with this year."
+          }
+        },
+        "required": [
+          "year"
+        ],
+        "additionalProperties": false,
+        "description": "Which year of the squad to read."
+      },
+      "SquadChampionshipDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The championship's name: \"2026 Derek's Pool Cup\"."
+          },
+          "isOver": {
+            "type": "boolean",
+            "description": "True once the year has ended in US Eastern: the place is final."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The squad's place, 1 best, as on the Championship tab."
+          },
+          "displayPosition": {
+            "type": "string",
+            "description": "The place as shown: \"T2\" for a shared 2nd."
+          },
+          "squadCount": {
+            "type": "integer",
+            "description": "Squads in the standings, for \"3rd of 12\"."
+          },
+          "points": {
+            "type": "integer",
+            "description": "Points in tenths of a point: 725 is 72.5."
+          },
+          "pointsBehindLeader": {
+            "type": "integer",
+            "description": "Tenths of a point behind 1st; 0 for a squad in 1st."
+          },
+          "movement": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Places gained (positive) or lost since before the year's latest counted contest; null until two have counted."
+          },
+          "finishes": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 10,
+            "maxItems": 10,
+            "description": "Its finish matrix row: index 0 counts 1sts."
+          },
+          "podiums": {
+            "type": "integer"
+          },
+          "topTens": {
+            "type": "integer"
+          },
+          "played": {
+            "type": "integer",
+            "description": "Counted contests the squad placed in."
+          },
+          "contestsCounted": {
+            "type": "integer",
+            "description": "Counted contests that went final in the year, league-wide."
+          },
+          "contestsToGo": {
+            "type": "integer",
+            "description": "For the current year, the league's open and live contests that will count once final; 0 for any other year."
+          }
+        },
+        "required": [
+          "name",
+          "isOver",
+          "position",
+          "displayPosition",
+          "squadCount",
+          "points",
+          "pointsBehindLeader",
+          "movement",
+          "finishes",
+          "podiums",
+          "topTens",
+          "played",
+          "contestsCounted",
+          "contestsToGo"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's row of a championship year."
+      },
+      "SquadCupDto": {
+        "type": "object",
+        "properties": {
+          "cupId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The cup's name: \"2026 PGA Tour Cup\"."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "CROWNED"
+            ]
+          },
+          "contestsCounted": {
+            "type": "integer",
+            "description": "The cup's contests that counted, so the client can leave off a cup not yet on show."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The squad's place in the cup, 1 best."
+          },
+          "displayPosition": {
+            "type": "string",
+            "description": "The place as shown: \"T2\" for a shared 2nd."
+          },
+          "squadCount": {
+            "type": "integer",
+            "description": "Squads in the cup's standings."
+          },
+          "points": {
+            "type": "integer",
+            "description": "Points in tenths of a point."
+          },
+          "movement": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup."
+          },
+          "trophy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "CHAMPION",
+              "RUNNER_UP",
+              "THIRD",
+              null
+            ],
+            "description": "The trophy the squad took from a crowned cup; null while open and below 3rd."
+          }
+        },
+        "required": [
+          "cupId",
+          "sportLeagueId",
+          "name",
+          "status",
+          "contestsCounted",
+          "position",
+          "displayPosition",
+          "squadCount",
+          "points",
+          "movement",
+          "trophy"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's row of a cup."
+      },
+      "SquadYearDto": {
+        "type": "object",
+        "properties": {
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "year": {
+            "type": "integer"
+          },
+          "championship": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The championship's name: \"2026 Derek's Pool Cup\"."
+              },
+              "isOver": {
+                "type": "boolean",
+                "description": "True once the year has ended in US Eastern: the place is final."
+              },
+              "position": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The squad's place, 1 best, as on the Championship tab."
+              },
+              "displayPosition": {
+                "type": "string",
+                "description": "The place as shown: \"T2\" for a shared 2nd."
+              },
+              "squadCount": {
+                "type": "integer",
+                "description": "Squads in the standings, for \"3rd of 12\"."
+              },
+              "points": {
+                "type": "integer",
+                "description": "Points in tenths of a point: 725 is 72.5."
+              },
+              "pointsBehindLeader": {
+                "type": "integer",
+                "description": "Tenths of a point behind 1st; 0 for a squad in 1st."
+              },
+              "movement": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Places gained (positive) or lost since before the year's latest counted contest; null until two have counted."
+              },
+              "finishes": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "minItems": 10,
+                "maxItems": 10,
+                "description": "Its finish matrix row: index 0 counts 1sts."
+              },
+              "podiums": {
+                "type": "integer"
+              },
+              "topTens": {
+                "type": "integer"
+              },
+              "played": {
+                "type": "integer",
+                "description": "Counted contests the squad placed in."
+              },
+              "contestsCounted": {
+                "type": "integer",
+                "description": "Counted contests that went final in the year, league-wide."
+              },
+              "contestsToGo": {
+                "type": "integer",
+                "description": "For the current year, the league's open and live contests that will count once final; 0 for any other year."
+              }
+            },
+            "required": [
+              "name",
+              "isOver",
+              "position",
+              "displayPosition",
+              "squadCount",
+              "points",
+              "pointsBehindLeader",
+              "movement",
+              "finishes",
+              "podiums",
+              "topTens",
+              "played",
+              "contestsCounted",
+              "contestsToGo"
+            ],
+            "additionalProperties": false,
+            "description": "Its championship row; null for an inactive squad that placed in nothing that year."
+          },
+          "cups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cupId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The cup's name: \"2026 PGA Tour Cup\"."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "OPEN",
+                    "CROWNED"
+                  ]
+                },
+                "contestsCounted": {
+                  "type": "integer",
+                  "description": "The cup's contests that counted, so the client can leave off a cup not yet on show."
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "The squad's place in the cup, 1 best."
+                },
+                "displayPosition": {
+                  "type": "string",
+                  "description": "The place as shown: \"T2\" for a shared 2nd."
+                },
+                "squadCount": {
+                  "type": "integer",
+                  "description": "Squads in the cup's standings."
+                },
+                "points": {
+                  "type": "integer",
+                  "description": "Points in tenths of a point."
+                },
+                "movement": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup."
+                },
+                "trophy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "CHAMPION",
+                    "RUNNER_UP",
+                    "THIRD",
+                    null
+                  ],
+                  "description": "The trophy the squad took from a crowned cup; null while open and below 3rd."
+                }
+              },
+              "required": [
+                "cupId",
+                "sportLeagueId",
+                "name",
+                "status",
+                "contestsCounted",
+                "position",
+                "displayPosition",
+                "squadCount",
+                "points",
+                "movement",
+                "trophy"
+              ],
+              "additionalProperties": false,
+              "description": "One squad's row of a cup."
+            },
+            "description": "Every cup of the season the squad has a row in, by sports league name."
+          }
+        },
+        "required": [
+          "squadId",
+          "year",
+          "championship",
+          "cups"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's year: its championship row and its cup rows, the same rows the league pages show."
+      },
+      "SquadYearResponse": {
+        "type": "object",
+        "properties": {
+          "squadYear": {
+            "type": "object",
+            "properties": {
+              "squadId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "year": {
+                "type": "integer"
+              },
+              "championship": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The championship's name: \"2026 Derek's Pool Cup\"."
+                  },
+                  "isOver": {
+                    "type": "boolean",
+                    "description": "True once the year has ended in US Eastern: the place is final."
+                  },
+                  "position": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "The squad's place, 1 best, as on the Championship tab."
+                  },
+                  "displayPosition": {
+                    "type": "string",
+                    "description": "The place as shown: \"T2\" for a shared 2nd."
+                  },
+                  "squadCount": {
+                    "type": "integer",
+                    "description": "Squads in the standings, for \"3rd of 12\"."
+                  },
+                  "points": {
+                    "type": "integer",
+                    "description": "Points in tenths of a point: 725 is 72.5."
+                  },
+                  "pointsBehindLeader": {
+                    "type": "integer",
+                    "description": "Tenths of a point behind 1st; 0 for a squad in 1st."
+                  },
+                  "movement": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Places gained (positive) or lost since before the year's latest counted contest; null until two have counted."
+                  },
+                  "finishes": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "minItems": 10,
+                    "maxItems": 10,
+                    "description": "Its finish matrix row: index 0 counts 1sts."
+                  },
+                  "podiums": {
+                    "type": "integer"
+                  },
+                  "topTens": {
+                    "type": "integer"
+                  },
+                  "played": {
+                    "type": "integer",
+                    "description": "Counted contests the squad placed in."
+                  },
+                  "contestsCounted": {
+                    "type": "integer",
+                    "description": "Counted contests that went final in the year, league-wide."
+                  },
+                  "contestsToGo": {
+                    "type": "integer",
+                    "description": "For the current year, the league's open and live contests that will count once final; 0 for any other year."
+                  }
+                },
+                "required": [
+                  "name",
+                  "isOver",
+                  "position",
+                  "displayPosition",
+                  "squadCount",
+                  "points",
+                  "pointsBehindLeader",
+                  "movement",
+                  "finishes",
+                  "podiums",
+                  "topTens",
+                  "played",
+                  "contestsCounted",
+                  "contestsToGo"
+                ],
+                "additionalProperties": false,
+                "description": "Its championship row; null for an inactive squad that placed in nothing that year."
+              },
+              "cups": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "cupId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "sportLeagueId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The cup's name: \"2026 PGA Tour Cup\"."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "OPEN",
+                        "CROWNED"
+                      ]
+                    },
+                    "contestsCounted": {
+                      "type": "integer",
+                      "description": "The cup's contests that counted, so the client can leave off a cup not yet on show."
+                    },
+                    "position": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "The squad's place in the cup, 1 best."
+                    },
+                    "displayPosition": {
+                      "type": "string",
+                      "description": "The place as shown: \"T2\" for a shared 2nd."
+                    },
+                    "squadCount": {
+                      "type": "integer",
+                      "description": "Squads in the cup's standings."
+                    },
+                    "points": {
+                      "type": "integer",
+                      "description": "Points in tenths of a point."
+                    },
+                    "movement": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup."
+                    },
+                    "trophy": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "CHAMPION",
+                        "RUNNER_UP",
+                        "THIRD",
+                        null
+                      ],
+                      "description": "The trophy the squad took from a crowned cup; null while open and below 3rd."
+                    }
+                  },
+                  "required": [
+                    "cupId",
+                    "sportLeagueId",
+                    "name",
+                    "status",
+                    "contestsCounted",
+                    "position",
+                    "displayPosition",
+                    "squadCount",
+                    "points",
+                    "movement",
+                    "trophy"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One squad's row of a cup."
+                },
+                "description": "Every cup of the season the squad has a row in, by sports league name."
+              }
+            },
+            "required": [
+              "squadId",
+              "year",
+              "championship",
+              "cups"
+            ],
+            "additionalProperties": false,
+            "description": "One squad's year: its championship row and its cup rows, the same rows the league pages show."
+          }
+        },
+        "required": [
+          "squadYear"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's year."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -49080,6 +49658,97 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/history/squads/{squadId}": {
+      "get": {
+        "operationId": "getSquadYear",
+        "summary": "Get a squad's year",
+        "tags": [
+          "History"
+        ],
+        "description": "One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "description": "The championship year, US Eastern, such as 2026; the cups read are the season with this year."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "squadId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One squad's year.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquadYearResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

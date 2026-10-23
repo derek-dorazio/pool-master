@@ -2,6 +2,11 @@ import type { ChampionshipDto, ChampionshipSquadDto, ChampionshipYearDto } from 
 import type { Squad } from '@poolmaster/shared/domain';
 import type { ChampionshipYearSummaryView, ChampionshipYearView } from '../modules/championship/service';
 
+/** The championship's name: the year and the league's cup name, "2026 Derek's Pool Cup". */
+export function championshipName(year: number, cupName: string): string {
+  return `${year} ${cupName}`;
+}
+
 export function toChampionshipSquadDto(squad: Squad): ChampionshipSquadDto {
   return { squadId: squad.id, squadName: squad.name, squadIconKey: squad.iconKey };
 }
@@ -11,7 +16,7 @@ export function toChampionshipDto(view: ChampionshipYearView): ChampionshipDto {
     leagueId: view.leagueId,
     year: view.year,
     cupName: view.cupName,
-    name: `${view.year} ${view.cupName}`,
+    name: championshipName(view.year, view.cupName),
     isOver: view.isOver,
     contestsCounted: view.contestsCounted,
     contestsToGo: view.contestsToGo,
