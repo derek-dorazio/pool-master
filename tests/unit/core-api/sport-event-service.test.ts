@@ -1,6 +1,7 @@
 import { expect } from '@jest/globals';
 import { MANUAL_ADMIN_PROVIDER_ID, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
+import type { SportEventChangedNotice } from '../../../packages/core-api/src/modules/notifications';
 import { SportEventService } from '../../../packages/core-api/src/modules/events/service';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
@@ -11,6 +12,7 @@ import {
   fakeContestConfigurationRepo,
   fakeContestRepo,
 } from '../../support/repo-fakes';
+import { mockFn } from '../../support/mock-fn';
 
 /** Before every event's start in this file, so the release cutoff never depends on today. */
 const NOW = new Date('2026-01-15T12:00:00.000Z');
@@ -19,7 +21,7 @@ const NOW = new Date('2026-01-15T12:00:00.000Z');
 // and what update and delete refuse — against an in-memory store. The adapters behind the
 // same ports are tested against Postgres in sport-event-repositories.integration.
 
-function setup(sportName: Sport = Sport.GOLF) {
+function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChangedNotice) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
@@ -32,6 +34,11 @@ function setup(sportName: Sport = Sport.GOLF) {
       matches: store.matchRepo(),
     },
     sportEvents,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    sportEventChanged,
   );
   const service = new SportEventService({
     sportEvents,
@@ -489,6 +496,25 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
       { roundNumber: 1, scheduledDate: '2026-06-11T12:00:00.000Z' },
       { roundNumber: 2, scheduledDate: '2026-06-13T12:00:00.000Z' },
     ]);
+  });
+
+  it('tells the leagues on a released event its previous start when an admin moves it, but not for a draft or an unchanged start', async () => {
+    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice);
+    const { event: draft } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
+    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, name: 'Released Open' });
+    await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
+    const moved = new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY);
+
+    await service.updateEvent(draft.id, { startDate: moved });
+    await service.updateEvent(released.id, { startDate: MANUAL_INPUT.startDate, name: 'Renamed Open' });
+    await service.updateEvent(released.id, { startDate: moved });
+
+    expect(notice.sportEventChanged).toHaveBeenCalledTimes(1);
+    expect(notice.sportEventChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ id: released.id, startDate: moved }),
+      { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
+    );
   });
 
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {

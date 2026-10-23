@@ -1,10 +1,12 @@
 /**
  * The contest milestone emails (#845): "New contest open" (D1), "Contest is live, good luck"
- * (E1) and "Final results" (F1 with F3, and F2). The contest world is in memory; the email service is the real one over an in-memory
+ * (E1), "Final results" (F1 with F3, and F2) and an event on it postponed, moved or cancelled
+ * (C6, C7). The contest world is in memory; the email service is the real one over an in-memory
  * outbox, so the tests assert on the emails recorded.
  */
 import {
   ContestEntryStatus,
+  ContestStatus,
   LeagueMembershipStatus,
   LeagueRole,
   MatchStatus,
@@ -15,7 +17,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
-import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
+import { ContestEventChangeKind, EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
 import { ContestNotices } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
@@ -23,6 +25,9 @@ import { TEST_UNSUBSCRIBE } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
+/** The tests' clock: a week before STARTS_AT. */
+const NOW = new Date('2026-04-02T11:40:00.000Z');
+const HOUR = 60 * 60 * 1000;
 
 describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
@@ -74,6 +79,7 @@ describe('ContestNotices', () => {
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
+      now: () => NOW,
     });
   }
 
@@ -313,10 +319,11 @@ describe('ContestNotices', () => {
       expect(textTo(dana.user.id)).toContain('Congratulations, Dana\'s Squad tied for first in Week 1 Pick\'em with Upsets!');
     });
 
-    it('tells only the commissioners and the members with a submitted entry, not a draft, that a contest whose every event was cancelled ended with no scores', async () => {
+    it('tells only the commissioners and the members with a submitted entry, not a draft, that a season contest whose every event was cancelled ended with no scores', async () => {
       const league = world.addLeague({ leagueCode: 'OFFICE24' });
       const event = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
-      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [event.id] });
+      const later = world.addSportEvent({ startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [event.id, later.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
       const entrant = member(league.id, 'Nora');
       const drafting = member(league.id, 'Dana');
@@ -361,6 +368,142 @@ describe('ContestNotices', () => {
         expect.objectContaining({ action: 'email.contestSettled.skipped' }),
         expect.any(String),
       );
+    });
+  });
+
+  describe('sportEventChanged (C6, C7)', () => {
+    /** An entry of the member's squad in the contest, submitted for the event or left a draft. */
+    async function enter(contestId: string, owner: { squad: { id: string } }, sportEventId: string, submitted: boolean) {
+      const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+      if (created.status !== 'created') throw new Error('entry not created');
+      if (submitted) await world.entryRepo().setEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
+    }
+
+    it('tells the commissioners and the members with a submitted entry, in each league with an unfinished contest on it, that a cancelled event ends a one-event contest, and sends no no-scores email after', async () => {
+      const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+      const entrant = member(league.id, 'Nora');
+      const drafting = member(league.id, 'Dana');
+      member(league.id, 'Sam');
+      await enter(contest.id, entrant, masters.id, true);
+      await enter(contest.id, drafting, masters.id, false);
+      const elsewhere = world.addLeague();
+      world.addContest(elsewhere.id, { sportEventIds: [masters.id] });
+      const otherCommissioner = member(elsewhere.id, 'Other', { role: LeagueRole.COMMISSIONER });
+      const finished = world.addLeague();
+      world.addContest(finished.id, { sportEventIds: [masters.id], status: ContestStatus.COMPLETED });
+      member(finished.id, 'Done', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+
+      expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id, otherCommissioner.user.id].sort());
+      expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_EVENT_CHANGED')).toBe(true);
+      const toNora = outbox.rows.find((row) => row.recipientUserId === entrant.user.id);
+      expect(toNora?.fromName).toBe('Office League');
+      expect(toNora?.subject).toBe('Cancelled: The Masters');
+      expect(textTo(entrant.user.id)).toContain('The Masters has been cancelled, so Masters Pick 6 ends with no scores.');
+      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+
+      await notices().contestSettled(contest);
+
+      expect(outbox.rows.filter((row) => row.templateKey === 'CONTEST_RESULTS')).toHaveLength(0);
+    });
+
+    it('says a cancelled event counts for nothing in a season contest, without promising more events that may already be done', async () => {
+      const league = world.addLeague();
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const open = world.addSportEvent({ name: 'The Open', startDate: STARTS_AT });
+      world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, open.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+
+      expect(textTo(commissioner.user.id)).toContain('The Masters has been cancelled. It counts for nothing in Majors Pool.');
+      expect(textTo(commissioner.user.id)).not.toContain('goes on');
+    });
+
+    it('tells an open contest a postponed event that has not started yet keeps its picks open', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const league = world.addLeague();
+      world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(outbox.rows.find((row) => row.recipientUserId === commissioner.user.id)?.subject).toBe('Postponed: The Masters');
+      expect(textTo(commissioner.user.id)).toContain('The Masters has been postponed, with no new date yet.');
+      expect(textTo(commissioner.user.id)).toContain('Picks for Masters Pick 6 stay open until it starts.');
+    });
+
+    it('tells an open contest its picks are closed when its event is postponed after its start, a drawn quick pick too, and a live season contest whose postponed event is still ahead that its picks are open', async () => {
+      const kickedOff = world.addSportEvent({ name: 'Game Day', startDate: new Date(NOW.getTime() - HOUR), status: SportEventStatus.POSTPONED });
+      const rainedOut = world.addLeague();
+      world.addContest(rainedOut.id, { name: 'Rain Out Pool', sportEventIds: [kickedOff.id] });
+      const rainedOutCommissioner = member(rainedOut.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+      const ahead = world.addSportEvent({ name: 'Later Event', startDate: new Date(NOW.getTime() + 24 * HOUR), status: SportEventStatus.POSTPONED });
+      const drawnLeague = world.addLeague();
+      world.addContest(drawnLeague.id, { name: 'Quick Pick Pool', sportEventIds: [ahead.id], drawnAt: NOW });
+      const drawnCommissioner = member(drawnLeague.id, 'Dana', { role: LeagueRole.COMMISSIONER });
+      const seasonLeague = world.addLeague();
+      world.addContest(seasonLeague.id, { name: 'Season Pool', status: ContestStatus.ACTIVE, sportEventIds: [kickedOff.id, ahead.id] });
+      const seasonCommissioner = member(seasonLeague.id, 'Lee', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(kickedOff, { kind: ContestEventChangeKind.POSTPONED });
+      await notices().sportEventChanged(ahead, { kind: ContestEventChangeKind.POSTPONED });
+
+      expect(textTo(rainedOutCommissioner.user.id)).not.toContain('stay open');
+      expect(textTo(rainedOutCommissioner.user.id)).toContain('Rain Out Pool carries on when it resumes.');
+      expect(textTo(drawnCommissioner.user.id)).not.toContain('stay open');
+      const toSeason = outbox.rows.filter((row) => row.recipientUserId === seasonCommissioner.user.id).map((row) => row.textBody ?? '');
+      expect(toSeason.find((text) => text.includes('Later Event'))).toContain('Picks for Season Pool stay open until it starts.');
+    });
+
+    it('tells a second postponement of the same event, and a move back to an earlier new date, again', async () => {
+      const league = world.addLeague();
+      const first = new Date('2026-04-16T11:40:00.000Z');
+      const second = new Date('2026-04-23T11:40:00.000Z');
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+      member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await notices().sportEventChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.POSTPONED });
+      await notices().sportEventChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
+      await notices().sportEventChanged({ ...masters, startDate: second }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: first });
+      await notices().sportEventChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: second });
+
+      expect(outbox.rows.map((row) => row.subject)).toEqual([
+        'Postponed: The Masters',
+        'Postponed: The Masters',
+        'New date: The Masters',
+        'New date: The Masters',
+        'New date: The Masters',
+      ]);
+    });
+
+    it('gives the old and new start of a moved event, keeps the picks open, and tells a second move again', async () => {
+      const league = world.addLeague();
+      const newStart = new Date('2026-04-16T11:40:00.000Z');
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: newStart });
+      world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
+
+      expect(outbox.rows).toHaveLength(1);
+      expect(outbox.rows[0]?.subject).toBe('New date: The Masters');
+      expect(textTo(commissioner.user.id)).toContain('The Masters has moved from Apr 9, 2026');
+      expect(textTo(commissioner.user.id)).toContain('to Apr 16, 2026');
+      expect(textTo(commissioner.user.id)).toContain('Picks for Masters Pick 6 stay open until the new start.');
+
+      await notices().sportEventChanged({ ...masters, startDate: new Date('2026-04-23T11:40:00.000Z') }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: newStart });
+
+      expect(outbox.rows).toHaveLength(2);
+      expect(outbox.rows[1]?.textBody).toContain('to Apr 23, 2026');
     });
   });
 });

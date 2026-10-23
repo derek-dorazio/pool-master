@@ -34,7 +34,7 @@ import { MatchResultService } from '../scoring-families/head-to-head/match-resul
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { sportStoresRaceResults } from '../scoring-families/race-results';
 import { SportLeagueService } from '../sport-catalog/sport-league-service';
-import type { ContestStartedNotice } from '../notifications/contest-notices';
+import type { ContestStartedNotice, SportEventChangedNotice } from '../notifications/contest-notices';
 import { EventLifecycleService, type FinishedSportEventSettlement, type ReleasedEditionContests } from './event-lifecycle-service';
 import { SportEventService } from './service';
 import { SportEventBracketService } from './sport-event-bracket-service';
@@ -191,6 +191,8 @@ export function createEventLifecycleService(
     logger?: FastifyBaseLogger;
     /** Who is told a contest has gone live (#845); without it, nobody is. */
     contestStarted?: ContestStartedNotice;
+    /** Who is told an event was postponed, moved or cancelled (#845); without it, nobody is. */
+    sportEventChanged?: SportEventChangedNotice;
     contestSettlement?: FinishedSportEventSettlement;
     releasedEditionContests?: ReleasedEditionContests;
   } = {},
@@ -206,5 +208,6 @@ export function createEventLifecycleService(
     options.contestStarted,
     options.contestSettlement,
     options.releasedEditionContests,
+    options.sportEventChanged,
   );
 }
