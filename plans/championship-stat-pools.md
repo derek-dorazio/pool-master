@@ -13,7 +13,7 @@ section 8 carry a recommendation each, and none is answered yet except the ones 
 ## TL;DR
 
 - **What it is:** pick players, not teams, for the World Series, the NBA Finals, the Stanley Cup
-  Final, or the NFL's conference championships plus the Super Bowl. Each game, each player
+  Final, or the NFL's Conference Championship weekend and the Super Bowl (two events). Each game, each player
   scores one whole number: hits, points, goals, or the sport's named composite. A roster's total
   over the games is its score, highest wins. It is fantasy cut down to one stat.
 - **Named composites (Decided):** **Box Score** for baseball, **Triple Threat** for the NBA,
