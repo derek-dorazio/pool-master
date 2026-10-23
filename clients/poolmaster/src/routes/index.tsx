@@ -26,6 +26,8 @@ import { ManageContestsPage } from '@/features/contests/manage-contests-page';
 import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
 import { EditLeaguePage } from '@/features/leagues/edit-league-page';
+import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
+import { EditContestCupWeightPage } from '@/features/contests/edit-contest-cup-weight-page';
 import { LeagueHomePage } from '@/features/leagues/league-home-page';
 import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
 import { WelcomePage } from '@/features/leagues/leagues-page';
@@ -163,6 +165,10 @@ export const router = createBrowserRouter([
                     element: <EditLeaguePage />,
                   },
                   {
+                    path: 'championships/edit',
+                    element: <EditChampionshipSettingsPage />,
+                  },
+                  {
                     path: 'teams',
                     element: <ManageTeamsPage />,
                   },
@@ -197,6 +203,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'contests/:contestId/events',
                     element: <ContestEventsPage />,
+                  },
+                  {
+                    path: 'contests/:contestId/cup-weight',
+                    element: <EditContestCupWeightPage />,
                   },
                 ],
               },

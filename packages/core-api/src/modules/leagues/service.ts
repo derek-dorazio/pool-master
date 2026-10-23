@@ -16,7 +16,7 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { ContestStatus, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ContestStatus, CupPointsScale, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
 import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
@@ -33,6 +33,12 @@ export interface UpdateLeagueDetailsInput {
   name: string;
   description?: string;
   iconKey: LeagueIconKey;
+}
+
+export interface UpdateLeagueCupSettingsInput {
+  cupName: string;
+  cupPointsScale: CupPointsScale;
+  cupCustomPoints: number[];
 }
 
 // #202 — `UserLeagueView` and `findByUser` are gone. `listLeagues({ scope: 'mine' })` is that
@@ -383,6 +389,52 @@ export class LeagueService {
       action: 'league.updateDetails.success',
       data: { leagueId },
     }, 'Updated league details');
+    return updatedLeague;
+  }
+
+  /**
+   * The league's championship settings (#841, #863): its name and points table, replaced
+   * together. CUSTOM needs its list, and no other scale takes one. Cups score on read, so they
+   * follow the new table at once; the championship keeps what each contest earned at settlement.
+   */
+  async updateCupSettings(leagueId: string, updates: UpdateLeagueCupSettingsInput): Promise<League> {
+    this.logger?.debug({
+      action: 'league.updateCupSettings.enter',
+      data: { leagueId, cupPointsScale: updates.cupPointsScale, customPlaces: updates.cupCustomPoints.length },
+    }, 'Updating league cup settings');
+    const league = await this.deps.leagues.findById(leagueId);
+    if (!league) {
+      this.logger?.warn({ action: 'league.updateCupSettings.notFound', data: { leagueId } }, 'Cannot update cup settings for missing league');
+      throw new LeagueNotFoundError(leagueId);
+    }
+    if (!league.isActive) {
+      this.logger?.warn({ action: 'league.updateCupSettings.readOnlyInactive', data: { leagueId } }, 'Rejected cup settings update for inactive league');
+      throw new LeagueOperationError(
+        'Inactive leagues are read-only outside lifecycle actions',
+        'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
+      );
+    }
+    const isCustom = updates.cupPointsScale === CupPointsScale.CUSTOM;
+    if (isCustom !== updates.cupCustomPoints.length > 0) {
+      this.logger?.warn({
+        action: 'league.updateCupSettings.customPointsInvalid',
+        data: { leagueId, cupPointsScale: updates.cupPointsScale, customPlaces: updates.cupCustomPoints.length },
+      }, 'Rejected cup settings with custom points that do not fit the scale');
+      throw new LeagueOperationError(
+        isCustom ? 'A custom points table needs points for at least 1st place' : 'Only a custom points table takes its own points',
+        'CUP_CUSTOM_POINTS_INVALID',
+      );
+    }
+
+    const updatedLeague = await this.deps.leagues.update(leagueId, {
+      cupName: updates.cupName.trim(),
+      cupPointsScale: updates.cupPointsScale,
+      cupCustomPoints: updates.cupCustomPoints,
+    });
+    this.logger?.info({
+      action: 'league.updateCupSettings.success',
+      data: { leagueId, cupPointsScale: updates.cupPointsScale },
+    }, 'Updated league cup settings');
     return updatedLeague;
   }
 

@@ -7,6 +7,7 @@ import {
   ContestEntryStatus,
   ContestStatus,
   ContestFormat,
+  CupWeight,
   ParticipantScoringDefinitionIdSchema,
   SelectionType,
   Sport,
@@ -76,6 +77,12 @@ export const SetContestSportEventsRequestSchema = z.object({
   sportEventIds: z.array(z.string().uuid()).min(1).describe('Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.'),
 }).describe('Request payload for setting the events a contest covers.');
 export type SetContestSportEventsRequest = z.infer<typeof SetContestSportEventsRequestSchema>;
+
+/** Body of the commissioner's cup weight save (#841). */
+export const SetContestCupWeightRequestSchema = z.object({
+  cupWeight: z.nativeEnum(CupWeight).describe('How much the contest counts toward its cup and the league championship: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.'),
+}).describe('Request payload for setting how much a contest counts toward its cup and the championship.');
+export type SetContestCupWeightRequest = z.infer<typeof SetContestCupWeightRequestSchema>;
 
 export const ContestDtoSchema = z.object({
   id: z.string(),
@@ -319,6 +326,7 @@ registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
 registerSchema('ContestSportEventDto', ContestSportEventDtoSchema);
 registerSchema('SetContestSportEventsRequest', SetContestSportEventsRequestSchema);
+registerSchema('SetContestCupWeightRequest', SetContestCupWeightRequestSchema);
 registerSchema('ContestEntryEventDto', ContestEntryEventDtoSchema);
 registerSchema('ContestEntryEventResultDto', ContestEntryEventResultDtoSchema);
 registerSchema('ContestLeaderboardQuery', ContestLeaderboardQuerySchema);

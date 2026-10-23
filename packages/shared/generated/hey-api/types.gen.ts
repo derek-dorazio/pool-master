@@ -1181,6 +1181,24 @@ export type UpdateLeagueDetailsRequest = {
 };
 
 /**
+ * Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.
+ */
+export type UpdateLeagueCupSettingsRequest = {
+    /**
+     * The league championship's name, shown after its year.
+     */
+    cupName: string;
+    /**
+     * The points table every cup and the championship score on.
+     */
+    cupPointsScale: 'STANDARD' | 'TOP_TEN' | 'FIELD_BEATEN' | 'CUSTOM';
+    /**
+     * CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale.
+     */
+    cupCustomPoints: Array<number>;
+};
+
+/**
  * Commissioner request payload for sending direct email invites.
  */
 export type SendLeagueInvitationsRequest = {
@@ -1335,6 +1353,18 @@ export type LeagueDto = {
      * League creation timestamp in ISO 8601 format.
      */
     createdAt?: string;
+    /**
+     * The league championship's name, shown after its year: "2026 Big Dawgs Cup".
+     */
+    cupName: string;
+    /**
+     * The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+     */
+    cupPointsScale: 'STANDARD' | 'TOP_TEN' | 'FIELD_BEATEN' | 'CUSTOM';
+    /**
+     * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
+     */
+    cupCustomPoints: Array<number>;
 };
 
 /**
@@ -1592,6 +1622,18 @@ export type LeagueResponse = {
          * League creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
+        /**
+         * The league championship's name, shown after its year: "2026 Big Dawgs Cup".
+         */
+        cupName: string;
+        /**
+         * The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+         */
+        cupPointsScale: 'STANDARD' | 'TOP_TEN' | 'FIELD_BEATEN' | 'CUSTOM';
+        /**
+         * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
+         */
+        cupCustomPoints: Array<number>;
     };
 };
 
@@ -1639,6 +1681,18 @@ export type LeagueContextResponse = {
          * League creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
+        /**
+         * The league championship's name, shown after its year: "2026 Big Dawgs Cup".
+         */
+        cupName: string;
+        /**
+         * The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+         */
+        cupPointsScale: 'STANDARD' | 'TOP_TEN' | 'FIELD_BEATEN' | 'CUSTOM';
+        /**
+         * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
+         */
+        cupCustomPoints: Array<number>;
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -1859,6 +1913,18 @@ export type LeagueListResponse = {
          * League creation timestamp in ISO 8601 format.
          */
         createdAt?: string;
+        /**
+         * The league championship's name, shown after its year: "2026 Big Dawgs Cup".
+         */
+        cupName: string;
+        /**
+         * The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+         */
+        cupPointsScale: 'STANDARD' | 'TOP_TEN' | 'FIELD_BEATEN' | 'CUSTOM';
+        /**
+         * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
+         */
+        cupCustomPoints: Array<number>;
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -3417,6 +3483,10 @@ export type ContestManagementDetailDto = {
         maxEntriesPerSquad?: number | null;
     };
     /**
+     * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+     */
+    cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
+    /**
      * When the contest was created.
      */
     createdAt: string;
@@ -4137,6 +4207,10 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         };
+        /**
+         * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+         */
+        cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
         /**
          * When the contest was created.
          */
@@ -9495,6 +9569,16 @@ export type SetContestSportEventsRequest = {
      * Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.
      */
     sportEventIds: Array<string>;
+};
+
+/**
+ * Request payload for setting how much a contest counts toward its cup and the championship.
+ */
+export type SetContestCupWeightRequest = {
+    /**
+     * How much the contest counts toward its cup and the league championship: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+     */
+    cupWeight: 'NORMAL' | 'BONUS' | 'DOUBLE' | 'NOT_COUNTED';
 };
 
 /**
@@ -18696,6 +18780,45 @@ export type UpdateLeagueDetailsResponses = {
 
 export type UpdateLeagueDetailsResponse = UpdateLeagueDetailsResponses[keyof UpdateLeagueDetailsResponses];
 
+export type UpdateLeagueCupSettingsData = {
+    body: UpdateLeagueCupSettingsRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cup-settings';
+};
+
+export type UpdateLeagueCupSettingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type UpdateLeagueCupSettingsError = UpdateLeagueCupSettingsErrors[keyof UpdateLeagueCupSettingsErrors];
+
+export type UpdateLeagueCupSettingsResponses = {
+    /**
+     * Single-league response.
+     */
+    200: LeagueResponse;
+};
+
+export type UpdateLeagueCupSettingsResponse = UpdateLeagueCupSettingsResponses[keyof UpdateLeagueCupSettingsResponses];
+
 export type InactivateLeagueData = {
     body?: never;
     path: {
@@ -19937,6 +20060,50 @@ export type OpenContestResponses = {
 };
 
 export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
+
+export type SetContestCupWeightData = {
+    body: SetContestCupWeightRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/cup-weight';
+};
+
+export type SetContestCupWeightErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND — no such contest in this league.
+     */
+    404: ErrorEnvelope;
+    /**
+     * CONTEST_FINAL — the contest is COMPLETED, so its weight is fixed.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SetContestCupWeightError = SetContestCupWeightErrors[keyof SetContestCupWeightErrors];
+
+export type SetContestCupWeightResponses = {
+    /**
+     * Managed-contest detail response.
+     */
+    200: ContestManagementResponse;
+};
+
+export type SetContestCupWeightResponse = SetContestCupWeightResponses[keyof SetContestCupWeightResponses];
 
 export type SetContestSportEventsData = {
     body: SetContestSportEventsRequest;

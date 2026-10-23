@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { ContestConfigurationRequest, SetContestSportEventsRequest } from '@poolmaster/shared/dto';
+import type { ContestConfigurationRequest, SetContestCupWeightRequest, SetContestSportEventsRequest } from '@poolmaster/shared/dto';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
@@ -15,6 +15,7 @@ export function createContestManagementHandlers(
     updateContestConfiguration,
     openContest,
     setContestSportEvents,
+    setContestCupWeight,
   };
 
   async function getContest(
@@ -94,6 +95,38 @@ export function createContestManagementHandlers(
         return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management open route failed');
+      throw error;
+    }
+  }
+
+  async function setContestCupWeight(
+    request: FastifyRequest<{
+      Params: { id: string; contestId: string };
+      Body: SetContestCupWeightRequest;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId, cupWeight: request.body.cupWeight }, 'contest management set cup weight route start');
+    try {
+      const contest = await contestManagementService.setContestCupWeight(
+        request.params.id,
+        request.params.contestId,
+        request.body.cupWeight,
+      );
+      logger.info({ contestId: request.params.contestId }, 'contest management set cup weight route completed');
+      return reply.send({ contest });
+    } catch (error) {
+      if (error instanceof ContestManagementError) {
+        logger.warn({
+          contestId: request.params.contestId,
+          error: error.message,
+          code: error.code,
+          statusCode: error.statusCode,
+        }, 'contest management set cup weight route rejected');
+        return sendError(reply, error.statusCode, error.code, error.message);
+      }
+      logger.error({ contestId: request.params.contestId, err: error }, 'contest management set cup weight route failed');
       throw error;
     }
   }

@@ -8,7 +8,7 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueService, UpdateLeagueDetailsInput } from './service';
+import type { CreateLeagueInput, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
@@ -32,6 +32,7 @@ export function createLeagueHandlers(
     getLeague,
     getLeagueByCode,
     updateLeagueDetails,
+    updateLeagueCupSettings,
     inactivateLeague,
     activateLeague,
     deleteLeague,
@@ -420,6 +421,44 @@ export function createLeagueHandlers(
           action: 'leagueRoute.updateDetails.invalid',
           data: { leagueId: request.params.id, errorCode: err.code },
         }, 'Rejected league detail update');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function updateLeagueCupSettings(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: UpdateLeagueCupSettingsInput;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueRoute.updateCupSettings.enter',
+      data: { leagueId: request.params.id, cupPointsScale: request.body.cupPointsScale },
+    }, 'Handling update league cup settings request');
+    try {
+      const league = await leagueService.updateCupSettings(request.params.id, request.body);
+      logger.info({
+        action: 'leagueRoute.updateCupSettings.success',
+        data: { leagueId: request.params.id },
+      }, 'Updated league cup settings');
+      return reply.send({ league: toLeagueDto(league) });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        logger.warn({
+          action: 'leagueRoute.updateCupSettings.notFound',
+          data: { leagueId: request.params.id },
+        }, 'Cannot update cup settings for missing league');
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        logger.warn({
+          action: 'leagueRoute.updateCupSettings.invalid',
+          data: { leagueId: request.params.id, errorCode: err.code },
+        }, 'Rejected league cup settings update');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;

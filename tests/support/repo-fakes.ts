@@ -345,6 +345,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     update: echoUpdate(),
     replaceSportEvents: nothing(),
     transitionStatus: jest.fn().mockResolvedValue(true),
+    setCupWeight: jest.fn().mockResolvedValue(true),
     delete: nothing(),
     ...overrides,
   };

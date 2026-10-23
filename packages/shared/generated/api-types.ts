@@ -545,6 +545,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cup-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update the league's championship settings
+         * @description Allows a commissioner to set an active league's championship name and points table (#841, #863) in one request. Cups score on read, so they follow the new table at once; the championship keeps the points each contest earned when it went final. 400 CUP_CUSTOM_POINTS_INVALID when CUSTOM has no points or another scale sends some; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.
+         */
+        put: operations["updateLeagueCupSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/inactivate": {
         parameters: {
             query?: never;
@@ -1147,6 +1167,26 @@ export interface paths {
          * @description Moves a DRAFT contest to OPEN so league members can see and enter it, and returns it as getContestConfiguration does. Commissioner only. There is no undo: from here its name, configuration and existence are locked. The event's field need not be ready; entries wait on it.
          */
         post: operations["openContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/cup-weight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set how much a contest counts toward its cup
+         * @description Sets how much the contest counts toward its sports league cup and the league championship (#841) and returns it as getContestConfiguration does. Commissioner only. Allowed while the contest is DRAFT, OPEN or ACTIVE; once it is COMPLETED its weight is fixed, because the championship keeps the points it earned at settlement.
+         */
+        put: operations["setContestCupWeight"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3851,6 +3891,18 @@ export interface components {
              */
             iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
         };
+        /** @description Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table. */
+        UpdateLeagueCupSettingsRequest: {
+            /** @description The league championship's name, shown after its year. */
+            cupName: string;
+            /**
+             * @description The points table every cup and the championship score on.
+             * @enum {string}
+             */
+            cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
+            /** @description CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale. */
+            cupCustomPoints: number[];
+        };
         /** @description Commissioner request payload for sending direct email invites. */
         SendLeagueInvitationsRequest: {
             /** @description Email recipients to invite into the league. */
@@ -3947,6 +3999,15 @@ export interface components {
              * @description League creation timestamp in ISO 8601 format.
              */
             createdAt?: string;
+            /** @description The league championship's name, shown after its year: "2026 Big Dawgs Cup". */
+            cupName: string;
+            /**
+             * @description The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+             * @enum {string}
+             */
+            cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
+            /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
+            cupCustomPoints: number[];
         };
         /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
@@ -4142,6 +4203,15 @@ export interface components {
                  * @description League creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
+                /** @description The league championship's name, shown after its year: "2026 Big Dawgs Cup". */
+                cupName: string;
+                /**
+                 * @description The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+                 * @enum {string}
+                 */
+                cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
+                /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
+                cupCustomPoints: number[];
             };
         };
         /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
@@ -4172,6 +4242,15 @@ export interface components {
                  * @description League creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
+                /** @description The league championship's name, shown after its year: "2026 Big Dawgs Cup". */
+                cupName: string;
+                /**
+                 * @description The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+                 * @enum {string}
+                 */
+                cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
+                /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
+                cupCustomPoints: number[];
             };
             /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
@@ -4348,6 +4427,15 @@ export interface components {
                  * @description League creation timestamp in ISO 8601 format.
                  */
                 createdAt?: string;
+                /** @description The league championship's name, shown after its year: "2026 Big Dawgs Cup". */
+                cupName: string;
+                /**
+                 * @description The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list.
+                 * @enum {string}
+                 */
+                cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
+                /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
+                cupCustomPoints: number[];
             }[];
             /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
             memberships: {
@@ -5531,6 +5619,11 @@ export interface components {
                 maxEntriesPerSquad?: number | null;
             };
             /**
+             * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+             * @enum {string}
+             */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+            /**
              * Format: date-time
              * @description When the contest was created.
              */
@@ -6028,6 +6121,11 @@ export interface components {
                     /** @description Maximum entries a Team may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
                 };
+                /**
+                 * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+                 * @enum {string}
+                 */
+                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
                 /**
                  * Format: date-time
                  * @description When the contest was created.
@@ -10059,6 +10157,14 @@ export interface components {
         SetContestSportEventsRequest: {
             /** @description Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order. */
             sportEventIds: string[];
+        };
+        /** @description Request payload for setting how much a contest counts toward its cup and the championship. */
+        SetContestCupWeightRequest: {
+            /**
+             * @description How much the contest counts toward its cup and the league championship: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             * @enum {string}
+             */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
         };
         /** @description An entry's status in one event of its contest (#713): "submit week 6". */
         ContestEntryEventDto: {
@@ -17232,6 +17338,68 @@ export interface operations {
             };
         };
     };
+    updateLeagueCupSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLeagueCupSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-league response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeagueResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     inactivateLeague: {
         parameters: {
             query?: never;
@@ -19047,6 +19215,78 @@ export interface operations {
             };
             /** @description CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type's checks. CONTEST_SELECTION_TYPE_NOT_ALLOWED — the event's sport no longer offers the contest's selection type. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    setContestCupWeight: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetContestCupWeightRequest"];
+            };
+        };
+        responses: {
+            /** @description Managed-contest detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestManagementResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_NOT_FOUND — no such contest in this league. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_FINAL — the contest is COMPLETED, so its weight is fixed. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

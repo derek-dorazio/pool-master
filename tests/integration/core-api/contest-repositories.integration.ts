@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ContestStatus, ContestTemplateEventType, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, ContestTemplateEventType, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -234,6 +234,18 @@ describe('ContestRepository', () => {
     })).resolves.toBe(true);
     const completed = await repos().contests.findById(contest.id);
     expect(completed).toEqual(expect.objectContaining({ status: ContestStatus.COMPLETED, startsAt, endsAt }));
+  });
+
+  it('sets a cup weight only while the contest is in the given statuses, and says when it changed nothing', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const open = await createContest(league.id, event.id, 'Weighted', ContestStatus.OPEN);
+    const settled = await createContest(league.id, event.id, 'Settled', ContestStatus.COMPLETED);
+    const unsettled = [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE];
+
+    await expect(repos().contests.setCupWeight(open.id, CupWeight.DOUBLE, unsettled)).resolves.toBe(true);
+    await expect(repos().contests.setCupWeight(settled.id, CupWeight.NOT_COUNTED, unsettled)).resolves.toBe(false);
+    expect((await repos().contests.findById(open.id))?.cupWeight).toBe(CupWeight.DOUBLE);
+    expect((await repos().contests.findById(settled.id))?.cupWeight).toBe(CupWeight.NORMAL);
   });
 
   it('deletes a DRAFT contest whose configuration carries a scoring rule and a prize definition, with everything under it', async () => {

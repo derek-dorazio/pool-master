@@ -1,6 +1,7 @@
 import { expect } from '@jest/globals';
 import {
   ContestStatus,
+  CupPointsScale,
   LeagueIconKey,
   LeagueMembershipStatus,
   LeagueRole,
@@ -230,6 +231,7 @@ describe('LeagueService — lifecycle', () => {
     ['activateLeague', (service: LeagueService) => service.activateLeague('missing')],
     ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x', iconKey: LeagueIconKey.TROPHY })],
     ['deleteInactiveLeague', (service: LeagueService) => service.deleteInactiveLeague('missing', 'X')],
+    ['updateCupSettings', (service: LeagueService) => service.updateCupSettings('missing', { cupName: 'Cup', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [] })],
   ])('%s on an unknown league throws LeagueNotFoundError naming the league', async (_name, act) => {
     const attempt = act(serviceFor(inMemoryLeagueWorld()));
     await expect(attempt).rejects.toBeInstanceOf(LeagueNotFoundError);
@@ -291,6 +293,62 @@ describe('LeagueService — editing details and icon', () => {
       description: 'New text',
       iconKey: LeagueIconKey.SOCCER_BALL,
     });
+  });
+});
+
+describe('LeagueService — championship settings', () => {
+  it('stores a trimmed championship name and a custom points table on an active league', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague();
+
+    await serviceFor(world).updateCupSettings(league.id, {
+      cupName: '  Big Dawgs Cup  ',
+      cupPointsScale: CupPointsScale.CUSTOM,
+      cupCustomPoints: [10, 6, 3],
+    });
+
+    expect(world.tables.leagues.get(league.id)).toMatchObject({
+      cupName: 'Big Dawgs Cup',
+      cupPointsScale: CupPointsScale.CUSTOM,
+      cupCustomPoints: [10, 6, 3],
+    });
+  });
+
+  it('switching back to a built-in table clears the custom points, so no stale table lingers', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague({ cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [5, 2] });
+
+    await serviceFor(world).updateCupSettings(league.id, {
+      cupName: league.cupName,
+      cupPointsScale: CupPointsScale.TOP_TEN,
+      cupCustomPoints: [],
+    });
+
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ cupPointsScale: CupPointsScale.TOP_TEN, cupCustomPoints: [] });
+  });
+
+  it.each([
+    ['a custom table with no points', CupPointsScale.CUSTOM, []],
+    ['a built-in table sent with its own points', CupPointsScale.STANDARD, [10, 5]],
+  ])('refuses %s with CUP_CUSTOM_POINTS_INVALID and leaves the settings unchanged', async (_case, cupPointsScale, cupCustomPoints) => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague({ cupName: 'Old Cup' });
+
+    await expect(serviceFor(world).updateCupSettings(league.id, { cupName: 'New Cup', cupPointsScale, cupCustomPoints }))
+      .rejects.toMatchObject({ code: 'CUP_CUSTOM_POINTS_INVALID', statusCode: 400 });
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Old Cup', cupPointsScale: CupPointsScale.STANDARD });
+  });
+
+  it('refuses championship settings on an inactive league with LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague({ isActive: false, cupName: 'Frozen Cup' });
+
+    await expect(serviceFor(world).updateCupSettings(league.id, {
+      cupName: 'Thawed Cup',
+      cupPointsScale: CupPointsScale.STANDARD,
+      cupCustomPoints: [],
+    })).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Frozen Cup' });
   });
 });
 

@@ -21,17 +21,21 @@ import {
   listSports,
   openContest,
   releaseEvent,
+  setContestCupWeight,
   submitContestEntry,
   submitContestSelection,
   transitionEvent,
+  updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, CupContestCount, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, CupContestCount, CupPointsScale, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
+  ContestManagementResponseSchema,
   ChampionshipYearListResponseSchema,
   CupListResponseSchema,
   CupResponseSchema,
   CupSquadPointsResponseSchema,
+  LeagueResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -43,6 +47,9 @@ import { standardEventPricing } from '../support/budget-pricing';
 // two squads on STANDARD points from their entries' frozen places. The member wins the first race
 // and the commissioner the second, so they finish level on points, wins and podiums and share 1st.
 // The same settlements write the league championship (#863): its year shares 1st the same way.
+// Then the commissioner's settings (#841 slice 3): a third race's open contest is set to count
+// double, the settled ones refuse a new weight, and a custom points table rescores the cup at
+// once while the championship keeps the points its contests earned when they settled.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -79,7 +86,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: sports league cups and the league championship (#841, #863)', () => {
-  it('makes the season\'s cup with its first contest, then ranks squads on STANDARD points from settled races, sharing 1st on a tie and moving the climber, and writes the league championship year alike', async () => {
+  it('makes the season\'s cup with its first contest, then ranks squads on STANDARD points from settled races, sharing 1st on a tie and moving the climber, and writes the league championship year alike; a new points table rescores the cup but not the settled championship', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Cup Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -216,5 +223,72 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       path: { id: league.id },
     })).data)).years;
     expect(years.map((row) => [row.year, row.isOver, row.leaders.length])).toEqual([[year, false, 2]]);
+
+    // --- Cup weight: an open contest takes one; a final contest refuses it -------------------
+    const coast = await releaseRace('Coast Marathon', `${SEASON}-11-01T13:30:00.000Z`);
+    const coastContest = expectDefined((await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
+    })).data).contest.id;
+    await openContest({ client: commissioner.client, path: { id: league.id, contestId: coastContest } });
+    const doubled = await setContestCupWeight({
+      client: commissioner.client,
+      path: { id: league.id, contestId: coastContest },
+      body: { cupWeight: CupWeight.DOUBLE },
+    });
+    expect(ContestManagementResponseSchema.parse(expectDefined(doubled.data)).contest.cupWeight).toBe(CupWeight.DOUBLE);
+    const settledWeight = await setContestCupWeight({
+      client: commissioner.client,
+      path: { id: league.id, contestId: harbourContest },
+      body: { cupWeight: CupWeight.NOT_COUNTED },
+    });
+    expect(settledWeight.response.status).toBe(409);
+    expect(settledWeight.error?.error.code).toBe('CONTEST_FINAL');
+    const memberWeight = await setContestCupWeight({
+      client: member.client,
+      path: { id: league.id, contestId: coastContest },
+      body: { cupWeight: CupWeight.NORMAL },
+    });
+    expect(memberWeight.response.status).toBe(403);
+
+    // --- Points table: CUSTOM 10 for 1st, 5 for 2nd; each squad has one of each -------------
+    const custom = await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { cupName: '  Harriers Shield  ', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5] },
+    });
+    expect(LeagueResponseSchema.parse(expectDefined(custom.data)).league).toMatchObject({
+      cupName: 'Harriers Shield',
+      cupPointsScale: CupPointsScale.CUSTOM,
+      cupCustomPoints: [10, 5],
+    });
+    const rescored = CupResponseSchema.parse(expectDefined((await getCup({ client: member.client, path: { id: league.id, cupId } })).data)).cup;
+    expect(rescored.standings.map((row) => [row.displayPosition, row.points])).toEqual([['T1', 150], ['T1', 150]]);
+    expect(rescored.contests.find((row) => row.contestId === coastContest)).toMatchObject({ count: CupContestCount.NOT_FINAL, cupWeight: CupWeight.DOUBLE });
+    const keptChampionship = ChampionshipResponseSchema.parse(expectDefined((await getChampionship({
+      client: member.client,
+      path: { id: league.id, year },
+    })).data)).championship;
+    expect(keptChampionship.cupName).toBe('Harriers Shield');
+    expect(keptChampionship.standings.map((row) => row.points)).toEqual([1800, 1800]);
+  });
+
+  it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Steward', leagueName: `Cup Rules ${RUN}` });
+    const member = await buildRegisteredUser({ displayName: 'Bystander' });
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    const update = (client: typeof member.client, cupPointsScale: CupPointsScale, cupCustomPoints: number[]) =>
+      updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints } });
+
+    expect((await update(member.client, CupPointsScale.TOP_TEN, [])).response.status).toBe(403);
+    const empty = await update(commissioner.client, CupPointsScale.CUSTOM, []);
+    expect(empty.response.status).toBe(400);
+    expect(empty.error?.error.code).toBe('CUP_CUSTOM_POINTS_INVALID');
+    const tooLong = await update(commissioner.client, CupPointsScale.CUSTOM, Array.from({ length: 51 }, () => 1));
+    expect(tooLong.response.status).toBe(400);
+    const stored = await update(commissioner.client, CupPointsScale.TOP_TEN, []);
+    expect(LeagueResponseSchema.parse(expectDefined(stored.data)).league).toMatchObject({ cupName: 'Rules Cup', cupPointsScale: CupPointsScale.TOP_TEN });
   });
 });

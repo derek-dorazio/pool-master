@@ -336,6 +336,12 @@ export class InMemoryContestWorld {
           this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
         }
       },
+      setCupWeight: async (id, cupWeight, whileIn) => {
+        const existing = this.contests.get(id);
+        if (!existing || !whileIn.includes(existing.status)) return false;
+        this.contests.set(id, { ...existing, cupWeight });
+        return true;
+      },
       transitionStatus: async (id, transition) => {
         const existing = this.contests.get(id);
         if (!existing || !transition.from.includes(existing.status)) return false;

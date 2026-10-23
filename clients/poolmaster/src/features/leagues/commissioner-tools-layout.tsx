@@ -2,6 +2,7 @@ import { Settings } from 'lucide-react';
 import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { AdminAreaLayout } from '@/features/shared/ui';
 import {
+  buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminContestsPath,
   buildLeagueAdminEditPath,
   buildLeagueAdminInvitesPath,
@@ -37,7 +38,9 @@ export function CommissionerToolsLayout() {
       icon={<Settings aria-hidden size={18} />}
       menuItems={[
         {
-          isActive: pathname === settingsPath || pathname === buildLeagueAdminEditPath(leagueCode),
+          isActive: pathname === settingsPath
+            || pathname === buildLeagueAdminEditPath(leagueCode)
+            || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode),
           label: 'League settings',
           testId: 'commissioner-tools-menu-settings',
           to: settingsPath,

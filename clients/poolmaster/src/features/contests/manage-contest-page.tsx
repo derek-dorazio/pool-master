@@ -17,7 +17,9 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import {
+  buildLeagueAdminContestCupWeightPath,
   buildLeagueAdminContestEditPath,
   buildLeagueAdminContestEventsPath,
   buildLeagueAdminContestsPath,
@@ -98,7 +100,8 @@ function ContestTiersSection({
 
 /**
  * Commissioner tools › Contests › one contest: its status and next step first, then its settings
- * as rows with one Edit while it is not open, its tiers, and Delete contest in the danger zone.
+ * as rows with one Edit while it is not open, how much it counts toward its cup until it is
+ * final, its tiers, and Delete contest in the danger zone.
  */
 export function ManageContestPage() {
   const logger = getLogger().child({ feature: 'manage-contest-page' });
@@ -296,6 +299,34 @@ export function ManageContestPage() {
           label="Entries per member"
           testId="manage-contest-entries-per-team"
           value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        description="How much this contest counts toward its sports league cup and the league championship."
+        testId="manage-contest-championships"
+        title="Championships"
+      >
+        <SettingsRow
+          action={contest.status === ContestStatus.COMPLETED ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
+              <Lock aria-hidden size={13} />
+              Final
+            </span>
+          ) : (
+            <LinkButton
+              data-testid="manage-contest-cup-weight-edit"
+              isDisabled={!league.isActive}
+              size="sm"
+              to={buildLeagueAdminContestCupWeightPath(leagueCode, contest.id)}
+              variant="secondary"
+            >
+              Edit
+            </LinkButton>
+          )}
+          label="Cup weight"
+          testId="manage-contest-cup-weight"
+          value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
         />
       </SettingsSection>
 

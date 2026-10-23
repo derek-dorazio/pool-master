@@ -103,6 +103,33 @@ export function contestManagementModule(
     handler: handlers.openContest,
   });
 
+  fastify.put('/contests/:contestId/cup-weight', {
+    schema: {
+      tags: ['Contest Management'],
+      summary: 'Set how much a contest counts toward its cup',
+      description:
+        'Sets how much the contest counts toward its sports league cup and the league championship (#841) and returns it as getContestConfiguration does. Commissioner only. Allowed while the contest is DRAFT, OPEN or ACTIVE; once it is COMPLETED its weight is fixed, because the championship keeps the points it earned at settlement.',
+      operationId: 'setContestCupWeight',
+      body: schemaRef('SetContestCupWeightRequest'),
+      response: {
+        200: schemaRef('ContestManagementResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_NOT_FOUND — no such contest in this league.',
+        },
+        409: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_FINAL — the contest is COMPLETED, so its weight is fixed.',
+        },
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.setContestCupWeight,
+  });
+
   fastify.put('/contests/:contestId/sport-events', {
     schema: {
       tags: ['Contest Management'],
