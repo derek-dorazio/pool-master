@@ -347,7 +347,7 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
 
     expect(await screen.findByText('2 entries waiting for the draw')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Run draw' })).toBeInTheDocument();
-    expect(screen.getByTestId('manage-contest-format')).toHaveTextContent('Random draw');
+    expect(screen.getByTestId('manage-contest-format')).toHaveTextContent('Quick pick');
     expect(screen.getByTestId('manage-contest-rules')).toHaveTextContent('The draw deals each entry 3 golfers at random. The best 2 scores count.');
     expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('Entries close when you run the draw');
   });

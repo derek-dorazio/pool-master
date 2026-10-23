@@ -1171,7 +1171,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     await waitForStartingChoices();
     fireEvent.click(screen.getByTestId('contest-format-RANDOM_DRAW'));
 
-    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Random draw');
+    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Quick pick');
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveTextContent('Draw 1 golfer each');
     expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveTextContent('Draw 3 golfers each, 2 count');

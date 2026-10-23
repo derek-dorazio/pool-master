@@ -139,9 +139,11 @@ In order:
    records. Use the `add-frontend-feature` skill.
    The public How to Play page and each league's Contest types page (the commissioner's menu
    of contest types) read the contest templates, so the sport's leagues and formats appear
-   there once their templates exist. The one hand-written part is the sport's line in
-   `SPORT_BLURBS`: write it for a new sport, and rewrite it when a slice adds a sport league
-   or a format to a sport already there. Then open both pages and read the sport's section
+   there once their templates exist. The hand-written parts are the sport's line in
+   `SPORT_BLURBS` and, for a new sport, its picture in the How to Play illustrations (the
+   typecheck asks for it); a new way to play also needs its picture and its guide. Write the
+   line for a new sport, and rewrite it when a slice adds a sport league or a format to a
+   sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
    sure it runs. Add the sport's row to the sport x selection-type scenario suite
