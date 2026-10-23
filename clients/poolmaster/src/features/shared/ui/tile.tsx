@@ -18,13 +18,15 @@ const tileVariants = cva("border", {
     padding: {
       none: "p-0",
       sm: "p-4",
-      md: "p-6",
-      lg: "p-8",
+      // Phones get less padding: cards nest, and every level would otherwise take 48px of a
+      // 390px screen.
+      md: "p-4 sm:p-6",
+      lg: "p-5 sm:p-8",
     },
     radius: {
       md: "rounded-2xl",
       lg: "rounded-[1.5rem]",
-      xl: "rounded-[2rem]",
+      xl: "rounded-3xl sm:rounded-[2rem]",
     },
   },
   defaultVariants: {

@@ -8,7 +8,8 @@ type MetricGridProps = {
 
 export function MetricGrid({ children, className }: MetricGridProps) {
   return (
-    <div className={cn("grid gap-4 sm:grid-cols-3", className)}>{children}</div>
+    // Two across on a phone, so a page's figures do not push its content a screen further down.
+    <div className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4", className)}>{children}</div>
   );
 }
 
@@ -20,7 +21,7 @@ type MetricTileProps = {
 
 export function MetricTile({ helperText, label, value }: MetricTileProps) {
   return (
-    <div className="rounded-2xl bg-background px-4 py-4">
+    <div className="min-w-0 rounded-2xl bg-background px-3 py-3 sm:px-4 sm:py-4">
       <div className="text-xs uppercase text-muted-foreground">
         {label}
       </div>

@@ -25,8 +25,9 @@ type LeagueMenuProps = {
 export function LeagueMenu({ action, "aria-label": ariaLabel, items }: LeagueMenuProps) {
   return (
     <nav aria-label={ariaLabel} className="border-b border-border bg-card">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-6">
-        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 sm:px-6">
+        {/* On a phone the links can run past the edge; the faded right edge says the row scrolls. */}
+        <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto max-sm:pr-12 max-sm:[mask-image:linear-gradient(to_right,black_85%,transparent)]">
           {items.map((item) => (
             <Link
               aria-current={item.isActive ? "page" : undefined}

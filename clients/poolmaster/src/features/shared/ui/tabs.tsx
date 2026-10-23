@@ -11,7 +11,7 @@ export function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        "inline-flex rounded-2xl border border-border bg-background p-1",
+        "inline-flex max-w-full flex-wrap rounded-2xl border border-border bg-background p-1",
         className,
       )}
       {...props}
@@ -59,7 +59,7 @@ export function SegmentedControl({
   return (
     <div
       aria-label={ariaLabel}
-      className="inline-flex rounded-2xl border border-border bg-background p-1"
+      className="inline-flex max-w-full flex-wrap rounded-2xl border border-border bg-background p-1"
       role="radiogroup"
     >
       {options.map((option) => (

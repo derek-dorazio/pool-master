@@ -78,7 +78,7 @@ export function FormField({
 }
 
 const controlClassName =
-  "w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-primary disabled:cursor-not-allowed disabled:opacity-70";
+  "w-full rounded-2xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none sm:text-sm transition placeholder:text-muted-foreground focus:border-primary disabled:cursor-not-allowed disabled:opacity-70";
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement>;
 

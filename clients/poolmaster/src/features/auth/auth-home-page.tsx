@@ -342,13 +342,15 @@ export function AuthHomePage() {
 
   return (
     <Tile className="shadow-lg" padding="lg" radius="xl">
-      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-5">
-          <span className="inline-flex rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase text-muted-foreground">
+      {/* On a phone the form comes straight after the headline and the two feature notes follow
+          it; on a wide screen the notes sit under the headline, beside the form. */}
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr]">
+        <div className="space-y-5 lg:col-start-1 lg:row-start-1">
+          <span className="hidden rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase text-muted-foreground sm:inline-flex">
             Ultimate Office Pool Manager
           </span>
           <div className="space-y-3">
-            <h2 className="max-w-xl font-display text-4xl font-black tracking-normal">
+            <h2 className="max-w-xl font-display text-3xl font-black tracking-normal sm:text-4xl">
               {inviteContext
                 ? `You're almost inside ${inviteContext.league.name}.`
                 : teamInviteContext
@@ -379,18 +381,7 @@ export function AuthHomePage() {
               message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you can review the invitation and accept it.`}
               title="Co-owner invite"
             />
-          ) : (
-            <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
-              <Tile padding="sm" radius="md" variant="subtle">
-                Commissioners create a league, give it a memorable league code,
-                and invite their members.
-              </Tile>
-              <Tile padding="sm" radius="md" variant="subtle">
-                Members join by invitation, choose the name they play under,
-                and enter contests.
-              </Tile>
-            </div>
-          )}
+          ) : null}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
             <Alert data-testid="auth-invite-preview-error" tone="danger">
@@ -400,7 +391,7 @@ export function AuthHomePage() {
           ) : null}
         </div>
 
-        <Tile padding="md" radius="xl" variant="subtle">
+        <Tile className="lg:col-start-2 lg:row-span-2 lg:row-start-1" padding="md" radius="xl" variant="subtle">
           <SegmentedControl
             aria-label="Authentication mode"
             onChange={(nextMode) =>
@@ -576,6 +567,19 @@ export function AuthHomePage() {
               : "Continue to welcome"}
           </Link>
         </Tile>
+
+        {inviteContext || teamInviteContext ? null : (
+          <div className="grid gap-3 self-start text-sm text-muted-foreground sm:grid-cols-2 lg:col-start-1 lg:row-start-2 lg:-mt-3">
+            <Tile padding="sm" radius="md" variant="subtle">
+              Commissioners create a league, give it a memorable league code,
+              and invite their members.
+            </Tile>
+            <Tile padding="sm" radius="md" variant="subtle">
+              Members join by invitation, choose the name they play under,
+              and enter contests.
+            </Tile>
+          </div>
+        )}
       </div>
     </Tile>
   );

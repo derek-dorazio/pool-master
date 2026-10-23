@@ -204,7 +204,7 @@ export function DataGrid<TData>({
                   <th className="px-4 py-3 font-medium" key={`${header.id}-filter`}>
                     {header.isPlaceholder || !header.column.getCanFilter() ? null : (
                       <input
-                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs normal-case tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
+                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-base normal-case sm:text-xs tracking-normal text-foreground placeholder:text-muted-foreground focus:border-[color:var(--status-active-border)]"
                         data-testid={`${filterTestIdPrefix}-${header.column.id}`}
                         onChange={(event) =>
                           header.column.setFilterValue(event.target.value)
