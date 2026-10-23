@@ -203,9 +203,9 @@ export function buildApp() {
   // Domain modules (protected by auth-guard)
   // =========================================================================
   app.register(leaguesModule, { prefix: '/api/v1/leagues', email });
-  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
+  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email });
-  app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
+  app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',

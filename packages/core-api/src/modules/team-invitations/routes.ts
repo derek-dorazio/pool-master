@@ -16,11 +16,12 @@ import {
   PrismaUserRepository,
 } from '../../adapters';
 import { getAppPrisma } from '../../core/prisma-context';
+import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { createSquadOwnerInvitationHandlers } from '../squads/owner-invitation-handler';
 import { SquadOwnerInvitationService } from '../squads/owner-invitation-service';
 import { AuthService } from '../auth/auth-service';
 
-export function teamInvitationsModule(fastify: FastifyInstance): void {
+export function teamInvitationsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -37,6 +38,9 @@ export function teamInvitationsModule(fastify: FastifyInstance): void {
     users: userRepo,
     prisma,
     membershipTransaction: new PrismaMembershipTransaction(prisma),
+    email: opts.email,
+    appBaseUrl: readApplicationBaseUrl(process.env),
+    logger: fastify.log,
   });
   // #217 — this module is the only one that exposes register-and-accept, so it is the only one
   // that hands the handlers an AuthService.

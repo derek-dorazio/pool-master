@@ -29,6 +29,31 @@ export interface LeagueJoinSuccessEmailData {
   teamName?: string;
 }
 
+/** B4: someone with no account yet is invited to co-own a squad; accepting signs them up. */
+export interface SquadOwnerInviteEmailData {
+  recipientEmail: string;
+  inviterName: string;
+  squadName: string;
+  leagueName: string;
+  leagueCode: string;
+  inviteUrl: string;
+  expiresAt?: Date | string;
+  /** Accepting makes them the squad's only owner: a replacement for its sole owner. */
+  soleOwner: boolean;
+}
+
+/** B5: someone with an account was made a co-owner of a squad straight away. */
+export interface SquadOwnerAddedEmailData {
+  userName: string;
+  inviterName: string;
+  squadName: string;
+  leagueName: string;
+  leagueCode: string;
+  leagueHomeUrl: string;
+  /** They are the squad's only owner: they replaced its sole owner. */
+  soleOwner: boolean;
+}
+
 export interface ContestEntryCompletedTierSelection {
   tierName: string;
   participantNames: string[];
@@ -486,6 +511,8 @@ export interface PasswordChangedEmailData {
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
+  SQUAD_OWNER_INVITE: SquadOwnerInviteEmailData;
+  SQUAD_OWNER_ADDED: SquadOwnerAddedEmailData;
   CONTEST_ENTRY_COMPLETED: ContestEntryCompletedEmailData;
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
@@ -557,6 +584,8 @@ export type EmailTemplateScope = (typeof EmailTemplateScope)[keyof typeof EmailT
 export interface EmailTemplateScopeByKey {
   LEAGUE_MEMBER_INVITE: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_JOIN_SUCCESS: typeof EmailTemplateScope.LEAGUE;
+  SQUAD_OWNER_INVITE: typeof EmailTemplateScope.LEAGUE;
+  SQUAD_OWNER_ADDED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_COMPLETED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
@@ -633,6 +662,22 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderLeagueJoinSuccessEmail,
+  },
+  SQUAD_OWNER_INVITE: {
+    category: EmailCategory.MEMBERSHIP,
+    serviceClass: ServiceClass.ESSENTIAL,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderSquadOwnerInviteEmail,
+  },
+  SQUAD_OWNER_ADDED: {
+    category: EmailCategory.MEMBERSHIP,
+    serviceClass: ServiceClass.ESSENTIAL,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderSquadOwnerAddedEmail,
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
@@ -808,6 +853,69 @@ function renderLeagueJoinSuccessEmail(
     title: 'You are in',
     bodyBlocks,
     textLines,
+  });
+}
+
+function renderSquadOwnerInviteEmail(
+  data: SquadOwnerInviteEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const expiresLine = formatDateTime(data.expiresAt, context.timeZone);
+  const own = data.soleOwner ? 'own' : 'co-own';
+  const intro = `${data.inviterName} invited you to ${own} ${data.squadName} in ${data.leagueName}.`;
+  const shared = data.soleOwner ? [] : ['Co-owners share the squad: its entries, picks and results.'];
+  const details: Array<[string, string]> = [
+    ['League code', data.leagueCode],
+    ['Invite email', data.recipientEmail],
+    ...(expiresLine ? ([['Expires', expiresLine]] as Array<[string, string]>) : []),
+  ];
+  return buildMessage(context, {
+    templateKey: 'SQUAD_OWNER_INVITE',
+    subject: `${data.inviterName} invited you to ${own} ${data.squadName}`,
+    preheader: intro,
+    title: data.soleOwner ? 'Squad invitation' : 'Co-owner invitation',
+    bodyBlocks: [
+      paragraph(`${escapeHtml(data.inviterName)} invited you to ${own} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
+      ...shared.map((line) => paragraph(escapeHtml(line))),
+      detailList(details),
+      button('Accept invitation', data.inviteUrl),
+    ].join(''),
+    textLines: [
+      intro,
+      ...shared,
+      ...details.map(([label, value]) => `${label}: ${value}`),
+      `Accept invitation: ${data.inviteUrl}`,
+    ],
+  });
+}
+
+function renderSquadOwnerAddedEmail(
+  data: SquadOwnerAddedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const role = data.soleOwner ? 'made you the owner of' : 'added you as a co-owner of';
+  const added = `${data.inviterName} ${role} ${data.squadName} in ${data.leagueName}.`;
+  const shared = data.soleOwner ? [] : ['You share the squad with its other owners: its entries, picks and results.'];
+  return buildMessage(context, {
+    templateKey: 'SQUAD_OWNER_ADDED',
+    subject: data.soleOwner ? `You own ${data.squadName}` : `You're a co-owner of ${data.squadName}`,
+    preheader: added,
+    title: data.soleOwner ? 'You own a squad' : 'You are a co-owner',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(`${escapeHtml(data.inviterName)} ${role} ${strong(data.squadName)} in ${strong(data.leagueName)}.`),
+      ...shared.map((line) => paragraph(escapeHtml(line))),
+      detailList([['League code', data.leagueCode]]),
+      button('Open league', data.leagueHomeUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      added,
+      ...shared,
+      `League code: ${data.leagueCode}`,
+      `Open league: ${data.leagueHomeUrl}`,
+    ],
   });
 }
 

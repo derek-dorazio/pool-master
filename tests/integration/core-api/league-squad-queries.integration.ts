@@ -28,6 +28,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { emailServiceInto } from '../../support/email-service';
 
 // League and squad reads that only the HTTP contract tests reached before (#508): what each
 // query returns from Postgres, and which rows its filters leave out.
@@ -73,6 +74,8 @@ function ownerInvitationService() {
     users: new PrismaUserRepository(prisma),
     prisma,
     membershipTransaction: new PrismaMembershipTransaction(prisma),
+    email: emailServiceInto(),
+    appBaseUrl: 'https://app.example.test',
   });
 }
 

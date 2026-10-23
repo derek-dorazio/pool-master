@@ -27,6 +27,8 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
     templates: {
       LEAGUE_MEMBER_INVITE: true,
       LEAGUE_JOIN_SUCCESS: true,
+      SQUAD_OWNER_INVITE: true,
+      SQUAD_OWNER_ADDED: true,
       CONTEST_ENTRY_COMPLETED: true,
       CONTEST_STARTED_SUMMARY: true,
       CONTEST_ENTRY_REMINDER: true,

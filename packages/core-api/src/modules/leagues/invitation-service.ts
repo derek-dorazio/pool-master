@@ -28,6 +28,8 @@ import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { LeagueNotFoundError } from './service';
 import {
+  buildLeagueHomeUrl,
+  buildLeagueInviteUrl,
   type EmailLeague,
   type EmailService,
 } from '../email';
@@ -210,7 +212,7 @@ export class InvitationService {
         inviterName: input.inviterName,
         leagueName: input.league.name,
         leagueCode: input.league.leagueCode,
-        inviteUrl: buildInviteUrl(this.appBaseUrl, input.inviteCode),
+        inviteUrl: buildLeagueInviteUrl(this.appBaseUrl, input.inviteCode),
         message: input.message,
         expiresAt: input.expiresAt,
       },
@@ -605,7 +607,7 @@ export class InvitationService {
           leagueName: input.leagueName,
           leagueCode: input.leagueCode,
           teamName,
-          leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
+          leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.leagueCode),
         },
       });
       this.logger?.info({
@@ -726,14 +728,6 @@ function isOutstanding(invitation: LeagueInvitation): boolean {
 /** Generates a short, URL-safe invite code. */
 function generateInviteCode(): string {
   return randomUUID().replace(/-/g, '').slice(0, 12);
-}
-
-function buildInviteUrl(appBaseUrl: string, inviteCode: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
-}
-
-function buildLeagueUrl(appBaseUrl: string, leagueCode: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}`;
 }
 
 export class InvitationNotFoundError extends Error {

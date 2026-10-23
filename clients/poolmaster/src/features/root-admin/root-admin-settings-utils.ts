@@ -38,6 +38,8 @@ export function summarizeIngestionSchedule(config: IngestionScheduleConfig): Set
 export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['templates'], string]> = [
   ['LEAGUE_MEMBER_INVITE', 'League invitation'],
   ['LEAGUE_JOIN_SUCCESS', 'League welcome'],
+  ['SQUAD_OWNER_INVITE', 'Co-owner invitation'],
+  ['SQUAD_OWNER_ADDED', 'Added as a co-owner'],
   ['CONTEST_ENTRY_COMPLETED', 'Entry confirmation'],
   ['CONTEST_STARTED_SUMMARY', 'Contest started'],
   ['CONTEST_ENTRY_REMINDER', 'Entry reminders'],

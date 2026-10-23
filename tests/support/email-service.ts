@@ -51,3 +51,20 @@ export async function deliverQueuedEmail(): Promise<void> {
     await Promise.all(pendingDeliveries.splice(0));
   }
 }
+
+/**
+ * The real EmailService queueing into an in-memory outbox and sending nothing, with EMAIL_CONFIG
+ * at its everywhere-but-QA defaults. For a test that asserts on what was queued.
+ */
+export function emailServiceInto(messages: InMemoryEmailMessages = inMemoryEmailMessages()): EmailService {
+  const config = EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
+  return new EmailService({
+    messages,
+    suppressions: inMemoryEmailSuppressions(),
+    optOuts: inMemoryEmailOptOuts(),
+    unsubscribe: TEST_UNSUBSCRIBE,
+    providerName: 'smtp',
+    readConfig: () => config,
+    senderAddress: 'noreply@poolmaster.test',
+  });
+}

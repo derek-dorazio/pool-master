@@ -25,6 +25,9 @@ import {
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
+import { emailServiceInto } from '../../support/email-service';
+
+const APP_BASE_URL = 'https://app.example.test';
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -190,6 +193,8 @@ describe('SquadOwnerInvitationService', () => {
       squadMemberships: createSquadMembershipRepo(),
       users,
       prisma: asPrismaClient(prisma),
+      email: emailServiceInto(),
+      appBaseUrl: APP_BASE_URL,
     }));
 
     await expect(service.inviteOwner({
@@ -232,6 +237,8 @@ describe('SquadOwnerInvitationService', () => {
       squadMemberships: squadMembershipRepo,
       users,
       prisma: asPrismaClient(prisma),
+      email: emailServiceInto(),
+      appBaseUrl: APP_BASE_URL,
     }));
 
     const result = await service.inviteOwner({
@@ -304,6 +311,8 @@ describe('SquadOwnerInvitationService', () => {
           squadMemberships: createSquadMembershipRepo(),
           users: fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
           prisma: asPrismaClient(createPrisma()),
+          email: emailServiceInto(),
+          appBaseUrl: APP_BASE_URL,
         })),
       };
     }
@@ -404,6 +413,8 @@ describe('SquadOwnerInvitationService', () => {
       squadMemberships: createSquadMembershipRepo(),
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       prisma: asPrismaClient(createPrisma()),
+      email: emailServiceInto(),
+      appBaseUrl: APP_BASE_URL,
     }));
 
     const result = await service.listInvitationsForViewer('league-1', 'root-admin-1', true);
@@ -466,6 +477,8 @@ describe('SquadOwnerInvitationService', () => {
       }),
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       prisma: asPrismaClient(createPrisma()),
+      email: emailServiceInto(),
+      appBaseUrl: APP_BASE_URL,
     }));
 
     await expect(service.replaceOwner({

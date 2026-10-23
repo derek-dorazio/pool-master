@@ -277,6 +277,15 @@ another way. Resend gives
 the invitation a new invite code and a fresh seven-day expiry and queues a new email, so the
 old link stops working.
 
+Co-owner emails (#845 B4, B5) are queued when a commissioner or squad owner invites a co-owner,
+or replaces an owner. An address with no account gets the invitation (`SQUAD_OWNER_INVITE`): who
+invited them, the squad, the league and its code, the expiry and an Accept invitation button to
+`/team-invite/:code`. An account that is seated on the squad straight away is told it was added
+(`SQUAD_OWNER_ADDED`), with an Open league button, and gets no invitation. Both come from the
+league. A replacement for a squad's only owner is invited to own it, or told they now own it,
+with no mention of other owners. A failure to queue either is logged and never undoes the
+invitation, whose link the squad's owners panel still shows.
+
 Contest entry confirmation emails ("Entry submitted") are receipts, queued when a member
 submits an entry (#481), not when its picks or tiebreaker are saved. They go to every active
 owner of the entry's squad, and say until when the picks can still change (#845). A repeat

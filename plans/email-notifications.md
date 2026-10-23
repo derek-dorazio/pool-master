@@ -50,8 +50,8 @@ writing the first slice's tickets.
 | `CONTEST_STARTED_SUMMARY` | An `OPEN` contest becomes `ACTIVE` at its cutoff | Active commissioners plus owners of squads with a submitted entry, each once | Event, start time, entry count and **every** entry (no cap), contest link. No "good luck", no leaderboard link, and members with no entry are not told |
 
 Each template can be switched off on the root admin Settings page (`EMAIL_CONFIG`). QA sends
-nothing until real delivery is wired. Co-owner invitations (`SquadOwnerInvitation`) send **no**
-email today: the commissioner has to share the link by hand.
+nothing until real delivery is wired. Co-owner invitations (`SquadOwnerInvitation`) send B4 or B5
+since slice 6.
 
 ---
 
@@ -144,8 +144,8 @@ decision to the password recovery design.
 | B1 | League invitation | Commissioner invites an address by email; refused for current members | The invited address | At once | Inviter, league, message, expiry, Join league | ✅ `LEAGUE_MEMBER_INVITE` | – | Essential |
 | B2 | League invitation (resent) | Commissioner presses Resend Invite on a pending email invite | The invited address | At once | Same as B1, new expiry | ✅ same template | – | Essential |
 | B3 | Welcome to the league | An invitation is accepted (new squad or a restored one) | The person who joined | At once | League, their squad's name, League Home, the league's open contests if any | 🟡 `LEAGUE_JOIN_SUCCESS` (add open contests) | P2 | Essential |
-| B4 | Co-owner invitation | Commissioner or squad owner invites an address to co-own a squad; a new address joins on sign-up | The invited address | At once | Who invited them, the squad's name, league, Accept button | | P1 | Essential |
-| B5 | You were added as a co-owner | Co-owner invite to an address that already has an account (added straight away) | That person | At once | Squad's name, league, League Home | | P2 | Essential |
+| B4 | Co-owner invitation | Commissioner or squad owner invites an address to co-own a squad; a new address joins on sign-up | The invited address | At once | Who invited them, the squad's name, league, Accept button | ✅ `SQUAD_OWNER_INVITE`, also when an owner is replaced | P1 | Essential |
+| B5 | You were added as a co-owner | Co-owner invite to an address that already has an account (added straight away) | That person | At once | Squad's name, league, League Home | ✅ `SQUAD_OWNER_ADDED`, names who added them | P2 | Essential |
 | B6 | New member joined | An invitation is accepted | The league's commissioners, not the joiner | At once, or daily if more than three in a day | Who joined, their squad's name, member count, Teams and Owners link | | P2 | B |
 | B7 | Invitation still pending | An email invite is pending and expires in 2 days | The commissioner who sent it | Once, 2 days before expiry | Who hasn't joined, Resend Invite link | | P3 | B |
 | B8 | You're now a commissioner | A member is made commissioner | That person | At once | What commissioners can do, Commissioner tools link | | P3 | Essential |
