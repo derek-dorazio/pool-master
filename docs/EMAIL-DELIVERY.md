@@ -374,5 +374,15 @@ from. After a round it also names the reader's golfers who missed the cut in it.
 idempotency key (contest, event, round, event, week or bracket round, person) keeps a second sweep or task from
 sending one twice.
 
-If the outbox cannot record a welcome, a receipt, a new contest or a contest-started email, the action that
+Final results emails (`CONTEST_RESULTS`, #845 slice 4) are queued by contest settlement the
+moment it moves a contest to `COMPLETED`, whatever its format. A contest with frozen places tells
+every active league member, once each: who won (every entry placed first when they tie), the
+final top 10 and anyone tied with the 10th, then the reader's entries placed below them, each
+total as the contest scores it. The owners of a winning entry are congratulated at the top. A
+contest that completes with no places (every event cancelled, a squares game never played)
+instead tells its commissioners and the members with an entry that it ended with no scores. The
+idempotency key (contest, person) sends it once, even to a contest settled again after being
+moved back out of `COMPLETED`. Prizes are not in it yet (catalog row F4).
+
+If the outbox cannot record a welcome, a receipt, a new contest, a contest-started or a final results email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

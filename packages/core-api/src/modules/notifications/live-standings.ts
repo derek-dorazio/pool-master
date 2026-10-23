@@ -592,8 +592,8 @@ export class LiveStandings implements DueNotifications {
   }
 }
 
-/** The first 10 entries, and any tied with the 10th. */
-function leaderCount(entries: ReadonlyArray<{ position: number | null }>): number {
+/** The first 10 entries, and any tied with the 10th: how many a standings or results email lists. */
+export function leaderCount(entries: ReadonlyArray<{ position: number | null }>): number {
   const last = entries.at(STANDINGS_LEADERS - 1);
   if (last?.position == null) return Math.min(STANDINGS_LEADERS, entries.length);
   let count = STANDINGS_LEADERS;

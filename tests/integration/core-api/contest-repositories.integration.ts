@@ -27,6 +27,7 @@ import type { MailDeliveryProvider } from '../../../packages/core-api/src/module
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
+import { fakeLogger } from '../../support/fake-logger';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -934,6 +935,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
       contestStarted: createContestNotices(prisma, {
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
+        logger: fakeLogger(),
       }),
     });
 

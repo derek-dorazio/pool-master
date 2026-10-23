@@ -333,6 +333,43 @@ export interface ContestStandingsEmailData {
   picksUrl?: string;
 }
 
+/** How a contest ended, which decides what its final results email says (#845 F1, F2). */
+export const ContestResultsKind = {
+  /** It settled with places: winners, the final top 10 and the reader's entries (F1, with F3). */
+  SCORED: 'SCORED',
+  /** It ended with no scores: nothing it covered was played (F2). */
+  NO_SCORES: 'NO_SCORES',
+} as const;
+export type ContestResultsKind = (typeof ContestResultsKind)[keyof typeof ContestResultsKind];
+
+export type ContestResultsOutcome =
+  | {
+    kind: typeof ContestResultsKind.SCORED;
+    /** The entries placed first: more than one when they tie. */
+    winners: StandingsEntryName[];
+    /** The final leaders, at most 10 and anyone tied with the 10th. */
+    top: StandingsLine[];
+    /** The reader's entries placed below the leaders. */
+    yours: StandingsLine[];
+    entryCount: number;
+    /** The reader's entries among the winners (F3). */
+    yourWins: StandingsEntryName[];
+  }
+  | {
+    kind: typeof ContestResultsKind.NO_SCORES;
+    /** Every event the contest covered was cancelled. */
+    allEventsCancelled: boolean;
+  };
+
+export interface ContestResultsEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  outcome: ContestResultsOutcome;
+  leaderboardUrl: string;
+  contestUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -355,6 +392,7 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
   CONTEST_OPENED: ContestOpenedEmailData;
   CONTEST_STANDINGS: ContestStandingsEmailData;
+  CONTEST_RESULTS: ContestResultsEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -420,6 +458,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
   CONTEST_OPENED: typeof EmailTemplateScope.LEAGUE;
   CONTEST_STANDINGS: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_RESULTS: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -525,6 +564,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestStandingsEmail,
+  },
+  CONTEST_RESULTS: {
+    category: EmailCategory.RESULTS,
+    serviceClass: ServiceClass.A,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestResultsEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -1088,6 +1135,70 @@ function renderContestStandingsEmail(
     subject: wording.subject,
     preheader: wording.lead,
     title: wording.title,
+    bodyBlocks,
+    textLines,
+  });
+}
+
+/** "Chalk (Pat) won." or "Chalk (Pat) and Upsets (Sam) tied for first."; null with no winner. */
+function describeWinners(winners: readonly StandingsEntryName[]): string | null {
+  const names = winners.map((winner) => `${winner.entryName} (${winner.squadName})`);
+  if (names.length === 0) return null;
+  if (names.length === 1) return `${names[0]} won.`;
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tied for first.`;
+}
+
+function renderContestResultsEmail(
+  data: ContestResultsEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const { outcome } = data;
+  if (outcome.kind === ContestResultsKind.NO_SCORES) {
+    const lead = outcome.allEventsCancelled
+      ? `Every event was cancelled, so ${data.contestName} ends with no scores.`
+      : `${data.contestName} has ended with no scores.`;
+    return buildMessage(context, {
+      templateKey: 'CONTEST_RESULTS',
+      subject: `${data.contestName} ended with no scores`,
+      preheader: lead,
+      title: 'No scores',
+      bodyBlocks: [paragraph(`Hi ${escapeHtml(data.userName)},`), paragraph(escapeHtml(lead)), button('View contest', data.contestUrl)].join(''),
+      textLines: [`Hi ${data.userName},`, '', lead, '', `View contest: ${data.contestUrl}`],
+    });
+  }
+  const lead = [`${data.contestName} is over.`, describeWinners(outcome.winners)].filter((sentence) => sentence !== null).join(' ');
+  const tied = outcome.winners.length > 1;
+  const congratulations = outcome.yourWins.map((win) => `Congratulations, ${win.squadName}${tied ? ' tied for first in' : ' won'} ${data.contestName} with ${win.entryName}!`);
+  const leadersTitle = outcome.top.length < outcome.entryCount
+    ? `Final top ${String(outcome.top.length)} of ${String(outcome.entryCount)}`
+    : 'Final standings';
+  const yoursTitle = outcome.yours.length === 1 ? 'Your entry' : 'Your entries';
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.userName)},`),
+    ...congratulations.map((line) => paragraph(strong(line))),
+    paragraph(escapeHtml(lead)),
+    sectionTitle(leadersTitle),
+    standingsTable(outcome.top),
+    ...(outcome.yours.length > 0 ? [sectionTitle(yoursTitle), standingsTable(outcome.yours)] : []),
+    button('Final leaderboard', data.leaderboardUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.userName},`,
+    '',
+    ...(congratulations.length > 0 ? [...congratulations, ''] : []),
+    lead,
+    '',
+    `${leadersTitle}:`,
+    ...outcome.top.map(standingsTextLine),
+    ...(outcome.yours.length > 0 ? ['', `${yoursTitle}:`, ...outcome.yours.map(standingsTextLine)] : []),
+    '',
+    `Final leaderboard: ${data.leaderboardUrl}`,
+  ];
+  return buildMessage(context, {
+    templateKey: 'CONTEST_RESULTS',
+    subject: `Final results: ${data.contestName}`,
+    preheader: lead,
+    title: 'Final results',
     bodyBlocks,
     textLines,
   });
