@@ -218,9 +218,7 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
 - **Q7. Player leagues as sport leagues, or a new sport?** *Recommend a sport league with
   participant-type and scoring-family overrides. A new sport ("Baseball players") would split
   baseball's pages and copy in two.*
-- **Q8. Which leagues?** Derek said only major sports that fit well. *Recommend MLB, NBA, NHL and
-  NFL now. The WNBA Finals fit just as well (points, rebounds, assists) and could be a fifth
-  league, kept separate from the NBA as men's and women's always are. Want it?*
+- **Q8. Which leagues? Decided:** MLB, NBA, NHL and NFL. No WNBA.
 - **Q9. Roster size and counted players.** *Recommend Tiered: one player from each of six tiers,
   best four count. Budget: six players under the cap, best four count. Quick pick: three players
   each.* All are editable by the commissioner, as today.
