@@ -1,4 +1,4 @@
-import { ContestStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, CupStatus } from '@poolmaster/shared/domain';
 import { useCallback } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import type { CupDto } from '@/lib/api';
@@ -14,6 +14,7 @@ import {
   MetricTile,
   Tile,
 } from '@/features/shared/ui';
+import { buildPodium } from './championship-view';
 import { CupContestList } from './cup-contest-list';
 import { CupRaceChart } from './cup-race-chart';
 import { CupStandingsGrid } from './cup-standings-grid';
@@ -26,6 +27,7 @@ import {
   formatPlace,
   nextContestToCount,
 } from './cup-view';
+import { Podium } from './podium';
 import { useChampionshipsRoute } from './use-championships-route';
 import { useSeasonCupsQuery } from './use-cups-query';
 
@@ -51,18 +53,19 @@ function CupChips({ cups, leagueCode, selectedId, year }: { cups: CupDto[]; leag
   );
 }
 
-/** Leader, the viewer's place, and the contest that counts next. */
+/** Leader or champion, the viewer's place, and while the cup is open the contest that counts next. */
 function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | null }) {
   const leaders = cupLeaders(cup);
   const leaderPoints = leaders[0]?.points ?? 0;
   const mine = cup.standings.find((row) => row.squadId === mySquadId);
   const next = nextContestToCount(cup);
+  const isCrowned = cup.status === CupStatus.CROWNED;
 
   return (
     <MetricGrid>
       <MetricTile
         helperText={leaders.length ? `${formatCupPoints(leaderPoints)} pts` : undefined}
-        label="Leader"
+        label={isCrowned ? (leaders.length > 1 ? 'Champions' : 'Champion') : 'Leader'}
         value={leaders.length ? leaders.map((row) => row.squadName).join(', ') : 'Nobody yet'}
       />
       {mine ? (
@@ -74,20 +77,23 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
           value={formatPlace(mine)}
         />
       ) : null}
-      <MetricTile
-        helperText={next
-          ? next.status === ContestStatus.ACTIVE ? 'Live now' : `Starts ${formatDateDisplay(next.firstEventStartsAt)}`
-          : undefined}
-        label="Next to count"
-        value={next?.name ?? 'Every contest is final'}
-      />
+      {isCrowned ? null : (
+        <MetricTile
+          helperText={next
+            ? next.status === ContestStatus.ACTIVE ? 'Live now' : `Starts ${formatDateDisplay(next.firstEventStartsAt)}`
+            : undefined}
+          label="Next to count"
+          value={next?.name ?? 'Every contest is final'}
+        />
+      )}
     </MetricGrid>
   );
 }
 
 /**
  * Points race: one sports league cup's standings, how the top squads got there, and every contest
- * in it. A squad opens its points contest by contest; a contest opens its leaderboard.
+ * in it; a crowned cup's podium above its frozen standings. A squad opens its points contest by
+ * contest; a contest opens its leaderboard.
  */
 export function PointsRacePage() {
   const { sportLeagueId } = useParams<{ sportLeagueId: string }>();
@@ -132,10 +138,15 @@ export function PointsRacePage() {
       <Tile className="space-y-5" padding="sm" radius="lg">
         <div>
           <h2 className="text-xl font-semibold text-foreground">{cup.name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {cup.sportLeagueName} · {progress.final} of {progress.total} contests final
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
+            {cup.sportLeagueName} · {cup.crownedAt
+              ? `Crowned ${formatDateDisplay(cup.crownedAt)}`
+              : `${progress.final} of ${progress.total} contests final`}
           </p>
         </div>
+        {cup.status === CupStatus.CROWNED ? (
+          <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+        ) : null}
         <CupStatTiles cup={cup} mySquadId={viewer.mySquadId} />
         <CupStandingsGrid focusSquadId={viewer.mySquadId} rows={cup.standings} squadPath={squadPath} />
       </Tile>

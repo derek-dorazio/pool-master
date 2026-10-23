@@ -96,6 +96,7 @@ Cup                                 unique (leagueId, seasonYear, sportLeagueId)
   leagueId, seasonYear, sportLeagueId
   status          CupStatus         OPEN | CROWNED
   crownedAt       DateTime?
+  crownedPointsScale, crownedCustomPoints   the league's points table at crowning
 
 CupStanding                         frozen at crowning; unique (cupId, squadId)
   position, displayPosition         "T2" for ties
@@ -105,7 +106,8 @@ CupStanding                         frozen at crowning; unique (cupId, squadId)
 ```
 
 - **Which contests count** is worked out on read: the league's contests in the cup's season and
-  sports league, not `NOT_COUNTED`. Open cup standings are computed from frozen places; only
+  sports league, not `NOT_COUNTED`. Open cup standings are computed from each final contest's
+  settled finish and weight (`LeagueYearFinish`), scored on the league's current table; only
   crowning stores them.
 - **Created, never set up.** Contest creation calls the cups service, which makes the cup if
   missing (`rules/architecture-rules.md` §4 *Service Topology*); the migration does it for every
@@ -140,7 +142,8 @@ CupStanding                         frozen at crowning; unique (cupId, squadId)
 
 `POST .../cups/:cupId/crown`, the commissioner, whenever the season is done (golf in September,
 NFL after the Super Bowl). Refused while a counted contest is Open or Live
-(`CUP_HAS_UNFINISHED_CONTESTS`, listing them); drafts never opened don't count. It writes
+(`CUP_HAS_UNFINISHED_CONTESTS`, listing them), and before any contest has counted
+(`CUP_NOTHING_COUNTED`); drafts never opened don't count. It writes
 `CupStanding`, hands out trophies (ties share), and sets `CROWNED`. A contest that goes Final
 later is listed "After the cup was crowned" and changes nothing.
 
@@ -253,7 +256,7 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | `PUT /cup-settings` | #841, #863 | The championship name and points table together (`cupName`, `cupPointsScale`, `cupCustomPoints`), apart from the league's details, as League settings edits them in their own section |
 | `PUT /contest-management/contests/:contestId/cup-weight` | #841 | A contest's `cupWeight`, until it is final |
 
-Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`, `CONTEST_FINAL`,
+Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`, `CUP_NOTHING_COUNTED`, `CONTEST_FINAL`,
 `SQUAD_DELETE_HAS_RESULTS`. Read cost: open cups read one league-season of frozen places per
 page; the championship and summary read a few hundred `LeagueYearFinish` rows a year. If a
 league ever gets slow, cache by its latest `settledAt`.
@@ -304,10 +307,13 @@ journey row once a page exists.
    gate; this table is the categorization until then.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
-4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
-   Score each final contest from its frozen `LeagueYearFinish` weight and points, not the
-   live `contest.cupWeight`, so a weight saved while settlement runs cannot split a crowned cup
-   from the championship.
+4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy
+   shelf moved to #872 slice 2, whose squad results endpoint and trophy case section are the same
+   thing; a shelf built here would need its own endpoint only to be replaced. Cups score each final contest from its `LeagueYearFinish` row's finish
+   and weight, not the live `contest.cupWeight`, so a weight saved while settlement runs cannot
+   split a cup from the championship. Open cups keep scoring on the league's table as it stands
+   (slice 3); crowning freezes the standings with that table on the cup, so a crowned cup's
+   chart and squad breakdown keep matching its frozen points.
 5. **Projected points** from live contests, greyed as "if it ended now".
 
 2 and 3 in parallel after 1; 4 and 5 after 2.
@@ -319,7 +325,7 @@ journey row once a page exists.
    slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
    second backfill.
 2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting (landed with #841 slice 3);
-   championship trophies on the shelf, which comes with the shelf itself in #841 slice 4. Builds the page shell if #841 slice 2 hasn't.
+   championship trophies on the shelf, which comes with the shelf itself in #872 slice 2. Builds the page shell if #841 slice 2 hasn't.
 
 **#837 history** (after both pages exist)
 
@@ -395,7 +401,8 @@ email, not another page. Sent through the email outbox (#845), class B.
 
 1. **Squad year.** The results endpoint; championship card, tiles, finish row, cups and contests
    on the squad page. After #863 slice 2 and #841 slice 2.
-2. **Trophies and all years.** Contest medals, the trophy case section, the All years strip and
+2. **Trophies and all years.** Contest medals, the trophy case section (the trophy shelf: every
+   top-3 cup finish from `CupStanding.trophy` and championship finish), the All years strip and
    the year picker. After #841 slice 4 and #837 slice 1.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
 4. **Year in review email.** After slice 1 and #845's outbox.

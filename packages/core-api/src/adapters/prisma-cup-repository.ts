@@ -2,34 +2,61 @@
  * Prisma adapter for the CupRepository port (#841).
  */
 
-import type { PrismaClient } from '@prisma/client';
-import type { CupContest, CupKey, CupRankedEntry, CupRepository } from '@poolmaster/shared/db';
-import { ContestStatus, type Cup, type CupPointsTable } from '@poolmaster/shared/domain';
+import type { Prisma, PrismaClient } from '@prisma/client';
+import type { CupContest, CupContestFinish, CupKey, CupRankedEntry, CupRepository } from '@poolmaster/shared/db';
+import { ContestStatus, CupStatus, type Cup, type CupPointsTable, type CupStanding } from '@poolmaster/shared/domain';
 
-const CUP_SELECT = { id: true, leagueId: true, seasonYear: true, sportLeagueId: true, createdAt: true } as const;
+const CUP_SELECT = {
+  id: true,
+  leagueId: true,
+  seasonYear: true,
+  sportLeagueId: true,
+  status: true,
+  crownedAt: true,
+  crownedPointsScale: true,
+  crownedCustomPoints: true,
+  createdAt: true,
+} as const;
+
+type CupRow = Prisma.CupGetPayload<{ select: typeof CUP_SELECT }>;
+
+function toCup(row: CupRow): Cup {
+  return {
+    id: row.id,
+    leagueId: row.leagueId,
+    seasonYear: row.seasonYear,
+    sportLeagueId: row.sportLeagueId,
+    status: row.status,
+    crownedAt: row.crownedAt,
+    crownedPointsTable: row.crownedPointsScale === null ? null : { scale: row.crownedPointsScale, customPoints: row.crownedCustomPoints },
+    createdAt: row.createdAt,
+  };
+}
 
 export class PrismaCupRepository implements CupRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async ensure(key: CupKey): Promise<Cup> {
-    return this.prisma.cup.upsert({
+    return toCup(await this.prisma.cup.upsert({
       where: { leagueId_seasonYear_sportLeagueId: key },
       create: key,
       update: {},
       select: CUP_SELECT,
-    });
+    }));
   }
 
   async findById(id: string): Promise<Cup | null> {
-    return this.prisma.cup.findUnique({ where: { id }, select: CUP_SELECT });
+    const row = await this.prisma.cup.findUnique({ where: { id }, select: CUP_SELECT });
+    return row === null ? null : toCup(row);
   }
 
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
-    return this.prisma.cup.findMany({
+    const rows = await this.prisma.cup.findMany({
       where: { leagueId, seasonYear },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       select: CUP_SELECT,
     });
+    return rows.map(toCup);
   }
 
   async findContests(key: CupKey): Promise<CupContest[]> {
@@ -79,6 +106,58 @@ export class PrismaCupRepository implements CupRepository {
     return rows.flatMap((row) => row.position === null
       ? []
       : [{ contestId: row.contestId, squadId: row.contestEntry.squadId, position: row.position }]);
+  }
+
+  async findFinishes(contestIds: readonly string[]): Promise<CupContestFinish[]> {
+    if (contestIds.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.leagueYearFinish.findMany({
+      where: { contestId: { in: [...contestIds] } },
+      select: { contestId: true, squadId: true, place: true, tiedCount: true, rankedEntryCount: true, weight: true, createdAt: true },
+    });
+    return rows.map(({ createdAt, ...row }) => ({ ...row, recordedAt: createdAt }));
+  }
+
+  async findStandings(cupId: string): Promise<CupStanding[]> {
+    return this.prisma.cupStanding.findMany({
+      where: { cupId },
+      orderBy: [{ position: 'asc' }, { squadId: 'asc' }],
+      select: {
+        cupId: true,
+        squadId: true,
+        position: true,
+        displayPosition: true,
+        points: true,
+        wins: true,
+        podiums: true,
+        contestsCounted: true,
+        trophy: true,
+      },
+    });
+  }
+
+  async crown(
+    cupId: string,
+    crowning: { crownedAt: Date; pointsTable: CupPointsTable; standings: readonly CupStanding[] },
+  ): Promise<Cup | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // Guarded on OPEN, so of two crownings racing only one writes.
+      const { count } = await tx.cup.updateMany({
+        where: { id: cupId, status: CupStatus.OPEN },
+        data: {
+          status: CupStatus.CROWNED,
+          crownedAt: crowning.crownedAt,
+          crownedPointsScale: crowning.pointsTable.scale,
+          crownedCustomPoints: [...crowning.pointsTable.customPoints],
+        },
+      });
+      if (count === 0) {
+        return null;
+      }
+      await tx.cupStanding.createMany({ data: crowning.standings.map((standing) => ({ ...standing, cupId })) });
+      return toCup(await tx.cup.findUniqueOrThrow({ where: { id: cupId }, select: CUP_SELECT }));
+    });
   }
 
   async findPointsTable(leagueId: string): Promise<CupPointsTable | null> {

@@ -1449,6 +1449,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cups/{cupId}/crown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Crown a cup
+         * @description Allows a commissioner to crown a cup once its season is done: every squad's place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_NOTHING_COUNTED before any contest has counted toward it; 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league's. Active commissioners only (root admins bypass).
+         */
+        post: operations["crownCup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/championship/": {
         parameters: {
             query?: never;
@@ -14447,7 +14467,7 @@ export interface components {
             /** @description The season whose cups to list, such as 2026. */
             seasonYear: number;
         };
-        /** @description One squad's place in a cup. Every active squad has a row, at 0 points until it places. */
+        /** @description One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning. */
         CupStandingRowDto: {
             /** Format: uuid */
             squadId: string;
@@ -14476,6 +14496,11 @@ export interface components {
             movement: number | null;
             /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
             pointsAfter: number[];
+            /**
+             * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+             * @enum {string|null}
+             */
+            trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
         };
         /** @description A squad that won a contest; a tie for 1st lists each. */
         CupWinnerDto: {
@@ -14496,15 +14521,15 @@ export interface components {
             /** @enum {string} */
             selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /**
-             * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+             * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
              * @enum {string}
              */
             cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
             /**
-             * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+             * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
              * @enum {string}
              */
-            count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+            count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL" | "AFTER_CROWNING";
             /**
              * Format: date-time
              * @description When its first event starts (instant).
@@ -14535,6 +14560,16 @@ export interface components {
             sportLeagueName: string;
             /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
             name: string;
+            /**
+             * @description OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+             * @enum {string}
+             */
+            status: "OPEN" | "CROWNED";
+            /**
+             * Format: date-time
+             * @description When it was crowned (instant); null while open.
+             */
+            crownedAt: string | null;
             /** @description Best first; squads sharing a place in name order. */
             standings: {
                 /** Format: uuid */
@@ -14564,6 +14599,11 @@ export interface components {
                 movement: number | null;
                 /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
                 pointsAfter: number[];
+                /**
+                 * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                 * @enum {string|null}
+                 */
+                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
             }[];
             /** @description Every contest of the season and sports league, drafts left out, by first event start. */
             contests: {
@@ -14578,15 +14618,15 @@ export interface components {
                 /** @enum {string} */
                 selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                 /**
-                 * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                 * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
                  * @enum {string}
                  */
                 cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
                 /**
-                 * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                 * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
                  * @enum {string}
                  */
-                count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL" | "AFTER_CROWNING";
                 /**
                  * Format: date-time
                  * @description When its first event starts (instant).
@@ -14620,6 +14660,16 @@ export interface components {
                 sportLeagueName: string;
                 /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
                 name: string;
+                /**
+                 * @description OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+                 * @enum {string}
+                 */
+                status: "OPEN" | "CROWNED";
+                /**
+                 * Format: date-time
+                 * @description When it was crowned (instant); null while open.
+                 */
+                crownedAt: string | null;
                 /** @description Best first; squads sharing a place in name order. */
                 standings: {
                     /** Format: uuid */
@@ -14649,6 +14699,11 @@ export interface components {
                     movement: number | null;
                     /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
                     pointsAfter: number[];
+                    /**
+                     * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                     * @enum {string|null}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
                 }[];
                 /** @description Every contest of the season and sports league, drafts left out, by first event start. */
                 contests: {
@@ -14663,15 +14718,15 @@ export interface components {
                     /** @enum {string} */
                     selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                     /**
-                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
                      * @enum {string}
                      */
                     cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
                     /**
-                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
                      * @enum {string}
                      */
-                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL" | "AFTER_CROWNING";
                     /**
                      * Format: date-time
                      * @description When its first event starts (instant).
@@ -14706,6 +14761,16 @@ export interface components {
                 sportLeagueName: string;
                 /** @description The cup's name, built from season and sports league: "2026 PGA Tour Cup". */
                 name: string;
+                /**
+                 * @description OPEN while its standings are worked out on read; CROWNED once the commissioner has crowned it, its standings frozen.
+                 * @enum {string}
+                 */
+                status: "OPEN" | "CROWNED";
+                /**
+                 * Format: date-time
+                 * @description When it was crowned (instant); null while open.
+                 */
+                crownedAt: string | null;
                 /** @description Best first; squads sharing a place in name order. */
                 standings: {
                     /** Format: uuid */
@@ -14735,6 +14800,11 @@ export interface components {
                     movement: number | null;
                     /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
                     pointsAfter: number[];
+                    /**
+                     * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                     * @enum {string|null}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
                 }[];
                 /** @description Every contest of the season and sports league, drafts left out, by first event start. */
                 contests: {
@@ -14749,15 +14819,15 @@ export interface components {
                     /** @enum {string} */
                     selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
                     /**
-                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all.
+                     * @description How much it counts: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Once final, the weight it was settled with.
                      * @enum {string}
                      */
                     cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
                     /**
-                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final.
+                     * @description COUNTED: final with places, which earned points. NOT_COUNTED: its weight is not counted. NO_RESULT: final with nobody placed, every event cancelled. NOT_FINAL: open or live; it counts once final. AFTER_CROWNING: the cup was crowned before it went final, so it changes nothing.
                      * @enum {string}
                      */
-                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL";
+                    count: "COUNTED" | "NOT_COUNTED" | "NO_RESULT" | "NOT_FINAL" | "AFTER_CROWNING";
                     /**
                      * Format: date-time
                      * @description When its first event starts (instant).
@@ -20301,6 +20371,65 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    crownCup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                cupId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One cup. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

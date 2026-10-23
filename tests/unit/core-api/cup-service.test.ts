@@ -7,6 +7,8 @@ import {
   ContestStatus,
   CupContestCount,
   CupPointsScale,
+  CupStatus,
+  CupTrophy,
   CupWeight,
   SelectionType,
   TeamIconKey,
@@ -20,6 +22,7 @@ const LEAGUE = 'league-1';
 const PGA = 'sport-league-pga';
 const NFL = 'sport-league-nfl';
 const KEY = { leagueId: LEAGUE, seasonYear: 2026, sportLeagueId: PGA };
+const CROWNED_AT = new Date('2026-09-30T12:00:00.000Z');
 
 function squad(id: string, name: string, overrides: Partial<Squad> = {}): Squad {
   return {
@@ -51,6 +54,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     sportLeagues: fakeSportLeagueRepo({
       findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: id === PGA ? 'PGA Tour' : 'NFL' })),
     }),
+    now: () => CROWNED_AT,
   });
   let day = 0;
   /** A contest of the 2026 PGA Tour season, final on the next day unless told otherwise, with its ranked entries. */
@@ -69,6 +73,10 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
       ...overrides,
     });
     cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
+    const completedAt = cups.contests.at(-1)?.completedAt ?? null;
+    if (completedAt !== null) {
+      cups.settle(id, completedAt);
+    }
   };
   return { cups, service, contest };
 }
@@ -233,5 +241,134 @@ describe('CupService (#841)', () => {
 
     await expect(service.getCup('league-2', cupId)).rejects.toMatchObject({ code: 'CUP_NOT_FOUND' });
     await expect(service.getSquadPoints(LEAGUE, cupId, 'strangers')).rejects.toMatchObject({ code: 'SQUAD_NOT_FOUND' });
+  });
+
+  it('scores a final contest at the weight it was settled with, not a weight saved while it settled', async () => {
+    const { cups, service, contest } = build();
+    await service.ensureCup(KEY);
+    contest('masters', [['eagles', 1], ['birdies', 2]]);
+    // Saved after settlement read the weight, before the contest went final.
+    const masters = cups.contests.find((candidate) => candidate.id === 'masters');
+    if (masters) {
+      masters.cupWeight = CupWeight.DOUBLE;
+    }
+
+    const [cup] = await service.listSeasonCups(LEAGUE, 2026);
+    const breakdown = await service.getSquadPoints(LEAGUE, cup.cup.id, 'eagles');
+
+    expect(cup.standings.map((row) => row.points)).toEqual([1000, 800, 0]);
+    expect(cup.contests.map((row) => row.weight)).toEqual([CupWeight.NORMAL]);
+    expect(breakdown.contests.map((row) => [row.weight, row.points])).toEqual([[CupWeight.NORMAL, 1000]]);
+  });
+
+  describe('crowning', () => {
+    it('freezes every squad\'s place and hands 1st, 2nd and 3rd their trophies, none to a squad at 0', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1], ['birdies', 2]]);
+      contest('open', [['eagles', 1]]);
+      const cupId = cups.cups[0]?.id ?? '';
+
+      const crowned = await service.crown(LEAGUE, cupId);
+
+      expect(crowned.cup).toMatchObject({ status: CupStatus.CROWNED, crownedAt: CROWNED_AT });
+      expect(crowned.standings.map((row) => [row.squad.name, row.displayPosition, row.points, row.trophy, row.movement])).toEqual([
+        ['Eagles', '1', 2000, CupTrophy.CHAMPION, null],
+        ['Birdies', '2', 800, CupTrophy.RUNNER_UP, null],
+        ['Bogeys', '3', 0, null, null],
+      ]);
+    });
+
+    it('gives squads sharing a place the same trophy', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1], ['birdies', 2], ['bogeys', 3]]);
+      contest('open', [['birdies', 1], ['eagles', 2], ['bogeys', 3]]);
+
+      const crowned = await service.crown(LEAGUE, cups.cups[0]?.id ?? '');
+
+      expect(crowned.standings.map((row) => [row.squad.name, row.displayPosition, row.trophy])).toEqual([
+        ['Birdies', 'T1', CupTrophy.CHAMPION],
+        ['Eagles', 'T1', CupTrophy.CHAMPION],
+        ['Bogeys', '3', CupTrophy.THIRD],
+      ]);
+    });
+
+    it('keeps a crowned cup on the points table it was crowned on, and leaves a contest final later out as after the crowning', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1], ['birdies', 2]]);
+      contest('tour-championship', [], { status: ContestStatus.OPEN, cupWeight: CupWeight.NOT_COUNTED });
+      const cupId = cups.cups[0]?.id ?? '';
+      await service.crown(LEAGUE, cupId);
+
+      cups.addLeague(LEAGUE, { scale: CupPointsScale.TOP_TEN, customPoints: [] });
+      // Settled, and its finishes written, after the crowning.
+      contest('late', [['bogeys', 1]], { completedAt: new Date('2026-10-05T20:00:00.000Z') });
+      const cup = await service.getCup(LEAGUE, cupId);
+
+      expect(cup.standings.map((row) => [row.squad.name, row.points, row.pointsAfter])).toEqual([
+        ['Eagles', 1000, [1000]],
+        ['Birdies', 800, [800]],
+        ['Bogeys', 0, [0]],
+      ]);
+      expect(cup.contests.map((row) => [row.contest.id, row.count, row.winners.map((winner) => winner.name)])).toEqual([
+        ['masters', CupContestCount.COUNTED, ['Eagles']],
+        ['tour-championship', CupContestCount.NOT_COUNTED, []],
+        ['late', CupContestCount.AFTER_CROWNING, []],
+      ]);
+    });
+
+    it('refuses while a counted contest is open or live, naming each, but not for one that is not counted', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1]]);
+      contest('open', [], { status: ContestStatus.OPEN });
+      contest('players', [], { status: ContestStatus.ACTIVE });
+      contest('skins-game', [], { status: ContestStatus.ACTIVE, cupWeight: CupWeight.NOT_COUNTED });
+
+      const refusal = service.crown(LEAGUE, cups.cups[0]?.id ?? '');
+
+      await expect(refusal).rejects.toMatchObject({
+        code: 'CUP_HAS_UNFINISHED_CONTESTS',
+        message: 'The cup cannot be crowned while Contest open, Contest players are not final.',
+      });
+      await expect(refusal).rejects.toHaveProperty('contests', [
+        expect.objectContaining({ id: 'open' }),
+        expect.objectContaining({ id: 'players' }),
+      ]);
+      expect(cups.cups[0]?.status).toBe(CupStatus.OPEN);
+    });
+
+    it('refuses with CUP_NOTHING_COUNTED a cup none of whose contests has counted, leaving it open', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('skins-game', [['eagles', 1]], { cupWeight: CupWeight.NOT_COUNTED });
+      contest('washed-out', []);
+
+      await expect(service.crown(LEAGUE, cups.cups[0]?.id ?? '')).rejects.toMatchObject({ code: 'CUP_NOTHING_COUNTED' });
+      expect(cups.cups[0]?.status).toBe(CupStatus.OPEN);
+      expect(cups.standings).toEqual([]);
+    });
+
+    it('refuses to crown a cup twice with CUP_CROWNED', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1]]);
+      const cupId = cups.cups[0]?.id ?? '';
+      await service.crown(LEAGUE, cupId);
+
+      await expect(service.crown(LEAGUE, cupId)).rejects.toMatchObject({ code: 'CUP_CROWNED' });
+      expect(cups.standings).toHaveLength(3);
+    });
+
+    it('refuses with CUP_CROWNED when another crowning got there first', async () => {
+      const { cups, service, contest } = build();
+      await service.ensureCup(KEY);
+      contest('masters', [['eagles', 1]]);
+      jest.spyOn(cups, 'crown').mockResolvedValueOnce(null);
+
+      await expect(service.crown(LEAGUE, cups.cups[0]?.id ?? '')).rejects.toMatchObject({ code: 'CUP_CROWNED' });
+    });
   });
 });
