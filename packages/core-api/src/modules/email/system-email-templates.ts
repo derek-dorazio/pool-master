@@ -507,6 +507,15 @@ export interface PasswordChangedEmailData {
   forgotPasswordUrl: string;
 }
 
+/** A root admin's test of the email setup (#910): no league, no member data. */
+export interface EmailTestEmailData {
+  /** POOLMASTER_ENVIRONMENT, so a test from QA can't be mistaken for one from prod. */
+  environment: string;
+  /** The name of the root admin who sent it. */
+  requestedBy: string;
+  requestedAt: Date;
+}
+
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
@@ -525,6 +534,7 @@ export interface SystemEmailTemplateDataByKey {
   EVENT_STILL_DRAFT: EventStillDraftEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
+  EMAIL_TEST: EmailTestEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -598,6 +608,7 @@ export interface EmailTemplateScopeByKey {
   EVENT_STILL_DRAFT: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
+  EMAIL_TEST: typeof EmailTemplateScope.PLATFORM;
 }
 
 type EmailTemplateRegistry = {
@@ -782,6 +793,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderPasswordChangedEmail,
+  },
+  EMAIL_TEST: {
+    category: EmailCategory.ROOT_ADMIN,
+    serviceClass: ServiceClass.ESSENTIAL,
+    settingsSwitch: false,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderEmailTestEmail,
   },
 };
 
@@ -1707,6 +1726,23 @@ function renderPasswordChangedEmail(
     title: 'Password changed',
     bodyBlocks,
     textLines,
+  });
+}
+
+function renderEmailTestEmail(
+  data: EmailTestEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const subject = `${BRAND_NAME} test email (${data.environment})`;
+  const sentSentence = `${data.requestedBy} sent this test from the ${data.environment} Email settings on ${formatInstant(data.requestedAt, context.timeZone)}.`;
+  const workingSentence = 'It reached you, so email from this site is working.';
+  return buildMessage(context, {
+    templateKey: 'EMAIL_TEST',
+    subject,
+    preheader: workingSentence,
+    title: 'Test email',
+    bodyBlocks: [paragraph(escapeHtml(sentSentence)), paragraph(workingSentence)].join(''),
+    textLines: [sentSentence, '', workingSentence],
   });
 }
 

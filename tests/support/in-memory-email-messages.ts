@@ -40,6 +40,10 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
 
   return {
     rows,
+    findById(id: string): Promise<EmailMessage | undefined> {
+      const row = rows.find((candidate) => candidate.id === id);
+      return Promise.resolve(row ? { ...row } : undefined);
+    },
     record(input: EmailMessageRecord): Promise<EmailMessageRecordResult> {
       const existing = rows.find((row) => row.idempotencyKey === input.idempotencyKey);
       if (existing) return Promise.resolve({ message: { ...existing }, created: false });

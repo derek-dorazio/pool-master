@@ -22,6 +22,11 @@ const CLEARED_CONTENT = { subject: null, textBody: null, htmlBody: null, listUns
 export class PrismaEmailMessageRepository implements EmailMessageRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async findById(id: string): Promise<EmailMessage | undefined> {
+    const row = await this.prisma.emailMessage.findUnique({ where: { id } });
+    return row ? toEmailMessage(row) : undefined;
+  }
+
   async record(input: EmailMessageRecord): Promise<EmailMessageRecordResult> {
     const base = {
       templateKey: input.templateKey,

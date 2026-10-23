@@ -11614,7 +11614,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST';
 
 /**
  * Whether and how system email is sent.
@@ -12115,6 +12115,34 @@ export type EmailUnsubscribeResponse = {
      * The category of email that is now off.
      */
     category: 'COMMISSIONER_UPDATES' | 'CONTEST_UPDATES' | 'LIVE_STANDINGS' | 'RESULTS' | 'RECEIPTS';
+};
+
+/**
+ * Where to send a test email.
+ */
+export type EmailTestRequest = {
+    /**
+     * The one address the test email goes to.
+     */
+    to: string;
+};
+
+/**
+ * What happened to a test email.
+ */
+export type EmailTestResponse = {
+    /**
+     * Where the test email stands after a few seconds: SENT when the provider took it, SENDING when a sender is handing it over, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error) or no sender has reached it yet, or FAILED.
+     */
+    status: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED';
+    /**
+     * Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, NOT_ALLOWED_IN_ENVIRONMENT when the address is not in "Only send to" or is a reserved domain, SUPPRESSED when the address bounced or complained before.
+     */
+    skipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+    /**
+     * The provider's error from the last failed try, or null.
+     */
+    error: string | null;
 };
 
 /**
@@ -25167,6 +25195,39 @@ export type ResetIngestionScheduleResponses = {
 };
 
 export type ResetIngestionScheduleResponse = ResetIngestionScheduleResponses[keyof ResetIngestionScheduleResponses];
+
+export type SendTestEmailData = {
+    body: EmailTestRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/platform/email/test';
+};
+
+export type SendTestEmailErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type SendTestEmailError = SendTestEmailErrors[keyof SendTestEmailErrors];
+
+export type SendTestEmailResponses = {
+    /**
+     * What happened to a test email.
+     */
+    200: EmailTestResponse;
+};
+
+export type SendTestEmailResponse = SendTestEmailResponses[keyof SendTestEmailResponses];
 
 export type ListProvidersData = {
     body?: never;

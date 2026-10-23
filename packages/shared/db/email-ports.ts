@@ -52,6 +52,8 @@ export interface EmailMessageRecordResult {
 }
 
 export interface EmailMessageRepository {
+  /** One email by id, or undefined. */
+  findById(id: string): Promise<EmailMessage | undefined>;
   /** Records one email, unless its idempotency key is already recorded; then returns that row. */
   record(input: EmailMessageRecord): Promise<EmailMessageRecordResult>;
   /**

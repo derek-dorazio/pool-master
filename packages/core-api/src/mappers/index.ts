@@ -20,3 +20,4 @@ export * from './platform-settings.mapper';
 export * from './cups.mapper';
 export * from './championship.mapper';
 export * from './history.mapper';
+export * from './email-test.mapper';
