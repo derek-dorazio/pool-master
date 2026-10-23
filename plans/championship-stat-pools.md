@@ -70,9 +70,8 @@ something the commissioner edits (Q3).
 | Hockey (NHL) | Goals, Assists, Points, Shots on goal | **Power Play** | 2 × Goals + Assists + Shots on goal |
 | American football (NFL) | Touchdowns, Receptions, Scrimmage yards, Passing yards | **Redzone** | 6 × Touchdowns + Receptions + Yards ÷ 10, rounded down, per game |
 
-The default stat on each sport's default setup is the composite, except the NBA, where Derek
-named Points as the default and the most popular. Q2 asks whether the other sports follow the
-NBA (a single stat by default) or default to the composite.
+The default stat on each sport's default setup is the composite (Box Score, Power Play,
+Redzone), except the NBA, where Derek named Points as the default and the most popular (Q2).
 
 Who is in the field (Q5): baseball's position players, not pitchers; every NBA player on the
 roster; NHL skaters, not goalies; the NFL's quarterbacks, running backs, wide receivers and
@@ -204,9 +203,8 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
 - **Q0. Composite names. Decided:** Box Score (baseball), Triple Threat (NBA), Power Play
   (hockey), Redzone (NFL).
 - **Q1. The NFL composite's name. Decided:** Redzone.
-- **Q2. Default stat.** The NBA defaults to Points (Derek). For the others: *recommend the single
-  most popular stat as the default (Hits, Goals, Touchdowns), so a new contest reads simply, with
-  the composite one tap away.*
+- **Q2. Default stat. Decided:** the composite for baseball, hockey and the NFL; Points for the
+  NBA.
 - **Q3. Fixed composite or editable weights?** *Recommend fixed, one per sport. Editable weights
   turn this back into fantasy, and the names stop meaning one thing.*
 - **Q4. What ranks the field for tiers and prices?** *Recommend the regular-season total of the
