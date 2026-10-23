@@ -1,9 +1,9 @@
-import { ChampionshipTile, ContestResultCount } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ChampionshipTile, ContestResultCount } from '@poolmaster/shared/domain';
 import type { ChampionshipDto, ChampionshipStandingRowDto, ContestResultSummaryDto } from '@/lib/api';
 import { formatCupPoints, formatOrdinalPlace, joinNames } from './cup-view';
 
 /** How many finishing places the finish matrix counts: 1st to 10th. */
-export const FINISH_MATRIX_PLACES = 10;
+export const FINISH_MATRIX_PLACES = CHAMPIONSHIP_MATRIX_PLACES;
 
 /** Each medal tile's label. A `Record`, so a new tile needs its label. */
 export const CHAMPIONSHIP_TILE_LABELS: Record<ChampionshipTile, string> = {
