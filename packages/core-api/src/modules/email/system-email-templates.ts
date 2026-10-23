@@ -1410,7 +1410,7 @@ function renderContestResultsEmail(
 ): SystemEmailMessage {
   const { outcome } = data;
   if (outcome.kind === ContestResultsKind.NO_SCORES) {
-    const cancelled = outcome.cancelledEvents.length === 1 ? `${outcome.cancelledEvents.join('')} was` : 'Every event was';
+    const cancelled = outcome.cancelledEvents.length === 1 ? `${outcome.cancelledEvents[0]} was` : 'Every event was';
     const lead = outcome.cancelledEvents.length === 0
       ? `${data.contestName} has ended with no scores.`
       : `${cancelled} cancelled, so ${data.contestName} ends with no scores.`;

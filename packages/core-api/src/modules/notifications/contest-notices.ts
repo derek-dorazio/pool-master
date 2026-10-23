@@ -87,7 +87,7 @@ export interface SportEventChangedNotice {
   sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
 }
 
-/** A contest that is finished already hears nothing more about its events. */
+/** Only an open or live contest hears about its events: a finished one is done, and a draft one's commissioners aren't told. */
 const TOLD_OF_EVENT_CHANGES = [ContestStatus.OPEN, ContestStatus.ACTIVE];
 
 export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice, ContestSettledNotice, SportEventChangedNotice {
@@ -238,13 +238,15 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
    * C6 and C7: tells each league with an open or live contest on the event, its commissioners and
    * the members with a submitted entry, one email per contest; a draft contest's commissioners
    * are not told. A postponed or moved event keeps an open contest's picks open until it starts;
-   * a cancelled one counts for nothing. A cancelled event that was a contest's only one ends it,
-   * and its no-scores result (F2) says so instead, which a member hears even with Contest updates
-   * turned off.
+   * a cancelled one counts for nothing. A cancellation that leaves a contest no event to play (its
+   * only one, or the last not already cancelled) ends it, and its no-scores result (F2) says so
+   * instead, which a member hears even with Contest updates turned off.
    */
   async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    const contests = (await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES }))
-      .filter((contest) => change.kind !== ContestEventChangeKind.CANCELLED || contest.sportEventIds.length > 1);
+    const onEvent = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
+    const contests = change.kind === ContestEventChangeKind.CANCELLED
+      ? await this.stillToPlay(onEvent, sportEvent.id)
+      : onEvent;
     // The about names the change and the start it leaves, and a move both starts, so a second
     // postponement or a move back to an earlier new date is told again.
     const about = change.kind === ContestEventChangeKind.RESCHEDULED
@@ -279,6 +281,15 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, eventName: sportEvent.name, change: contestChange, contestUrl },
       }));
     }));
+  }
+
+  /** The contests with an event besides `sportEventId` that isn't cancelled, so they go on. */
+  private async stillToPlay(contests: Contest[], sportEventId: string): Promise<Contest[]> {
+    const others = [...new Set(contests.flatMap((contest) => contest.sportEventIds))].filter((id) => id !== sportEventId);
+    const playable = new Set((await this.deps.sportEvents.findByIds(others))
+      .filter((other) => other.status !== SportEventStatus.CANCELLED)
+      .map((other) => other.id));
+    return contests.filter((contest) => contest.sportEventIds.some((id) => playable.has(id)));
   }
 
   /** The people owning an entry submitted for any of the contest's events, as E1 counts entrants. */

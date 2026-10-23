@@ -393,7 +393,8 @@ instead tells its commissioners and the members with an entry that it ended with
 idempotency key (contest, person) sends it once, even to a contest settled again after being
 moved back out of `COMPLETED`. Prizes are not in it yet (catalog row F4). When every event was
 cancelled it says so, naming the event of a one-event contest ("The Masters was cancelled, so
-Masters Pick 6 ends with no scores"). That contest gets no event cancelled email, so a member
+Masters Pick 6 ends with no scores"). A contest whose last event to play is cancelled gets no
+event cancelled email, so a member
 who turned off Contest updates still hears it ended.
 
 Event changed emails (`CONTEST_EVENT_CHANGED`, #845 C6 and C7) are queued when an event goes
@@ -404,8 +405,9 @@ members owning an entry submitted for any of its events, one email per contest. 
 event's picks are still open (the contest takes picks, isn't drawn, and the event hasn't reached
 its start), a postponed or moved event's email says they stay open until it starts; an event
 postponed after its start says the contest carries on when it resumes. A moved event's email
-gives its old and new start. A cancelled event counts for nothing; a contest it was the only
-event of is not told, since it ends with no scores and its final results email says why. The
+gives its old and new start. A cancelled event counts for nothing; a contest it leaves with no
+event to play (its only one, or the last not already cancelled) is not told, since it ends with
+no scores and its final results email says why. The
 cancellation is told before the event's contests settle. The
 idempotency key names the change and the start it leaves (a move, both starts), so a second
 postponement or a move back to an earlier new date is told again.
