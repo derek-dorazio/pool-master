@@ -917,6 +917,18 @@ export const CupContestCount = {
 export type CupContestCount = (typeof CupContestCount)[keyof typeof CupContestCount];
 
 /**
+ * Whether a contest that went final counts toward the league championship of its year (#837).
+ * COUNTED: squads placed and earned points. NOT_COUNTED: its weight is not counted; its places
+ * stand but earn nothing. NO_RESULT: nobody placed (every event cancelled).
+ */
+export const ContestResultCount = {
+  COUNTED: 'COUNTED',
+  NOT_COUNTED: 'NOT_COUNTED',
+  NO_RESULT: 'NO_RESULT',
+} as const;
+export type ContestResultCount = (typeof ContestResultCount)[keyof typeof ContestResultCount];
+
+/**
  * A cup's state (#841): OPEN while its standings are worked out on read; CROWNED once the
  * commissioner crowns it, its standings frozen and its trophies handed out.
  */

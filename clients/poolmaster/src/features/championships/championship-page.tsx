@@ -1,24 +1,38 @@
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
-import { ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
+import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
+import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import {
   CHAMPIONSHIP_TILE_LABELS,
   buildPodium,
   describeChampionshipStanding,
+  describeContestResultFilter,
+  parseContestResultFilter,
+  type ContestResultFilter,
 } from './championship-view';
 import { Podium } from './podium';
-import { useChampionshipQuery } from './use-championship-query';
+import { useChampionshipContestsQuery, useChampionshipQuery } from './use-championship-query';
 import { useChampionshipsRoute } from './use-championships-route';
 
 /**
  * Championship (#863): the league championship of the year across every sport. The trophy and
- * podium once the year is over, the leader before; then the medal tiles and the finish matrix.
+ * podium once the year is over, the leader before; then the medal tiles, the finish matrix, and
+ * the year's contests (#837), which a matrix count narrows to the contests behind it.
  */
 export function ChampionshipPage() {
-  const { league, leagueId, viewer, year } = useChampionshipsRoute();
+  const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
   const championshipQuery = useChampionshipQuery(leagueId, year);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const filter = parseContestResultFilter(searchParams, championshipQuery.data?.standings ?? []);
+  // The list waits for the standings, so a filter in the link is checked before it is asked for.
+  const contestsQuery = useChampionshipContestsQuery(championshipQuery.data ? leagueId : '', year, filter);
+  const chooseFilter = useCallback((next: ContestResultFilter | null) => {
+    setSearchParams(next === null ? {} : { squad: next.squadId, ...(next.place === null ? {} : { place: String(next.place) }) }, { replace: true });
+  }, [setSearchParams]);
 
   if (championshipQuery.isLoading) {
     return <LoadingState body="Loading the championship..." />;
@@ -27,6 +41,7 @@ export function ChampionshipPage() {
     return <ErrorState body="We couldn't load this year's championship." testId="championship-error" />;
   }
   const championship = championshipQuery.data;
+  const filteredSquadName = championship.standings.find((row) => row.squadId === filter?.squadId)?.squadName ?? '';
   const podium = championship.isOver ? buildPodium(championship.standings) : [];
 
   return (
@@ -71,13 +86,39 @@ export function ChampionshipPage() {
             {championship.contestsCounted} {championship.contestsCounted === 1 ? 'contest' : 'contests'} final
           </span>
         </div>
-        <ChampionshipStandingsGrid focusSquadId={viewer.mySquadId} rows={championship.standings} />
+        <ChampionshipStandingsGrid filter={filter} focusSquadId={viewer.mySquadId} onFilter={chooseFilter} rows={championship.standings} />
         {league ? (
           <p className="text-xs text-muted-foreground">
             Points table: {describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}.
             Each contest&apos;s weight multiplies it, and a contest keeps the points it earned when it went final.
           </p>
         ) : null}
+      </Tile>
+
+      <Tile className="space-y-3" padding="sm" radius="lg">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold text-foreground" data-testid="championship-contests-heading">
+            {describeContestResultFilter(filter, filteredSquadName, year)}
+          </h2>
+          {filter ? (
+            <Button data-testid="championship-contests-clear" onClick={() => chooseFilter(null)} size="sm" type="button" variant="subtle">
+              Show every contest
+            </Button>
+          ) : (
+            <span className="text-xs text-muted-foreground">Tap a count in the table to see its contests.</span>
+          )}
+        </div>
+        {contestsQuery.isError ? (
+          <ErrorState body="We couldn't load this year's contests." testId="championship-contests-error" />
+        ) : !contestsQuery.data ? (
+          <LoadingState body="Loading the year's contests..." />
+        ) : (
+          <ChampionshipContestList
+            contests={contestsQuery.data}
+            emptyBody={`No contest went final in ${year}.`}
+            leagueCode={leagueCode}
+          />
+        )}
       </Tile>
     </div>
   );

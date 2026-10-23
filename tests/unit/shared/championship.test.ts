@@ -7,6 +7,7 @@ import {
   CupWeight,
   championshipTiles,
   championshipYear,
+  championshipYearStart,
   rankChampionshipTallies,
   tallyChampionship,
 } from '@poolmaster/shared/domain';
@@ -17,6 +18,14 @@ describe('championship rules (#863)', () => {
   it('puts a contest final at 11pm New York on 31 December, 04:00Z on 1 January, in the old year, and one an hour later in the new', () => {
     expect(championshipYear(new Date('2027-01-01T04:00:00.000Z'))).toBe(2026);
     expect(championshipYear(new Date('2027-01-01T05:00:00.000Z'))).toBe(2027);
+  });
+
+  it('starts a championship year at midnight New York on 1 January, 05:00Z, the first instant championshipYear puts in it', () => {
+    const start = championshipYearStart(2027);
+
+    expect(start.toISOString()).toBe('2027-01-01T05:00:00.000Z');
+    expect(championshipYear(start)).toBe(2027);
+    expect(championshipYear(new Date(start.getTime() - 1))).toBe(2026);
   });
 
   it('tallies points, the finish matrix, podiums, top tens and contests played, leaving out NOT_COUNTED finishes and giving an unplaced squad a row at 0', () => {

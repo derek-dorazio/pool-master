@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ChampionshipRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest } from '@poolmaster/shared/db';
 import { ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
 
 const FINISH_SELECT = {
@@ -70,6 +70,34 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
         cupWeight: { not: CupWeight.NOT_COUNTED },
       },
+    });
+  }
+
+  async findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        leagueId,
+        status: ContestStatus.COMPLETED,
+        OR: [{ endsAt: { gte: from, lt: to } }, { id: { in: [...contestIds] } }],
+      },
+      select: {
+        id: true,
+        name: true,
+        selectionType: true,
+        endsAt: true,
+        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { eventSeries: { select: { sportLeague: { select: { name: true } } } } } } } },
+      },
+    });
+    // Every event of a contest is one sports league's, so the first event names it.
+    return rows.flatMap((row) => {
+      const firstEvent = row.sportEvents.at(0);
+      return firstEvent === undefined ? [] : [{
+        id: row.id,
+        name: row.name,
+        selectionType: row.selectionType,
+        sportLeagueName: firstEvent.sportEvent.eventSeries.sportLeague.name,
+        completedAt: row.endsAt,
+      }];
     });
   }
 }
