@@ -65,4 +65,12 @@ describe("IconPalette", () => {
       expect(button).toBeDisabled();
     }
   });
+
+  it("sizes its columns to the container rather than the viewport, so a narrow card cannot squeeze tiles below a readable width", () => {
+    renderPalette();
+
+    const group = screen.getByRole("group", { name: "League icon" });
+    expect(group).toHaveClass("grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))]");
+    expect(group.className).not.toMatch(/\b(sm|md|lg|xl):grid-cols-/);
+  });
 });

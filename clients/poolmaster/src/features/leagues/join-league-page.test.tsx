@@ -113,6 +113,28 @@ describe('pool-master-rop.23: JoinLeaguePage generated DTO fixtures', () => {
     mockLogger.error.mockReset();
   });
 
+  it('offers the icons as the shared palette, which wraps to the card width, and marks only the chosen icon as pressed', async () => {
+    getCurrentUserMock.mockResolvedValue(apiSuccess({
+      user: buildCurrentUser({ firstName: 'Derek', lastName: 'Dorazio' }),
+    }));
+    refreshTokenMock.mockResolvedValue({ data: null });
+    getInvitationPreviewMock.mockResolvedValue(apiSuccess(getInvitationPreviewData(
+      buildInvitationPreview(),
+    )));
+
+    renderJoinLeaguePage();
+
+    const palette = await screen.findByTestId('join-league-icon-palette');
+    expect(palette).toHaveAttribute('role', 'group');
+    const chosen = screen.getByTestId(`join-league-team-icon-${TeamIconKey.TURBO_TURTLE_MIDNIGHT}`);
+    expect(chosen).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(chosen);
+
+    expect(chosen).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId(`join-league-team-icon-${TeamIconKey.CAPTAIN_SMILE_FIELD}`)).toHaveAttribute('aria-pressed', 'false');
+  });
+
   it('pool-master-rop.23: lets an authenticated member set team name and icon during join', async () => {
     getCurrentUserMock.mockResolvedValue(apiSuccess({
       user: buildCurrentUser({
