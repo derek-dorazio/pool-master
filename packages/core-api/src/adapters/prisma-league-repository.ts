@@ -60,6 +60,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         description: league.description,
         isActive: league.isActive,
         iconKey: league.iconKey,
+        cupName: league.cupName,
       },
     });
     return mapToLeague(row);
@@ -89,6 +90,7 @@ function mapToLeague(row: PrismaLeague): League {
     description: row.description ?? undefined,
     isActive: row.isActive,
     iconKey: row.iconKey as LeagueIconKey,
+    cupName: row.cupName,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

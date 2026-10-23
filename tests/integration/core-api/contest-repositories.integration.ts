@@ -56,7 +56,7 @@ async function createLeagueAndEvent() {
   const suffix = randomUUID().slice(0, 8);
   const owner = await createTestUser({ displayName: `Contest Repo ${suffix}` });
   const league = await prisma.league.create({
-    data: { leagueCode: `CREPO${suffix.toUpperCase()}`, name: `Contest Repo League ${suffix}` },
+    data: { cupName: 'Test Cup', leagueCode: `CREPO${suffix.toUpperCase()}`, name: `Contest Repo League ${suffix}` },
   });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },

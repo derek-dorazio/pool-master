@@ -114,7 +114,7 @@ function setup() {
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
   const play = (game: SportEventMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
     games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore }]);

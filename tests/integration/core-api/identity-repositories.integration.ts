@@ -48,7 +48,7 @@ afterAll(async () => {
 async function createLeague(prisma: ReturnType<typeof getPrisma>, code: string, name: string, isActive = true) {
   return prisma.league.create({
     data: {
-      leagueCode: code,
+      cupName: 'Test Cup', leagueCode: code,
       name,
       isActive,
       iconKey: LeagueIconKey.TROPHY,

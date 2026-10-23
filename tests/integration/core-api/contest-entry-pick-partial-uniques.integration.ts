@@ -47,7 +47,7 @@ async function seedContestFixture(contestFormat: 'ROSTER'): Promise<FixtureConte
   });
   const league = await prisma.league.create({
     data: {
-      leagueCode: `PUL${suffix.toUpperCase()}`,
+      cupName: 'Test Cup', leagueCode: `PUL${suffix.toUpperCase()}`,
       name: `Partial Uniques League ${suffix}`,
       iconKey: 'TROPHY',
     },

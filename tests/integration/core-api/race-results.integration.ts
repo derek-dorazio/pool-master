@@ -153,7 +153,7 @@ describe('horse racing contest — read and settled from the finishing order', (
     const race = await seedRace();
     const { prisma, suffix, event, arrow, bolt, comet, drift } = race;
     const owner = await createTestUser({ displayName: `Race Owner ${suffix}` });
-    const league = await prisma.league.create({ data: { leagueCode: `HRS${suffix.toUpperCase()}`, name: `Paddock League ${suffix}` } });
+    const league = await prisma.league.create({ data: { cupName: 'Test Cup', leagueCode: `HRS${suffix.toUpperCase()}`, name: `Paddock League ${suffix}` } });
     await prisma.leagueMembership.create({
       data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
     });

@@ -1,0 +1,203 @@
+/**
+ * The league championship (#863): every counted contest of every sport, in the calendar year it
+ * went final (US Eastern). Unlike a cup, it is stored: each squad's finish is written once, at
+ * settlement, with the points it earned then, so a later points table or weight change never
+ * shifts a past year. A year freezes itself: once it is over, no contest can go final in it.
+ */
+import type { FastifyBaseLogger } from 'fastify';
+import type { ChampionshipRepository, CupRepository, SquadRepository } from '@poolmaster/shared/db';
+import {
+  type ChampionshipTile,
+  CupWeight,
+  championshipTiles,
+  championshipYear,
+  cupFinishPoints,
+  rankChampionshipTallies,
+  squadContestFinishes,
+  tallyChampionship,
+  type Contest,
+  type LeagueYearFinish,
+  type Squad,
+} from '@poolmaster/shared/domain';
+
+type ChampionshipLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn'>;
+
+export class ChampionshipLeagueNotFoundError extends Error {
+  readonly code = 'LEAGUE_NOT_FOUND';
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ChampionshipLeagueNotFoundError';
+  }
+}
+
+/** One squad's place in a championship year. */
+export interface ChampionshipStandingView {
+  squad: Squad;
+  position: number;
+  displayPosition: string;
+  /** Tenths of a point. */
+  points: number;
+  /** Finishes in 1st to 10th: `finishes[0]` counts 1sts. */
+  finishes: number[];
+  podiums: number;
+  topTens: number;
+  played: number;
+}
+
+export interface ChampionshipTileView {
+  tile: ChampionshipTile;
+  count: number;
+  squads: Squad[];
+}
+
+export interface ChampionshipYearView {
+  leagueId: string;
+  year: number;
+  cupName: string;
+  /** True once the year has ended in US Eastern: the championship is decided. */
+  isOver: boolean;
+  /** Counted contests that went final in the year. */
+  contestsCounted: number;
+  /** The league's open and live counted contests, for the current year only; 0 for any other. */
+  contestsToGo: number;
+  standings: ChampionshipStandingView[];
+  tiles: ChampionshipTileView[];
+}
+
+export interface ChampionshipYearSummaryView {
+  year: number;
+  isOver: boolean;
+  /** The squads in 1st, several on a tie: the champions once the year is over, the leaders before. */
+  leaders: Squad[];
+}
+
+export interface ChampionshipServiceDeps {
+  finishes: ChampionshipRepository;
+  cups: Pick<CupRepository, 'findRankedEntries' | 'findPointsTable'>;
+  squads: SquadRepository;
+  logger?: ChampionshipLogger;
+  now?: () => Date;
+}
+
+export class ChampionshipService {
+  private readonly now: () => Date;
+
+  constructor(private readonly deps: ChampionshipServiceDeps) {
+    this.now = deps.now ?? (() => new Date());
+  }
+
+  /**
+   * Writes a contest's finishes as it goes final: each squad once, from its best entry's frozen
+   * place, scored on the league's points table and the contest's weight. Settlement calls it after
+   * freezing the places and before completing the contest, so a failure leaves the contest to be
+   * settled again. A second call for the contest writes nothing. Answers how many it wrote.
+   */
+  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'selectionType' | 'cupWeight'>, settledAt: Date): Promise<number> {
+    const table = await this.deps.cups.findPointsTable(contest.leagueId);
+    if (table === null) {
+      this.deps.logger?.warn({ action: 'championship.record.leagueMissing', data: { contestId: contest.id, leagueId: contest.leagueId } }, 'Championship finishes not written: the contest\'s league is gone');
+      return 0;
+    }
+    const finishes = squadContestFinishes(await this.deps.cups.findRankedEntries([contest.id]));
+    if (finishes.length === 0) {
+      this.deps.logger?.debug({ action: 'championship.record.noResult', data: { contestId: contest.id } }, 'Championship finishes not written: nobody placed');
+      return 0;
+    }
+    const eventSeriesId = await this.deps.finishes.findSingleEventSeries(contest.id);
+    const year = championshipYear(settledAt);
+    const written = await this.deps.finishes.recordFinishes(finishes.map((finish) => ({
+      leagueId: contest.leagueId,
+      year,
+      squadId: finish.squadId,
+      contestId: contest.id,
+      place: finish.place,
+      tiedCount: finish.tiedCount,
+      rankedEntryCount: finish.rankedEntryCount,
+      eventSeriesId,
+      selectionType: contest.selectionType,
+      weight: contest.cupWeight,
+      points: cupFinishPoints(table, finish, contest.cupWeight),
+      settledAt,
+    })));
+    this.deps.logger?.info({ action: 'championship.record', data: { contestId: contest.id, leagueId: contest.leagueId, year, written } }, 'Wrote a settled contest\'s championship finishes');
+    return written;
+  }
+
+  /** One year of the league championship: its standings, medal tiles and progress. */
+  async getYear(leagueId: string, year: number): Promise<ChampionshipYearView> {
+    const cupName = await this.deps.finishes.findCupName(leagueId);
+    if (cupName === null) {
+      this.deps.logger?.warn({ action: 'championship.year.leagueNotFound', data: { leagueId, year } }, 'Championship asked for a league that does not exist');
+      throw new ChampionshipLeagueNotFoundError(`League ${leagueId} was not found.`);
+    }
+    const currentYear = championshipYear(this.now());
+    const [finishes, leagueSquads, unfinished] = await Promise.all([
+      this.deps.finishes.findByLeagueYear(leagueId, year),
+      this.deps.squads.findByLeague(leagueId, true),
+      year === currentYear ? this.deps.finishes.countUnfinishedContests(leagueId) : Promise.resolve(0),
+    ]);
+    const counted = finishes.filter((finish) => finish.weight !== CupWeight.NOT_COUNTED);
+    const placed = new Set(counted.map((finish) => finish.squadId));
+    // Every active squad shows, at 0 until it places; an inactive one shows once it has placed.
+    const squads = leagueSquads
+      .filter((squad) => squad.isActive || placed.has(squad.id))
+      .sort((left, right) => left.name.localeCompare(right.name));
+    const squadById = new Map(squads.map((squad) => [squad.id, squad]));
+    const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
+    const ranked = rankChampionshipTallies(tallies);
+    this.deps.logger?.debug({ action: 'championship.year', data: { leagueId, year, finishCount: finishes.length } }, 'Read a championship year');
+    return {
+      leagueId,
+      year,
+      cupName,
+      isOver: year < currentYear,
+      contestsCounted: new Set(counted.map((finish) => finish.contestId)).size,
+      contestsToGo: unfinished,
+      standings: ranked.flatMap((row) => {
+        const squad = squadById.get(row.squadId);
+        return squad === undefined ? [] : [{
+          squad,
+          position: row.position,
+          displayPosition: row.displayPosition,
+          points: row.points,
+          finishes: row.finishes,
+          podiums: row.podiums,
+          topTens: row.topTens,
+          played: row.played,
+        }];
+      }),
+      // Tiles name leaders in standings order.
+      tiles: championshipTiles(ranked).map((tile) => ({
+        tile: tile.tile,
+        count: tile.count,
+        squads: tile.squadIds.flatMap((squadId) => squadById.get(squadId) ?? []),
+      })),
+    };
+  }
+
+  /** Every year the league has a counted finish in, newest first, with who leads or won it. */
+  async listYears(leagueId: string): Promise<ChampionshipYearSummaryView[]> {
+    const [finishes, leagueSquads] = await Promise.all([
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+    ]);
+    const currentYear = championshipYear(this.now());
+    const squadById = new Map(leagueSquads.map((squad) => [squad.id, squad]));
+    const byYear = new Map<number, LeagueYearFinish[]>();
+    for (const finish of finishes) {
+      if (finish.weight === CupWeight.NOT_COUNTED) continue;
+      byYear.set(finish.year, [...(byYear.get(finish.year) ?? []), finish]);
+    }
+    const years = [...byYear].sort(([left], [right]) => right - left).map(([year, rows]) => {
+      const squadIds = [...new Set(rows.map((row) => row.squadId))]
+        .sort((left, right) => (squadById.get(left)?.name ?? '').localeCompare(squadById.get(right)?.name ?? ''));
+      const leaders = rankChampionshipTallies(tallyChampionship(squadIds, rows))
+        .filter((row) => row.position === 1 && row.points > 0)
+        .flatMap((row) => squadById.get(row.squadId) ?? []);
+      return { year, isOver: year < currentYear, leaders };
+    });
+    this.deps.logger?.debug({ action: 'championship.years', data: { leagueId, yearCount: years.length } }, 'Listed championship years');
+    return years;
+  }
+}

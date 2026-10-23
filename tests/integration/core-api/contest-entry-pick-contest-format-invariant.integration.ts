@@ -44,7 +44,7 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   });
   const league = await prisma.league.create({
     data: {
-      leagueCode: `PIN${suffix.toUpperCase()}`,
+      cupName: 'Test Cup', leagueCode: `PIN${suffix.toUpperCase()}`,
       name: `Invariant League ${suffix}`,
       iconKey: 'TROPHY',
     },

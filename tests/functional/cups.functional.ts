@@ -10,8 +10,10 @@ import {
   createParticipant,
   enterContest,
   generateInviteLink,
+  getChampionship,
   getCup,
   getCupSquadPoints,
+  listChampionshipYears,
   listContestConfigTemplates,
   listCups,
   listEventParticipants,
@@ -23,8 +25,14 @@ import {
   submitContestSelection,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, CupContestCount, CupWeight, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
-import { CupListResponseSchema, CupResponseSchema, CupSquadPointsResponseSchema } from '@poolmaster/shared/dto';
+import { ContestFormat, CupContestCount, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import {
+  ChampionshipResponseSchema,
+  ChampionshipYearListResponseSchema,
+  CupListResponseSchema,
+  CupResponseSchema,
+  CupSquadPointsResponseSchema,
+} from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -34,6 +42,7 @@ import { standardEventPricing } from '../support/budget-pricing';
 // league's first contest of the season, and two races settled through the real routes rank the
 // two squads on STANDARD points from their entries' frozen places. The member wins the first race
 // and the commissioner the second, so they finish level on points, wins and podiums and share 1st.
+// The same settlements write the league championship (#863): its year shares 1st the same way.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -69,8 +78,8 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-describe('SDK Functional: sports league cups (#841)', () => {
-  it('makes the season\'s cup with its first contest, then ranks squads on STANDARD points from settled races, sharing 1st on a tie and moving the climber', async () => {
+describe('SDK Functional: sports league cups and the league championship (#841, #863)', () => {
+  it('makes the season\'s cup with its first contest, then ranks squads on STANDARD points from settled races, sharing 1st on a tie and moving the climber, and writes the league championship year alike', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Cup Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -186,5 +195,23 @@ describe('SDK Functional: sports league cups (#841)', () => {
       [harbourContest, '1', 1000],
       [valleyContest, '2', 800],
     ]);
+
+    // --- The league championship: both races went final this year (an event completed by hand ends
+    // when it is completed), so the year is level the same way ---
+    const year = championshipYear(new Date());
+    const championship = ChampionshipResponseSchema.parse(expectDefined((await getChampionship({
+      client: member.client,
+      path: { id: league.id, year },
+    })).data)).championship;
+    expect(championship).toMatchObject({ year, cupName: `Cup Harriers ${RUN} Cup`, name: `${year} Cup Harriers ${RUN} Cup`, isOver: false, contestsCounted: 2, contestsToGo: 0 });
+    expect(championship.standings.map((row) => [row.displayPosition, row.points, row.finishes.slice(0, 2), row.played])).toEqual([
+      ['T1', 1800, [1, 1], 2],
+      ['T1', 1800, [1, 1], 2],
+    ]);
+    const years = ChampionshipYearListResponseSchema.parse(expectDefined((await listChampionshipYears({
+      client: commissioner.client,
+      path: { id: league.id },
+    })).data)).years;
+    expect(years.map((row) => [row.year, row.isOver, row.leaders.length])).toEqual([[year, false, 2]]);
   });
 });

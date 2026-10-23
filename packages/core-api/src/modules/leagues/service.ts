@@ -124,6 +124,8 @@ export class LeagueService {
       description: input.description?.trim() || undefined,
       isActive: true,
       iconKey: LeagueIconKey.TROPHY,
+      // The championship's name until the commissioner renames it (#863).
+      cupName: `${input.name} Cup`,
     });
     const membership = await this.deps.memberships.create({
       leagueId: league.id,

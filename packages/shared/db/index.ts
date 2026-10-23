@@ -125,3 +125,4 @@ export type {
   CupRankedEntry,
   CupRepository,
 } from './cup-ports';
+export type { ChampionshipRepository } from './championship-ports';

@@ -362,6 +362,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         name: `League ${leagueSequence}`,
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
+        cupName: `League ${leagueSequence} Cup`,
         ...overrides,
       });
     },

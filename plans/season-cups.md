@@ -152,8 +152,10 @@ NFL season is mid-way on 31 December.
 - **A contest counts in the calendar year it went Final**, in US Eastern (Q1). One still
   running on 31 December counts toward the year it finishes. Best entry once per squad; Not
   counted and cancelled contests are out.
-- **Stored at settlement**, in the same transaction that writes `ContestEntryStanding`, through
-  `ChampionshipService.recordContest(contestId)` called by contest-management. A backfill
+- **Stored at settlement**, through `ChampionshipService.recordContest(contest, settledAt)`, which
+  contest settlement calls once the places are frozen and just before it completes the contest.
+  Settlement runs no transaction, so this order stands in for one: a failed write leaves the
+  contest unsettled, to be settled again, and a second write for a contest writes nothing. A backfill
   migration writes every contest already Final. No year-end job: once a year is over no contest
   can go Final in it, so it freezes itself, and "the trophy is presented" is just the page seeing
   that its year has ended.

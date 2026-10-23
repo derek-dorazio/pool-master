@@ -578,11 +578,14 @@ model League {
   cupPointsScale  PrismaCupPointsScale @default(STANDARD) @map("cup_points_scale")
   /// The commissioner's points for 1st, 2nd ... ; set only for CUSTOM, empty otherwise (database check).
   cupCustomPoints Int[]                @default([]) @map("cup_custom_points")
+  /// The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". Set to "<league name> Cup" at creation.
+  cupName         String               @map("cup_name")
   createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships           LeagueMembership[]
   cups                  Cup[]
+  yearFinishes          LeagueYearFinish[]
   squads                Squad[]
   squadMemberships      SquadMembership[]
   contests              Contest[]
@@ -626,6 +629,7 @@ model Squad {
   memberships      SquadMembership[]
   entries          ContestEntry[]
   ownerInvitations SquadOwnerInvitation[]
+  yearFinishes     LeagueYearFinish[]
 
   @@unique([leagueId, name])
   @@index([leagueId, isActive])
@@ -854,8 +858,9 @@ model EventSeries {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague SportLeague  @relation(fields: [sportLeagueId], references: [id])
-  sportEvents SportEvent[]
+  sportLeague  SportLeague        @relation(fields: [sportLeagueId], references: [id])
+  sportEvents  SportEvent[]
+  yearFinishes LeagueYearFinish[]
 
   @@unique([sportLeagueId, name])
   @@map("event_series")
@@ -966,6 +971,7 @@ model Contest {
   squaresDraw         ContestSquaresDraw?
   squaresWinners      ContestSquaresWinner[]
   emailMessages       EmailMessage[]
+  yearFinishes        LeagueYearFinish[]
 
   @@index([leagueId])
   @@index([leagueId, seasonYear])
@@ -990,6 +996,42 @@ model Cup {
 
   @@unique([leagueId, seasonYear, sportLeagueId])
   @@map("cups")
+}
+
+/// One squad's finish in one settled contest, for the league championship (#863): written once,
+/// when the contest goes final, from its best entry's frozen place and the league's points table
+/// at that moment, so a later table or weight change never shifts a past year. A contest counts in
+/// the calendar year it went final, in US Eastern.
+model LeagueYearFinish {
+  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId         String              @map("league_id") @db.Uuid
+  year             Int
+  squadId          String              @map("squad_id") @db.Uuid
+  contestId        String              @map("contest_id") @db.Uuid
+  /// The squad's best entry's place, 1 best.
+  place            Int
+  /// Entries sharing the place, the squad's own included, for the point split.
+  tiedCount        Int                 @map("tied_count")
+  /// Entries ranked in the contest.
+  rankedEntryCount Int                 @map("ranked_entry_count")
+  /// The series of a single-event contest (the Masters), for perpetual trophies (#874); null for a contest of several events.
+  eventSeriesId    String?             @map("event_series_id") @db.Uuid
+  selectionType    PrismaSelectionType @map("selection_type")
+  weight           PrismaCupWeight
+  /// Tenths of a point, from the points table and weight at settlement.
+  points           Int
+  settledAt        DateTime            @map("settled_at") @db.Timestamptz
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+
+  // The squad delete guard keeps a squad with results; the cascades let a league go whole.
+  league      League       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  squad       Squad        @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  contest     Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  eventSeries EventSeries? @relation(fields: [eventSeriesId], references: [id], onDelete: SetNull)
+
+  @@unique([contestId, squadId])
+  @@index([leagueId, year])
+  @@map("league_year_finishes")
 }
 
 // One event a contest covers (#713). Every contest has at least one: a golf or race contest has

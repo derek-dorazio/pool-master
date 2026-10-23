@@ -46,7 +46,7 @@ async function createLeague(label: string) {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8).toUpperCase();
   const commissioner = await createTestUser({ displayName: `${label} ${suffix}` });
-  const league = await prisma.league.create({ data: { leagueCode: `LSQ${suffix}`, name: `${label} ${suffix}` } });
+  const league = await prisma.league.create({ data: { cupName: 'Test Cup', leagueCode: `LSQ${suffix}`, name: `${label} ${suffix}` } });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: commissioner.user.id, role: LeagueRole.COMMISSIONER, status: LeagueMembershipStatus.ACTIVE },
   });

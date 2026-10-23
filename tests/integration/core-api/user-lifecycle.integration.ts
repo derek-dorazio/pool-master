@@ -55,7 +55,7 @@ describe('shared user delete cascade (#202)', () => {
     });
     const league = await prisma.league.create({
       data: {
-        leagueCode: `${LEAGUE_CODE_PREFIX}1`,
+        cupName: 'Test Cup', leagueCode: `${LEAGUE_CODE_PREFIX}1`,
         name: 'Cascade League',
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
@@ -86,7 +86,7 @@ describe('shared user delete cascade (#202)', () => {
     const { user } = await createTestUser({ lastName: 'Blocked' });
     const league = await prisma.league.create({
       data: {
-        leagueCode: `${LEAGUE_CODE_PREFIX}2`,
+        cupName: 'Test Cup', leagueCode: `${LEAGUE_CODE_PREFIX}2`,
         name: 'Blocking League',
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,

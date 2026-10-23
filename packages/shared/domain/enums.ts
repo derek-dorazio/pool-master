@@ -902,3 +902,17 @@ export const CupContestCount = {
   NOT_FINAL: 'NOT_FINAL',
 } as const;
 export type CupContestCount = (typeof CupContestCount)[keyof typeof CupContestCount];
+
+/**
+ * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,
+ * 2nd or 3rd; PLAYED counts the counted contests a squad placed in.
+ */
+export const ChampionshipTile = {
+  MOST_FIRSTS: 'MOST_FIRSTS',
+  MOST_SECONDS: 'MOST_SECONDS',
+  MOST_THIRDS: 'MOST_THIRDS',
+  MOST_PODIUMS: 'MOST_PODIUMS',
+  MOST_TOP_TENS: 'MOST_TOP_TENS',
+  MOST_PLAYED: 'MOST_PLAYED',
+} as const;
+export type ChampionshipTile = (typeof ChampionshipTile)[keyof typeof ChampionshipTile];
