@@ -1199,6 +1199,16 @@ export type UpdateLeagueCupSettingsRequest = {
 };
 
 /**
+ * Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced.
+ */
+export type UpdateLeagueEventEmailSettingsRequest = {
+    /**
+     * The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.
+     */
+    mutedSportLeagueIds: Array<string>;
+};
+
+/**
  * Commissioner request payload for sending direct email invites.
  */
 export type SendLeagueInvitationsRequest = {
@@ -1365,6 +1375,10 @@ export type LeagueDto = {
      * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
      */
     cupCustomPoints: Array<number>;
+    /**
+     * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+     */
+    mutedSportLeagueIds: Array<string>;
 };
 
 /**
@@ -1634,6 +1648,10 @@ export type LeagueResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     };
 };
 
@@ -1693,6 +1711,10 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -1925,6 +1947,10 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -19433,6 +19459,45 @@ export type UpdateLeagueCupSettingsResponses = {
 };
 
 export type UpdateLeagueCupSettingsResponse = UpdateLeagueCupSettingsResponses[keyof UpdateLeagueCupSettingsResponses];
+
+export type UpdateLeagueEventEmailSettingsData = {
+    body: UpdateLeagueEventEmailSettingsRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/event-email-settings';
+};
+
+export type UpdateLeagueEventEmailSettingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type UpdateLeagueEventEmailSettingsError = UpdateLeagueEventEmailSettingsErrors[keyof UpdateLeagueEventEmailSettingsErrors];
+
+export type UpdateLeagueEventEmailSettingsResponses = {
+    /**
+     * Single-league response.
+     */
+    200: LeagueResponse;
+};
+
+export type UpdateLeagueEventEmailSettingsResponse = UpdateLeagueEventEmailSettingsResponses[keyof UpdateLeagueEventEmailSettingsResponses];
 
 export type InactivateLeagueData = {
     body?: never;

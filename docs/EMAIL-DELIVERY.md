@@ -442,7 +442,10 @@ in the Commissioner updates category:
   commissioners and links to the contest's commissioner page.
 
 C1 and C2 go to every active commissioner of every active league, each league sending its own;
-a league that joins after the others were told is told on the next sweep. A sport league whose
+a league that joins after the others were told is told on the next sweep. A league hears about
+every sport league unless its commissioners mute one (#851): the league's `mutedSportLeagueIds`,
+set with `PUT /api/v1/leagues/{id}/event-email-settings`, and a league muting an event's sport
+league is not told of it. A sport league added later is heard about until muted. A sport league whose
 events are weeks (each NFL week its own event) is told of its season's first week only. The
 idempotency key (event, league, person; for C4, contest, person) sends each once, and a league or
 contest already told is skipped before its email is built.

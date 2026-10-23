@@ -99,6 +99,14 @@ export const UpdateLeagueCupSettingsRequestSchema = z.object({
 }).describe('Commissioner request payload for the league\'s championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.');
 export type UpdateLeagueCupSettingsRequest = z.infer<typeof UpdateLeagueCupSettingsRequestSchema>;
 
+export const UpdateLeagueEventEmailSettingsRequestSchema = z.object({
+  mutedSportLeagueIds: z
+    .array(z.string().uuid())
+    .max(200)
+    .describe('The sport leagues whose upcoming events the league\'s commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.'),
+}).describe('Commissioner request payload for which sport leagues\' upcoming events the league\'s commissioners hear about (#851): the whole list, replaced.');
+export type UpdateLeagueEventEmailSettingsRequest = z.infer<typeof UpdateLeagueEventEmailSettingsRequestSchema>;
+
 export const SendLeagueInvitationsRequestSchema = z.object({
   emails: z.array(EmailInputSchema).min(1).max(50).describe('Email recipients to invite into the league.'),
   message: z.string().max(500).optional().describe('Optional commissioner note included with the invitation email.'),
@@ -175,6 +183,7 @@ export const LeagueDtoSchema = z.object({
   cupName: z.string().describe('The league championship\'s name, shown after its year: "2026 Big Dawgs Cup".'),
   cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
+  mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
@@ -399,6 +408,7 @@ registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
 registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
 registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
 registerSchema('UpdateLeagueCupSettingsRequest', UpdateLeagueCupSettingsRequestSchema);
+registerSchema('UpdateLeagueEventEmailSettingsRequest', UpdateLeagueEventEmailSettingsRequestSchema);
 registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchema);
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);

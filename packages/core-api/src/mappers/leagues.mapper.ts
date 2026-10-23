@@ -31,5 +31,6 @@ export function toLeagueDto(
     cupName: league.cupName,
     cupPointsScale: league.cupPointsScale,
     cupCustomPoints: league.cupCustomPoints,
+    mutedSportLeagueIds: league.mutedSportLeagueIds,
   };
 }

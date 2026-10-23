@@ -4,9 +4,9 @@
  * within 7 days, and "Your contest isn't open yet" (C4) when a contest is still a draft 48 hours
  * before its picks close.
  *
- * C1 and C2 go to every active commissioner of every active league, for every sport league's
- * events (plan Q3.3); each league sends its own, so a commissioner of two leagues gets one from
- * each. C2 skips a league that already has a contest on the event. A sport league whose events
+ * C1 and C2 go to every active commissioner of every active league, for the events of every
+ * sport league the league hasn't muted (#851); each league sends its own, so a commissioner of
+ * two leagues gets one from each. C2 skips a league that already has a contest on the event. A sport league whose events
  * are weeks (each NFL week is its own event) is told only of its season's first week, not every
  * week. C4 goes to the contest's league's commissioners.
  *
@@ -131,7 +131,7 @@ export class CommissionerNotices implements DueNotifications {
         }
         const told = await this.deps.email.leaguesRecorded(templateKey, sportEvent.id);
         leagues ??= await this.deps.leagues.findAll({ isActive: true });
-        let untold = leagues.filter((league) => !told.has(league.id));
+        let untold = leagues.filter((league) => !told.has(league.id) && !league.mutedSportLeagueIds.includes(sportEvent.sportLeagueId));
         if (templateKey === 'EVENT_READY_FOR_CONTESTS') {
           const withContest = new Set((await this.deps.contests.findBySportEvent(sportEvent.id)).map((contest) => contest.leagueId));
           untold = untold.filter((league) => !withContest.has(league.id));

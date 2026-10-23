@@ -85,6 +85,11 @@ export interface League extends DomainEntity {
   cupPointsScale: CupPointsScale;
   /** CUSTOM's points for 1st, 2nd ...; empty for every other scale (a database check holds it). */
   cupCustomPoints: number[];
+  /**
+   * Sport leagues whose upcoming events the league's commissioners are not emailed about (#851):
+   * "Coming up soon" and "Ready for contests". Empty at creation: every sport league.
+   */
+  mutedSportLeagueIds: string[];
 }
 
 /** User membership within a league. */

@@ -565,6 +565,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/event-email-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose which sport leagues' upcoming events the commissioners are emailed about
+         * @description Allows a commissioner to set which sport leagues an active league's commissioners are not emailed about (#851): "Coming up soon" about 10 days before an event, and "Ready for contests" once it is released. The list is replaced whole; [] hears about every sport league, the default. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.
+         */
+        put: operations["updateLeagueEventEmailSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/inactivate": {
         parameters: {
             query?: never;
@@ -3983,6 +4003,11 @@ export interface components {
             /** @description CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale. */
             cupCustomPoints: number[];
         };
+        /** @description Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced. */
+        UpdateLeagueEventEmailSettingsRequest: {
+            /** @description The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league. */
+            mutedSportLeagueIds: string[];
+        };
         /** @description Commissioner request payload for sending direct email invites. */
         SendLeagueInvitationsRequest: {
             /** @description Email recipients to invite into the league. */
@@ -4088,6 +4113,8 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
             cupCustomPoints: number[];
+            /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+            mutedSportLeagueIds: string[];
         };
         /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
@@ -4292,6 +4319,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             };
         };
         /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
@@ -4331,6 +4360,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             };
             /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
@@ -4516,6 +4547,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             }[];
             /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
             memberships: {
@@ -17826,6 +17859,68 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["UpdateLeagueCupSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-league response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeagueResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateLeagueEventEmailSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLeagueEventEmailSettingsRequest"];
             };
         };
         responses: {
