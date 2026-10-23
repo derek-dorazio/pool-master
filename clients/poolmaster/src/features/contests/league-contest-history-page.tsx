@@ -58,7 +58,7 @@ export function LeagueContestHistoryPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const years = useMemo(() => contestHistoryYears(contestsQuery.data ?? []), [contestsQuery.data]);
   const year = chooseContestHistoryYear(years, searchParams.get('year'));
-  const resultsQuery = useChampionshipContestsQuery(year === null ? '' : leagueId, year ?? 0, null);
+  const resultsQuery = useChampionshipContestsQuery(leagueId, year, null);
 
   if (leagueQuery.isLoading) {
     return <LoadingState body="Loading contest history..." />;
