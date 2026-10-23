@@ -7,10 +7,11 @@ import { registerFreshUser } from './helpers/user-session';
 
 /**
  * #929 — the app on a phone's browser: a commissioner signs up, creates a league and starts a
- * contest at iPhone width, and no page along the way runs wider than the screen. A page wider
- * than the screen makes Safari and Chrome zoom the whole page out or scroll it sideways, which is
- * what the signed-in header and the create-contest sport picker did before. Form fields must be
- * at least 16px, or iOS Safari zooms in on every field the person taps.
+ * contest at iPhone width, and no page along the way runs wider than the screen; the league home
+ * and Create contest are also checked at 320px. A page wider than the screen makes Safari and
+ * Chrome zoom the whole page out or scroll it sideways, which is what the signed-in header and
+ * the create-contest sport picker did before. Form fields must be at least 16px, or iOS Safari
+ * zooms in on every field the person taps.
  *
  * Chromium with a phone's viewport, touch and user agent stands in for both phone browsers: the
  * suite installs Chromium only, and page width is decided by the CSS, not the engine.
@@ -18,6 +19,8 @@ import { registerFreshUser } from './helpers/user-session';
 
 /** An iPhone 13 / 14: the most common phone width in the US. */
 const PHONE_WIDTH = 390;
+/** An iPhone SE: the narrowest phone the app supports (ux-rules §3). */
+const NARROWEST_PHONE_WIDTH = 320;
 
 test.use({
   viewport: { width: PHONE_WIDTH, height: 844 },
@@ -55,9 +58,16 @@ test.afterAll(async ({ playwright }, testInfo) => {
 });
 
 /** The page's layout width; on a phone the browser widens it to fit content wider than the screen. */
-async function expectFitsPhone(page: Page) {
+async function expectFitsPhone(page: Page, phoneWidth = PHONE_WIDTH) {
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
-  expect(width, `${page.url()} is ${width}px wide on a ${PHONE_WIDTH}px phone`).toBeLessThanOrEqual(PHONE_WIDTH);
+  expect(width, `${page.url()} is ${width}px wide on a ${phoneWidth}px phone`).toBeLessThanOrEqual(phoneWidth);
+}
+
+/** The same check on the narrowest supported phone, then back to the test's own width. */
+async function expectFitsNarrowestPhone(page: Page) {
+  await page.setViewportSize({ width: NARROWEST_PHONE_WIDTH, height: 568 });
+  await expectFitsPhone(page, NARROWEST_PHONE_WIDTH);
+  await page.setViewportSize({ width: PHONE_WIDTH, height: 844 });
 }
 
 /** Every visible text field, select and text box: under 16px, iOS Safari zooms in when it is tapped. */
@@ -105,6 +115,7 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     await expect(page.getByTestId('league-home')).toBeVisible();
     await expect(page.getByTestId('league-selector-toggle')).toBeVisible();
     await expectFitsPhone(page);
+    await expectFitsNarrowestPhone(page);
   });
 
   await test.step('the Commissioner tools button stays on screen and opens the create-contest page, which fits the phone', async () => {
@@ -114,6 +125,7 @@ test('a commissioner signs up, creates a league and starts a contest on a phone 
     await page.getByTestId('manage-contests-create-link').click();
     await expect(page.getByTestId('create-contest-page')).toBeVisible();
     await expectFitsPhone(page);
+    await expectFitsNarrowestPhone(page);
     await expectNoZoomingFields(page);
   });
 });

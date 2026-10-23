@@ -93,7 +93,8 @@ Use those conventions as the starting point, but bias toward a consumer app:
   the phone sizing, so a feature rarely needs its own: form fields are 16px on
   phones (iOS Safari zooms in on anything smaller), cards and the page shell
   use less padding below `sm`, and dialogs size to `dvh`, not `vh`.
-  `phone-layout.e2e.ts` checks the main commissioner path at iPhone width.
+  `phone-layout.e2e.ts` checks the main commissioner path at 390px, and the
+  league home and Create contest at 320px.
 
 ## 4. Active And Inactive State Rules
 

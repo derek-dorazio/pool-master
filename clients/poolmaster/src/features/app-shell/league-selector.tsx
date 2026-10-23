@@ -69,7 +69,7 @@ export function LeagueSelector({
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="flex w-full cursor-pointer items-center justify-start gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs"
+        className="flex w-full cursor-pointer items-center justify-start gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
         data-testid="league-selector-toggle"
         onClick={() => setIsOpen((current) => !current)}
         size="auto"
@@ -90,7 +90,7 @@ export function LeagueSelector({
 
       {isOpen ? (
         <Tile
-          className="absolute left-0 z-20 mt-3 w-72 max-w-[calc(100vw-2rem)] shadow-xl sm:left-auto sm:right-0"
+          className="absolute left-0 z-20 mt-3 w-72 max-w-[calc(100vw-2rem)] shadow-xl lg:left-auto lg:right-0"
           padding="sm"
           radius="lg"
         >

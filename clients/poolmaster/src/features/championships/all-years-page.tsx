@@ -61,7 +61,7 @@ export function AllYearsPage() {
         <LoadingState body="Loading league history..." />
       ) : (
         <>
-          <MetricGrid className="grid-cols-2">
+          <MetricGrid>
             {summaryQuery.data.tiles.map((tile) => (
               <div data-testid={`all-years-tile-${tile.tile}`} key={tile.tile}>
                 <MetricTile
