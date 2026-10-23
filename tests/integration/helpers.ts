@@ -179,9 +179,9 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email });
-  testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads' });
+  testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email });
-  testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations' });
+  testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });
   testApp.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
   testApp.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',

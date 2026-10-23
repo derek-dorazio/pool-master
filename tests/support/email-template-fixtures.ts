@@ -29,6 +29,23 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
     teamName: 'Morgan\'s Squad',
   },
+  SQUAD_OWNER_INVITE: {
+    recipientEmail: 'jordan@example.com',
+    inviterName: 'Morgan Member',
+    squadName: 'Morgan\'s Squad',
+    leagueName: 'Office League',
+    leagueCode: 'OFFICE24',
+    inviteUrl: 'http://localhost:5173/team-invite/abc123def456',
+    expiresAt: '2026-04-04T18:30:00.000Z',
+  },
+  SQUAD_OWNER_ADDED: {
+    userName: 'Jordan Player',
+    inviterName: 'Morgan Member',
+    squadName: 'Morgan\'s Squad',
+    leagueName: 'Office League',
+    leagueCode: 'OFFICE24',
+    leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
+  },
   CONTEST_ENTRY_COMPLETED: {
     userName: 'Morgan Member',
     leagueName: 'Office League',

@@ -28,6 +28,7 @@ import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { LeagueNotFoundError } from './service';
 import {
+  buildLeagueHomeUrl,
   type EmailLeague,
   type EmailService,
 } from '../email';
@@ -605,7 +606,7 @@ export class InvitationService {
           leagueName: input.leagueName,
           leagueCode: input.leagueCode,
           teamName,
-          leagueHomeUrl: buildLeagueUrl(this.appBaseUrl, input.leagueCode),
+          leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.leagueCode),
         },
       });
       this.logger?.info({
@@ -730,10 +731,6 @@ function generateInviteCode(): string {
 
 function buildInviteUrl(appBaseUrl: string, inviteCode: string): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
-}
-
-function buildLeagueUrl(appBaseUrl: string, leagueCode: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}`;
 }
 
 export class InvitationNotFoundError extends Error {

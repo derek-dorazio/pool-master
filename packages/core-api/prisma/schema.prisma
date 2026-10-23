@@ -193,6 +193,8 @@ enum PrismaEmailTemplateKey {
   EVENT_READY_FOR_CONTESTS
   CONTEST_NOT_OPEN
   EVENT_STILL_DRAFT
+  SQUAD_OWNER_INVITE
+  SQUAD_OWNER_ADDED
 }
 
 enum PrismaEmailMessageStatus {

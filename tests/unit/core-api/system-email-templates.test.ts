@@ -589,6 +589,8 @@ describe('the email template registry', () => {
       EVENT_READY_FOR_CONTESTS: EmailCategory.COMMISSIONER_UPDATES,
       CONTEST_NOT_OPEN: EmailCategory.COMMISSIONER_UPDATES,
       EVENT_STILL_DRAFT: EmailCategory.ROOT_ADMIN,
+      SQUAD_OWNER_INVITE: EmailCategory.MEMBERSHIP,
+      SQUAD_OWNER_ADDED: EmailCategory.MEMBERSHIP,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });
@@ -609,6 +611,8 @@ describe('the email template registry', () => {
       EVENT_READY_FOR_CONTESTS: ServiceClass.B,
       CONTEST_NOT_OPEN: ServiceClass.B,
       EVENT_STILL_DRAFT: ServiceClass.ESSENTIAL,
+      SQUAD_OWNER_INVITE: ServiceClass.ESSENTIAL,
+      SQUAD_OWNER_ADDED: ServiceClass.ESSENTIAL,
       PASSWORD_RESET: ServiceClass.ESSENTIAL,
       PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
     });

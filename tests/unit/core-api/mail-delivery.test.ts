@@ -200,6 +200,8 @@ describe('EMAIL_CONFIG defaults', () => {
         EVENT_READY_FOR_CONTESTS: true,
         CONTEST_NOT_OPEN: true,
         EVENT_STILL_DRAFT: true,
+        SQUAD_OWNER_INVITE: true,
+        SQUAD_OWNER_ADDED: true,
       },
     });
   });
