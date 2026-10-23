@@ -14,6 +14,7 @@ import {
   ContestFormat,
   ContestStatus,
   MatchSide,
+  PickOutcome,
   PredictedResult,
   SelectionType,
   SportEventStatus,
@@ -162,6 +163,26 @@ describe('loadBracketStandings', () => {
       ['Alice', 8, 12, 'T1'],
       ['Bob', 8, 12, 'T1'],
       ['Cara', 5, 9, '3'],
+    ]);
+  });
+
+  it('names each entry\'s pick to win the final, pending while its team is still playing and busted once it is out', async () => {
+    const context = setup();
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
+    const champions = async () => (await loadBracketStandings(context.deps, context.contest.id, context.sportEvent)).entries
+      .map((standing) => [standing.entry.name, standing.champion]);
+
+    expect(await champions()).toEqual([
+      ['Alice', { name: 'Team T1', outcome: PickOutcome.PENDING }],
+      ['Bob', { name: 'Team T1', outcome: PickOutcome.PENDING }],
+      ['Cara', { name: 'Team T2', outcome: PickOutcome.PENDING }],
+    ]);
+
+    context.play(FINAL_T1_70_66);
+    expect(await champions()).toEqual([
+      ['Alice', { name: 'Team T1', outcome: PickOutcome.CORRECT }],
+      ['Bob', { name: 'Team T1', outcome: PickOutcome.CORRECT }],
+      ['Cara', { name: 'Team T2', outcome: PickOutcome.BUSTED }],
     ]);
   });
 

@@ -11,6 +11,10 @@
  *   next week's first kickoff. A survivor reader whose entry went out that week is told so in the
  *   same email (E5). A playoff event a survivor contest plays a week per round settles, and is
  *   reported, once, as the event.
+ * - **Bracket round results (E4):** every game of a bracket round is decided (see
+ *   `lastFinishedMatchRound`), and more rounds remain: the leaders by points, each reader's
+ *   champion pick and what their entries can still reach, and the next round's start. Not after
+ *   the final: the contest's final results cover it.
  *
  * Each goes once its moment is a buffer old (EMAIL_CONFIG.standingsBufferMinutes, Q3.11), so a
  * late correction lands first, and only within the hour after that: past it the moment is gone.
@@ -28,10 +32,13 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
+  ContestConfigurationRepository,
   ContestEntryEventStandingRepository,
   ContestRepository,
   LeagueRepository,
+  SportEventMatchRepository,
   SportEventRepository,
+  SportLeagueRepository,
   SquadMembershipRepository,
   StandingsEmailPositionRepository,
 } from '@poolmaster/shared/db';
@@ -40,10 +47,13 @@ import {
   ContestFormat,
   ContestStatus,
   LeagueRole,
+  PickOutcome,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantRoundStatus,
   SelectionType,
   SportEventStatus,
+  eventRoundLabel,
+  getSportDefinition,
   type Contest,
   type League,
   type SportEvent,
@@ -67,6 +77,7 @@ import {
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { sportStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
+import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';
 import { lastFinishedRound } from '../scoring-families/stroke-play/finished-rounds';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 
@@ -83,7 +94,13 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
   /** When each event of a season contest settled. */
   eventStandings: Pick<ContestEntryEventStandingRepository, 'findByContest'>;
-  leaderboards: Pick<ContestService, 'leaderboardOf' | 'pickEmLeaderboardOf' | 'survivorLeaderboardOf'>;
+  leaderboards: Pick<ContestService, 'leaderboardOf' | 'pickEmLeaderboardOf' | 'survivorLeaderboardOf' | 'bracketStandingsOf'>;
+  /** A bracket's games, for when a round finished and when the next one starts. */
+  matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  /** A bracket contest's rules, for the round it starts at. */
+  configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
+  /** A bracket's round names, in its sport league's words. */
+  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   positions: StandingsEmailPositionRepository;
   leagues: Pick<LeagueRepository, 'findById'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
@@ -119,7 +136,7 @@ interface StandingsBoard {
   /** The moment as one reader sees it: a pick'em week's leaders mark the reader's entries. */
   momentFor: (ownsSquad: (squadId: string) => boolean) => StandingsMoment;
   rows: StandingsBoardRow[];
-  personal: (ownsSquad: (squadId: string) => boolean) => Pick<ContestStandingsEmailData, 'cut' | 'out' | 'picksUrl'>;
+  personal: (ownsSquad: (squadId: string) => boolean) => Pick<ContestStandingsEmailData, 'cut' | 'out' | 'champions' | 'picksUrl'>;
 }
 
 /** The event of a season contest that settled last, if it is due, and the next one still to play. */
@@ -135,7 +152,8 @@ export class LiveStandings implements DueNotifications {
     const contests = (await this.deps.contests.findByStatuses([ContestStatus.ACTIVE]))
       .filter((contest) => contest.contestFormat === ContestFormat.ROSTER
         || contest.selectionType === SelectionType.PICK_EM
-        || contest.selectionType === SelectionType.SURVIVOR);
+        || contest.selectionType === SelectionType.SURVIVOR
+        || contest.selectionType === SelectionType.BRACKET);
     if (contests.length === 0) return;
     const bufferMs = this.deps.readConfig().standingsBufferMinutes * 60_000;
     const sportEvents = new Map((await this.deps.sportEvents.findByIds(
@@ -166,7 +184,9 @@ export class LiveStandings implements DueNotifications {
             ...await this.dueRoundStandings(contest, contestEvents, fieldOf, isDue),
             ...await this.dueEventResults(contest, contestEvents, isDue),
           ]
-          : await this.dueWeekResults(contest, contestEvents, isDue);
+          : contest.selectionType === SelectionType.BRACKET
+            ? await this.dueBracketRound(contest, contestEvents, isDue)
+            : await this.dueWeekResults(contest, contestEvents, isDue);
         for (const standings of due) {
           await this.queueStandings(standings);
         }
@@ -260,6 +280,46 @@ export class LiveStandings implements DueNotifications {
     }];
   }
 
+  /** E4: the last finished round of a bracket under way, unless it is the final. */
+  private async dueBracketRound(
+    contest: Contest,
+    contestEvents: SportEvent[],
+    isDue: (at: Date) => boolean,
+  ): Promise<DueStandings[]> {
+    const sportEvent = contestEvents.at(0);
+    if (sportEvent?.status !== SportEventStatus.IN_PROGRESS) return [];
+    const [matches, configuration] = await Promise.all([
+      this.deps.matches.findBySportEvent(sportEvent.id),
+      this.deps.configurations.findByContest(contest.id),
+    ]);
+    const rules = configuration?.configJson;
+    const startsAtRound = rules?.selectionType === SelectionType.BRACKET ? rules.startsAtRound : 1;
+    const finished = lastFinishedMatchRound(matches, startsAtRound);
+    const lastRound = Math.max(...matches.map((match) => match.roundNumber));
+    if (!finished || finished.roundNumber >= lastRound || !isDue(finished.finishedAt)) return [];
+    const roundNumber = finished.roundNumber;
+    const roundNames = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
+    const roundCount = Math.max(sportEvent.rounds ?? getSportDefinition(sportEvent.sport).defaultRounds, lastRound);
+    const roundName = (round: number): string => eventRoundLabel(sportEvent.sport, roundNames, round, roundCount);
+    const nextStart = matches
+      .filter((match) => match.roundNumber === roundNumber + 1 && match.scheduledDate !== null)
+      .map((match) => match.scheduledDate?.getTime() ?? 0)
+      .sort((left, right) => left - right)
+      .at(0);
+    const moment: StandingsMoment = {
+      kind: StandingsMomentKind.BRACKET_ROUND,
+      eventName: sportEvent.name,
+      roundName: roundName(roundNumber),
+      ...(nextStart !== undefined && { nextRound: { name: roundName(roundNumber + 1), startsAt: new Date(nextStart) } }),
+    };
+    return [{
+      contest,
+      sportEvent,
+      about: `${contest.id}:${sportEvent.id}:bracket-round-${String(roundNumber)}`,
+      board: (lastPositions) => this.bracketBoard(contest, moment, lastPositions),
+    }];
+  }
+
   /**
    * The event of a season contest that settled last, by when its standings froze, when that is
    * due and another event remains to play. Not after the last one: the final results cover it.
@@ -312,6 +372,7 @@ export class LiveStandings implements DueNotifications {
           ? cutNews(leaderboard.entries.filter((row) => ownsSquad(row.squadId)), fieldRows, moment.roundNumber)
           : [],
         out: [],
+        champions: [],
       }),
     };
   }
@@ -367,8 +428,46 @@ export class LiveStandings implements DueNotifications {
       personal: (ownsSquad) => ({
         cut: [],
         out: [],
+        champions: [],
         // Every week is picked afresh: a reader with an entry has picks to make.
         ...(leaderboard.entries.some((entry) => ownsSquad(entry.squadId)) && { picksUrl }),
+      }),
+    };
+  }
+
+  /** A bracket contest's board: points, with each reader's champion picks and what their entries can still reach. */
+  private async bracketBoard(
+    contest: Contest,
+    moment: StandingsMoment,
+    lastPositions: ReadonlyMap<string, number>,
+  ): Promise<StandingsBoard> {
+    const { leaderboard, champions } = await this.deps.leaderboards.bracketStandingsOf(contest);
+    return {
+      momentFor: () => moment,
+      rows: leaderboard.entries.map((entry) => ({
+        entryId: entry.entryId,
+        squadId: entry.squadId,
+        position: entry.position,
+        line: {
+          place: entry.displayPosition,
+          entryName: entry.entryName,
+          squadName: entry.squadName,
+          score: String(entry.points),
+          movement: movementOf(entry.entryId, entry.position, lastPositions),
+          isYours: false,
+        },
+      })),
+      personal: (ownsSquad) => ({
+        cut: [],
+        out: [],
+        champions: leaderboard.entries
+          .filter((entry) => ownsSquad(entry.squadId))
+          .flatMap((entry) => {
+            const champion = champions.get(entry.entryId);
+            return champion
+              ? [{ entryName: entry.entryName, team: champion.name, alive: champion.outcome !== PickOutcome.BUSTED, maxPossiblePoints: entry.maxPossiblePoints }]
+              : [];
+          }),
       }),
     };
   }
@@ -419,6 +518,7 @@ export class LiveStandings implements DueNotifications {
         const yours = leaderboard.entries.filter((entry) => ownsSquad(entry.squadId));
         return {
           cut: [],
+          champions: [],
           out: yours.flatMap((entry) => {
             const out = outThisWeek.get(entry.entryId);
             return out ? [out] : [];

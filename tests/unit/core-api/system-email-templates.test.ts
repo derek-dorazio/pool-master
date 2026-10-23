@@ -444,6 +444,30 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).not.toContain('Make picks for next week');
     });
 
+    it('reports a finished bracket round with the leaders by points, the reader\'s champion picks and what each entry can still reach, and the next round\'s start', () => {
+      const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+        ...standings,
+        contestName: 'March Madness',
+        moment: { kind: StandingsMomentKind.BRACKET_ROUND, eventName: 'NCAA Tournament', roundName: 'Sweet 16', nextRound: { name: 'Elite Eight', startsAt: new Date('2026-03-28T22:09:00.000Z') } },
+        top: [{ place: '1', entryName: 'Chalk', squadName: 'Pat', score: '120', movement: 2, isYours: false }],
+        yours: [],
+        entryCount: 1,
+        cut: [],
+        champions: [
+          { entryName: 'Blue Devils', team: 'Duke', alive: true, maxPossiblePoints: 280 },
+          { entryName: 'Long Shot', team: 'Saint Peter\'s', alive: false, maxPossiblePoints: 90 },
+        ],
+      }, { timeZone: 'America/New_York' });
+
+      expect(message.subject).toBe('After Sweet 16: March Madness');
+      expect(message.text).toContain('Sweet 16 results');
+      expect(message.text).toContain('Sweet 16 of NCAA Tournament is done. Here\'s where March Madness stands.');
+      expect(message.text).toContain('Blue Devils: your champion, Duke, is still alive, with 280 points possible.');
+      expect(message.text).toContain('Long Shot: your champion, Saint Peter\'s, is out, with 90 points possible.');
+      expect(message.text).toContain('Standings, by points:\n1. Chalk (Pat), 120, up 2');
+      expect(message.text).toContain('Next round: Elite Eight, Mar 28, 2026, 6:09 PM EDT');
+    });
+
     it('names the round a survivor entry went out in when the event is a playoff of several rounds', () => {
       const message = renderSystemEmailTemplate('CONTEST_STANDINGS', {
         ...standings,

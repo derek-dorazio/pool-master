@@ -9,8 +9,9 @@ import type {
   ContestEntryWithSquad,
   SportEventMatchRepository,
 } from '@poolmaster/shared/db';
-import { SelectionType, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
+import { PickOutcome, SelectionType, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
 import {
+  bracketFinal,
   contestBracketGames,
   finalTotalPoints,
   rankPredictionStandings,
@@ -34,6 +35,8 @@ export interface BracketStandingsReadDeps extends ContestLeaderboardReadDeps {
 export interface BracketEntryStanding {
   entry: ContestEntryWithSquad;
   score: BracketScore;
+  /** The team the entry picks to win the final, and how that pick stands; null with no final pick standing. */
+  champion: { name: string; outcome: PickOutcome } | null;
   position: number;
   displayPosition: string;
 }
@@ -100,10 +103,18 @@ export async function loadBracketStandings(
     else picksByEntry.set(prediction.contestEntryId, [prediction]);
   }
 
+  const final = bracketFinal(games);
+  const nameOf = new Map(field.map((row) => [row.entry.id, row.participant.name]));
   const scored = entries.map((entry) => {
     // A bracket pick names a team (#792): a tie pick is never one.
     const { kept } = resolveBracketPicks(games, (picksByEntry.get(entry.id) ?? []).filter(isTeamChoice), seedOf, withdrawn);
-    return { entry, score: scoreBracketPicks(games, kept, seedOf, settings, withdrawn) };
+    const score = scoreBracketPicks(games, kept, seedOf, settings, withdrawn);
+    const finalPick = final ? kept.find((pick) => pick.sportEventMatchId === final.id) : undefined;
+    const name = finalPick ? nameOf.get(finalPick.sportEventParticipantId) : undefined;
+    const champion = final && name !== undefined
+      ? { name, outcome: score.picks.get(final.id)?.outcome ?? PickOutcome.PENDING }
+      : null;
+    return { entry, score, champion };
   });
   const finalTotal = finalTotalPoints(games);
   const ranks = new Map(rankPredictionStandings(
@@ -115,9 +126,9 @@ export async function loadBracketStandings(
     finalTotalPoints: finalTotal,
     gameCount: games.length,
     entries: scored
-      .flatMap(({ entry, score }) => {
+      .flatMap(({ entry, score, champion }) => {
         const rank = ranks.get(entry.id);
-        return rank ? [{ entry, score, position: rank.position, displayPosition: rank.displayPosition }] : [];
+        return rank ? [{ entry, score, champion, position: rank.position, displayPosition: rank.displayPosition }] : [];
       })
       .sort((left, right) => left.position - right.position || left.entry.entryNumber - right.entry.entryNumber || left.entry.name.localeCompare(right.entry.name)),
   };

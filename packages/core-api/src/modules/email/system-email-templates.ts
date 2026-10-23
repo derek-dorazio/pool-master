@@ -214,6 +214,8 @@ export const StandingsMomentKind = {
   PICK_EM_WEEK: 'PICK_EM_WEEK',
   /** A survivor week settled, and more weeks remain (E3, with E5 for the reader's entries that went out). */
   SURVIVOR_WEEK: 'SURVIVOR_WEEK',
+  /** Every game of a bracket round has a result, and more rounds remain (E4). */
+  BRACKET_ROUND: 'BRACKET_ROUND',
 } as const;
 export type StandingsMomentKind = (typeof StandingsMomentKind)[keyof typeof StandingsMomentKind];
 
@@ -258,6 +260,14 @@ export type StandingsMoment =
     /** Entries still in after the week, of `entryCount`. */
     stillIn: number;
     nextWeek?: StandingsNextWeek;
+  }
+  | {
+    kind: typeof StandingsMomentKind.BRACKET_ROUND;
+    eventName: string;
+    /** The round that just finished, in the sport league's words ("Sweet 16"). */
+    roundName: string;
+    /** The next round and its first game's start, once that is set. */
+    nextRound?: { name: string; startsAt: Date };
   };
 
 /** One entry's line in a standings email. */
@@ -276,6 +286,15 @@ export interface StandingsLine {
   eventResult?: { place: string | null; score: string | null };
   /** In a survivor contest, whether the entry is out. */
   isOut?: boolean;
+}
+
+/** One of the reader's bracket entries' pick to win it all, and what the entry can still reach (E4). */
+export interface StandingsChampion {
+  entryName: string;
+  team: string;
+  /** Whether the team is still playing. */
+  alive: boolean;
+  maxPossiblePoints: number;
 }
 
 /** One of the reader's survivor entries that went out in the week (E5). */
@@ -307,6 +326,8 @@ export interface ContestStandingsEmailData {
   cut: StandingsCutNews[];
   /** The reader's survivor entries that went out in the week; empty when none did. */
   out: StandingsElimination[];
+  /** The reader's bracket entries' champion picks; empty outside a bracket. */
+  champions: StandingsChampion[];
   leaderboardUrl: string;
   /** Where the reader makes next week's picks, when they have picks to make. */
   picksUrl?: string;
@@ -912,6 +933,12 @@ function standingsWording(data: ContestStandingsEmailData): { subject: string; t
           .filter((sentence) => sentence !== null)
           .join(' '),
       };
+    case StandingsMomentKind.BRACKET_ROUND:
+      return {
+        subject: `After ${moment.roundName}: ${data.contestName}`,
+        title: `${moment.roundName} results`,
+        lead: `${moment.roundName} of ${moment.eventName} is done. Here's where ${data.contestName} stands.`,
+      };
     case StandingsMomentKind.SURVIVOR_WEEK:
       return {
         subject: `After ${moment.eventName}: ${data.contestName}`,
@@ -935,12 +962,19 @@ function standingsLeadersTitle(data: ContestStandingsEmailData): string {
   switch (data.moment.kind) {
     case StandingsMomentKind.PICK_EM_WEEK:
       return `Season ${shown.toLowerCase()}, by points`;
+    case StandingsMomentKind.BRACKET_ROUND:
+      return `${shown}, by points`;
     case StandingsMomentKind.SURVIVOR_WEEK:
       return `${shown}, by weeks survived`;
     case StandingsMomentKind.ROUND:
     case StandingsMomentKind.EVENT:
       return shown;
   }
+}
+
+/** "Chalk Talk: your champion, Duke, is still alive, with 96 points possible." */
+function describeChampion(champion: StandingsChampion): string {
+  return `${champion.entryName}: your champion, ${champion.team}, ${champion.alive ? 'is still alive' : 'is out'}, with ${String(champion.maxPossiblePoints)} points possible.`;
 }
 
 /** "Lucky Picks is out: Chicago didn't win in Week 5." */
@@ -1004,6 +1038,9 @@ function renderContestStandingsEmail(
     nextRows.push(['Next event', `${next.name}, ${formatInstant(next.startsAt, context.timeZone)}`]);
     if (next.picksCloseAt) nextRows.push(['Picks close', formatInstant(next.picksCloseAt, context.timeZone)]);
   }
+  if (moment.kind === StandingsMomentKind.BRACKET_ROUND && moment.nextRound) {
+    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatInstant(moment.nextRound.startsAt, context.timeZone)}`]);
+  }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
     nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatInstant(moment.nextWeek.firstKickoffAt, context.timeZone)}`]);
   }
@@ -1014,6 +1051,7 @@ function renderContestStandingsEmail(
   const leadersTitle = standingsLeadersTitle(data);
   const personalLines = [
     ...data.out.map((out) => describeElimination(out, moment.eventName)),
+    ...data.champions.map(describeChampion),
     ...data.cut.map((news) => `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.`),
   ];
   const picksAction = 'Make picks for next week';
