@@ -130,13 +130,15 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b border-inverse-border bg-surface-inverse text-on-inverse shadow-lg">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="space-y-1">
-              <span className="inline-flex rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary">
+        {/* On a phone the title and account share the first row and the league selector takes
+            the full second row, so the header never runs wider than the screen. */}
+        <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:justify-between">
+          <div className="flex min-w-0 items-center gap-4 max-lg:contents">
+            <div className="min-w-0 space-y-1">
+              <span className="hidden rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary sm:inline-flex">
                 Ultimate Office Pool Manager
               </span>
-              <h1 className="font-display text-2xl font-black tracking-normal text-on-inverse">
+              <h1 className="font-display text-xl font-black tracking-normal text-on-inverse sm:text-2xl">
                 Prime Time Commissioner
               </h1>
             </div>
@@ -144,6 +146,7 @@ export function AppShell() {
             {shouldLoadLeagueShell ? (
               <LeagueSelector
                 activeLeagueCode={activeLeagueCode}
+                className="col-span-2 sm:justify-self-start"
                 commissionerLeagueIds={commissionerLeagueIds}
                 leagues={leagues ?? []}
                 onCreateLeague={openCreateLeague}
@@ -164,7 +167,7 @@ export function AppShell() {
             ) : null}
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="col-start-2 row-start-1 flex items-center justify-end gap-3">
             {auth.isAuthenticated ? (
               <>
                 <AccountMenu
@@ -216,14 +219,14 @@ export function AppShell() {
 
       {showLeagueMenu && activeLeagueCode ? <LeagueMenuBar leagueCode={activeLeagueCode} /> : null}
 
-      <div className="mx-auto max-w-6xl px-6 py-10">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
         <main>
           <Outlet />
         </main>
       </div>
 
       <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-6 py-6 text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6">
           <Link className="hover:text-foreground" data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
             How to Play
           </Link>

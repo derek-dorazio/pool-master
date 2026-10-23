@@ -121,7 +121,8 @@ export function SelectionParticipantCard({
         tabIndex={-1}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-4">
+        {/* Wraps so that on a phone the badge drops under the name instead of squeezing it. */}
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0">
             <div className="font-medium text-foreground">
               {selectionParticipantLabel(participant)}

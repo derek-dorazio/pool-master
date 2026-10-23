@@ -86,6 +86,15 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - Prefer card/list/tile layouts for consumer league browsing before reaching
   for tables. A list that can run to hundreds of rows (teams, owners, standings)
   is the exception: §12 rule 7.
+- Every page works in a phone's browser at 320px wide (iOS Safari and Android
+  Chrome; there is no native app yet). No page may be wider than the screen:
+  a row of controls wraps or scrolls inside its own box, and a wide table
+  scrolls inside its own box rather than widening the page. Shared pieces carry
+  the phone sizing, so a feature rarely needs its own: form fields are 16px on
+  phones (iOS Safari zooms in on anything smaller), cards and the page shell
+  use less padding below `sm`, and dialogs size to `dvh`, not `vh`.
+  `phone-layout.e2e.ts` checks the main commissioner path at 390px, and the
+  league home and Create contest at 320px.
 
 ## 4. Active And Inactive State Rules
 

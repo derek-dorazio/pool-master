@@ -91,7 +91,9 @@ export function Modal({
         <Dialog.Content
           aria-describedby={description ? descriptionId : undefined}
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 max-h-[calc(100vh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-[2rem] border border-border bg-card p-6 shadow-2xl",
+            // dvh, not vh: on iOS Safari 100vh counts the area under the toolbar, so a tall dialog's
+            // buttons would sit behind it.
+            "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-card p-5 shadow-2xl sm:rounded-[2rem] sm:p-6",
             modalSizeClassNames[size],
             className,
           )}
@@ -100,7 +102,7 @@ export function Modal({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 space-y-2">
               <Dialog.Title
-                className="text-2xl font-semibold tracking-tight"
+                className="text-xl font-semibold tracking-tight sm:text-2xl"
                 {...(titleId ? { id: titleId } : {})}
               >
                 {title}
