@@ -9,6 +9,8 @@ import type {
   ContestEntryDeleteResult,
   ContestEntryRepository,
   ContestEntryWithSquad,
+  StandingsEmailPosition,
+  StandingsEmailPositionRepository,
 } from '@poolmaster/shared/db';
 import type { ContestEntry, ContestEntryStatus } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
@@ -128,6 +130,34 @@ async function isContestDrawn(tx: Prisma.TransactionClient, contestId: string): 
     tx.contestSquaresDraw.count({ where: { contestId } }),
   ]);
   return deals + digits > 0;
+}
+
+/** Prisma adapter for StandingsEmailPositionRepository: the place is a column on the entry (#877). */
+export class PrismaStandingsEmailPositionRepository implements StandingsEmailPositionRepository {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async findByContest(contestId: string): Promise<Map<string, number>> {
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { contestId, lastStandingsEmailPosition: { not: null } },
+      select: { id: true, lastStandingsEmailPosition: true },
+    });
+    return new Map(rows.flatMap((row) => row.lastStandingsEmailPosition === null ? [] : [[row.id, row.lastStandingsEmailPosition]]));
+  }
+
+  /**
+   * One statement for the whole board, and raw so the entry's `updated_at` stays as it was: a
+   * standings email changes nothing about the entry, and its receipts read that time.
+   */
+  async record(positions: readonly StandingsEmailPosition[]): Promise<void> {
+    if (positions.length === 0) return;
+    const ids = positions.map((row) => row.contestEntryId);
+    const places = positions.map((row) => row.position);
+    await this.prisma.$executeRaw`
+      UPDATE "contest_entries" AS entry
+      SET "last_standings_email_position" = placed.position
+      FROM unnest(${ids}::uuid[], ${places}::int[]) AS placed(id, position)
+      WHERE entry.id = placed.id`;
+  }
 }
 
 function mapToEntry(row: {

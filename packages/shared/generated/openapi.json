@@ -26400,6 +26400,7 @@
           "CONTEST_STARTED_SUMMARY",
           "CONTEST_ENTRY_REMINDER",
           "CONTEST_OPENED",
+          "CONTEST_STANDINGS",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED"
         ],
@@ -26444,6 +26445,12 @@
             "maxItems": 5,
             "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
           },
+          "standingsBufferMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240,
+            "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+          },
           "templates": {
             "type": "object",
             "properties": {
@@ -26470,6 +26477,10 @@
               "CONTEST_OPENED": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "CONTEST_STANDINGS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
@@ -26478,7 +26489,8 @@
               "CONTEST_ENTRY_COMPLETED",
               "CONTEST_STARTED_SUMMARY",
               "CONTEST_ENTRY_REMINDER",
-              "CONTEST_OPENED"
+              "CONTEST_OPENED",
+              "CONTEST_STANDINGS"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -26489,6 +26501,7 @@
           "allowedRecipients",
           "sendRatePerSecond",
           "entryReminderHours",
+          "standingsBufferMinutes",
           "templates"
         ],
         "additionalProperties": false,
@@ -27883,6 +27896,12 @@
                     "maxItems": 5,
                     "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                   },
+                  "standingsBufferMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27909,6 +27928,10 @@
                       "CONTEST_OPENED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STANDINGS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -27917,7 +27940,8 @@
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
-                      "CONTEST_OPENED"
+                      "CONTEST_OPENED",
+                      "CONTEST_STANDINGS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27928,6 +27952,7 @@
                   "allowedRecipients",
                   "sendRatePerSecond",
                   "entryReminderHours",
+                  "standingsBufferMinutes",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -27972,6 +27997,12 @@
                     "maxItems": 5,
                     "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                   },
+                  "standingsBufferMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -27998,6 +28029,10 @@
                       "CONTEST_OPENED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STANDINGS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28006,7 +28041,8 @@
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
-                      "CONTEST_OPENED"
+                      "CONTEST_OPENED",
+                      "CONTEST_STANDINGS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28017,6 +28053,7 @@
                   "allowedRecipients",
                   "sendRatePerSecond",
                   "entryReminderHours",
+                  "standingsBufferMinutes",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -28904,6 +28941,12 @@
                           "maxItems": 5,
                           "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                         },
+                        "standingsBufferMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240,
+                          "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -28930,6 +28973,10 @@
                             "CONTEST_OPENED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STANDINGS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -28938,7 +28985,8 @@
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
-                            "CONTEST_OPENED"
+                            "CONTEST_OPENED",
+                            "CONTEST_STANDINGS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28949,6 +28997,7 @@
                         "allowedRecipients",
                         "sendRatePerSecond",
                         "entryReminderHours",
+                        "standingsBufferMinutes",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -28993,6 +29042,12 @@
                           "maxItems": 5,
                           "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                         },
+                        "standingsBufferMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240,
+                          "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -29019,6 +29074,10 @@
                             "CONTEST_OPENED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STANDINGS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -29027,7 +29086,8 @@
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
-                            "CONTEST_OPENED"
+                            "CONTEST_OPENED",
+                            "CONTEST_STANDINGS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29038,6 +29098,7 @@
                         "allowedRecipients",
                         "sendRatePerSecond",
                         "entryReminderHours",
+                        "standingsBufferMinutes",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -29583,6 +29644,12 @@
                     "maxItems": 5,
                     "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                   },
+                  "standingsBufferMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29609,6 +29676,10 @@
                       "CONTEST_OPENED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STANDINGS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -29617,7 +29688,8 @@
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
-                      "CONTEST_OPENED"
+                      "CONTEST_OPENED",
+                      "CONTEST_STANDINGS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29628,6 +29700,7 @@
                   "allowedRecipients",
                   "sendRatePerSecond",
                   "entryReminderHours",
+                  "standingsBufferMinutes",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -30373,6 +30446,12 @@
                     "maxItems": 5,
                     "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                   },
+                  "standingsBufferMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -30399,6 +30478,10 @@
                       "CONTEST_OPENED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STANDINGS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30407,7 +30490,8 @@
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
-                      "CONTEST_OPENED"
+                      "CONTEST_OPENED",
+                      "CONTEST_STANDINGS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30418,6 +30502,7 @@
                   "allowedRecipients",
                   "sendRatePerSecond",
                   "entryReminderHours",
+                  "standingsBufferMinutes",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -30462,6 +30547,12 @@
                     "maxItems": 5,
                     "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                   },
+                  "standingsBufferMinutes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 240,
+                    "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -30488,6 +30579,10 @@
                       "CONTEST_OPENED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "CONTEST_STANDINGS": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -30496,7 +30591,8 @@
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
-                      "CONTEST_OPENED"
+                      "CONTEST_OPENED",
+                      "CONTEST_STANDINGS"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30507,6 +30603,7 @@
                   "allowedRecipients",
                   "sendRatePerSecond",
                   "entryReminderHours",
+                  "standingsBufferMinutes",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -31352,6 +31449,12 @@
                           "maxItems": 5,
                           "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                         },
+                        "standingsBufferMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240,
+                          "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -31378,6 +31481,10 @@
                             "CONTEST_OPENED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STANDINGS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31386,7 +31493,8 @@
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
-                            "CONTEST_OPENED"
+                            "CONTEST_OPENED",
+                            "CONTEST_STANDINGS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31397,6 +31505,7 @@
                         "allowedRecipients",
                         "sendRatePerSecond",
                         "entryReminderHours",
+                        "standingsBufferMinutes",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -31441,6 +31550,12 @@
                           "maxItems": 5,
                           "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
                         },
+                        "standingsBufferMinutes": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 240,
+                          "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -31467,6 +31582,10 @@
                             "CONTEST_OPENED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "CONTEST_STANDINGS": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -31475,7 +31594,8 @@
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
-                            "CONTEST_OPENED"
+                            "CONTEST_OPENED",
+                            "CONTEST_STANDINGS"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31486,6 +31606,7 @@
                         "allowedRecipients",
                         "sendRatePerSecond",
                         "entryReminderHours",
+                        "standingsBufferMinutes",
                         "templates"
                       ],
                       "additionalProperties": false,

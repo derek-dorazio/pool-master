@@ -388,6 +388,22 @@ export interface ContestEntryRepository {
   delete(id: string): Promise<ContestEntryDeleteResult>;
 }
 
+/** An entry's place in a live standings email (#877); null for an entry not ranked yet. */
+export interface StandingsEmailPosition {
+  contestEntryId: string;
+  position: number | null;
+}
+
+/**
+ * Each entry's place in the last live standings email of its contest (#877), which the next
+ * one's movement is measured from.
+ */
+export interface StandingsEmailPositionRepository {
+  /** By entry id: the entries of the contest that have a recorded place. */
+  findByContest(contestId: string): Promise<Map<string, number>>;
+  record(positions: readonly StandingsEmailPosition[]): Promise<void>;
+}
+
 /** One game's pick as it is saved (#716): replaces the entry's pick on that game, if any. */
 export type ContestEntryMatchPredictionWrite = PredictedChoice & {
   sportEventMatchId: string;

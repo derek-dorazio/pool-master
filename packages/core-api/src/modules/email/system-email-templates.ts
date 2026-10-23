@@ -204,6 +204,64 @@ export interface ContestEntryReminderEmailData {
   contestUrl: string;
 }
 
+/** What a live standings email reports on (#877), which decides its subject and opening line. */
+export const StandingsMomentKind = {
+  /** A stroke-play round finished, and more rounds remain (catalog row E2). */
+  ROUND: 'ROUND',
+  /** One event of a season contest settled, and more events remain (E6). */
+  EVENT: 'EVENT',
+} as const;
+export type StandingsMomentKind = (typeof StandingsMomentKind)[keyof typeof StandingsMomentKind];
+
+/** The event after the one that just finished, in a season contest. */
+export interface StandingsNextEvent {
+  name: string;
+  startsAt: Date;
+  /** When its picks close, while they are still open. */
+  picksCloseAt?: Date;
+}
+
+export type StandingsMoment =
+  | { kind: typeof StandingsMomentKind.ROUND; eventName: string; roundNumber: number }
+  | { kind: typeof StandingsMomentKind.EVENT; eventName: string; nextEvent?: StandingsNextEvent };
+
+/** One entry's line in a standings email. */
+export interface StandingsLine {
+  /** "1", "T3"; null for an entry with nothing scored yet. */
+  place: string | null;
+  entryName: string;
+  squadName: string;
+  /** The entry's total as the leaderboard shows it, such as "-8"; null with nothing scored. */
+  score: string | null;
+  /** Places gained (positive) or lost since the last standings email; null when there is none to compare with. */
+  movement: number | null;
+  /** Whether a squad the reader owns holds the entry. */
+  isYours: boolean;
+  /** In a season contest, the entry's place and score in the event that just finished, such as "T2, -6". */
+  eventResult?: string;
+}
+
+/** Which of an entry's picks went out in the round: golfers who missed the cut. */
+export interface StandingsCutNews {
+  entryName: string;
+  names: string[];
+}
+
+export interface ContestStandingsEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  moment: StandingsMoment;
+  /** The leaders, at most 10, best first. */
+  top: StandingsLine[];
+  /** The reader's entries placed below the leaders, best first. */
+  yours: StandingsLine[];
+  entryCount: number;
+  /** The reader's picks cut in the round, by entry; empty when none were. */
+  cut: StandingsCutNews[];
+  leaderboardUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -225,6 +283,7 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
   CONTEST_OPENED: ContestOpenedEmailData;
+  CONTEST_STANDINGS: ContestStandingsEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -289,6 +348,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
   CONTEST_OPENED: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_STANDINGS: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -386,6 +446,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestOpenedEmail,
+  },
+  CONTEST_STANDINGS: {
+    category: EmailCategory.LIVE_STANDINGS,
+    notificationClass: NotificationClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestStandingsEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -764,6 +832,109 @@ function renderContestEntryReminderEmail(
     templateKey: 'CONTEST_ENTRY_REMINDER',
     subject: wording.subject,
     preheader: `${wording.closesLabel} ${closesLine}.`,
+    title: wording.title,
+    bodyBlocks,
+    textLines,
+  });
+}
+
+/** What a standings email is called and how it opens, by what it reports on. */
+function standingsWording(data: ContestStandingsEmailData): { subject: string; title: string; lead: string } {
+  const { moment } = data;
+  switch (moment.kind) {
+    case StandingsMomentKind.ROUND:
+      return {
+        subject: `After round ${String(moment.roundNumber)}: ${data.contestName}`,
+        title: `Round ${String(moment.roundNumber)} standings`,
+        lead: `Here's where ${data.contestName} stands after round ${String(moment.roundNumber)} of ${moment.eventName}.`,
+      };
+    case StandingsMomentKind.EVENT:
+      return {
+        subject: `After ${moment.eventName}: ${data.contestName}`,
+        title: `${moment.eventName} results`,
+        lead: `${moment.eventName} is done. Here's where ${data.contestName} stands.`,
+      };
+  }
+}
+
+/** "up 2", "down 1", "no change"; null with nothing to compare with. */
+function describeMovement(movement: number | null): string | null {
+  if (movement === null) return null;
+  if (movement === 0) return 'no change';
+  return movement > 0 ? `up ${String(movement)}` : `down ${String(-movement)}`;
+}
+
+/** "▲2", "▼1", "="; blank with nothing to compare with. */
+function movementMark(movement: number | null): string {
+  if (movement === null) return '';
+  if (movement === 0) return '=';
+  return movement > 0 ? `▲${String(movement)}` : `▼${String(-movement)}`;
+}
+
+function standingsTextLine(line: StandingsLine): string {
+  const movement = describeMovement(line.movement);
+  return [
+    `${line.place ?? '-'}. ${line.entryName} (${line.squadName})${line.isYours ? ', yours' : ''}`,
+    line.score ?? 'no score yet',
+    ...(line.eventResult ? [`this event ${line.eventResult}`] : []),
+    ...(movement ? [movement] : []),
+  ].join(', ');
+}
+
+function standingsTable(lines: StandingsLine[]): string {
+  const cell = `padding:10px 12px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:14px;line-height:1.4;color:${EMAIL_THEME.navy};vertical-align:top;`;
+  const rows = lines.map((line) => `<tr>
+        <td style="${cell}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
+        <td style="${cell}">${line.isYours ? strong(line.entryName) : escapeHtml(line.entryName)}${line.isYours ? ` <span style="color:${EMAIL_THEME.muted};">(yours)</span>` : ''}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(line.eventResult)}` : ''}</span></td>
+        <td style="${cell}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}</td>
+        <td style="${cell}text-align:right;color:${EMAIL_THEME.muted};">${escapeHtml(movementMark(line.movement))}</td>
+      </tr>`).join('');
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">${rows}</table>`;
+}
+
+function renderContestStandingsEmail(
+  data: ContestStandingsEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const wording = standingsWording(data);
+  const { moment } = data;
+  const next = moment.kind === StandingsMomentKind.EVENT ? moment.nextEvent : undefined;
+  const nextRows: Array<[string, string]> = next
+    ? [
+      ['Next event', `${next.name}, ${formatInstant(next.startsAt, context.timeZone)}`],
+      ...(next.picksCloseAt ? ([['Picks close', formatInstant(next.picksCloseAt, context.timeZone)]] as Array<[string, string]>) : []),
+    ]
+    : [];
+  const leadersTitle = data.top.length < data.entryCount ? `Top ${String(data.top.length)} of ${String(data.entryCount)}` : 'Standings';
+  const cutLines = data.cut.map((news) => `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.`);
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.userName)},`),
+    paragraph(escapeHtml(wording.lead)),
+    sectionTitle(leadersTitle),
+    standingsTable(data.top),
+    ...(data.yours.length > 0 ? [sectionTitle(data.yours.length === 1 ? 'Your entry' : 'Your entries'), standingsTable(data.yours)] : []),
+    ...cutLines.map((line) => paragraph(escapeHtml(line))),
+    ...(nextRows.length > 0 ? [detailList(nextRows)] : []),
+    button('Leaderboard', data.leaderboardUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.userName},`,
+    '',
+    wording.lead,
+    '',
+    `${leadersTitle}:`,
+    ...data.top.map(standingsTextLine),
+    ...(data.yours.length > 0 ? ['', `${data.yours.length === 1 ? 'Your entry' : 'Your entries'}:`, ...data.yours.map(standingsTextLine)] : []),
+    ...(cutLines.length > 0 ? ['', ...cutLines] : []),
+    ...(nextRows.length > 0 ? ['', ...nextRows.map(([label, value]) => `${label}: ${value}`)] : []),
+    '',
+    `Leaderboard: ${data.leaderboardUrl}`,
+  ];
+
+  return buildMessage(context, {
+    templateKey: 'CONTEST_STANDINGS',
+    subject: wording.subject,
+    preheader: wording.lead,
     title: wording.title,
     bodyBlocks,
     textLines,

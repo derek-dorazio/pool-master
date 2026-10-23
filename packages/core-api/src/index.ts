@@ -57,7 +57,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createContestNotices, createEntryReminders } from './modules/notifications';
+import { createContestNotices, createEntryReminders, createLiveStandings } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -114,12 +114,10 @@ export function buildApp() {
     sportEvents: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
-    notificationsDue: createEntryReminders(prisma, {
-      email,
-      readConfig: () => appSettings.get(EMAIL_SETTINGS),
-      appBaseUrl,
-      logger: app.log,
-    }),
+    notificationsDue: [
+      createEntryReminders(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
+      createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
+    ],
     logger: app.log,
   });
   const ingestionConfigService = new IngestionConfigService(appSettings, app.log);

@@ -9,6 +9,7 @@ import {
   PrismaContestEntryStandingRepository,
   PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
+  PrismaStandingsEmailPositionRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
@@ -687,6 +688,34 @@ describe('ContestEntryRepository', () => {
 
     expect((await repos().entries.findByContest(contest.id)).map((entry) => entry.id)).toEqual([staying.id]);
     await expect(getPrisma().contestEntryEvent.count({ where: { contestEntryId: leaving.id } })).resolves.toBe(0);
+  });
+});
+
+describe('StandingsEmailPositionRepository (#877)', () => {
+  it('records each entry\'s place in a standings email and reads back only the contest\'s placed entries, the next record replacing the last, without touching the entry\'s update time', async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Standings');
+    const other = await createContest(league.id, event.id, 'Other Standings');
+    const leader = await createEntry(contest.id, squads[0].id, 1, 'Leader');
+    const unscored = await createEntry(contest.id, squads[1].id, 1, 'Unscored');
+    const elsewhere = await createEntry(other.id, squads[0].id, 1, 'Elsewhere');
+    const positions = new PrismaStandingsEmailPositionRepository(getPrisma());
+
+    await expect(positions.findByContest(contest.id)).resolves.toEqual(new Map());
+    await positions.record([
+      { contestEntryId: leader.id, position: 1 },
+      { contestEntryId: unscored.id, position: null },
+      { contestEntryId: elsewhere.id, position: 4 },
+    ]);
+    await expect(positions.findByContest(contest.id)).resolves.toEqual(new Map([[leader.id, 1]]));
+
+    await positions.record([{ contestEntryId: leader.id, position: 2 }, { contestEntryId: unscored.id, position: 1 }]);
+    await expect(positions.findByContest(contest.id)).resolves.toEqual(new Map([[leader.id, 2], [unscored.id, 1]]));
+    await expect(positions.findByContest(other.id)).resolves.toEqual(new Map([[elsewhere.id, 4]]));
+    await positions.record([]);
+    // Entry receipts read the entry's update time; a standings email is not an update to it.
+    const stored = await getPrisma().contestEntry.findUniqueOrThrow({ where: { id: leader.id } });
+    expect(stored.updatedAt).toEqual(leader.updatedAt);
   });
 });
 

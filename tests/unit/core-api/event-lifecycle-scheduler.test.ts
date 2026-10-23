@@ -320,7 +320,7 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
     };
     const notificationsDue = { queueDue: jest.fn(async () => { order.push('notifications'); }) };
     const sweptAt = new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue, logger: fakeLogger(), now: () => sweptAt });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue: [notificationsDue], logger: fakeLogger(), now: () => sweptAt });
 
     await scheduler.runSweep();
 
@@ -328,14 +328,16 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
     expect(order).toEqual(['transition', 'notifications']);
   });
 
-  it('logs a failed notifications step without failing the sweep', async () => {
+  it('logs a failed notifications step without failing the sweep, and still runs the next kind of email', async () => {
     const { sportEvents, rounds } = storeWith([]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), applySportEventStatusTransition: jest.fn() };
     const logger = fakeLogger();
-    const notificationsDue = { queueDue: jest.fn().mockRejectedValue(new Error('outbox down')) };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue, logger });
+    const reminders = { queueDue: jest.fn().mockRejectedValue(new Error('outbox down')) };
+    const standings = { queueDue: jest.fn(async () => undefined) };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, notificationsDue: [reminders, standings], logger });
 
     await expect(scheduler.runSweep()).resolves.toBeUndefined();
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ error: 'outbox down' }), expect.any(String));
+    expect(standings.queueDue).toHaveBeenCalledTimes(1);
   });
 });

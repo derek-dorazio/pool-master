@@ -443,8 +443,16 @@ export class ContestService {
     requesterUserId: string,
     requestedSportEventId?: string,
   ): Promise<ContestLeaderboardModel> {
-    const context = await this.getEntryContext(contestId, requesterUserId, 'read');
-    const { contest } = context;
+    const { contest } = await this.getEntryContext(contestId, requesterUserId, 'read');
+    return this.leaderboardOf(contest, requestedSportEventId);
+  }
+
+  /**
+   * The same leaderboard for a contest already in hand, with no reader to check: what the live
+   * standings emails read (#877), so an email and the page never disagree.
+   */
+  async leaderboardOf(contest: Contest, requestedSportEventId?: string): Promise<ContestLeaderboardModel> {
+    const contestId = contest.id;
     const now = this.now();
     // No event's picks are revealed while the contest takes entries, unless a draw dealt them.
     if (contest.drawnAt === undefined && (contest.status === ContestStatus.DRAFT || contest.status === ContestStatus.OPEN)) {
