@@ -109,7 +109,9 @@ After the first apply, by hand in the AWS console (SES, in the environment's reg
    turn off notification emails, and smoke users at reserved domains are never emailed. AWS
    usually answers within a day.
 3. **Until then**, verify a few tester addresses under Identities, since a sandbox account sends
-   only to verified addresses (200 a day, one a second).
+   only to verified addresses (200 a day, one a second). The task role's policy allows sends to any identity
+   in the account (from this environment's domain only), because a sandbox send is also
+   authorized against the recipient's identity.
 4. **Turn email on** from the app, not Terraform: `/manage/settings` → Email. On QA, fill in
    "Only send to" first (`docs/EMAIL-DELIVERY.md`, *Testing on QA Without Emailing Real People*).
 

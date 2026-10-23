@@ -8,6 +8,11 @@
 # both retries failed at once on the dpkg lock, because `timeout` stops npx but not the
 # apt-get it started under sudo. Retries now wait for that apt-get to finish first.
 #
+# On 2026-10-23 a slow mirror failed four main runs in one day, while fetching fonts and
+# upgrades for libraries the runner image already has. The browser comes from the Actions
+# cache, so the script now installs it alone and asks apt only when `ldd` shows the browser
+# is missing a library it links against.
+#
 # Usage: scripts/ci-install-playwright-chromium.sh [attempts] [seconds-per-attempt] [total-seconds]
 # total-seconds bounds the whole script, waits included; keep it under the CI step's limit.
 set -euo pipefail
@@ -16,6 +21,27 @@ ATTEMPTS="${1:-3}"
 ATTEMPT_SECONDS="${2:-180}"
 TOTAL_SECONDS="${3:-660}"
 DEADLINE=$((SECONDS + TOTAL_SECONDS))
+BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-$HOME/.cache/ms-playwright}"
+
+cd "$(dirname "$0")/../clients/poolmaster"
+
+# True when at least one installed Chromium binary was found and none of them lacks a
+# shared library. No binary found, or an ldd that fails, counts as false, so the full
+# install runs. The output is collected before matching: under pipefail, piping into
+# `grep -q` lets a failing ldd or a SIGPIPE turn a missing library into success.
+browser_libraries_present() {
+  local binaries output
+  binaries=$(find "$BROWSERS_PATH" -maxdepth 3 -type f \( -name chrome -o -name chrome-headless-shell \) 2>/dev/null)
+  [ -n "$binaries" ] || return 1
+  output=$(while read -r BINARY; do ldd "$BINARY" 2>&1 || echo "not found: ldd failed on $BINARY"; done <<< "$binaries")
+  [[ $output != *"not found"* ]]
+}
+
+if timeout --kill-after=15 "$ATTEMPT_SECONDS" npx playwright install chromium && browser_libraries_present; then
+  echo "Playwright Chromium installed; the runner already has its system libraries, so apt is skipped"
+  exit 0
+fi
+echo "::warning::Chromium did not install on its own or is missing system libraries; installing them with apt"
 
 # A stalled mirror otherwise blocks apt indefinitely. Make each connection give up and
 # retry on its own, so a slow mirror still has a chance inside one attempt.
@@ -28,8 +54,6 @@ APT
 apt_busy() {
   pgrep -x apt-get > /dev/null || pgrep -x dpkg > /dev/null
 }
-
-cd "$(dirname "$0")/../clients/poolmaster"
 
 # Seconds kept back from each attempt for timeout's --kill-after, so an attempt never
 # runs past the deadline.

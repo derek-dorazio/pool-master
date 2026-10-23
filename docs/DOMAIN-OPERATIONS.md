@@ -998,6 +998,8 @@ year is over, the trophy and the podium; the medal tiles; the finish matrix; and
 contests, each opening its final leaderboard. A count in the matrix narrows the contests to those
 behind it (a cell to the squad's finishes in that place, Played to every contest it placed in),
 kept in the link as `?squad=…&place=…`.
+Contests › History reads the same list one year at a time (`?year=2025`, the newest year with a
+completed contest by default), each row naming its winner and opening the contest.
 
 ### Squares — `selections`
 
