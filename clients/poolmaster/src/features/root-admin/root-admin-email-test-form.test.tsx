@@ -55,6 +55,17 @@ describe('the Send test email form', () => {
     );
   });
 
+  it('says the email is being sent, not that it failed, while a sender is handing it over', async () => {
+    sendTestEmailMock.mockResolvedValue({ data: { status: 'SENDING', skipReason: null, error: null } });
+    renderForm();
+
+    sendTo('derek@gmail.com');
+
+    const result = await screen.findByTestId('root-admin-email-test-result');
+    expect(result).toHaveTextContent('Being sent. Check the inbox in a minute.');
+    expect(result).not.toHaveTextContent('failed');
+  });
+
   it('refuses something that is not an email address without calling the server', async () => {
     renderForm();
 

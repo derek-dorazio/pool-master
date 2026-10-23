@@ -29,7 +29,14 @@ const ADMIN: User = {
   updatedAt: NOW,
 };
 
-function testService(send: MailDeliveryProvider['send'], now: () => Date = () => NOW) {
+/** Lets the woken sender run between polls, without real waiting. */
+const yieldToSender = () => new Promise<void>((resolve) => { setImmediate(resolve); });
+
+function testService(
+  send: MailDeliveryProvider['send'],
+  now: () => Date = () => NOW,
+  overrides: { sender?: (messages: ReturnType<typeof inMemoryEmailMessages>) => { wake: () => void }; sleep?: () => Promise<void> } = {},
+) {
   const messages = inMemoryEmailMessages(now);
   const readConfig = () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' });
   const transport: MailDeliveryProvider = { providerName: 'ses', send };
@@ -45,8 +52,18 @@ function testService(send: MailDeliveryProvider['send'], now: () => Date = () =>
     now,
   });
   const users = { findById: (id: string) => Promise.resolve(id === ADMIN.id ? ADMIN : null) };
-  return new EmailTestService({ email, sender, messages, users, environment: 'qa', now });
+  return new EmailTestService({
+    email,
+    sender: overrides.sender?.(messages) ?? sender,
+    messages,
+    users,
+    environment: 'qa',
+    now,
+    sleep: overrides.sleep ?? yieldToSender,
+  });
 }
+
+const neverCalled = () => Promise.reject(new Error('this sender should not send'));
 
 describe('the root admin test email', () => {
   it('sends one email to the address, from the app, naming the admin and the environment, and returns it SENT', async () => {
@@ -90,5 +107,31 @@ describe('the root admin test email', () => {
     await service.send('derek@gmail.com', ADMIN.id);
 
     expect(tries).toBe(2);
+  });
+
+  it('returns the email SENDING, not failed, when another sender has claimed it and not finished', async () => {
+    const service = testService(neverCalled, () => NOW, {
+      sender: (messages) => ({
+        wake: () => { messages.rows[0].status = EmailMessageStatus.SENDING; },
+      }),
+    });
+
+    const result = await service.send('derek@gmail.com', ADMIN.id);
+
+    expect(result.status).toBe(EmailMessageStatus.SENDING);
+    expect(result.lastError).toBeUndefined();
+  });
+
+  it('stops waiting after about eight seconds and returns the email still QUEUED when no sender reaches it', async () => {
+    let waits = 0;
+    const service = testService(neverCalled, () => NOW, {
+      sender: () => ({ wake: () => undefined }),
+      sleep: () => { waits++; return Promise.resolve(); },
+    });
+
+    const result = await service.send('derek@gmail.com', ADMIN.id);
+
+    expect(result.status).toBe(EmailMessageStatus.QUEUED);
+    expect(waits).toBe(32);
   });
 });

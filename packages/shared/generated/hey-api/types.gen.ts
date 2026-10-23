@@ -12132,7 +12132,7 @@ export type EmailTestRequest = {
  */
 export type EmailTestResponse = {
     /**
-     * Where the test email stands once the sender has had its try: SENT when the provider took it, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error), or FAILED.
+     * Where the test email stands after a few seconds: SENT when the provider took it, SENDING when a sender is handing it over, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error) or no sender has reached it yet, or FAILED.
      */
     status: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED';
     /**

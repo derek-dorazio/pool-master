@@ -1,6 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { EmailMessageStatus, EmailSkipReason } from '@poolmaster/shared/domain';
+import { z } from 'zod';
+import { EmailMessageStatus, EmailSkipReason, assertNever } from '@poolmaster/shared/domain';
 import { EmailTestRequestSchema } from '@poolmaster/shared/dto';
 import { sendTestEmail, type EmailTestRequest, type EmailTestResponse } from '@/lib/api';
 import { Alert, Button, FormField, Input } from '@/features/shared/ui';
@@ -15,18 +16,34 @@ const SKIP_REASON_TEXT: Record<EmailSkipReason, string> = {
   [EmailSkipReason.OPTED_OUT]: 'Not sent: the address\'s owner turned this kind of email off.',
 };
 
+const emailTestFormSchema = EmailTestRequestSchema.extend({
+  to: z.string().trim().email('Enter an email address.'),
+});
+
 /** What happened to the test email, in the admin's words. */
 function resultText(result: EmailTestResponse): { tone: 'success' | 'warning' | 'danger'; text: string } {
-  if (result.status === EmailMessageStatus.SENT) {
-    return { tone: 'success', text: 'Sent. Check the inbox in a minute.' };
+  const providerSaid = result.error ? ` The email provider said: ${result.error}` : '';
+  switch (result.status) {
+    case EmailMessageStatus.SENT:
+    case EmailMessageStatus.DELIVERED:
+      return { tone: 'success', text: 'Sent. Check the inbox in a minute.' };
+    case EmailMessageStatus.SENDING:
+      return { tone: 'success', text: 'Being sent. Check the inbox in a minute.' };
+    case EmailMessageStatus.QUEUED:
+      return result.error
+        ? { tone: 'danger', text: `The first try failed and it will be tried again.${providerSaid}` }
+        : { tone: 'warning', text: 'Waiting to be sent. Check the inbox in a few minutes.' };
+    case EmailMessageStatus.SKIPPED:
+      return { tone: 'warning', text: result.skipReason ? SKIP_REASON_TEXT[result.skipReason] : 'Not sent.' };
+    case EmailMessageStatus.BOUNCED:
+      return { tone: 'danger', text: 'Not delivered: the recipient\'s mail server refused it.' };
+    case EmailMessageStatus.COMPLAINED:
+      return { tone: 'warning', text: 'Delivered, but the recipient marked it as spam.' };
+    case EmailMessageStatus.FAILED:
+      return { tone: 'danger', text: `Not sent.${providerSaid}` };
+    default:
+      return assertNever(result.status, 'email status');
   }
-  if (result.status === EmailMessageStatus.SKIPPED) {
-    return { tone: 'warning', text: result.skipReason ? SKIP_REASON_TEXT[result.skipReason] : 'Not sent.' };
-  }
-  const error = result.error ? ` The email provider said: ${result.error}` : '';
-  return result.status === EmailMessageStatus.FAILED
-    ? { tone: 'danger', text: `Not sent.${error}` }
-    : { tone: 'danger', text: `The first try failed and it will be tried again.${error}` };
 }
 
 /**
@@ -36,7 +53,7 @@ function resultText(result: EmailTestResponse): { tone: 'success' | 'warning' | 
  */
 export function EmailTestForm() {
   const form = useForm<EmailTestRequest>({
-    resolver: zodResolver(EmailTestRequestSchema),
+    resolver: zodResolver(emailTestFormSchema),
     defaultValues: { to: '' },
   });
 

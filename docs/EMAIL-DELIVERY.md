@@ -213,10 +213,15 @@ The Email card of `/manage/settings` has **Send a test email to**: a root admin 
 and presses Send. `POST /api/v1/platform/email/test` records one `EMAIL_TEST` email (a fixed
 subject and body naming the environment and the admin; category Root admin, no settings switch)
 and sends it like every other: the overall switch, "Only send to" and the suppression list all
-apply, and it goes through the outbox and the configured provider. The request waits for the
-sender's first try, so the page says what happened: sent, not sent and why, or the provider's
-error (an address SES won't take in the sandbox, for example). It checks the setup, not the
-templates; the **Send email previews** workflow is for those.
+apply, and it goes through the outbox and the configured provider. The request wakes the sender
+and waits up to about eight seconds for this email's first try (never for the rest of the queue),
+so the page says what happened: sent, being sent (another task claimed it), not sent and why, or
+the provider's error (an address SES won't take in the sandbox, for example). It checks the
+setup, not the templates; the **Send email previews** workflow is for those.
+
+Each core-api task re-reads the settings every 30 seconds, so a test pressed right after saving
+can still run on the old settings on another task; the skip reason shows it. Wait half a minute
+after a save, or press again.
 
 ## Testing on QA Without Emailing Real People
 

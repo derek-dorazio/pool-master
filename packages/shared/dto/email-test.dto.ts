@@ -4,18 +4,20 @@
  */
 import { z } from 'zod';
 import { EmailMessageStatus, EmailSkipReason } from '../domain/enums';
+import { EmailInputSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
 export const EmailTestRequestSchema = z.object({
-  to: z.string().trim().email('Enter an email address.').describe('The one address the test email goes to.'),
+  to: EmailInputSchema.describe('The one address the test email goes to.'),
 }).describe('Where to send a test email.');
 export type EmailTestRequest = z.infer<typeof EmailTestRequestSchema>;
 
 export const EmailTestResponseSchema = z.object({
   status: z.nativeEnum(EmailMessageStatus).describe(
-    'Where the test email stands once the sender has had its try: SENT when the provider took it, '
-    + 'SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first '
-    + 'try failed and a retry is due (see error), or FAILED.',
+    'Where the test email stands after a few seconds: SENT when the provider took it, SENDING when '
+    + 'a sender is handing it over, SKIPPED when the settings or the address stopped it (see skipReason), '
+    + 'QUEUED when the first try failed and a retry is due (see error) or no sender has reached it yet, '
+    + 'or FAILED.',
   ),
   skipReason: z.nativeEnum(EmailSkipReason).nullable().describe(
     'Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, '
