@@ -259,7 +259,7 @@ league ever gets slow, cache by its latest `settledAt`.
 
 ## 7. Service classes
 
-The shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`, `C`, `D`) in `packages/shared/domain`
+The shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`; `C` and `D` join with their first feature) in `packages/shared/domain`
 serves views and emails, using the email catalog's letters (`plans/email-notifications.md`,
 *Class*): Essential every league, A free and up, B from Pro, C from Premium, D Platinum. The
 upper plans differ mainly through the levers in `plans/monetization-strategy.md`, *The levers*.

@@ -783,16 +783,12 @@ export function isOptionalEmailCategory(category: EmailCategory): category is Op
  * names: the monetization work maps each class to its plans. Nothing is gated on it yet.
  */
 export const ServiceClass = {
-  /** Account, security and membership, and contest results. Every league gets it, on every plan, always. */
+  /** Account, security and membership. Every league gets it, on every plan, always. */
   ESSENTIAL: 'ESSENTIAL',
   /** The basics, on the free plan too: a contest opening, receipts, final results. */
   A: 'A',
-  /** Paid plans from Pro: reminders, nudges, live standings, cups and the championship. */
+  /** Paid plans from Pro (plans/season-cups.md §7, plans/email-notifications.md *Class*). */
   B: 'B',
-  /** From Premium. */
-  C: 'C',
-  /** Platinum: the all-time summary and the record book. */
-  D: 'D',
 } as const;
 export type ServiceClass = (typeof ServiceClass)[keyof typeof ServiceClass];
 

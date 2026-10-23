@@ -564,8 +564,8 @@ describe('the email template registry', () => {
     });
   });
 
-  it('gives every template a notification class: account and membership email essential, the contest opening and receipts on the free class, reminders, the live email and live standings on the first paid class', () => {
-    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.notificationClass]))).toEqual({
+  it('gives every template a service class: account and membership email essential, the contest opening and receipts on the free class, reminders, the live email and live standings on the first paid class', () => {
+    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.serviceClass]))).toEqual({
       LEAGUE_MEMBER_INVITE: ServiceClass.ESSENTIAL,
       LEAGUE_JOIN_SUCCESS: ServiceClass.ESSENTIAL,
       CONTEST_ENTRY_COMPLETED: ServiceClass.A,

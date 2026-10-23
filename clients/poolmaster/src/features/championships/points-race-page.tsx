@@ -67,9 +67,9 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
       />
       {mine ? (
         <MetricTile
-          helperText={mine.position === 1 && leaders.length
-            ? 'In the lead'
-            : `${formatCupPoints(leaderPoints - mine.points)} behind`}
+          helperText={!leaders.length
+            ? undefined
+            : mine.position === 1 ? 'In the lead' : `${formatCupPoints(leaderPoints - mine.points)} behind`}
           label="You"
           value={formatPlace(mine)}
         />

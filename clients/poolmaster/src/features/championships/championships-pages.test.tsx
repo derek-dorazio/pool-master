@@ -244,6 +244,17 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-race-line-team-2')).toHaveAttribute('stroke-width', '2');
   });
 
+  it('gives the viewer\'s place no gap to the leader while nothing has counted, rather than "0 behind"', async () => {
+    primeViewer([NHL_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-nhl');
+
+    const race = await screen.findByTestId('points-race');
+    expect(race).toHaveTextContent('LeaderNobody yet');
+    expect(race).toHaveTextContent('You1stNext to count');
+    expect(race).not.toHaveTextContent('behind');
+  });
+
   it('waits to draw the race until a contest has counted', async () => {
     primeViewer([NHL_CUP]);
 
