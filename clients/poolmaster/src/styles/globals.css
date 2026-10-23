@@ -25,6 +25,8 @@
     --color-gold-500: #d79e00;
     --color-gold-600: #a87c00;
     --color-gold-700: #745600;
+    --color-bronze-100: #e9c9a0;
+    --color-bronze-700: #5e3b0f;
     --color-red-50: #fbe8ea;
     --color-red-100: #f3bec3;
     --color-red-200: #e28c96;
@@ -103,6 +105,13 @@
     --chart-series-4: var(--color-navy-300);
     --chart-series-5: var(--color-navy-200);
     --chart-grid: rgba(11, 30, 63, 0.1);
+    /* Podium steps, 1st to 3rd: gold, silver, bronze, each with the text that reads on it. */
+    --podium-1-surface: var(--color-gold-400);
+    --podium-1-text: var(--color-navy-600);
+    --podium-2-surface: var(--color-navy-100);
+    --podium-2-text: var(--color-navy-500);
+    --podium-3-surface: var(--color-bronze-100);
+    --podium-3-text: var(--color-bronze-700);
 
     --background: 60 13% 95%;
     --foreground: 218 70% 15%;

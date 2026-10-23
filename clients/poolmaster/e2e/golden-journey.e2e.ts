@@ -1185,6 +1185,14 @@ test('act 6: completing the event settles the contest and freezes its standing a
     await expect(page.getByTestId('cup-race-chart')).toBeVisible();
   });
 
+  await test.step('the settled contest counts in this year\'s league championship, which Championships opens on', async () => {
+    // The championship counts a contest in the year it went final, which is now.
+    await page.goto(`/league/${run.leagueCode}/championships`);
+    await expect(page.getByTestId('championship')).toBeVisible();
+    await expect(page.getByTestId('championship-progress')).toHaveText(/^[1-9]\d* contests? final$/);
+    await expect(page.getByTestId('championship-standings')).toBeVisible();
+  });
+
   await test.step('a late score correction moves the golfer and leaves the settled standing alone', async () => {
     const counting = bestOf(settled, settled.entry.countingIds);
     const scoreBefore = scoreOn(settled, counting);

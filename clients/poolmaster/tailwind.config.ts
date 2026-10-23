@@ -53,6 +53,11 @@ const config: Config = {
           5: "var(--chart-series-5)",
           grid: "var(--chart-grid)",
         },
+        podium: {
+          1: { DEFAULT: "var(--podium-1-surface)", foreground: "var(--podium-1-text)" },
+          2: { DEFAULT: "var(--podium-2-surface)", foreground: "var(--podium-2-text)" },
+          3: { DEFAULT: "var(--podium-3-surface)", foreground: "var(--podium-3-text)" },
+        },
         paper: "var(--color-paper)",
         ink: "var(--color-ink)",
         surface: {

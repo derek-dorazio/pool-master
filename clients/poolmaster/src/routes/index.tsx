@@ -7,6 +7,7 @@ import { MyAccountPage } from '@/features/account/my-account-page';
 import { UserPage } from '@/features/account/user-page';
 import { AppShell } from '@/features/app-shell/app-shell';
 import { NotFoundPage } from '@/features/app-shell/not-found-page';
+import { ChampionshipPage } from '@/features/championships/championship-page';
 import { ChampionshipsLayout, ChampionshipsRedirect } from '@/features/championships/championships-layout';
 import { CupSquadPointsPage } from '@/features/championships/cup-squad-points-page';
 import { PointsRacePage } from '@/features/championships/points-race-page';
@@ -255,9 +256,8 @@ export const router = createBrowserRouter([
             element: <ChampionshipsLayout />,
             children: [
               {
-                // The Championship tab (#863 slice 2) becomes the landing tab; until then, the Trophy case.
                 index: true,
-                element: <Navigate replace to="trophies" />,
+                element: <ChampionshipPage />,
               },
               {
                 path: 'trophies',
