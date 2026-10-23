@@ -638,6 +638,30 @@ describe('LiveStandings.queueDue', () => {
     expect(toAna.textBody).toContain('Make picks for next week: ');
   });
 
+  it('names as a season contest\'s next event the one still to play, passing over an event that finished but has not settled', async () => {
+    const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
+    const open = world.addSportEvent({ name: 'The Open', startDate: new Date('2026-07-16T06:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const contest = world.addContest(league.id, {
+      name: 'Majors Pool',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.ROSTER,
+      selectionType: SelectionType.TIERED,
+      sportEventIds: [masters.id, pga.id, open.id],
+    });
+    const ana = member(league.id, 'Ana');
+    const settledAt = new Date('2026-04-13T00:00:00.000Z');
+    await settle(contest.id, masters.id, 'e1', settledAt);
+    boards.set(contest.id, [row('e1', ana.squad, 1, -9)]);
+
+    await standings().queueDue(after(settledAt, 31));
+
+    const [toAna] = emailsTo(ana.user.id);
+    expect(toAna.textBody).toContain('Next event: The Open');
+    expect(toAna.textBody).not.toContain('PGA Championship');
+  });
+
   it('logs a contest whose standings fail and still sends the others', async () => {
     const { league, masters, contest } = liveMasters();
     const ana = member(league.id, 'Ana');
