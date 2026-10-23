@@ -85,24 +85,18 @@ host has no inbound rules and no SSH key; Session Manager authorises each sessio
 operator's own IAM credentials, and the database security group admits only that host and the
 ECS tasks.
 
-To query from a laptop:
-
-1. Install the AWS CLI's Session Manager plugin: `brew install --cask session-manager-plugin`.
-2. Run `scripts/db-tunnel.sh qa` and leave it open. It finds the host and the RDS endpoint and
-   forwards `localhost:15432` to PostgreSQL.
-3. Point a database client at `localhost:15432`, database `poolmaster`, with `sslmode=require`
-   (RDS requires TLS, and `verify-full` fails the hostname check through the tunnel). Use the
-   read-only role below, not the master user.
+`docs/DATABASE-ACCESS.md` has the operator steps: the tunnel (`scripts/db-tunnel.sh`), the psql
+aliases and a GUI client.
 
 The read-only role is created once per environment, as the master user, through the tunnel. Set
 its password with psql's `\password`, which sends it already hashed, so it never lands in shell
 history or the server log. Keep it in a password manager and never commit it:
 
 ```sql
-CREATE ROLE poolmaster_readonly LOGIN;
-GRANT pg_read_all_data TO poolmaster_readonly;
-ALTER ROLE poolmaster_readonly SET default_transaction_read_only = on;
-\password poolmaster_readonly
+CREATE ROLE <read-only user> LOGIN;
+GRANT pg_read_all_data TO <read-only user>;
+ALTER ROLE <read-only user> SET default_transaction_read_only = on;
+\password <read-only user>
 ```
 
 `pg_read_all_data` grants reads only, and covers tables that later migrations create, so the
