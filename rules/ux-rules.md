@@ -280,13 +280,17 @@ administration area (root admin included), reusing the same shared components.
     a second-chance bracket), never for its own sake. A league starts on the
     format whose default sorts first. The seeded-template integration test
     checks all of it. The same names and descriptions are the contest types
-    menu (#803): the public How to Play page shows each sport's formats, and a
-    league's Contest types page shows every sport league's tiles, with
-    "Create this contest" links for its commissioners. Both read the
-    templates, so a new template or sport shows up there with no copy change;
-    the only hand-written copy is one line per sport (`SPORT_BLURBS`). That
+    menu (#803): the public How to Play page shows each way to play once, as an
+    illustrated card, with chips that narrow it to one sport and show that
+    sport's picture, line and default templates (#878); a league's Contest
+    types page shows every sport league's tiles, with "Create this contest"
+    links for its commissioners. Both read the templates, so a new template or
+    sport shows up there with no copy change. The hand-written parts are
+    records the typecheck enforces: each sport's picture in
+    `illustrations.tsx`, each way to play's picture there and its guide in
+    `FORMAT_GUIDES`, and one line per sport (`SPORT_BLURBS`). That
     line names the sport's leagues and formats, and nothing fails when it falls
     behind, so a slice that adds a sport, a sport league or a contest template
     rewrites its sport's line in the same PR and reads both pages for that
-    sport before review: every league and format it added has its tile, and
-    the line still describes what the tiles offer.
+    sport before review: every league and format it added appears, and the
+    line still describes what the sport offers.

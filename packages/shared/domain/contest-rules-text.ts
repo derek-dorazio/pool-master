@@ -30,7 +30,7 @@ export function formatDollars(value: number) {
 const SELECTION_TYPE_NAMES: Record<SelectionType, string> = {
   TIERED: 'Tiered',
   BUDGET_PICK: 'Budget',
-  RANDOM_DRAW: 'Random draw',
+  RANDOM_DRAW: 'Quick pick',
   PICK_EM: 'Pick’em',
   BRACKET: 'Bracket',
   SURVIVOR: 'Survivor',

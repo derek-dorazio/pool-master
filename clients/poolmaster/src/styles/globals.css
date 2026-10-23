@@ -140,6 +140,32 @@
     --duration-fast: 120ms;
     --duration-base: 200ms;
     --duration-slow: 320ms;
+    /* How to Play illustrations (#878): each sport's scene and each way to play's sheet. */
+    --illustration-ink: #0c2341;
+    --illustration-paper: #ffffff;
+    --illustration-paper-ink: #0c2341;
+    --illustration-gold: #f5b800;
+    --illustration-gold-ink: #0c2341;
+    --illustration-sky: #dbe7f3;
+    --illustration-grass: #5b9e57;
+    --illustration-grass-dark: #4a8a47;
+    --illustration-dirt: #c99a6b;
+    --illustration-sand: #efe0c6;
+    --illustration-red: #c8323c;
+    --illustration-orange: #e07a2e;
+    --illustration-ice: #e9f3fa;
+    --illustration-court: #3f6fa8;
+    --illustration-brown: #7a4a2a;
+    --illustration-asphalt: #3a3f47;
+    --illustration-road: #555a63;
+    --illustration-puck: #1d1f24;
+    --illustration-puck-top: #3a3d44;
+    --illustration-tennis-ball: #d4e157;
+    --illustration-tint: #eef0f4;
+    --illustration-chip: #e6e6df;
+    --illustration-card: #ffffff;
+    --illustration-line: rgba(12, 35, 65, 0.16);
+    --illustration-muted: #66665f;
   }
 
   .dark {
@@ -162,6 +188,20 @@
     --border: 0 0% 100% / 0.12;
     --input: 0 0% 100% / 0.12;
     --ring: 45 100% 48%;
+    --illustration-ink: #e9e7dc;
+    --illustration-paper: #f3f3ee;
+    --illustration-sky: #12305a;
+    --illustration-grass: #3f7f3c;
+    --illustration-grass-dark: #356c33;
+    --illustration-dirt: #8e6a48;
+    --illustration-sand: #2a3550;
+    --illustration-ice: #1a3a5e;
+    --illustration-court: #2c5280;
+    --illustration-tint: #12294d;
+    --illustration-chip: #16305a;
+    --illustration-card: #0c2341;
+    --illustration-line: rgba(255, 255, 255, 0.14);
+    --illustration-muted: #c2c2b6;
   }
 }
 

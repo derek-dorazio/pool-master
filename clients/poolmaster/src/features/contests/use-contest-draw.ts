@@ -16,7 +16,7 @@ export const CONTEST_DRAW_CODE_MESSAGES: ErrorCodeMessages = {
   CONTEST_DRAW_NOT_OPEN: 'The draw can only run while the contest is open for entries.',
   CONTEST_DRAW_NO_ENTRIES: 'No one has entered yet. The draw needs at least one entry to deal to.',
   CONTEST_EVENT_ALREADY_STARTED: 'The event has already started, so it’s too late to run the draw.',
-  CONTEST_NOT_RANDOM_DRAW: 'This contest isn’t a random draw, so there is no draw to run.',
+  CONTEST_NOT_RANDOM_DRAW: 'This contest isn’t a quick pick, so there is no draw to run.',
 };
 
 /**
