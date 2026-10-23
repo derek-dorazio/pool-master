@@ -290,8 +290,9 @@ matters.
    can sort them. The same for DMARC reports.
 5. **How does Derek query the prod database?** *Recommendation:* no public endpoint on prod. Use
    an SSM port-forwarding tunnel (no open port, signed in with Derek's AWS login) and a separate
-   read-only database user for the IDE, so a stray query cannot change data. Fits the IDE setup
-   instructions being written in another thread.
+   read-only database user for the IDE, so a stray query cannot change data. PR #920 adds the
+   SSM host and `scripts/db-tunnel.sh` for QA; prod reuses them (P1 adds the host to prod, P4's
+   runbook points at the tunnel) and adds the read-only user.
 6. **What must exist before strangers sign up?** The app has no Terms of Service or Privacy
    Policy page, and AWS's SES review and app stores tend to ask for one. *Recommendation:* soft
    launch with Derek's own leagues first; add short Terms and Privacy pages (a separate ticket)
