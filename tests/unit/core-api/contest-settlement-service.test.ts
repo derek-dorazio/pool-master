@@ -105,9 +105,23 @@ function world({
   ];
   const eventStandings: ContestEntryEventStandingResult[] = [];
   const standings: ContestEntryStandingResult[] = [];
+  // What the championship was handed at each recording, with the places frozen by then.
+  const recorded: Array<{ contestId: string; settledAt: Date; positions: Array<number | null | undefined>; statusThen: ContestStatus }> = [];
+  const championship = {
+    failNext: false,
+    recordContest: async (recording: Contest, settledAt: Date) => {
+      if (championship.failNext) {
+        championship.failNext = false;
+        throw new Error('championship write failed');
+      }
+      recorded.push({ contestId: recording.id, settledAt, positions: standings.map((row) => row.position), statusThen: contest.status });
+      return standings.length;
+    },
+  };
 
   const service = new ContestSettlementService({
     squares: fakeSquaresRepo(),
+    championship,
     sportEvents: fakeSportEventRepo({
       findById: mockFn<SportEventRepository['findById']>(async (id) => events.get(id) ?? null),
       findByIds: mockFn<SportEventRepository['findByIds']>(async (ids) => ids.flatMap((id) => events.get(id) ?? [])),
@@ -184,6 +198,8 @@ function world({
     eventStandings,
     standings,
     entries,
+    recorded,
+    championship,
     contest: () => contest,
     complete: (sportEventId: string) => {
       const event = events.get(sportEventId);
@@ -227,6 +243,34 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
       .toEqual([['entry-b', -9, 1, 2], ['entry-a', -4, 2, 2]]);
     expect(w.contest().status).toBe(ContestStatus.COMPLETED);
     expect(summary).toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });
+  });
+
+  it('hands the contest to the league championship as it goes final, after its places are frozen and before it is COMPLETED', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    expect(w.recorded).toEqual([]);
+    w.complete(PGA);
+
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+
+    expect(w.recorded).toEqual([{ contestId: 'majors', settledAt: T, positions: [1, 2], statusThen: ContestStatus.ACTIVE }]);
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+  });
+
+  it('leaves the contest ACTIVE when its championship finishes cannot be written, so settling the event again completes it', async () => {
+    const w = world();
+    w.complete(MASTERS);
+    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
+    w.complete(PGA);
+    w.championship.failNext = true;
+
+    await expect(w.service.settleFinishedSportEvent(PGA, { completedAt: T })).rejects.toThrow('championship write failed');
+    expect(w.contest().status).toBe(ContestStatus.ACTIVE);
+
+    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
+    expect(w.contest().status).toBe(ContestStatus.COMPLETED);
+    expect(w.recorded.map((row) => row.contestId)).toEqual(['majors']);
   });
 
   it('does not rewrite an event\'s frozen standings when that event is settled again while the contest is still live', async () => {

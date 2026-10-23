@@ -184,6 +184,7 @@ Shown By Its Name*.
 | `ContestEntryEventStanding` | event result | An entry's result in one event, frozen when that event settles | `ContestEntryStanding`, the contest total |
 | `ContestEntryStanding` | standings, final result | An entry's contest total (the sum of its event results), frozen when the contest settles | `SportEventParticipantStanding`, a field member's position in the event |
 | `Cup` | cup, "2026 PGA Tour Cup", points race | One sports league's season-long points race in a league (#841): its standings are worked out from the frozen places of the league's contests of that season and sports league | The league championship, which counts every contest of a calendar year |
+| `LeagueYearFinish` | championship, "2026 Derek's Pool Cup", league championship | One squad's finish in one settled contest for the league championship (#863), written once at settlement with the points it earned then; the championship year is the calendar year the contest went final, US Eastern | A sports league cup, which counts one season of one sports league and is worked out on read |
 
 ### Words that mean more than one thing
 

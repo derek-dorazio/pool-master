@@ -118,7 +118,7 @@ function setup(options: { rules?: (configurationId: string) => ParticipantContes
     now: () => now,
   });
   const contestService = new ContestService(deps);
-  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo() });
+  const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
   return {
     world, games, contest, sportEvent, viewer, deps, contestService, settlement,

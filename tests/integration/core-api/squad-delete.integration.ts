@@ -40,7 +40,7 @@ async function seedLeagueWithContestHistory() {
 
   const league = await prisma.league.create({
     data: {
-      leagueCode: `DEL${suffix.toUpperCase()}`,
+      cupName: 'Test Cup', leagueCode: `DEL${suffix.toUpperCase()}`,
       name: `Delete Team League ${suffix}`,
       iconKey: 'TROPHY',
     },

@@ -28,6 +28,7 @@ import { createSportEventParticipantService, createSportEventTierService } from 
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
+import { createChampionshipService } from '../championship/wiring';
 
 /** The bracket, pick'em and survivor reads, plus the batched match read the season leaderboards take (#762). */
 function createContestLeaderboardReadDeps(
@@ -80,6 +81,7 @@ export function createContestSettlementService(
     standings: new PrismaContestEntryStandingRepository(prisma),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
+    championship: createChampionshipService(prisma, logger),
     logger,
   });
 }

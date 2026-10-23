@@ -949,6 +949,25 @@ and share a place when equal on all three. The pure rules are `@poolmaster/share
 | Read one cup | `member` | `getCup`, `GET /leagues/:id/cups/:cupId`; 404 `CUP_NOT_FOUND` for another league's cup |
 | Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
 
+### League championship — `championship`
+
+A league's championship across every sport (#863, `plans/season-cups.md`): the 2026 Derek's Pool
+Cup, named by `League.cupName` ("<league name> Cup" at creation). A contest counts in the
+calendar year it went final, in US Eastern, unless it is `NOT_COUNTED`; a contest nobody placed
+in counts for nothing. Unlike a cup it is stored: as a contest goes final, settlement calls
+`ChampionshipService.recordContest` before completing it, which writes a `LeagueYearFinish` per
+squad from its best entry (place, tie, ranked field, the single event's series, selection type,
+weight, and points on the league's table at that moment). A row is written once; settling again
+writes nothing, and a later table or weight change never shifts a past year. If the write fails
+the contest stays unsettled, to be settled again. A year freezes itself: once it is over no
+contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pure rules are
+`@poolmaster/shared/domain/championship.ts`.
+
+| Operation | Role | Notes |
+|---|---|---|
+| List the championship's years | `member` | `listChampionshipYears`, `GET /leagues/:id/championship`: each year with a counted contest, newest first, with `isOver` and its `leaders` (the squads in 1st: champions once the year is over) |
+| Read a championship year | `member` | `getChampionship`, `GET /leagues/:id/championship/:year`: standings (every active squad, at 0 until it places; an inactive squad once it has placed) with each squad's finish matrix row (1st to 10th), podiums, top tens and contests played; the medal tiles (`MOST_FIRSTS`, `MOST_SECONDS`, `MOST_THIRDS`, `MOST_PODIUMS`, `MOST_TOP_TENS`, `MOST_PLAYED`, ties naming each); `contestsCounted`, and for the current year `contestsToGo` (open and live counted contests) |
+
 ### Squares — `selections`
 
 A squares contest (#711, `plans/super-bowl-squares.md`) is a 10x10 grid on one game of one event.

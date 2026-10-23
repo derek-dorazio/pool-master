@@ -75,6 +75,8 @@ export interface League extends DomainEntity {
   description?: string | null;
   isActive: boolean;
   iconKey: LeagueIconKey;
+  /** The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". */
+  cupName: string;
 }
 
 /** User membership within a league. */
@@ -283,6 +285,29 @@ export interface Cup {
   seasonYear: number;
   sportLeagueId: string;
   createdAt: Date;
+}
+
+/**
+ * One squad's finish in one settled contest, for the league championship (#863), written once at
+ * settlement. `year` is the calendar year the contest went final in, US Eastern.
+ */
+export interface LeagueYearFinish {
+  leagueId: string;
+  year: number;
+  squadId: string;
+  contestId: string;
+  /** The squad's best entry's place, 1 best. */
+  place: number;
+  /** Entries sharing the place, the squad's own included. */
+  tiedCount: number;
+  rankedEntryCount: number;
+  /** The series of a single-event contest (the Masters); null for a contest of several events. */
+  eventSeriesId: string | null;
+  selectionType: SelectionType;
+  weight: CupWeight;
+  /** Tenths of a point. */
+  points: number;
+  settledAt: Date;
 }
 
 /** Tier definition used for tiered contest-selection modes. */

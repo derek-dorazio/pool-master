@@ -33,7 +33,7 @@ async function seedLeagueWithEntry() {
   const suffix = randomUUID().slice(0, 8);
   const commissioner = await createTestUser({ firstName: 'Lock', lastName: `Commish${suffix}` });
   const league = await prisma.league.create({
-    data: { leagueCode: `LCK${suffix.toUpperCase()}`, name: `Lock League ${suffix}`, iconKey: 'TROPHY', isActive: false },
+    data: { cupName: 'Test Cup', leagueCode: `LCK${suffix.toUpperCase()}`, name: `Lock League ${suffix}`, iconKey: 'TROPHY', isActive: false },
   });
   await prisma.leagueMembership.create({
     data: { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },

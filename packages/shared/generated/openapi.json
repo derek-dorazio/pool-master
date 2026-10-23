@@ -35636,6 +35636,1552 @@
         "additionalProperties": false,
         "description": "One squad's cup points."
       },
+      "ChampionshipSquadDto": {
+        "type": "object",
+        "properties": {
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad's current name."
+          },
+          "squadIconKey": {
+            "type": "string",
+            "enum": [
+              "CAPTAIN_SMILE_SUNSET",
+              "CAPTAIN_SMILE_FIELD",
+              "CAPTAIN_SMILE_OCEAN",
+              "CAPTAIN_SMILE_MIDNIGHT",
+              "CAPTAIN_SMILE_CANDY",
+              "CAPTAIN_WINK_SUNSET",
+              "CAPTAIN_WINK_FIELD",
+              "CAPTAIN_WINK_OCEAN",
+              "CAPTAIN_WINK_MIDNIGHT",
+              "CAPTAIN_WINK_CANDY",
+              "CHAMPION_BEARD_SUNSET",
+              "CHAMPION_BEARD_FIELD",
+              "CHAMPION_BEARD_OCEAN",
+              "CHAMPION_BEARD_MIDNIGHT",
+              "CHAMPION_BEARD_CANDY",
+              "MAVERICK_MASK_SUNSET",
+              "MAVERICK_MASK_FIELD",
+              "MAVERICK_MASK_OCEAN",
+              "MAVERICK_MASK_MIDNIGHT",
+              "MAVERICK_MASK_CANDY",
+              "STARFACE_SUNSET",
+              "STARFACE_FIELD",
+              "STARFACE_OCEAN",
+              "STARFACE_MIDNIGHT",
+              "STARFACE_CANDY",
+              "HELMET_STRIPE_SUNSET",
+              "HELMET_STRIPE_FIELD",
+              "HELMET_STRIPE_OCEAN",
+              "HELMET_STRIPE_MIDNIGHT",
+              "HELMET_STRIPE_CANDY",
+              "HELMET_BOLT_SUNSET",
+              "HELMET_BOLT_FIELD",
+              "HELMET_BOLT_OCEAN",
+              "HELMET_BOLT_MIDNIGHT",
+              "HELMET_BOLT_CANDY",
+              "HELMET_HORN_SUNSET",
+              "HELMET_HORN_FIELD",
+              "HELMET_HORN_OCEAN",
+              "HELMET_HORN_MIDNIGHT",
+              "HELMET_HORN_CANDY",
+              "HELMET_WING_SUNSET",
+              "HELMET_WING_FIELD",
+              "HELMET_WING_OCEAN",
+              "HELMET_WING_MIDNIGHT",
+              "HELMET_WING_CANDY",
+              "HELMET_GRID_SUNSET",
+              "HELMET_GRID_FIELD",
+              "HELMET_GRID_OCEAN",
+              "HELMET_GRID_MIDNIGHT",
+              "HELMET_GRID_CANDY",
+              "GOLF_BAG_SUNSET",
+              "GOLF_BAG_FIELD",
+              "GOLF_BAG_OCEAN",
+              "GOLF_BAG_MIDNIGHT",
+              "GOLF_BAG_CANDY",
+              "WHISTLE_BADGE_SUNSET",
+              "WHISTLE_BADGE_FIELD",
+              "WHISTLE_BADGE_OCEAN",
+              "WHISTLE_BADGE_MIDNIGHT",
+              "WHISTLE_BADGE_CANDY",
+              "STOPWATCH_BADGE_SUNSET",
+              "STOPWATCH_BADGE_FIELD",
+              "STOPWATCH_BADGE_OCEAN",
+              "STOPWATCH_BADGE_MIDNIGHT",
+              "STOPWATCH_BADGE_CANDY",
+              "MEGAPHONE_SUNSET",
+              "MEGAPHONE_FIELD",
+              "MEGAPHONE_OCEAN",
+              "MEGAPHONE_MIDNIGHT",
+              "MEGAPHONE_CANDY",
+              "FOAM_FINGER_SUNSET",
+              "FOAM_FINGER_FIELD",
+              "FOAM_FINGER_OCEAN",
+              "FOAM_FINGER_MIDNIGHT",
+              "FOAM_FINGER_CANDY",
+              "BULL_HEAD_SUNSET",
+              "BULL_HEAD_FIELD",
+              "BULL_HEAD_OCEAN",
+              "BULL_HEAD_MIDNIGHT",
+              "BULL_HEAD_CANDY",
+              "LUCKY_DUCK_SUNSET",
+              "LUCKY_DUCK_FIELD",
+              "LUCKY_DUCK_OCEAN",
+              "LUCKY_DUCK_MIDNIGHT",
+              "LUCKY_DUCK_CANDY",
+              "TURBO_TURTLE_SUNSET",
+              "TURBO_TURTLE_FIELD",
+              "TURBO_TURTLE_OCEAN",
+              "TURBO_TURTLE_MIDNIGHT",
+              "TURBO_TURTLE_CANDY",
+              "FIRE_PIZZA_SUNSET",
+              "FIRE_PIZZA_FIELD",
+              "FIRE_PIZZA_OCEAN",
+              "FIRE_PIZZA_MIDNIGHT",
+              "FIRE_PIZZA_CANDY",
+              "BANANA_BAT_SUNSET",
+              "BANANA_BAT_FIELD",
+              "BANANA_BAT_OCEAN",
+              "BANANA_BAT_MIDNIGHT",
+              "BANANA_BAT_CANDY"
+            ],
+            "description": "The squad's built-in team icon."
+          }
+        },
+        "required": [
+          "squadId",
+          "squadName",
+          "squadIconKey"
+        ],
+        "additionalProperties": false,
+        "description": "A squad named on the championship: a leader, a champion or a tile holder."
+      },
+      "ChampionshipStandingRowDto": {
+        "type": "object",
+        "properties": {
+          "squadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "squadName": {
+            "type": "string",
+            "description": "The squad's current name."
+          },
+          "squadIconKey": {
+            "type": "string",
+            "enum": [
+              "CAPTAIN_SMILE_SUNSET",
+              "CAPTAIN_SMILE_FIELD",
+              "CAPTAIN_SMILE_OCEAN",
+              "CAPTAIN_SMILE_MIDNIGHT",
+              "CAPTAIN_SMILE_CANDY",
+              "CAPTAIN_WINK_SUNSET",
+              "CAPTAIN_WINK_FIELD",
+              "CAPTAIN_WINK_OCEAN",
+              "CAPTAIN_WINK_MIDNIGHT",
+              "CAPTAIN_WINK_CANDY",
+              "CHAMPION_BEARD_SUNSET",
+              "CHAMPION_BEARD_FIELD",
+              "CHAMPION_BEARD_OCEAN",
+              "CHAMPION_BEARD_MIDNIGHT",
+              "CHAMPION_BEARD_CANDY",
+              "MAVERICK_MASK_SUNSET",
+              "MAVERICK_MASK_FIELD",
+              "MAVERICK_MASK_OCEAN",
+              "MAVERICK_MASK_MIDNIGHT",
+              "MAVERICK_MASK_CANDY",
+              "STARFACE_SUNSET",
+              "STARFACE_FIELD",
+              "STARFACE_OCEAN",
+              "STARFACE_MIDNIGHT",
+              "STARFACE_CANDY",
+              "HELMET_STRIPE_SUNSET",
+              "HELMET_STRIPE_FIELD",
+              "HELMET_STRIPE_OCEAN",
+              "HELMET_STRIPE_MIDNIGHT",
+              "HELMET_STRIPE_CANDY",
+              "HELMET_BOLT_SUNSET",
+              "HELMET_BOLT_FIELD",
+              "HELMET_BOLT_OCEAN",
+              "HELMET_BOLT_MIDNIGHT",
+              "HELMET_BOLT_CANDY",
+              "HELMET_HORN_SUNSET",
+              "HELMET_HORN_FIELD",
+              "HELMET_HORN_OCEAN",
+              "HELMET_HORN_MIDNIGHT",
+              "HELMET_HORN_CANDY",
+              "HELMET_WING_SUNSET",
+              "HELMET_WING_FIELD",
+              "HELMET_WING_OCEAN",
+              "HELMET_WING_MIDNIGHT",
+              "HELMET_WING_CANDY",
+              "HELMET_GRID_SUNSET",
+              "HELMET_GRID_FIELD",
+              "HELMET_GRID_OCEAN",
+              "HELMET_GRID_MIDNIGHT",
+              "HELMET_GRID_CANDY",
+              "GOLF_BAG_SUNSET",
+              "GOLF_BAG_FIELD",
+              "GOLF_BAG_OCEAN",
+              "GOLF_BAG_MIDNIGHT",
+              "GOLF_BAG_CANDY",
+              "WHISTLE_BADGE_SUNSET",
+              "WHISTLE_BADGE_FIELD",
+              "WHISTLE_BADGE_OCEAN",
+              "WHISTLE_BADGE_MIDNIGHT",
+              "WHISTLE_BADGE_CANDY",
+              "STOPWATCH_BADGE_SUNSET",
+              "STOPWATCH_BADGE_FIELD",
+              "STOPWATCH_BADGE_OCEAN",
+              "STOPWATCH_BADGE_MIDNIGHT",
+              "STOPWATCH_BADGE_CANDY",
+              "MEGAPHONE_SUNSET",
+              "MEGAPHONE_FIELD",
+              "MEGAPHONE_OCEAN",
+              "MEGAPHONE_MIDNIGHT",
+              "MEGAPHONE_CANDY",
+              "FOAM_FINGER_SUNSET",
+              "FOAM_FINGER_FIELD",
+              "FOAM_FINGER_OCEAN",
+              "FOAM_FINGER_MIDNIGHT",
+              "FOAM_FINGER_CANDY",
+              "BULL_HEAD_SUNSET",
+              "BULL_HEAD_FIELD",
+              "BULL_HEAD_OCEAN",
+              "BULL_HEAD_MIDNIGHT",
+              "BULL_HEAD_CANDY",
+              "LUCKY_DUCK_SUNSET",
+              "LUCKY_DUCK_FIELD",
+              "LUCKY_DUCK_OCEAN",
+              "LUCKY_DUCK_MIDNIGHT",
+              "LUCKY_DUCK_CANDY",
+              "TURBO_TURTLE_SUNSET",
+              "TURBO_TURTLE_FIELD",
+              "TURBO_TURTLE_OCEAN",
+              "TURBO_TURTLE_MIDNIGHT",
+              "TURBO_TURTLE_CANDY",
+              "FIRE_PIZZA_SUNSET",
+              "FIRE_PIZZA_FIELD",
+              "FIRE_PIZZA_OCEAN",
+              "FIRE_PIZZA_MIDNIGHT",
+              "FIRE_PIZZA_CANDY",
+              "BANANA_BAT_SUNSET",
+              "BANANA_BAT_FIELD",
+              "BANANA_BAT_OCEAN",
+              "BANANA_BAT_MIDNIGHT",
+              "BANANA_BAT_CANDY"
+            ],
+            "description": "The squad's built-in team icon."
+          },
+          "squadIsActive": {
+            "type": "boolean",
+            "description": "False for an inactive squad, shown because it placed in a counted contest of the year."
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it."
+          },
+          "displayPosition": {
+            "type": "string",
+            "description": "The place as shown: \"T2\" for a shared 2nd."
+          },
+          "points": {
+            "type": "integer",
+            "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+          },
+          "finishes": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 10,
+            "maxItems": 10,
+            "description": "The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts."
+          },
+          "podiums": {
+            "type": "integer",
+            "description": "Counted contests finished 1st, 2nd or 3rd."
+          },
+          "topTens": {
+            "type": "integer",
+            "description": "Counted contests finished in the top ten."
+          },
+          "played": {
+            "type": "integer",
+            "description": "Counted contests the squad placed in."
+          }
+        },
+        "required": [
+          "squadId",
+          "squadName",
+          "squadIconKey",
+          "squadIsActive",
+          "position",
+          "displayPosition",
+          "points",
+          "finishes",
+          "podiums",
+          "topTens",
+          "played"
+        ],
+        "additionalProperties": false,
+        "description": "One squad's row in a championship year. Every active squad has one, at 0 until it places."
+      },
+      "ChampionshipTileDto": {
+        "type": "object",
+        "properties": {
+          "tile": {
+            "type": "string",
+            "enum": [
+              "MOST_FIRSTS",
+              "MOST_SECONDS",
+              "MOST_THIRDS",
+              "MOST_PODIUMS",
+              "MOST_TOP_TENS",
+              "MOST_PLAYED"
+            ],
+            "description": "Which count the tile leads on: 1sts, 2nds, 3rds, podiums (1st to 3rd), top-ten finishes or contests played."
+          },
+          "count": {
+            "type": "integer",
+            "description": "The most any squad has; 0 while nobody has any."
+          },
+          "squads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadName": {
+                  "type": "string",
+                  "description": "The squad's current name."
+                },
+                "squadIconKey": {
+                  "type": "string",
+                  "enum": [
+                    "CAPTAIN_SMILE_SUNSET",
+                    "CAPTAIN_SMILE_FIELD",
+                    "CAPTAIN_SMILE_OCEAN",
+                    "CAPTAIN_SMILE_MIDNIGHT",
+                    "CAPTAIN_SMILE_CANDY",
+                    "CAPTAIN_WINK_SUNSET",
+                    "CAPTAIN_WINK_FIELD",
+                    "CAPTAIN_WINK_OCEAN",
+                    "CAPTAIN_WINK_MIDNIGHT",
+                    "CAPTAIN_WINK_CANDY",
+                    "CHAMPION_BEARD_SUNSET",
+                    "CHAMPION_BEARD_FIELD",
+                    "CHAMPION_BEARD_OCEAN",
+                    "CHAMPION_BEARD_MIDNIGHT",
+                    "CHAMPION_BEARD_CANDY",
+                    "MAVERICK_MASK_SUNSET",
+                    "MAVERICK_MASK_FIELD",
+                    "MAVERICK_MASK_OCEAN",
+                    "MAVERICK_MASK_MIDNIGHT",
+                    "MAVERICK_MASK_CANDY",
+                    "STARFACE_SUNSET",
+                    "STARFACE_FIELD",
+                    "STARFACE_OCEAN",
+                    "STARFACE_MIDNIGHT",
+                    "STARFACE_CANDY",
+                    "HELMET_STRIPE_SUNSET",
+                    "HELMET_STRIPE_FIELD",
+                    "HELMET_STRIPE_OCEAN",
+                    "HELMET_STRIPE_MIDNIGHT",
+                    "HELMET_STRIPE_CANDY",
+                    "HELMET_BOLT_SUNSET",
+                    "HELMET_BOLT_FIELD",
+                    "HELMET_BOLT_OCEAN",
+                    "HELMET_BOLT_MIDNIGHT",
+                    "HELMET_BOLT_CANDY",
+                    "HELMET_HORN_SUNSET",
+                    "HELMET_HORN_FIELD",
+                    "HELMET_HORN_OCEAN",
+                    "HELMET_HORN_MIDNIGHT",
+                    "HELMET_HORN_CANDY",
+                    "HELMET_WING_SUNSET",
+                    "HELMET_WING_FIELD",
+                    "HELMET_WING_OCEAN",
+                    "HELMET_WING_MIDNIGHT",
+                    "HELMET_WING_CANDY",
+                    "HELMET_GRID_SUNSET",
+                    "HELMET_GRID_FIELD",
+                    "HELMET_GRID_OCEAN",
+                    "HELMET_GRID_MIDNIGHT",
+                    "HELMET_GRID_CANDY",
+                    "GOLF_BAG_SUNSET",
+                    "GOLF_BAG_FIELD",
+                    "GOLF_BAG_OCEAN",
+                    "GOLF_BAG_MIDNIGHT",
+                    "GOLF_BAG_CANDY",
+                    "WHISTLE_BADGE_SUNSET",
+                    "WHISTLE_BADGE_FIELD",
+                    "WHISTLE_BADGE_OCEAN",
+                    "WHISTLE_BADGE_MIDNIGHT",
+                    "WHISTLE_BADGE_CANDY",
+                    "STOPWATCH_BADGE_SUNSET",
+                    "STOPWATCH_BADGE_FIELD",
+                    "STOPWATCH_BADGE_OCEAN",
+                    "STOPWATCH_BADGE_MIDNIGHT",
+                    "STOPWATCH_BADGE_CANDY",
+                    "MEGAPHONE_SUNSET",
+                    "MEGAPHONE_FIELD",
+                    "MEGAPHONE_OCEAN",
+                    "MEGAPHONE_MIDNIGHT",
+                    "MEGAPHONE_CANDY",
+                    "FOAM_FINGER_SUNSET",
+                    "FOAM_FINGER_FIELD",
+                    "FOAM_FINGER_OCEAN",
+                    "FOAM_FINGER_MIDNIGHT",
+                    "FOAM_FINGER_CANDY",
+                    "BULL_HEAD_SUNSET",
+                    "BULL_HEAD_FIELD",
+                    "BULL_HEAD_OCEAN",
+                    "BULL_HEAD_MIDNIGHT",
+                    "BULL_HEAD_CANDY",
+                    "LUCKY_DUCK_SUNSET",
+                    "LUCKY_DUCK_FIELD",
+                    "LUCKY_DUCK_OCEAN",
+                    "LUCKY_DUCK_MIDNIGHT",
+                    "LUCKY_DUCK_CANDY",
+                    "TURBO_TURTLE_SUNSET",
+                    "TURBO_TURTLE_FIELD",
+                    "TURBO_TURTLE_OCEAN",
+                    "TURBO_TURTLE_MIDNIGHT",
+                    "TURBO_TURTLE_CANDY",
+                    "FIRE_PIZZA_SUNSET",
+                    "FIRE_PIZZA_FIELD",
+                    "FIRE_PIZZA_OCEAN",
+                    "FIRE_PIZZA_MIDNIGHT",
+                    "FIRE_PIZZA_CANDY",
+                    "BANANA_BAT_SUNSET",
+                    "BANANA_BAT_FIELD",
+                    "BANANA_BAT_OCEAN",
+                    "BANANA_BAT_MIDNIGHT",
+                    "BANANA_BAT_CANDY"
+                  ],
+                  "description": "The squad's built-in team icon."
+                }
+              },
+              "required": [
+                "squadId",
+                "squadName",
+                "squadIconKey"
+              ],
+              "additionalProperties": false,
+              "description": "A squad named on the championship: a leader, a champion or a tile holder."
+            },
+            "description": "Every squad holding the most, in standings order; empty while nobody has any."
+          }
+        },
+        "required": [
+          "tile",
+          "count",
+          "squads"
+        ],
+        "additionalProperties": false,
+        "description": "One medal tile."
+      },
+      "ChampionshipDto": {
+        "type": "object",
+        "properties": {
+          "leagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "year": {
+            "type": "integer",
+            "description": "The calendar year, US Eastern, its contests went final in."
+          },
+          "cupName": {
+            "type": "string",
+            "description": "The league's cup name, such as \"Derek's Pool Cup\"."
+          },
+          "name": {
+            "type": "string",
+            "description": "The championship's name: the year and the cup name, \"2026 Derek's Pool Cup\"."
+          },
+          "isOver": {
+            "type": "boolean",
+            "description": "True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader."
+          },
+          "contestsCounted": {
+            "type": "integer",
+            "description": "Counted contests that went final in the year."
+          },
+          "contestsToGo": {
+            "type": "integer",
+            "description": "For the current year, the league's open and live contests that will count once final; 0 for any other year."
+          },
+          "standings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadName": {
+                  "type": "string",
+                  "description": "The squad's current name."
+                },
+                "squadIconKey": {
+                  "type": "string",
+                  "enum": [
+                    "CAPTAIN_SMILE_SUNSET",
+                    "CAPTAIN_SMILE_FIELD",
+                    "CAPTAIN_SMILE_OCEAN",
+                    "CAPTAIN_SMILE_MIDNIGHT",
+                    "CAPTAIN_SMILE_CANDY",
+                    "CAPTAIN_WINK_SUNSET",
+                    "CAPTAIN_WINK_FIELD",
+                    "CAPTAIN_WINK_OCEAN",
+                    "CAPTAIN_WINK_MIDNIGHT",
+                    "CAPTAIN_WINK_CANDY",
+                    "CHAMPION_BEARD_SUNSET",
+                    "CHAMPION_BEARD_FIELD",
+                    "CHAMPION_BEARD_OCEAN",
+                    "CHAMPION_BEARD_MIDNIGHT",
+                    "CHAMPION_BEARD_CANDY",
+                    "MAVERICK_MASK_SUNSET",
+                    "MAVERICK_MASK_FIELD",
+                    "MAVERICK_MASK_OCEAN",
+                    "MAVERICK_MASK_MIDNIGHT",
+                    "MAVERICK_MASK_CANDY",
+                    "STARFACE_SUNSET",
+                    "STARFACE_FIELD",
+                    "STARFACE_OCEAN",
+                    "STARFACE_MIDNIGHT",
+                    "STARFACE_CANDY",
+                    "HELMET_STRIPE_SUNSET",
+                    "HELMET_STRIPE_FIELD",
+                    "HELMET_STRIPE_OCEAN",
+                    "HELMET_STRIPE_MIDNIGHT",
+                    "HELMET_STRIPE_CANDY",
+                    "HELMET_BOLT_SUNSET",
+                    "HELMET_BOLT_FIELD",
+                    "HELMET_BOLT_OCEAN",
+                    "HELMET_BOLT_MIDNIGHT",
+                    "HELMET_BOLT_CANDY",
+                    "HELMET_HORN_SUNSET",
+                    "HELMET_HORN_FIELD",
+                    "HELMET_HORN_OCEAN",
+                    "HELMET_HORN_MIDNIGHT",
+                    "HELMET_HORN_CANDY",
+                    "HELMET_WING_SUNSET",
+                    "HELMET_WING_FIELD",
+                    "HELMET_WING_OCEAN",
+                    "HELMET_WING_MIDNIGHT",
+                    "HELMET_WING_CANDY",
+                    "HELMET_GRID_SUNSET",
+                    "HELMET_GRID_FIELD",
+                    "HELMET_GRID_OCEAN",
+                    "HELMET_GRID_MIDNIGHT",
+                    "HELMET_GRID_CANDY",
+                    "GOLF_BAG_SUNSET",
+                    "GOLF_BAG_FIELD",
+                    "GOLF_BAG_OCEAN",
+                    "GOLF_BAG_MIDNIGHT",
+                    "GOLF_BAG_CANDY",
+                    "WHISTLE_BADGE_SUNSET",
+                    "WHISTLE_BADGE_FIELD",
+                    "WHISTLE_BADGE_OCEAN",
+                    "WHISTLE_BADGE_MIDNIGHT",
+                    "WHISTLE_BADGE_CANDY",
+                    "STOPWATCH_BADGE_SUNSET",
+                    "STOPWATCH_BADGE_FIELD",
+                    "STOPWATCH_BADGE_OCEAN",
+                    "STOPWATCH_BADGE_MIDNIGHT",
+                    "STOPWATCH_BADGE_CANDY",
+                    "MEGAPHONE_SUNSET",
+                    "MEGAPHONE_FIELD",
+                    "MEGAPHONE_OCEAN",
+                    "MEGAPHONE_MIDNIGHT",
+                    "MEGAPHONE_CANDY",
+                    "FOAM_FINGER_SUNSET",
+                    "FOAM_FINGER_FIELD",
+                    "FOAM_FINGER_OCEAN",
+                    "FOAM_FINGER_MIDNIGHT",
+                    "FOAM_FINGER_CANDY",
+                    "BULL_HEAD_SUNSET",
+                    "BULL_HEAD_FIELD",
+                    "BULL_HEAD_OCEAN",
+                    "BULL_HEAD_MIDNIGHT",
+                    "BULL_HEAD_CANDY",
+                    "LUCKY_DUCK_SUNSET",
+                    "LUCKY_DUCK_FIELD",
+                    "LUCKY_DUCK_OCEAN",
+                    "LUCKY_DUCK_MIDNIGHT",
+                    "LUCKY_DUCK_CANDY",
+                    "TURBO_TURTLE_SUNSET",
+                    "TURBO_TURTLE_FIELD",
+                    "TURBO_TURTLE_OCEAN",
+                    "TURBO_TURTLE_MIDNIGHT",
+                    "TURBO_TURTLE_CANDY",
+                    "FIRE_PIZZA_SUNSET",
+                    "FIRE_PIZZA_FIELD",
+                    "FIRE_PIZZA_OCEAN",
+                    "FIRE_PIZZA_MIDNIGHT",
+                    "FIRE_PIZZA_CANDY",
+                    "BANANA_BAT_SUNSET",
+                    "BANANA_BAT_FIELD",
+                    "BANANA_BAT_OCEAN",
+                    "BANANA_BAT_MIDNIGHT",
+                    "BANANA_BAT_CANDY"
+                  ],
+                  "description": "The squad's built-in team icon."
+                },
+                "squadIsActive": {
+                  "type": "boolean",
+                  "description": "False for an inactive squad, shown because it placed in a counted contest of the year."
+                },
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it."
+                },
+                "displayPosition": {
+                  "type": "string",
+                  "description": "The place as shown: \"T2\" for a shared 2nd."
+                },
+                "points": {
+                  "type": "integer",
+                  "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+                },
+                "finishes": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "minItems": 10,
+                  "maxItems": 10,
+                  "description": "The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts."
+                },
+                "podiums": {
+                  "type": "integer",
+                  "description": "Counted contests finished 1st, 2nd or 3rd."
+                },
+                "topTens": {
+                  "type": "integer",
+                  "description": "Counted contests finished in the top ten."
+                },
+                "played": {
+                  "type": "integer",
+                  "description": "Counted contests the squad placed in."
+                }
+              },
+              "required": [
+                "squadId",
+                "squadName",
+                "squadIconKey",
+                "squadIsActive",
+                "position",
+                "displayPosition",
+                "points",
+                "finishes",
+                "podiums",
+                "topTens",
+                "played"
+              ],
+              "additionalProperties": false,
+              "description": "One squad's row in a championship year. Every active squad has one, at 0 until it places."
+            },
+            "description": "Best first; squads sharing a place in name order."
+          },
+          "tiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tile": {
+                  "type": "string",
+                  "enum": [
+                    "MOST_FIRSTS",
+                    "MOST_SECONDS",
+                    "MOST_THIRDS",
+                    "MOST_PODIUMS",
+                    "MOST_TOP_TENS",
+                    "MOST_PLAYED"
+                  ],
+                  "description": "Which count the tile leads on: 1sts, 2nds, 3rds, podiums (1st to 3rd), top-ten finishes or contests played."
+                },
+                "count": {
+                  "type": "integer",
+                  "description": "The most any squad has; 0 while nobody has any."
+                },
+                "squads": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "squadId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "squadName": {
+                        "type": "string",
+                        "description": "The squad's current name."
+                      },
+                      "squadIconKey": {
+                        "type": "string",
+                        "enum": [
+                          "CAPTAIN_SMILE_SUNSET",
+                          "CAPTAIN_SMILE_FIELD",
+                          "CAPTAIN_SMILE_OCEAN",
+                          "CAPTAIN_SMILE_MIDNIGHT",
+                          "CAPTAIN_SMILE_CANDY",
+                          "CAPTAIN_WINK_SUNSET",
+                          "CAPTAIN_WINK_FIELD",
+                          "CAPTAIN_WINK_OCEAN",
+                          "CAPTAIN_WINK_MIDNIGHT",
+                          "CAPTAIN_WINK_CANDY",
+                          "CHAMPION_BEARD_SUNSET",
+                          "CHAMPION_BEARD_FIELD",
+                          "CHAMPION_BEARD_OCEAN",
+                          "CHAMPION_BEARD_MIDNIGHT",
+                          "CHAMPION_BEARD_CANDY",
+                          "MAVERICK_MASK_SUNSET",
+                          "MAVERICK_MASK_FIELD",
+                          "MAVERICK_MASK_OCEAN",
+                          "MAVERICK_MASK_MIDNIGHT",
+                          "MAVERICK_MASK_CANDY",
+                          "STARFACE_SUNSET",
+                          "STARFACE_FIELD",
+                          "STARFACE_OCEAN",
+                          "STARFACE_MIDNIGHT",
+                          "STARFACE_CANDY",
+                          "HELMET_STRIPE_SUNSET",
+                          "HELMET_STRIPE_FIELD",
+                          "HELMET_STRIPE_OCEAN",
+                          "HELMET_STRIPE_MIDNIGHT",
+                          "HELMET_STRIPE_CANDY",
+                          "HELMET_BOLT_SUNSET",
+                          "HELMET_BOLT_FIELD",
+                          "HELMET_BOLT_OCEAN",
+                          "HELMET_BOLT_MIDNIGHT",
+                          "HELMET_BOLT_CANDY",
+                          "HELMET_HORN_SUNSET",
+                          "HELMET_HORN_FIELD",
+                          "HELMET_HORN_OCEAN",
+                          "HELMET_HORN_MIDNIGHT",
+                          "HELMET_HORN_CANDY",
+                          "HELMET_WING_SUNSET",
+                          "HELMET_WING_FIELD",
+                          "HELMET_WING_OCEAN",
+                          "HELMET_WING_MIDNIGHT",
+                          "HELMET_WING_CANDY",
+                          "HELMET_GRID_SUNSET",
+                          "HELMET_GRID_FIELD",
+                          "HELMET_GRID_OCEAN",
+                          "HELMET_GRID_MIDNIGHT",
+                          "HELMET_GRID_CANDY",
+                          "GOLF_BAG_SUNSET",
+                          "GOLF_BAG_FIELD",
+                          "GOLF_BAG_OCEAN",
+                          "GOLF_BAG_MIDNIGHT",
+                          "GOLF_BAG_CANDY",
+                          "WHISTLE_BADGE_SUNSET",
+                          "WHISTLE_BADGE_FIELD",
+                          "WHISTLE_BADGE_OCEAN",
+                          "WHISTLE_BADGE_MIDNIGHT",
+                          "WHISTLE_BADGE_CANDY",
+                          "STOPWATCH_BADGE_SUNSET",
+                          "STOPWATCH_BADGE_FIELD",
+                          "STOPWATCH_BADGE_OCEAN",
+                          "STOPWATCH_BADGE_MIDNIGHT",
+                          "STOPWATCH_BADGE_CANDY",
+                          "MEGAPHONE_SUNSET",
+                          "MEGAPHONE_FIELD",
+                          "MEGAPHONE_OCEAN",
+                          "MEGAPHONE_MIDNIGHT",
+                          "MEGAPHONE_CANDY",
+                          "FOAM_FINGER_SUNSET",
+                          "FOAM_FINGER_FIELD",
+                          "FOAM_FINGER_OCEAN",
+                          "FOAM_FINGER_MIDNIGHT",
+                          "FOAM_FINGER_CANDY",
+                          "BULL_HEAD_SUNSET",
+                          "BULL_HEAD_FIELD",
+                          "BULL_HEAD_OCEAN",
+                          "BULL_HEAD_MIDNIGHT",
+                          "BULL_HEAD_CANDY",
+                          "LUCKY_DUCK_SUNSET",
+                          "LUCKY_DUCK_FIELD",
+                          "LUCKY_DUCK_OCEAN",
+                          "LUCKY_DUCK_MIDNIGHT",
+                          "LUCKY_DUCK_CANDY",
+                          "TURBO_TURTLE_SUNSET",
+                          "TURBO_TURTLE_FIELD",
+                          "TURBO_TURTLE_OCEAN",
+                          "TURBO_TURTLE_MIDNIGHT",
+                          "TURBO_TURTLE_CANDY",
+                          "FIRE_PIZZA_SUNSET",
+                          "FIRE_PIZZA_FIELD",
+                          "FIRE_PIZZA_OCEAN",
+                          "FIRE_PIZZA_MIDNIGHT",
+                          "FIRE_PIZZA_CANDY",
+                          "BANANA_BAT_SUNSET",
+                          "BANANA_BAT_FIELD",
+                          "BANANA_BAT_OCEAN",
+                          "BANANA_BAT_MIDNIGHT",
+                          "BANANA_BAT_CANDY"
+                        ],
+                        "description": "The squad's built-in team icon."
+                      }
+                    },
+                    "required": [
+                      "squadId",
+                      "squadName",
+                      "squadIconKey"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A squad named on the championship: a leader, a champion or a tile holder."
+                  },
+                  "description": "Every squad holding the most, in standings order; empty while nobody has any."
+                }
+              },
+              "required": [
+                "tile",
+                "count",
+                "squads"
+              ],
+              "additionalProperties": false,
+              "description": "One medal tile."
+            },
+            "description": "The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played."
+          }
+        },
+        "required": [
+          "leagueId",
+          "year",
+          "cupName",
+          "name",
+          "isOver",
+          "contestsCounted",
+          "contestsToGo",
+          "standings",
+          "tiles"
+        ],
+        "additionalProperties": false,
+        "description": "One year of the league championship."
+      },
+      "ChampionshipResponse": {
+        "type": "object",
+        "properties": {
+          "championship": {
+            "type": "object",
+            "properties": {
+              "leagueId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "year": {
+                "type": "integer",
+                "description": "The calendar year, US Eastern, its contests went final in."
+              },
+              "cupName": {
+                "type": "string",
+                "description": "The league's cup name, such as \"Derek's Pool Cup\"."
+              },
+              "name": {
+                "type": "string",
+                "description": "The championship's name: the year and the cup name, \"2026 Derek's Pool Cup\"."
+              },
+              "isOver": {
+                "type": "boolean",
+                "description": "True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader."
+              },
+              "contestsCounted": {
+                "type": "integer",
+                "description": "Counted contests that went final in the year."
+              },
+              "contestsToGo": {
+                "type": "integer",
+                "description": "For the current year, the league's open and live contests that will count once final; 0 for any other year."
+              },
+              "standings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "squadId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "squadName": {
+                      "type": "string",
+                      "description": "The squad's current name."
+                    },
+                    "squadIconKey": {
+                      "type": "string",
+                      "enum": [
+                        "CAPTAIN_SMILE_SUNSET",
+                        "CAPTAIN_SMILE_FIELD",
+                        "CAPTAIN_SMILE_OCEAN",
+                        "CAPTAIN_SMILE_MIDNIGHT",
+                        "CAPTAIN_SMILE_CANDY",
+                        "CAPTAIN_WINK_SUNSET",
+                        "CAPTAIN_WINK_FIELD",
+                        "CAPTAIN_WINK_OCEAN",
+                        "CAPTAIN_WINK_MIDNIGHT",
+                        "CAPTAIN_WINK_CANDY",
+                        "CHAMPION_BEARD_SUNSET",
+                        "CHAMPION_BEARD_FIELD",
+                        "CHAMPION_BEARD_OCEAN",
+                        "CHAMPION_BEARD_MIDNIGHT",
+                        "CHAMPION_BEARD_CANDY",
+                        "MAVERICK_MASK_SUNSET",
+                        "MAVERICK_MASK_FIELD",
+                        "MAVERICK_MASK_OCEAN",
+                        "MAVERICK_MASK_MIDNIGHT",
+                        "MAVERICK_MASK_CANDY",
+                        "STARFACE_SUNSET",
+                        "STARFACE_FIELD",
+                        "STARFACE_OCEAN",
+                        "STARFACE_MIDNIGHT",
+                        "STARFACE_CANDY",
+                        "HELMET_STRIPE_SUNSET",
+                        "HELMET_STRIPE_FIELD",
+                        "HELMET_STRIPE_OCEAN",
+                        "HELMET_STRIPE_MIDNIGHT",
+                        "HELMET_STRIPE_CANDY",
+                        "HELMET_BOLT_SUNSET",
+                        "HELMET_BOLT_FIELD",
+                        "HELMET_BOLT_OCEAN",
+                        "HELMET_BOLT_MIDNIGHT",
+                        "HELMET_BOLT_CANDY",
+                        "HELMET_HORN_SUNSET",
+                        "HELMET_HORN_FIELD",
+                        "HELMET_HORN_OCEAN",
+                        "HELMET_HORN_MIDNIGHT",
+                        "HELMET_HORN_CANDY",
+                        "HELMET_WING_SUNSET",
+                        "HELMET_WING_FIELD",
+                        "HELMET_WING_OCEAN",
+                        "HELMET_WING_MIDNIGHT",
+                        "HELMET_WING_CANDY",
+                        "HELMET_GRID_SUNSET",
+                        "HELMET_GRID_FIELD",
+                        "HELMET_GRID_OCEAN",
+                        "HELMET_GRID_MIDNIGHT",
+                        "HELMET_GRID_CANDY",
+                        "GOLF_BAG_SUNSET",
+                        "GOLF_BAG_FIELD",
+                        "GOLF_BAG_OCEAN",
+                        "GOLF_BAG_MIDNIGHT",
+                        "GOLF_BAG_CANDY",
+                        "WHISTLE_BADGE_SUNSET",
+                        "WHISTLE_BADGE_FIELD",
+                        "WHISTLE_BADGE_OCEAN",
+                        "WHISTLE_BADGE_MIDNIGHT",
+                        "WHISTLE_BADGE_CANDY",
+                        "STOPWATCH_BADGE_SUNSET",
+                        "STOPWATCH_BADGE_FIELD",
+                        "STOPWATCH_BADGE_OCEAN",
+                        "STOPWATCH_BADGE_MIDNIGHT",
+                        "STOPWATCH_BADGE_CANDY",
+                        "MEGAPHONE_SUNSET",
+                        "MEGAPHONE_FIELD",
+                        "MEGAPHONE_OCEAN",
+                        "MEGAPHONE_MIDNIGHT",
+                        "MEGAPHONE_CANDY",
+                        "FOAM_FINGER_SUNSET",
+                        "FOAM_FINGER_FIELD",
+                        "FOAM_FINGER_OCEAN",
+                        "FOAM_FINGER_MIDNIGHT",
+                        "FOAM_FINGER_CANDY",
+                        "BULL_HEAD_SUNSET",
+                        "BULL_HEAD_FIELD",
+                        "BULL_HEAD_OCEAN",
+                        "BULL_HEAD_MIDNIGHT",
+                        "BULL_HEAD_CANDY",
+                        "LUCKY_DUCK_SUNSET",
+                        "LUCKY_DUCK_FIELD",
+                        "LUCKY_DUCK_OCEAN",
+                        "LUCKY_DUCK_MIDNIGHT",
+                        "LUCKY_DUCK_CANDY",
+                        "TURBO_TURTLE_SUNSET",
+                        "TURBO_TURTLE_FIELD",
+                        "TURBO_TURTLE_OCEAN",
+                        "TURBO_TURTLE_MIDNIGHT",
+                        "TURBO_TURTLE_CANDY",
+                        "FIRE_PIZZA_SUNSET",
+                        "FIRE_PIZZA_FIELD",
+                        "FIRE_PIZZA_OCEAN",
+                        "FIRE_PIZZA_MIDNIGHT",
+                        "FIRE_PIZZA_CANDY",
+                        "BANANA_BAT_SUNSET",
+                        "BANANA_BAT_FIELD",
+                        "BANANA_BAT_OCEAN",
+                        "BANANA_BAT_MIDNIGHT",
+                        "BANANA_BAT_CANDY"
+                      ],
+                      "description": "The squad's built-in team icon."
+                    },
+                    "squadIsActive": {
+                      "type": "boolean",
+                      "description": "False for an inactive squad, shown because it placed in a counted contest of the year."
+                    },
+                    "position": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it."
+                    },
+                    "displayPosition": {
+                      "type": "string",
+                      "description": "The place as shown: \"T2\" for a shared 2nd."
+                    },
+                    "points": {
+                      "type": "integer",
+                      "description": "Points in tenths of a point: 725 is 72.5. Show to one decimal."
+                    },
+                    "finishes": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      },
+                      "minItems": 10,
+                      "maxItems": 10,
+                      "description": "The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts."
+                    },
+                    "podiums": {
+                      "type": "integer",
+                      "description": "Counted contests finished 1st, 2nd or 3rd."
+                    },
+                    "topTens": {
+                      "type": "integer",
+                      "description": "Counted contests finished in the top ten."
+                    },
+                    "played": {
+                      "type": "integer",
+                      "description": "Counted contests the squad placed in."
+                    }
+                  },
+                  "required": [
+                    "squadId",
+                    "squadName",
+                    "squadIconKey",
+                    "squadIsActive",
+                    "position",
+                    "displayPosition",
+                    "points",
+                    "finishes",
+                    "podiums",
+                    "topTens",
+                    "played"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One squad's row in a championship year. Every active squad has one, at 0 until it places."
+                },
+                "description": "Best first; squads sharing a place in name order."
+              },
+              "tiles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "tile": {
+                      "type": "string",
+                      "enum": [
+                        "MOST_FIRSTS",
+                        "MOST_SECONDS",
+                        "MOST_THIRDS",
+                        "MOST_PODIUMS",
+                        "MOST_TOP_TENS",
+                        "MOST_PLAYED"
+                      ],
+                      "description": "Which count the tile leads on: 1sts, 2nds, 3rds, podiums (1st to 3rd), top-ten finishes or contests played."
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "The most any squad has; 0 while nobody has any."
+                    },
+                    "squads": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "squadId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "squadName": {
+                            "type": "string",
+                            "description": "The squad's current name."
+                          },
+                          "squadIconKey": {
+                            "type": "string",
+                            "enum": [
+                              "CAPTAIN_SMILE_SUNSET",
+                              "CAPTAIN_SMILE_FIELD",
+                              "CAPTAIN_SMILE_OCEAN",
+                              "CAPTAIN_SMILE_MIDNIGHT",
+                              "CAPTAIN_SMILE_CANDY",
+                              "CAPTAIN_WINK_SUNSET",
+                              "CAPTAIN_WINK_FIELD",
+                              "CAPTAIN_WINK_OCEAN",
+                              "CAPTAIN_WINK_MIDNIGHT",
+                              "CAPTAIN_WINK_CANDY",
+                              "CHAMPION_BEARD_SUNSET",
+                              "CHAMPION_BEARD_FIELD",
+                              "CHAMPION_BEARD_OCEAN",
+                              "CHAMPION_BEARD_MIDNIGHT",
+                              "CHAMPION_BEARD_CANDY",
+                              "MAVERICK_MASK_SUNSET",
+                              "MAVERICK_MASK_FIELD",
+                              "MAVERICK_MASK_OCEAN",
+                              "MAVERICK_MASK_MIDNIGHT",
+                              "MAVERICK_MASK_CANDY",
+                              "STARFACE_SUNSET",
+                              "STARFACE_FIELD",
+                              "STARFACE_OCEAN",
+                              "STARFACE_MIDNIGHT",
+                              "STARFACE_CANDY",
+                              "HELMET_STRIPE_SUNSET",
+                              "HELMET_STRIPE_FIELD",
+                              "HELMET_STRIPE_OCEAN",
+                              "HELMET_STRIPE_MIDNIGHT",
+                              "HELMET_STRIPE_CANDY",
+                              "HELMET_BOLT_SUNSET",
+                              "HELMET_BOLT_FIELD",
+                              "HELMET_BOLT_OCEAN",
+                              "HELMET_BOLT_MIDNIGHT",
+                              "HELMET_BOLT_CANDY",
+                              "HELMET_HORN_SUNSET",
+                              "HELMET_HORN_FIELD",
+                              "HELMET_HORN_OCEAN",
+                              "HELMET_HORN_MIDNIGHT",
+                              "HELMET_HORN_CANDY",
+                              "HELMET_WING_SUNSET",
+                              "HELMET_WING_FIELD",
+                              "HELMET_WING_OCEAN",
+                              "HELMET_WING_MIDNIGHT",
+                              "HELMET_WING_CANDY",
+                              "HELMET_GRID_SUNSET",
+                              "HELMET_GRID_FIELD",
+                              "HELMET_GRID_OCEAN",
+                              "HELMET_GRID_MIDNIGHT",
+                              "HELMET_GRID_CANDY",
+                              "GOLF_BAG_SUNSET",
+                              "GOLF_BAG_FIELD",
+                              "GOLF_BAG_OCEAN",
+                              "GOLF_BAG_MIDNIGHT",
+                              "GOLF_BAG_CANDY",
+                              "WHISTLE_BADGE_SUNSET",
+                              "WHISTLE_BADGE_FIELD",
+                              "WHISTLE_BADGE_OCEAN",
+                              "WHISTLE_BADGE_MIDNIGHT",
+                              "WHISTLE_BADGE_CANDY",
+                              "STOPWATCH_BADGE_SUNSET",
+                              "STOPWATCH_BADGE_FIELD",
+                              "STOPWATCH_BADGE_OCEAN",
+                              "STOPWATCH_BADGE_MIDNIGHT",
+                              "STOPWATCH_BADGE_CANDY",
+                              "MEGAPHONE_SUNSET",
+                              "MEGAPHONE_FIELD",
+                              "MEGAPHONE_OCEAN",
+                              "MEGAPHONE_MIDNIGHT",
+                              "MEGAPHONE_CANDY",
+                              "FOAM_FINGER_SUNSET",
+                              "FOAM_FINGER_FIELD",
+                              "FOAM_FINGER_OCEAN",
+                              "FOAM_FINGER_MIDNIGHT",
+                              "FOAM_FINGER_CANDY",
+                              "BULL_HEAD_SUNSET",
+                              "BULL_HEAD_FIELD",
+                              "BULL_HEAD_OCEAN",
+                              "BULL_HEAD_MIDNIGHT",
+                              "BULL_HEAD_CANDY",
+                              "LUCKY_DUCK_SUNSET",
+                              "LUCKY_DUCK_FIELD",
+                              "LUCKY_DUCK_OCEAN",
+                              "LUCKY_DUCK_MIDNIGHT",
+                              "LUCKY_DUCK_CANDY",
+                              "TURBO_TURTLE_SUNSET",
+                              "TURBO_TURTLE_FIELD",
+                              "TURBO_TURTLE_OCEAN",
+                              "TURBO_TURTLE_MIDNIGHT",
+                              "TURBO_TURTLE_CANDY",
+                              "FIRE_PIZZA_SUNSET",
+                              "FIRE_PIZZA_FIELD",
+                              "FIRE_PIZZA_OCEAN",
+                              "FIRE_PIZZA_MIDNIGHT",
+                              "FIRE_PIZZA_CANDY",
+                              "BANANA_BAT_SUNSET",
+                              "BANANA_BAT_FIELD",
+                              "BANANA_BAT_OCEAN",
+                              "BANANA_BAT_MIDNIGHT",
+                              "BANANA_BAT_CANDY"
+                            ],
+                            "description": "The squad's built-in team icon."
+                          }
+                        },
+                        "required": [
+                          "squadId",
+                          "squadName",
+                          "squadIconKey"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A squad named on the championship: a leader, a champion or a tile holder."
+                      },
+                      "description": "Every squad holding the most, in standings order; empty while nobody has any."
+                    }
+                  },
+                  "required": [
+                    "tile",
+                    "count",
+                    "squads"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One medal tile."
+                },
+                "description": "The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played."
+              }
+            },
+            "required": [
+              "leagueId",
+              "year",
+              "cupName",
+              "name",
+              "isOver",
+              "contestsCounted",
+              "contestsToGo",
+              "standings",
+              "tiles"
+            ],
+            "additionalProperties": false,
+            "description": "One year of the league championship."
+          }
+        },
+        "required": [
+          "championship"
+        ],
+        "additionalProperties": false,
+        "description": "One championship year."
+      },
+      "ChampionshipYearDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer"
+          },
+          "isOver": {
+            "type": "boolean",
+            "description": "True once the year has ended in US Eastern."
+          },
+          "leaders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadName": {
+                  "type": "string",
+                  "description": "The squad's current name."
+                },
+                "squadIconKey": {
+                  "type": "string",
+                  "enum": [
+                    "CAPTAIN_SMILE_SUNSET",
+                    "CAPTAIN_SMILE_FIELD",
+                    "CAPTAIN_SMILE_OCEAN",
+                    "CAPTAIN_SMILE_MIDNIGHT",
+                    "CAPTAIN_SMILE_CANDY",
+                    "CAPTAIN_WINK_SUNSET",
+                    "CAPTAIN_WINK_FIELD",
+                    "CAPTAIN_WINK_OCEAN",
+                    "CAPTAIN_WINK_MIDNIGHT",
+                    "CAPTAIN_WINK_CANDY",
+                    "CHAMPION_BEARD_SUNSET",
+                    "CHAMPION_BEARD_FIELD",
+                    "CHAMPION_BEARD_OCEAN",
+                    "CHAMPION_BEARD_MIDNIGHT",
+                    "CHAMPION_BEARD_CANDY",
+                    "MAVERICK_MASK_SUNSET",
+                    "MAVERICK_MASK_FIELD",
+                    "MAVERICK_MASK_OCEAN",
+                    "MAVERICK_MASK_MIDNIGHT",
+                    "MAVERICK_MASK_CANDY",
+                    "STARFACE_SUNSET",
+                    "STARFACE_FIELD",
+                    "STARFACE_OCEAN",
+                    "STARFACE_MIDNIGHT",
+                    "STARFACE_CANDY",
+                    "HELMET_STRIPE_SUNSET",
+                    "HELMET_STRIPE_FIELD",
+                    "HELMET_STRIPE_OCEAN",
+                    "HELMET_STRIPE_MIDNIGHT",
+                    "HELMET_STRIPE_CANDY",
+                    "HELMET_BOLT_SUNSET",
+                    "HELMET_BOLT_FIELD",
+                    "HELMET_BOLT_OCEAN",
+                    "HELMET_BOLT_MIDNIGHT",
+                    "HELMET_BOLT_CANDY",
+                    "HELMET_HORN_SUNSET",
+                    "HELMET_HORN_FIELD",
+                    "HELMET_HORN_OCEAN",
+                    "HELMET_HORN_MIDNIGHT",
+                    "HELMET_HORN_CANDY",
+                    "HELMET_WING_SUNSET",
+                    "HELMET_WING_FIELD",
+                    "HELMET_WING_OCEAN",
+                    "HELMET_WING_MIDNIGHT",
+                    "HELMET_WING_CANDY",
+                    "HELMET_GRID_SUNSET",
+                    "HELMET_GRID_FIELD",
+                    "HELMET_GRID_OCEAN",
+                    "HELMET_GRID_MIDNIGHT",
+                    "HELMET_GRID_CANDY",
+                    "GOLF_BAG_SUNSET",
+                    "GOLF_BAG_FIELD",
+                    "GOLF_BAG_OCEAN",
+                    "GOLF_BAG_MIDNIGHT",
+                    "GOLF_BAG_CANDY",
+                    "WHISTLE_BADGE_SUNSET",
+                    "WHISTLE_BADGE_FIELD",
+                    "WHISTLE_BADGE_OCEAN",
+                    "WHISTLE_BADGE_MIDNIGHT",
+                    "WHISTLE_BADGE_CANDY",
+                    "STOPWATCH_BADGE_SUNSET",
+                    "STOPWATCH_BADGE_FIELD",
+                    "STOPWATCH_BADGE_OCEAN",
+                    "STOPWATCH_BADGE_MIDNIGHT",
+                    "STOPWATCH_BADGE_CANDY",
+                    "MEGAPHONE_SUNSET",
+                    "MEGAPHONE_FIELD",
+                    "MEGAPHONE_OCEAN",
+                    "MEGAPHONE_MIDNIGHT",
+                    "MEGAPHONE_CANDY",
+                    "FOAM_FINGER_SUNSET",
+                    "FOAM_FINGER_FIELD",
+                    "FOAM_FINGER_OCEAN",
+                    "FOAM_FINGER_MIDNIGHT",
+                    "FOAM_FINGER_CANDY",
+                    "BULL_HEAD_SUNSET",
+                    "BULL_HEAD_FIELD",
+                    "BULL_HEAD_OCEAN",
+                    "BULL_HEAD_MIDNIGHT",
+                    "BULL_HEAD_CANDY",
+                    "LUCKY_DUCK_SUNSET",
+                    "LUCKY_DUCK_FIELD",
+                    "LUCKY_DUCK_OCEAN",
+                    "LUCKY_DUCK_MIDNIGHT",
+                    "LUCKY_DUCK_CANDY",
+                    "TURBO_TURTLE_SUNSET",
+                    "TURBO_TURTLE_FIELD",
+                    "TURBO_TURTLE_OCEAN",
+                    "TURBO_TURTLE_MIDNIGHT",
+                    "TURBO_TURTLE_CANDY",
+                    "FIRE_PIZZA_SUNSET",
+                    "FIRE_PIZZA_FIELD",
+                    "FIRE_PIZZA_OCEAN",
+                    "FIRE_PIZZA_MIDNIGHT",
+                    "FIRE_PIZZA_CANDY",
+                    "BANANA_BAT_SUNSET",
+                    "BANANA_BAT_FIELD",
+                    "BANANA_BAT_OCEAN",
+                    "BANANA_BAT_MIDNIGHT",
+                    "BANANA_BAT_CANDY"
+                  ],
+                  "description": "The squad's built-in team icon."
+                }
+              },
+              "required": [
+                "squadId",
+                "squadName",
+                "squadIconKey"
+              ],
+              "additionalProperties": false,
+              "description": "A squad named on the championship: a leader, a champion or a tile holder."
+            },
+            "description": "The squads in 1st, several on a tie: the champions once the year is over, the leaders before."
+          }
+        },
+        "required": [
+          "year",
+          "isOver",
+          "leaders"
+        ],
+        "additionalProperties": false,
+        "description": "One year of the league championship, with who won or leads it."
+      },
+      "ChampionshipYearListResponse": {
+        "type": "object",
+        "properties": {
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "year": {
+                  "type": "integer"
+                },
+                "isOver": {
+                  "type": "boolean",
+                  "description": "True once the year has ended in US Eastern."
+                },
+                "leaders": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "squadId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "squadName": {
+                        "type": "string",
+                        "description": "The squad's current name."
+                      },
+                      "squadIconKey": {
+                        "type": "string",
+                        "enum": [
+                          "CAPTAIN_SMILE_SUNSET",
+                          "CAPTAIN_SMILE_FIELD",
+                          "CAPTAIN_SMILE_OCEAN",
+                          "CAPTAIN_SMILE_MIDNIGHT",
+                          "CAPTAIN_SMILE_CANDY",
+                          "CAPTAIN_WINK_SUNSET",
+                          "CAPTAIN_WINK_FIELD",
+                          "CAPTAIN_WINK_OCEAN",
+                          "CAPTAIN_WINK_MIDNIGHT",
+                          "CAPTAIN_WINK_CANDY",
+                          "CHAMPION_BEARD_SUNSET",
+                          "CHAMPION_BEARD_FIELD",
+                          "CHAMPION_BEARD_OCEAN",
+                          "CHAMPION_BEARD_MIDNIGHT",
+                          "CHAMPION_BEARD_CANDY",
+                          "MAVERICK_MASK_SUNSET",
+                          "MAVERICK_MASK_FIELD",
+                          "MAVERICK_MASK_OCEAN",
+                          "MAVERICK_MASK_MIDNIGHT",
+                          "MAVERICK_MASK_CANDY",
+                          "STARFACE_SUNSET",
+                          "STARFACE_FIELD",
+                          "STARFACE_OCEAN",
+                          "STARFACE_MIDNIGHT",
+                          "STARFACE_CANDY",
+                          "HELMET_STRIPE_SUNSET",
+                          "HELMET_STRIPE_FIELD",
+                          "HELMET_STRIPE_OCEAN",
+                          "HELMET_STRIPE_MIDNIGHT",
+                          "HELMET_STRIPE_CANDY",
+                          "HELMET_BOLT_SUNSET",
+                          "HELMET_BOLT_FIELD",
+                          "HELMET_BOLT_OCEAN",
+                          "HELMET_BOLT_MIDNIGHT",
+                          "HELMET_BOLT_CANDY",
+                          "HELMET_HORN_SUNSET",
+                          "HELMET_HORN_FIELD",
+                          "HELMET_HORN_OCEAN",
+                          "HELMET_HORN_MIDNIGHT",
+                          "HELMET_HORN_CANDY",
+                          "HELMET_WING_SUNSET",
+                          "HELMET_WING_FIELD",
+                          "HELMET_WING_OCEAN",
+                          "HELMET_WING_MIDNIGHT",
+                          "HELMET_WING_CANDY",
+                          "HELMET_GRID_SUNSET",
+                          "HELMET_GRID_FIELD",
+                          "HELMET_GRID_OCEAN",
+                          "HELMET_GRID_MIDNIGHT",
+                          "HELMET_GRID_CANDY",
+                          "GOLF_BAG_SUNSET",
+                          "GOLF_BAG_FIELD",
+                          "GOLF_BAG_OCEAN",
+                          "GOLF_BAG_MIDNIGHT",
+                          "GOLF_BAG_CANDY",
+                          "WHISTLE_BADGE_SUNSET",
+                          "WHISTLE_BADGE_FIELD",
+                          "WHISTLE_BADGE_OCEAN",
+                          "WHISTLE_BADGE_MIDNIGHT",
+                          "WHISTLE_BADGE_CANDY",
+                          "STOPWATCH_BADGE_SUNSET",
+                          "STOPWATCH_BADGE_FIELD",
+                          "STOPWATCH_BADGE_OCEAN",
+                          "STOPWATCH_BADGE_MIDNIGHT",
+                          "STOPWATCH_BADGE_CANDY",
+                          "MEGAPHONE_SUNSET",
+                          "MEGAPHONE_FIELD",
+                          "MEGAPHONE_OCEAN",
+                          "MEGAPHONE_MIDNIGHT",
+                          "MEGAPHONE_CANDY",
+                          "FOAM_FINGER_SUNSET",
+                          "FOAM_FINGER_FIELD",
+                          "FOAM_FINGER_OCEAN",
+                          "FOAM_FINGER_MIDNIGHT",
+                          "FOAM_FINGER_CANDY",
+                          "BULL_HEAD_SUNSET",
+                          "BULL_HEAD_FIELD",
+                          "BULL_HEAD_OCEAN",
+                          "BULL_HEAD_MIDNIGHT",
+                          "BULL_HEAD_CANDY",
+                          "LUCKY_DUCK_SUNSET",
+                          "LUCKY_DUCK_FIELD",
+                          "LUCKY_DUCK_OCEAN",
+                          "LUCKY_DUCK_MIDNIGHT",
+                          "LUCKY_DUCK_CANDY",
+                          "TURBO_TURTLE_SUNSET",
+                          "TURBO_TURTLE_FIELD",
+                          "TURBO_TURTLE_OCEAN",
+                          "TURBO_TURTLE_MIDNIGHT",
+                          "TURBO_TURTLE_CANDY",
+                          "FIRE_PIZZA_SUNSET",
+                          "FIRE_PIZZA_FIELD",
+                          "FIRE_PIZZA_OCEAN",
+                          "FIRE_PIZZA_MIDNIGHT",
+                          "FIRE_PIZZA_CANDY",
+                          "BANANA_BAT_SUNSET",
+                          "BANANA_BAT_FIELD",
+                          "BANANA_BAT_OCEAN",
+                          "BANANA_BAT_MIDNIGHT",
+                          "BANANA_BAT_CANDY"
+                        ],
+                        "description": "The squad's built-in team icon."
+                      }
+                    },
+                    "required": [
+                      "squadId",
+                      "squadName",
+                      "squadIconKey"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A squad named on the championship: a leader, a champion or a tile holder."
+                  },
+                  "description": "The squads in 1st, several on a tie: the champions once the year is over, the leaders before."
+                }
+              },
+              "required": [
+                "year",
+                "isOver",
+                "leaders"
+              ],
+              "additionalProperties": false,
+              "description": "One year of the league championship, with who won or leads it."
+            },
+            "description": "Every year with a counted contest, newest first; years with none are left out."
+          }
+        },
+        "required": [
+          "years"
+        ],
+        "additionalProperties": false,
+        "description": "The league championship's years."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -43643,6 +45189,142 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CupSquadPointsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/championship/": {
+      "get": {
+        "operationId": "listChampionshipYears",
+        "summary": "List championship years",
+        "tags": [
+          "Championship"
+        ],
+        "description": "Every year the league has a counted contest in, newest first, with the squads in 1st: the champions of a year that is over, the leaders of the current one. Years with no counted contest are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The league championship's years.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChampionshipYearListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/championship/{year}": {
+      "get": {
+        "operationId": "getChampionship",
+        "summary": "Get a championship year",
+        "tags": [
+          "Championship"
+        ],
+        "description": "One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "path",
+            "name": "year",
+            "required": true,
+            "description": "The championship year, such as 2026."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One championship year.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChampionshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
