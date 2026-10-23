@@ -9,21 +9,10 @@
  * counts, so the options bag went with them.
  */
 import type { LeagueDto } from '@poolmaster/shared/dto';
-import type { LeagueIconKey } from '@poolmaster/shared/domain';
-
-interface LeagueRow {
-  id: string;
-  leagueCode: string;
-  name: string;
-  description?: string | null;
-  isActive: boolean;
-  iconKey: LeagueIconKey;
-  createdAt: Date;
-  updatedAt: Date;
-}
+import type { League } from '@poolmaster/shared/domain';
 
 export function toLeagueDto(
-  league: LeagueRow,
+  league: League,
   counts?: {
     memberCount?: number;
     activeContestCount?: number;
@@ -39,5 +28,8 @@ export function toLeagueDto(
     memberCount: counts?.memberCount ?? 0,
     activeContestCount: counts?.activeContestCount ?? 0,
     createdAt: league.createdAt.toISOString(),
+    cupName: league.cupName,
+    cupPointsScale: league.cupPointsScale,
+    cupCustomPoints: league.cupCustomPoints,
   };
 }

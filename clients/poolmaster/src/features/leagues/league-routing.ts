@@ -112,6 +112,11 @@ export function buildLeagueAdminContestEventsPath(leagueCode: string, contestId:
   return `/league/${leagueCode}/admin/contests/${contestId}/events`;
 }
 
+/** How much one contest counts toward its cup and the league championship (#841). */
+export function buildLeagueAdminContestCupWeightPath(leagueCode: string, contestId: string) {
+  return `/league/${leagueCode}/admin/contests/${contestId}/cup-weight`;
+}
+
 export function buildLeagueAdminTeamsPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/teams`;
 }
@@ -130,6 +135,11 @@ export function buildLeagueAdminInvitesPath(leagueCode: string) {
 
 export function buildLeagueAdminEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/edit`;
+}
+
+/** The league's championship name and points table (#841, #863). */
+export function buildLeagueAdminChampionshipsEditPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/championships/edit`;
 }
 
 export function buildInvitePath(inviteCode: string) {

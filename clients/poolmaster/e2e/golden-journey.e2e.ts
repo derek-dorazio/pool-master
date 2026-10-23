@@ -580,6 +580,35 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('league-home-description')).toHaveText(description);
     });
 
+    await test.step('set the championship points table to Top ten, and make the budget contest count double', async () => {
+      // League settings › Championships holds the table every cup and the championship score on.
+      await page.goto(`/league/${run.leagueCode}/admin`);
+      await page.getByTestId('league-settings-championships-edit').click();
+      await page.getByTestId('edit-championships-scale-TOP_TEN').click();
+      await expect(page.getByTestId('championship-points-preview-1st')).toContainText('25');
+      const settings = await submitAndRead<{ league: { cupPointsScale: string } }>(
+        page,
+        'edit-championships-save',
+        'PUT',
+        `/api/v1/leagues/${state.leagueId}/cup-settings`,
+      );
+      expect(settings.league.cupPointsScale).toBe('TOP_TEN');
+      await expect(page.getByTestId('league-settings-points-table')).toContainText('Top ten');
+
+      // A contest's weight is set on its own page and holds until it is final.
+      await page.goto(`/league/${run.leagueCode}/admin/contests/${state.budgetContestId}`);
+      await page.getByTestId('manage-contest-cup-weight-edit').click();
+      await page.getByTestId('edit-cup-weight-DOUBLE').click();
+      const weighted = await submitAndRead<{ contest: { cupWeight: string } }>(
+        page,
+        'edit-cup-weight-save',
+        'PUT',
+        `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.budgetContestId}/cup-weight`,
+      );
+      expect(weighted.contest.cupWeight).toBe('DOUBLE');
+      await expect(page.getByTestId('manage-contest-cup-weight')).toContainText('Double (x2)');
+    });
+
     await test.step('generate the join URL in Commissioner tools › Invites, and see it pending', async () => {
       // Inviting members lives in Commissioner tools, beside the invites still pending.
       await page.goto(`/league/${run.leagueCode}/admin/invites`);

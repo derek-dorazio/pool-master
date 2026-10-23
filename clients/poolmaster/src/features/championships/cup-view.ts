@@ -44,9 +44,14 @@ function ordinalSuffix(position: number) {
   return ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[position % 10] ?? 'th';
 }
 
+/** A place as an ordinal: "1st", "12th". */
+export function formatOrdinalPlace(position: number): string {
+  return `${position}${ordinalSuffix(position)}`;
+}
+
 /** A place as a sentence reads it: "6th", or "T2" for a shared 2nd. */
 export function formatPlace(row: Pick<CupStandingRowDto, 'displayPosition' | 'position'>): string {
-  return row.displayPosition.startsWith('T') ? row.displayPosition : `${row.position}${ordinalSuffix(row.position)}`;
+  return row.displayPosition.startsWith('T') ? row.displayPosition : formatOrdinalPlace(row.position);
 }
 
 function joinNames(names: string[]) {

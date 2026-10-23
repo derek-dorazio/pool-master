@@ -107,6 +107,7 @@ export function buildManagedContest(
     ],
     name: 'Masters One-and-Done',
     status: 'DRAFT',
+    cupWeight: 'NORMAL',
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',
     configuration: {

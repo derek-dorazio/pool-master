@@ -49,6 +49,9 @@ describe('LeagueSelector', () => {
               iconKey: 'GOLF_FLAG',
               memberCount: 12,
               activeContestCount: 3,
+              cupName: 'League One Cup',
+              cupPointsScale: 'STANDARD',
+              cupCustomPoints: [],
             },
             {
               id: 'league-2',
@@ -58,6 +61,9 @@ describe('LeagueSelector', () => {
               iconKey: 'FOOTBALL',
               memberCount: 10,
               activeContestCount: 1,
+              cupName: 'League Two Cup',
+              cupPointsScale: 'STANDARD',
+              cupCustomPoints: [],
             },
           ]}
           onCreateLeague={() => undefined}

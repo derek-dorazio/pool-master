@@ -250,7 +250,8 @@ the commissioner writes. Shapes in `packages/shared/dto/` (`cups.dto.ts`, `champ
 | `GET /championship` | #863 | Years with their champions |
 | `GET /history/contests?year=&squadId=&place=` | #837 | `ContestResultSummaryDto[]` for one year (no paging, `rules/domain-model-conventions-rules.md` §16), read from `LeagueYearFinish` so a cell's list matches its count |
 | `GET /history/summary` | #837 | Tile counts (`SummaryTile`: `MOST_CHAMPIONSHIPS`, `MOST_CUPS`) and each year's champions |
-| `PATCH /leagues/:leagueId`, contest settings | #841, #863 | Gain `cupPointsScale`, `cupCustomPoints`, `cupName`; `cupWeight` |
+| `PUT /cup-settings` | #841, #863 | The championship name and points table together (`cupName`, `cupPointsScale`, `cupCustomPoints`), apart from the league's details, as League settings edits them in their own section |
+| `PUT /contest-management/contests/:contestId/cup-weight` | #841 | A contest's `cupWeight`, until it is final |
 
 Typed errors: `CUP_NOT_FOUND`, `CUP_CROWNED`, `CUP_HAS_UNFINISHED_CONTESTS`, `CONTEST_FINAL`,
 `SQUAD_DELETE_HAS_RESULTS`. Read cost: open cups read one league-season of frozen places per
@@ -301,8 +302,12 @@ journey row once a page exists.
    a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
    slice 2 adds the Championship tab. The `ChampionshipFeature` map in code waits for the first
    gate; this table is the categorization until then.
-3. **Commissioner settings.** Points table with preview; cup weight.
+3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
+   name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
+   Score each final contest from its frozen `LeagueYearFinish` weight and points, not the
+   live `contest.cupWeight`, so a weight saved while settlement runs cannot split a crowned cup
+   from the championship.
 5. **Projected points** from live contests, greyed as "if it ended now".
 
 2 and 3 in parallel after 1; 4 and 5 after 2.
@@ -313,7 +318,7 @@ journey row once a page exists.
    `GET /championship/:year` and `/championship`. Plus the guard and best-entry function if #841
    slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
    second backfill.
-2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting;
+2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting (landed with #841 slice 3);
    championship trophies on the shelf. Builds the page shell if #841 slice 2 hasn't.
 
 **#837 history** (after both pages exist)

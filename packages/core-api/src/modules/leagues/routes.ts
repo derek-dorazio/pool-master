@@ -177,6 +177,26 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     handler: league.updateLeagueDetails,
   });
 
+  fastify.put('/:id/cup-settings', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Update the league\'s championship settings',
+      description:
+        'Allows a commissioner to set an active league\'s championship name and points table (#841, #863) in one request. Cups score on read, so they follow the new table at once; the championship keeps the points each contest earned when it went final. 400 CUP_CUSTOM_POINTS_INVALID when CUSTOM has no points or another scale sends some; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.',
+      operationId: 'updateLeagueCupSettings',
+      body: schemaRef('UpdateLeagueCupSettingsRequest'),
+      response: {
+        200: schemaRef('LeagueResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: league.updateLeagueCupSettings,
+  });
+
   fastify.post('/:id/inactivate', {
     schema: {
       tags: ['Leagues'],

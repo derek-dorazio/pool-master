@@ -17,6 +17,7 @@ import {
   listLeagueSquadsData,
 } from '@/features/leagues/test/fixtures';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
+import { EditContestCupWeightPage } from './edit-contest-cup-weight-page';
 import { EditContestPage } from './edit-contest-page';
 import { ManageContestPage } from './manage-contest-page';
 import {
@@ -37,6 +38,7 @@ const getLeagueByCodeMock = vi.fn();
 const getSelectionStateMock = vi.fn();
 const getSportLeagueMock = vi.fn();
 const runContestDrawMock = vi.fn();
+const setContestCupWeightMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
@@ -54,6 +56,7 @@ bindApiMocks({
   getSelectionState: getSelectionStateMock,
   getSportLeague: getSportLeagueMock,
   runContestDraw: runContestDrawMock,
+  setContestCupWeight: setContestCupWeightMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -76,6 +79,7 @@ function renderAt(path: string) {
                   <Route element={<div data-testid="contests-list-destination" />} path="contests" />
                   <Route element={<ManageContestPage />} path="contests/:contestId" />
                   <Route element={<EditContestPage />} path="contests/:contestId/edit" />
+                  <Route element={<EditContestCupWeightPage />} path="contests/:contestId/cup-weight" />
                 </Route>
               </Route>
             </Route>
@@ -120,7 +124,7 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     deleteContestMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
-    getSelectionStateMock, getSportLeagueMock, runContestDrawMock,
+    getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
     listContestEntriesMock, listContestsMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
@@ -472,6 +476,78 @@ describe('Commissioner tools › Contests › one contest › its events', () =>
 
     expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
     expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
+  });
+});
+
+describe('Commissioner tools › Contests › one contest › Cup weight', () => {
+  it('shows how much an open contest counts toward its cup, with an Edit to change it', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'OPEN' }),
+      managedContest: buildManagedContest({ status: 'OPEN', cupWeight: 'BONUS' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-cup-weight')).toHaveTextContent('Bonus (x1.5)');
+    expect(screen.getByTestId('manage-contest-cup-weight-edit')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1/cup-weight');
+  });
+
+  it('shows a final contest\'s cup weight as fixed, with no Edit', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'COMPLETED' }),
+      managedContest: buildManagedContest({ status: 'COMPLETED', cupWeight: 'DOUBLE' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-cup-weight')).toHaveTextContent('Double (x2)');
+    expect(screen.getByTestId('manage-contest-cup-weight-final')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contest-cup-weight-edit')).not.toBeInTheDocument();
+  });
+
+  it('saves the weight chosen and returns to the contest page, which shows it', async () => {
+    primeMocks({ managedContest: buildManagedContest({ status: 'OPEN' }) });
+    setContestCupWeightMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest({ status: 'OPEN', cupWeight: 'DOUBLE' }) }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/cup-weight');
+
+    fireEvent.click(await screen.findByTestId('edit-cup-weight-DOUBLE'));
+    expect(screen.getByTestId('edit-cup-weight-DOUBLE')).toBeChecked();
+    getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest({ status: 'OPEN', cupWeight: 'DOUBLE' }) }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save weight' }));
+
+    expect(await screen.findByTestId('manage-contest-cup-weight')).toHaveTextContent('Double (x2)');
+    expect(setContestCupWeightMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1', contestId: 'contest-1' },
+      body: { cupWeight: 'DOUBLE' },
+    }));
+  });
+
+  it('stays on the form with the reason when the contest went final before the save', async () => {
+    primeMocks({ managedContest: buildManagedContest({ status: 'ACTIVE' }) });
+    setContestCupWeightMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_FINAL', message: 'This contest is final, so how much it counts is fixed.' } },
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/cup-weight');
+
+    fireEvent.click(await screen.findByTestId('edit-cup-weight-NOT_COUNTED'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save weight' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('This contest is final, so how much it counts is fixed.');
+    expect(screen.getByTestId('edit-cup-weight-page')).toBeInTheDocument();
+  });
+
+  it('sends a commissioner who opens Cup weight on a final contest back to the contest page', async () => {
+    primeMocks({
+      contest: buildContest({ status: 'COMPLETED' }),
+      managedContest: buildManagedContest({ status: 'COMPLETED' }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/cup-weight');
+
+    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-cup-weight-page')).not.toBeInTheDocument();
   });
 });
 

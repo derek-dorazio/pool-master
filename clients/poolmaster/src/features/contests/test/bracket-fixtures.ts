@@ -255,6 +255,9 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       memberCount: 2,
       activeContestCount: 1,
       createdAt: '2026-04-15T00:00:00.000Z',
+      cupName: 'Big Dawgs Cup',
+      cupPointsScale: 'STANDARD',
+      cupCustomPoints: [],
     },
     membership: {
       id: 'league-membership-1',
