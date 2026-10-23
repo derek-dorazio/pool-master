@@ -139,7 +139,7 @@ export interface SquadHistoryView {
 }
 
 export interface HistoryServiceDeps {
-  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests'>;
+  finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
   championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
@@ -213,14 +213,12 @@ export class HistoryService {
    */
   async getSquadHistory(leagueId: string, squadId: string): Promise<SquadHistoryView> {
     const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadHistory.squadNotFound');
-    const [championshipYears, seasonYears, finishes] = await Promise.all([
+    const [championshipYears, seasonYears] = await Promise.all([
       this.deps.championship.listYears(leagueId),
       this.deps.cups.listSeasonYears(leagueId),
-      this.deps.finishes.findByLeague(leagueId),
     ]);
     const yearNumbers = [...new Set([...championshipYears.map((row) => row.year), ...seasonYears])].sort((left, right) => right - left);
     const years = await Promise.all(yearNumbers.map((year) => this.readSquadYear(leagueId, squad, year)));
-    const counted = finishes.filter((finish) => finish.squadId === squadId && finish.weight !== CupWeight.NOT_COUNTED);
     const trophies = years.flatMap((year): SquadTrophyView[] => {
       const { championship } = year;
       const podium = championship !== null && championship.isOver
@@ -234,10 +232,11 @@ export class HistoryService {
     this.deps.logger?.debug({ action: 'history.squadHistory', data: { leagueId, squadId, yearCount: years.length, trophyCount: trophies.length } }, 'Read a squad\'s history');
     return {
       squad,
+      // Summed from the years' championship rows, so they always match the Championship tab.
       medals: {
-        firsts: counted.filter((finish) => finish.place === 1).length,
-        seconds: counted.filter((finish) => finish.place === 2).length,
-        thirds: counted.filter((finish) => finish.place === 3).length,
+        firsts: sumFinishes(years, 0),
+        seconds: sumFinishes(years, 1),
+        thirds: sumFinishes(years, 2),
       },
       trophies,
       years,
@@ -372,4 +371,9 @@ function mostOf(tile: SummaryTile, wins: readonly Squad[]): HistorySummaryTileVi
     count,
     squads: byName([...counts.values()].filter((row) => row.count === count && count > 0).map((row) => row.squad)),
   };
+}
+
+/** How many times the squad finished in a place (0 for 1st) over its championship rows. */
+function sumFinishes(years: SquadYearView[], placeIndex: number): number {
+  return years.reduce((total, year) => total + (year.championship?.standing.finishes[placeIndex] ?? 0), 0);
 }

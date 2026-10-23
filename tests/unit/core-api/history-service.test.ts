@@ -379,13 +379,13 @@ describe('HistoryService squad year (#872)', () => {
 describe('HistoryService squad history (#872)', () => {
   const NOW = new Date('2026-08-01T12:00:00.000Z');
 
-  function standingRow(rowSquad: Squad, position: number, points: number): ChampionshipStandingView {
+  function standingRow(rowSquad: Squad, position: number, points: number, finishes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]): ChampionshipStandingView {
     return {
       squad: rowSquad,
       position,
       displayPosition: String(position),
       points,
-      finishes: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      finishes,
       podiums: 0,
       topTens: 0,
       played: 1,
@@ -393,12 +393,8 @@ describe('HistoryService squad history (#872)', () => {
     };
   }
 
-  function buildHistory(
-    years: Record<number, { isOver: boolean; standings: ChampionshipStandingView[]; cups: CupView[] }>,
-    finishRows: LeagueYearFinish[] = [],
-  ) {
+  function buildHistory(years: Record<number, { isOver: boolean; standings: ChampionshipStandingView[]; cups: CupView[] }>) {
     const finishes = new InMemoryChampionship();
-    finishes.finishes.push(...finishRows);
     const byYear = new Map(Object.entries(years).map(([year, row]) => [Number(year), row]));
     const yearNumbers = [...byYear.keys()].sort((left, right) => right - left);
     return new HistoryService({
@@ -427,23 +423,6 @@ describe('HistoryService squad history (#872)', () => {
       },
       now: () => NOW,
     });
-  }
-
-  function storedFinish(contestId: string, squadId: string, place: number, weight: CupWeight = CupWeight.NORMAL): LeagueYearFinish {
-    return {
-      leagueId: LEAGUE,
-      year: 2025,
-      squadId,
-      contestId,
-      place,
-      tiedCount: 1,
-      rankedEntryCount: 6,
-      eventSeriesId: null,
-      selectionType: SelectionType.TIERED,
-      weight,
-      points: 100,
-      settledAt: new Date('2025-06-01T00:00:00.000Z'),
-    };
   }
 
   it('reads the squad\'s year for every league year newest first, and shelves its championship podiums of years over and its crowned cups\' trophies', async () => {
@@ -480,21 +459,15 @@ describe('HistoryService squad history (#872)', () => {
     expect(history.trophies).toEqual([]);
   });
 
-  it('counts the squad\'s counted contest 1sts, 2nds and 3rds all time, leaving out NOT_COUNTED contests and other squads', async () => {
-    const service = buildHistory({}, [
-      storedFinish('a', 'eagles', 1),
-      storedFinish('b', 'eagles', 1),
-      storedFinish('c', 'eagles', 2),
-      storedFinish('d', 'eagles', 3),
-      storedFinish('e', 'eagles', 4),
-      storedFinish('f', 'eagles', 1, CupWeight.NOT_COUNTED),
-      storedFinish('a', 'birdies', 2),
-    ]);
+  it('sums the squad\'s contest 1sts, 2nds and 3rds over its championship rows of every year, leaving out other squads', async () => {
+    const service = buildHistory({
+      2026: { isOver: false, standings: [standingRow(BIRDIES, 1, 900, [5, 5, 5, 0, 0, 0, 0, 0, 0, 0]), standingRow(EAGLES, 2, 600, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0])], cups: [] },
+      2025: { isOver: true, standings: [standingRow(EAGLES, 1, 2000, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0])], cups: [] },
+    });
 
     const history = await service.getSquadHistory(LEAGUE, 'eagles');
 
     expect(history.medals).toEqual({ firsts: 2, seconds: 1, thirds: 1 });
-    expect(history.years).toEqual([]);
   });
 
   it('refuses a squad of another league with SQUAD_NOT_FOUND', async () => {

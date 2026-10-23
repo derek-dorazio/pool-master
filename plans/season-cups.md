@@ -429,7 +429,7 @@ email, not another page. Sent through the email outbox (#845), class B.
    Built as `GET /leagues/:id/history/squads/:squadId/years` (`getSquadHistory`): the medals, the
    shelf and every year's `SquadYearDto`. A championship trophy is a podium with points in a year
    that is over (`TrophyKind`; `trophyForPlace` is shared with crowning). The year picker is
-   `?year=` on the squad page; the strip lists only the years the squad placed in. Perpetual
+   `?year=` on the squad page; the strip lists only the years, and the cups, the squad placed in. Perpetual
    trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
 4. **Year in review email.** After slice 1 and #845's outbox.

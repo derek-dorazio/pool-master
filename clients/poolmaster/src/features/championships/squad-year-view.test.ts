@@ -38,4 +38,16 @@ describe('squad year lines', () => {
     expect(describeSquadYearLine(cupOnly, 2026)).toEqual({ title: '2026 so far', detail: '2026 PGA Tour Cup T2' });
     expect(describeSquadYearLine(past, 2026)).toEqual({ title: '2025', detail: 'Championship 2nd of 12 · 2025 NFL Cup champion' });
   });
+
+  it('leaves out a year and a cup in which the squad has a 0-point row it never placed in', () => {
+    const unplaced = { contestsCounted: 0, points: 0, position: 3, displayPosition: 'T3' };
+    const noResults = buildSquadYear({ year: 2026, championship: buildSquadChampionship({}, { played: 0 }), cups: [buildSquadCup({ name: '2026 NFL Cup' }, unplaced)] });
+    const championshipOnly = buildSquadYear({
+      year: 2025,
+      championship: buildSquadChampionship({ isOver: true, squadCount: 12 }),
+      cups: [buildSquadCup({ name: '2025 NFL Cup', status: 'CROWNED' }, unplaced)],
+    });
+    expect(squadYearsPlaced([noResults, championshipOnly]).map((row) => row.year)).toEqual([2025]);
+    expect(describeSquadYearLine(championshipOnly, 2026)).toEqual({ title: '2025', detail: 'Championship 2nd of 12' });
+  });
 });

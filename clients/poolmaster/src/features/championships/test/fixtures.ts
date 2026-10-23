@@ -220,7 +220,7 @@ export function buildSquadCup(
     status: 'OPEN',
     contestsCounted: 3,
     squadCount: 3,
-    standing: buildCupStanding({ points: 1600, ...standing }),
+    standing: buildCupStanding({ points: 1600, contestsCounted: 2, ...standing }),
     ...overrides,
   };
 }

@@ -53,18 +53,23 @@ export function isChampionshipTrophy(trophy: SquadTrophyDto): boolean {
   return trophy.kind === TrophyKind.CHAMPIONSHIP;
 }
 
-/** The years the squad's All years strip lists: each one it placed in the championship or has a cup on show in. */
-export function squadYearsPlaced(years: SquadYearDto[]): SquadYearDto[] {
-  return years.filter((year) => (year.championship?.standing.played ?? 0) > 0 || historyCupsOnShow(year.cups).length > 0);
+/** The cups on show that the squad placed in: every active squad has a 0-point row, which the strip leaves out. */
+function cupsPlacedOnShow(cups: SquadCupDto[]): SquadCupDto[] {
+  return historyCupsOnShow(cups).filter((cup) => cup.standing.contestsCounted > 0);
 }
 
-/** A year's line in the strip: its championship place, then each cup on show with its trophy or place. */
+/** The years the squad's All years strip lists: each one it placed in the championship or in a cup on show. */
+export function squadYearsPlaced(years: SquadYearDto[]): SquadYearDto[] {
+  return years.filter((year) => (year.championship?.standing.played ?? 0) > 0 || cupsPlacedOnShow(year.cups).length > 0);
+}
+
+/** A year's line in the strip: its championship place, then each cup on show it placed in, with its trophy or place. */
 export function describeSquadYearLine(year: SquadYearDto, currentYear: number): { title: string; detail: string } {
   const parts = [
     ...(year.championship && year.championship.standing.played > 0
       ? [`Championship ${formatPlace(year.championship.standing)} of ${year.championship.squadCount}`]
       : []),
-    ...historyCupsOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : CUP_TROPHY_LABELS[cup.standing.trophy].toLowerCase()}`),
+    ...cupsPlacedOnShow(year.cups).map((cup) => `${cup.name} ${cup.standing.trophy === null ? formatPlace(cup.standing) : CUP_TROPHY_LABELS[cup.standing.trophy].toLowerCase()}`),
   ];
   return { title: historyYearTitle({ year: year.year, isOver: year.year < currentYear }), detail: parts.join(' · ') };
 }
