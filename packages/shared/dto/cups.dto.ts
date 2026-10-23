@@ -37,6 +37,7 @@ export const CupStandingRowDtoSchema = z.object({
   podiums: z.number().int().describe('Counted contests the squad finished 1st, 2nd or 3rd.'),
   contestsCounted: z.number().int().describe('Counted contests the squad placed in.'),
   movement: z.number().int().nullable().describe('Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.'),
+  pointsAfter: z.array(PointsSchema).describe('The squad\'s running total after each counted contest, in the order they went final (tenths): the race chart\'s line. Empty until a contest counts.'),
 }).describe('One squad\'s place in a cup. Every active squad has a row, at 0 points until it places.');
 export type CupStandingRowDto = z.infer<typeof CupStandingRowDtoSchema>;
 

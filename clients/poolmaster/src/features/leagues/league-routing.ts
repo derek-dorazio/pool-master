@@ -29,6 +29,26 @@ export function buildLeagueHistoryPath(leagueCode: string) {
   return `/league/${leagueCode}/history`;
 }
 
+/** Championships (#841, #863): the year's page, which lands on its current tab. */
+export function buildLeagueChampionshipsPath(leagueCode: string, year?: number) {
+  return year === undefined ? `/league/${leagueCode}/championships` : `/league/${leagueCode}/championships/${year}`;
+}
+
+/** The Trophy case: a card per sports league cup of the year. */
+export function buildLeagueTrophyCasePath(leagueCode: string, year: number) {
+  return `${buildLeagueChampionshipsPath(leagueCode, year)}/trophies`;
+}
+
+/** The Points race of one sports league's cup in a year. */
+export function buildLeaguePointsRacePath(leagueCode: string, year: number, sportLeagueId: string) {
+  return `${buildLeagueChampionshipsPath(leagueCode, year)}/race/${sportLeagueId}`;
+}
+
+/** One squad's points in a cup, contest by contest. */
+export function buildLeagueCupSquadPath(leagueCode: string, year: number, sportLeagueId: string, squadId: string) {
+  return `${buildLeaguePointsRacePath(leagueCode, year, sportLeagueId)}/squads/${squadId}`;
+}
+
 /** Every contest type the league could run (#803): with create links for its commissioners. */
 export function buildLeagueContestTypesPath(leagueCode: string) {
   return `/league/${leagueCode}/contest-types`;

@@ -26,6 +26,7 @@ export function toCupDto(view: CupView): CupDto {
       podiums: row.podiums,
       contestsCounted: row.contestsCounted,
       movement: row.movement,
+      pointsAfter: row.pointsAfter,
     })),
     contests: view.contests.map((row) => ({
       contestId: row.contest.id,

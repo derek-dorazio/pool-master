@@ -15644,6 +15644,10 @@ export type CupStandingRowDto = {
      * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
      */
     movement: number | null;
+    /**
+     * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
+     */
+    pointsAfter: Array<number>;
 };
 
 /**
@@ -15751,6 +15755,10 @@ export type CupDto = {
          * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
          */
         movement: number | null;
+        /**
+         * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
+         */
+        pointsAfter: Array<number>;
     }>;
     /**
      * Every contest of the season and sports league, drafts left out, by first event start.
@@ -15854,6 +15862,10 @@ export type CupListResponse = {
              * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
              */
             movement: number | null;
+            /**
+             * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
+             */
+            pointsAfter: Array<number>;
         }>;
         /**
          * Every contest of the season and sports league, drafts left out, by first event start.
@@ -15958,6 +15970,10 @@ export type CupResponse = {
              * Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted.
              */
             movement: number | null;
+            /**
+             * The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts.
+             */
+            pointsAfter: Array<number>;
         }>;
         /**
          * Every contest of the season and sports league, drafts left out, by first event start.

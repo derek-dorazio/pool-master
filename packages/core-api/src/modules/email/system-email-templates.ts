@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { EmailCategory, NotificationClass, formatDollars } from '@poolmaster/shared/domain';
+import { EmailCategory, ServiceClass, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -379,7 +379,7 @@ export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
   /** Decides whether a member can turn the email off, and which unsubscribe link it carries. */
   category: EmailCategory;
   /** The service level the email belongs to, for monetization to gate on later (#845). */
-  notificationClass: NotificationClass;
+  serviceClass: ServiceClass;
   /**
    * Whether EMAIL_CONFIG has a switch for this email, under its key. An email without one (an
    * account email such as a password reset) follows only the overall switch.
@@ -472,7 +472,7 @@ export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
 export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   LEAGUE_MEMBER_INVITE: {
     category: EmailCategory.MEMBERSHIP,
-    notificationClass: NotificationClass.ESSENTIAL,
+    serviceClass: ServiceClass.ESSENTIAL,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -480,7 +480,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   LEAGUE_JOIN_SUCCESS: {
     category: EmailCategory.MEMBERSHIP,
-    notificationClass: NotificationClass.ESSENTIAL,
+    serviceClass: ServiceClass.ESSENTIAL,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -488,7 +488,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
-    notificationClass: NotificationClass.A,
+    serviceClass: ServiceClass.A,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -496,7 +496,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_STARTED_SUMMARY: {
     category: EmailCategory.LIVE_STANDINGS,
-    notificationClass: NotificationClass.B,
+    serviceClass: ServiceClass.B,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -504,7 +504,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_ENTRY_REMINDER: {
     category: EmailCategory.CONTEST_UPDATES,
-    notificationClass: NotificationClass.B,
+    serviceClass: ServiceClass.B,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -512,7 +512,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_OPENED: {
     category: EmailCategory.CONTEST_UPDATES,
-    notificationClass: NotificationClass.A,
+    serviceClass: ServiceClass.A,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -520,7 +520,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_STANDINGS: {
     category: EmailCategory.LIVE_STANDINGS,
-    notificationClass: NotificationClass.B,
+    serviceClass: ServiceClass.B,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -528,7 +528,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
-    notificationClass: NotificationClass.ESSENTIAL,
+    serviceClass: ServiceClass.ESSENTIAL,
     settingsSwitch: false,
     keepsContent: false,
     // A reset email is never sent after its link is dead.
@@ -537,7 +537,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   PASSWORD_CHANGED: {
     category: EmailCategory.ACCOUNT,
-    notificationClass: NotificationClass.ESSENTIAL,
+    serviceClass: ServiceClass.ESSENTIAL,
     settingsSwitch: false,
     keepsContent: true,
     sendWithinMs: null,

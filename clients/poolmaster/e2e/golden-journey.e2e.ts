@@ -54,6 +54,8 @@ type JourneyState = {
   tourId?: string;
   playerIds?: string[];
   eventId?: string;
+  /** The tournament's year: its contest's season, so the year of the tour's cup (#841). */
+  eventYear?: number;
   /** Field-entry ids in tier order: entry `i` sits alone in `tier-${i + 1}`. */
   fieldEntryIds?: string[];
   commissionerId?: string;
@@ -274,7 +276,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     journey.playerIds = playerIds;
 
     // plans/147 — a tournament is one year's edition on a tour; there is no season to create.
-    const eventId = await test.step('create a tournament on the tour, in its start year', async () => {
+    const { eventId, eventYear } = await test.step('create a tournament on the tour, in its start year', async () => {
       const now = new Date();
       const start = addDays(now, 7);
       start.setHours(8, 0, 0, 0);
@@ -293,9 +295,10 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       const id = created.event.id;
       await expect(page).toHaveURL(new RegExp(`/manage/sports/golf/events/${id}$`));
       await expect(page.getByTestId('root-admin-sport-event-home-page')).toBeVisible();
-      return id;
+      return { eventId: id, eventYear: start.getFullYear() };
     });
     journey.eventId = eventId;
+    journey.eventYear = eventYear;
 
     await test.step(`load the ${PLAYER_COUNT} players into the field in one submit`, async () => {
       await page.goto(`/manage/sports/golf/events/${eventId}/field`);
@@ -1143,6 +1146,14 @@ test('act 6: completing the event settles the contest and freezes its standing a
     expect(read.entry.displayPosition).not.toBeNull();
     expectCountingPicksExplainTheTotal(read);
     return read;
+  });
+
+  await test.step('the settled contest counts in its tour\'s cup: the Points race lists it as final, and the member\'s squad has points', async () => {
+    await page.goto(`/league/${run.leagueCode}/championships/${state.eventYear}/race/${state.tourId}`);
+    await expect(page.getByTestId('points-race')).toBeVisible();
+    await expect(page.getByTestId(`cup-contest-${state.contestId}`)).toContainText('Final');
+    await expect(page.getByTestId('cup-standings')).toBeVisible();
+    await expect(page.getByTestId('cup-race-chart')).toBeVisible();
   });
 
   await test.step('a late score correction moves the golfer and leaves the settled standing alone', async () => {

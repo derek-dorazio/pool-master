@@ -1,4 +1,4 @@
-import { EmailCategory, EmailTemplateKey, NotificationClass } from '@poolmaster/shared/domain';
+import { EmailCategory, EmailTemplateKey, ServiceClass } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
@@ -588,17 +588,17 @@ describe('the email template registry', () => {
     });
   });
 
-  it('gives every template a notification class: account and membership email essential, the contest opening and receipts on the free class, reminders, the live email and live standings on the first paid class', () => {
-    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.notificationClass]))).toEqual({
-      LEAGUE_MEMBER_INVITE: NotificationClass.ESSENTIAL,
-      LEAGUE_JOIN_SUCCESS: NotificationClass.ESSENTIAL,
-      CONTEST_ENTRY_COMPLETED: NotificationClass.A,
-      CONTEST_STARTED_SUMMARY: NotificationClass.B,
-      CONTEST_ENTRY_REMINDER: NotificationClass.B,
-      CONTEST_OPENED: NotificationClass.A,
-      CONTEST_STANDINGS: NotificationClass.B,
-      PASSWORD_RESET: NotificationClass.ESSENTIAL,
-      PASSWORD_CHANGED: NotificationClass.ESSENTIAL,
+  it('gives every template a service class: account and membership email essential, the contest opening and receipts on the free class, reminders, the live email and live standings on the first paid class', () => {
+    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.serviceClass]))).toEqual({
+      LEAGUE_MEMBER_INVITE: ServiceClass.ESSENTIAL,
+      LEAGUE_JOIN_SUCCESS: ServiceClass.ESSENTIAL,
+      CONTEST_ENTRY_COMPLETED: ServiceClass.A,
+      CONTEST_STARTED_SUMMARY: ServiceClass.B,
+      CONTEST_ENTRY_REMINDER: ServiceClass.B,
+      CONTEST_OPENED: ServiceClass.A,
+      CONTEST_STANDINGS: ServiceClass.B,
+      PASSWORD_RESET: ServiceClass.ESSENTIAL,
+      PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
     });
   });
 
