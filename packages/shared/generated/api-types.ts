@@ -11566,7 +11566,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -11577,6 +11577,8 @@ export interface components {
             sendRatePerSecond: number;
             /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
             entryReminderHours: number[];
+            /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+            standingsBufferMinutes: number;
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
             templates: {
                 /** @description Whether this email is sent. */
@@ -11591,6 +11593,8 @@ export interface components {
                 CONTEST_ENTRY_REMINDER: boolean;
                 /** @description Whether this email is sent. */
                 CONTEST_OPENED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_STANDINGS: boolean;
             };
         };
         /** @description A named set of budget pricing values. */
@@ -12111,6 +12115,8 @@ export interface components {
                 sendRatePerSecond: number;
                 /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                 entryReminderHours: number[];
+                /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                standingsBufferMinutes: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12125,6 +12131,8 @@ export interface components {
                     CONTEST_ENTRY_REMINDER: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_OPENED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STANDINGS: boolean;
                 };
             };
             /** @description The value a reset would store. */
@@ -12137,6 +12145,8 @@ export interface components {
                 sendRatePerSecond: number;
                 /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                 entryReminderHours: number[];
+                /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                standingsBufferMinutes: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12151,6 +12161,8 @@ export interface components {
                     CONTEST_ENTRY_REMINDER: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_OPENED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STANDINGS: boolean;
                 };
             };
         } | {
@@ -12468,6 +12480,8 @@ export interface components {
                     sendRatePerSecond: number;
                     /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                     entryReminderHours: number[];
+                    /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                    standingsBufferMinutes: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -12482,6 +12496,8 @@ export interface components {
                         CONTEST_ENTRY_REMINDER: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_OPENED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STANDINGS: boolean;
                     };
                 };
                 /** @description The value a reset would store. */
@@ -12494,6 +12510,8 @@ export interface components {
                     sendRatePerSecond: number;
                     /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                     entryReminderHours: number[];
+                    /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                    standingsBufferMinutes: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -12508,6 +12526,8 @@ export interface components {
                         CONTEST_ENTRY_REMINDER: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_OPENED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STANDINGS: boolean;
                     };
                 };
             } | {
@@ -12674,6 +12694,8 @@ export interface components {
                 sendRatePerSecond: number;
                 /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                 entryReminderHours: number[];
+                /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                standingsBufferMinutes: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12688,6 +12710,8 @@ export interface components {
                     CONTEST_ENTRY_REMINDER: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_OPENED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STANDINGS: boolean;
                 };
             };
             /**
@@ -12957,6 +12981,8 @@ export interface components {
                 sendRatePerSecond: number;
                 /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                 entryReminderHours: number[];
+                /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                standingsBufferMinutes: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12971,6 +12997,8 @@ export interface components {
                     CONTEST_ENTRY_REMINDER: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_OPENED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STANDINGS: boolean;
                 };
             } | null;
             /** @description The value the save stored. */
@@ -12983,6 +13011,8 @@ export interface components {
                 sendRatePerSecond: number;
                 /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                 entryReminderHours: number[];
+                /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                standingsBufferMinutes: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12997,6 +13027,8 @@ export interface components {
                     CONTEST_ENTRY_REMINDER: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_OPENED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_STANDINGS: boolean;
                 };
             };
         } | {
@@ -13293,6 +13325,8 @@ export interface components {
                     sendRatePerSecond: number;
                     /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                     entryReminderHours: number[];
+                    /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                    standingsBufferMinutes: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -13307,6 +13341,8 @@ export interface components {
                         CONTEST_ENTRY_REMINDER: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_OPENED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STANDINGS: boolean;
                     };
                 } | null;
                 /** @description The value the save stored. */
@@ -13319,6 +13355,8 @@ export interface components {
                     sendRatePerSecond: number;
                     /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
                     entryReminderHours: number[];
+                    /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+                    standingsBufferMinutes: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -13333,6 +13371,8 @@ export interface components {
                         CONTEST_ENTRY_REMINDER: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_OPENED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_STANDINGS: boolean;
                     };
                 };
             } | {

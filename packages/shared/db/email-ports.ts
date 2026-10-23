@@ -88,6 +88,11 @@ export interface EmailMessageRepository {
   ): Promise<EmailMessage | undefined>;
   /** Clears the subject and bodies of emails created before `cutoff`; returns how many. */
   clearContentCreatedBefore(cutoff: Date): Promise<number>;
+  /**
+   * Whether an email of `templateKey` about the contest is recorded under an idempotency key
+   * starting with `keyPrefix`: for anyone, in any state.
+   */
+  existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; keyPrefix: string }): Promise<boolean>;
   /** Where each invitation's latest email of `templateKey` stands, by invitation id. */
   findLatestStateByInvitations(
     invitationIds: string[],

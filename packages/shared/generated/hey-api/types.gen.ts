@@ -11530,7 +11530,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED';
 
 /**
  * Whether and how system email is sent.
@@ -11552,6 +11552,10 @@ export type EmailConfig = {
      * How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment.
      */
     entryReminderHours: Array<number>;
+    /**
+     * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+     */
+    standingsBufferMinutes: number;
     /**
      * Per-template switches. A template that is off is skipped even while email is on.
      */
@@ -11580,6 +11584,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         CONTEST_OPENED: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        CONTEST_STANDINGS: boolean;
     };
 };
 
@@ -12384,6 +12392,10 @@ export type SettingsGroup = {
          */
         entryReminderHours: Array<number>;
         /**
+         * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+         */
+        standingsBufferMinutes: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12411,6 +12423,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_OPENED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STANDINGS: boolean;
         };
     };
     /**
@@ -12434,6 +12450,10 @@ export type SettingsGroup = {
          */
         entryReminderHours: Array<number>;
         /**
+         * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+         */
+        standingsBufferMinutes: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -12461,6 +12481,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             CONTEST_OPENED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STANDINGS: boolean;
         };
     };
 } | {
@@ -12940,6 +12964,10 @@ export type SettingsGroupList = {
              */
             entryReminderHours: Array<number>;
             /**
+             * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+             */
+            standingsBufferMinutes: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -12967,6 +12995,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_OPENED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STANDINGS: boolean;
             };
         };
         /**
@@ -12990,6 +13022,10 @@ export type SettingsGroupList = {
              */
             entryReminderHours: Array<number>;
             /**
+             * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+             */
+            standingsBufferMinutes: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -13017,6 +13053,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 CONTEST_OPENED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STANDINGS: boolean;
             };
         };
     } | {
@@ -13296,6 +13336,10 @@ export type SettingsGroupUpdateRequest = {
          */
         entryReminderHours: Array<number>;
         /**
+         * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+         */
+        standingsBufferMinutes: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13323,6 +13367,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             CONTEST_OPENED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STANDINGS: boolean;
         };
     };
     /**
@@ -13721,6 +13769,10 @@ export type SettingsChange = {
          */
         entryReminderHours: Array<number>;
         /**
+         * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+         */
+        standingsBufferMinutes: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13748,6 +13800,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_OPENED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STANDINGS: boolean;
         };
     } | null;
     /**
@@ -13771,6 +13827,10 @@ export type SettingsChange = {
          */
         entryReminderHours: Array<number>;
         /**
+         * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+         */
+        standingsBufferMinutes: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13798,6 +13858,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             CONTEST_OPENED: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            CONTEST_STANDINGS: boolean;
         };
     };
 } | {
@@ -14244,6 +14308,10 @@ export type SettingsChangeList = {
              */
             entryReminderHours: Array<number>;
             /**
+             * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+             */
+            standingsBufferMinutes: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -14271,6 +14339,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_OPENED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STANDINGS: boolean;
             };
         } | null;
         /**
@@ -14294,6 +14366,10 @@ export type SettingsChangeList = {
              */
             entryReminderHours: Array<number>;
             /**
+             * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
+             */
+            standingsBufferMinutes: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -14321,6 +14397,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 CONTEST_OPENED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                CONTEST_STANDINGS: boolean;
             };
         };
     } | {

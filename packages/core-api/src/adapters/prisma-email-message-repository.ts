@@ -153,6 +153,14 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return count;
   }
 
+  async existsForContest(query: { contestId: string; templateKey: EmailTemplateKey; keyPrefix: string }): Promise<boolean> {
+    const row = await this.prisma.emailMessage.findFirst({
+      where: { contestId: query.contestId, templateKey: query.templateKey, idempotencyKey: { startsWith: query.keyPrefix } },
+      select: { id: true },
+    });
+    return row !== null;
+  }
+
   async findLatestStateByInvitations(
     invitationIds: string[],
     templateKey: EmailTemplateKey,

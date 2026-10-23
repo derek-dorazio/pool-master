@@ -185,6 +185,7 @@ describe('EMAIL_CONFIG defaults', () => {
       allowedRecipients: [],
       sendRatePerSecond: 10,
       entryReminderHours: [48, 24, 3],
+      standingsBufferMinutes: 30,
       templates: {
         LEAGUE_MEMBER_INVITE: true,
         LEAGUE_JOIN_SUCCESS: true,
@@ -192,6 +193,7 @@ describe('EMAIL_CONFIG defaults', () => {
         CONTEST_STARTED_SUMMARY: true,
         CONTEST_ENTRY_REMINDER: true,
         CONTEST_OPENED: true,
+        CONTEST_STANDINGS: true,
       },
     });
   });

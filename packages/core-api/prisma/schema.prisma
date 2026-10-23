@@ -186,6 +186,7 @@ enum PrismaEmailTemplateKey {
   PASSWORD_CHANGED
   CONTEST_ENTRY_REMINDER
   CONTEST_OPENED
+  CONTEST_STANDINGS
 }
 
 enum PrismaEmailMessageStatus {
@@ -724,6 +725,7 @@ model EmailMessage {
   @@index([invitationId, createdAt])
   @@index([createdAt])
   @@index([providerMessageId])
+  @@index([contestId, templateKey])
   @@map("email_messages")
 }
 
@@ -1153,14 +1155,17 @@ model ContestPrizeDefinition {
 // =============================================================================
 
 model ContestEntry {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId       String   @map("contest_id") @db.Uuid
-  squadId         String   @map("squad_id") @db.Uuid
-  entryNumber     Int      @default(1) @map("entry_number")
-  name            String
-  tiebreakerValue Int?     @map("tiebreaker_value")
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId                  String   @map("contest_id") @db.Uuid
+  squadId                    String   @map("squad_id") @db.Uuid
+  entryNumber                Int      @default(1) @map("entry_number")
+  name                       String
+  tiebreakerValue            Int?     @map("tiebreaker_value")
+  /// The entry's place in the last live standings email of its contest (#877), which the next
+  /// one's movement is measured from. Null until a standings email has gone out.
+  lastStandingsEmailPosition Int?     @map("last_standings_email_position")
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   contest Contest @relation(fields: [contestId], references: [id])
   squad   Squad   @relation(fields: [squadId], references: [id])

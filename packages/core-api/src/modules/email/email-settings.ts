@@ -23,6 +23,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
     allowedRecipients: [],
     sendRatePerSecond: 10,
     entryReminderHours: [48, 24, 3],
+    standingsBufferMinutes: 30,
     templates: {
       LEAGUE_MEMBER_INVITE: true,
       LEAGUE_JOIN_SUCCESS: true,
@@ -30,6 +31,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
       CONTEST_STARTED_SUMMARY: true,
       CONTEST_ENTRY_REMINDER: true,
       CONTEST_OPENED: true,
+      CONTEST_STANDINGS: true,
     },
   }),
 });

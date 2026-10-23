@@ -235,11 +235,11 @@ places when they are outside it, with movement since the last email.
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
 |---|---|---|---|---|---|---|---|---|
 | E1 | Contest is live, good luck | The contest goes `OPEN` → `ACTIVE` at its cutoff | Every active league member (Q3.8, decided) | At once | "Good luck, everyone." The event (dates, venue, rounds or games) and the contest's rules in a few lines (selection type, scoring, prizes), entry count, Leaderboard button. No list of entries (Q3.9, decided) | 🟡 `CONTEST_STARTED_SUMMARY` (no cap, no leaderboard link, no "good luck", entrants only) | P1 | B |
-| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | | P1 | B |
+| E2 | Round standings | Every golfer still playing a stroke-play round has finished it (Q3.11) | Every league member with an entry, plus commissioners | Once per round, after the buffer (Q3.11); not after the final round (F1 covers it) | "After round 2 of the Masters." Top 10 with movement, the reader's entries, cut news for their picks, Leaderboard button | ✅ `CONTEST_STANDINGS` (#877) | P1 | B |
 | E3 | Week results | A pick'em or survivor week settles | Same as E2 | Once per week, after the buffer; not for the last week | The week's winner (#717), the week's top 10, contest standings top 10, next week's first kickoff, Make picks for next week button | | P1 | B |
 | E4 | Bracket round results | Every match of a bracket round has a result | Same as E2 | Once per round, after the buffer; not after the final | Top 10, the reader's busted picks and remaining champions, next round's start, Bracket link | | P1 | B |
 | E5 | You're out | A survivor entry is eliminated (losing pick, a draw where draws knock you out, or no unused team left) | Owners of that entry | With E3 | Which week and pick, how many are left, Leaderboard link | | P2 | B |
-| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | | P2 | B |
+| E6 | Event results in a season contest | One event of a multi-event roster contest (a majors pool) settles and more events remain | Same as E2 | Once per event, after the buffer | That event's result for each entry, contest standings top 10, next event and its pick deadline | ✅ `CONTEST_STANDINGS` (#877) | P2 | B |
 | E7 | Squares quarter winner | A squares contest's scoring moment is decided (end of a quarter) | Every entry owner on the board | Once per quarter, not the final one | Winning numbers and box, who holds it, Grid link | | P3 | B |
 | E8 | Next round is set | A reseeded or second-chance round's matchups are set, and picks are open for it | Owners of entries that pick that round | At once | The round's games, picks close at, Make picks button | | P2 | B |
 
@@ -336,8 +336,10 @@ SES 4 and 5, then slices 2 to 6 here.
    submit through `EntryReceipts` in the notifications module. Random draw and squares have no
    submit: their receipts go out at their draw, which folds D6 and D7 into D3; claiming a box
    sends nothing.
-3. **Live standings.** The standings buffer in `EMAIL_CONFIG`, E2 round, E3 week, E4 bracket round, E5 eliminations, E6 season event,
-   with the top 10 and the reader's entries.
+3. **Live standings** (#877), in three PRs, all one `CONTEST_STANDINGS` email. Part 1: the
+   standings buffer in `EMAIL_CONFIG`, each entry's place recorded with every standings email so
+   the next one shows movement, E2 round and E6 season event. Part 2: E3 week and E5
+   eliminations. Part 3: E4 bracket round. Each with the top 10 and the reader's entries.
 4. **Final results.** F1 with F3 folded in, F2.
 5. **Commissioner event emails.** C1, C2, C4, C6, C7, G1, to every commissioner. Choosing sport leagues is #851.
 6. **League and account gaps.** B4 and B5 co-owner emails, B3 with open contests, B6, A5. A1

@@ -43,7 +43,7 @@ export interface GolfContestScore {
  * while the status has not caught up (the event can complete before the last group's round
  * flips to COMPLETED).
  */
-function isRoundFinished(round: ParticipantRoundView): boolean {
+export function isRoundFinished(round: ParticipantRoundView): boolean {
   return round.golf !== null && (
     round.round.status === ParticipantRoundStatus.COMPLETED
     || round.round.status === ParticipantRoundStatus.MISSED_CUT
@@ -51,7 +51,7 @@ function isRoundFinished(round: ParticipantRoundView): boolean {
   );
 }
 
-function isOutOfEvent(row: SportEventParticipantView): boolean {
+export function isOutOfEvent(row: SportEventParticipantView): boolean {
   const status = row.standing?.standing.status;
   return !row.entry.isActive
     || status === ParticipantStandingStatus.WITHDRAWN
