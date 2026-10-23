@@ -161,6 +161,15 @@ export class PrismaEmailMessageRepository implements EmailMessageRepository {
     return row !== null;
   }
 
+  async findLeagueIdsRecorded(query: { templateKey: EmailTemplateKey; keyPrefix: string }): Promise<Set<string>> {
+    const rows = await this.prisma.emailMessage.findMany({
+      where: { templateKey: query.templateKey, idempotencyKey: { startsWith: query.keyPrefix }, leagueId: { not: null } },
+      distinct: ['leagueId'],
+      select: { leagueId: true },
+    });
+    return new Set(rows.flatMap((row) => row.leagueId ?? []));
+  }
+
   async findLatestStateByInvitations(
     invitationIds: string[],
     templateKey: EmailTemplateKey,

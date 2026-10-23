@@ -1,3 +1,4 @@
+export * from './commissioner-notices';
 export * from './contest-notices';
 export * from './contest-summary';
 export * from './entry-receipts';

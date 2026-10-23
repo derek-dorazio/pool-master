@@ -11712,7 +11712,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -11745,6 +11745,12 @@ export interface components {
                 CONTEST_RESULTS: boolean;
                 /** @description Whether this email is sent. */
                 CONTEST_EVENT_CHANGED: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_COMING_UP: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_READY_FOR_CONTESTS: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_NOT_OPEN: boolean;
             };
         };
         /** @description A named set of budget pricing values. */
@@ -12287,6 +12293,12 @@ export interface components {
                     CONTEST_RESULTS: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_EVENT_CHANGED: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_COMING_UP: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_NOT_OPEN: boolean;
                 };
             };
             /** @description The value a reset would store. */
@@ -12321,6 +12333,12 @@ export interface components {
                     CONTEST_RESULTS: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_EVENT_CHANGED: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_COMING_UP: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_NOT_OPEN: boolean;
                 };
             };
         } | {
@@ -12660,6 +12678,12 @@ export interface components {
                         CONTEST_RESULTS: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_EVENT_CHANGED: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_COMING_UP: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_NOT_OPEN: boolean;
                     };
                 };
                 /** @description The value a reset would store. */
@@ -12694,6 +12718,12 @@ export interface components {
                         CONTEST_RESULTS: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_EVENT_CHANGED: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_COMING_UP: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_NOT_OPEN: boolean;
                     };
                 };
             } | {
@@ -12882,6 +12912,12 @@ export interface components {
                     CONTEST_RESULTS: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_EVENT_CHANGED: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_COMING_UP: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_NOT_OPEN: boolean;
                 };
             };
             /**
@@ -13173,6 +13209,12 @@ export interface components {
                     CONTEST_RESULTS: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_EVENT_CHANGED: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_COMING_UP: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_NOT_OPEN: boolean;
                 };
             } | null;
             /** @description The value the save stored. */
@@ -13207,6 +13249,12 @@ export interface components {
                     CONTEST_RESULTS: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_EVENT_CHANGED: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_COMING_UP: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_NOT_OPEN: boolean;
                 };
             };
         } | {
@@ -13525,6 +13573,12 @@ export interface components {
                         CONTEST_RESULTS: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_EVENT_CHANGED: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_COMING_UP: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_NOT_OPEN: boolean;
                     };
                 } | null;
                 /** @description The value the save stored. */
@@ -13559,6 +13613,12 @@ export interface components {
                         CONTEST_RESULTS: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_EVENT_CHANGED: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_COMING_UP: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_NOT_OPEN: boolean;
                     };
                 };
             } | {

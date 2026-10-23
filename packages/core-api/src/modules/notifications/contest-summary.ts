@@ -18,6 +18,7 @@ import {
   getSportDefinition,
   pluralize,
   type Contest,
+  type ContestSelectionConfig,
   type RoundName,
   type SportEvent,
 } from '@poolmaster/shared/domain';
@@ -58,10 +59,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
   const rules = configuration?.configJson;
   if (!first || !rules) return null;
 
-  const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
-  const window = cutoff.kind === ContestCutoffKind.EVENT_START
-    ? first
-    : cutoffTiming(cutoff, first, await deps.matches.findBySportEvent(first.id));
+  const closesAt = await contestClosesAt(deps, contest, rules, first);
   return {
     sportEvents,
     rules: formatContestRules(
@@ -72,8 +70,25 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
       rules.selectionType === SelectionType.BRACKET ? await roundNameOf(deps, first) : undefined,
     ),
     entriesPerMember: formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad),
-    closesAt: window.startDate,
+    closesAt,
   };
+}
+
+/**
+ * When the contest's picks close on its first event: the event's start, a second-chance
+ * bracket's starting round or a squares game's kickoff. Never before the event starts.
+ */
+export async function contestClosesAt(
+  deps: Pick<ContestSummaryDeps, 'matches'>,
+  contest: Contest,
+  rules: ContestSelectionConfig,
+  first: SportEvent,
+): Promise<Date> {
+  const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
+  const window = cutoff.kind === ContestCutoffKind.EVENT_START
+    ? first
+    : cutoffTiming(cutoff, first, await deps.matches.findBySportEvent(first.id));
+  return window.startDate;
 }
 
 /** A knockout's rounds by name, in its sport league's words where it has them ("Sweet 16"). */

@@ -117,6 +117,10 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       return Promise.resolve(rows.some((row) =>
         row.contestId === contestId && row.templateKey === templateKey && row.idempotencyKey.startsWith(keyPrefix)));
     },
+    findLeagueIdsRecorded({ templateKey, keyPrefix }) {
+      return Promise.resolve(new Set(rows.flatMap((row) =>
+        row.templateKey === templateKey && row.idempotencyKey.startsWith(keyPrefix) && row.leagueId ? [row.leagueId] : [])));
+    },
     findLatestStateByInvitations(invitationIds: string[], templateKey: EmailTemplateKey) {
       const latest = new Map<string, EmailMessageState>();
       for (const row of rows) {

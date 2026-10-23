@@ -24,7 +24,7 @@ export function sportPlaysMatches(sport: Sport): boolean {
  * sport's event of one round, whose games form no bracket (#715), else a knockout; null for a
  * sport whose events are all one kind. An event with no round count has its sport's default.
  */
-export function contestTemplateEventTypeOf(event: { sport: Sport; rounds: number | null }): ContestTemplateEventType | null {
+export function contestTemplateEventTypeOf(event: { sport: Sport; rounds?: number | null }): ContestTemplateEventType | null {
   if (!sportPlaysMatches(event.sport)) {
     return null;
   }
@@ -39,7 +39,7 @@ export function contestTemplateEventTypeOf(event: { sport: Sport; rounds: number
  */
 export function isTemplateOfferedOn(
   template: { sport: Sport; sportLeagueId: string | null; eventType?: ContestTemplateEventType | null },
-  event: { sport: Sport; sportLeagueId: string; rounds: number | null },
+  event: { sport: Sport; sportLeagueId: string; rounds?: number | null },
 ): boolean {
   return template.sport === event.sport
     && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)

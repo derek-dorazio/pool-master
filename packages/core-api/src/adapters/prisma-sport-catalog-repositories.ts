@@ -209,6 +209,9 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
         ...(filters.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
+        ...((filters.startsFrom !== undefined || filters.startsBefore !== undefined) && {
+          startDate: { gte: filters.startsFrom, lt: filters.startsBefore },
+        }),
       },
       include: SPORT_EVENT_INCLUDE,
       orderBy: [{ startDate: 'asc' }, { name: 'asc' }],

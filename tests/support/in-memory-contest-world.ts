@@ -553,6 +553,8 @@ export class InMemoryContestWorld {
   leagueRepo(): LeagueRepository {
     return fakeLeagueRepo({
       findById: async (id) => this.leagues.get(id) ?? null,
+      findAll: async (filters = {}) => [...this.leagues.values()]
+        .filter((league) => filters.isActive === undefined || league.isActive === filters.isActive),
     });
   }
 
@@ -573,6 +575,14 @@ export class InMemoryContestWorld {
     return fakeSportEventRepo({
       findById: async (id) => this.sportEvents.get(id) ?? null,
       findByIds: async (ids) => ids.flatMap((id) => this.sportEvents.get(id) ?? []),
+      // Ordered by start, as the database orders them.
+      findAll: async (filters) => [...this.sportEvents.values()]
+        .filter((event) => (filters.status === undefined || event.status === filters.status)
+          && (filters.sportLeagueId === undefined || event.sportLeagueId === filters.sportLeagueId)
+          && (filters.eventYear === undefined || event.eventYear === filters.eventYear)
+          && (filters.startsFrom === undefined || event.startDate >= filters.startsFrom)
+          && (filters.startsBefore === undefined || event.startDate < filters.startsBefore))
+        .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
     });
