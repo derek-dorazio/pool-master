@@ -44,6 +44,16 @@ function parseCategory(value: string | undefined): EmailCategory | undefined {
   return category;
 }
 
+/** One address, so a blank workflow input or a pasted list fails here rather than on SES. */
+function parseTo(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const to = value.trim();
+  if (to.split('@').length !== 2 || /[\s,;]/.test(to) || to.startsWith('@') || to.endsWith('@')) {
+    throw new Error('--to needs exactly one email address.');
+  }
+  return to;
+}
+
 function previewTarget(options: { send: boolean; to: string | undefined }): PreviewTarget | undefined {
   if (options.to) {
     const config = readMailDeliveryConfig();
@@ -51,7 +61,7 @@ function previewTarget(options: { send: boolean; to: string | undefined }): Prev
       transport: createMailDeliveryProvider(config),
       fromAddress: config.fromEmail,
       to: options.to,
-      label: `${options.to} through ${config.provider}`,
+      label: `the --to address through ${config.provider}`,
     };
   }
   if (!options.send) return undefined;
@@ -76,7 +86,7 @@ async function main(): Promise<void> {
     },
   });
   const category = parseCategory(values.category);
-  const target = previewTarget({ send: values.send, to: values.to?.trim() || undefined });
+  const target = previewTarget({ send: values.send, to: parseTo(values.to) });
   const templateKeys = (Object.keys(EMAIL_TEMPLATES) as SystemEmailTemplateKey[])
     .filter((templateKey) => category === undefined || EMAIL_TEMPLATES[templateKey].category === category);
   await mkdir(OUTPUT_DIR, { recursive: true });

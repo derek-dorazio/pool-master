@@ -44,7 +44,6 @@ jobs:
       SES_FROM_EMAIL: noreply@qa.ultimateofficepoolmanager.com
       SES_CONFIGURATION_SET: poolmaster-qa
       # Inputs go through the environment, never into the script text.
-      PREVIEW_TO: ${{ inputs.to }}
       PREVIEW_CATEGORY: ${{ inputs.category }}
     steps:
       - uses: actions/checkout@v6
@@ -63,16 +62,21 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+      # The repo is public, so its logs are too: the address is set on this step alone and
+      # masked before anything runs, and the script never prints it.
       - name: Send the previews
         shell: bash
+        env:
+          PREVIEW_TO: ${{ inputs.to }}
         run: |
+          echo "::add-mask::$PREVIEW_TO"
           npm run email:preview -- --to "$PREVIEW_TO" --category "$PREVIEW_CATEGORY" 2>&1 | tee preview.log
       - name: Summary
         if: always()
         shell: bash
         run: |
           {
-            echo "### Email previews to the address you entered"
+            echo "### Email previews"
             echo ""
             echo '```'
             tail -n 40 preview.log 2>/dev/null || echo "(no output)"
