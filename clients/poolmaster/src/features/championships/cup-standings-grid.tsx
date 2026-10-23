@@ -15,7 +15,8 @@ const MOVEMENT_CLASS = {
 
 /**
  * A cup's standings: place, movement since the latest counted contest, squad, points, wins and
- * contests counted, with search and paging (rules/ux-rules.md §12 rule 7). A squad opens its
+ * contests counted, with search and paging (rules/ux-rules.md §12 rule 7). A season that is over
+ * shows no movement. A squad opens its
  * points contest by contest. `focusSquadId` marks one squad: the viewer's, or the squad whose page
  * shows it. With a projection, a greyed "If it ended now" column shows each squad's place and
  * points if the live contests ended now.
@@ -24,12 +25,14 @@ export function CupStandingsGrid({
   focusSquadId,
   projection,
   rows,
+  showMovement = true,
   squadPath,
 }: {
   focusSquadId: string | null;
   /** Each squad's projected standing, by squad id, while a contest is live. */
   projection?: ReadonlyMap<string, CupProjectedStandingDto>;
   rows: CupStandingRowDto[];
+  showMovement?: boolean;
   squadPath: (squadId: string) => string;
 }) {
   const columns = useMemo<ColumnDef<CupStandingRowDto, string | number>[]>(
@@ -41,13 +44,13 @@ export function CupStandingsGrid({
         enableGlobalFilter: false,
         cell: ({ row }) => <span className="font-semibold tabular-nums">{row.original.displayPosition}</span>,
       },
-      {
+      ...(showMovement ? [{
         id: 'movement',
         header: 'Move',
-        accessorFn: (row) => row.movement ?? 0,
+        accessorFn: (row: CupStandingRowDto) => row.movement ?? 0,
         enableGlobalFilter: false,
         enableSorting: false,
-        cell: ({ row }) => {
+        cell: ({ row }: { row: { original: CupStandingRowDto } }) => {
           const movement = describeMovement(row.original.movement);
           return (
             <span aria-label={movement.description} className={cn('text-xs font-bold', MOVEMENT_CLASS[movement.direction])}>
@@ -55,7 +58,7 @@ export function CupStandingsGrid({
             </span>
           );
         },
-      },
+      }] : []),
       {
         id: 'squad',
         header: 'Squad',
@@ -105,7 +108,7 @@ export function CupStandingsGrid({
         },
       }] : []),
     ],
-    [focusSquadId, projection, squadPath],
+    [focusSquadId, projection, showMovement, squadPath],
   );
 
   return (

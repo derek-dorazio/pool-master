@@ -17,6 +17,7 @@ import {
   getCupSquadPoints,
   listChampionshipYears,
   listContestConfigTemplates,
+  listCupSeasons,
   listCups,
   listEventParticipants,
   listSportLeagues,
@@ -37,6 +38,7 @@ import {
   CupListResponseSchema,
   CupProjectionResponseSchema,
   CupResponseSchema,
+  CupSeasonListResponseSchema,
   CupSquadPointsResponseSchema,
   LeagueResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -193,6 +195,9 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       ['2', 800, 0, null],
     ]);
     const memberSquadId = expectDefined(afterOne.cups[0]?.standings[0]).squadId;
+    // The year picker offers the season.
+    expect(CupSeasonListResponseSchema.parse(expectDefined((await listCupSeasons({ client: member.client, path: { id: league.id } })).data)).seasonYears)
+      .toEqual([SEASON]);
 
     // --- The second race goes the other way: level on everything, so they share 1st -----------
     const valleyContest = await runContest(valley, `Valley Picks ${RUN}`, { Kiplimo: 1, Kipruto: 2, Tola: 3, Abdi: 4, Lemma: 5 });

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -27,13 +27,15 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getCupProjectionMock: vi.fn(),
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
+  listChampionshipYearsMock: vi.fn(),
+  listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
 }));
@@ -45,6 +47,8 @@ bindApiMocks({
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
+  listChampionshipYears: listChampionshipYearsMock,
+  listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
   refreshToken: refreshTokenMock,
 });
@@ -88,6 +92,8 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   getCupProjectionMock.mockResolvedValue(apiSuccess({ projection: buildRunningCupProjection() }));
+  listChampionshipYearsMock.mockResolvedValue(apiSuccess({ years: [{ year: 2026, isOver: false, leaders: [] }, { year: 2024, isOver: true, leaders: [] }] }));
+  listCupSeasonsMock.mockResolvedValue(apiSuccess({ seasonYears: [2026, 2025] }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
 }
 
@@ -113,6 +119,22 @@ const CROWNED_NFL_CUP = buildCup({
     buildCupStanding({ squadId: 'team-2', squadName: 'Birdie Bandits', position: 2, displayPosition: '2', points: 1600, pointsAfter: [800, 1600], trophy: 'RUNNER_UP' }),
   ],
   contests: [...NFL_CUP.contests, buildCupContest({ contestId: 'nfl-3', name: 'Pro Bowl Picks', count: 'AFTER_CROWNING' })],
+});
+
+/** Last season's PGA Tour cup: every contest final, never crowned. */
+const PAST_PGA_CUP = buildCup({
+  ...buildRunningCup(),
+  seasonYear: 2025,
+  name: '2025 PGA Tour Cup',
+  contests: buildRunningCup().contests.filter((contest) => contest.count !== 'NOT_FINAL'),
+});
+
+/** Last season's NFL cup, its playoffs still live in the new year. */
+const PAST_NFL_CUP_STILL_LIVE = buildCup({
+  ...NFL_CUP,
+  seasonYear: 2025,
+  name: '2025 NFL Cup',
+  contests: [...NFL_CUP.contests, buildCupContest({ contestId: 'nfl-3', name: 'Playoff Picks', status: 'ACTIVE', count: 'NOT_FINAL', completedAt: null })],
 });
 
 /** A cup with one counted contest, which the Trophy case doesn't show yet. */
@@ -142,7 +164,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock]) {
     mock.mockReset();
   }
 });
@@ -165,6 +187,30 @@ describe('Championships', () => {
     renderChampionships('/league/BIGDAWGS/championships/2025/trophies');
 
     expect(await screen.findByRole('heading', { name: '2025 Championships' })).toBeInTheDocument();
+  });
+
+  it('offers every year with a championship or a cup, and the current one, newest first, and moves the tab shown to the year chosen', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    const picker = await screen.findByRole('combobox', { name: 'Year' });
+    await waitFor(() => expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2026', '2025', '2024']));
+    fireEvent.change(picker, { target: { value: '2025' } });
+
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/league\/BIGDAWGS\/championships\/2025\/trophies$/);
+    expect(await screen.findByRole('heading', { name: '2025 Championships' })).toBeInTheDocument();
+  });
+
+  it('takes the Points race to the chosen year\'s first cup, since the same sports league may have none then', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+
+    fireEvent.change(await screen.findByRole('combobox', { name: 'Year' }), { target: { value: '2024' } });
+
+    expect(screen.getByTestId('location')).toHaveTextContent(/^\/league\/BIGDAWGS\/championships\/2024\/race/);
+    expect(screen.getByTestId('location')).not.toHaveTextContent('sport-league-pga');
   });
 
   it('sends a year that is not a year back to the current one', async () => {
@@ -290,6 +336,16 @@ describe('Championships › Trophy case', () => {
     expect(within(pga).getByRole('progressbar', { name: '3 of 4 contests final' })).toBeInTheDocument();
     expect(pga).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/race/sport-league-pga');
     expect(screen.getByTestId('cup-card-cup-nfl')).toHaveTextContent('Casey Crushers leads · you are 1st');
+  });
+
+  it('drops the progress from a past season\'s cup card once its season is over', async () => {
+    primeViewer([PAST_PGA_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2025/trophies');
+
+    const card = await screen.findByTestId('cup-card-cup-pga');
+    expect(card).toHaveTextContent('2025 PGA Tour Cup');
+    expect(within(card).queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
   it('leaves off a cup until two of its contests have counted, explaining so when none has', async () => {
@@ -503,6 +559,29 @@ describe('Championships › Points race', () => {
     expect(screen.getByText('Champion')).toBeInTheDocument();
     expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
     expect(screen.getByTestId('cup-contest-nfl-3')).toHaveTextContent('After crowning');
+  });
+
+  it('shows a past season\'s cup never crowned as not crowned, with no movement and no next contest', async () => {
+    primeViewer([PAST_PGA_CUP]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-pga');
+
+    expect(await screen.findByTestId('cup-not-crowned')).toHaveTextContent('hasn\'t been crowned');
+    expect(screen.getByTestId('points-race-summary')).toHaveTextContent('PGA Tour · Not crowned');
+    expect(screen.getByTestId('points-race')).toHaveTextContent('Finished 1stBirdie Bandits');
+    expect(screen.queryByText('Next to count')).not.toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Move' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('cup-podium')).not.toBeInTheDocument();
+  });
+
+  it('keeps a past season\'s cup live while a contest of its season is still live, as NFL playoffs in the new year', async () => {
+    primeViewer([PAST_NFL_CUP_STILL_LIVE]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2025/race/sport-league-nfl');
+
+    expect(await screen.findByTestId('points-race')).toHaveTextContent('Next to countPlayoff PicksLive now');
+    expect(screen.getByRole('columnheader', { name: 'Move' })).toBeInTheDocument();
+    expect(screen.queryByTestId('cup-not-crowned')).not.toBeInTheDocument();
   });
 
   it('says the league has no such cup for a sports league it has none in that year', async () => {

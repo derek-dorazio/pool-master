@@ -1,4 +1,4 @@
-import { ContestStatus, CupContestCount, CupStatus, CupWeight } from '@poolmaster/shared/domain';
+import { ContestStatus, CupContestCount, CupStatus, CupWeight, championshipYear } from '@poolmaster/shared/domain';
 import type { CupContestRowDto, CupDto, CupProjectedStandingDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 
 /** How many squads the race chart draws. */
@@ -108,6 +108,16 @@ export function describeCupContest(contest: CupContestRowDto): CupContestState {
 export function isReadyToCrown(cup: CupDto): boolean {
   return cup.status === CupStatus.OPEN
     && cup.contests.some((contest) => contest.count === CupContestCount.COUNTED)
+    && !cup.contests.some((contest) => contest.count === CupContestCount.NOT_FINAL);
+}
+
+/**
+ * Whether a cup's season is behind it: a past year's cup with no contest still open or live. Its
+ * live parts (movement, progress, the next contest to count) are gone; a cup's own season can run
+ * past its year, as an NFL season into February, so the year alone does not end it.
+ */
+export function isCupSeasonOver(cup: CupDto, now: Date): boolean {
+  return cup.seasonYear < championshipYear(now)
     && !cup.contests.some((contest) => contest.count === CupContestCount.NOT_FINAL);
 }
 
