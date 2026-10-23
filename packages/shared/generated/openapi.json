@@ -2513,6 +2513,47 @@
         "additionalProperties": false,
         "description": "Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none."
       },
+      "UpdateLeagueCupSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "cupName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "The league championship's name, shown after its year.",
+            "x-transform": [
+              "trim"
+            ]
+          },
+          "cupPointsScale": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "TOP_TEN",
+              "FIELD_BEATEN",
+              "CUSTOM"
+            ],
+            "description": "The points table every cup and the championship score on."
+          },
+          "cupCustomPoints": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "maxItems": 50,
+            "description": "CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale."
+          }
+        },
+        "required": [
+          "cupName",
+          "cupPointsScale",
+          "cupCustomPoints"
+        ],
+        "additionalProperties": false,
+        "description": "Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table."
+      },
       "SendLeagueInvitationsRequest": {
         "type": "object",
         "properties": {
@@ -2760,6 +2801,27 @@
             "type": "string",
             "format": "date-time",
             "description": "League creation timestamp in ISO 8601 format."
+          },
+          "cupName": {
+            "type": "string",
+            "description": "The league championship's name, shown after its year: \"2026 Big Dawgs Cup\"."
+          },
+          "cupPointsScale": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "TOP_TEN",
+              "FIELD_BEATEN",
+              "CUSTOM"
+            ],
+            "description": "The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list."
+          },
+          "cupCustomPoints": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
           }
         },
         "required": [
@@ -2769,7 +2831,10 @@
           "isActive",
           "iconKey",
           "memberCount",
-          "activeContestCount"
+          "activeContestCount",
+          "cupName",
+          "cupPointsScale",
+          "cupCustomPoints"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3206,6 +3271,27 @@
                 "type": "string",
                 "format": "date-time",
                 "description": "League creation timestamp in ISO 8601 format."
+              },
+              "cupName": {
+                "type": "string",
+                "description": "The league championship's name, shown after its year: \"2026 Big Dawgs Cup\"."
+              },
+              "cupPointsScale": {
+                "type": "string",
+                "enum": [
+                  "STANDARD",
+                  "TOP_TEN",
+                  "FIELD_BEATEN",
+                  "CUSTOM"
+                ],
+                "description": "The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list."
+              },
+              "cupCustomPoints": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
               }
             },
             "required": [
@@ -3215,7 +3301,10 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount"
+              "activeContestCount",
+              "cupName",
+              "cupPointsScale",
+              "cupCustomPoints"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3294,6 +3383,27 @@
                 "type": "string",
                 "format": "date-time",
                 "description": "League creation timestamp in ISO 8601 format."
+              },
+              "cupName": {
+                "type": "string",
+                "description": "The league championship's name, shown after its year: \"2026 Big Dawgs Cup\"."
+              },
+              "cupPointsScale": {
+                "type": "string",
+                "enum": [
+                  "STANDARD",
+                  "TOP_TEN",
+                  "FIELD_BEATEN",
+                  "CUSTOM"
+                ],
+                "description": "The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list."
+              },
+              "cupCustomPoints": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
               }
             },
             "required": [
@@ -3303,7 +3413,10 @@
               "isActive",
               "iconKey",
               "memberCount",
-              "activeContestCount"
+              "activeContestCount",
+              "cupName",
+              "cupPointsScale",
+              "cupCustomPoints"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3676,6 +3789,27 @@
                   "type": "string",
                   "format": "date-time",
                   "description": "League creation timestamp in ISO 8601 format."
+                },
+                "cupName": {
+                  "type": "string",
+                  "description": "The league championship's name, shown after its year: \"2026 Big Dawgs Cup\"."
+                },
+                "cupPointsScale": {
+                  "type": "string",
+                  "enum": [
+                    "STANDARD",
+                    "TOP_TEN",
+                    "FIELD_BEATEN",
+                    "CUSTOM"
+                  ],
+                  "description": "The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner's list."
+                },
+                "cupCustomPoints": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
                 }
               },
               "required": [
@@ -3685,7 +3819,10 @@
                 "isActive",
                 "iconKey",
                 "memberCount",
-                "activeContestCount"
+                "activeContestCount",
+                "cupName",
+                "cupPointsScale",
+                "cupCustomPoints"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -7641,6 +7778,16 @@
             ],
             "description": "Current commissioner-managed contest configuration."
           },
+          "cupWeight": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "BONUS",
+              "DOUBLE",
+              "NOT_COUNTED"
+            ],
+            "description": "How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED."
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -7674,6 +7821,7 @@
           "name",
           "status",
           "configuration",
+          "cupWeight",
           "createdAt",
           "updatedAt"
         ],
@@ -9504,6 +9652,16 @@
                 ],
                 "description": "Current commissioner-managed contest configuration."
               },
+              "cupWeight": {
+                "type": "string",
+                "enum": [
+                  "NORMAL",
+                  "BONUS",
+                  "DOUBLE",
+                  "NOT_COUNTED"
+                ],
+                "description": "How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED."
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -9537,6 +9695,7 @@
               "name",
               "status",
               "configuration",
+              "cupWeight",
               "createdAt",
               "updatedAt"
             ],
@@ -21796,6 +21955,26 @@
         ],
         "additionalProperties": false,
         "description": "Request payload for setting the events a contest covers."
+      },
+      "SetContestCupWeightRequest": {
+        "type": "object",
+        "properties": {
+          "cupWeight": {
+            "type": "string",
+            "enum": [
+              "NORMAL",
+              "BONUS",
+              "DOUBLE",
+              "NOT_COUNTED"
+            ],
+            "description": "How much the contest counts toward its cup and the league championship: NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all."
+          }
+        },
+        "required": [
+          "cupWeight"
+        ],
+        "additionalProperties": false,
+        "description": "Request payload for setting how much a contest counts toward its cup and the championship."
       },
       "ContestEntryEventDto": {
         "type": "object",
@@ -41710,6 +41889,88 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/cup-settings": {
+      "put": {
+        "operationId": "updateLeagueCupSettings",
+        "summary": "Update the league's championship settings",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to set an active league's championship name and points table (#841, #863) in one request. Cups score on read, so they follow the new table at once; the championship keeps the points each contest earned when it went final. 400 CUP_CUSTOM_POINTS_INVALID when CUSTOM has no points or another scale sends some; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeagueCupSettingsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/inactivate": {
       "post": {
         "operationId": "inactivateLeague",
@@ -44151,6 +44412,106 @@
           },
           "422": {
             "description": "CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type's checks. CONTEST_SELECTION_TYPE_NOT_ALLOWED — the event's sport no longer offers the contest's selection type.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/cup-weight": {
+      "put": {
+        "operationId": "setContestCupWeight",
+        "summary": "Set how much a contest counts toward its cup",
+        "tags": [
+          "Contest Management"
+        ],
+        "description": "Sets how much the contest counts toward its sports league cup and the league championship (#841) and returns it as getContestConfiguration does. Commissioner only. Allowed while the contest is DRAFT, OPEN or ACTIVE; once it is COMPLETED its weight is fixed, because the championship keeps the points it earned at settlement.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetContestCupWeightRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Managed-contest detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestManagementResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTEST_FINAL — the contest is COMPLETED, so its weight is fixed.",
             "content": {
               "application/json": {
                 "schema": {

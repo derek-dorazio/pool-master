@@ -6,6 +6,7 @@ import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
+import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
 import { EditLeaguePage } from './edit-league-page';
 import { LeagueSettingsPage } from './league-settings-page';
@@ -33,6 +34,7 @@ const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
+const updateLeagueCupSettingsMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
 
 bindApiMocks({
@@ -44,6 +46,7 @@ bindApiMocks({
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
+  updateLeagueCupSettings: updateLeagueCupSettingsMock,
   updateLeagueDetails: updateLeagueDetailsMock,
 });
 
@@ -59,6 +62,7 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
                 <Route element={<CommissionerToolsLayout />}>
                   <Route element={<LeagueSettingsPage />} index />
                   <Route element={<EditLeaguePage />} path="edit" />
+                  <Route element={<EditChampionshipSettingsPage />} path="championships/edit" />
                 </Route>
               </Route>
             </Route>
@@ -77,15 +81,17 @@ function primeMocks({
   isActive = true,
   isRootAdmin = false,
   leagueRole = 'COMMISSIONER',
+  league = {},
 }: {
   isActive?: boolean;
   isRootAdmin?: boolean;
   leagueRole?: 'COMMISSIONER' | 'MEMBER';
+  league?: Parameters<typeof buildLeague>[0];
 } = {}) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser({ isRootAdmin }) }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
-    buildLeague({ isActive }),
+    buildLeague({ isActive, ...league }),
     { membership: buildLeagueMembership({ role: leagueRole }) },
   )));
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
@@ -113,7 +119,7 @@ afterEach(() => {
   for (const mock of [
     activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
     inactivateLeagueMock, listLeagueMembersMock, listLeagueSquadsMock, refreshTokenMock,
-    updateLeagueDetailsMock,
+    updateLeagueCupSettingsMock, updateLeagueDetailsMock,
   ]) {
     mock.mockReset();
   }
@@ -219,7 +225,8 @@ describe('League settings', () => {
     renderCommissionerTools();
 
     expect(await screen.findByTestId('league-inactive-banner')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Edit' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId('league-settings-edit')).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByTestId('league-settings-championships-edit')).toHaveAttribute('aria-disabled', 'true');
     expect(screen.queryByRole('button', { name: 'Inactivate league' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Activate league' })).toBeEnabled();
   });
@@ -443,6 +450,116 @@ describe('Edit league', () => {
 
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
     expect(updateLeagueDetailsMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('Championship settings', () => {
+  it('shows the championship name and the points table on League settings, with an Edit to change them', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    const championships = within(await screen.findByTestId('league-settings-championships'));
+    expect(championships.getByTestId('league-settings-cup-name')).toHaveTextContent('Big Dawgs Cup');
+    expect(championships.getByTestId('league-settings-points-table')).toHaveTextContent('Standard');
+    expect(championships.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/championships/edit');
+  });
+
+  it("lists a custom table's points in order on League settings", async () => {
+    primeMocks({ league: { cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 6, 3] } });
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-settings-points-table')).toHaveTextContent('Custom: 10, 6, 3');
+  });
+
+  it('saves a renamed championship on a custom table in one request, previewing what each place earns, and returns to League settings', async () => {
+    primeMocks();
+    updateLeagueCupSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({
+      cupName: 'Dawg Bowl',
+      cupPointsScale: 'CUSTOM',
+      cupCustomPoints: [10, 6, 3],
+    }))));
+    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    fireEvent.change(await screen.findByLabelText('Championship name'), { target: { value: 'Dawg Bowl' } });
+    fireEvent.click(screen.getByTestId('edit-championships-scale-CUSTOM'));
+    fireEvent.change(screen.getByLabelText('Custom points'), { target: { value: '10, 6 3' } });
+
+    expect(screen.getByTestId('championship-points-preview-1st')).toHaveTextContent('10');
+    expect(screen.getByTestId('championship-points-preview-3rd')).toHaveTextContent('3');
+    expect(screen.getByTestId('championship-points-preview-4th')).toHaveTextContent('0');
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague({
+      cupName: 'Dawg Bowl',
+      cupPointsScale: 'CUSTOM',
+      cupCustomPoints: [10, 6, 3],
+    }))));
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByTestId('league-settings-points-table')).toHaveTextContent('Custom: 10, 6, 3');
+    expect(updateLeagueCupSettingsMock).toHaveBeenCalledTimes(1);
+    expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1' },
+      body: { cupName: 'Dawg Bowl', cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 6, 3] },
+    }));
+    // Open cups score on the table as it stands, so they are read again.
+    expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.cups.all }));
+  });
+
+  it('sends no custom points when a custom table is switched back to Top ten, and previews its points', async () => {
+    primeMocks({ league: { cupPointsScale: 'CUSTOM', cupCustomPoints: [5, 2] } });
+    updateLeagueCupSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ cupPointsScale: 'TOP_TEN' }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    expect(await screen.findByLabelText('Custom points')).toHaveValue('5, 2');
+    fireEvent.click(screen.getByTestId('edit-championships-scale-TOP_TEN'));
+    expect(screen.queryByLabelText('Custom points')).not.toBeInTheDocument();
+    expect(screen.getByTestId('championship-points-preview-1st')).toHaveTextContent('25');
+    expect(screen.getByTestId('championship-points-preview-10th')).toHaveTextContent('1');
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    await waitFor(() => expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { cupName: 'Big Dawgs Cup', cupPointsScale: 'TOP_TEN', cupCustomPoints: [] },
+    })));
+  });
+
+  it('blocks saving custom points that are not whole numbers and says why next to the field, sending nothing', async () => {
+    primeMocks();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    fireEvent.click(await screen.findByTestId('edit-championships-scale-CUSTOM'));
+    fireEvent.change(screen.getByLabelText('Custom points'), { target: { value: '10, 2.5' } });
+    expect(screen.getByTestId('championship-points-preview-empty')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByText("Each place's points must be a whole number from 0 to 1000.")).toBeInTheDocument();
+    expect(updateLeagueCupSettingsMock).not.toHaveBeenCalled();
+  });
+
+  it('stays on the form with the reason when saving fails', async () => {
+    primeMocks();
+    updateLeagueCupSettingsMock.mockResolvedValue({
+      error: { error: { code: 'CUP_CUSTOM_POINTS_INVALID', message: 'A custom points table needs points for at least 1st place' } },
+    });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('A custom points table needs points for at least 1st place');
+    expect(screen.getByTestId('edit-championships-page')).toBeInTheDocument();
+  });
+
+  it('sends a commissioner who opens Edit championships on an inactive league back to the read-only settings', async () => {
+    primeMocks({ isActive: false });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-championships-page')).not.toBeInTheDocument();
   });
 });
 

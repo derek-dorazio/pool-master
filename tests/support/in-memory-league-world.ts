@@ -45,6 +45,7 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
+  CupPointsScale,
   InvitationStatus,
   LeagueIconKey,
   LeagueMembershipStatus,
@@ -187,7 +188,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       );
       return leagues.where((row) => leagueIds.has(row.id));
     },
-    create: async (row) => leagues.insert(row),
+    // The points table starts STANDARD, as the database default has it.
+    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
   };
 
@@ -363,6 +365,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         isActive: true,
         iconKey: LeagueIconKey.TROPHY,
         cupName: `League ${leagueSequence} Cup`,
+        cupPointsScale: CupPointsScale.STANDARD,
+        cupCustomPoints: [],
         ...overrides,
       });
     },

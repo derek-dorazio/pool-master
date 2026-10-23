@@ -110,6 +110,14 @@ export class PrismaContestRepository implements ContestRepository {
     return result.count > 0;
   }
 
+  async setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean> {
+    const result = await this.prisma.contest.updateMany({
+      where: { id, status: { in: [...whileIn] } },
+      data: { cupWeight },
+    });
+    return result.count > 0;
+  }
+
   async update(id: string, updates: ContestUpdate): Promise<Contest> {
     const row = await this.prisma.contest.update({
       where: { id },

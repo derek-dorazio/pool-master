@@ -52,7 +52,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return rows.map(mapToLeague);
   }
 
-  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League> {
+  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints'>): Promise<League> {
     const row = await this.prisma.league.create({
       data: {
         leagueCode: league.leagueCode,
@@ -75,6 +75,9 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.description !== undefined && { description: updates.description }),
         ...(updates.isActive !== undefined && { isActive: updates.isActive }),
         ...(updates.iconKey !== undefined && { iconKey: updates.iconKey }),
+        ...(updates.cupName !== undefined && { cupName: updates.cupName }),
+        ...(updates.cupPointsScale !== undefined && { cupPointsScale: updates.cupPointsScale }),
+        ...(updates.cupCustomPoints !== undefined && { cupCustomPoints: updates.cupCustomPoints }),
       },
     });
     return mapToLeague(row);
@@ -91,6 +94,8 @@ function mapToLeague(row: PrismaLeague): League {
     isActive: row.isActive,
     iconKey: row.iconKey as LeagueIconKey,
     cupName: row.cupName,
+    cupPointsScale: row.cupPointsScale,
+    cupCustomPoints: row.cupCustomPoints,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

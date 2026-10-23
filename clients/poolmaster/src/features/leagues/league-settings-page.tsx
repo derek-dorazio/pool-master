@@ -10,16 +10,17 @@ import {
   SettingsRow,
   SettingsSection,
 } from '@/features/shared/ui';
+import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
-import { buildLeagueAdminEditPath, buildLeagueAdminTeamsPath } from './league-routing';
+import { buildLeagueAdminChampionshipsEditPath, buildLeagueAdminEditPath, buildLeagueAdminTeamsPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
- * for all of them, then the danger zone.
+ * for all of them, the championship settings with their own Edit, then the danger zone.
  */
 export function LeagueSettingsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -109,6 +110,34 @@ export function LeagueSettingsPage() {
           value={squadsQuery.isLoading || !members
             ? <span className="text-muted-foreground">Loading...</span>
             : commissionerNames.join(', ')}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        action={(
+          <LinkButton
+            data-testid="league-settings-championships-edit"
+            isDisabled={isInactive}
+            size="sm"
+            to={buildLeagueAdminChampionshipsEditPath(league.leagueCode)}
+            variant="secondary"
+          >
+            Edit
+          </LinkButton>
+        )}
+        description="What each finishing place earns toward the championship and every sports league cup."
+        testId="league-settings-championships"
+        title="Championships"
+      >
+        <SettingsRow
+          label="Championship name"
+          testId="league-settings-cup-name"
+          value={<span className="font-semibold">{league.cupName}</span>}
+        />
+        <SettingsRow
+          label="Points table"
+          testId="league-settings-points-table"
+          value={describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}
         />
       </SettingsSection>
 

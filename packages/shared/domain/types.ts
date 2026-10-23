@@ -13,6 +13,7 @@ import type {
   ContestEntryStatus,
   ContestStatus,
   ContestFormat,
+  CupPointsScale,
   CupWeight,
   DateFormat,
   EmailMessageStatus,
@@ -77,6 +78,10 @@ export interface League extends DomainEntity {
   iconKey: LeagueIconKey;
   /** The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". */
   cupName: string;
+  /** The points table every cup and the championship score on (#841). STANDARD at creation. */
+  cupPointsScale: CupPointsScale;
+  /** CUSTOM's points for 1st, 2nd ...; empty for every other scale (a database check holds it). */
+  cupCustomPoints: number[];
 }
 
 /** User membership within a league. */

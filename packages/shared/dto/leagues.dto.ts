@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
+  CupPointsScale,
   EmailMessageStatus,
   EmailSkipReason,
   InvitationStatus,
@@ -78,6 +79,26 @@ export const UpdateLeagueDetailsRequestSchema = z.object({
 }).describe('Commissioner request payload for editing league details while the league remains active. Name, description and icon are replaced together, so a save either applies all three or none.');
 export type UpdateLeagueDetailsRequest = z.infer<typeof UpdateLeagueDetailsRequestSchema>;
 
+/** The most places a CUSTOM points table lists; every place after it scores 0. */
+export const CUP_CUSTOM_POINTS_MAX_PLACES = 50;
+/** The most whole points one place can earn on a CUSTOM table. */
+export const CUP_CUSTOM_POINTS_MAX = 1000;
+
+export const UpdateLeagueCupSettingsRequestSchema = z.object({
+  cupName: z
+    .string()
+    .trim()
+    .min(1)
+    .max(100)
+    .describe('The league championship\'s name, shown after its year.'),
+  cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on.'),
+  cupCustomPoints: z
+    .array(z.number().int().min(0).max(CUP_CUSTOM_POINTS_MAX))
+    .max(CUP_CUSTOM_POINTS_MAX_PLACES)
+    .describe(`CUSTOM's whole points for 1st, 2nd ... (0 to ${CUP_CUSTOM_POINTS_MAX}, at most ${CUP_CUSTOM_POINTS_MAX_PLACES} places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale.`),
+}).describe('Commissioner request payload for the league\'s championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.');
+export type UpdateLeagueCupSettingsRequest = z.infer<typeof UpdateLeagueCupSettingsRequestSchema>;
+
 export const SendLeagueInvitationsRequestSchema = z.object({
   emails: z.array(EmailInputSchema).min(1).max(50).describe('Email recipients to invite into the league.'),
   message: z.string().max(500).optional().describe('Optional commissioner note included with the invitation email.'),
@@ -151,6 +172,9 @@ export const LeagueDtoSchema = z.object({
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
   createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
+  cupName: z.string().describe('The league championship\'s name, shown after its year: "2026 Big Dawgs Cup".'),
+  cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
+  cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
@@ -374,6 +398,7 @@ export type LeagueBulkOperationResponse = z.infer<typeof LeagueBulkOperationResp
 registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
 registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
 registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
+registerSchema('UpdateLeagueCupSettingsRequest', UpdateLeagueCupSettingsRequestSchema);
 registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchema);
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);

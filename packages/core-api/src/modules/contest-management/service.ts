@@ -61,6 +61,7 @@ import type {
   TournamentFormat,
   Sport,
   SportEvent,
+  CupWeight,
 } from '@poolmaster/shared/domain';
 import {
   ContestStatus,
@@ -416,6 +417,31 @@ export class ContestManagementService {
       refreshedConfiguration,
       await this.resolveContestSportEvents(contest),
     );
+  }
+
+  /**
+   * How much a contest counts toward its cup and the league championship (#841). The
+   * commissioner can change it until the contest goes final: settlement writes the championship's
+   * points with the weight it finds, so a final contest's weight is fixed (409 CONTEST_FINAL).
+   */
+  async setContestCupWeight(leagueId: string, contestId: string, cupWeight: CupWeight): Promise<ContestManagementDetailDto> {
+    this.logger.debug({ leagueId, contestId, cupWeight }, 'contest management set cup weight start');
+    const contest = await this.contestRepo.findById(contestId);
+    if (!contest || contest.leagueId !== leagueId) {
+      this.logger.warn({ leagueId, contestId }, 'contest management set cup weight missing contest');
+      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
+    }
+    const changed = contest.status !== ContestStatus.COMPLETED && await this.contestRepo.setCupWeight(
+      contestId,
+      cupWeight,
+      [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE],
+    );
+    if (!changed) {
+      this.logger.warn({ contestId, status: contest.status }, 'contest management set cup weight refused for a final contest');
+      throw new ContestManagementError('This contest is final, so how much it counts is fixed.', 'CONTEST_FINAL', 409);
+    }
+    this.logger.info({ contestId, cupWeight }, 'contest management set cup weight completed');
+    return this.getContest(contestId);
   }
 
   /**
@@ -1371,6 +1397,7 @@ function buildContestManagementDetail(
     leagueId: string;
     name: string;
     status: ContestManagementDetailDto['status'];
+    cupWeight: CupWeight;
     createdAt: Date;
     updatedAt: Date;
   },
@@ -1391,6 +1418,7 @@ function buildContestManagementDetail(
     sportEvents,
     name: contest.name,
     status: contest.status,
+    cupWeight: contest.cupWeight,
     createdAt: contest.createdAt.toISOString(),
     updatedAt: contest.updatedAt.toISOString(),
     templateId: configuration.templateId ?? null,

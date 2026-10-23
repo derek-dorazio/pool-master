@@ -15,6 +15,7 @@ import type {
   User,
 } from '@poolmaster/shared/domain/types';
 import {
+  CupPointsScale,
   CupWeight,
   ContestStatus,
   ContestFormat,
@@ -54,6 +55,8 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     leagueCode: `LEAGUE${id.slice(-4)}`,
     name: `League ${id}`,
     cupName: `League ${id} Cup`,
+    cupPointsScale: CupPointsScale.STANDARD,
+    cupCustomPoints: [],
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
     createdAt: new Date('2026-01-01'),

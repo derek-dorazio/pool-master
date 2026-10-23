@@ -170,7 +170,8 @@ export interface LeagueRepository {
    */
   findByUser(userId: string): Promise<League[]>;
 
-  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt'>): Promise<League>;
+  /** The points table starts STANDARD, from the database default. */
+  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
 }
 
@@ -324,6 +325,12 @@ export interface ContestRepository {
    * runs of the same event transition (a provider re-sending it) cannot both apply it.
    */
   transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean>;
+  /**
+   * Sets how much the contest counts toward its cup and the championship (#841), but only while
+   * it is in one of `whileIn`: a guarded single write, so it cannot land after settlement has
+   * moved the contest to COMPLETED. Returns whether this call made the change.
+   */
+  setCupWeight(id: string, cupWeight: Contest['cupWeight'], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /** Deletes a contest with its entries, picks, selection state, configuration and rules. */
   delete(id: string): Promise<void>;
 }

@@ -581,6 +581,79 @@ describe('ContestManagementService', () => {
     });
   });
 
+  describe('setContestCupWeight', () => {
+    function buildService(options?: { status?: ContestStatus; leagueId?: string; written?: boolean }) {
+      const contestCoreRepo = createContestRepo();
+      const contest = {
+        id: 'contest-1',
+        leagueId: options?.leagueId ?? 'league-1',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        name: 'Contest 1',
+        status: options?.status ?? ContestStatus.OPEN,
+        contestFormat: ContestFormat.ROSTER,
+        selectionType: 'TIERED',
+        cupWeight: CupWeight.NORMAL as CupWeight,
+        createdAt: new Date('2026-04-07T12:00:00.000Z'),
+        updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+      };
+      (contestCoreRepo.findById as jest.Mock).mockResolvedValue(contest);
+      (contestCoreRepo.setCupWeight as jest.Mock).mockImplementation(async (_id: string, cupWeight: CupWeight) => {
+        if (options?.written === false) {
+          return false;
+        }
+        contest.cupWeight = cupWeight;
+        return true;
+      });
+      const service = new ContestManagementService({
+        contests: contestCoreRepo,
+        configTemplates: createContestConfigTemplateRepo(),
+        configurations: createContestConfigurationRepo(),
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(0),
+        sportEventReader: createSportEventReader(),
+        now: () => CONTEST_MANAGEMENT_TEST_NOW,
+        cups: createCupKeeper(),
+      });
+      return { service, contestCoreRepo };
+    }
+
+    it('sets the weight of an open contest with a write guarded to unsettled statuses, and returns it with the new weight', async () => {
+      const { service, contestCoreRepo } = buildService();
+
+      const updated = await service.setContestCupWeight('league-1', 'contest-1', CupWeight.DOUBLE);
+
+      expect(contestCoreRepo.setCupWeight).toHaveBeenCalledWith(
+        'contest-1',
+        CupWeight.DOUBLE,
+        [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE],
+      );
+      expect(updated.cupWeight).toBe(CupWeight.DOUBLE);
+    });
+
+    it('refuses a completed contest with 409 CONTEST_FINAL without writing, so settled cup points never shift', async () => {
+      const { service, contestCoreRepo } = buildService({ status: ContestStatus.COMPLETED });
+
+      await expect(service.setContestCupWeight('league-1', 'contest-1', CupWeight.NOT_COUNTED))
+        .rejects.toMatchObject({ code: 'CONTEST_FINAL', statusCode: 409 });
+      expect(contestCoreRepo.setCupWeight).not.toHaveBeenCalled();
+    });
+
+    it('refuses with 409 CONTEST_FINAL when settlement completes the contest between the read and the guarded write', async () => {
+      const { service } = buildService({ written: false });
+
+      await expect(service.setContestCupWeight('league-1', 'contest-1', CupWeight.BONUS))
+        .rejects.toMatchObject({ code: 'CONTEST_FINAL', statusCode: 409 });
+    });
+
+    it("answers another league's contest as 404 CONTEST_NOT_FOUND and leaves its weight alone", async () => {
+      const { service, contestCoreRepo } = buildService({ leagueId: 'league-2' });
+
+      await expect(service.setContestCupWeight('league-1', 'contest-1', CupWeight.DOUBLE))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestCoreRepo.setCupWeight).not.toHaveBeenCalled();
+    });
+  });
+
   describe('openContest', () => {
     function buildService(options?: {
       status?: ContestStatus;
