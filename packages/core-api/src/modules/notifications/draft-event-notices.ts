@@ -11,7 +11,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, UserRepository } from '@poolmaster/shared/db';
-import { SportEventStatus, type SportEvent } from '@poolmaster/shared/domain';
+import { SportEventStatus, type SportEvent, type User } from '@poolmaster/shared/domain';
 import { buildSportEventAdminUrl, type EmailService } from '../email';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventService } from '../events/service';
@@ -55,7 +55,7 @@ export class DraftEventNotices implements DueNotifications {
 
   private async queueOne(
     sportEvent: SportEvent,
-    rootAdmins: Awaited<ReturnType<DraftEventNoticeDeps['users']['findAll']>>,
+    rootAdmins: User[],
     now: Date,
   ): Promise<void> {
     const daysLeft = Math.ceil((sportEvent.startDate.getTime() - now.getTime()) / DAY_MS);

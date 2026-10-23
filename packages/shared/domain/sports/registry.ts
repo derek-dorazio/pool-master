@@ -42,3 +42,12 @@ export function getSportDefinition(sport: Sport): SportDefinition {
 export function sportAllowsSelectionType(definition: SportDefinition, selectionType: SelectionType): boolean {
   return definition.selectionTypes.includes(selectionType);
 }
+
+/**
+ * A sport as a URL segment, as the root admin's Manage pages and the emails linking to them
+ * spell it: `GOLF` reads `golf`, `HORSE_RACING` reads `horse-racing`. Derived from the enum
+ * value, so every sport has one and no two share one.
+ */
+export function sportPathSegment(sport: Sport): string {
+  return sport.toLowerCase().replace(/_/g, '-');
+}

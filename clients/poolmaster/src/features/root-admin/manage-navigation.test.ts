@@ -1,4 +1,4 @@
-import { SUPPORTED_SPORTS, Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, Sport, sportPathSegment } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
 import {
   SPORTS_LANDING_PATH,
@@ -6,7 +6,6 @@ import {
   buildSportEventPath,
   getManageBreadcrumbLabel,
   parseSportPathSegment,
-  sportPathSegment,
 } from './manage-navigation';
 
 describe('Manage sport paths (plans/racing-sports.md Q9.6)', () => {
