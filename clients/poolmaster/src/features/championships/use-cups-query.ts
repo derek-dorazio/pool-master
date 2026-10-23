@@ -24,7 +24,7 @@ export function useSeasonCupsQuery(leagueId: string, seasonYear: number) {
 
 /**
  * An open cup's standings if its live contests ended now: read only while one is live, and
- * refreshed as often as a live leaderboard.
+ * refreshed as often as a live leaderboard until a read fails.
  */
 export function useCupProjectionQuery(leagueId: string, cupId: string, isLive: boolean) {
   return useQuery({
@@ -39,7 +39,8 @@ export function useCupProjectionQuery(leagueId: string, cupId: string, isLive: b
       return response.data.projection;
     },
     enabled: Boolean(leagueId && cupId) && isLive,
-    refetchInterval: isLive ? CONTEST_POLL_INTERVAL_MS : false,
+    // A projection that failed stays failed until the page is opened again, rather than asking every 30s.
+    refetchInterval: (query) => (isLive && query.state.status !== 'error' ? CONTEST_POLL_INTERVAL_MS : false),
     retry: false,
   });
 }
