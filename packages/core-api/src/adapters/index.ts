@@ -14,7 +14,7 @@ export { PrismaEmailOptOutRepository } from './prisma-email-opt-out-repository';
 export { PrismaEmailSuppressionRepository } from './prisma-email-suppression-repository';
 export { PrismaPlatformRuntimeConfigRepository } from './prisma-platform-runtime-config-repository';
 export { PrismaProviderSyncRunRepository } from './prisma-provider-sync-run-repository';
-export { PrismaContestEntryRepository } from './prisma-contest-entry-repository';
+export { PrismaContestEntryRepository, PrismaStandingsEmailPositionRepository } from './prisma-contest-entry-repository';
 export { PrismaContestEntryPickRepository } from './prisma-contest-entry-pick-repository';
 export { PrismaContestEntryMatchPredictionRepository } from './prisma-contest-entry-match-prediction-repository';
 export {

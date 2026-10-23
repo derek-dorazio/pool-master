@@ -1,6 +1,7 @@
 import {
   EntryReceiptKind,
   EntryReminderKind,
+  StandingsMomentKind,
   type SystemEmailTemplateDataByKey,
   type SystemEmailTemplateKey,
 } from '../../packages/core-api/src/modules/email';
@@ -74,6 +75,24 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     entriesPerMember: '1 entry per member',
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
     contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
+  },
+  CONTEST_STANDINGS: {
+    userName: 'Morgan Member',
+    leagueName: 'Office League',
+    contestName: 'Masters Pick 6',
+    moment: { kind: StandingsMomentKind.ROUND, eventName: 'The Masters', roundNumber: 2 },
+    top: [
+      { place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-12', movement: 2, isYours: false },
+      { place: 'T2', entryName: 'Green Jackets', squadName: 'Morgan Member', score: '-9', movement: 0, isYours: true },
+      { place: 'T2', entryName: 'Azalea', squadName: 'The Fourballs', score: '-9', movement: -1, isYours: false },
+    ],
+    yours: [
+      { place: '14', entryName: 'Long Shots', squadName: 'Morgan Member', score: '+3', movement: -4, isYours: true },
+    ],
+    entryCount: 18,
+    cut: [{ entryName: 'Long Shots', names: ['Danny Willett', 'Mike Weir'] }],
+    out: [],
+    leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
   },
   PASSWORD_RESET: {
     firstName: 'Morgan',

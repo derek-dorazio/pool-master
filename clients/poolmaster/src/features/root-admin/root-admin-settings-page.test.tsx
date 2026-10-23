@@ -47,6 +47,7 @@ const EMAIL_DEFAULTS = {
   allowedRecipients: [] as string[],
   sendRatePerSecond: 10,
   entryReminderHours: [48, 24, 3],
+  standingsBufferMinutes: 30,
   templates: {
     LEAGUE_MEMBER_INVITE: true,
     LEAGUE_JOIN_SUCCESS: true,
@@ -54,6 +55,7 @@ const EMAIL_DEFAULTS = {
     CONTEST_STARTED_SUMMARY: true,
     CONTEST_ENTRY_REMINDER: true,
     CONTEST_OPENED: true,
+    CONTEST_STANDINGS: true,
   },
 };
 
@@ -169,6 +171,7 @@ describe('RootAdminSettingsPage email card', () => {
           allowedRecipients: ['tester@gmail.com'],
           sendRatePerSecond: 10,
           entryReminderHours: [48, 24, 3],
+          standingsBufferMinutes: 30,
           templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
         },
       },
@@ -208,6 +211,30 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
     expect(await screen.findByText(/greater than or equal to 1/)).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('saves the standings email delay as a number of minutes', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
+    renderPage();
+
+    const field = await screen.findByTestId('root-admin-email-settings-standings-buffer');
+    expect(field).toHaveValue(30);
+    fireEvent.change(field, { target: { value: '45' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { standingsBufferMinutes: number } } }];
+    expect(request.body.value.standingsBufferMinutes).toBe(45);
+  });
+
+  it('refuses to save a standings email delay over 240 minutes', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-standings-buffer'), { target: { value: '300' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    expect(await screen.findByText(/less than or equal to 240/)).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 

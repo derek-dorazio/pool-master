@@ -1117,7 +1117,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
   });
 });
 
-describe('Commissioner tools › Contests › Create contest › Random draw format', () => {
+describe('Commissioner tools › Contests › Create contest › Quick pick format', () => {
   const DRAW_TEMPLATES = [
     {
       id: '66666666-6666-4666-8666-666666666666',
@@ -1162,7 +1162,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     listEventsMock.mockReset();
   });
 
-  it('switches to Random draw with its sweepstake presets, and creates random-draw rules with golfers dealt per entry', async () => {
+  it('switches to Quick pick with its sweepstake presets, and creates quick pick rules with golfers dealt per entry', async () => {
     await primeDrawMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-draw' } } });
 
@@ -1171,7 +1171,7 @@ describe('Commissioner tools › Contests › Create contest › Random draw for
     await waitForStartingChoices();
     fireEvent.click(screen.getByTestId('contest-format-RANDOM_DRAW'));
 
-    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Random draw');
+    expect(screen.getByTestId('contest-format-RANDOM_DRAW')).toHaveTextContent('Quick pick');
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toBeChecked();
     expect(screen.getByTestId('contest-template-golf-random-draw-1')).toHaveTextContent('Draw 1 golfer each');
     expect(screen.getByTestId('contest-template-golf-random-draw-3-best-2')).toHaveTextContent('Draw 3 golfers each, 2 count');

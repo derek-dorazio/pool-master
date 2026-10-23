@@ -204,6 +204,114 @@ export interface ContestEntryReminderEmailData {
   contestUrl: string;
 }
 
+/** What a live standings email reports on (#877), which decides its subject and opening line. */
+export const StandingsMomentKind = {
+  /** A stroke-play round finished, and more rounds remain (catalog row E2). */
+  ROUND: 'ROUND',
+  /** One event of a season contest settled, and more events remain (E6). */
+  EVENT: 'EVENT',
+  /** A pick'em week settled, and more weeks remain (E3). */
+  PICK_EM_WEEK: 'PICK_EM_WEEK',
+  /** A survivor week settled, and more weeks remain (E3, with E5 for the reader's entries that went out). */
+  SURVIVOR_WEEK: 'SURVIVOR_WEEK',
+} as const;
+export type StandingsMomentKind = (typeof StandingsMomentKind)[keyof typeof StandingsMomentKind];
+
+/** The event after the one that just finished, in a season contest. */
+export interface StandingsNextEvent {
+  name: string;
+  startsAt: Date;
+  /** When its picks close, while they are still open. */
+  picksCloseAt?: Date;
+}
+
+/** The week after the one that just settled, in a pick'em or survivor contest. */
+export interface StandingsNextWeek {
+  name: string;
+  /** Its first game's kickoff, when its first picks lock. */
+  firstKickoffAt: Date;
+}
+
+/** An entry named in a standings email: a week's winner. */
+export interface StandingsEntryName {
+  entryName: string;
+  squadName: string;
+}
+
+export type StandingsMoment =
+  | { kind: typeof StandingsMomentKind.ROUND; eventName: string; roundNumber: number }
+  | { kind: typeof StandingsMomentKind.EVENT; eventName: string; nextEvent?: StandingsNextEvent }
+  | {
+    kind: typeof StandingsMomentKind.PICK_EM_WEEK;
+    eventName: string;
+    /** The week's winners: more than one when they tie. */
+    winners: StandingsEntryName[];
+    /** The week's leaders by the week's points, at most 10 and anyone tied with the 10th. */
+    weekLeaders: StandingsLine[];
+    /** How many entries played the week. */
+    weekEntryCount: number;
+    nextWeek?: StandingsNextWeek;
+  }
+  | {
+    kind: typeof StandingsMomentKind.SURVIVOR_WEEK;
+    eventName: string;
+    /** Entries still in after the week, of `entryCount`. */
+    stillIn: number;
+    nextWeek?: StandingsNextWeek;
+  };
+
+/** One entry's line in a standings email. */
+export interface StandingsLine {
+  /** "1", "T3"; null for an entry with nothing scored yet. */
+  place: string | null;
+  entryName: string;
+  squadName: string;
+  /** The entry's total as the leaderboard shows it, such as "-8"; null with nothing scored. */
+  score: string | null;
+  /** Places gained (positive) or lost since the last standings email; null when there is none to compare with. */
+  movement: number | null;
+  /** Whether a squad the reader owns holds the entry. */
+  isYours: boolean;
+  /** In a season contest, the entry's place and score in the event that just finished; null for either not decided. */
+  eventResult?: { place: string | null; score: string | null };
+  /** In a survivor contest, whether the entry is out. */
+  isOut?: boolean;
+}
+
+/** One of the reader's survivor entries that went out in the week (E5). */
+export interface StandingsElimination {
+  entryName: string;
+  /** The team it picked; null when it had no pick. */
+  team: string | null;
+  /** The round of a playoff event it went out in; null for an event of one round. */
+  roundNumber: number | null;
+}
+
+/** Which of an entry's picks went out in the round: golfers who missed the cut. */
+export interface StandingsCutNews {
+  entryName: string;
+  names: string[];
+}
+
+export interface ContestStandingsEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  moment: StandingsMoment;
+  /** The leaders, at most 10, best first. */
+  top: StandingsLine[];
+  /** The reader's entries placed below the leaders, best first. */
+  yours: StandingsLine[];
+  entryCount: number;
+  /** The reader's picks cut in the round, by entry; empty when none were. */
+  cut: StandingsCutNews[];
+  /** The reader's survivor entries that went out in the week; empty when none did. */
+  out: StandingsElimination[];
+  leaderboardUrl: string;
+  /** Where the reader makes next week's picks, when they have picks to make. */
+  picksUrl?: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -225,6 +333,7 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_STARTED_SUMMARY: ContestStartedSummaryEmailData;
   CONTEST_ENTRY_REMINDER: ContestEntryReminderEmailData;
   CONTEST_OPENED: ContestOpenedEmailData;
+  CONTEST_STANDINGS: ContestStandingsEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -289,6 +398,7 @@ export interface EmailTemplateScopeByKey {
   CONTEST_STARTED_SUMMARY: typeof EmailTemplateScope.LEAGUE;
   CONTEST_ENTRY_REMINDER: typeof EmailTemplateScope.LEAGUE;
   CONTEST_OPENED: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_STANDINGS: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -386,6 +496,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestOpenedEmail,
+  },
+  CONTEST_STANDINGS: {
+    category: EmailCategory.LIVE_STANDINGS,
+    notificationClass: ServiceClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestStandingsEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -764,6 +882,173 @@ function renderContestEntryReminderEmail(
     templateKey: 'CONTEST_ENTRY_REMINDER',
     subject: wording.subject,
     preheader: `${wording.closesLabel} ${closesLine}.`,
+    title: wording.title,
+    bodyBlocks,
+    textLines,
+  });
+}
+
+/** What a standings email is called and how it opens, by what it reports on. */
+function standingsWording(data: ContestStandingsEmailData): { subject: string; title: string; lead: string } {
+  const { moment } = data;
+  switch (moment.kind) {
+    case StandingsMomentKind.ROUND:
+      return {
+        subject: `After round ${String(moment.roundNumber)}: ${data.contestName}`,
+        title: `Round ${String(moment.roundNumber)} standings`,
+        lead: `Here's where ${data.contestName} stands after round ${String(moment.roundNumber)} of ${moment.eventName}.`,
+      };
+    case StandingsMomentKind.EVENT:
+      return {
+        subject: `After ${moment.eventName}: ${data.contestName}`,
+        title: `${moment.eventName} results`,
+        lead: `${moment.eventName} is done. Here's where ${data.contestName} stands.`,
+      };
+    case StandingsMomentKind.PICK_EM_WEEK:
+      return {
+        subject: `After ${moment.eventName}: ${data.contestName}`,
+        title: `${moment.eventName} results`,
+        lead: [`${moment.eventName} is done.`, describeWeekWinners(moment.winners), `Here's where ${data.contestName} stands.`]
+          .filter((sentence) => sentence !== null)
+          .join(' '),
+      };
+    case StandingsMomentKind.SURVIVOR_WEEK:
+      return {
+        subject: `After ${moment.eventName}: ${data.contestName}`,
+        title: `${moment.eventName} results`,
+        lead: `${moment.eventName} is done. ${String(moment.stillIn)} of ${String(data.entryCount)} ${data.entryCount === 1 ? 'entry' : 'entries'} ${moment.stillIn === 1 ? 'is' : 'are'} still in ${data.contestName}.`,
+      };
+  }
+}
+
+/** "Eagle Eyes (The Birdies) won the week."; null when nobody did. */
+function describeWeekWinners(winners: readonly StandingsEntryName[]): string | null {
+  const names = winners.map((winner) => `${winner.entryName} (${winner.squadName})`);
+  if (names.length === 0) return null;
+  if (names.length === 1) return `${names[0]} won the week.`;
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tied for the week.`;
+}
+
+/** The heading over the contest's leaders, by how its entries are scored. */
+function standingsLeadersTitle(data: ContestStandingsEmailData): string {
+  const shown = data.top.length < data.entryCount ? `Top ${String(data.top.length)} of ${String(data.entryCount)}` : 'Standings';
+  switch (data.moment.kind) {
+    case StandingsMomentKind.PICK_EM_WEEK:
+      return `Season ${shown.toLowerCase()}, by points`;
+    case StandingsMomentKind.SURVIVOR_WEEK:
+      return `${shown}, by weeks survived`;
+    case StandingsMomentKind.ROUND:
+    case StandingsMomentKind.EVENT:
+      return shown;
+  }
+}
+
+/** "Lucky Picks is out: Chicago didn't win in Week 5." */
+function describeElimination(out: StandingsElimination, eventName: string): string {
+  const when = out.roundNumber === null ? eventName : `round ${String(out.roundNumber)} of ${eventName}`;
+  return out.team === null
+    ? `${out.entryName} is out: it had no pick in ${when}.`
+    : `${out.entryName} is out: ${out.team} didn't win in ${when}.`;
+}
+
+/** "up 2", "down 1", "no change"; null with nothing to compare with. */
+function describeMovement(movement: number | null): string | null {
+  if (movement === null) return null;
+  if (movement === 0) return 'no change';
+  return movement > 0 ? `up ${String(movement)}` : `down ${String(-movement)}`;
+}
+
+/** "▲2", "▼1", "="; blank with nothing to compare with. */
+function movementMark(movement: number | null): string {
+  if (movement === null) return '';
+  if (movement === 0) return '=';
+  return movement > 0 ? `▲${String(movement)}` : `▼${String(-movement)}`;
+}
+
+/** "T2, -6", with a dash for a part not decided. */
+function formatEventResult(result: { place: string | null; score: string | null }): string {
+  return `${result.place ?? '-'}, ${result.score ?? '-'}`;
+}
+
+function standingsTextLine(line: StandingsLine): string {
+  const movement = describeMovement(line.movement);
+  return [
+    `${line.place ?? '-'}. ${line.entryName} (${line.squadName})${line.isYours ? ', yours' : ''}`,
+    line.score ?? 'no score yet',
+    ...(line.isOut ? ['out'] : []),
+    ...(line.eventResult ? [`this event ${formatEventResult(line.eventResult)}`] : []),
+    ...(movement ? [movement] : []),
+  ].join(', ');
+}
+
+function standingsTable(lines: StandingsLine[]): string {
+  const cell = `padding:10px 12px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:14px;line-height:1.4;color:${EMAIL_THEME.navy};vertical-align:top;`;
+  const rows = lines.map((line) => `<tr>
+        <td style="${cell}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
+        <td style="${cell}">${line.isYours ? strong(line.entryName) : escapeHtml(line.entryName)}${line.isYours ? ` <span style="color:${EMAIL_THEME.muted};">(yours)</span>` : ''}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(formatEventResult(line.eventResult))}` : ''}</span></td>
+        <td style="${cell}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}${line.isOut ? `<br><span style="font-size:12px;font-weight:400;color:${EMAIL_THEME.muted};">out</span>` : ''}</td>
+        <td style="${cell}text-align:right;color:${EMAIL_THEME.muted};">${escapeHtml(movementMark(line.movement))}</td>
+      </tr>`).join('');
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">${rows}</table>`;
+}
+
+function renderContestStandingsEmail(
+  data: ContestStandingsEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const wording = standingsWording(data);
+  const { moment } = data;
+  const nextRows: Array<[string, string]> = [];
+  if (moment.kind === StandingsMomentKind.EVENT && moment.nextEvent) {
+    const next = moment.nextEvent;
+    nextRows.push(['Next event', `${next.name}, ${formatInstant(next.startsAt, context.timeZone)}`]);
+    if (next.picksCloseAt) nextRows.push(['Picks close', formatInstant(next.picksCloseAt, context.timeZone)]);
+  }
+  if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
+    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatInstant(moment.nextWeek.firstKickoffAt, context.timeZone)}`]);
+  }
+  const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
+  const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK
+    ? `${moment.eventName}, ${weekLeaders.length < moment.weekEntryCount ? `top ${String(weekLeaders.length)} of ${String(moment.weekEntryCount)}` : 'everyone'}`
+    : '';
+  const leadersTitle = standingsLeadersTitle(data);
+  const personalLines = [
+    ...data.out.map((out) => describeElimination(out, moment.eventName)),
+    ...data.cut.map((news) => `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.`),
+  ];
+  const picksAction = 'Make picks for next week';
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.userName)},`),
+    paragraph(escapeHtml(wording.lead)),
+    ...personalLines.map((line) => paragraph(escapeHtml(line))),
+    ...(weekLeaders.length > 0 ? [sectionTitle(weekLeadersTitle), standingsTable(weekLeaders)] : []),
+    sectionTitle(leadersTitle),
+    standingsTable(data.top),
+    ...(data.yours.length > 0 ? [sectionTitle(data.yours.length === 1 ? 'Your entry' : 'Your entries'), standingsTable(data.yours)] : []),
+    ...(nextRows.length > 0 ? [detailList(nextRows)] : []),
+    ...(data.picksUrl ? [button(picksAction, data.picksUrl)] : []),
+    button('Leaderboard', data.leaderboardUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.userName},`,
+    '',
+    wording.lead,
+    ...(personalLines.length > 0 ? ['', ...personalLines] : []),
+    ...(weekLeaders.length > 0 ? ['', `${weekLeadersTitle}:`, ...weekLeaders.map(standingsTextLine)] : []),
+    '',
+    `${leadersTitle}:`,
+    ...data.top.map(standingsTextLine),
+    ...(data.yours.length > 0 ? ['', `${data.yours.length === 1 ? 'Your entry' : 'Your entries'}:`, ...data.yours.map(standingsTextLine)] : []),
+    ...(nextRows.length > 0 ? ['', ...nextRows.map(([label, value]) => `${label}: ${value}`)] : []),
+    '',
+    ...(data.picksUrl ? [`${picksAction}: ${data.picksUrl}`] : []),
+    `Leaderboard: ${data.leaderboardUrl}`,
+  ];
+
+  return buildMessage(context, {
+    templateKey: 'CONTEST_STANDINGS',
+    subject: wording.subject,
+    preheader: wording.lead,
     title: wording.title,
     bodyBlocks,
     textLines,

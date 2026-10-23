@@ -9,6 +9,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
   PrismaContestConfigurationRepository,
+  PrismaContestEntryEventStandingRepository,
   PrismaContestEntryMatchPredictionRepository,
   PrismaContestEntryPickRepository,
   PrismaContestEntryRepository,
@@ -20,13 +21,16 @@ import {
   PrismaSportLeagueRepository,
   PrismaSquadMembershipRepository,
   PrismaSquaresRepository,
+  PrismaStandingsEmailPositionRepository,
   PrismaUserRepository,
 } from '../../adapters';
+import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
-import { createSportEventTierService } from '../events/wiring';
+import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
 import { ContestNotices } from './contest-notices';
 import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
+import { LiveStandings } from './live-standings';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
   email: EmailService;
@@ -86,6 +90,27 @@ export function createEntryReceipts(prisma: PrismaClient, options: {
     users: new PrismaUserRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),
+    ...options,
+  });
+}
+
+export function createLiveStandings(prisma: PrismaClient, options: {
+  email: EmailService;
+  readConfig: () => EmailConfig;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+}): LiveStandings {
+  return new LiveStandings({
+    contests: new PrismaContestRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    eventParticipants: createSportEventParticipantService(prisma, options.logger),
+    eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
+    leaderboards: createContestService(prisma, options.logger),
+    positions: new PrismaStandingsEmailPositionRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
+    memberships: new PrismaLeagueMembershipRepository(prisma),
+    squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
     ...options,
   });
 }

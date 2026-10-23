@@ -173,6 +173,20 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
       >
         <Input data-testid="root-admin-email-settings-reminder-hours" {...form.register('entryReminderHours')} />
       </FormField>
+      <FormField
+        error={form.formState.errors.standingsBufferMinutes?.message}
+        helperText="Minutes after a round or event finishes before its standings email goes, from 0 to 240, so a late score correction lands first."
+        label="Standings email delay"
+      >
+        <Input
+          data-testid="root-admin-email-settings-standings-buffer"
+          inputMode="numeric"
+          max={240}
+          min={0}
+          type="number"
+          {...form.register('standingsBufferMinutes', { valueAsNumber: true })}
+        />
+      </FormField>
       {saveMutation.isError ? (
         <Alert
           action={conflicted ? (

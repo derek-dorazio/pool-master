@@ -357,10 +357,10 @@ describe('Seeded running series and their Top 10 templates', () => {
       template.name,
     ])).toEqual([
       ['World Marathon Majors (men)', 'wmm-men-budget-top-10', SelectionType.BUDGET_PICK, true, true, 'Budget: 4 runners under the cap, Top 10 points'],
-      ['World Marathon Majors (men)', 'wmm-men-random-draw-top-10', SelectionType.RANDOM_DRAW, true, true, 'Random draw: 1 runner each, Top 10 points'],
+      ['World Marathon Majors (men)', 'wmm-men-random-draw-top-10', SelectionType.RANDOM_DRAW, true, true, 'Quick pick: 1 runner each, Top 10 points'],
       ['World Marathon Majors (men)', 'wmm-men-tiered-top-10', SelectionType.TIERED, true, true, 'Tiered: 1 runner per tier, Top 10 points'],
       ['World Marathon Majors (women)', 'wmm-women-budget-top-10', SelectionType.BUDGET_PICK, true, true, 'Budget: 4 runners under the cap, Top 10 points'],
-      ['World Marathon Majors (women)', 'wmm-women-random-draw-top-10', SelectionType.RANDOM_DRAW, true, true, 'Random draw: 1 runner each, Top 10 points'],
+      ['World Marathon Majors (women)', 'wmm-women-random-draw-top-10', SelectionType.RANDOM_DRAW, true, true, 'Quick pick: 1 runner each, Top 10 points'],
       ['World Marathon Majors (women)', 'wmm-women-tiered-top-10', SelectionType.TIERED, true, true, 'Tiered: 1 runner per tier, Top 10 points'],
     ]);
     expect(new Set(templates.map((template) => template.sportLeague?.sport.sport))).toEqual(new Set([Sport.RUNNING]));
@@ -1031,7 +1031,7 @@ const LEAGUES_PLAYED_AS_SERIES: readonly string[] = ['NBA', 'WNBA', 'NHL', 'PWHL
 const FORMAT_NAMES: Record<SelectionType, string> = {
   TIERED: 'Tiered',
   BUDGET_PICK: 'Budget',
-  RANDOM_DRAW: 'Random draw',
+  RANDOM_DRAW: 'Quick pick',
   PICK_EM: 'Pick’em',
   BRACKET: 'Bracket',
   SURVIVOR: 'Survivor',

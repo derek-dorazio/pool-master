@@ -16,8 +16,9 @@
  * the contests whose cutoff comes after the event's start (a second-chance bracket, #721).
  *
  * Each sweep ends with the "notifications due" step (#845): the emails that fire on the clock
- * rather than on an action, such as entry reminders, are queued once their time has come. The
- * outbox's idempotency key keeps a second sweep, or a second server task, from sending one twice.
+ * rather than on an action, such as entry reminders and live standings, are queued once their
+ * time has come. The outbox's idempotency key keeps a second sweep, or a second server task, from
+ * sending one twice.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -36,8 +37,8 @@ export interface EventLifecycleSchedulerOptions {
   sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
   rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
   eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
-  /** The "notifications due" step; omitted, a sweep only moves events and contests. */
-  notificationsDue?: DueNotifications;
+  /** The "notifications due" step, one per kind of email; omitted, a sweep only moves events and contests. */
+  notificationsDue?: readonly DueNotifications[];
   logger?: FastifyBaseLogger;
   now?: () => Date;
 }
@@ -47,7 +48,7 @@ export class EventLifecycleScheduler {
   private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
   private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
-  private readonly notificationsDue?: DueNotifications;
+  private readonly notificationsDue: readonly DueNotifications[];
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
 
@@ -55,7 +56,7 @@ export class EventLifecycleScheduler {
     this.sportEvents = options.sportEvents;
     this.rounds = options.rounds;
     this.eventLifecycleService = options.eventLifecycleService;
-    this.notificationsDue = options.notificationsDue;
+    this.notificationsDue = options.notificationsDue ?? [];
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
   }
@@ -95,13 +96,16 @@ export class EventLifecycleScheduler {
       }
     }
 
-    // After the transitions, so a contest that just went live is not reminded about.
-    try {
-      await this.notificationsDue?.queueDue(now);
-    } catch (error) {
-      this.logger?.error({
-        error: error instanceof Error ? error.message : String(error),
-      }, 'Event lifecycle scheduler failed to queue the notifications due');
+    // After the transitions, so a contest that just went live is not reminded about. Each kind
+    // on its own, so one failing does not hold up the others.
+    for (const notifications of this.notificationsDue) {
+      try {
+        await notifications.queueDue(now);
+      } catch (error) {
+        this.logger?.error({
+          error: error instanceof Error ? error.message : String(error),
+        }, 'Event lifecycle scheduler failed to queue the notifications due');
+      }
     }
   }
 

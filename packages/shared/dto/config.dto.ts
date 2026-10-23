@@ -99,6 +99,10 @@ export const EmailConfigSchema = z.object({
     'How many hours before a contest\'s picks close each entry reminder goes, to members with '
     + 'nothing submitted (#845). Everyone gets each reminder at the same moment.',
   ),
+  standingsBufferMinutes: z.number().int().min(0).max(240).describe(
+    'How many minutes after a round, week or event finishes its live standings email goes (#877), '
+    + 'so a late score correction lands first.',
+  ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
     LEAGUE_JOIN_SUCCESS: templateSwitch,
@@ -106,6 +110,7 @@ export const EmailConfigSchema = z.object({
     CONTEST_STARTED_SUMMARY: templateSwitch,
     CONTEST_ENTRY_REMINDER: templateSwitch,
     CONTEST_OPENED: templateSwitch,
+    CONTEST_STANDINGS: templateSwitch,
   } satisfies Record<SwitchableEmailTemplateKey, z.ZodBoolean>).describe(
     'Per-template switches. A template that is off is skipped even while email is on.',
   ),

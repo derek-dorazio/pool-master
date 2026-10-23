@@ -39,6 +39,8 @@ export type {
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,
+  StandingsEmailPosition,
+  StandingsEmailPositionRepository,
   UserRepository,
   UserSearchFilters,
   UserUpdate,
