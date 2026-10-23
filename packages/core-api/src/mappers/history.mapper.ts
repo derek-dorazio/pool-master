@@ -1,5 +1,6 @@
-import type { ContestResultSummaryDto, HistorySummaryDto, SquadYearDto } from '@poolmaster/shared/dto';
-import type { ContestResultView, HistorySummaryView, SquadYearView } from '../modules/history/service';
+import { TrophyKind } from '@poolmaster/shared/domain';
+import type { ContestResultSummaryDto, HistorySummaryDto, SquadHistoryDto, SquadYearDto } from '@poolmaster/shared/dto';
+import type { ContestResultView, HistorySummaryView, SquadHistoryView, SquadYearView } from '../modules/history/service';
 import { championshipName, toChampionshipSquadDto, toChampionshipStandingRowDto } from './championship.mapper';
 import { cupName, toCupStandingRowDto } from './cups.mapper';
 
@@ -63,5 +64,23 @@ export function toSquadYearDto(view: SquadYearView): SquadYearDto {
       squadCount: cup.view.standings.length,
       standing: toCupStandingRowDto(cup.standing),
     })),
+  };
+}
+
+export function toSquadHistoryDto(view: SquadHistoryView): SquadHistoryDto {
+  return {
+    squadId: view.squad.id,
+    medals: view.medals,
+    trophies: view.trophies.map((trophy) => (trophy.kind === TrophyKind.CHAMPIONSHIP
+      ? { kind: trophy.kind, year: trophy.year, trophy: trophy.trophy, name: championshipName(trophy.year, trophy.cupName), cupId: null, sportLeagueId: null }
+      : {
+          kind: trophy.kind,
+          year: trophy.year,
+          trophy: trophy.trophy,
+          name: cupName(trophy.cup.cup.seasonYear, trophy.cup.sportLeagueName),
+          cupId: trophy.cup.cup.id,
+          sportLeagueId: trophy.cup.cup.sportLeagueId,
+        })),
+    years: view.years.map(toSquadYearDto),
   };
 }

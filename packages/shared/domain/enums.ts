@@ -962,6 +962,16 @@ export const SummaryTile = {
 export type SummaryTile = (typeof SummaryTile)[keyof typeof SummaryTile];
 
 /**
+ * Which trophy a squad page's trophy shelf (#872) shows: a league championship finished 1st to 3rd
+ * in a year that is over, or a crowned cup's trophy. Both use `CupTrophy` for the place.
+ */
+export const TrophyKind = {
+  CHAMPIONSHIP: 'CHAMPIONSHIP',
+  CUP: 'CUP',
+} as const;
+export type TrophyKind = (typeof TrophyKind)[keyof typeof TrophyKind];
+
+/**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,
  * 2nd or 3rd; PLAYED counts the counted contests a squad placed in.
  */

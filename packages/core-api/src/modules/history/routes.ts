@@ -38,6 +38,23 @@ export function historyModule(fastify: FastifyInstance): void {
     handler: handlers.getHistorySummary,
   });
 
+  fastify.get('/squads/:squadId/years', {
+    schema: {
+      tags: ['History'],
+      summary: 'Get a squad\'s history',
+      description: `A squad's whole history for its squad page: its contest medals all time (counted contests finished 1st, 2nd and 3rd), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as \`getSquadYear\` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. ${MEMBERS_ONLY}`,
+      operationId: 'getSquadHistory',
+      response: {
+        200: schemaRef('SquadHistoryResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getSquadHistory,
+  });
+
   fastify.get('/squads/:squadId', {
     schema: {
       tags: ['History'],

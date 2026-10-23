@@ -5,7 +5,7 @@
  * squad's year for its squad page (#872).
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, SelectionType, SummaryTile } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile, TrophyKind } from '@poolmaster/shared/domain';
 import { ChampionshipSquadDtoSchema, ChampionshipStandingRowDtoSchema } from './championship.dto';
 import { CupStandingRowDtoSchema } from './cups.dto';
 import { DateTimeSchema } from './common.dto';
@@ -119,6 +119,36 @@ export const SquadYearResponseSchema = z.object({
 }).describe('One squad\'s year.');
 export type SquadYearResponse = z.infer<typeof SquadYearResponseSchema>;
 
+export const SquadMedalsDtoSchema = z.object({
+  firsts: z.number().int().describe('Counted contests the squad finished 1st in, every year.'),
+  seconds: z.number().int().describe('Counted contests it finished 2nd in, every year.'),
+  thirds: z.number().int().describe('Counted contests it finished 3rd in, every year.'),
+}).describe('A squad\'s contest medals, all time.');
+export type SquadMedalsDto = z.infer<typeof SquadMedalsDtoSchema>;
+
+export const SquadTrophyDtoSchema = z.object({
+  kind: z.nativeEnum(TrophyKind).describe('CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.'),
+  year: z.number().int(),
+  trophy: z.nativeEnum(CupTrophy).describe('The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.'),
+  name: z.string().describe('What it was won in: "2025 Derek\'s Pool Cup" or "2025 NFL Cup".'),
+  cupId: z.string().uuid().nullable().describe('The cup, for a cup trophy; null for a championship.'),
+  sportLeagueId: z.string().uuid().nullable().describe('The cup\'s sports league, for a cup trophy; null for a championship.'),
+}).describe('One trophy on a squad\'s shelf.');
+export type SquadTrophyDto = z.infer<typeof SquadTrophyDtoSchema>;
+
+export const SquadHistoryDtoSchema = z.object({
+  squadId: z.string().uuid(),
+  medals: SquadMedalsDtoSchema,
+  trophies: z.array(SquadTrophyDtoSchema).describe('Newest year first; within a year the championship first, then cups by sports league name.'),
+  years: z.array(SquadYearDtoSchema).describe('The squad\'s year for every year the league has a championship or a cup season in, newest first.'),
+}).describe('A squad\'s whole history in the league.');
+export type SquadHistoryDto = z.infer<typeof SquadHistoryDtoSchema>;
+
+export const SquadHistoryResponseSchema = z.object({
+  squadHistory: SquadHistoryDtoSchema,
+}).describe('A squad\'s whole history in the league.');
+export type SquadHistoryResponse = z.infer<typeof SquadHistoryResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
@@ -133,3 +163,7 @@ registerSchema('SquadChampionshipDto', SquadChampionshipDtoSchema);
 registerSchema('SquadCupDto', SquadCupDtoSchema);
 registerSchema('SquadYearDto', SquadYearDtoSchema);
 registerSchema('SquadYearResponse', SquadYearResponseSchema);
+registerSchema('SquadMedalsDto', SquadMedalsDtoSchema);
+registerSchema('SquadTrophyDto', SquadTrophyDtoSchema);
+registerSchema('SquadHistoryDto', SquadHistoryDtoSchema);
+registerSchema('SquadHistoryResponse', SquadHistoryResponseSchema);

@@ -4,7 +4,7 @@ import { buildLeagueHistoryPath, buildLeagueTeamEditPath, buildLeagueTeamsPath }
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { LeaveLeagueSection } from '@/features/leagues/leave-league-section';
-import { SquadYearSection } from '@/features/championships/squad-year-section';
+import { SquadHistorySection } from '@/features/championships/squad-history-section';
 import {
   Alert,
   EmptyState,
@@ -142,7 +142,7 @@ export function MyTeamPage() {
         testId="my-team-owners"
       />
 
-      <SquadYearSection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
+      <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={myTeam} />
 
       {viewer.isMember ? <LeaveLeagueSection league={league} /> : null}
     </section>
