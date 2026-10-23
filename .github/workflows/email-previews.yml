@@ -1,0 +1,84 @@
+# Send every system email, filled in with the examples in tests/support/email-template-fixtures.ts,
+# to one address through QA's SES, so copy changes can be read in a real inbox (#844, #910).
+#
+# workflow_dispatch only. It runs `npm run email:preview -- --to <address>` on the runner with
+# the repository's AWS credentials, so it sends straight through SES: the app's "Send system
+# email" switch and "Only send to" list do not apply, and nothing is written to QA's outbox.
+# While the AWS account is in the SES sandbox, the address must be verified in SES.
+# See docs/EMAIL-DELIVERY.md, "Previewing Emails".
+name: Send email previews
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: The one address every preview goes to
+        type: string
+        required: true
+      category:
+        description: Which emails to send
+        type: choice
+        options:
+          - ALL
+          - ACCOUNT
+          - MEMBERSHIP
+          - COMMISSIONER_UPDATES
+          - CONTEST_UPDATES
+          - LIVE_STANDINGS
+          - RESULTS
+          - RECEIPTS
+          - ROOT_ADMIN
+        default: ALL
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    name: send
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_REGION: us-east-2
+      EMAIL_PROVIDER: ses
+      SES_FROM_EMAIL: noreply@qa.ultimateofficepoolmanager.com
+      SES_CONFIGURATION_SET: poolmaster-qa
+      # Inputs go through the environment, never into the script text.
+      PREVIEW_CATEGORY: ${{ inputs.category }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: 'npm'
+      - run: npm ci
+      - name: Build the shared package and the Prisma client the email module imports
+        run: |
+          npm run build --workspace @poolmaster/shared
+          npx prisma generate --schema packages/core-api/prisma/schema.prisma
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      # The repo is public, so its logs are too: the address is set on this step alone and
+      # masked before anything runs, and the script never prints it.
+      - name: Send the previews
+        shell: bash
+        env:
+          PREVIEW_TO: ${{ inputs.to }}
+        run: |
+          echo "::add-mask::$PREVIEW_TO"
+          npm run email:preview -- --to "$PREVIEW_TO" --category "$PREVIEW_CATEGORY" 2>&1 | tee preview.log
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "### Email previews"
+            echo ""
+            echo '```'
+            tail -n 40 preview.log 2>/dev/null || echo "(no output)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
