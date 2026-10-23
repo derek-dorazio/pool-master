@@ -1,24 +1,30 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useEffect, useMemo } from 'react';
+import { ChampionshipContestList } from '@/features/championships/championship-contest-list';
+import { useChampionshipContestsQuery } from '@/features/championships/use-championship-query';
+import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { getLeagueLoadErrorCopy } from '@/features/leagues/league-load-error';
 import {
   Chip,
   EmptyState,
   ErrorState,
   LinkButton,
-  ListStack,
   LoadingState,
   PageHeader,
+  Select,
   Tile,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
-import { isHistoricalContest } from './contest-status';
-import { ContestListCard } from './contest-list-card';
+import { chooseContestHistoryYear, contestHistoryYears } from './contest-history';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { ContestsViewSwitch } from './contests-view-switch';
 import { useLeagueContestsQuery } from './use-league-contests-query';
 
 
+/**
+ * Contest History (#837): one year's completed contests at a time, newest first, each with its
+ * winner. The year is in the link (`?year=2025`); without one, the newest year with a final contest.
+ */
 export function LeagueContestHistoryPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const logger = getLogger().child({
@@ -49,10 +55,10 @@ export function LeagueContestHistoryPage() {
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
 
-  const historicalContests = useMemo(
-    () => (contestsQuery.data ?? []).filter((contest) => isHistoricalContest(contest.status)),
-    [contestsQuery.data],
-  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const years = useMemo(() => contestHistoryYears(contestsQuery.data ?? []), [contestsQuery.data]);
+  const year = chooseContestHistoryYear(years, searchParams.get('year'));
+  const resultsQuery = useChampionshipContestsQuery(leagueId, year, null);
 
   if (leagueQuery.isLoading) {
     return <LoadingState body="Loading contest history..." />;
@@ -87,34 +93,46 @@ export function LeagueContestHistoryPage() {
         <LoadingState body="Loading contest history..." />
       ) : contestsQuery.isError ? (
         <ErrorState body="We couldn't load contest history for this league." />
+      ) : year === null ? (
+        <EmptyState body="This league does not have any completed contests yet." />
       ) : (
         <Tile data-testid="league-contests-history">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Completed contests</h2>
+              <h2 className="text-xl font-semibold text-foreground">Completed in {year}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Open a completed contest to view final standings and revealed picks.
               </p>
             </div>
-            <Chip tone="info">
-              {historicalContests.length}
-            </Chip>
+            <div className="flex items-center gap-3">
+              {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
+              <Select
+                aria-label="Year"
+                className="w-auto"
+                data-testid="league-contests-history-year"
+                onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
+                value={year}
+              >
+                {years.map((option) => <option key={option} value={option}>{option}</option>)}
+              </Select>
+            </div>
           </div>
 
-          <ListStack className="mt-5">
-            {historicalContests.length ? (
-              historicalContests.map((contest) => (
-                <ContestListCard
-                  contest={contest}
-                  key={contest.id}
-                  leagueCode={league.leagueCode}
-                  testId={`league-history-contest-${contest.id}`}
-                />
-              ))
+          <div className="mt-5">
+            {resultsQuery.isError ? (
+              <ErrorState body={`We couldn't load the contests completed in ${year}.`} testId="league-contests-history-error" />
+            ) : !resultsQuery.data ? (
+              <LoadingState body="Loading contest history..." />
             ) : (
-              <EmptyState body="This league does not have any completed contests yet." />
+              <ChampionshipContestList
+                contestPath={buildLeagueContestPath}
+                contests={resultsQuery.data}
+                emptyBody={`No contest was completed in ${year}.`}
+                leagueCode={league.leagueCode}
+                testIdPrefix="league-history-contest"
+              />
             )}
-          </ListStack>
+          </div>
         </Tile>
       )}
     </section>
