@@ -26575,6 +26575,8 @@
         "enum": [
           "LEAGUE_MEMBER_INVITE",
           "LEAGUE_JOIN_SUCCESS",
+          "SQUAD_OWNER_INVITE",
+          "SQUAD_OWNER_ADDED",
           "CONTEST_ENTRY_COMPLETED",
           "CONTEST_STARTED_SUMMARY",
           "CONTEST_ENTRY_REMINDER",
@@ -26647,6 +26649,14 @@
                 "type": "boolean",
                 "description": "Whether this email is sent."
               },
+              "SQUAD_OWNER_INVITE": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "SQUAD_OWNER_ADDED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
               "CONTEST_ENTRY_COMPLETED": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
@@ -26695,6 +26705,8 @@
             "required": [
               "LEAGUE_MEMBER_INVITE",
               "LEAGUE_JOIN_SUCCESS",
+              "SQUAD_OWNER_INVITE",
+              "SQUAD_OWNER_ADDED",
               "CONTEST_ENTRY_COMPLETED",
               "CONTEST_STARTED_SUMMARY",
               "CONTEST_ENTRY_REMINDER",
@@ -28128,6 +28140,14 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "SQUAD_OWNER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "SQUAD_OWNER_ADDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_ENTRY_COMPLETED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -28176,6 +28196,8 @@
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
+                      "SQUAD_OWNER_INVITE",
+                      "SQUAD_OWNER_ADDED",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
@@ -28259,6 +28281,14 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "SQUAD_OWNER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "SQUAD_OWNER_ADDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_ENTRY_COMPLETED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -28307,6 +28337,8 @@
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
+                      "SQUAD_OWNER_INVITE",
+                      "SQUAD_OWNER_ADDED",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
@@ -29233,6 +29265,14 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "SQUAD_OWNER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "SQUAD_OWNER_ADDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_ENTRY_COMPLETED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -29281,6 +29321,8 @@
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
+                            "SQUAD_OWNER_INVITE",
+                            "SQUAD_OWNER_ADDED",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
@@ -29364,6 +29406,14 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "SQUAD_OWNER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "SQUAD_OWNER_ADDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_ENTRY_COMPLETED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -29412,6 +29462,8 @@
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
+                            "SQUAD_OWNER_INVITE",
+                            "SQUAD_OWNER_ADDED",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
@@ -29996,6 +30048,14 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "SQUAD_OWNER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "SQUAD_OWNER_ADDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_ENTRY_COMPLETED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -30044,6 +30104,8 @@
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
+                      "SQUAD_OWNER_INVITE",
+                      "SQUAD_OWNER_ADDED",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
@@ -30828,6 +30890,14 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "SQUAD_OWNER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "SQUAD_OWNER_ADDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_ENTRY_COMPLETED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -30876,6 +30946,8 @@
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
+                      "SQUAD_OWNER_INVITE",
+                      "SQUAD_OWNER_ADDED",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
@@ -30959,6 +31031,14 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "SQUAD_OWNER_INVITE": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
+                      "SQUAD_OWNER_ADDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_ENTRY_COMPLETED": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -31007,6 +31087,8 @@
                     "required": [
                       "LEAGUE_MEMBER_INVITE",
                       "LEAGUE_JOIN_SUCCESS",
+                      "SQUAD_OWNER_INVITE",
+                      "SQUAD_OWNER_ADDED",
                       "CONTEST_ENTRY_COMPLETED",
                       "CONTEST_STARTED_SUMMARY",
                       "CONTEST_ENTRY_REMINDER",
@@ -31891,6 +31973,14 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "SQUAD_OWNER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "SQUAD_OWNER_ADDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_ENTRY_COMPLETED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -31939,6 +32029,8 @@
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
+                            "SQUAD_OWNER_INVITE",
+                            "SQUAD_OWNER_ADDED",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",
@@ -32022,6 +32114,14 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "SQUAD_OWNER_INVITE": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
+                            "SQUAD_OWNER_ADDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_ENTRY_COMPLETED": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -32070,6 +32170,8 @@
                           "required": [
                             "LEAGUE_MEMBER_INVITE",
                             "LEAGUE_JOIN_SUCCESS",
+                            "SQUAD_OWNER_INVITE",
+                            "SQUAD_OWNER_ADDED",
                             "CONTEST_ENTRY_COMPLETED",
                             "CONTEST_STARTED_SUMMARY",
                             "CONTEST_ENTRY_REMINDER",

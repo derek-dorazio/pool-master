@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
+import type { FastifyBaseLogger } from 'fastify';
 import type {
   LeagueMembershipRepository,
   MembershipRepositories,
@@ -10,8 +11,10 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import type {
+  Squad,
   SquadOwnerInvitation,
   SquadOwnerInvitationStatus,
+  User,
 } from '@poolmaster/shared/domain';
 import {
   LeagueMembershipStatus,
@@ -29,6 +32,12 @@ import {
   LastCommissionerError,
   requireAnotherActiveCommissioner,
 } from '../leagues/member-lifecycle';
+import {
+  buildLeagueHomeUrl,
+  buildSquadOwnerInviteUrl,
+  formatUserName,
+  type EmailService,
+} from '../email';
 
 const DEFAULT_OWNER_INVITE_EXPIRY_DAYS = 7;
 
@@ -48,6 +57,10 @@ export interface SquadOwnerInvitationServiceDeps extends MembershipRepositories 
   users: UserRepository;
   prisma: PrismaClient;
   membershipTransaction: MembershipTransaction;
+  /** Sends the co-owner invitation (#845 B4) and "you were added as a co-owner" (B5). */
+  email: Pick<EmailService, 'send'>;
+  appBaseUrl: string;
+  logger?: FastifyBaseLogger;
 }
 
 export class SquadOwnerInvitationService {
@@ -58,6 +71,9 @@ export class SquadOwnerInvitationService {
   private readonly users: UserRepository;
   private readonly prisma: PrismaClient;
   private readonly membershipTransaction: MembershipTransaction;
+  private readonly email: Pick<EmailService, 'send'>;
+  private readonly appBaseUrl: string;
+  private readonly logger?: FastifyBaseLogger;
 
   constructor(deps: SquadOwnerInvitationServiceDeps) {
     this.invitationRepo = deps.squadOwnerInvitations;
@@ -67,6 +83,9 @@ export class SquadOwnerInvitationService {
     this.users = deps.users;
     this.prisma = deps.prisma;
     this.membershipTransaction = deps.membershipTransaction;
+    this.email = deps.email;
+    this.appBaseUrl = deps.appBaseUrl;
+    this.logger = deps.logger;
   }
 
   async listInvitationsForViewer(
@@ -95,7 +114,7 @@ export class SquadOwnerInvitationService {
       input.actorIsRootAdmin ?? false,
     );
     await this.requireActiveLeague(input.leagueId);
-    await this.requireActiveSquad(input.leagueId, input.squadId);
+    const squad = await this.requireActiveSquad(input.leagueId, input.squadId);
 
     const duplicate = await this.invitationRepo.findPendingByLeagueAndEmail(
       input.leagueId,
@@ -135,6 +154,7 @@ export class SquadOwnerInvitationService {
       });
     });
 
+    await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
     return this.mapInvitationDto(invitation);
   }
 
@@ -147,7 +167,7 @@ export class SquadOwnerInvitationService {
       input.actorIsRootAdmin ?? false,
     );
     await this.requireActiveLeague(input.leagueId);
-    await this.requireActiveSquad(input.leagueId, input.squadId);
+    const squad = await this.requireActiveSquad(input.leagueId, input.squadId);
 
     if (input.actorUserId === input.targetUserId) {
       throw new SquadOwnerInvitationOperationError(
@@ -240,7 +260,77 @@ export class SquadOwnerInvitationService {
       });
     });
 
+    await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
     return this.mapInvitationDto(invitation);
+  }
+
+  /**
+   * Tells the invitee, once the invitation is committed: an address with no account gets the
+   * invitation to accept (B4), and an account seated on the squad straight away is told it was
+   * added (B5). The invitation stands if the email can't be queued, and the invite link on the
+   * squad's owners panel still works, so a failure is logged rather than thrown.
+   */
+  private async emailInvitee(
+    invitation: SquadOwnerInvitation,
+    squad: Squad,
+    actorUserId: string,
+    addedUser: User | null,
+  ): Promise<void> {
+    try {
+      const [league, inviter, owners] = await Promise.all([
+        this.prisma.league.findUnique({ where: { id: invitation.leagueId } }),
+        this.users.findById(actorUserId),
+        this.squadMembershipRepo.findBySquad(squad.id),
+      ]);
+      if (!league || !inviter) {
+        throw new Error(league ? `Inviter not found: ${actorUserId}` : `League not found: ${invitation.leagueId}`);
+      }
+      const emailLeague = { id: league.id, name: league.name, leagueCode: league.leagueCode };
+      const inviterName = formatUserName(inviter);
+      // Replacing a squad's sole owner leaves the invitee as its only owner, not a co-owner.
+      const soleOwner = owners.every((owner) => owner.userId === addedUser?.id);
+      if (addedUser) {
+        await this.email.send('SQUAD_OWNER_ADDED', {
+          to: { email: addedUser.email, userId: addedUser.id, timeZone: addedUser.timezone },
+          about: invitation.id,
+          league: emailLeague,
+          data: {
+            userName: formatUserName(addedUser),
+            inviterName,
+            squadName: squad.name,
+            leagueName: league.name,
+            leagueCode: league.leagueCode,
+            leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, league.leagueCode),
+            soleOwner,
+          },
+        });
+        return;
+      }
+      await this.email.send('SQUAD_OWNER_INVITE', {
+        to: { email: invitation.email },
+        about: `${invitation.id}:${invitation.inviteCode}`,
+        league: emailLeague,
+        data: {
+          recipientEmail: invitation.email,
+          inviterName,
+          squadName: squad.name,
+          leagueName: league.name,
+          leagueCode: league.leagueCode,
+          inviteUrl: buildSquadOwnerInviteUrl(this.appBaseUrl, invitation.inviteCode),
+          expiresAt: invitation.expiresAt,
+          soleOwner,
+        },
+      });
+    } catch (error) {
+      this.logger?.error({
+        action: 'squadOwnerInvitation.email.failed',
+        data: {
+          invitationId: invitation.id,
+          leagueId: invitation.leagueId,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      }, 'Failed to queue the co-owner email');
+    }
   }
 
   async revokeInvitation(

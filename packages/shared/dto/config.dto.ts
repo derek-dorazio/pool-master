@@ -106,6 +106,8 @@ export const EmailConfigSchema = z.object({
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
     LEAGUE_JOIN_SUCCESS: templateSwitch,
+    SQUAD_OWNER_INVITE: templateSwitch,
+    SQUAD_OWNER_ADDED: templateSwitch,
     CONTEST_ENTRY_COMPLETED: templateSwitch,
     CONTEST_STARTED_SUMMARY: templateSwitch,
     CONTEST_ENTRY_REMINDER: templateSwitch,

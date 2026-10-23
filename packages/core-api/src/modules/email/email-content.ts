@@ -14,9 +14,24 @@ export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'user
   return fullName || user.username || user.email;
 }
 
+/** The league's home page. */
+export function buildLeagueHomeUrl(appBaseUrl: string, leagueCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}`;
+}
+
+/** Where a league invitation is accepted. */
+export function buildLeagueInviteUrl(appBaseUrl: string, inviteCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/invite/${encodeURIComponent(inviteCode)}`;
+}
+
+/** Where a co-owner invitation is accepted. */
+export function buildSquadOwnerInviteUrl(appBaseUrl: string, inviteCode: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/team-invite/${encodeURIComponent(inviteCode)}`;
+}
+
 /** The contest's page in its league. */
 export function buildContestUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/contests/${encodeURIComponent(contestId)}`;
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/contests/${encodeURIComponent(contestId)}`;
 }
 
 /** One entry's page in its contest. */
@@ -31,7 +46,7 @@ export function buildLeaderboardUrl(appBaseUrl: string, leagueCode: string, cont
 
 /** The league's contests page for its commissioners. */
 export function buildLeagueAdminContestsUrl(appBaseUrl: string, leagueCode: string): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}/league/${encodeURIComponent(leagueCode)}/admin/contests`;
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/contests`;
 }
 
 /** Create contest, started on one contest template when given. */
