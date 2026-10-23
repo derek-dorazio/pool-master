@@ -39,7 +39,7 @@ questions in section 8 carry a recommendation each. The ones Derek has answered 
 
 1. Before the series, an admin loads the event: the series' games as its rounds, and every
    eligible player on both teams as its field. Players are ranked by their regular-season
-   composite, so tiers and budget prices work as they do for golf (Q4). The admin releases it.
+   composite, so tiers and budget prices work as they do for golf (Q4, Decided). The admin releases it.
 2. A commissioner creates a contest on it, choosing the format as today: Tiered by default,
    Budget, or Quick pick. The setup says how it scores ("Box Score: total bases + runs + RBI +
    walks + stolen bases"). There is no stat to choose.
@@ -74,7 +74,7 @@ Nobody edits it (Q3, Decided).
 | Hockey (NHL) | **Power Play** | 2 × Goals + Assists + Shots on goal |
 | American football (NFL) | **Redzone** | 6 × Touchdowns + Receptions + Scrimmage and passing yards ÷ 10, rounded down, per game |
 
-Who is in the field (Q5): baseball's position players, not pitchers; every NBA player on the
+Who is in the field (Q5, Decided): baseball's position players, not pitchers; every NBA player on the
 roster; NHL skaters, not goalies; the NFL's quarterbacks, running backs, wide receivers and
 tight ends.
 
@@ -207,11 +207,10 @@ Each has a recommendation. The ones Derek has already answered are marked **Deci
   scores its sport's composite.
 - **Q3. Configurable stat? Decided:** no. The composite only, with no configuration (Derek:
   "It's different").
-- **Q4. What ranks the field for tiers and prices?** *Recommend the regular-season total of the
-  sport's composite, loaded with the field and editable by the admin. Odds are never loaded.*
-- **Q5. Who is in the field?** *Recommend position players, all NBA players, skaters, and
-  QB/RB/WR/TE, as in section 2. Pitchers and goalies need their own formulas and could come
-  later.*
+- **Q4. What ranks the field for tiers and prices? Decided:** the regular-season total of the
+  sport's composite, loaded with the field and editable by the admin. Odds are never loaded.
+- **Q5. Who is in the field? Decided:** MLB position players, every NBA player, NHL skaters, and
+  the NFL's QB/RB/WR/TE, as in section 2. No pitchers or goalies.
 - **Q6. When do scores update? Decided:** live from a data provider at launch. Until then, after
   each game, through the workflows. *Recommend that a thread prepares each game's box score file
   and Derek says "Load" once per game, which keeps the rule that a load runs only on his go.*
