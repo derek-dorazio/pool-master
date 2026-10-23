@@ -27,6 +27,11 @@ export const ListCupsQuerySchema = z.object({
 }).describe('Which season\'s cups to list.');
 export type ListCupsQuery = z.infer<typeof ListCupsQuerySchema>;
 
+export const CupSeasonListResponseSchema = z.object({
+  seasonYears: z.array(z.number().int()).describe('Seasons with a cup to show, newest first; empty before the league has a contest.'),
+}).describe('The seasons in which a league has cups.');
+export type CupSeasonListResponse = z.infer<typeof CupSeasonListResponseSchema>;
+
 export const CupStandingRowDtoSchema = z.object({
   squadId: z.string().uuid(),
   squadName: z.string().describe('The squad\'s current name.'),
@@ -143,6 +148,7 @@ export const CupProjectionResponseSchema = z.object({
 export type CupProjectionResponse = z.infer<typeof CupProjectionResponseSchema>;
 
 registerSchema('ListCupsQuery', ListCupsQuerySchema);
+registerSchema('CupSeasonListResponse', CupSeasonListResponseSchema);
 registerSchema('CupStandingRowDto', CupStandingRowDtoSchema);
 registerSchema('CupWinnerDto', CupWinnerDtoSchema);
 registerSchema('CupContestRowDto', CupContestRowDtoSchema);

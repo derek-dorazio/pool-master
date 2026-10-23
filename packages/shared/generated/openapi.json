@@ -34802,6 +34802,23 @@
         "additionalProperties": false,
         "description": "Which season's cups to list."
       },
+      "CupSeasonListResponse": {
+        "type": "object",
+        "properties": {
+          "seasonYears": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "description": "Seasons with a cup to show, newest first; empty before the league has a contest."
+          }
+        },
+        "required": [
+          "seasonYears"
+        ],
+        "additionalProperties": false,
+        "description": "The seasons in which a league has cups."
+      },
       "CupStandingRowDto": {
         "type": "object",
         "properties": {
@@ -46356,6 +46373,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/cups/seasons": {
+      "get": {
+        "operationId": "listCupSeasons",
+        "summary": "List the seasons with cups",
+        "tags": [
+          "Cups"
+        ],
+        "description": "The seasons in which the league has a contest a cup lists (drafts left out), newest first: with the championship's years, the years the Championships page offers. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The seasons in which a league has cups.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CupSeasonListResponse"
                 }
               }
             }

@@ -12,6 +12,7 @@ import {
   formatPlace,
   formatProjectedStanding,
   hasLiveContest,
+  isCupSeasonOver,
   isReadyToCrown,
   nextContestToCount,
 } from './cup-view';
@@ -150,5 +151,17 @@ describe('cup view', () => {
       ...projection,
       contests: [...projection.contests, { contestId: 'contest-5', name: 'Wyndham Budget', cupWeight: 'BONUS' }],
     })).toBe('The greyed column shows where each squad would stand if Tour Championship Tiers and Wyndham Budget ended now.');
+  });
+
+  it('ends a cup\'s season once its year is past and no contest of it is open or live, but not while one still is', () => {
+    const now = new Date('2026-02-03T12:00:00.000Z');
+    const finals = [buildCupContest()];
+    const stillLive = [...finals, buildCupContest({ contestId: 'super-bowl', status: 'ACTIVE', count: 'NOT_FINAL', completedAt: null })];
+
+    expect([
+      isCupSeasonOver(buildCup({ seasonYear: 2025, contests: finals }), now),
+      isCupSeasonOver(buildCup({ seasonYear: 2025, contests: stillLive }), now),
+      isCupSeasonOver(buildCup({ seasonYear: 2026, contests: finals }), now),
+    ]).toEqual([true, false, false]);
   });
 });

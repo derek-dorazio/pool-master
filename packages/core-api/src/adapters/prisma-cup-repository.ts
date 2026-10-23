@@ -59,6 +59,18 @@ export class PrismaCupRepository implements CupRepository {
     return rows.map(toCup);
   }
 
+  async findSeasonYears(leagueId: string): Promise<number[]> {
+    // Every contest with an event has its season's cup (contest creation ensures it), so the
+    // seasons of the league's listed contests are the seasons with a cup to show.
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: { not: ContestStatus.DRAFT }, sportEvents: { some: { sequence: 1 } } },
+      distinct: ['seasonYear'],
+      orderBy: { seasonYear: 'desc' },
+      select: { seasonYear: true },
+    });
+    return rows.map((row) => row.seasonYear);
+  }
+
   async findContests(key: CupKey): Promise<CupContest[]> {
     // Every event of a contest is one sports league's (contest creation refuses a mix), so the
     // first event's series names the contest's sports league.

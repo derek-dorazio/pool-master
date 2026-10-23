@@ -212,6 +212,11 @@ export class CupService {
     return views;
   }
 
+  /** The seasons the league has a cup to show in, newest first: the Championships year picker's cup years. */
+  async listSeasonYears(leagueId: string): Promise<number[]> {
+    return this.deps.cups.findSeasonYears(leagueId);
+  }
+
   async getCup(leagueId: string, cupId: string): Promise<CupView> {
     const cup = await this.requireLeagueCup(leagueId, cupId);
     return this.buildCupView(cup, await this.deps.squads.findByLeague(leagueId, true));

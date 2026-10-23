@@ -49,6 +49,8 @@ export interface CupRepository {
   findById(id: string): Promise<Cup | null>;
   /** The league's cups of one season, oldest first. */
   findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]>;
+  /** The seasons in which the league has a contest a cup lists (drafts left out), newest first. */
+  findSeasonYears(leagueId: string): Promise<number[]>;
   /** The league's contests of the cup's season and sports league, drafts left out, by first event start. */
   findContests(key: CupKey): Promise<CupContest[]>;
   /** Every entry with a frozen place in the contests. */

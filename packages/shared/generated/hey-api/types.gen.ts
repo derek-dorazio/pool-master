@@ -16004,6 +16004,16 @@ export type ListCupsQuery = {
 };
 
 /**
+ * The seasons in which a league has cups.
+ */
+export type CupSeasonListResponse = {
+    /**
+     * Seasons with a cup to show, newest first; empty before the league has a contest.
+     */
+    seasonYears: Array<number>;
+};
+
+/**
  * One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning.
  */
 export type CupStandingRowDto = {
@@ -21115,6 +21125,37 @@ export type ListCupsResponses = {
 };
 
 export type ListCupsResponse = ListCupsResponses[keyof ListCupsResponses];
+
+export type ListCupSeasonsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/cups/seasons';
+};
+
+export type ListCupSeasonsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListCupSeasonsError = ListCupSeasonsErrors[keyof ListCupSeasonsErrors];
+
+export type ListCupSeasonsResponses = {
+    /**
+     * The seasons in which a league has cups.
+     */
+    200: CupSeasonListResponse;
+};
+
+export type ListCupSeasonsResponse = ListCupSeasonsResponses[keyof ListCupSeasonsResponses];
 
 export type GetCupData = {
     body?: never;

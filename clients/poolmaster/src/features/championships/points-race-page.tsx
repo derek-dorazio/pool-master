@@ -27,6 +27,7 @@ import {
   formatCupPoints,
   formatPlace,
   hasLiveContest,
+  isCupSeasonOver,
   nextContestToCount,
 } from './cup-view';
 import { Podium } from './podium';
@@ -55,8 +56,8 @@ function CupChips({ cups, leagueCode, selectedId, year }: { cups: CupDto[]; leag
   );
 }
 
-/** Leader or champion, the viewer's place, and while the cup is open the contest that counts next. */
-function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | null }) {
+/** Leader or champion, the viewer's place, and while the cup's season runs the contest that counts next. */
+function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonOver: boolean; mySquadId: string | null }) {
   const leaders = cupLeaders(cup);
   const leaderPoints = leaders[0]?.points ?? 0;
   const mine = cup.standings.find((row) => row.squadId === mySquadId);
@@ -67,7 +68,7 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
     <MetricGrid>
       <MetricTile
         helperText={leaders.length ? `${formatCupPoints(leaderPoints)} pts` : undefined}
-        label={isCrowned ? (leaders.length > 1 ? 'Champions' : 'Champion') : 'Leader'}
+        label={isCrowned ? (leaders.length > 1 ? 'Champions' : 'Champion') : isSeasonOver ? 'Finished 1st' : 'Leader'}
         value={leaders.length ? leaders.map((row) => row.squadName).join(', ') : 'Nobody yet'}
       />
       {mine ? (
@@ -79,7 +80,7 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
           value={formatPlace(mine)}
         />
       ) : null}
-      {isCrowned ? null : (
+      {isCrowned || isSeasonOver ? null : (
         <MetricTile
           helperText={next
             ? next.status === ContestStatus.ACTIVE ? 'Live now' : `Starts ${formatDateDisplay(next.firstEventStartsAt)}`
@@ -94,7 +95,8 @@ function CupStatTiles({ cup, mySquadId }: { cup: CupDto; mySquadId: string | nul
 
 /**
  * Points race: one sports league cup's standings, how the top squads got there, and every contest
- * in it; a crowned cup's podium above its frozen standings. While a contest it counts is live, the
+ * in it; a crowned cup's podium above its frozen standings, and "Not crowned" for a past season's
+ * cup that never was, which drops the live parts. While a contest it counts is live, the
  * standings carry a greyed "If it ended now" column. A squad opens its points contest by contest;
  * a contest opens its leaderboard.
  */
@@ -140,6 +142,8 @@ export function PointsRacePage() {
     );
   }
   const progress = cupProgress(cup);
+  const isSeasonOver = isCupSeasonOver(cup, new Date());
+  const isCrowned = cup.status === CupStatus.CROWNED;
 
   return (
     <div className="space-y-6" data-testid="points-race">
@@ -150,20 +154,30 @@ export function PointsRacePage() {
           <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
               ? `Crowned ${formatDateDisplay(cup.crownedAt)}`
-              : `${progress.final} of ${progress.total} contests final`}
+              : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
           </p>
         </div>
-        {cup.status === CupStatus.CROWNED ? (
+        {isCrowned ? (
           <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+        ) : isSeasonOver ? (
+          <p className="text-sm text-muted-foreground" data-testid="cup-not-crowned">
+            {'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'}
+          </p>
         ) : null}
-        <CupStatTiles cup={cup} mySquadId={viewer.mySquadId} />
+        <CupStatTiles cup={cup} isSeasonOver={isSeasonOver} mySquadId={viewer.mySquadId} />
         {projection && projectedBySquad ? (
           <p className="text-sm text-muted-foreground" data-testid="cup-projection-note">{describeProjection(projection)}</p>
         ) : null}
         {projectionQuery.isError ? (
           <p className="text-sm text-muted-foreground" data-testid="cup-projection-error">{'We couldn\'t work out where squads would stand if the live contests ended now.'}</p>
         ) : null}
-        <CupStandingsGrid focusSquadId={viewer.mySquadId} projection={projectedBySquad} rows={cup.standings} squadPath={squadPath} />
+        <CupStandingsGrid
+          focusSquadId={viewer.mySquadId}
+          projection={projectedBySquad}
+          rows={cup.standings}
+          showMovement={!isSeasonOver}
+          squadPath={squadPath}
+        />
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div>

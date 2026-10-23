@@ -1409,6 +1409,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/cups/seasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the seasons with cups
+         * @description The seasons in which the league has a contest a cup lists (drafts left out), newest first: with the championship's years, the years the Championships page offers. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listCupSeasons"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/cups/{cupId}": {
         parameters: {
             query?: never;
@@ -14547,6 +14567,11 @@ export interface components {
             /** @description The season whose cups to list, such as 2026. */
             seasonYear: number;
         };
+        /** @description The seasons in which a league has cups. */
+        CupSeasonListResponse: {
+            /** @description Seasons with a cup to show, newest first; empty before the league has a contest. */
+            seasonYears: number[];
+        };
         /** @description One squad's place in a cup. Every active squad has a row, at 0 points until it places; a crowned cup's rows are frozen at crowning. */
         CupStandingRowDto: {
             /** Format: uuid */
@@ -20428,6 +20453,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listCupSeasons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The seasons in which a league has cups. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CupSeasonListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

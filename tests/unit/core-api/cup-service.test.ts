@@ -99,6 +99,15 @@ describe('CupService (#841)', () => {
     expect(cups.cups.map((cup) => cup.sportLeagueId)).toEqual([PGA, NFL]);
   });
 
+  it('lists the seasons the league has a cup to show in, newest first, leaving out one with only a draft', async () => {
+    const { service, contest } = build();
+    contest('masters', []);
+    contest('last-season', [], { seasonYear: 2025 });
+    contest('next-season', [], { seasonYear: 2027, status: ContestStatus.DRAFT });
+
+    await expect(service.listSeasonYears(LEAGUE)).resolves.toEqual([2026, 2025]);
+  });
+
   it('names the cup from its season and sports league and ranks squads by STANDARD points from their best entry', async () => {
     const { service, contest } = build();
     await service.ensureCup(KEY);
