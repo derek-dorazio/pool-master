@@ -408,6 +408,55 @@ export interface ContestEventChangedEmailData {
   contestUrl: string;
 }
 
+/** The league's contest on an event's previous edition, and who won it. */
+export interface PreviousContestWinners {
+  contestName: string;
+  /** The winning entries' names; two or more on a tie. */
+  winners: string[];
+}
+
+/** C1: an event starts in about 10 days, for a commissioner to plan a contest on it. */
+export interface EventComingUpEmailData {
+  userName: string;
+  leagueName: string;
+  eventName: string;
+  startsAt: Date;
+  /** Whether the event is open for contests yet; a DRAFT one is not. */
+  released: boolean;
+  /** The league's contests on last year's edition, with their winners. */
+  lastYear: PreviousContestWinners[];
+  /** The league's contests page for its commissioners. */
+  contestsUrl: string;
+}
+
+/** A default contest setup offered on the event, with Create contest started on it. */
+export interface ContestSetupLink {
+  name: string;
+  url: string;
+}
+
+/** C2: an event is released and starts within 7 days, and the league has no contest on it. */
+export interface EventReadyForContestsEmailData {
+  userName: string;
+  leagueName: string;
+  eventName: string;
+  startsAt: Date;
+  /** "89 golfers", or null while the field is empty. */
+  field: string | null;
+  setups: ContestSetupLink[];
+  createContestUrl: string;
+}
+
+/** C4: a contest is still a draft 48 hours before its picks close. */
+export interface ContestNotOpenEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  closesAt: Date;
+  /** The contest's commissioner page, where it is opened. */
+  contestAdminUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -432,6 +481,9 @@ export interface SystemEmailTemplateDataByKey {
   CONTEST_STANDINGS: ContestStandingsEmailData;
   CONTEST_RESULTS: ContestResultsEmailData;
   CONTEST_EVENT_CHANGED: ContestEventChangedEmailData;
+  EVENT_COMING_UP: EventComingUpEmailData;
+  EVENT_READY_FOR_CONTESTS: EventReadyForContestsEmailData;
+  CONTEST_NOT_OPEN: ContestNotOpenEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -499,6 +551,9 @@ export interface EmailTemplateScopeByKey {
   CONTEST_STANDINGS: typeof EmailTemplateScope.LEAGUE;
   CONTEST_RESULTS: typeof EmailTemplateScope.LEAGUE;
   CONTEST_EVENT_CHANGED: typeof EmailTemplateScope.LEAGUE;
+  EVENT_COMING_UP: typeof EmailTemplateScope.LEAGUE;
+  EVENT_READY_FOR_CONTESTS: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_NOT_OPEN: typeof EmailTemplateScope.LEAGUE;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -620,6 +675,30 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestEventChangedEmail,
+  },
+  EVENT_COMING_UP: {
+    category: EmailCategory.COMMISSIONER_UPDATES,
+    serviceClass: ServiceClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderEventComingUpEmail,
+  },
+  EVENT_READY_FOR_CONTESTS: {
+    category: EmailCategory.COMMISSIONER_UPDATES,
+    serviceClass: ServiceClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderEventReadyForContestsEmail,
+  },
+  CONTEST_NOT_OPEN: {
+    category: EmailCategory.COMMISSIONER_UPDATES,
+    serviceClass: ServiceClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestNotOpenEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -1302,6 +1381,106 @@ function renderContestEventChangedEmail(
       button('View contest', data.contestUrl),
     ].join(''),
     textLines: [`Hi ${data.userName},`, '', ...sentences, '', `View contest: ${data.contestUrl}`],
+  });
+}
+
+/** "Green Jackets won Masters Pick 6." or "Green Jackets and Azalea tied for Masters Pick 6." */
+function previousWinnersSentence(previous: PreviousContestWinners): string {
+  const { winners } = previous;
+  return winners.length === 1
+    ? `${winners.join('')} won ${previous.contestName}.`
+    : `${winners.slice(0, -1).join(', ')} and ${winners.slice(-1).join('')} tied for ${previous.contestName}.`;
+}
+
+function renderEventComingUpEmail(
+  data: EventComingUpEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const startsLine = formatInstant(data.startsAt, context.timeZone);
+  const sentences = [
+    `${data.eventName} starts ${startsLine}. Get ready to set up ${data.leagueName}'s contest.`,
+    ...(data.released ? [] : ["It isn't open for contests yet. We'll email you when it is."]),
+  ];
+  const lastYear = data.lastYear.map(previousWinnersSentence);
+  const lastYearTitle = 'Last year';
+  return buildMessage(context, {
+    templateKey: 'EVENT_COMING_UP',
+    subject: `Coming up: ${data.eventName}`,
+    preheader: sentences[0] ?? data.eventName,
+    title: 'Coming up soon',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
+      ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
+      button('Your league\'s contests', data.contestsUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      ...sentences,
+      ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
+      '',
+      `Your league's contests: ${data.contestsUrl}`,
+    ],
+  });
+}
+
+function renderEventReadyForContestsEmail(
+  data: EventReadyForContestsEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const intro = `${data.eventName} is ready. Set up ${data.leagueName}'s contest.`;
+  const rows: Array<[string, string]> = [
+    ['Starts', formatInstant(data.startsAt, context.timeZone)],
+    ...(data.field === null ? [] : [['Field', data.field] as [string, string]]),
+  ];
+  const setupsTitle = 'Contest setups for it';
+  const setupItems = data.setups.map((setup) => `<li style="margin:0 0 8px;"><a href="${escapeAttribute(setup.url)}" style="color:${EMAIL_THEME.navy};">${escapeHtml(setup.name)}</a></li>`);
+  return buildMessage(context, {
+    templateKey: 'EVENT_READY_FOR_CONTESTS',
+    subject: `Ready for contests: ${data.eventName}`,
+    preheader: intro,
+    title: 'Ready for contests',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(escapeHtml(intro)),
+      detailList(rows),
+      ...(data.setups.length > 0
+        ? [sectionTitle(setupsTitle), `<ul style="margin:0 0 20px;padding-left:20px;font-size:16px;line-height:1.55;">${setupItems.join('')}</ul>`]
+        : []),
+      button('Create contest', data.createContestUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      intro,
+      ...rows.map(([label, value]) => `${label}: ${value}`),
+      ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map((setup) => `${setup.name}: ${setup.url}`)] : []),
+      '',
+      `Create contest: ${data.createContestUrl}`,
+    ],
+  });
+}
+
+function renderContestNotOpenEmail(
+  data: ContestNotOpenEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const sentences = [
+    `${data.contestName} is still a draft, and its picks close ${formatInstant(data.closesAt, context.timeZone)}.`,
+    "Members can't enter until you open it.",
+  ];
+  return buildMessage(context, {
+    templateKey: 'CONTEST_NOT_OPEN',
+    subject: `Not open yet: ${data.contestName}`,
+    preheader: sentences.join(' '),
+    title: "Your contest isn't open yet",
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
+      button('Open contest', data.contestAdminUrl),
+    ].join(''),
+    textLines: [`Hi ${data.userName},`, '', ...sentences, '', `Open contest: ${data.contestAdminUrl}`],
   });
 }
 

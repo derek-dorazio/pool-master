@@ -585,6 +585,9 @@ describe('the email template registry', () => {
       CONTEST_STANDINGS: EmailCategory.LIVE_STANDINGS,
       CONTEST_RESULTS: EmailCategory.RESULTS,
       CONTEST_EVENT_CHANGED: EmailCategory.CONTEST_UPDATES,
+      EVENT_COMING_UP: EmailCategory.COMMISSIONER_UPDATES,
+      EVENT_READY_FOR_CONTESTS: EmailCategory.COMMISSIONER_UPDATES,
+      CONTEST_NOT_OPEN: EmailCategory.COMMISSIONER_UPDATES,
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
     });
@@ -601,6 +604,9 @@ describe('the email template registry', () => {
       CONTEST_STANDINGS: ServiceClass.B,
       CONTEST_RESULTS: ServiceClass.A,
       CONTEST_EVENT_CHANGED: ServiceClass.A,
+      EVENT_COMING_UP: ServiceClass.B,
+      EVENT_READY_FOR_CONTESTS: ServiceClass.B,
+      CONTEST_NOT_OPEN: ServiceClass.B,
       PASSWORD_RESET: ServiceClass.ESSENTIAL,
       PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
     });

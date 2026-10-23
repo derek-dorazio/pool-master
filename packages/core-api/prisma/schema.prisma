@@ -189,6 +189,9 @@ enum PrismaEmailTemplateKey {
   CONTEST_STANDINGS
   CONTEST_RESULTS
   CONTEST_EVENT_CHANGED
+  EVENT_COMING_UP
+  EVENT_READY_FOR_CONTESTS
+  CONTEST_NOT_OPEN
 }
 
 enum PrismaEmailMessageStatus {
@@ -742,6 +745,7 @@ model EmailMessage {
   @@index([createdAt])
   @@index([providerMessageId])
   @@index([contestId, templateKey])
+  @@index([templateKey, leagueId])
   @@map("email_messages")
 }
 

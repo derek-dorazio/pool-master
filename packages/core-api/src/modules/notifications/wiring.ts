@@ -8,6 +8,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
+  PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestEntryEventStandingRepository,
   PrismaContestEntryMatchPredictionRepository,
@@ -27,6 +28,7 @@ import {
 import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
 import { createSportEventParticipantService, createSportEventTierService } from '../events/wiring';
+import { CommissionerNotices } from './commissioner-notices';
 import { ContestNotices } from './contest-notices';
 import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
@@ -72,6 +74,25 @@ export function createContestNotices(prisma: PrismaClient, options: {
     leagues: new PrismaLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
+    finalStandings: createContestService(prisma, options.logger),
+    ...options,
+  });
+}
+
+export function createCommissionerNotices(prisma: PrismaClient, options: {
+  email: EmailService;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+}): CommissionerNotices {
+  return new CommissionerNotices({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    contests: new PrismaContestRepository(prisma),
+    configurations: new PrismaContestConfigurationRepository(prisma),
+    matches: new PrismaSportEventMatchRepository(prisma),
+    templates: new PrismaContestConfigTemplateRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
+    memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     finalStandings: createContestService(prisma, options.logger),
     ...options,

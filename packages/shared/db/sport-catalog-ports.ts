@@ -76,6 +76,10 @@ export interface SportEventFilters {
   q?: string;
   /** Leave out DRAFT events: what a non-admin may see (#431). */
   releasedOnly?: boolean;
+  /** Only events starting at or after this moment. */
+  startsFrom?: Date;
+  /** Only events starting before this moment. */
+  startsBefore?: Date;
 }
 
 /** The sport league comes from the series, so it is not supplied. */
