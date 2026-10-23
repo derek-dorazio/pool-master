@@ -68,10 +68,11 @@ locals {
   app_domain = var.domain_name != "" ? "${local.env_subdomain_prefix[var.environment]}${var.domain_name}" : ""
   app_url    = local.app_domain != "" ? "https://${local.app_domain}" : "https://${aws_cloudfront_distribution.webapp.domain_name}"
   # System email: each environment sends from its own subdomain identity (#844), like the app.
-  mail_domain      = local.app_domain
-  mail_from_domain = local.mail_domain != "" ? "bounce.${local.mail_domain}" : ""
-  manage_mail_dns  = local.mail_domain != "" && var.route53_zone_id != ""
-  ses_from_email   = "noreply@${local.mail_domain != "" ? local.mail_domain : "poolmaster.dev"}"
+  mail_domain        = local.app_domain
+  mail_from_domain   = local.mail_domain != "" ? "bounce.${local.mail_domain}" : ""
+  manage_mail_dns    = local.mail_domain != "" && var.route53_zone_id != ""
+  ses_sending_domain = local.mail_domain != "" ? local.mail_domain : "poolmaster.dev"
+  ses_from_email     = "noreply@${local.ses_sending_domain}"
 
   # Port mapping for backend services
   service_ports = {
@@ -531,20 +532,36 @@ resource "aws_iam_role_policy" "ecs_task_ses_send" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "ses:SendEmail",
-        "ses:SendRawEmail",
-      ]
-      Resource = concat(
-        aws_ses_domain_identity.mail[*].arn,
-        aws_ses_email_identity.sender[*].arn,
-        [aws_sesv2_configuration_set.mail.arn],
-      )
-    }]
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail",
+        ]
+        Resource = concat(
+          aws_ses_domain_identity.mail[*].arn,
+          aws_ses_email_identity.sender[*].arn,
+          [aws_sesv2_configuration_set.mail.arn],
+        )
+      },
+      # In the SES sandbox, AWS also checks the send against the recipient's verified identity
+      # (e.g. identity/tester@gmail.com), so without this every send is AccessDenied. It still
+      # only allows mail from this environment's sending domain.
+      # core-api calls only the SESv2 SendEmail API.
+      {
+        Effect   = "Allow"
+        Action   = "ses:SendEmail"
+        Resource = "arn:aws:ses:${var.region}:${data.aws_caller_identity.current.account_id}:identity/*"
+        Condition = {
+          StringLike = { "ses:FromAddress" = "*@${local.ses_sending_domain}" }
+        }
+      },
+    ]
   })
 }
+
+data "aws_caller_identity" "current" {}
 
 # --- SES identity for system email (#844) ---
 # Each environment sends from its own subdomain (QA: qa.<domain>, prod: the bare domain), so QA
