@@ -17,7 +17,7 @@ section 8 carry a recommendation each, and none is answered yet except the ones 
   scores one whole number: hits, points, goals, or the sport's named composite. A roster's total
   over the games is its score, highest wins. It is fantasy cut down to one stat.
 - **Named composites (Decided):** **Box Score** for baseball, **Triple Threat** for the NBA,
-  **Power Play** for hockey. The NFL's name is question Q1.
+  **Power Play** for hockey, **Redzone** for the NFL.
 - **Fit:** golf's shape almost as it is. An event of rounds, a field of individuals, tiered,
   budget and quick pick rosters, per-round scores with a counted total. What is new is a fourth
   scoring family, *stat total*, where higher is better and every stat a player had in each game
@@ -68,7 +68,7 @@ something the commissioner edits (Q3).
 | Baseball | Hits, Total bases, Home runs, Runs, RBI | **Box Score** | Total bases + Runs + RBI + Walks + Stolen bases |
 | Basketball (NBA) | Points (default), Rebounds, Assists, Three-pointers made | **Triple Threat** | Points + Rebounds + Assists |
 | Hockey (NHL) | Goals, Assists, Points, Shots on goal | **Power Play** | 2 × Goals + Assists + Shots on goal |
-| American football (NFL) | Touchdowns, Receptions, Scrimmage yards, Passing yards | Q1 | 6 × Touchdowns + Receptions + Yards ÷ 10, rounded down, per game |
+| American football (NFL) | Touchdowns, Receptions, Scrimmage yards, Passing yards | **Redzone** | 6 × Touchdowns + Receptions + Yards ÷ 10, rounded down, per game |
 
 The default stat on each sport's default setup is the composite, except the NBA, where Derek
 named Points as the default and the most popular. Q2 asks whether the other sports follow the
@@ -202,9 +202,8 @@ Each slice is a normal PR. Slices 1 and 2 can go in parallel once slice 1's sche
 Each has a recommendation. The ones Derek has already answered are marked **Decided**.
 
 - **Q0. Composite names. Decided:** Box Score (baseball), Triple Threat (NBA), Power Play
-  (hockey).
-- **Q1. The NFL composite's name.** Options: Red Zone, Two-Minute Drill, Hail Mary, End Zone.
-  *Recommend **Red Zone**: it's where touchdowns happen, and it reads as a scoring word.*
+  (hockey), Redzone (NFL).
+- **Q1. The NFL composite's name. Decided:** Redzone.
 - **Q2. Default stat.** The NBA defaults to Points (Derek). For the others: *recommend the single
   most popular stat as the default (Hits, Goals, Touchdowns), so a new contest reads simply, with
   the composite one tap away.*
