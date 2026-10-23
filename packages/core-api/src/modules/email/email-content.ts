@@ -3,7 +3,7 @@
  * web app. One copy, so every email names people and links to a contest the same way.
  */
 
-import type { User } from '@poolmaster/shared/domain';
+import { sportPathSegment, type Sport, type User } from '@poolmaster/shared/domain';
 
 /** The reader's full name, else their username, else their address. */
 export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'username' | 'email'>): string {
@@ -43,4 +43,9 @@ export function buildCreateContestUrl(appBaseUrl: string, leagueCode: string, te
 /** One contest's commissioner page, where it is opened. */
 export function buildContestAdminUrl(appBaseUrl: string, leagueCode: string, contestId: string): string {
   return `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/${encodeURIComponent(contestId)}`;
+}
+
+/** A sport event's root admin page, under the sport's Manage pages. */
+export function buildSportEventAdminUrl(appBaseUrl: string, sport: Sport, sportEventId: string): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}/manage/sports/${sportPathSegment(sport)}/events/${encodeURIComponent(sportEventId)}`;
 }

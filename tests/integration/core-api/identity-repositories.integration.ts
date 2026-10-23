@@ -115,6 +115,21 @@ describe('identity cluster repositories (#202)', () => {
       expect(inactiveOnly.map((user) => user.id)).toEqual([inactive.user.id]);
     });
 
+    it('filters on isRootAdmin, finding only root admins or only everyone else', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+      const marker = `root${Date.now().toString(36)}`;
+      const rootAdmin = await createTestUser({ lastName: marker });
+      const member = await createTestUser({ lastName: marker });
+      await prisma.user.update({ where: { id: rootAdmin.user.id }, data: { isRootAdmin: true } });
+
+      const rootAdmins = await repo.findAll({ search: marker, isRootAdmin: true });
+      const others = await repo.findAll({ search: marker, isRootAdmin: false });
+
+      expect(rootAdmins.map((user) => user.id)).toEqual([rootAdmin.user.id]);
+      expect(others.map((user) => user.id)).toEqual([member.user.id]);
+    });
+
     it('never returns a password hash on the domain user', async () => {
       const prisma = getPrisma();
       const repo = new PrismaUserRepository(prisma);

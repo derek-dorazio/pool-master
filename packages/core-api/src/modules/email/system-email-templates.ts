@@ -457,6 +457,18 @@ export interface ContestNotOpenEmailData {
   contestAdminUrl: string;
 }
 
+/** G1: an event starts within 7 days and is still a draft, so no league can build a contest on it. */
+export interface EventStillDraftEmailData {
+  firstName: string;
+  eventName: string;
+  startsAt: Date;
+  /** Whole days until it starts, counting a part day as one: 7 down to 1. */
+  daysLeft: number;
+  /** What it needs before release, in the release refusal's words; empty when it is ready. */
+  stillNeeded: string[];
+  eventAdminUrl: string;
+}
+
 export interface PasswordResetEmailData {
   firstName: string;
   username: string;
@@ -484,6 +496,7 @@ export interface SystemEmailTemplateDataByKey {
   EVENT_COMING_UP: EventComingUpEmailData;
   EVENT_READY_FOR_CONTESTS: EventReadyForContestsEmailData;
   CONTEST_NOT_OPEN: ContestNotOpenEmailData;
+  EVENT_STILL_DRAFT: EventStillDraftEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
 }
@@ -554,6 +567,7 @@ export interface EmailTemplateScopeByKey {
   EVENT_COMING_UP: typeof EmailTemplateScope.LEAGUE;
   EVENT_READY_FOR_CONTESTS: typeof EmailTemplateScope.LEAGUE;
   CONTEST_NOT_OPEN: typeof EmailTemplateScope.LEAGUE;
+  EVENT_STILL_DRAFT: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
 }
@@ -699,6 +713,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderContestNotOpenEmail,
+  },
+  EVENT_STILL_DRAFT: {
+    category: EmailCategory.ROOT_ADMIN,
+    serviceClass: ServiceClass.ESSENTIAL,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderEventStillDraftEmail,
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
@@ -1481,6 +1503,38 @@ function renderContestNotOpenEmail(
       button('Open contest', data.contestAdminUrl),
     ].join(''),
     textLines: [`Hi ${data.userName},`, '', ...sentences, '', `Open contest: ${data.contestAdminUrl}`],
+  });
+}
+
+function renderEventStillDraftEmail(
+  data: EventStillDraftEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const startsIn = data.daysLeft === 1 ? 'within a day' : `in ${data.daysLeft} days`;
+  const intro = `${data.eventName} starts ${startsIn} (${formatInstant(data.startsAt, context.timeZone)}) and is still a draft, so no league can set up a contest on it.`;
+  const neededTitle = 'Still needed before release';
+  const ready = 'It has everything it needs: release it.';
+  return buildMessage(context, {
+    templateKey: 'EVENT_STILL_DRAFT',
+    subject: `Still in draft: ${data.eventName}`,
+    preheader: intro,
+    title: 'Event still in draft',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.firstName)},`),
+      paragraph(escapeHtml(intro)),
+      ...(data.stillNeeded.length > 0
+        ? [sectionTitle(neededTitle), `<ul style="margin:0 0 20px;padding-left:20px;font-size:16px;line-height:1.55;color:${EMAIL_THEME.ink};">${data.stillNeeded.map((item) => `<li style="margin:0 0 8px;">${escapeHtml(item)}</li>`).join('')}</ul>`]
+        : [paragraph(escapeHtml(ready))]),
+      button('Open event', data.eventAdminUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.firstName},`,
+      '',
+      intro,
+      ...(data.stillNeeded.length > 0 ? ['', `${neededTitle}:`, ...data.stillNeeded.map((item) => `- ${item}`)] : [ready]),
+      '',
+      `Open event: ${data.eventAdminUrl}`,
+    ],
   });
 }
 

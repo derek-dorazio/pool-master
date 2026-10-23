@@ -156,6 +156,14 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     closesAt: new Date('2027-04-08T12:00:00.000Z'),
     contestAdminUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/contest-1',
   },
+  EVENT_STILL_DRAFT: {
+    firstName: 'Riley',
+    eventName: 'The Masters',
+    startsAt: new Date('2027-04-08T12:00:00.000Z'),
+    daysLeft: 6,
+    stillNeeded: ['its prices have not been assigned'],
+    eventAdminUrl: 'http://localhost:5173/manage/sports/golf/events/event-1',
+  },
   PASSWORD_RESET: {
     firstName: 'Morgan',
     username: 'morgan',

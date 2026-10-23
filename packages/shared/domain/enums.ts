@@ -760,6 +760,8 @@ export const EmailCategory = {
   LIVE_STANDINGS: 'LIVE_STANDINGS',
   RESULTS: 'RESULTS',
   RECEIPTS: 'RECEIPTS',
+  /** Root admin operations, such as an event still in draft. Can't be turned off. */
+  ROOT_ADMIN: 'ROOT_ADMIN',
 } as const;
 export type EmailCategory = (typeof EmailCategory)[keyof typeof EmailCategory];
 
@@ -806,6 +808,7 @@ export const EmailTemplateKey = {
   EVENT_COMING_UP: 'EVENT_COMING_UP',
   EVENT_READY_FOR_CONTESTS: 'EVENT_READY_FOR_CONTESTS',
   CONTEST_NOT_OPEN: 'CONTEST_NOT_OPEN',
+  EVENT_STILL_DRAFT: 'EVENT_STILL_DRAFT',
   PASSWORD_RESET: 'PASSWORD_RESET',
   PASSWORD_CHANGED: 'PASSWORD_CHANGED',
 } as const;

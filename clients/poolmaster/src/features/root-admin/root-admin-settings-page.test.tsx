@@ -61,6 +61,7 @@ const EMAIL_DEFAULTS = {
     EVENT_COMING_UP: true,
     EVENT_READY_FOR_CONTESTS: true,
     CONTEST_NOT_OPEN: true,
+    EVENT_STILL_DRAFT: true,
   },
 };
 

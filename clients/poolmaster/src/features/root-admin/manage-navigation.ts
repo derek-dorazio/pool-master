@@ -1,4 +1,4 @@
-import { SUPPORTED_SPORTS, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, getSportDefinition, sportPathSegment, type Sport } from '@poolmaster/shared/domain';
 import type { NavMenuItem } from '@/features/shared/ui';
 
 export type ManageSectionGroup = 'platform' | 'sports' | 'operations';
@@ -17,14 +17,6 @@ const MANAGE_SECTION_GROUP_TITLES: Record<ManageSectionGroup, string> = {
   sports: 'Sports',
   operations: 'Operations',
 };
-
-/**
- * A sport as a Manage URL segment: `GOLF` reads `golf`, `HORSE_RACING` reads `horse-racing`.
- * Derived from the enum value, so every supported sport has one and no two share one.
- */
-export function sportPathSegment(sport: Sport): string {
-  return sport.toLowerCase().replace(/_/g, '-');
-}
 
 /** The supported sport a URL segment names, or null when it names none. */
 export function parseSportPathSegment(segment: string | undefined): Sport | null {

@@ -93,6 +93,7 @@ These hold for every row below, so the tables don't repeat them.
 | Live standings | Each member | E1–E8 |
 | Results | Each member | F1, F3 |
 | Receipts | Each member | D3, D4 |
+| Root admin | Nobody | G1, G2 |
 
 **Q2.1 Opt-out granularity.** **Decided (Derek 2026-10-21):** one on/off switch per category
 per person, applying to all their leagues, plus one-click unsubscribe. It is the same decision
@@ -289,7 +290,7 @@ nothing to re-send. *Recommendation:* no email.
 
 | # | Name | Trigger and conditions | Audience | Timing | Key content and links | Today | Priority | Class |
 |---|---|---|---|---|---|---|---|---|
-| G1 | Event still in draft | An event starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | | P2 | Essential |
+| G1 | Event still in draft | An event starts in 7 days and is still `DRAFT` | Root admins | Once, then daily until released | Event, what's missing for release (field, tiers, prices), Event admin link | ✅ `EVENT_STILL_DRAFT` (#893), category Root admin; the list is the release refusal's own | P2 | Essential |
 | G2 | Email delivery problems | Bounces or complaints from the email provider in the last day | Root admins | Daily, only when there are any | Count by template, addresses suppressed | | P2 (sending design) | Essential |
 
 Later, not now: cup standings and "crowned champion" emails belong to season cups (#841), and a
