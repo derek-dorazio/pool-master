@@ -147,8 +147,8 @@ describe('buildLeagueMenuItems', () => {
     expect(activeLabel('/league/BIGDAWGS/championships/2026/race/pga/squads/team-2')).toEqual(['Championships']);
   });
 
-  it('marks the viewer\'s own entry on the history page it links to', () => {
-    expect(activeLabel('/league/BIGDAWGS/history')).toEqual(['Yours']);
+  it('marks Championships, not the viewer\'s own entry, on All years', () => {
+    expect(activeLabel('/league/BIGDAWGS/history')).toEqual(['Championships']);
   });
 
   it('marks Members, not the viewer\'s own entry, on another squad\'s page', () => {

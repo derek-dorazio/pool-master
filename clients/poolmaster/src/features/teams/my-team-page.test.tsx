@@ -197,7 +197,7 @@ afterEach(() => {
 });
 
 describe('My team', () => {
-  it('shows the viewer\'s squad by its name with Edit, Contest history, its owners and Leave league', async () => {
+  it('shows the viewer\'s squad by its name with Edit, an All years link, its owners and Leave league', async () => {
     primeTeam();
 
     renderTeamRoutes();
@@ -208,6 +208,7 @@ describe('My team', () => {
     expect(screen.getByTestId('my-team-edit')).toHaveTextContent('Edit');
     expect(screen.getByTestId('my-team-edit')).toHaveAttribute('href', '/league/BIGDAWGS/team/edit');
     expect(screen.getByTestId('my-team-history-link')).toHaveAttribute('href', '/league/BIGDAWGS/history');
+    expect(screen.getByTestId('my-team-history-link')).toHaveTextContent('All years');
     expect(within(screen.getByTestId('my-team-owners')).getByText('Casey Commissioner')).toBeInTheDocument();
     expect(screen.getByTestId('leave-league-section')).toBeInTheDocument();
   });

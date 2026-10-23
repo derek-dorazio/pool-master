@@ -1,18 +1,26 @@
 /**
- * League history (#837): what happened in a championship year, contest by contest. It stores
- * nothing: it reads the finishes the championship wrote at settlement, so every list matches the
- * finish matrix it drills from.
+ * League history (#837): what happened in a championship year, contest by contest, and the All
+ * years summary. It stores nothing: it reads the finishes the championship wrote at settlement, so
+ * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type { ChampionshipRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
+  CupContestCount,
+  CupStatus,
+  CupTrophy,
   CupWeight,
+  SummaryTile,
+  championshipYear,
   championshipYearStart,
   type SelectionType,
   type LeagueYearFinish,
   type Squad,
 } from '@poolmaster/shared/domain';
+
+import type { ChampionshipService } from '../championship/service';
+import type { CupService, CupView } from '../cups/service';
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -60,14 +68,88 @@ export interface ContestResultView {
   squadFinish: ContestResultSquadFinishView | null;
 }
 
+export interface HistorySummaryTileView {
+  tile: SummaryTile;
+  count: number;
+  squads: Squad[];
+}
+
+export interface HistoryCupView {
+  view: CupView;
+  contestsCounted: number;
+  /** A crowned cup's champions; an open cup's leaders. */
+  winners: Squad[];
+}
+
+export interface HistoryYearView {
+  year: number;
+  isOver: boolean;
+  /** The championship's champions once the year is over, its leaders before. */
+  champions: Squad[];
+  cups: HistoryCupView[];
+}
+
+export interface HistorySummaryView {
+  tiles: HistorySummaryTileView[];
+  years: HistoryYearView[];
+}
+
 export interface HistoryServiceDeps {
   finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
+  championship: Pick<ChampionshipService, 'listYears'>;
+  cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
   logger?: HistoryLogger;
+  now?: () => Date;
 }
 
 export class HistoryService {
-  constructor(private readonly deps: HistoryServiceDeps) {}
+  private readonly now: () => Date;
+
+  constructor(private readonly deps: HistoryServiceDeps) {
+    this.now = deps.now ?? (() => new Date());
+  }
+
+  /**
+   * All years: every year with a counted championship contest or a cup, newest first, with the
+   * championship's champions (its leaders while the year runs) and each cup's champions (its
+   * leaders while open); and the tiles for most championships and most cups won.
+   */
+  async getSummary(leagueId: string): Promise<HistorySummaryView> {
+    const [championshipYears, seasonYears] = await Promise.all([
+      this.deps.championship.listYears(leagueId),
+      this.deps.cups.listSeasonYears(leagueId),
+    ]);
+    const seasons = await Promise.all(seasonYears.map(async (seasonYear) => [seasonYear, await this.deps.cups.listSeasonCups(leagueId, seasonYear)] as const));
+    const cupsBySeason = new Map(seasons);
+    const championsByYear = new Map(championshipYears.map((row) => [row.year, row.leaders]));
+    const currentYear = championshipYear(this.now());
+
+    const years = [...new Set([...championsByYear.keys(), ...cupsBySeason.keys()])]
+      .sort((left, right) => right - left)
+      .map((year): HistoryYearView => ({
+        year,
+        isOver: year < currentYear,
+        champions: byName(championsByYear.get(year) ?? []),
+        cups: (cupsBySeason.get(year) ?? [])
+          .map((view) => ({
+            view,
+            contestsCounted: view.contests.filter((contest) => contest.count === CupContestCount.COUNTED).length,
+            winners: byName(view.cup.status === CupStatus.CROWNED
+              ? view.standings.filter((row) => row.trophy === CupTrophy.CHAMPION).map((row) => row.squad)
+              : view.standings.filter((row) => row.position === 1 && row.points > 0).map((row) => row.squad)),
+          }))
+          .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName)),
+      }));
+
+    const championships = years.filter((row) => row.isOver).flatMap((row) => row.champions);
+    const cupWins = years.flatMap((row) => row.cups.filter((cup) => cup.view.cup.status === CupStatus.CROWNED).flatMap((cup) => cup.winners));
+    this.deps.logger?.debug({ action: 'history.summary', data: { leagueId, yearCount: years.length } }, 'Read the league\'s All years summary');
+    return {
+      tiles: [mostOf(SummaryTile.MOST_CHAMPIONSHIPS, championships), mostOf(SummaryTile.MOST_CUPS, cupWins)],
+      years,
+    };
+  }
 
   /**
    * The contests that went final in a championship year, newest first. Unfiltered, every one,
@@ -135,4 +217,22 @@ function resultCount(rows: readonly LeagueYearFinish[]): ContestResultCount {
   const first = rows.at(0);
   if (first === undefined) return ContestResultCount.NO_RESULT;
   return first.weight === CupWeight.NOT_COUNTED ? ContestResultCount.NOT_COUNTED : ContestResultCount.COUNTED;
+}
+
+function byName(squads: readonly Squad[]): Squad[] {
+  return [...squads].sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/** A tile: the most wins any squad has in `wins` (one entry per win), and every squad holding it. */
+function mostOf(tile: SummaryTile, wins: readonly Squad[]): HistorySummaryTileView {
+  const counts = new Map<string, { squad: Squad; count: number }>();
+  for (const squad of wins) {
+    counts.set(squad.id, { squad, count: (counts.get(squad.id)?.count ?? 0) + 1 });
+  }
+  const count = Math.max(0, ...[...counts.values()].map((row) => row.count));
+  return {
+    tile,
+    count,
+    squads: byName([...counts.values()].filter((row) => row.count === count && count > 0).map((row) => row.squad)),
+  };
 }

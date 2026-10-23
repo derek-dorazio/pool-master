@@ -12,6 +12,7 @@ import {
   buildLeagueSquadMember,
   getLeagueByCodeData,
 } from '@/features/leagues/test/fixtures';
+import { AllYearsPage } from './all-years-page';
 import { ChampionshipPage } from './championship-page';
 import { ChampionshipsLayout, ChampionshipsRedirect } from './championships-layout';
 import { CupSquadPointsPage } from './cup-squad-points-page';
@@ -28,9 +29,10 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
+  getHistorySummaryMock: vi.fn(),
   getCupProjectionMock: vi.fn(),
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
@@ -45,6 +47,7 @@ const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPoin
 bindApiMocks({
   crownCup: crownCupMock,
   getChampionship: getChampionshipMock,
+  getHistorySummary: getHistorySummaryMock,
   getCupProjection: getCupProjectionMock,
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
@@ -79,6 +82,7 @@ function renderChampionships(path: string) {
               <Route element={<CupSquadPointsPage />} path="race/:sportLeagueId/squads/:squadId" />
             </Route>
             <Route element={<div data-testid="leaderboard" />} path="/league/:leagueCode/contests/:contestId/leaderboard" />
+            <Route element={<AllYearsPage />} path="/league/:leagueCode/history" />
           </Routes>
         </MemoryRouter>
       </AuthProvider>
@@ -724,5 +728,98 @@ describe('Championships › a squad\'s cup points', () => {
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga',
     );
     expect(screen.getByTestId('championships-tab-race')).toBeChecked();
+  });
+});
+
+const BANDITS = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' as const };
+const CRUSHERS = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' as const };
+
+/** 2026 so far led by the Bandits, and 2025 won by both, with a crowned NFL cup and a PGA cup too small to show. */
+const SUMMARY = {
+  tiles: [
+    { tile: 'MOST_CHAMPIONSHIPS' as const, count: 1, squads: [BANDITS, CRUSHERS] },
+    { tile: 'MOST_CUPS' as const, count: 0, squads: [] },
+  ],
+  years: [
+    {
+      year: 2026,
+      isOver: false,
+      champions: [BANDITS],
+      cups: [{ cupId: 'cup-nfl-2026', sportLeagueId: 'sport-league-nfl', name: '2026 NFL Cup', status: 'OPEN' as const, contestsCounted: 2, winners: [CRUSHERS] }],
+    },
+    {
+      year: 2025,
+      isOver: true,
+      champions: [BANDITS, CRUSHERS],
+      cups: [
+        { cupId: 'cup-nfl-2025', sportLeagueId: 'sport-league-nfl', name: '2025 NFL Cup', status: 'CROWNED' as const, contestsCounted: 17, winners: [BANDITS] },
+        { cupId: 'cup-pga-2025', sportLeagueId: 'sport-league-pga', name: '2025 PGA Tour Cup', status: 'OPEN' as const, contestsCounted: 1, winners: [CRUSHERS] },
+      ],
+    },
+  ],
+};
+
+describe('Championships › All years', () => {
+  it('opens from the Championships header', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.click(await screen.findByTestId('championships-all-years'));
+
+    expect(await screen.findByTestId('all-years-page')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/history');
+  });
+
+  it('shows the most championships and cups won, naming every squad tied, and nobody on a tile nobody has', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-tile-MOST_CHAMPIONSHIPS')).toHaveTextContent('Most championships1Birdie Bandits and Casey Crushers');
+    expect(screen.getByTestId('all-years-tile-MOST_CUPS')).toHaveTextContent('Most cups0Nobody yet');
+  });
+
+  it('lists each year newest first, the current one so far with its leader, and each cup on show with its champion or leader', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-year-2026')).toHaveTextContent('2026 so far');
+    expect(screen.getByTestId('all-years-year-2026')).toHaveTextContent('Birdie Bandits leads');
+    expect(screen.getByTestId('all-years-cup-cup-nfl-2026')).toHaveTextContent('2026 NFL CupCasey Crushers leads');
+    expect(screen.getByTestId('all-years-year-2025')).toHaveTextContent('Champions: Birdie Bandits and Casey Crushers');
+    expect(screen.getByTestId('all-years-cup-cup-nfl-2025')).toHaveTextContent('2025 NFL CupWon by Birdie Bandits');
+    expect(screen.queryByTestId('all-years-cup-cup-pga-2025')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('all-years-list')).getAllByRole('heading').map((heading) => heading.textContent)).toEqual(['2026 so far', '2025']);
+  });
+
+  it('opens a year\'s Championship tab from its row, and a cup\'s Points race from its line', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-year-link-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025');
+    expect(screen.getByTestId('all-years-cup-cup-nfl-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025/race/sport-league-nfl');
+  });
+
+  it('says nothing has counted yet for a league with no history', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: { tiles: SUMMARY.tiles, years: [] } }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-empty')).toHaveTextContent('Nothing has counted yet.');
+  });
+
+  it('says so when the history cannot be loaded', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-error')).toBeInTheDocument();
   });
 });

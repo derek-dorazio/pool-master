@@ -777,9 +777,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await submitAndRead(page, 'user-page-save-preferences', 'PUT', '/api/v1/users/me/preferences');
     });
 
-    await test.step('open the league history page', async () => {
+    await test.step('open the league All years page', async () => {
       await page.goto(`/league/${run.leagueCode}/history`);
-      await expect(page.getByTestId('my-team-history-page')).toBeVisible();
+      await expect(page.getByTestId('all-years-page')).toBeVisible();
       await expect(page.getByTestId('shared-error-state')).toHaveCount(0);
       await expect(page.getByTestId('shared-forbidden-state')).toHaveCount(0);
     });

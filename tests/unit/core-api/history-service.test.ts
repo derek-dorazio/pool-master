@@ -5,12 +5,18 @@
 import type { FinalContest } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
+  CupContestCount,
+  CupStatus,
+  CupTrophy,
   CupWeight,
+  SummaryTile,
   SelectionType,
   TeamIconKey,
   type LeagueYearFinish,
   type Squad,
 } from '@poolmaster/shared/domain';
+import type { ChampionshipYearSummaryView } from '../../../packages/core-api/src/modules/championship/service';
+import type { CupStandingView, CupView } from '../../../packages/core-api/src/modules/cups/service';
 import {
   HistoryService,
   HistorySquadNotFoundError,
@@ -47,6 +53,8 @@ function build() {
       findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       findByLeague: jest.fn().mockResolvedValue(SQUADS),
     }),
+    championship: { listYears: jest.fn().mockResolvedValue([]) },
+    cups: { listSeasonYears: jest.fn().mockResolvedValue([]), listSeasonCups: jest.fn().mockResolvedValue([]) },
   });
   const contest = (id: string, completedAt: string | null, overrides: Partial<FinalContest> = {}) => {
     finishes.finalContests.push({
@@ -150,5 +158,124 @@ describe('HistoryService (#837)', () => {
     const { service } = build();
 
     await expect(service.listYearContests(LEAGUE, 2026, { squadId: 'elsewhere' })).rejects.toBeInstanceOf(HistorySquadNotFoundError);
+  });
+});
+
+/** A cup of `seasonYear`: its standings as [squad, position, points, trophy] and how many contests counted. */
+function cupView(
+  sportLeagueName: string,
+  seasonYear: number,
+  status: CupStatus,
+  rows: Array<[Squad, number, number, CupTrophy | null]>,
+  counted = 2,
+): CupView {
+  return {
+    cup: {
+      id: `cup-${sportLeagueName}-${seasonYear}`,
+      leagueId: LEAGUE,
+      seasonYear,
+      sportLeagueId: `sl-${sportLeagueName}`,
+      status,
+      crownedAt: status === CupStatus.CROWNED ? new Date(`${seasonYear}-12-01T00:00:00.000Z`) : null,
+      crownedPointsTable: null,
+      createdAt: new Date(`${seasonYear}-01-01T00:00:00.000Z`),
+    },
+    sportLeagueName,
+    standings: rows.map(([standingSquad, position, points, trophy]): CupStandingView => ({
+      squad: standingSquad,
+      position,
+      displayPosition: String(position),
+      points,
+      wins: 0,
+      podiums: 0,
+      contestsCounted: counted,
+      movement: null,
+      pointsAfter: [],
+      trophy,
+    })),
+    contests: Array.from({ length: counted }, () => ({
+      contest: {} as CupView['contests'][number]['contest'],
+      weight: CupWeight.NORMAL,
+      count: CupContestCount.COUNTED,
+      winners: [],
+    })),
+  };
+}
+
+describe('HistoryService summary (#837)', () => {
+  const NOW = new Date('2026-08-01T12:00:00.000Z');
+
+  function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>) {
+    return new HistoryService({
+      finishes: new InMemoryChampionship(),
+      squads: fakeSquadRepo(),
+      championship: { listYears: jest.fn().mockResolvedValue(years) },
+      cups: {
+        listSeasonYears: jest.fn().mockResolvedValue(Object.keys(cupsBySeason).map(Number).sort((left, right) => right - left)),
+        listSeasonCups: jest.fn((_leagueId: string, seasonYear: number) => Promise.resolve(cupsBySeason[seasonYear] ?? [])),
+      },
+      now: () => NOW,
+    });
+  }
+
+  it('lists every year with a championship or a cup newest first, the current one so far, with champions and each cup\'s champions or leaders by sports league', async () => {
+    const service = buildSummary(
+      [{ year: 2026, isOver: false, leaders: [EAGLES] }, { year: 2025, isOver: true, leaders: [EAGLES, BIRDIES] }],
+      {
+        2026: [cupView('PGA Tour', 2026, CupStatus.OPEN, [[BOGEYS, 1, 900, null], [EAGLES, 2, 800, null]])],
+        2025: [
+          cupView('NFL', 2025, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION], [EAGLES, 2, 1200, CupTrophy.RUNNER_UP]]),
+          cupView('LPGA Tour', 2025, CupStatus.OPEN, [[EAGLES, 1, 0, null], [BIRDIES, 1, 0, null]], 0),
+        ],
+        2024: [cupView('NFL', 2024, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION]])],
+      },
+    );
+
+    const summary = await service.getSummary(LEAGUE);
+
+    expect(summary.years.map((row) => [
+      row.year,
+      row.isOver,
+      row.champions.map((champion) => champion.name),
+      row.cups.map((cup) => [cup.view.sportLeagueName, cup.contestsCounted, cup.winners.map((winner) => winner.name)]),
+    ])).toEqual([
+      [2026, false, ['Eagles'], [['PGA Tour', 2, ['Bogeys']]]],
+      [2025, true, ['Birdies', 'Eagles'], [['LPGA Tour', 0, []], ['NFL', 2, ['Birdies']]]],
+      [2024, true, [], [['NFL', 2, ['Birdies']]]],
+    ]);
+  });
+
+  it('counts championships from years over only and cups from crowned ones only, naming every squad tied on the most', async () => {
+    const service = buildSummary(
+      [
+        { year: 2026, isOver: false, leaders: [BOGEYS] },
+        { year: 2025, isOver: true, leaders: [EAGLES, BIRDIES] },
+        { year: 2024, isOver: true, leaders: [EAGLES] },
+      ],
+      {
+        2026: [cupView('PGA Tour', 2026, CupStatus.OPEN, [[BOGEYS, 1, 900, null]])],
+        2025: [
+          cupView('NFL', 2025, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION], [BOGEYS, 1, 1500, CupTrophy.CHAMPION]]),
+          cupView('PGA Tour', 2025, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION]]),
+        ],
+      },
+    );
+
+    const { tiles } = await service.getSummary(LEAGUE);
+
+    expect(tiles.map((tile) => [tile.tile, tile.count, tile.squads.map((tied) => tied.name)])).toEqual([
+      [SummaryTile.MOST_CHAMPIONSHIPS, 2, ['Eagles']],
+      [SummaryTile.MOST_CUPS, 2, ['Birdies']],
+    ]);
+  });
+
+  it('gives a league with no history no years and tiles at 0 naming nobody', async () => {
+    const summary = await buildSummary([], {}).getSummary(LEAGUE);
+
+    expect(summary.years).toEqual([]);
+    expect(summary.tiles.map((tile) => [tile.tile, tile.count, tile.squads])).toEqual([
+      [SummaryTile.MOST_CHAMPIONSHIPS, 0, []],
+      [SummaryTile.MOST_CUPS, 0, []],
+    ]);
   });
 });
