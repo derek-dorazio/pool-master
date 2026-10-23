@@ -1030,10 +1030,13 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
 });
 
 describe('EventLifecycleService — an event cancelled under a contest (#845 C7)', () => {
-  it('tells the commissioner and the member with a submitted entry, and nobody else, that the one-event contest ends with no scores', async () => {
+  it('tells the commissioner and the member with a submitted entry of a season contest, and nobody else, that the cancelled event counts for nothing, and says nothing about a one-event or draft contest on it', async () => {
     const prisma = getPrisma();
-    const { owner, league, squads, event } = await createLeagueAndEvent();
-    const open = await createContest(league.id, event.id, 'Called Off Pool', ContestStatus.OPEN);
+    const { owner, league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const open = await createContest(league.id, [event.id, later.event.id], 'Season Pool', ContestStatus.OPEN);
+    await createContest(league.id, event.id, 'Called Off Pool', ContestStatus.OPEN);
+    await createContest(league.id, [event.id, later.event.id], 'Draft Pool', ContestStatus.DRAFT);
     const [member, onlooker] = await Promise.all([
       createTestUser({ displayName: 'Entered Member' }),
       createTestUser({ displayName: 'No Entry' }),
@@ -1065,7 +1068,7 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     expect(send.mock.calls.map(([message]) => message.to).sort()).toEqual([owner.user.email, member.user.email].sort());
     const toMember = send.mock.calls.find(([message]) => message.to === member.user.email)?.[0];
     expect(toMember?.subject).toBe(`Cancelled: ${event.name}`);
-    expect(toMember?.text).toContain(`${event.name} has been cancelled, so Called Off Pool ends with no scores.`);
+    expect(toMember?.text).toContain(`${event.name} has been cancelled. It counts for nothing in Season Pool.`);
   });
 });
 

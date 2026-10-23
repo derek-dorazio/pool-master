@@ -382,8 +382,8 @@ export type ContestResultsOutcome =
   }
   | {
     kind: typeof ContestResultsKind.NO_SCORES;
-    /** Every event the contest covered was cancelled. */
-    allEventsCancelled: boolean;
+    /** The names of the contest's events when every one was cancelled; empty when any was played. */
+    cancelledEvents: string[];
   };
 
 export interface ContestResultsEmailData {
@@ -419,9 +419,8 @@ export type ContestEventChange =
     picksOpen: boolean;
   }
   | {
+    /** Only for a contest with other events: one it was the only event of ends, and F2 says so. */
     kind: typeof ContestEventChangeKind.CANCELLED;
-    /** The event was the contest's only one, so the contest ends with no scores (F2 is not sent). */
-    endsContest: boolean;
   };
 
 export interface ContestEventChangedEmailData {
@@ -1411,9 +1410,10 @@ function renderContestResultsEmail(
 ): SystemEmailMessage {
   const { outcome } = data;
   if (outcome.kind === ContestResultsKind.NO_SCORES) {
-    const lead = outcome.allEventsCancelled
-      ? `Every event was cancelled, so ${data.contestName} ends with no scores.`
-      : `${data.contestName} has ended with no scores.`;
+    const cancelled = outcome.cancelledEvents.length === 1 ? `${outcome.cancelledEvents[0]} was` : 'Every event was';
+    const lead = outcome.cancelledEvents.length === 0
+      ? `${data.contestName} has ended with no scores.`
+      : `${cancelled} cancelled, so ${data.contestName} ends with no scores.`;
     return buildMessage(context, {
       templateKey: 'CONTEST_RESULTS',
       subject: `${data.contestName} ended with no scores`,
@@ -1488,9 +1488,7 @@ function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone:
       return {
         subject: `Cancelled: ${data.eventName}`,
         title: 'Event cancelled',
-        sentences: change.endsContest
-          ? [`${data.eventName} has been cancelled, so ${data.contestName} ends with no scores.`]
-          : [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}.`],
+        sentences: [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}.`],
       };
   }
 }

@@ -87,8 +87,8 @@ export interface SportEventChangedNotice {
   sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void>;
 }
 
-/** A contest that is finished already hears nothing more about its events. */
-const TOLD_OF_EVENT_CHANGES = [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE];
+/** Only an open or live contest hears about its events: a finished one is done, and a draft one's commissioners aren't told. */
+const TOLD_OF_EVENT_CHANGES = [ContestStatus.OPEN, ContestStatus.ACTIVE];
 
 export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice, ContestSettledNotice, SportEventChangedNotice {
   constructor(private readonly deps: ContestNoticeDeps) {}
@@ -192,11 +192,10 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         this.deps.sportEvents.findByIds(contest.sportEventIds),
         this.entrantsOf(contest),
       ]);
-      // C7 already told them a one-event contest's cancelled event ended it with no scores.
-      if (contest.sportEventIds.length === 1 && sportEvents.at(0)?.status === SportEventStatus.CANCELLED) return;
+      const allCancelled = sportEvents.length > 0 && sportEvents.every((sportEvent) => sportEvent.status === SportEventStatus.CANCELLED);
       const outcome: ContestResultsOutcome = {
         kind: ContestResultsKind.NO_SCORES,
-        allEventsCancelled: sportEvents.length > 0 && sportEvents.every((sportEvent) => sportEvent.status === SportEventStatus.CANCELLED),
+        cancelledEvents: allCancelled ? sportEvents.map((sportEvent) => sportEvent.name) : [],
       };
       const recipients = members
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
@@ -236,13 +235,18 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   }
 
   /**
-   * C6 and C7: tells each league with an unfinished contest on the event, its commissioners and
-   * the members with a submitted entry, one email per contest. A postponed or moved event keeps
-   * an open contest's picks open until it starts; a cancelled one counts for nothing, and ends a
-   * contest it was the only event of.
+   * C6 and C7: tells each league with an open or live contest on the event, its commissioners and
+   * the members with a submitted entry, one email per contest; a draft contest's commissioners
+   * are not told. A postponed or moved event keeps an open contest's picks open until it starts;
+   * a cancelled one counts for nothing. A cancellation that leaves a contest no event to play (its
+   * only one, or the last not already cancelled) ends it, and its no-scores result (F2) says so
+   * instead, which a member hears even with Contest updates turned off.
    */
   async sportEventChanged(sportEvent: SportEvent, change: SportEventChange): Promise<void> {
-    const contests = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
+    const onEvent = await this.deps.contests.findBySportEvent(sportEvent.id, { statuses: TOLD_OF_EVENT_CHANGES });
+    const contests = change.kind === ContestEventChangeKind.CANCELLED
+      ? await this.stillToPlay(onEvent, sportEvent.id)
+      : onEvent;
     // The about names the change and the start it leaves, and a move both starts, so a second
     // postponement or a move back to an earlier new date is told again.
     const about = change.kind === ContestEventChangeKind.RESCHEDULED
@@ -261,7 +265,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       }
       const picksOpen = areEventPicksOpen(contest, sportEvent, now);
       const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
-        ? { kind: change.kind, endsContest: contest.sportEventIds.length === 1 }
+        ? { kind: change.kind }
         : change.kind === ContestEventChangeKind.RESCHEDULED
           ? { kind: change.kind, previousStart: change.previousStart, newStart: sportEvent.startDate, picksOpen }
           : { kind: change.kind, picksOpen };
@@ -277,6 +281,15 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, eventName: sportEvent.name, change: contestChange, contestUrl },
       }));
     }));
+  }
+
+  /** The contests with an event besides `sportEventId` that isn't cancelled, so they go on. */
+  private async stillToPlay(contests: Contest[], sportEventId: string): Promise<Contest[]> {
+    const others = [...new Set(contests.flatMap((contest) => contest.sportEventIds))].filter((id) => id !== sportEventId);
+    const playable = new Set((await this.deps.sportEvents.findByIds(others))
+      .filter((other) => other.status !== SportEventStatus.CANCELLED)
+      .map((other) => other.id));
+    return contests.filter((contest) => contest.sportEventIds.some((id) => playable.has(id)));
   }
 
   /** The people owning an entry submitted for any of the contest's events, as E1 counts entrants. */
