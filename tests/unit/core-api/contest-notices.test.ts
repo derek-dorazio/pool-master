@@ -7,6 +7,7 @@
 import {
   ContestEntryStatus,
   ContestStatus,
+  EmailCategory,
   LeagueMembershipStatus,
   LeagueRole,
   MatchStatus,
@@ -37,10 +38,12 @@ describe('ContestNotices', () => {
   let tierCount: number;
   let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
+  let optOuts: ReturnType<typeof inMemoryEmailOptOuts>;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
+    optOuts = inMemoryEmailOptOuts();
     matches = [];
     roundNames = [];
     tierCount = 6;
@@ -56,7 +59,7 @@ describe('ContestNotices', () => {
       readConfig: () => config,
       senderAddress: 'noreply@poolmaster.test',
       suppressions: inMemoryEmailSuppressions(),
-      optOuts: inMemoryEmailOptOuts(),
+      optOuts,
       unsubscribe: TEST_UNSUBSCRIBE,
       logger,
     });
@@ -379,7 +382,7 @@ describe('ContestNotices', () => {
       if (submitted) await world.entryRepo().setEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
     }
 
-    it('tells the commissioners and the members with a submitted entry, in each league with an unfinished contest on it, that a cancelled event ends a one-event contest, and sends no no-scores email after', async () => {
+    it('sends no event changed email when a cancelled event ends a one-event contest, and the no-scores result names the event to the commissioners and members with a submitted entry, Contest updates turned off or not', async () => {
       const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
       const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
@@ -389,27 +392,44 @@ describe('ContestNotices', () => {
       member(league.id, 'Sam');
       await enter(contest.id, entrant, masters.id, true);
       await enter(contest.id, drafting, masters.id, false);
+      await optOuts.setOptedOut(entrant.user.id, EmailCategory.CONTEST_UPDATES, true);
+
+      await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
+
+      expect(outbox.rows).toEqual([]);
+
+      await notices().contestSettled(contest);
+
+      expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id].sort());
+      expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_RESULTS')).toBe(true);
+      const toNora = outbox.rows.find((row) => row.recipientUserId === entrant.user.id);
+      expect(toNora?.fromName).toBe('Office League');
+      expect(toNora?.subject).toBe('Masters Pick 6 ended with no scores');
+      expect(textTo(entrant.user.id)).toContain('The Masters was cancelled, so Masters Pick 6 ends with no scores.');
+      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+    });
+
+    it('tells the commissioners and members with a submitted entry of each open or live contest on a cancelled event, and nobody about a draft or finished contest', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.CANCELLED });
+      const open = world.addSportEvent({ name: 'The Open', startDate: STARTS_AT });
+      const office = world.addLeague();
+      world.addContest(office.id, { name: 'Majors Pool', sportEventIds: [masters.id, open.id] });
+      const commissioner = member(office.id, 'Casey', { role: LeagueRole.COMMISSIONER });
       const elsewhere = world.addLeague();
-      world.addContest(elsewhere.id, { sportEventIds: [masters.id] });
+      world.addContest(elsewhere.id, { status: ContestStatus.ACTIVE, sportEventIds: [masters.id, open.id] });
       const otherCommissioner = member(elsewhere.id, 'Other', { role: LeagueRole.COMMISSIONER });
+      const drafting = world.addLeague();
+      world.addContest(drafting.id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id, open.id] });
+      member(drafting.id, 'Draft', { role: LeagueRole.COMMISSIONER });
       const finished = world.addLeague();
-      world.addContest(finished.id, { sportEventIds: [masters.id], status: ContestStatus.COMPLETED });
+      world.addContest(finished.id, { status: ContestStatus.COMPLETED, sportEventIds: [masters.id, open.id] });
       member(finished.id, 'Done', { role: LeagueRole.COMMISSIONER });
 
       await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
       await notices().sportEventChanged(masters, { kind: ContestEventChangeKind.CANCELLED });
 
-      expect(recipientIds()).toEqual([commissioner.user.id, entrant.user.id, otherCommissioner.user.id].sort());
+      expect(recipientIds()).toEqual([commissioner.user.id, otherCommissioner.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_EVENT_CHANGED')).toBe(true);
-      const toNora = outbox.rows.find((row) => row.recipientUserId === entrant.user.id);
-      expect(toNora?.fromName).toBe('Office League');
-      expect(toNora?.subject).toBe('Cancelled: The Masters');
-      expect(textTo(entrant.user.id)).toContain('The Masters has been cancelled, so Masters Pick 6 ends with no scores.');
-      expect(textTo(entrant.user.id)).toContain(`View contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
-
-      await notices().contestSettled(contest);
-
-      expect(outbox.rows.filter((row) => row.templateKey === 'CONTEST_RESULTS')).toHaveLength(0);
     });
 
     it('says a cancelled event counts for nothing in a season contest, without promising more events that may already be done', async () => {
