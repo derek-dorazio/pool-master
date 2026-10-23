@@ -207,6 +207,22 @@ and the request succeeds. Each skip is logged as `email.send.skip` with the reas
 ids, never the body or an address. The transport (`EMAIL_PROVIDER`) and the
 sender address stay in env, because they describe how the deployment is wired.
 
+## Sending a Test Email
+
+The Email card of `/manage/settings` has **Send a test email to**: a root admin types an address
+and presses Send. `POST /api/v1/platform/email/test` records one `EMAIL_TEST` email (a fixed
+subject and body naming the environment and the admin; category Root admin, no settings switch)
+and sends it like every other: the overall switch, "Only send to" and the suppression list all
+apply, and it goes through the outbox and the configured provider. The request wakes the sender
+and waits up to about eight seconds for this email's first try (never for the rest of the queue),
+so the page says what happened: sent, being sent (another task claimed it), not sent and why, or
+the provider's error (an address SES won't take in the sandbox, for example). It checks the
+setup, not the templates; the **Send email previews** workflow is for those.
+
+Each core-api task re-reads the settings every 30 seconds, so a test pressed right after saving
+can still run on the old settings on another task; the skip reason shows it. Wait half a minute
+after a save, or press again.
+
 ## Testing on QA Without Emailing Real People
 
 1. On `/manage/settings`, set "Only send to" to your own address(es), and to

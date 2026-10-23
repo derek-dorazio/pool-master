@@ -15,6 +15,7 @@ import {
 // ordering, scoping) is asserted against Postgres in sport-catalog-repositories.integration.
 
 const GOLF = { id: 'sport-golf', sport: Sport.GOLF } as never;
+const BASKETBALL = { id: 'sport-basketball', sport: Sport.BASKETBALL } as never;
 
 function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
   return {
@@ -28,6 +29,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
+    displayName: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),
@@ -48,8 +50,13 @@ function buildService(overrides: {
   participants?: Parameters<typeof fakeParticipantRepo>[0];
 } = {}) {
   const deps = {
-    sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), ...overrides.sports }),
-    sportLeagues: fakeSportLeagueRepo({ findById: jest.fn().mockResolvedValue(sportLeague()), ...overrides.sportLeagues }),
+    sports: fakeSportRepo({ findBySport: jest.fn().mockResolvedValue(GOLF), findAll: jest.fn().mockResolvedValue([GOLF, BASKETBALL]), ...overrides.sports }),
+    sportLeagues: fakeSportLeagueRepo({
+      findById: jest.fn().mockResolvedValue(sportLeague()),
+      // A real update returns the whole row, sport included.
+      update: jest.fn().mockImplementation(async (id: string, updates: Partial<SportLeague>) => sportLeague({ id, ...updates })),
+      ...overrides.sportLeagues,
+    }),
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     affiliations: fakeParticipantLeagueAffiliationRepo(overrides.affiliations),
     participants: fakeParticipantRepo(overrides.participants),
@@ -58,7 +65,7 @@ function buildService(overrides: {
 }
 
 describe('SportLeagueService — sport leagues', () => {
-  it('lists the sport\'s sport leagues with their affiliation and event counts, zero where there are none', async () => {
+  it('lists the sport\'s sport leagues with their sport and their affiliation and event counts, zero where there are none', async () => {
     const { service } = buildService({
       sportLeagues: { findAll: jest.fn().mockResolvedValue([sportLeague(), sportLeague({ id: 'sl-champions', name: 'Champions Tour' })]) },
       affiliations: { countBySportLeagues: jest.fn().mockResolvedValue(new Map([['sl-pga', 144]])) },
@@ -67,9 +74,9 @@ describe('SportLeagueService — sport leagues', () => {
 
     const result = await service.listSportLeagues({ sport: Sport.GOLF, isActive: true });
 
-    expect(result.map((row) => [row.name, row.affiliationCount, row.sportEventCount])).toEqual([
-      ['PGA Tour', 144, 3],
-      ['Champions Tour', 0, 0],
+    expect(result.map((row) => [row.name, row.sport, row.affiliationCount, row.sportEventCount])).toEqual([
+      ['PGA Tour', Sport.GOLF, 144, 3],
+      ['Champions Tour', Sport.GOLF, 0, 0],
     ]);
   });
 
@@ -96,7 +103,6 @@ describe('SportLeagueService — sport leagues', () => {
 });
 
 describe('SportLeagueService — bracket advancement', () => {
-  const BASKETBALL = { id: 'sport-basketball', sport: Sport.BASKETBALL } as never;
 
   it('creates a sport league fixed by default, and one that reseeds when its sport plays a bracket', async () => {
     const { service } = buildService({ sports: { findBySport: jest.fn().mockResolvedValue(BASKETBALL) } });

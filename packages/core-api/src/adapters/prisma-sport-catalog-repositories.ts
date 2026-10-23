@@ -768,6 +768,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     matchPeriodLayout: row.matchPeriodLayout,
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
+    displayName: row.displayName,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

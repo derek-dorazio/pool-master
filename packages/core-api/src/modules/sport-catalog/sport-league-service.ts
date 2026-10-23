@@ -30,8 +30,9 @@ import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
 import { resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
 
-/** A sport league with the two counts its list is read for. */
+/** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
+  sport: Sport;
   affiliationCount: number;
   /** Events across every series of the sport league, every year. */
   sportEventCount: number;
@@ -265,14 +266,26 @@ export class SportLeagueService {
 
   private async summarize(sportLeagues: SportLeague[]): Promise<SportLeagueSummary[]> {
     const ids = sportLeagues.map((sportLeague) => sportLeague.id);
-    const [affiliationCounts, eventCounts] = await Promise.all([
+    const [sportRows, affiliationCounts, eventCounts] = await Promise.all([
+      this.deps.sports.findAll(),
       this.deps.affiliations.countBySportLeagues(ids),
       this.deps.sportEvents.countBySportLeagues(ids),
     ]);
+    const sportsById = new Map(sportRows.map((sportRow) => [sportRow.id, sportRow.sport]));
     return sportLeagues.map((sportLeague) => ({
       ...sportLeague,
+      sport: requireSportOf(sportsById, sportLeague),
       affiliationCount: affiliationCounts.get(sportLeague.id) ?? 0,
       sportEventCount: eventCounts.get(sportLeague.id) ?? 0,
     }));
   }
+}
+
+/** A sport league's sport, read from its sport row; every sport league has one (a foreign key). */
+function requireSportOf(sportsById: ReadonlyMap<string, Sport>, sportLeague: SportLeague): Sport {
+  const sport = sportsById.get(sportLeague.sportId);
+  if (sport === undefined) {
+    throw new SportCatalogError(`No Sport row exists for sport league ${sportLeague.id}.`, 'SPORT_NOT_FOUND', 404);
+  }
+  return sport;
 }

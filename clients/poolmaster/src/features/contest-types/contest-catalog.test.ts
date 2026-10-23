@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestConfigTemplateDto } from '@/lib/api';
-import { buildLeagueContestCatalog, buildPublicContestCatalog } from './contest-catalog';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
+import { buildLeagueContestCatalog, buildPublicContestCatalog, catalogSlug } from './contest-catalog';
 
 const NFL = '80300000-0000-4000-8000-000000000001';
 const CFP = '80300000-0000-4000-8000-000000000002';
 const LPGA = '80300000-0000-4000-8000-000000000003';
+const PGA = '80300000-0000-4000-8000-000000000004';
+const XFL = '80300000-0000-4000-8000-000000000005';
 
 function template(templateKey: string, overrides: Partial<ContestConfigTemplateDto>): ContestConfigTemplateDto {
   return {
@@ -68,11 +71,44 @@ describe('the contest types catalog', () => {
   });
 
   it('gives the public page one tile per format for each sport, in the sport\'s format order, led by a default, with no variations', () => {
-    const catalog = buildPublicContestCatalog(TEMPLATES);
+    const catalog = buildPublicContestCatalog(TEMPLATES, []);
 
     expect(catalog.map(({ sport, groups }) => [sport, groups.map(({ featured, variations }) => [featured.templateKey, variations.length])])).toEqual([
       ['GOLF', [['golf-tiered-pick-6', 0], ['golf-budget-pick-6-best-4', 0]]],
       ['AMERICAN_FOOTBALL', [['cfp-tiered-doubling', 0], ['nfl-survivor', 0], ['nfl-squares', 0]]],
     ]);
+  });
+
+  it('gives the public page each sport\'s active leagues by the name shown beside other sports\' leagues, each with the formats it offers, its own templates leading its sport\'s', () => {
+    const catalog = buildPublicContestCatalog(TEMPLATES, [
+      sportLeagueFixture({ id: PGA, sport: 'GOLF', name: 'PGA TOUR' }),
+      sportLeagueFixture({ id: LPGA, sport: 'GOLF', name: 'LPGA Tour' }),
+      sportLeagueFixture({ id: NFL, sport: 'AMERICAN_FOOTBALL', name: 'NFL' }),
+      sportLeagueFixture({ id: CFP, sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff', displayName: 'College Football' }),
+      sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL', isActive: false }),
+    ]);
+
+    expect(catalog.map(({ sport, leagues }) => [sport, leagues.map(({ name, slug, groups }) => [name, slug, groups.map(({ featured }) => featured.templateKey)])])).toEqual([
+      ['GOLF', [
+        ['LPGA Tour', 'lpga-tour', ['lpga-tour-majors-tiered', 'golf-budget-pick-6-best-4']],
+        ['PGA TOUR', 'pga-tour', ['golf-tiered-pick-6', 'golf-budget-pick-6-best-4']],
+      ]],
+      ['AMERICAN_FOOTBALL', [
+        ['College Football', 'college-football-playoff', ['cfp-tiered-doubling']],
+        ['NFL', 'nfl', ['nfl-tiered-doubling', 'nfl-survivor', 'nfl-squares']],
+      ]],
+    ]);
+  });
+
+  it('leaves out of the public page a sport league that offers no format', () => {
+    const catalog = buildPublicContestCatalog(TEMPLATES, [sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL' })]);
+
+    expect(catalog.find(({ sport }) => sport === 'AMERICAN_FOOTBALL')?.leagues).toEqual([]);
+  });
+
+  it('spells a name for the page\'s link in lower case with dashes and no accents', () => {
+    expect(catalogSlug('NCAA Division I Men')).toBe('ncaa-division-i-men');
+    expect(catalogSlug('Copa América')).toBe('copa-america');
+    expect(catalogSlug('UCI Women\'s WorldTour')).toBe('uci-women-s-worldtour');
   });
 });

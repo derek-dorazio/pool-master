@@ -2403,7 +2403,7 @@ export interface paths {
         };
         /**
          * List sport leagues
-         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen.
+         * @description Every sport league, or one sport's, each with its affiliation and event counts. The one list that takes a sport: a sport league is where the sport is chosen. Anyone may read it, signed in or not: the public How to Play page names each sport's leagues from it.
          */
         get: operations["listSportLeagues"];
         put?: never;
@@ -2761,6 +2761,26 @@ export interface paths {
          * @description Resets ingestion scheduling back to the platform defaults.
          */
         post: operations["resetIngestionSchedule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/email/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test email
+         * @description Root admin only. Sends one fixed test email to `to` the way every system email goes: it obeys "Send system email" and "Only send to", skips a suppressed address, and goes through the outbox and the configured provider. Waits for the sender's first try and returns where the email stands: SENT, SKIPPED with the reason, or QUEUED with the provider's error when that try failed and a retry is due.
+         */
+        post: operations["sendTestEmail"];
         delete?: never;
         options?: never;
         head?: never;
@@ -7797,6 +7817,11 @@ export interface components {
              * @description The sport this sport league belongs to.
              */
             sportId: string;
+            /**
+             * @description The sport this sport league belongs to, as the sport enum.
+             * @enum {string}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Sport league name, e.g. "PGA Tour". */
             name: string;
             /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7824,6 +7849,8 @@ export interface components {
              * @enum {string|null}
              */
             noun: "LEAGUE" | null;
+            /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+            displayName: string | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -7863,6 +7890,11 @@ export interface components {
                  * @description The sport this sport league belongs to.
                  */
                 sportId: string;
+                /**
+                 * @description The sport this sport league belongs to, as the sport enum.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7890,6 +7922,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                displayName: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -7920,6 +7954,11 @@ export interface components {
                  * @description The sport this sport league belongs to.
                  */
                 sportId: string;
+                /**
+                 * @description The sport this sport league belongs to, as the sport enum.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Sport league name, e.g. "PGA Tour". */
                 name: string;
                 /** @description The provider's tour name for this sport league (e.g. "PGA TOUR"), or a substring its event names carry. Catalog browse keeps an event that matches either way; the event-year import (importEventYearFromProvider) needs the tour name, ignoring case. null when none is set. */
@@ -7947,6 +7986,8 @@ export interface components {
                  * @enum {string|null}
                  */
                 noun: "LEAGUE" | null;
+                /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
+                displayName: string | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -11805,7 +11846,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -12105,6 +12146,29 @@ export interface components {
              * @enum {string}
              */
             category: "COMMISSIONER_UPDATES" | "CONTEST_UPDATES" | "LIVE_STANDINGS" | "RESULTS" | "RECEIPTS";
+        };
+        /** @description Where to send a test email. */
+        EmailTestRequest: {
+            /**
+             * Format: email
+             * @description The one address the test email goes to.
+             */
+            to: string;
+        };
+        /** @description What happened to a test email. */
+        EmailTestResponse: {
+            /**
+             * @description Where the test email stands after a few seconds: SENT when the provider took it, SENDING when a sender is handing it over, SKIPPED when the settings or the address stopped it (see skipReason), QUEUED when the first try failed and a retry is due (see error) or no sender has reached it yet, or FAILED.
+             * @enum {string}
+             */
+            status: "QUEUED" | "SENDING" | "SENT" | "DELIVERED" | "BOUNCED" | "COMPLAINED" | "FAILED" | "SKIPPED";
+            /**
+             * @description Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, NOT_ALLOWED_IN_ENVIRONMENT when the address is not in "Only send to" or is a reserved domain, SUPPRESSED when the address bounced or complained before.
+             * @enum {string|null}
+             */
+            skipReason: "EMAIL_DISABLED" | "TEMPLATE_DISABLED" | "NOT_ALLOWED_IN_ENVIRONMENT" | "SUPPRESSED" | "OPTED_OUT" | null;
+            /** @description The provider's error from the last failed try, or null. */
+            error: string | null;
         };
         /**
          * @description The stored key of a settings group.
@@ -25666,6 +25730,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IngestionScheduleConfig"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendTestEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailTestRequest"];
+            };
+        };
+        responses: {
+            /** @description What happened to a test email. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailTestResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */

@@ -337,8 +337,10 @@ of the contest: the template is where it came from, not what it is.
 ### What this rule does not do
 
 - **Global is not public.** A valid session is still required. A11 moves an object from
-  `rootAdmin` to `authenticated`, never to anonymous. The one exception is the
-  `ContestConfigTemplate` list (#803). Its rows are product copy, names and descriptions written
+  `rootAdmin` to `authenticated`, never to anonymous. The exceptions are the
+  `ContestConfigTemplate` list (#803) and the `SportLeague` list, which the same page reads to
+  name each sport's leagues (the NFL, the PGA TOUR): reference data with nothing about a league
+  or a user. Reading one sport league still needs a session. Its rows are product copy, names and descriptions written
   to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
   what PoolMaster runs before signing up. Retired (inactive) templates are public too: they are
   the same kind of copy, with nothing about a league or a user. It was opened for that reason, not
@@ -558,7 +560,8 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 | Operation | Role | Notes |
 |---|---|---|
-| List, read one | `authenticated` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its affiliation and event counts and its `currentEventYear` |
+| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
+| Read one | `authenticated` | `getSportLeague` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
 | Set how brackets advance | `rootAdmin` | `bracketAdvancement` on create or update (#722): `FIXED` (the default) sends each winner to the match its link names; `RESEED_BY_SEED` lets a round's matches link nowhere, so the admin places their winners by seed (the NFL after Wild Card weekend). 422 `SPORT_LEAGUE_NOT_BRACKET` for `RESEED_BY_SEED` on a sport not played as a bracket. A change is 409 `SPORT_LEAGUE_BRACKET_ADVANCEMENT_LOCKED` while any event of the sport league, in any year, has its bracket loaded (#730): the bracket's links were drawn for the rule it has, and a fixed rule would strand the winners of games that link nowhere. Sending the rule it already has changes nothing |
@@ -1065,6 +1068,7 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | Save, reset a settings group | `rootAdmin` | `updateSettingsGroup` (the whole value plus `expectedUpdatedAt`; 409 `SETTINGS_CONFLICT` if someone saved in between), `resetSettingsGroup` |
 | Read a group's recent changes | `rootAdmin` | `listSettingsGroupHistory` — newest first, at most 20; the limit is the bound on an append-only history. Each value is typed by its group's schema; a change whose stored values no longer validate is logged and left out |
 | Switch email, or one email, off | `rootAdmin` | `updateSettingsGroup` on `EMAIL_CONFIG`, from the Email card of `/manage/settings`. A skipped email still counts as sent |
+| Send a test email | `rootAdmin` | `sendTestEmail` (#910) — one fixed email to one address through the outbox and the saved `EMAIL_CONFIG`; waits for the sender's first try and returns `SENT`, `SKIPPED` with the reason, or `QUEUED` with the provider's error. The Email card of `/manage/settings` |
 | Read, update, reset the ingestion schedule | `rootAdmin` | `getIngestionSchedule`, `updateIngestionSchedule`, `resetIngestionSchedule` |
 | Set, reset one sport's override | `rootAdmin` | `setSportIngestionOverride`, `resetSportIngestionOverride` |
 

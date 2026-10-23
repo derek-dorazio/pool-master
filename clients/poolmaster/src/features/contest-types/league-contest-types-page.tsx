@@ -1,8 +1,8 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQueries } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import type { Sport } from '@poolmaster/shared/domain';
-import { listSportLeagues, type ContestConfigTemplateDto, type SportEventDto } from '@/lib/api';
+import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueAdminContestCreateFromTemplatePath,
@@ -12,12 +12,11 @@ import { contestEventsForTemplate } from '@/features/contests/contest-template-e
 import { sportEventsQueryOptions } from '@/features/contests/sport-events-query';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
 import { ErrorState, LoadingState, PageHeader, SectionHeader } from '@/features/shared/ui';
-import { throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { QueryKeys } from '@/lib/query-keys';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
 import { SPORT_BLURBS } from './sport-blurbs';
+import { useSportLeaguesQuery } from './use-sport-leagues-query';
 
 /**
  * Contest types (#803): every contest the league could run, grouped by sport and sport league,
@@ -32,17 +31,7 @@ export function LeagueContestTypesPage() {
   const canCreate = viewer.isCommissioner && league?.isActive === true;
 
   const templatesQuery = useActiveContestTemplatesQuery();
-  const sportLeaguesQuery = useQuery({
-    queryKey: QueryKeys.sportLeagues.list(),
-    queryFn: async () => {
-      const response = await listSportLeagues();
-      if (!response.data?.sportLeagues) {
-        throwApiError(response.error, 'Sport league list response is missing data.');
-      }
-      return response.data.sportLeagues;
-    },
-    retry: false,
-  });
+  const sportLeaguesQuery = useSportLeaguesQuery();
   const catalog = useMemo(() => buildLeagueContestCatalog(
     templatesQuery.data ?? [],
     new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name])),
