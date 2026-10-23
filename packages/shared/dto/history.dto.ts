@@ -5,8 +5,9 @@
  * squad's year for its squad page (#872).
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile } from '@poolmaster/shared/domain';
-import { ChampionshipSquadDtoSchema } from './championship.dto';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, SelectionType, SummaryTile } from '@poolmaster/shared/domain';
+import { ChampionshipSquadDtoSchema, ChampionshipStandingRowDtoSchema } from './championship.dto';
+import { CupStandingRowDtoSchema } from './cups.dto';
 import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
@@ -86,19 +87,12 @@ export type GetSquadYearQuery = z.infer<typeof GetSquadYearQuerySchema>;
 export const SquadChampionshipDtoSchema = z.object({
   name: z.string().describe('The championship\'s name: "2026 Derek\'s Pool Cup".'),
   isOver: z.boolean().describe('True once the year has ended in US Eastern: the place is final.'),
-  position: z.number().int().min(1).describe('The squad\'s place, 1 best, as on the Championship tab.'),
-  displayPosition: z.string().describe('The place as shown: "T2" for a shared 2nd.'),
   squadCount: z.number().int().describe('Squads in the standings, for "3rd of 12".'),
-  points: z.number().int().describe('Points in tenths of a point: 725 is 72.5.'),
   pointsBehindLeader: z.number().int().describe('Tenths of a point behind 1st; 0 for a squad in 1st.'),
-  movement: z.number().int().nullable().describe('Places gained (positive) or lost since before the year\'s latest counted contest; null until two have counted.'),
-  finishes: z.array(z.number().int()).length(CHAMPIONSHIP_MATRIX_PLACES).describe('Its finish matrix row: index 0 counts 1sts.'),
-  podiums: z.number().int(),
-  topTens: z.number().int(),
-  played: z.number().int().describe('Counted contests the squad placed in.'),
   contestsCounted: z.number().int().describe('Counted contests that went final in the year, league-wide.'),
   contestsToGo: z.number().int().describe('For the current year, the league\'s open and live contests that will count once final; 0 for any other year.'),
-}).describe('One squad\'s row of a championship year.');
+  standing: ChampionshipStandingRowDtoSchema.describe('The squad\'s row of the championship standings, as the Championship tab shows it.'),
+}).describe('One squad\'s place in a championship year.');
 export type SquadChampionshipDto = z.infer<typeof SquadChampionshipDtoSchema>;
 
 export const SquadCupDtoSchema = z.object({
@@ -107,13 +101,9 @@ export const SquadCupDtoSchema = z.object({
   name: z.string().describe('The cup\'s name: "2026 PGA Tour Cup".'),
   status: z.nativeEnum(CupStatus),
   contestsCounted: z.number().int().describe('The cup\'s contests that counted, so the client can leave off a cup not yet on show.'),
-  position: z.number().int().min(1).describe('The squad\'s place in the cup, 1 best.'),
-  displayPosition: z.string().describe('The place as shown: "T2" for a shared 2nd.'),
   squadCount: z.number().int().describe('Squads in the cup\'s standings.'),
-  points: z.number().int().describe('Points in tenths of a point.'),
-  movement: z.number().int().nullable().describe('Places gained (positive) or lost since before the cup\'s latest counted contest; null until two have counted, and on a crowned cup.'),
-  trophy: z.nativeEnum(CupTrophy).nullable().describe('The trophy the squad took from a crowned cup; null while open and below 3rd.'),
-}).describe('One squad\'s row of a cup.');
+  standing: CupStandingRowDtoSchema.describe('The squad\'s row of the cup\'s standings, as the Points race shows it.'),
+}).describe('One squad\'s place in a cup.');
 export type SquadCupDto = z.infer<typeof SquadCupDtoSchema>;
 
 export const SquadYearDtoSchema = z.object({

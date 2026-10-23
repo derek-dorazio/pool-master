@@ -119,6 +119,7 @@ export function buildChampionshipStanding(overrides: Partial<ChampionshipStandin
     podiums: 0,
     topTens: 0,
     played: 0,
+    movement: null,
     ...overrides,
   };
 }
@@ -180,41 +181,46 @@ export function buildContestResult(overrides: Partial<ContestResultSummaryDto> =
   };
 }
 
-/** A squad's championship row: 2nd of 3, 6 points behind 1st. */
-export function buildSquadChampionship(overrides: Partial<SquadChampionshipDto> = {}): SquadChampionshipDto {
+/** A squad's place in the championship: Casey Crushers 2nd of 3, 6 points behind 1st. */
+export function buildSquadChampionship(
+  overrides: Partial<Omit<SquadChampionshipDto, 'standing'>> = {},
+  standing: Partial<ChampionshipStandingRowDto> = {},
+): SquadChampionshipDto {
   return {
     name: '2026 Derek\'s Pool Cup',
     isOver: false,
-    position: 2,
-    displayPosition: '2',
     squadCount: 3,
-    points: 1800,
     pointsBehindLeader: 60,
-    movement: 1,
-    finishes: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    podiums: 2,
-    topTens: 2,
-    played: 2,
     contestsCounted: 3,
     contestsToGo: 1,
+    standing: buildChampionshipStanding({
+      position: 2,
+      displayPosition: '2',
+      points: 1800,
+      finishes: [1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+      podiums: 2,
+      topTens: 2,
+      played: 2,
+      movement: 1,
+      ...standing,
+    }),
     ...overrides,
   };
 }
 
-/** A squad's row of an open PGA Tour cup with three contests counted. */
-export function buildSquadCup(overrides: Partial<SquadCupDto> = {}): SquadCupDto {
+/** Casey Crushers' place in an open PGA Tour cup with three contests counted: 1st of 3. */
+export function buildSquadCup(
+  overrides: Partial<Omit<SquadCupDto, 'standing'>> = {},
+  standing: Partial<CupStandingRowDto> = {},
+): SquadCupDto {
   return {
     cupId: 'cup-1',
     sportLeagueId: 'pga-tour',
     name: '2026 PGA Tour Cup',
     status: 'OPEN',
     contestsCounted: 3,
-    position: 1,
-    displayPosition: '1',
     squadCount: 3,
-    points: 1600,
-    movement: null,
-    trophy: null,
+    standing: buildCupStanding({ points: 1600, ...standing }),
     ...overrides,
   };
 }

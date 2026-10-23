@@ -137,6 +137,15 @@ describe('All years lines', () => {
     expect(historyCupsOnShow([{ ...cup, contestsCounted: 1 }]).map((row) => row.cupId)).toEqual(['cup-1']);
   });
 
+  it('applies the same show rule to a squad page\'s cup rows', () => {
+    const rows = [
+      { cupId: 'open-1', status: 'OPEN' as const, contestsCounted: 1 },
+      { cupId: 'open-2', status: 'OPEN' as const, contestsCounted: 2 },
+      { cupId: 'crowned-1', status: 'CROWNED' as const, contestsCounted: 1 },
+    ];
+    expect(historyCupsOnShow(rows).map((row) => row.cupId)).toEqual(['open-2', 'crowned-1']);
+  });
+
   it('skips a year with no champion and no cup on show, and keeps the others with only their cups on show', () => {
     const quietCup = { ...cup, cupId: 'cup-2', status: 'OPEN' as const, contestsCounted: 1, winners: [] };
     const years = historyYearsOnShow([

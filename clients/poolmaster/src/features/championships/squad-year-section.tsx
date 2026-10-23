@@ -6,15 +6,9 @@ import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/feature
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
-import { describeContestResultFilter, historyYearTitle, type ContestResultFilter } from './championship-view';
+import { describeContestResultFilter, historyCupsOnShow, historyYearTitle, type ContestResultFilter } from './championship-view';
 import { describeMovement } from './cup-view';
-import {
-  SQUAD_MEDAL_TILES,
-  describeSquadChampionship,
-  describeSquadCup,
-  squadCupsOnShow,
-  squadMatrixRow,
-} from './squad-year-view';
+import { SQUAD_MEDAL_TILES, describeSquadChampionship, describeSquadCup } from './squad-year-view';
 import { useChampionshipContestsQuery, useSquadYearQuery } from './use-championship-query';
 
 /**
@@ -30,7 +24,7 @@ export function SquadYearSection({
 }: {
   leagueCode: string;
   leagueId: string;
-  squad: Pick<SquadDto, 'id' | 'name' | 'iconKey' | 'isActive'>;
+  squad: Pick<SquadDto, 'id' | 'name'>;
 }) {
   const year = championshipYear(new Date());
   const squadYearQuery = useSquadYearQuery(leagueId, squad.id, year);
@@ -38,7 +32,7 @@ export function SquadYearSection({
   const filter = useMemo<ContestResultFilter>(() => ({ squadId: squad.id, place }), [squad.id, place]);
   const contestsQuery = useChampionshipContestsQuery(leagueId, year, filter);
   const championship = squadYearQuery.data?.championship ?? null;
-  const cups = squadCupsOnShow(squadYearQuery.data?.cups ?? []);
+  const cups = historyCupsOnShow(squadYearQuery.data?.cups ?? []);
 
   return (
     <section className="space-y-4" data-testid="squad-year">
@@ -58,8 +52,8 @@ export function SquadYearSection({
                   to={buildLeagueChampionshipsPath(leagueCode, year)}
                 >
                   <span className="font-semibold text-foreground">{championship.name}</span>
-                  <span className="text-sm text-muted-foreground" title={describeMovement(championship.movement).description}>
-                    {describeMovement(championship.movement).label}
+                  <span className="text-sm text-muted-foreground" title={describeMovement(championship.standing.movement).description}>
+                    {describeMovement(championship.standing.movement).label}
                   </span>
                 </Link>
                 <p className="text-sm text-foreground" data-testid="squad-year-championship-standing">
@@ -70,7 +64,7 @@ export function SquadYearSection({
               <MetricGrid className="grid-cols-3 sm:grid-cols-6">
                 {SQUAD_MEDAL_TILES.map((tile) => (
                   <div data-testid={`squad-year-tile-${tile.key}`} key={tile.key}>
-                    <MetricTile label={tile.label} value={tile.count(championship)} />
+                    <MetricTile label={tile.label} value={tile.count(championship.standing)} />
                   </div>
                 ))}
               </MetricGrid>
@@ -79,7 +73,7 @@ export function SquadYearSection({
                 filter={filter}
                 focusSquadId={squad.id}
                 onFilter={(next) => setPlace(next.place)}
-                rows={[squadMatrixRow(squad, championship)]}
+                rows={[championship.standing]}
                 searchable={false}
               />
             </>
@@ -99,7 +93,7 @@ export function SquadYearSection({
                       <span className="text-foreground">{cup.name}</span>
                       <span className="text-muted-foreground">
                         {describeSquadCup(cup)}
-                        {cup.movement === null ? null : ` · ${describeMovement(cup.movement).label}`}
+                        {cup.standing.movement === null ? null : ` · ${describeMovement(cup.standing.movement).label}`}
                       </span>
                     </Link>
                   </li>

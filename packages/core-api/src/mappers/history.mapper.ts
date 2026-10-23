@@ -1,7 +1,7 @@
 import type { ContestResultSummaryDto, HistorySummaryDto, SquadYearDto } from '@poolmaster/shared/dto';
 import type { ContestResultView, HistorySummaryView, SquadYearView } from '../modules/history/service';
-import { championshipName, toChampionshipSquadDto } from './championship.mapper';
-import { cupName } from './cups.mapper';
+import { championshipName, toChampionshipSquadDto, toChampionshipStandingRowDto } from './championship.mapper';
+import { cupName, toCupStandingRowDto } from './cups.mapper';
 
 export function toContestResultSummaryDto(view: ContestResultView): ContestResultSummaryDto {
   return {
@@ -48,18 +48,11 @@ export function toSquadYearDto(view: SquadYearView): SquadYearDto {
     championship: championship === null ? null : {
       name: championshipName(view.year, championship.cupName),
       isOver: championship.isOver,
-      position: championship.standing.position,
-      displayPosition: championship.standing.displayPosition,
       squadCount: championship.squadCount,
-      points: championship.standing.points,
       pointsBehindLeader: championship.pointsBehindLeader,
-      movement: championship.standing.movement,
-      finishes: championship.standing.finishes,
-      podiums: championship.standing.podiums,
-      topTens: championship.standing.topTens,
-      played: championship.standing.played,
       contestsCounted: championship.contestsCounted,
       contestsToGo: championship.contestsToGo,
+      standing: toChampionshipStandingRowDto(championship.standing),
     },
     cups: view.cups.map((cup) => ({
       cupId: cup.view.cup.id,
@@ -67,12 +60,8 @@ export function toSquadYearDto(view: SquadYearView): SquadYearDto {
       name: cupName(cup.view.cup.seasonYear, cup.view.sportLeagueName),
       status: cup.view.cup.status,
       contestsCounted: cup.contestsCounted,
-      position: cup.standing.position,
-      displayPosition: cup.standing.displayPosition,
       squadCount: cup.view.standings.length,
-      points: cup.standing.points,
-      movement: cup.standing.movement,
-      trophy: cup.standing.trophy,
+      standing: toCupStandingRowDto(cup.standing),
     })),
   };
 }

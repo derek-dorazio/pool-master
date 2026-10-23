@@ -356,7 +356,7 @@ describe('My team › This year', () => {
       squadYear: buildSquadYear({
         cups: [
           buildSquadCup(),
-          buildSquadCup({ cupId: 'cup-2', sportLeagueId: 'nfl', name: '2026 NFL Cup', status: 'CROWNED', contestsCounted: 1, trophy: 'CHAMPION' }),
+          buildSquadCup({ cupId: 'cup-2', sportLeagueId: 'nfl', name: '2026 NFL Cup', status: 'CROWNED', contestsCounted: 1 }, { trophy: 'CHAMPION' }),
           buildSquadCup({ cupId: 'cup-3', sportLeagueId: 'nba', name: '2026 NBA Cup', contestsCounted: 1 }),
         ],
       }),
@@ -402,7 +402,7 @@ describe('My team › This year', () => {
 
   it('says when nothing has counted yet, and leaves the championship card off for a squad with no row', async () => {
     primeTeam();
-    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: buildSquadChampionship({ contestsCounted: 0, pointsBehindLeader: 0, played: 0 }), cups: [] }) }));
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: buildSquadChampionship({ contestsCounted: 0, pointsBehindLeader: 0 }, { played: 0 }), cups: [] }) }));
 
     renderTeamRoutes();
 
@@ -422,7 +422,7 @@ describe('My team › This year', () => {
 
   it('shows another team\'s year on its page, read for that team', async () => {
     primeTeam();
-    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ position: 1, displayPosition: '1', pointsBehindLeader: 0 }) }) }));
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ pointsBehindLeader: 0 }, { squadId: 'team-2', squadName: 'Rival Squad', position: 1, displayPosition: '1' }) }) }));
 
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
 

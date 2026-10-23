@@ -15271,6 +15271,8 @@ export interface components {
             topTens: number;
             /** @description Counted contests the squad placed in. */
             played: number;
+            /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+            movement: number | null;
         };
         /** @description One medal tile. */
         ChampionshipTileDto: {
@@ -15337,6 +15339,8 @@ export interface components {
                 topTens: number;
                 /** @description Counted contests the squad placed in. */
                 played: number;
+                /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                movement: number | null;
             }[];
             /** @description The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played. */
             tiles: {
@@ -15406,6 +15410,8 @@ export interface components {
                     topTens: number;
                     /** @description Counted contests the squad placed in. */
                     played: number;
+                    /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                    movement: number | null;
                 }[];
                 /** @description The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played. */
                 tiles: {
@@ -15814,36 +15820,52 @@ export interface components {
             /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
             year: number;
         };
-        /** @description One squad's row of a championship year. */
+        /** @description One squad's place in a championship year. */
         SquadChampionshipDto: {
             /** @description The championship's name: "2026 Derek's Pool Cup". */
             name: string;
             /** @description True once the year has ended in US Eastern: the place is final. */
             isOver: boolean;
-            /** @description The squad's place, 1 best, as on the Championship tab. */
-            position: number;
-            /** @description The place as shown: "T2" for a shared 2nd. */
-            displayPosition: string;
             /** @description Squads in the standings, for "3rd of 12". */
             squadCount: number;
-            /** @description Points in tenths of a point: 725 is 72.5. */
-            points: number;
             /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
             pointsBehindLeader: number;
-            /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
-            movement: number | null;
-            /** @description Its finish matrix row: index 0 counts 1sts. */
-            finishes: number[];
-            podiums: number;
-            topTens: number;
-            /** @description Counted contests the squad placed in. */
-            played: number;
             /** @description Counted contests that went final in the year, league-wide. */
             contestsCounted: number;
             /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
             contestsToGo: number;
+            /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+            standing: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                squadIsActive: boolean;
+                /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                finishes: number[];
+                /** @description Counted contests finished 1st, 2nd or 3rd. */
+                podiums: number;
+                /** @description Counted contests finished in the top ten. */
+                topTens: number;
+                /** @description Counted contests the squad placed in. */
+                played: number;
+                /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                movement: number | null;
+            };
         };
-        /** @description One squad's row of a cup. */
+        /** @description One squad's place in a cup. */
         SquadCupDto: {
             /** Format: uuid */
             cupId: string;
@@ -15855,21 +15877,43 @@ export interface components {
             status: "OPEN" | "CROWNED";
             /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
             contestsCounted: number;
-            /** @description The squad's place in the cup, 1 best. */
-            position: number;
-            /** @description The place as shown: "T2" for a shared 2nd. */
-            displayPosition: string;
             /** @description Squads in the cup's standings. */
             squadCount: number;
-            /** @description Points in tenths of a point. */
-            points: number;
-            /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
-            movement: number | null;
-            /**
-             * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
-             * @enum {string|null}
-             */
-            trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+            /** @description The squad's row of the cup's standings, as the Points race shows it. */
+            standing: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                squadIsActive: boolean;
+                /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description Counted contests the squad won, alone or tied. */
+                wins: number;
+                /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                podiums: number;
+                /** @description Counted contests the squad placed in. */
+                contestsCounted: number;
+                /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                movement: number | null;
+                /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                pointsAfter: number[];
+                /**
+                 * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                 * @enum {string|null}
+                 */
+                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+            };
         };
         /** @description One squad's year: its championship row and its cup rows, the same rows the league pages show. */
         SquadYearDto: {
@@ -15882,28 +15926,44 @@ export interface components {
                 name: string;
                 /** @description True once the year has ended in US Eastern: the place is final. */
                 isOver: boolean;
-                /** @description The squad's place, 1 best, as on the Championship tab. */
-                position: number;
-                /** @description The place as shown: "T2" for a shared 2nd. */
-                displayPosition: string;
                 /** @description Squads in the standings, for "3rd of 12". */
                 squadCount: number;
-                /** @description Points in tenths of a point: 725 is 72.5. */
-                points: number;
                 /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
                 pointsBehindLeader: number;
-                /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
-                movement: number | null;
-                /** @description Its finish matrix row: index 0 counts 1sts. */
-                finishes: number[];
-                podiums: number;
-                topTens: number;
-                /** @description Counted contests the squad placed in. */
-                played: number;
                 /** @description Counted contests that went final in the year, league-wide. */
                 contestsCounted: number;
                 /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
                 contestsToGo: number;
+                /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                standing: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                    squadIsActive: boolean;
+                    /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                    finishes: number[];
+                    /** @description Counted contests finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests finished in the top ten. */
+                    topTens: number;
+                    /** @description Counted contests the squad placed in. */
+                    played: number;
+                    /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                    movement: number | null;
+                };
             } | null;
             /** @description Every cup of the season the squad has a row in, by sports league name. */
             cups: {
@@ -15917,21 +15977,43 @@ export interface components {
                 status: "OPEN" | "CROWNED";
                 /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
                 contestsCounted: number;
-                /** @description The squad's place in the cup, 1 best. */
-                position: number;
-                /** @description The place as shown: "T2" for a shared 2nd. */
-                displayPosition: string;
                 /** @description Squads in the cup's standings. */
                 squadCount: number;
-                /** @description Points in tenths of a point. */
-                points: number;
-                /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
-                movement: number | null;
-                /**
-                 * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
-                 * @enum {string|null}
-                 */
-                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                standing: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                    squadIsActive: boolean;
+                    /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description Counted contests the squad won, alone or tied. */
+                    wins: number;
+                    /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests the squad placed in. */
+                    contestsCounted: number;
+                    /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                    movement: number | null;
+                    /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                    pointsAfter: number[];
+                    /**
+                     * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                     * @enum {string|null}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                };
             }[];
         };
         /** @description One squad's year. */
@@ -15947,28 +16029,44 @@ export interface components {
                     name: string;
                     /** @description True once the year has ended in US Eastern: the place is final. */
                     isOver: boolean;
-                    /** @description The squad's place, 1 best, as on the Championship tab. */
-                    position: number;
-                    /** @description The place as shown: "T2" for a shared 2nd. */
-                    displayPosition: string;
                     /** @description Squads in the standings, for "3rd of 12". */
                     squadCount: number;
-                    /** @description Points in tenths of a point: 725 is 72.5. */
-                    points: number;
                     /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
                     pointsBehindLeader: number;
-                    /** @description Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
-                    movement: number | null;
-                    /** @description Its finish matrix row: index 0 counts 1sts. */
-                    finishes: number[];
-                    podiums: number;
-                    topTens: number;
-                    /** @description Counted contests the squad placed in. */
-                    played: number;
                     /** @description Counted contests that went final in the year, league-wide. */
                     contestsCounted: number;
                     /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
                     contestsToGo: number;
+                    /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                        squadIsActive: boolean;
+                        /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                        finishes: number[];
+                        /** @description Counted contests finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests finished in the top ten. */
+                        topTens: number;
+                        /** @description Counted contests the squad placed in. */
+                        played: number;
+                        /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                        movement: number | null;
+                    };
                 } | null;
                 /** @description Every cup of the season the squad has a row in, by sports league name. */
                 cups: {
@@ -15982,21 +16080,43 @@ export interface components {
                     status: "OPEN" | "CROWNED";
                     /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
                     contestsCounted: number;
-                    /** @description The squad's place in the cup, 1 best. */
-                    position: number;
-                    /** @description The place as shown: "T2" for a shared 2nd. */
-                    displayPosition: string;
                     /** @description Squads in the cup's standings. */
                     squadCount: number;
-                    /** @description Points in tenths of a point. */
-                    points: number;
-                    /** @description Places gained (positive) or lost since before the cup's latest counted contest; null until two have counted, and on a crowned cup. */
-                    movement: number | null;
-                    /**
-                     * @description The trophy the squad took from a crowned cup; null while open and below 3rd.
-                     * @enum {string|null}
-                     */
-                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                    /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                        squadIsActive: boolean;
+                        /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description Counted contests the squad won, alone or tied. */
+                        wins: number;
+                        /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests the squad placed in. */
+                        contestsCounted: number;
+                        /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                        movement: number | null;
+                        /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                        pointsAfter: number[];
+                        /**
+                         * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                         * @enum {string|null}
+                         */
+                        trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                    };
                 }[];
             };
         };

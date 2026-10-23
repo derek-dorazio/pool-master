@@ -43,7 +43,7 @@ export interface ChampionshipStandingView {
   podiums: number;
   topTens: number;
   played: number;
-  /** Places gained (positive) or lost since before the year's latest counted contest; null until two have counted. */
+  /** Places gained (positive) or lost since before the year's latest counted contest; null until two have counted, and once the year is over. */
   movement: number | null;
 }
 
@@ -148,7 +148,8 @@ export class ChampionshipService {
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));
     const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
     const ranked = rankChampionshipTallies(tallies);
-    const before = positionsBeforeLatest(squads.map((squad) => squad.id), counted);
+    // A year that is over is final, as a crowned cup is: no movement.
+    const before = year < currentYear ? null : positionsBeforeLatest(squads.map((squad) => squad.id), counted);
     this.deps.logger?.debug({ action: 'championship.year', data: { leagueId, year, finishCount: finishes.length } }, 'Read a championship year');
     return {
       leagueId,

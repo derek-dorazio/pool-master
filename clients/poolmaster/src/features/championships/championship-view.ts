@@ -140,10 +140,11 @@ export function describeHistoryCup(cup: HistoryCupDto): string {
 }
 
 /**
- * The cups All years shows: every crowned cup, since the Most cups tile counts it, and an open cup
- * once enough of its contests have counted, as on the Trophy case.
+ * The cups a history view shows, on All years and the squad page alike: every crowned cup, since
+ * the Most cups tile counts it, and an open cup once enough of its contests have counted, as on
+ * the Trophy case.
  */
-export function historyCupsOnShow(cups: HistoryCupDto[]): HistoryCupDto[] {
+export function historyCupsOnShow<T extends Pick<HistoryCupDto, 'status' | 'contestsCounted'>>(cups: T[]): T[] {
   return cups.filter((cup) => cup.status === CupStatus.CROWNED || cup.contestsCounted >= CUP_SHOWN_FROM_COUNTED);
 }
 

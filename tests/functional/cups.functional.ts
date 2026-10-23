@@ -400,17 +400,14 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const thisYear = await squadYear(year);
     expect(thisYear.championship).toMatchObject({
       name: `${year} Harriers Shield`,
-      displayPosition: 'T1',
       squadCount: 2,
-      points: 1800,
       pointsBehindLeader: 0,
-      movement: 0,
-      played: 2,
       contestsCounted: 2,
+      standing: { squadId: memberSquadId, displayPosition: 'T1', points: 1800, movement: 0, played: 2 },
     });
     expect(thisYear.cups).toEqual([]);
     const seasonYear = await squadYear(SEASON);
-    expect(seasonYear.cups.map((row) => [row.name, row.status, row.displayPosition, row.squadCount, row.points, row.trophy])).toEqual([
+    expect(seasonYear.cups.map((row) => [row.name, row.status, row.standing.displayPosition, row.squadCount, row.standing.points, row.standing.trophy])).toEqual([
       [`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 'T1', 2, 150, CupTrophy.CHAMPION],
     ]);
     const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });

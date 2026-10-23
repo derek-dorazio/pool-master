@@ -143,6 +143,17 @@ describe('ChampionshipService (#863)', () => {
     ]);
   });
 
+  it('gives no movement in a year that is over, its standings final as a crowned cup\'s are', async () => {
+    const { service, settle } = build();
+    await settle('masters', [['eagles', 1], ['birdies', 2]], new Date('2025-04-13T22:00:00.000Z'));
+    await settle('pga', [['birdies', 1], ['eagles', 3]], new Date('2025-05-17T22:00:00.000Z'));
+
+    const past = await service.getYear(LEAGUE, 2025);
+
+    expect(past.isOver).toBe(true);
+    expect(past.standings.map((row) => row.movement)).toEqual([null, null, null]);
+  });
+
   it('shows every active squad at 0 in a year with nothing counted, an inactive squad only once it placed, and nothing to go in a past year', async () => {
     const retired = squad('retired', 'Albatross', { isActive: false });
     const { finishes, service, settle } = build([EAGLES, retired]);
