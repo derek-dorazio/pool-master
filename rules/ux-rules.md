@@ -216,8 +216,8 @@ administration area (root admin included), reusing the same shared components.
    admins looking at the league, can open. No commissioner-only control appears
    in the member area: a commissioner acts as a member most of the time.
 2. **One league menu.** Member pages share one menu under the app bar (Home,
-   Contests, the viewer's own squad by its name — **Yours** until they have
-   one — and Members; `LeagueMenu`). Commissioners also see a
+   Contests, Championships, Contest types, the viewer's own squad by its
+   name — **Yours** until they have one — and Members; `LeagueMenu`). Commissioners also see a
    Commissioner tools button at its right end. The league selector stays in the
    app bar. An administration area has its own header with a way back and a side
    menu (`AdminAreaLayout`) instead of the league menu. Each of its pages has one

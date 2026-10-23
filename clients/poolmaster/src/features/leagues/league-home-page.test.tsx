@@ -15,12 +15,15 @@ import {
   getLeagueByCodeData,
   listLeagueSquadsData,
 } from './test/fixtures';
+import type { CupDto } from '@/lib/api';
+import { buildRunningCup } from '@/features/championships/test/fixtures';
 
 const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
+const listCupsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 
@@ -30,6 +33,7 @@ bindApiMocks({
   getLeagueByCode: getLeagueByCodeMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
+  listCups: listCupsMock,
   listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
 });
@@ -138,11 +142,13 @@ function standing(position: number, squadId: string, squadName: string, totalSco
 function primeMocks({
   contests = [] as ReturnType<typeof contest>[],
   entriesByContest = {} as Record<string, ReturnType<typeof entry>[]>,
+  cups = [] as CupDto[],
   eventStarts = {} as Record<string, string>,
   isActive = true,
   hasTeam = true,
 }: {
   contests?: ReturnType<typeof contest>[];
+  cups?: CupDto[];
   entriesByContest?: Record<string, ReturnType<typeof entry>[]>;
   eventStarts?: Record<string, string>;
   isActive?: boolean;
@@ -170,6 +176,7 @@ function primeMocks({
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData(
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
   )));
+  listCupsMock.mockResolvedValue(apiSuccess({ cups }));
   listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
     entryList(path.contestId, entriesByContest[path.contestId] ?? []),
   );
@@ -184,7 +191,7 @@ afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
     getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock,
-    listContestEntriesMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock,
+    listContestEntriesMock, listContestsMock, listCupsMock, listLeagueSquadsMock, refreshTokenMock,
   ]) {
     mock.mockReset();
   }
@@ -353,6 +360,29 @@ describe('League Home', () => {
     expect(await team.findByText('Casey Crushers')).toBeInTheDocument();
     expect(team.getByText('Casey Commissioner')).toBeInTheDocument();
     expect(team.getByRole('link', { name: /Go to Casey Crushers/ })).toHaveAttribute('href', '/league/BIGDAWGS/team');
+  });
+
+  it('shows the year\'s cups with who leads and the viewer\'s place, each opening its Points race', async () => {
+    primeMocks({ cups: [buildRunningCup()] });
+
+    renderLeagueHome();
+
+    const cups = within(await screen.findByTestId('league-home-cups'));
+    expect(listCupsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { seasonYear: 2026 } }));
+    expect(cups.getByRole('heading', { name: '2026 cups' })).toBeInTheDocument();
+    expect(cups.getByTestId('league-home-cup-cup-pga')).toHaveTextContent('Birdie Bandits leads · you are 2nd · 3 of 4 final');
+    expect(cups.getByTestId('league-home-cup-cup-pga')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+    expect(cups.getByRole('link', { name: /Trophy case/ })).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/trophies');
+  });
+
+  it('shows no cups card before the league has a contest in the year', async () => {
+    primeMocks();
+
+    renderLeagueHome();
+
+    await screen.findByTestId('league-home-your-team');
+    await vi.waitFor(() => expect(listCupsMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('league-home-cups')).not.toBeInTheDocument();
   });
 
   it('asks a member with no squad to choose their name in this league, rather than offering picks', async () => {

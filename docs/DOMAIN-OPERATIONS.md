@@ -945,9 +945,14 @@ and share a place when equal on all three. The pure rules are `@poolmaster/share
 
 | Operation | Role | Notes |
 |---|---|---|
-| List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT` or `NOT_FINAL`, with its winners). No viewer context (A8): the client finds its own squad's row |
+| List a season's cups | `member` | `listCups`, `GET /leagues/:id/cups?seasonYear=`: each cup with its standings (every active squad, at 0 until it places; an inactive squad once it has placed; `movement`, places gained since before the latest counted contest went final, null until two have; `pointsAfter`, the running total after each counted contest, which the race chart draws) and its contests (drafts left out, each `COUNTED`, `NOT_COUNTED`, `NO_RESULT` or `NOT_FINAL`, with its winners). No viewer context (A8): the client finds its own squad's row |
 | Read one cup | `member` | `getCup`, `GET /leagues/:id/cups/:cupId`; 404 `CUP_NOT_FOUND` for another league's cup |
 | Read a squad's cup points | `member` | `getCupSquadPoints`, `GET /leagues/:id/cups/:cupId/squads/:squadId`: the squad's place and points in each counted contest, in the order they went final; 404 `SQUAD_NOT_FOUND` for another league's squad |
+
+The web app shows cups under the league menu's **Championships**
+(`/league/:code/championships/:year`): the Trophy case has a card per cup, and Points race one
+cup's standings, race chart and contests, a squad opening its cup points and a contest its
+leaderboard. League Home has a card of the year's cups once there is one.
 
 ### League championship — `championship`
 

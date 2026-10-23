@@ -1,5 +1,6 @@
 import type { NavMenuItem } from '@/features/shared/ui';
 import {
+  buildLeagueChampionshipsPath,
   buildLeagueContestTypesPath,
   buildLeagueContestsPath,
   buildLeagueHistoryPath,
@@ -9,8 +10,8 @@ import {
 } from './league-routing';
 
 /**
- * The member pages' menu for one league: Home, Contests, Contest types, the viewer's own squad,
- * Members. Each item is active on its own page and on the pages under it, so a contest's
+ * The member pages' menu for one league: Home, Contests, Championships, Contest types, the
+ * viewer's own squad, Members. Each item is active on its own page and on the pages under it, so a contest's
  * leaderboard keeps Contests lit. The viewer's squad is shown by its name; until that name is known, or when the
  * viewer has no squad in the league, the entry reads "Yours".
  */
@@ -28,6 +29,12 @@ export function buildLeagueMenuItems(
   return [
     { isActive: pathname === homePath, label: 'Home', testId: 'league-menu-home', to: homePath },
     { isActive: isUnder(contestsPath), label: 'Contests', testId: 'league-menu-contests', to: contestsPath },
+    {
+      isActive: isUnder(buildLeagueChampionshipsPath(leagueCode)),
+      label: 'Championships',
+      testId: 'league-menu-championships',
+      to: buildLeagueChampionshipsPath(leagueCode),
+    },
     {
       isActive: isUnder(buildLeagueContestTypesPath(leagueCode)),
       label: 'Contest types',

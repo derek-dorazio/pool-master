@@ -118,7 +118,7 @@ or moved). **B**: paid conveniences (reminders, commissioner nudges, the good lu
 out" emails, standings while an event is live, a commissioner's "remind everyone" button if
 built). Emails about sports league cups, the league championship, season standings and
 trophies are **B** too, matching those features' class in `plans/season-cups.md` §7 (Derek
-2026-10-22); their rows come with #841, #863 and #837. The class is the `notificationClass`
+2026-10-22); their rows come with #841, #863 and #837. The class is the `serviceClass`
 field of each `EMAIL_TEMPLATES` entry; nothing reads it yet.
 
 ### A. Accounts

@@ -24,11 +24,15 @@ import {
   ENTRY_STATE_NOTE,
   type MyEntriesState,
 } from '@/features/contests/my-contest-entry';
+import { cupProgress, cupsOnShow, describeCupStanding } from '@/features/championships/cup-view';
+import { useSeasonCupsQuery } from '@/features/championships/use-cups-query';
 import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
   buildLeagueContestsPath,
+  buildLeaguePointsRacePath,
   buildLeagueTeamPath,
+  buildLeagueTrophyCasePath,
 } from './league-routing';
 
 function HomeCard({
@@ -282,6 +286,59 @@ export function YourTeamCard({
       ) : (
         <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
       )}
+    </HomeCard>
+  );
+}
+
+const HOME_CUPS = 3;
+
+/**
+ * The year's sports league cups (#841): who leads each and where the viewer stands, linking to its
+ * Points race. Shown once a cup is on show in the Trophy case, which has them all.
+ */
+export function CupsCard({
+  leagueCode,
+  leagueId,
+  mySquadId,
+  year,
+}: {
+  leagueCode: string;
+  leagueId: string;
+  mySquadId: string | null;
+  year: number;
+}) {
+  const cupsQuery = useSeasonCupsQuery(leagueId, year);
+  const cups = cupsOnShow(cupsQuery.data ?? []);
+  if (!cups.length) {
+    return null;
+  }
+
+  return (
+    <HomeCard
+      footer={{ label: 'Trophy case', testId: 'league-home-trophy-case', to: buildLeagueTrophyCasePath(leagueCode, year) }}
+      testId="league-home-cups"
+      title={`${year} cups`}
+    >
+      <ul>
+        {cups.slice(0, HOME_CUPS).map((cup) => {
+          const progress = cupProgress(cup);
+          return (
+            <li className="border-t border-border first:border-t-0" key={cup.id}>
+              <LinkButton
+                className="h-auto w-full flex-col items-start gap-0.5 rounded-none px-4 py-3 text-left"
+                data-testid={`league-home-cup-${cup.id}`}
+                to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
+                variant="ghost"
+              >
+                <span className="font-semibold text-foreground">{cup.name}</span>
+                <span className="text-sm font-normal text-muted-foreground">
+                  {describeCupStanding(cup, { squadId: mySquadId, isViewer: true })} · {progress.final} of {progress.total} final
+                </span>
+              </LinkButton>
+            </li>
+          );
+        })}
+      </ul>
     </HomeCard>
   );
 }

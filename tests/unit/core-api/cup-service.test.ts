@@ -165,6 +165,22 @@ describe('CupService (#841)', () => {
     ]);
   });
 
+  it('carries each squad\'s running total after each counted contest in the order they went final, 0 where it had no entry', async () => {
+    const { service, contest } = build();
+    await service.ensureCup(KEY);
+    contest('first', [['eagles', 1], ['birdies', 2]]);
+    contest('open', [['bogeys', 1]], { status: ContestStatus.OPEN });
+    contest('second', [['bogeys', 1], ['eagles', 2]]);
+
+    const [cup] = await service.listSeasonCups(LEAGUE, 2026);
+
+    expect(Object.fromEntries(cup.standings.map((row) => [row.squad.name, row.pointsAfter]))).toEqual({
+      Eagles: [1000, 1800],
+      Birdies: [800, 800],
+      Bogeys: [0, 1000],
+    });
+  });
+
   it('shows every active squad at 0, and an inactive squad only once it has placed', async () => {
     const retired = squad('retired', 'Retired', { isActive: false });
     const gone = squad('gone', 'Gone', { isActive: false });

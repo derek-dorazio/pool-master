@@ -96,6 +96,13 @@
     --team-icon-midnight-text: var(--status-completed-text);
     --team-icon-candy-surface: var(--workflow-primary-surface);
     --team-icon-candy-text: var(--status-active-text);
+    /* Line and mark colors for charts, one per series, in the order a chart hands them out. */
+    --chart-series-1: var(--color-gold-500);
+    --chart-series-2: var(--color-navy-600);
+    --chart-series-3: var(--color-red-400);
+    --chart-series-4: var(--color-navy-300);
+    --chart-series-5: var(--color-navy-200);
+    --chart-grid: rgba(11, 30, 63, 0.1);
 
     --background: 60 13% 95%;
     --foreground: 218 70% 15%;
@@ -188,6 +195,12 @@
     --border: 0 0% 100% / 0.12;
     --input: 0 0% 100% / 0.12;
     --ring: 45 100% 48%;
+    --chart-series-1: var(--color-gold-400);
+    --chart-series-2: var(--color-navy-50);
+    --chart-series-3: var(--color-red-200);
+    --chart-series-4: var(--color-navy-200);
+    --chart-series-5: var(--color-navy-300);
+    --chart-grid: rgba(255, 255, 255, 0.12);
     --illustration-ink: #e9e7dc;
     --illustration-paper: #f3f3ee;
     --illustration-sky: #12305a;

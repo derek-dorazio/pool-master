@@ -259,7 +259,7 @@ league ever gets slow, cache by its latest `settledAt`.
 
 ## 7. Service classes
 
-The shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`, `C`, `D`) in `packages/shared/domain`
+The shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`; `C` and `D` join with their first feature) in `packages/shared/domain`
 serves views and emails, using the email catalog's letters (`plans/email-notifications.md`,
 *Class*): Essential every league, A free and up, B from Pro, C from Premium, D Platinum. The
 upper plans differ mainly through the levers in `plans/monetization-strategy.md`, *The levers*.
@@ -297,7 +297,10 @@ journey row once a page exists.
    hasn't landed them. `CupStanding`, `Cup.status` and `crownedAt`, and the `AFTER_CROWNING` count
    come with crowning (slice 4), so no table or value sits unwritten before then.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
-   movement and race chart, the squad sheet, the league home card.
+   movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
+   a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
+   slice 2 adds the Championship tab. The `ChampionshipFeature` map in code waits for the first
+   gate; this table is the categorization until then.
 3. **Commissioner settings.** Points table with preview; cup weight.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium, the trophy shelf.
 5. **Projected points** from live contests, greyed as "if it ended now".
