@@ -153,7 +153,7 @@ async function seedLeague() {
   const squad = (name: string) => prisma.squad.create({ data: { leagueId: league.id, name: `${name} ${suffix}`, createdBy: commissioner.user.id } });
   const squads = { eagles: await squad('Eagles'), birdies: await squad('Birdies') };
   /** A contest of `events` fresh editions of the fixture tour. */
-  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED' } = {}) => {
+  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date } = {}) => {
     const editions = [];
     for (let index = 0; index < (options.events ?? 1); index++) {
       const edition = await freshEventEdition(prisma, { eventYear: 2026 });
@@ -175,6 +175,7 @@ async function seedLeague() {
         name,
         status: options.status ?? 'COMPLETED',
         cupWeight: options.cupWeight ?? 'NORMAL',
+        endsAt: options.endsAt ?? null,
         selectionType: 'TIERED',
         sportEvents: { create: editions.map((event, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       },
@@ -239,5 +240,29 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await expect(repo.findCupName(league.id)).resolves.toBe('Keeper Cup');
     await expect(repo.findCupName(randomUUID())).resolves.toBeNull();
     await expect(repo.countUnfinishedContests(league.id)).resolves.toBe(2);
+  });
+
+  it('reads the completed contests that went final in a year\'s range, end exclusive, plus those named whenever they ended, each with its sports league (#837)', async () => {
+    const repo = new PrismaChampionshipRepository(getPrisma());
+    const { league, contest } = await seedLeague();
+    const from = new Date('2026-01-01T05:00:00.000Z');
+    const to = new Date('2027-01-01T05:00:00.000Z');
+    const first = await contest('First', { endsAt: from });
+    await contest('Next year', { endsAt: to });
+    await contest('Last year', { endsAt: new Date('2026-01-01T04:59:59.000Z') });
+    const undated = await contest('Undated');
+    await contest('Live', { status: 'ACTIVE', endsAt: new Date('2026-06-01T00:00:00.000Z') });
+    const sportLeague = await getPrisma().eventSeries.findUniqueOrThrow({
+      where: { id: first.sportEvents[0]?.sportEvent.eventSeriesId ?? '' },
+      select: { sportLeague: { select: { name: true } } },
+    });
+
+    const contests = await repo.findFinalContests(league.id, from, to, [undated.id]);
+
+    expect(contests.map((row) => [row.name, row.completedAt?.toISOString() ?? null, row.sportLeagueName, row.selectionType]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
+      ['First', from.toISOString(), sportLeague.sportLeague.name, SelectionType.TIERED],
+      ['Undated', null, sportLeague.sportLeague.name, SelectionType.TIERED],
+    ]);
+    await expect(repo.findFinalContests(randomUUID(), from, to, [undated.id])).resolves.toEqual([]);
   });
 });

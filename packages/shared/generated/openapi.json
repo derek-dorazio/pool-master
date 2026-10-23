@@ -38322,6 +38322,506 @@
         "additionalProperties": false,
         "description": "The league championship's years."
       },
+      "ListContestResultsQuery": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 9999,
+            "description": "The championship year, US Eastern, the contests went final in, such as 2026."
+          },
+          "squadId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Only the counted contests this squad placed in: its Played count."
+          },
+          "place": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10,
+            "description": "With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED)."
+          }
+        },
+        "required": [
+          "year"
+        ],
+        "additionalProperties": false,
+        "description": "Which year's contests to list, and for which squad or matrix cell."
+      },
+      "ContestResultSquadFinishDto": {
+        "type": "object",
+        "properties": {
+          "place": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The squad's place from its best entry, 1 best."
+          },
+          "displayPlace": {
+            "type": "string",
+            "description": "The place as shown: \"T2\" for a shared 2nd."
+          },
+          "points": {
+            "type": "integer",
+            "description": "Championship points in tenths of a point, as earned at settlement: 725 is 72.5."
+          }
+        },
+        "required": [
+          "place",
+          "displayPlace",
+          "points"
+        ],
+        "additionalProperties": false,
+        "description": "The filtered squad's finish in one contest."
+      },
+      "ContestResultSummaryDto": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sportLeagueName": {
+            "type": "string",
+            "description": "The sports league its events are in, such as \"PGA Tour\"."
+          },
+          "selectionType": {
+            "type": "string",
+            "enum": [
+              "TIERED",
+              "BUDGET_PICK",
+              "RANDOM_DRAW",
+              "PICK_EM",
+              "BRACKET",
+              "SURVIVOR",
+              "SQUARES"
+            ]
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it went final (instant)."
+          },
+          "rankedEntryCount": {
+            "type": "integer",
+            "description": "Entries ranked in it; 0 when nobody placed."
+          },
+          "count": {
+            "type": "string",
+            "enum": [
+              "COUNTED",
+              "NOT_COUNTED",
+              "NO_RESULT"
+            ],
+            "description": "COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled."
+          },
+          "winners": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "squadId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "squadName": {
+                  "type": "string",
+                  "description": "The squad's current name."
+                },
+                "squadIconKey": {
+                  "type": "string",
+                  "enum": [
+                    "CAPTAIN_SMILE_SUNSET",
+                    "CAPTAIN_SMILE_FIELD",
+                    "CAPTAIN_SMILE_OCEAN",
+                    "CAPTAIN_SMILE_MIDNIGHT",
+                    "CAPTAIN_SMILE_CANDY",
+                    "CAPTAIN_WINK_SUNSET",
+                    "CAPTAIN_WINK_FIELD",
+                    "CAPTAIN_WINK_OCEAN",
+                    "CAPTAIN_WINK_MIDNIGHT",
+                    "CAPTAIN_WINK_CANDY",
+                    "CHAMPION_BEARD_SUNSET",
+                    "CHAMPION_BEARD_FIELD",
+                    "CHAMPION_BEARD_OCEAN",
+                    "CHAMPION_BEARD_MIDNIGHT",
+                    "CHAMPION_BEARD_CANDY",
+                    "MAVERICK_MASK_SUNSET",
+                    "MAVERICK_MASK_FIELD",
+                    "MAVERICK_MASK_OCEAN",
+                    "MAVERICK_MASK_MIDNIGHT",
+                    "MAVERICK_MASK_CANDY",
+                    "STARFACE_SUNSET",
+                    "STARFACE_FIELD",
+                    "STARFACE_OCEAN",
+                    "STARFACE_MIDNIGHT",
+                    "STARFACE_CANDY",
+                    "HELMET_STRIPE_SUNSET",
+                    "HELMET_STRIPE_FIELD",
+                    "HELMET_STRIPE_OCEAN",
+                    "HELMET_STRIPE_MIDNIGHT",
+                    "HELMET_STRIPE_CANDY",
+                    "HELMET_BOLT_SUNSET",
+                    "HELMET_BOLT_FIELD",
+                    "HELMET_BOLT_OCEAN",
+                    "HELMET_BOLT_MIDNIGHT",
+                    "HELMET_BOLT_CANDY",
+                    "HELMET_HORN_SUNSET",
+                    "HELMET_HORN_FIELD",
+                    "HELMET_HORN_OCEAN",
+                    "HELMET_HORN_MIDNIGHT",
+                    "HELMET_HORN_CANDY",
+                    "HELMET_WING_SUNSET",
+                    "HELMET_WING_FIELD",
+                    "HELMET_WING_OCEAN",
+                    "HELMET_WING_MIDNIGHT",
+                    "HELMET_WING_CANDY",
+                    "HELMET_GRID_SUNSET",
+                    "HELMET_GRID_FIELD",
+                    "HELMET_GRID_OCEAN",
+                    "HELMET_GRID_MIDNIGHT",
+                    "HELMET_GRID_CANDY",
+                    "GOLF_BAG_SUNSET",
+                    "GOLF_BAG_FIELD",
+                    "GOLF_BAG_OCEAN",
+                    "GOLF_BAG_MIDNIGHT",
+                    "GOLF_BAG_CANDY",
+                    "WHISTLE_BADGE_SUNSET",
+                    "WHISTLE_BADGE_FIELD",
+                    "WHISTLE_BADGE_OCEAN",
+                    "WHISTLE_BADGE_MIDNIGHT",
+                    "WHISTLE_BADGE_CANDY",
+                    "STOPWATCH_BADGE_SUNSET",
+                    "STOPWATCH_BADGE_FIELD",
+                    "STOPWATCH_BADGE_OCEAN",
+                    "STOPWATCH_BADGE_MIDNIGHT",
+                    "STOPWATCH_BADGE_CANDY",
+                    "MEGAPHONE_SUNSET",
+                    "MEGAPHONE_FIELD",
+                    "MEGAPHONE_OCEAN",
+                    "MEGAPHONE_MIDNIGHT",
+                    "MEGAPHONE_CANDY",
+                    "FOAM_FINGER_SUNSET",
+                    "FOAM_FINGER_FIELD",
+                    "FOAM_FINGER_OCEAN",
+                    "FOAM_FINGER_MIDNIGHT",
+                    "FOAM_FINGER_CANDY",
+                    "BULL_HEAD_SUNSET",
+                    "BULL_HEAD_FIELD",
+                    "BULL_HEAD_OCEAN",
+                    "BULL_HEAD_MIDNIGHT",
+                    "BULL_HEAD_CANDY",
+                    "LUCKY_DUCK_SUNSET",
+                    "LUCKY_DUCK_FIELD",
+                    "LUCKY_DUCK_OCEAN",
+                    "LUCKY_DUCK_MIDNIGHT",
+                    "LUCKY_DUCK_CANDY",
+                    "TURBO_TURTLE_SUNSET",
+                    "TURBO_TURTLE_FIELD",
+                    "TURBO_TURTLE_OCEAN",
+                    "TURBO_TURTLE_MIDNIGHT",
+                    "TURBO_TURTLE_CANDY",
+                    "FIRE_PIZZA_SUNSET",
+                    "FIRE_PIZZA_FIELD",
+                    "FIRE_PIZZA_OCEAN",
+                    "FIRE_PIZZA_MIDNIGHT",
+                    "FIRE_PIZZA_CANDY",
+                    "BANANA_BAT_SUNSET",
+                    "BANANA_BAT_FIELD",
+                    "BANANA_BAT_OCEAN",
+                    "BANANA_BAT_MIDNIGHT",
+                    "BANANA_BAT_CANDY"
+                  ],
+                  "description": "The squad's built-in team icon."
+                }
+              },
+              "required": [
+                "squadId",
+                "squadName",
+                "squadIconKey"
+              ],
+              "additionalProperties": false,
+              "description": "A squad named on the championship: a leader, a champion or a tile holder."
+            },
+            "description": "The squads that finished 1st, several on a tie, in name order; empty when nobody placed."
+          },
+          "squadFinish": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "place": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "The squad's place from its best entry, 1 best."
+              },
+              "displayPlace": {
+                "type": "string",
+                "description": "The place as shown: \"T2\" for a shared 2nd."
+              },
+              "points": {
+                "type": "integer",
+                "description": "Championship points in tenths of a point, as earned at settlement: 725 is 72.5."
+              }
+            },
+            "required": [
+              "place",
+              "displayPlace",
+              "points"
+            ],
+            "additionalProperties": false,
+            "description": "With a squadId filter, that squad's finish; null otherwise."
+          }
+        },
+        "required": [
+          "contestId",
+          "name",
+          "sportLeagueName",
+          "selectionType",
+          "completedAt",
+          "rankedEntryCount",
+          "count",
+          "winners",
+          "squadFinish"
+        ],
+        "additionalProperties": false,
+        "description": "One contest that went final in the year, with who won it."
+      },
+      "ContestResultListResponse": {
+        "type": "object",
+        "properties": {
+          "contests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contestId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "sportLeagueName": {
+                  "type": "string",
+                  "description": "The sports league its events are in, such as \"PGA Tour\"."
+                },
+                "selectionType": {
+                  "type": "string",
+                  "enum": [
+                    "TIERED",
+                    "BUDGET_PICK",
+                    "RANDOM_DRAW",
+                    "PICK_EM",
+                    "BRACKET",
+                    "SURVIVOR",
+                    "SQUARES"
+                  ]
+                },
+                "completedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it went final (instant)."
+                },
+                "rankedEntryCount": {
+                  "type": "integer",
+                  "description": "Entries ranked in it; 0 when nobody placed."
+                },
+                "count": {
+                  "type": "string",
+                  "enum": [
+                    "COUNTED",
+                    "NOT_COUNTED",
+                    "NO_RESULT"
+                  ],
+                  "description": "COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled."
+                },
+                "winners": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "squadId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "squadName": {
+                        "type": "string",
+                        "description": "The squad's current name."
+                      },
+                      "squadIconKey": {
+                        "type": "string",
+                        "enum": [
+                          "CAPTAIN_SMILE_SUNSET",
+                          "CAPTAIN_SMILE_FIELD",
+                          "CAPTAIN_SMILE_OCEAN",
+                          "CAPTAIN_SMILE_MIDNIGHT",
+                          "CAPTAIN_SMILE_CANDY",
+                          "CAPTAIN_WINK_SUNSET",
+                          "CAPTAIN_WINK_FIELD",
+                          "CAPTAIN_WINK_OCEAN",
+                          "CAPTAIN_WINK_MIDNIGHT",
+                          "CAPTAIN_WINK_CANDY",
+                          "CHAMPION_BEARD_SUNSET",
+                          "CHAMPION_BEARD_FIELD",
+                          "CHAMPION_BEARD_OCEAN",
+                          "CHAMPION_BEARD_MIDNIGHT",
+                          "CHAMPION_BEARD_CANDY",
+                          "MAVERICK_MASK_SUNSET",
+                          "MAVERICK_MASK_FIELD",
+                          "MAVERICK_MASK_OCEAN",
+                          "MAVERICK_MASK_MIDNIGHT",
+                          "MAVERICK_MASK_CANDY",
+                          "STARFACE_SUNSET",
+                          "STARFACE_FIELD",
+                          "STARFACE_OCEAN",
+                          "STARFACE_MIDNIGHT",
+                          "STARFACE_CANDY",
+                          "HELMET_STRIPE_SUNSET",
+                          "HELMET_STRIPE_FIELD",
+                          "HELMET_STRIPE_OCEAN",
+                          "HELMET_STRIPE_MIDNIGHT",
+                          "HELMET_STRIPE_CANDY",
+                          "HELMET_BOLT_SUNSET",
+                          "HELMET_BOLT_FIELD",
+                          "HELMET_BOLT_OCEAN",
+                          "HELMET_BOLT_MIDNIGHT",
+                          "HELMET_BOLT_CANDY",
+                          "HELMET_HORN_SUNSET",
+                          "HELMET_HORN_FIELD",
+                          "HELMET_HORN_OCEAN",
+                          "HELMET_HORN_MIDNIGHT",
+                          "HELMET_HORN_CANDY",
+                          "HELMET_WING_SUNSET",
+                          "HELMET_WING_FIELD",
+                          "HELMET_WING_OCEAN",
+                          "HELMET_WING_MIDNIGHT",
+                          "HELMET_WING_CANDY",
+                          "HELMET_GRID_SUNSET",
+                          "HELMET_GRID_FIELD",
+                          "HELMET_GRID_OCEAN",
+                          "HELMET_GRID_MIDNIGHT",
+                          "HELMET_GRID_CANDY",
+                          "GOLF_BAG_SUNSET",
+                          "GOLF_BAG_FIELD",
+                          "GOLF_BAG_OCEAN",
+                          "GOLF_BAG_MIDNIGHT",
+                          "GOLF_BAG_CANDY",
+                          "WHISTLE_BADGE_SUNSET",
+                          "WHISTLE_BADGE_FIELD",
+                          "WHISTLE_BADGE_OCEAN",
+                          "WHISTLE_BADGE_MIDNIGHT",
+                          "WHISTLE_BADGE_CANDY",
+                          "STOPWATCH_BADGE_SUNSET",
+                          "STOPWATCH_BADGE_FIELD",
+                          "STOPWATCH_BADGE_OCEAN",
+                          "STOPWATCH_BADGE_MIDNIGHT",
+                          "STOPWATCH_BADGE_CANDY",
+                          "MEGAPHONE_SUNSET",
+                          "MEGAPHONE_FIELD",
+                          "MEGAPHONE_OCEAN",
+                          "MEGAPHONE_MIDNIGHT",
+                          "MEGAPHONE_CANDY",
+                          "FOAM_FINGER_SUNSET",
+                          "FOAM_FINGER_FIELD",
+                          "FOAM_FINGER_OCEAN",
+                          "FOAM_FINGER_MIDNIGHT",
+                          "FOAM_FINGER_CANDY",
+                          "BULL_HEAD_SUNSET",
+                          "BULL_HEAD_FIELD",
+                          "BULL_HEAD_OCEAN",
+                          "BULL_HEAD_MIDNIGHT",
+                          "BULL_HEAD_CANDY",
+                          "LUCKY_DUCK_SUNSET",
+                          "LUCKY_DUCK_FIELD",
+                          "LUCKY_DUCK_OCEAN",
+                          "LUCKY_DUCK_MIDNIGHT",
+                          "LUCKY_DUCK_CANDY",
+                          "TURBO_TURTLE_SUNSET",
+                          "TURBO_TURTLE_FIELD",
+                          "TURBO_TURTLE_OCEAN",
+                          "TURBO_TURTLE_MIDNIGHT",
+                          "TURBO_TURTLE_CANDY",
+                          "FIRE_PIZZA_SUNSET",
+                          "FIRE_PIZZA_FIELD",
+                          "FIRE_PIZZA_OCEAN",
+                          "FIRE_PIZZA_MIDNIGHT",
+                          "FIRE_PIZZA_CANDY",
+                          "BANANA_BAT_SUNSET",
+                          "BANANA_BAT_FIELD",
+                          "BANANA_BAT_OCEAN",
+                          "BANANA_BAT_MIDNIGHT",
+                          "BANANA_BAT_CANDY"
+                        ],
+                        "description": "The squad's built-in team icon."
+                      }
+                    },
+                    "required": [
+                      "squadId",
+                      "squadName",
+                      "squadIconKey"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A squad named on the championship: a leader, a champion or a tile holder."
+                  },
+                  "description": "The squads that finished 1st, several on a tie, in name order; empty when nobody placed."
+                },
+                "squadFinish": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "place": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "The squad's place from its best entry, 1 best."
+                    },
+                    "displayPlace": {
+                      "type": "string",
+                      "description": "The place as shown: \"T2\" for a shared 2nd."
+                    },
+                    "points": {
+                      "type": "integer",
+                      "description": "Championship points in tenths of a point, as earned at settlement: 725 is 72.5."
+                    }
+                  },
+                  "required": [
+                    "place",
+                    "displayPlace",
+                    "points"
+                  ],
+                  "additionalProperties": false,
+                  "description": "With a squadId filter, that squad's finish; null otherwise."
+                }
+              },
+              "required": [
+                "contestId",
+                "name",
+                "sportLeagueName",
+                "selectionType",
+                "completedAt",
+                "rankedEntryCount",
+                "count",
+                "winners",
+                "squadFinish"
+              ],
+              "additionalProperties": false,
+              "description": "One contest that went final in the year, with who won it."
+            },
+            "description": "Newest final first. Unfiltered: every contest that went final in the year, counted or not. Filtered by squad or cell: only the counted contests the matrix counts there."
+          }
+        },
+        "required": [
+          "contests"
+        ],
+        "additionalProperties": false,
+        "description": "A year's final contests."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -46849,6 +47349,110 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChampionshipResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/history/contests": {
+      "get": {
+        "operationId": "listContestResults",
+        "summary": "List a year's final contests",
+        "tags": [
+          "History"
+        ],
+        "description": "Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "query",
+            "name": "year",
+            "required": true,
+            "description": "The championship year, US Eastern, the contests went final in, such as 2026."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "squadId",
+            "required": false,
+            "description": "Only the counted contests this squad placed in: its Played count."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "in": "query",
+            "name": "place",
+            "required": false,
+            "description": "With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED)."
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A year's final contests.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestResultListResponse"
                 }
               }
             }

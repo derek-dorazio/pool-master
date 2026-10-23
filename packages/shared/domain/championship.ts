@@ -19,6 +19,14 @@ export function championshipYear(at: Date): number {
   return Number(yearFormat.format(at));
 }
 
+/**
+ * The instant a championship year starts: midnight on 1 January in New York, which is always on
+ * standard time (UTC-5) then. A year runs from its start to the next year's.
+ */
+export function championshipYearStart(year: number): Date {
+  return new Date(Date.UTC(year, 0, 1, 5));
+}
+
 /** A squad's championship year: its points and how often it finished in each place. */
 export interface ChampionshipTally {
   squadId: string;

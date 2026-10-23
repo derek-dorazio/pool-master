@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -17,6 +18,7 @@ import {
   getCupSquadPoints,
   listChampionshipYears,
   listContestConfigTemplates,
+  listContestResults,
   listCupSeasons,
   listCups,
   listEventParticipants,
@@ -30,10 +32,11 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, CupContestCount, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
+  ContestResultListResponseSchema,
   ChampionshipYearListResponseSchema,
   CupListResponseSchema,
   CupProjectionResponseSchema,
@@ -51,7 +54,8 @@ import { standardEventPricing } from '../support/budget-pricing';
 // league's first contest of the season, and two races settled through the real routes rank the
 // two squads on STANDARD points from their entries' frozen places. The member wins the first race
 // and the commissioner the second, so they finish level on points, wins and podiums and share 1st.
-// The same settlements write the league championship (#863): its year shares 1st the same way.
+// The same settlements write the league championship (#863): its year shares 1st the same way,
+// and its drill-through (#837) lists both contests, a squad's, and one cell of its matrix row.
 // Then the commissioner's settings (#841 slice 3): a third race's open contest is set to count
 // double, the settled ones refuse a new weight, and a custom points table rescores the cup at
 // once while the championship keeps the points its contests earned when they settled. Then
@@ -245,6 +249,28 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       path: { id: league.id },
     })).data)).years;
     expect(years.map((row) => [row.year, row.isOver, row.leaders.length])).toEqual([[year, false, 2]]);
+
+    // --- Drill-through: the year's contests newest first, then the member's Played and its 1sts --
+    const yearContests = async (query: { squadId?: string; place?: number }) => ContestResultListResponseSchema.parse(expectDefined((await listContestResults({
+      client: member.client,
+      path: { id: league.id },
+      query: { year, ...query },
+    })).data)).contests;
+    expect((await yearContests({})).map((row) => [row.contestId, row.count, row.winners.length, row.rankedEntryCount, row.sportLeagueName])).toEqual([
+      [valleyContest, ContestResultCount.COUNTED, 1, 2, 'World Marathon Majors (men)'],
+      [harbourContest, ContestResultCount.COUNTED, 1, 2, 'World Marathon Majors (men)'],
+    ]);
+    expect((await yearContests({ squadId: memberSquadId })).map((row) => [row.contestId, row.squadFinish])).toEqual([
+      [valleyContest, { place: 2, displayPlace: '2', points: 800 }],
+      [harbourContest, { place: 1, displayPlace: '1', points: 1000 }],
+    ]);
+    expect((await yearContests({ squadId: memberSquadId, place: 1 })).map((row) => row.contestId)).toEqual([harbourContest]);
+    const placeAlone = await listContestResults({ client: member.client, path: { id: league.id }, query: { year, place: 1 } });
+    expect(placeAlone.response.status).toBe(400);
+    expect(placeAlone.error?.error.code).toBe('SQUAD_ID_REQUIRED');
+    const strangerSquad = await listContestResults({ client: member.client, path: { id: league.id }, query: { year, squadId: randomUUID() } });
+    expect(strangerSquad.response.status).toBe(404);
+    expect(strangerSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
 
     // --- Cup weight: an open contest takes one; a final contest refuses it -------------------
     const coast = await releaseRace('Coast Marathon', `${SEASON}-11-01T13:30:00.000Z`);

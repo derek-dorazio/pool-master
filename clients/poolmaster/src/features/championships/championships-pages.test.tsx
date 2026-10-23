@@ -19,6 +19,7 @@ import { PointsRacePage } from './points-race-page';
 import { TrophyCasePage } from './trophy-case-page';
 import {
   buildChampionshipStanding,
+  buildContestResult,
   buildCup,
   buildCupContest,
   buildCupStanding,
@@ -27,7 +28,7 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getCupProjectionMock: vi.fn(),
@@ -35,6 +36,7 @@ const { crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPoin
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
   listChampionshipYearsMock: vi.fn(),
+  listContestResultsMock: vi.fn(),
   listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
@@ -48,6 +50,7 @@ bindApiMocks({
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
   listChampionshipYears: listChampionshipYearsMock,
+  listContestResults: listContestResultsMock,
   listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
   refreshToken: refreshTokenMock,
@@ -95,7 +98,15 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   listChampionshipYearsMock.mockResolvedValue(apiSuccess({ years: [{ year: 2026, isOver: false, leaders: [] }, { year: 2024, isOver: true, leaders: [] }] }));
   listCupSeasonsMock.mockResolvedValue(apiSuccess({ seasonYears: [2026, 2025] }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
+  listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
 }
+
+/** The year's final contests, newest first: a counted one, a not-counted one, one rained out. */
+const YEAR_CONTESTS = [
+  buildContestResult({ contestId: 'contest-3', name: 'Rained Out Open', completedAt: '2026-07-20T22:00:00.000Z', count: 'NO_RESULT', rankedEntryCount: 0, winners: [] }),
+  buildContestResult({ contestId: 'contest-2', name: 'Fun Squares', sportLeagueName: 'NFL', completedAt: '2026-05-17T22:00:00.000Z', count: 'NOT_COUNTED', rankedEntryCount: 1 }),
+  buildContestResult(),
+];
 
 const NFL_CUP = buildCup({
   id: 'cup-nfl',
@@ -312,6 +323,95 @@ describe('Championships › Championship', () => {
 
     expect(await screen.findByTestId('championship-standing')).toHaveTextContent('No contest has counted in 2026 yet.');
     expect(screen.getByTestId('championship-tile-MOST_FIRSTS')).toHaveTextContent('Nobody yet');
+  });
+
+  it('lists the year\'s final contests newest first with sports league, winner and entries, marking one not counted and one without a result', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    const list = await screen.findByTestId('championship-contests');
+    expect(screen.getByTestId('championship-contests-heading')).toHaveTextContent('Contests in 2026');
+    expect(within(list).getAllByRole('link').map((link) => link.getAttribute('data-testid'))).toEqual([
+      'championship-contest-contest-3',
+      'championship-contest-contest-2',
+      'championship-contest-contest-1',
+    ]);
+    expect(screen.getByTestId('championship-contest-contest-1')).toHaveTextContent('Masters Tiers');
+    expect(screen.getByTestId('championship-contest-contest-1')).toHaveTextContent('Won by Birdie Bandits · 12 entries');
+    expect(screen.getByTestId('championship-contest-contest-1')).toHaveTextContent('PGA Tour');
+    expect(screen.getByTestId('championship-contest-contest-2')).toHaveTextContent('Not counted');
+    expect(screen.getByTestId('championship-contest-contest-2')).toHaveTextContent('Won by Birdie Bandits · 1 entry');
+    expect(screen.getByTestId('championship-contest-contest-3')).toHaveTextContent('No result');
+    expect(screen.getByTestId('championship-contest-contest-3')).toHaveTextContent('Every event was cancelled, so nobody placed');
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { year: 2026 } }));
+  });
+
+  it('opens a contest\'s final leaderboard from its row', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.click(await screen.findByTestId('championship-contest-contest-1'));
+
+    expect(await screen.findByTestId('leaderboard')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/league/BIGDAWGS/contests/contest-1/leaderboard');
+  });
+
+  it('narrows the contests to a matrix cell\'s when its count is tapped, with the squad\'s place and points, and back to all of them', async () => {
+    primeViewer();
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    const cell = await screen.findByTestId('championship-cell-team-1-2');
+    listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [
+      buildContestResult({ contestId: 'contest-5', name: 'US Open Tiers', squadFinish: { place: 2, displayPlace: 'T2', points: 725 } }),
+    ] }));
+
+    fireEvent.click(cell);
+
+    expect(await screen.findByTestId('championship-contest-contest-5')).toHaveTextContent('T2 · 72.5 pts');
+    expect(screen.getByTestId('championship-contests-heading')).toHaveTextContent('Contests Casey Crushers finished 2nd in 2026');
+    expect(screen.getByTestId('championship-cell-team-1-2')).toHaveAttribute('aria-pressed', 'true');
+    expect(listContestResultsMock).toHaveBeenLastCalledWith(expect.objectContaining({ query: { year: 2026, squadId: 'team-1', place: 2 } }));
+
+    listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
+    fireEvent.click(screen.getByTestId('championship-contests-clear'));
+
+    expect(await screen.findByTestId('championship-contest-contest-3')).toBeInTheDocument();
+    expect(screen.getByTestId('championship-contests-heading')).toHaveTextContent('Contests in 2026');
+  });
+
+  it('narrows the contests to every one a squad played when its Played count is tapped', async () => {
+    primeViewer();
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.click(await screen.findByTestId('championship-played-team-3'));
+
+    await waitFor(() => expect(screen.getByTestId('championship-contests-heading')).toHaveTextContent('Contests Fore Play played in 2026'));
+    expect(listContestResultsMock).toHaveBeenLastCalledWith(expect.objectContaining({ query: { year: 2026, squadId: 'team-3' } }));
+  });
+
+  it('keeps a cell\'s filter from a shared link, and ignores one naming a squad not in the standings', async () => {
+    primeViewer();
+    const { unmount } = renderChampionships('/league/BIGDAWGS/championships/2026?squad=team-2&place=1');
+
+    expect(await screen.findByTestId('championship-contests-heading')).toHaveTextContent('Contests Birdie Bandits finished 1st in 2026');
+    expect(listContestResultsMock).toHaveBeenLastCalledWith(expect.objectContaining({ query: { year: 2026, squadId: 'team-2', place: 1 } }));
+    unmount();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026?squad=team-9&place=1');
+
+    expect(await screen.findByTestId('championship-contests-heading')).toHaveTextContent('Contests in 2026');
+    expect(listContestResultsMock).toHaveBeenLastCalledWith(expect.objectContaining({ query: { year: 2026 } }));
+  });
+
+  it('says so when the year\'s contests cannot be loaded, keeping the standings', async () => {
+    primeViewer();
+    listContestResultsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship-contests-error')).toBeInTheDocument();
+    expect(screen.getByTestId('championship-standing-team-1')).toBeInTheDocument();
   });
 
   it('says so when the championship cannot be loaded', async () => {

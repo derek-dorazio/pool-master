@@ -21,6 +21,7 @@ export * from './bracket.dto';
 export * from './squares.dto';
 export * from './cups.dto';
 export * from './championship.dto';
+export * from './history.dto';
 export * from './ingestion.dto';
 export * from './live-score.dto';
 export * from './client-logs.dto';

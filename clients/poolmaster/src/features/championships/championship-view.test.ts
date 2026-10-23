@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildPodium, describeChampionshipStanding } from './championship-view';
-import { buildChampionshipStanding, buildRunningChampionship } from './test/fixtures';
+import {
+  buildPodium,
+  describeChampionshipStanding,
+  describeContestResult,
+  describeContestResultFilter,
+  parseContestResultFilter,
+} from './championship-view';
+import { buildChampionshipStanding, buildContestResult, buildRunningChampionship } from './test/fixtures';
 
 describe('describeChampionshipStanding', () => {
   it('names the leader, the gap to 2nd and the contests to go while the year runs', () => {
@@ -47,5 +53,49 @@ describe('buildPodium', () => {
       [1, ['Aces']],
       [2, ['Birdies']],
     ]);
+  });
+});
+
+describe('parseContestResultFilter', () => {
+  const standings = buildRunningChampionship().standings;
+
+  it('reads a squad in the standings and a place from 1st to 10th from the link', () => {
+    expect(parseContestResultFilter(new URLSearchParams('squad=team-1&place=10'), standings)).toEqual({ squadId: 'team-1', place: 10 });
+    expect(parseContestResultFilter(new URLSearchParams('squad=team-1'), standings)).toEqual({ squadId: 'team-1', place: null });
+  });
+
+  it('drops a place outside the matrix or not a whole number, keeping the squad', () => {
+    expect(parseContestResultFilter(new URLSearchParams('squad=team-1&place=11'), standings)).toEqual({ squadId: 'team-1', place: null });
+    expect(parseContestResultFilter(new URLSearchParams('squad=team-1&place=1.5'), standings)).toEqual({ squadId: 'team-1', place: null });
+  });
+
+  it('ignores a squad not in the standings, and a place without a squad', () => {
+    expect(parseContestResultFilter(new URLSearchParams('squad=team-9&place=1'), standings)).toBeNull();
+    expect(parseContestResultFilter(new URLSearchParams('place=1'), standings)).toBeNull();
+  });
+});
+
+describe('describeContestResultFilter', () => {
+  it('heads the year\'s contests, a squad\'s, and one cell\'s', () => {
+    expect(describeContestResultFilter(null, '', 2026)).toBe('Contests in 2026');
+    expect(describeContestResultFilter({ squadId: 'team-1', place: null }, 'Casey Crushers', 2026)).toBe('Contests Casey Crushers played in 2026');
+    expect(describeContestResultFilter({ squadId: 'team-1', place: 3 }, 'Casey Crushers', 2026)).toBe('Contests Casey Crushers finished 3rd in 2026');
+  });
+});
+
+describe('describeContestResult', () => {
+  it('names co-winners and the entries for a counted contest, with no badge', () => {
+    const contest = buildContestResult({ winners: [
+      { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_SUNSET' },
+      { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' },
+    ] });
+
+    expect(describeContestResult(contest)).toEqual({ badge: null, note: 'Won by Birdie Bandits and Casey Crushers · 12 entries' });
+  });
+
+  it('marks a not-counted contest while still naming its winner, and says why one has no result', () => {
+    expect(describeContestResult(buildContestResult({ count: 'NOT_COUNTED' }))).toEqual({ badge: 'Not counted', note: 'Won by Birdie Bandits · 12 entries' });
+    expect(describeContestResult(buildContestResult({ count: 'NO_RESULT', winners: [], rankedEntryCount: 0 })))
+      .toEqual({ badge: 'No result', note: 'Every event was cancelled, so nobody placed' });
   });
 });
