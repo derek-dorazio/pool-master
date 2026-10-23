@@ -519,7 +519,7 @@ describe('LiveStandings.queueDue', () => {
     } as PickEmLeaderboardModel;
   }
 
-  it('sends a settled pick\'em week\'s results once the buffer has passed: the week\'s winner and leaders, the season, next week and a picks link, but not after the last week', async () => {
+  it('sends a settled pick\'em week\'s results once the buffer has passed: the week\'s winner and leaders, the season, next week and a picks link for readers with an entry, but not after the last week', async () => {
     const settledAt = new Date('2026-09-15T04:00:00.000Z');
     const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.PICK_EM, settledAt);
     const ana = member(league.id, 'Ana');
@@ -547,6 +547,8 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.textBody).toContain('Season standings, by points:\n1. Entry e1 (Ana\'s Squad), 12\n2. Entry e2 (Ben\'s Squad), yours, 9\n3. Entry e3 (Ben\'s Squad), yours, 0');
     expect(toBen.textBody).toContain('Next week: Week 2, first kickoff');
     expect(toBen.textBody).toContain(`Make picks for next week: https://app.example.test/league/OFFICE24/contests/${contest.id}\n`);
+    const [toCasey] = emailsTo(casey.user.id);
+    expect(toCasey.textBody).not.toContain('Make picks for next week');
     expect(positions).toEqual(new Map([['e1', 1], ['e2', 2], ['e3', 3]]));
 
     outbox.rows.length = 0;
@@ -556,6 +558,23 @@ describe('LiveStandings.queueDue', () => {
     await settle(contest.id, week2.id, 'e1', after(lastSettledAt, -60));
     await settle(contest.id, week3.id, 'e1', lastSettledAt);
     await standings().queueDue(after(lastSettledAt, 31));
+    expect(outbox.rows).toHaveLength(0);
+  });
+
+  it('counts a week that finished with nothing to settle, as one no entry submitted, as played rather than still to come, so the last settled week sends nothing', async () => {
+    const settledAt = new Date('2026-09-15T04:00:00.000Z');
+    const { league, contest, week1, week2, week3 } = await liveWeeks(SelectionType.PICK_EM, settledAt);
+    const ana = member(league.id, 'Ana');
+    pickEmBoards.set(contest.id, pickEmBoard(contest.id, [week1.id, week2.id, week3.id], [
+      { entryId: 'e1', squad: ana.squad, position: 1, total: 12, week1: { position: 1, points: 12 } },
+    ]));
+    world.sportEvents.set(week2.id, { ...week2, status: SportEventStatus.COMPLETED });
+    world.sportEvents.set(week3.id, { ...week3, status: SportEventStatus.COMPLETED });
+    const week3SettledAt = new Date('2026-09-29T04:00:00.000Z');
+    await settle(contest.id, week3.id, 'e1', week3SettledAt);
+
+    await standings().queueDue(after(week3SettledAt, 31));
+
     expect(outbox.rows).toHaveLength(0);
   });
 

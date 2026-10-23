@@ -364,8 +364,12 @@ export class LiveStandings implements DueNotifications {
           isYours: false,
         },
       })),
-      // Every week is picked afresh: anyone with a squad in the contest has picks to make.
-      personal: () => ({ cut: [], out: [], picksUrl }),
+      personal: (ownsSquad) => ({
+        cut: [],
+        out: [],
+        // Every week is picked afresh: a reader with an entry has picks to make.
+        ...(leaderboard.entries.some((entry) => ownsSquad(entry.squadId)) && { picksUrl }),
+      }),
     };
   }
 

@@ -356,7 +356,7 @@ roster, pick'em or survivor contest is `ACTIVE`, one goes after each moment it c
   week's winners and lists the week's top 10 by its points above the season's; survivor says how
   many entries are still in and marks the ones out, and tells a reader whose entry went out that
   week which team it picked, or that it had no pick. It links to the contest to make next week's
-  picks: every reader in pick'em, only readers with an entry still in for survivor. A playoff
+  picks for readers with an entry (in survivor, an entry still in). A playoff
   that a survivor contest plays a week per round settles, and is reported, once, as the event.
 
 It goes to the league's active commissioners and every active member who owns an entry on the
