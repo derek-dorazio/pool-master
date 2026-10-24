@@ -902,16 +902,43 @@ describe('Event emails', () => {
     view.unmount();
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
-    expect(await screen.findByTestId('plan-locked-EMAIL_EVENT_COMING_UP')).toBeInTheDocument();
+    expect(await screen.findByTestId('plan-locked-EMAIL_EVENT_COMING_UP')).toHaveTextContent('Event emails');
+    expect(screen.queryByText('Coming up email')).not.toBeInTheDocument();
     expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
   });
 
-  it('offers the choice on a plan with only "Ready for contests", since the choice decides that email too', async () => {
+  it('offers the choice on a plan with only "Ready for contests", promising only that email there and on League settings', async () => {
     primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_EVENT_READY_FOR_CONTESTS'] }) } });
+
+    const view = renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    const page = await screen.findByTestId('edit-event-emails-page');
+    expect(page).toHaveTextContent('Commissioners get an email once an event is ready for contests. Choose the sport leagues you want to hear about.');
+    expect(page).not.toHaveTextContent('10 days');
+    view.unmount();
+
+    renderCommissionerTools();
+    expect(await screen.findByTestId('league-settings-event-emails')).toHaveTextContent('Emails to commissioners when an event is ready for contests.');
+  });
+
+  it('promises only the "Coming up soon" email on a plan without "Ready for contests"', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_EVENT_COMING_UP'] }) } });
+
+    const view = renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    expect(await screen.findByTestId('edit-event-emails-page')).toHaveTextContent('Commissioners get an email about 10 days before an event. Choose the sport leagues you want to hear about.');
+    view.unmount();
+
+    renderCommissionerTools();
+    expect(await screen.findByTestId('league-settings-event-emails')).toHaveTextContent('Emails to commissioners when an event is coming up.');
+  });
+
+  it('promises both emails on a plan with both', async () => {
+    primeMocks();
 
     renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
 
-    expect(await screen.findByTestId('edit-event-emails-page')).toBeInTheDocument();
+    expect(await screen.findByTestId('edit-event-emails-page')).toHaveTextContent('Commissioners get an email about 10 days before an event, and another once it\'s ready for contests.');
   });
 
   it('sends a commissioner who opens Edit event emails on an inactive league back to the read-only settings', async () => {
