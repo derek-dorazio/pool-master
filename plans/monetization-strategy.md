@@ -173,7 +173,23 @@ Kept for later refinement and tickets, none scheduled:
   counts, pick popularity, projected finish, contests per event, organisation accounts,
   member subscriptions, ads.
 
+### At launch: everyone on Premium, capped, with per-contest expansions (Derek, 2026-10-24, later the same day)
+
+This replaces *At launch: Platinum free, pricing at renewal* below. Design in
+`plans/payments.md` (#931, PR #967); the build is deferred.
+
+- Every league, new and existing, is on **Premium**, with every feature set to start at
+  Premium on the Plans page, and Premium's entry cap lowered to **20 per contest** on a date
+  Derek announces.
+- Commissioners pay once to **expand one contest** (for example $10 for up to 50 entries).
+  Subscriptions come later, annual or monthly.
+- **Platinum is capped at 1000 entries per contest** long term, not unlimited, so Q9 below
+  ("Platinum fixed at unlimited") no longer holds; Platinum joins the capped plans, still
+  checked so caps never fall as the plan rises. Premium returns to 100 once plans are sold.
+
 ### At launch: Platinum free, pricing at renewal (Derek, 2026-10-24)
+
+*Superseded by the section above.*
 
 Derek's launch plan: the plans exist and are defined, but every league gets **Platinum free**
 when it signs up. Leagues try every contest type and sport, and use history and notifications,
