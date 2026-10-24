@@ -3,8 +3,7 @@
 **Tracking issue:** #969. Parent: #581. Payments: #931 (`plans/payments.md`). Per-event
 pricing: #968.
 
-Written 2026-10-24 for Derek's review. Questions are in *Questions*, each with a
-recommendation; answer only where you disagree. Mockups:
+Written 2026-10-24 for Derek's review; every question in *Questions* answered the same day. Mockups:
 https://claude.ai/artifact/Gq7nPayxt7J7fE5vth7sCH (public page, commissioner page, phone,
 and what choosing a plan does).
 
@@ -128,8 +127,8 @@ This page only hands over; the flow itself is `plans/payments.md`.
 - **Prices** come from `GET /billing/prices`, which payments serves publicly: each paid plan's
   yearly and monthly amounts, read from Stripe, and an empty list while payments are off. Both
   pages read it, never config or copy (Derek: monthly is a premium over yearly, for example $99
-  a year or $9.99 a month). The Yearly/Monthly toggle shows only when the list has prices, and
-  picks the interval handed to checkout (Q2).
+  a year or $9.99 a month). The Yearly/Monthly toggle is always shown and picks the interval
+  handed to checkout; while the list is empty, every paid plan shows Free under both (Q2).
 
 ## Out of scope
 
@@ -142,37 +141,37 @@ This page only hands over; the flow itself is `plans/payments.md`.
 
 ## Questions
 
-Each has a recommendation; answer only where you disagree.
+All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle stays, with Free under both.
 
-1. **Public page at `/plans`, open to anyone, with `GET /plans` made public?** Recommended: yes.
+1. **Decided (Derek 2026-10-24): yes.** **Public page at `/plans`, open to anyone, with `GET /plans` made public?** Recommended: yes.
    It holds no league or user data, and How to Play already reads two public lists the same way.
-2. **Price slot until prices exist**: while `GET /billing/prices` is empty, the paid plans show
-   **Free for now** where the price will go, and the yearly/monthly toggle stays hidden?
-   Recommended: yes. A
-   "[PRICE]" placeholder or a made-up number on a public page would read as broken or binding;
-   the mockups show where the prices and toggle will sit.
-3. **Highlights built from the config**, with three or more features of one group starting at
+2. **Decided (Derek 2026-10-24): yes, but keep the Yearly/Monthly toggle and show Free under
+   both.** **Price slot until prices exist**: while `GET /billing/prices` is empty, the paid
+   plans show **Free** where the price will go. A "[PRICE]" placeholder or a made-up number on a
+   public page would read as broken or binding.
+3. **Decided (Derek 2026-10-24): yes.** **Highlights built from the config**, with three or more features of one group starting at
    the same plan shown as one counted line ("7 more emails")? Recommended: yes, so a root admin's
    change on `/manage/plans` can never leave a card saying the wrong thing.
-4. **Premium has no feature of its own today**, only bigger caps: every feature starts at Free,
+4. **Decided (Derek 2026-10-24): yes**; slice 1 also moves the code default in
+   `PLAN_SETTINGS`. **Premium has no feature of its own today**, only bigger caps: every feature starts at Free,
    Pro or Platinum. Move **All years** to Premium on `/manage/plans`, keeping the record book at
    Platinum? Recommended: yes, so every step up adds something to name on its card. It is a
    setting, so it needs no build; the page works either way.
-5. **A "Most popular" badge?** Recommended: none for now. Nobody pays yet, so there is nothing
+5. **Decided (Derek 2026-10-24): no badge.** **A "Most popular" badge?** Recommended: none for now. Nobody pays yet, so there is nothing
    true to say; the card style supports one later (the mockup's tweak shows it).
-6. **A one-line description under each feature** (in `plan-labels.ts`), on the public table and
+6. **Decided (Derek 2026-10-24): yes.** **A one-line description under each feature** (in `plan-labels.ts`), on the public table and
    as help text on the commissioner table? Recommended: yes. "Contest not open email" means
    little to a visitor without "For commissioners: a contest still needs opening".
-7. **The commissioner page replaces the current Choose a plan form**, at
+7. **Decided (Derek 2026-10-24): yes.** **The commissioner page replaces the current Choose a plan form**, at
    `/league/:code/admin/plan` with the old path redirecting? Recommended: yes; one page to
    compare and choose, instead of a radio list over a table.
-8. **Usage on the commissioner page**: sports leagues this year (already served) and the
+8. **Decided (Derek 2026-10-24): yes.** **Usage on the commissioner page**: sports leagues this year (already served) and the
    biggest open contest's entry count (new), from one small `GET /leagues/:id/plan-usage`?
    Recommended: yes. It is what makes "You use 34" possible, and Create contest keeps its own
    sports leagues call.
-9. **Every public button says Start free while payments are off?** Recommended: yes, because every
+9. **Decided (Derek 2026-10-24): yes.** **Every public button says Start free while payments are off?** Recommended: yes, because every
    new league starts on Platinum free; per-plan buttons arrive with payments.
-10. **Signed-in visitors** on `/plans` see **Choose for a league**, straight to the Plan page
+10. **Decided (Derek 2026-10-24): yes.** **Signed-in visitors** on `/plans` see **Choose for a league**, straight to the Plan page
     when they commission one league, otherwise My leagues? Recommended: yes.
 
 ## Slices
@@ -190,7 +189,7 @@ Ticketed under epic #969 as #971, #972 and #973; the issues carry the live state
 
 Slices 2 and 3 run in parallel after 1.
 
-Prices and the Yearly/Monthly toggle are wired to `GET /billing/prices` when the payments build
-adds it; until then the price slot shows Free for now, which is what the empty list means anyway.
+Prices are wired to `GET /billing/prices` when the payments build adds it; until then the
+Yearly/Monthly toggle shows Free under both, which is what the empty list means anyway.
 If the route is not in yet when slice 1 is built, the cards take the prices as an input and the
 pages pass none.
