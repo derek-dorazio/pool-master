@@ -139,6 +139,11 @@ export function LeagueSettingsPage() {
           testId="league-settings-points-table"
           value={describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}
         />
+        <SettingsRow
+          label="Hall of Lame"
+          testId="league-settings-hall-of-lame"
+          value={league.hallOfLameVisible ? 'Shown on All years' : 'Hidden'}
+        />
       </SettingsSection>
 
       <LeagueDangerZone league={league} />

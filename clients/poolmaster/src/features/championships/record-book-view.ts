@@ -13,6 +13,10 @@ export const RECORD_WORDING: Record<RecordType, { title: string; value: (value: 
   [RecordType.MOST_WINS_ALL_TIME]: { title: 'Most wins', value: (value) => plural(value, 'win') },
   [RecordType.LONGEST_PODIUM_RUN]: { title: 'Longest podium run', value: (value) => inARow(value, 'podium', 'podiums') },
   [RecordType.BIGGEST_FIELD_WON]: { title: 'Biggest field won', value: (value) => plural(value, 'entry', 'entries') },
+  [RecordType.MOST_RUNNER_UPS]: { title: 'Most runner-ups', value: (value) => plural(value, '2nd place') },
+  [RecordType.MOST_FOURTHS]: { title: 'Most 4th places', value: (value) => plural(value, '4th place') },
+  [RecordType.MOST_LAST_PLACES]: { title: 'Most last places', value: (value) => plural(value, 'last place') },
+  [RecordType.LONGEST_DROUGHT]: { title: 'Longest drought', value: (value) => `${plural(value, 'contest')} without a win` },
 };
 
 function plural(count: number, one: string, many = `${one}s`): string {

@@ -26,7 +26,8 @@ import {
   HistorySquadRequiredError,
 } from '../../../packages/core-api/src/modules/history/service';
 import { InMemoryChampionship } from '../../support/in-memory-championship';
-import { fakeSquadRepo } from '../../support/repo-fakes';
+import { fakeLeagueRepo, fakeSquadRepo } from '../../support/repo-fakes';
+import { buildLeague } from '../../factories';
 
 const LEAGUE = 'league-1';
 
@@ -48,10 +49,11 @@ const BIRDIES = squad('birdies', 'Birdies');
 const BOGEYS = squad('bogeys', 'Bogeys');
 const SQUADS = [EAGLES, BIRDIES, BOGEYS];
 
-function build() {
+function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {}) {
   const finishes = new InMemoryChampionship();
   const service = new HistoryService({
     finishes,
+    leagues: fakeLeagueRepo({ findById: jest.fn().mockResolvedValue(buildLeague({ id: LEAGUE, hallOfLameVisible })) }),
     squads: fakeSquadRepo({
       findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       findByLeague: jest.fn().mockResolvedValue(SQUADS),
@@ -105,7 +107,29 @@ describe('HistoryService (#837)', () => {
       ['Bogeys', 2025, 'masters'],
       ['Eagles', 2025, 'masters'],
     ]);
-    expect(records.map((row) => row.type)).toEqual([RecordType.MOST_WINS_IN_A_YEAR, RecordType.MOST_WINS_ALL_TIME, RecordType.LONGEST_PODIUM_RUN, RecordType.BIGGEST_FIELD_WON]);
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+      RecordType.MOST_LAST_PLACES,
+      RecordType.LONGEST_DROUGHT,
+    ]);
+  });
+
+  it('leaves the Hall of Lame out of the record book of a league that hides it', async () => {
+    const { contest, finish, service } = build({ hallOfLameVisible: false });
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 1], ['birdies', 2, 1], ['bogeys', 4, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+    ]);
   });
 
   it('lists every contest that went final in the year newest first, counted, not counted or without a result, with co-winners in name order and the entries ranked', async () => {
@@ -226,6 +250,7 @@ describe('HistoryService summary (#837)', () => {
   function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>) {
     return new HistoryService({
       finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo(),
       championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue(years) },
       cups: {
@@ -328,6 +353,7 @@ describe('HistoryService squad year (#872)', () => {
     const listSeasonCups = jest.fn().mockResolvedValue(cups);
     const service = new HistoryService({
       finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo({
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),
@@ -415,6 +441,7 @@ describe('HistoryService squad history (#872)', () => {
     const yearNumbers = [...byYear.keys()].sort((left, right) => right - left);
     return new HistoryService({
       finishes,
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo({
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),

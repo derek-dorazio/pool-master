@@ -5,7 +5,7 @@
  * every one on a tie, and the next best value's holders.
  */
 
-import { CupWeight, RecordType, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { CupWeight, RecordType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
 
 /** One way a squad could hold a record: its value, and the year or contest it was set in. */
 export interface RecordCandidate {
@@ -33,11 +33,19 @@ export interface ChampionshipYearChampions {
   championSquadIds: string[];
 }
 
+/** A last place needs a field of at least this many entries, so a two-entry contest's 2nd is not "last". */
+export const LAST_PLACE_MIN_ENTRIES = 3;
+
 /**
- * Every record somebody holds, in `RecordType` order. A record nobody holds yet (no counted win,
- * no championship) is left out. Finishes of contests not counted are left out, as everywhere.
+ * Every record somebody holds, in `RecordType` order; the Hall of Lame's only when the league shows
+ * it. A record nobody holds yet (no counted win, no championship) is left out. Finishes of contests
+ * not counted are left out, as everywhere.
  */
-export function rankRecords(finishes: readonly LeagueYearFinish[], championships: readonly ChampionshipYearChampions[]): RankedRecord[] {
+export function rankRecords(
+  finishes: readonly LeagueYearFinish[],
+  championships: readonly ChampionshipYearChampions[],
+  { hallOfLame }: { hallOfLame: boolean },
+): RankedRecord[] {
   const counted = finishes
     .filter((finish) => finish.weight !== CupWeight.NOT_COUNTED)
     .sort((left, right) => left.settledAt.getTime() - right.settledAt.getTime() || left.contestId.localeCompare(right.contestId));
@@ -49,8 +57,12 @@ export function rankRecords(finishes: readonly LeagueYearFinish[], championships
     [RecordType.MOST_WINS_ALL_TIME]: countBySquad(wins.map((finish) => finish.squadId)),
     [RecordType.LONGEST_PODIUM_RUN]: podiumRuns(counted),
     [RecordType.BIGGEST_FIELD_WON]: wins.map((finish) => ({ squadId: finish.squadId, value: finish.rankedEntryCount, year: finish.year, contestId: finish.contestId })),
+    [RecordType.MOST_RUNNER_UPS]: countBySquad(counted.filter((finish) => finish.place === 2).map((finish) => finish.squadId)),
+    [RecordType.MOST_FOURTHS]: countBySquad(counted.filter((finish) => finish.place === 4).map((finish) => finish.squadId)),
+    [RecordType.MOST_LAST_PLACES]: countBySquad(lastPlaces(counted).map((finish) => finish.squadId)),
+    [RecordType.LONGEST_DROUGHT]: droughts(counted),
   };
-  return Object.values(RecordType).flatMap((type) => {
+  return Object.values(RecordType).filter((type) => hallOfLame || !isHallOfLameRecord(type)).flatMap((type) => {
     const ranked = rank(candidates[type]);
     return ranked === null ? [] : [{ type, ...ranked }];
   });
@@ -105,6 +117,36 @@ function podiumRuns(counted: readonly LeagueYearFinish[]): RecordCandidate[] {
     let best: RecordCandidate = { squadId, value: 0, year: null, contestId: null };
     for (const finish of rows) {
       run = finish.place <= 3 ? run + 1 : 0;
+      if (run > 0 && run >= best.value) best = { squadId, value: run, year: finish.year, contestId: null };
+    }
+    return best;
+  });
+}
+
+/**
+ * The squads last in each contest of three or more entries: the worst place any squad finished in
+ * it (each squad's best entry), every squad on it on a tie. A contest everyone won has no last.
+ */
+function lastPlaces(counted: readonly LeagueYearFinish[]): LeagueYearFinish[] {
+  const byContest = new Map<string, LeagueYearFinish[]>();
+  for (const finish of counted) byContest.set(finish.contestId, [...(byContest.get(finish.contestId) ?? []), finish]);
+  return [...byContest.values()].flatMap((rows) => {
+    const worst = Math.max(...rows.map((finish) => finish.place));
+    return worst > 1 && rows.every((finish) => finish.rankedEntryCount >= LAST_PLACE_MIN_ENTRIES)
+      ? rows.filter((finish) => finish.place === worst)
+      : [];
+  });
+}
+
+/** Each squad's longest run of contests placed in without a win, ending in its year (the latest on a tie). */
+function droughts(counted: readonly LeagueYearFinish[]): RecordCandidate[] {
+  const bySquad = new Map<string, LeagueYearFinish[]>();
+  for (const finish of counted) bySquad.set(finish.squadId, [...(bySquad.get(finish.squadId) ?? []), finish]);
+  return [...bySquad].map(([squadId, rows]) => {
+    let run = 0;
+    let best: RecordCandidate = { squadId, value: 0, year: null, contestId: null };
+    for (const finish of rows) {
+      run = finish.place === 1 ? 0 : run + 1;
       if (run > 0 && run >= best.value) best = { squadId, value: run, year: finish.year, contestId: null };
     }
     return best;

@@ -475,6 +475,11 @@ next best. Ties show every holder.
    shows its best value and the next value down, every holder of each; a record nobody holds is
    left out.
 2. **Hall of Lame.** Its rows and the league setting.
+   Built as four more `RecordType`s from the same `rankRecords`, which leaves them out when
+   `League.hallOfLameVisible` is off, so a hidden Hall of Lame never leaves the server. The setting
+   rides on `PUT /cup-settings` with the championship name and points table (Edit championships).
+   A last place is the worst place among the squads (each squad's best entry), in contests of
+   `LAST_PLACE_MIN_ENTRIES` (3) or more entries.
 
 ## 12. Perpetual trophies (#874)
 

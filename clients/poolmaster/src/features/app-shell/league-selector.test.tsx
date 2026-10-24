@@ -52,6 +52,7 @@ describe('LeagueSelector', () => {
               cupName: 'League One Cup',
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
+              hallOfLameVisible: true,
             },
             {
               id: 'league-2',
@@ -64,6 +65,7 @@ describe('LeagueSelector', () => {
               cupName: 'League Two Cup',
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
+              hallOfLameVisible: true,
             },
           ]}
           onCreateLeague={() => undefined}

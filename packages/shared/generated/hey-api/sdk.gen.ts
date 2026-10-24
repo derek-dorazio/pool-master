@@ -1147,7 +1147,7 @@ export const getHistorySummary = <ThrowOnError extends boolean = false>(options:
 /**
  * List the record book
  *
- * The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const listRecords = <ThrowOnError extends boolean = false>(options: Options<ListRecordsData, ThrowOnError>) => (options.client ?? client).get<ListRecordsResponses, ListRecordsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

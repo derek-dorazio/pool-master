@@ -39,6 +39,7 @@ export interface UpdateLeagueCupSettingsInput {
   cupName: string;
   cupPointsScale: CupPointsScale;
   cupCustomPoints: number[];
+  hallOfLameVisible: boolean;
 }
 
 // #202 — `UserLeagueView` and `findByUser` are gone. `listLeagues({ scope: 'mine' })` is that
@@ -393,8 +394,8 @@ export class LeagueService {
   }
 
   /**
-   * The league's championship settings (#841, #863): its name and points table, replaced
-   * together. CUSTOM needs its list, and no other scale takes one. Cups score on read, so they
+   * The league's championship settings (#841, #863, #873): its name, points table and whether
+   * the record book shows its Hall of Lame, replaced together. CUSTOM needs its list, and no other scale takes one. Cups score on read, so they
    * follow the new table at once; the championship keeps what each contest earned at settlement.
    */
   async updateCupSettings(leagueId: string, updates: UpdateLeagueCupSettingsInput): Promise<League> {
@@ -430,10 +431,11 @@ export class LeagueService {
       cupName: updates.cupName.trim(),
       cupPointsScale: updates.cupPointsScale,
       cupCustomPoints: updates.cupCustomPoints,
+      hallOfLameVisible: updates.hallOfLameVisible,
     });
     this.logger?.info({
       action: 'league.updateCupSettings.success',
-      data: { leagueId, cupPointsScale: updates.cupPointsScale },
+      data: { leagueId, cupPointsScale: updates.cupPointsScale, hallOfLameVisible: updates.hallOfLameVisible },
     }, 'Updated league cup settings');
     return updatedLeague;
   }

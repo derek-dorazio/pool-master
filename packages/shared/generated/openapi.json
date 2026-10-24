@@ -2544,15 +2544,20 @@
             },
             "maxItems": 50,
             "description": "CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale."
+          },
+          "hallOfLameVisible": {
+            "type": "boolean",
+            "description": "Whether the record book shows its Hall of Lame rows, for the whole league."
           }
         },
         "required": [
           "cupName",
           "cupPointsScale",
-          "cupCustomPoints"
+          "cupCustomPoints",
+          "hallOfLameVisible"
         ],
         "additionalProperties": false,
-        "description": "Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table."
+        "description": "Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table."
       },
       "SendLeagueInvitationsRequest": {
         "type": "object",
@@ -2822,6 +2827,10 @@
               "type": "integer"
             },
             "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
+          },
+          "hallOfLameVisible": {
+            "type": "boolean",
+            "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
           }
         },
         "required": [
@@ -2834,7 +2843,8 @@
           "activeContestCount",
           "cupName",
           "cupPointsScale",
-          "cupCustomPoints"
+          "cupCustomPoints",
+          "hallOfLameVisible"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3292,6 +3302,10 @@
                   "type": "integer"
                 },
                 "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
+              },
+              "hallOfLameVisible": {
+                "type": "boolean",
+                "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
               }
             },
             "required": [
@@ -3304,7 +3318,8 @@
               "activeContestCount",
               "cupName",
               "cupPointsScale",
-              "cupCustomPoints"
+              "cupCustomPoints",
+              "hallOfLameVisible"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3404,6 +3419,10 @@
                   "type": "integer"
                 },
                 "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
+              },
+              "hallOfLameVisible": {
+                "type": "boolean",
+                "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
               }
             },
             "required": [
@@ -3416,7 +3435,8 @@
               "activeContestCount",
               "cupName",
               "cupPointsScale",
-              "cupCustomPoints"
+              "cupCustomPoints",
+              "hallOfLameVisible"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3810,6 +3830,10 @@
                     "type": "integer"
                   },
                   "description": "CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale."
+                },
+                "hallOfLameVisible": {
+                  "type": "boolean",
+                  "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
                 }
               },
               "required": [
@@ -3822,7 +3846,8 @@
                 "activeContestCount",
                 "cupName",
                 "cupPointsScale",
-                "cupCustomPoints"
+                "cupCustomPoints",
+                "hallOfLameVisible"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -43842,9 +43867,13 @@
               "MOST_WINS_IN_A_YEAR",
               "MOST_WINS_ALL_TIME",
               "LONGEST_PODIUM_RUN",
-              "BIGGEST_FIELD_WON"
+              "BIGGEST_FIELD_WON",
+              "MOST_RUNNER_UPS",
+              "MOST_FOURTHS",
+              "MOST_LAST_PLACES",
+              "LONGEST_DROUGHT"
             ],
-            "description": "MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries)."
+            "description": "MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more entries) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running)."
           },
           "best": {
             "type": "object",
@@ -44234,9 +44263,13 @@
                     "MOST_WINS_IN_A_YEAR",
                     "MOST_WINS_ALL_TIME",
                     "LONGEST_PODIUM_RUN",
-                    "BIGGEST_FIELD_WON"
+                    "BIGGEST_FIELD_WON",
+                    "MOST_RUNNER_UPS",
+                    "MOST_FOURTHS",
+                    "MOST_LAST_PLACES",
+                    "LONGEST_DROUGHT"
                   ],
-                  "description": "MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries)."
+                  "description": "MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more entries) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running)."
                 },
                 "best": {
                   "type": "object",
@@ -53378,7 +53411,7 @@
         "tags": [
           "History"
         ],
-        "description": "The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {

@@ -1,10 +1,13 @@
+import { isHallOfLameRecord } from '@poolmaster/shared/domain';
+import type { RecordDto } from '@/lib/api';
 import { ErrorState, Tile } from '@/features/shared/ui';
 import { RECORD_WORDING, describeRecordStand } from './record-book-view';
 import { useRecordsQuery } from './use-championship-query';
 
 /**
  * The record book on All years (#873): each record somebody holds, with its holders (every one
- * on a tie) and the next best. Nothing shows until a record is held.
+ * on a tie) and the next best; then the Hall of Lame, unless the league hides it (the server
+ * leaves its rows out). Nothing shows until a record is held.
  */
 export function RecordBook({ leagueId }: { leagueId: string }) {
   const recordsQuery = useRecordsQuery(leagueId);
@@ -13,13 +16,21 @@ export function RecordBook({ leagueId }: { leagueId: string }) {
     return <ErrorState body="We couldn't load the record book." testId="record-book-error" />;
   }
   const records = recordsQuery.data ?? [];
-  if (!records.length) {
-    return null;
-  }
+  const book = records.filter((record) => !isHallOfLameRecord(record.type));
+  const hallOfLame = records.filter((record) => isHallOfLameRecord(record.type));
 
   return (
-    <Tile className="space-y-3" data-testid="record-book" padding="sm" radius="lg">
-      <h2 className="text-lg font-semibold text-foreground">Record book</h2>
+    <>
+      {book.length ? <RecordList records={book} testId="record-book" title="Record book" /> : null}
+      {hallOfLame.length ? <RecordList records={hallOfLame} testId="hall-of-lame" title="Hall of Lame" /> : null}
+    </>
+  );
+}
+
+function RecordList({ records, testId, title }: { records: RecordDto[]; testId: string; title: string }) {
+  return (
+    <Tile className="space-y-3" data-testid={testId} padding="sm" radius="lg">
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       <ul className="space-y-3 text-sm">
         {records.map((record) => (
           <li className="space-y-0.5" data-testid={`record-${record.type}`} key={record.type}>
