@@ -2,7 +2,8 @@
 
 **Tracking issue:** #998
 
-Written 2026-10-24 for Derek's review. Design only: nothing here is built yet. Mockups (a canvas
+Written 2026-10-24 for Derek's review; every question in *Questions for Derek* answered the same
+day. Design only: nothing here is built yet. Mockups (a canvas
 of nine boards: desktop and phone landing page, the league picker, How to Play's new row, the
 sign-up flow, two Instagram ads, a commissioner email and small tiles):
 https://claude.ai/artifact/CEcG4pHJaFiRh29j9rVokC
@@ -253,8 +254,8 @@ Each has a recommendation; a one-word answer per number is enough.
    insurance. **Decided (Derek 2026-10-24): yes.**
 3. **A member who runs no league** clicks the button. Recommend offering "Start your own league"
    and "Share with your commissioner" (copies the page link). Both are useful, and neither
-   reaches into the other league. Derek (2026-10-24): likely fine; asked for the use cases,
-   which were explained in the thread. Open until he confirms.
+   reaches into the other league. **Decided (Derek 2026-10-24): yes**, both
+   buttons.
 4. **Tracking.** Recommend a cookieless analytics tool (Plausible, Fathom or similar, about
    $10–20 a month) on public pages and the sign-up path, counting page views by UTM tag and five
    goals: start, sign-up, league created, contest created, activation (as defined in the
