@@ -26,7 +26,8 @@ plan behaviour*; it wins where older sections disagree.
   pool, pick'em or DFS-style, each sold almost as its own product with light branding, and
   Platinum getting all of them. See *Sports and pool styles*.
 - **Plans differ mostly by levers, not by feature lists** (Derek, 2026-10-22): entries per
-  contest, how many sports leagues a league plays, league size and pool styles. Features
+  contest, how many sports leagues a league plays, and pool styles (league size dropped
+  2026-10-24). Features
   (cups, championship, history, emails) are classed only as finely as they naturally need,
   often just free or paid. See *The levers*.
 - Charge for **scale, depth and automation**. Keep the core loop free: invite, pick, watch the
@@ -72,13 +73,14 @@ starts at Pro is in Pro, Premium and Platinum, and a cap never falls as the plan
 
 ### Caps
 
-Three numbers per plan, each a whole number or unlimited:
+Two numbers per plan, each a whole number or unlimited. There is no league size cap (Derek
+2026-10-24): invites and joining are never limited, and members who join and want to enter
+are what push a commissioner to a higher plan.
 
 | Cap | Counts | Checked when | Starting numbers (Free / Pro / Premium / Platinum) |
 |---|---|---|---|
 | Entries per contest | Every entry in the contest, drafts included | An entry is added | 20 / 50 / 100 / unlimited |
 | Sports leagues per year | The different sports leagues (PGA Tour, NFL, ...) of the league's contests this calendar year, drafts included, deleted and cancelled contests not | A contest is created | 1 / 3 / 10 / unlimited |
-| League size | Active squads | A squad is added: an invite accepted, or a commissioner adding one | 20 / 50 / 100 / unlimited |
 
 The numbers are Derek's examples from 2026-10-22, to tune on screen.
 
@@ -87,8 +89,6 @@ The numbers are Derek's examples from 2026-10-22, to tune on screen.
   cannot both get in.
 - The sports league count works from contests, not from a list the commissioner keeps, so
   there is nothing to set up and past years never count against a league (Q5).
-- The league size count uses the squad's existing active flag, so a commissioner makes room by
-  making a squad inactive, never by deleting anyone.
 
 ### Features
 
@@ -128,11 +128,11 @@ every feature (Q9), so the default plan can never lose anything by accident.
 ### One entitlements function
 
 A single service turns a league's plan and `PLAN_CONFIG` into what the league may do: its
-three caps and its feature set. Every check calls it, and nothing else compares plans
+two caps and its feature set. Every check calls it, and nothing else compares plans
 (`rules/architecture-rules.md` §4 *Service Topology*). A lint rule bans comparisons against
 `LeaguePlan` values outside it, like the sport branching rule. Contracts carry what the app
 needs to show state: the league's plan and features, a contest's cap and entry count, the
-league's squad count and sports leagues used this year. The server stays the authority
+sports leagues the league has used this year. The server stays the authority
 (`rules/architecture-rules.md` §2 *Contract-First API Architecture*).
 
 ### Moving to a lower plan
@@ -148,9 +148,6 @@ One rule covers everything: **a lower plan stops new things; it never removes wh
 - **Sports leagues.** Contests already created in other sports leagues keep running. While
   over the count, new contests can be created only in sports leagues the league already uses
   this year. Create contest shows the others locked with the same kind of note.
-- **League size.** Nobody is removed. Invites still send, because invites are how leagues
-  grow, but accepting one past the size shows "This league is full" and tells the
-  commissioners. Adding a squad by hand is refused the same way.
 - **Features.** Hidden, never deleted. Rows (cup standings, finishes, history) keep being
   written for every league, so moving back up shows everything as if it had never left. A
   locked view shows its name and a short note; only commissioners see where to change the
@@ -203,23 +200,25 @@ Kept for later refinement and tickets, none scheduled:
 
 ### Open questions: first build
 
-Each has a recommendation; answer only where you disagree.
+Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5 agreed;
+6 changed to no league size cap.
 
-1. **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
+1. **Decided (Derek 2026-10-24): yes.** **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
    "Tier" already means player tiers in tiered selection, on Create contest and in the root
    admin's event screens; two meanings on one screen would confuse commissioners.
-2. **Any commissioner can change the plan, any time, taking effect at once, with every change
+2. **Decided (Derek 2026-10-24): yes.** **Any commissioner can change the plan, any time, taking effect at once, with every change
    logged?** Recommended: yes. Co-commissioners already share every other league setting.
-3. **Caps checked live, never removing anything, instead of frozen when a contest opens?**
+3. **Decided (Derek 2026-10-24): yes.** **Caps checked live, never removing anything, instead of frozen when a contest opens?**
    Recommended: yes. Nobody is paying, so there is nothing to protect by freezing, and it is
    what lets you see a cap bite on a test league straight away.
-4. **Count draft entries against the entry cap?** Recommended: yes, so the count never
+4. **Decided (Derek 2026-10-24): yes.** **Count draft entries against the entry cap?** Recommended: yes, so the count never
    surprises anyone at submit; deleting a draft frees a place.
-5. **Count sports leagues from this year's contests** (drafts in, deleted and cancelled out),
+5. **Decided (Derek 2026-10-24): yes.** **Count sports leagues from this year's contests** (drafts in, deleted and cancelled out),
    not from a list in league settings? Recommended: yes. Nothing to set up, past years never
    count, and it stays separate from the email follow list in #851.
-6. **League size counts active squads, and invites still send at the limit?** Recommended:
-   yes; accepting is what is refused, and making a squad inactive makes room.
+6. ~~League size counts active squads~~ **Decided (Derek 2026-10-24): no league size cap.**
+   Only entries are capped, so invites and joins always go through, and the members who join
+   and want to enter are the upsell.
 7. **Hide, never delete, on a lower plan, and keep writing the hidden data?** Recommended:
    yes, so moving back up loses nothing, which is also what makes a later upgrade worth it.
 8. **Edit the plan per feature on the admin page, and retire the class letters?**
@@ -228,16 +227,14 @@ Each has a recommendation; answer only where you disagree.
    results stay "Always" and can't be changed.
 9. **Platinum fixed at unlimited and every feature, and caps must not fall as the plan
    rises?** Recommended: yes, so the default plan can never lose anything through a typo.
-10. **First build caps are only entries per contest, sports leagues per year and league
-    size**, with selection types, pool styles and the others in *Not in the first build*?
+10. **First build caps are only entries per contest and sports leagues per year**, with selection types, pool styles and the others in *Not in the first build*?
     Recommended: yes; they are what you named, and selection types can join the same
     settings later in one small slice.
 11. **A dedicated Plans page in the root admin, saved as one `PLAN_CONFIG` settings group?**
     Recommended: yes. It reuses the settings history and refresh, and a grid by plan is
     easier to read than the generic settings form.
 12. **What a commissioner sees**: a plan picker on league settings with the comparison table,
-    and counters where caps bite ("18 of 20 entries", "1 of 1 sports leagues this year",
-    "20 of 20 squads")? Recommended: yes; members see only "full" messages, never a plan name.
+    and counters where caps bite ("18 of 20 entries", "1 of 1 sports leagues this year")? Recommended: yes; members see only "full" messages, never a plan name.
 
 ### Proposed slices (after Derek agrees)
 
@@ -247,7 +244,7 @@ Each has a recommendation; answer only where you disagree.
 2. **Choosing a plan**: league settings plan picker and comparison table; the root admin's
    league page shows and changes it; API and contracts.
 3. **Root admin Plans page**: the caps and features grids over `PLAN_CONFIG`.
-4. **Caps**: entries per contest, sports leagues per year, league size; counters and locked
+4. **Caps**: entries per contest and sports leagues per year; counters and locked
    states; failing tests first for each refusal.
 5. **Feature gating**: championship and history routes and views, and emails at send time.
 
@@ -339,7 +336,6 @@ A starting point to react to, not a decision. Names follow Derek's message.
 |---|---|---|---|---|
 | **Entries per contest** | 20 | 50 | 100 | Unlimited |
 | **Sports leagues the league plays** (PGA Tour, NFL, ...) | 1 | 3 | 10 | All |
-| **League size** (active squads) | 20 | 50 | 100 | Unlimited |
 | **Pool styles** (office pool, pick'em, DFS-style) | 1 | 1 | 2 | All |
 | Selection types | Tiered | All in its styles | All in its styles | All |
 | Core loop: invites, picks, live leaderboard, results | ✓ | ✓ | ✓ | ✓ |
@@ -474,7 +470,8 @@ the LPGA Tour are two.
 
 ### Vector: league size
 
-New 2026-10-22 (Derek): upper plans unlock larger leagues, counted as **active squads** (for
+**Dropped (Derek 2026-10-24): no league size cap; see *First build*, Q6.** Kept for the
+record. New 2026-10-22 (Derek): upper plans unlock larger leagues, counted as **active squads** (for
 example Free 20, Pro 50, Premium 100, Platinum unlimited). This sits beside the entry cap; it
 does not replace it (*Where the cap goes*).
 
@@ -536,7 +533,6 @@ work. A feature does not need a different version on every plan.
 |---|---|---|
 | Entries per contest | Number | Adding an entry (*Where the cap goes*) |
 | Sports leagues the league plays | Number | League settings and Create contest (*Number of sports leagues*) |
-| League size (active squads) | Number | Accepting an invite (*League size*) |
 | Pool styles | Number, plus which | League settings and Create contest (*Pool style*) |
 | Selection types | Set | Create contest (*Enablement*) |
 | Features | Feature classes | Each feature's routes, tiles or emails |
@@ -560,7 +556,7 @@ plan that gets it. Nothing is gated yet.
 | Email notifications | #845 | Per email: Essential and A free, B paid; cup, championship, season standings and trophy emails B | `plans/email-notifications.md`, *Class* |
 
 Pro and Premium leagues see the same cups and championship; Premium's bigger numbers on the
-levers (more entries, more sports leagues, more squads) are what make it worth more.
+levers (more entries, more sports leagues) are what make it worth more.
 
 ## Paid features worth paying for
 
