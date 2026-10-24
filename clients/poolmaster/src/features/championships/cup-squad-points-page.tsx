@@ -1,4 +1,5 @@
 import { useParams } from 'react-router-dom';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { buildLeagueContestLeaderboardPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import {
   Breadcrumbs,
@@ -9,18 +10,27 @@ import {
   LoadingState,
   Tile,
 } from '@/features/shared/ui';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { CUP_WEIGHT_LABELS, formatCupPoints } from './cup-view';
 import { useChampionshipsRoute } from './use-championships-route';
 import { useCupSquadPointsQuery, useSeasonCupsQuery } from './use-cups-query';
 
-/** One squad's points in a cup, counted contest by counted contest, each opening its leaderboard. */
+/**
+ * One squad's points in a cup, counted contest by counted contest, each opening its leaderboard.
+ * On a plan without cups, the locked note instead (#948).
+ */
 export function CupSquadPointsPage() {
   const { sportLeagueId = '', squadId = '' } = useParams<{ sportLeagueId: string; squadId: string }>();
-  const { leagueCode, leagueId, year } = useChampionshipsRoute();
-  const cupsQuery = useSeasonCupsQuery(leagueId, year);
+  const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
+  const isInPlan = hasPlanFeature(league, PlanFeature.CUP_STANDINGS);
+  const cupsQuery = useSeasonCupsQuery(isInPlan ? leagueId : '', year);
   const cup = cupsQuery.data?.find((candidate) => candidate.sportLeagueId === sportLeagueId);
   const pointsQuery = useCupSquadPointsQuery(leagueId, cup?.id ?? '', squadId);
 
+  if (!isInPlan) {
+    return <PlanLockedNotice feature={PlanFeature.CUP_STANDINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
+  }
   if (cupsQuery.isLoading || (cup && pointsQuery.isLoading)) {
     return <LoadingState body="Loading cup points..." />;
   }

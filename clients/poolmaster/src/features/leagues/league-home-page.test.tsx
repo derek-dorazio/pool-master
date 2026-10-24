@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { LeagueHomePage } from './league-home-page';
@@ -17,6 +18,7 @@ import {
 } from './test/fixtures';
 import type { CupDto } from '@/lib/api';
 import { buildRunningCup } from '@/features/championships/test/fixtures';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
@@ -149,7 +151,9 @@ function primeMocks({
   isActive = true,
   hasTeam = true,
   role = 'MEMBER' as 'MEMBER' | 'COMMISSIONER',
+  features = Object.values(PlanFeature),
 }: {
+  features?: PlanFeature[];
   contests?: ReturnType<typeof contest>[];
   cups?: CupDto[];
   entriesByContest?: Record<string, ReturnType<typeof entry>[]>;
@@ -161,7 +165,7 @@ function primeMocks({
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
-    buildLeague({ isActive, memberCount: 12, activeContestCount: 2 }),
+    buildLeague({ isActive, memberCount: 12, activeContestCount: 2, planEntitlements: buildPlanEntitlements({ features }) }),
     {
       membership: buildLeagueMembership({ role }),
       squadMembership: hasTeam ? buildLeagueSquadMember() : null,
@@ -392,6 +396,26 @@ describe('League Home', () => {
     expect(cups.getByTestId('league-home-cup-cup-pga')).toHaveTextContent('Birdie Bandits leads · you are 2nd · 3 of 4 final');
     expect(cups.getByTestId('league-home-cup-cup-pga')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/race/sport-league-pga');
     expect(cups.getByRole('link', { name: /Trophy case/ })).toHaveAttribute('href', '/league/BIGDAWGS/championships/2026/trophies');
+  });
+
+  it('shows no cups card and asks for no cups on a plan without them', async () => {
+    primeMocks({ cups: [buildRunningCup()], features: Object.values(PlanFeature).filter((feature) => feature !== PlanFeature.CUP_STANDINGS) });
+
+    renderLeagueHome();
+
+    await screen.findByTestId('league-home-your-team');
+    expect(listCupsMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('league-home-cups')).not.toBeInTheDocument();
+  });
+
+  it('offers the commissioner no year in review on a plan without its email', async () => {
+    primeMocks({ role: 'COMMISSIONER', features: Object.values(PlanFeature).filter((feature) => feature !== PlanFeature.EMAIL_YEAR_IN_REVIEW) });
+
+    renderLeagueHome();
+
+    await screen.findByTestId('league-home-identity');
+    expect(getYearReviewMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
   });
 
   it('shows no cups card before the league has a contest in the year', async () => {

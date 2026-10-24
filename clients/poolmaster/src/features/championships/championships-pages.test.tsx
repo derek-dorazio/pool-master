@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
@@ -12,6 +13,7 @@ import {
   buildLeagueSquadMember,
   getLeagueByCodeData,
 } from '@/features/leagues/test/fixtures';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { AllYearsPage } from './all-years-page';
 import { ChampionshipPage } from './championship-page';
 import { ChampionshipsLayout, ChampionshipsRedirect } from './championships-layout';
@@ -98,11 +100,16 @@ function renderChampionships(path: string) {
   );
 }
 
-function primeViewer(cups = [buildRunningCup()], championship = buildRunningChampionship(), role: 'MEMBER' | 'COMMISSIONER' = 'MEMBER') {
+function primeViewer(
+  cups = [buildRunningCup()],
+  championship = buildRunningChampionship(),
+  role: 'MEMBER' | 'COMMISSIONER' = 'MEMBER',
+  features: PlanFeature[] = Object.values(PlanFeature),
+) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
-    buildLeague(),
+    buildLeague({ planEntitlements: buildPlanEntitlements({ features }) }),
     { membership: buildLeagueMembership({ role }), squadMembership: buildLeagueSquadMember() },
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
@@ -190,7 +197,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
     mock.mockReset();
   }
 });
@@ -1009,5 +1016,119 @@ describe('Championships › All years', () => {
     renderChampionships('/league/BIGDAWGS/history');
 
     expect(await screen.findByTestId('all-years-error')).toBeInTheDocument();
+  });
+});
+
+/** Every feature but `locked`: a league whose plan lacks them. */
+function featuresWithout(...locked: PlanFeature[]): PlanFeature[] {
+  return Object.values(PlanFeature).filter((feature) => !locked.includes(feature));
+}
+
+/** Free's features under the default plan settings: only its emails. */
+const FREE_FEATURES = [
+  PlanFeature.EMAIL_CONTEST_OPENED,
+  PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED,
+  PlanFeature.EMAIL_CONTEST_RESULTS,
+  PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
+];
+
+describe('Championships › on a plan without them', () => {
+  it('shows a member the championship\'s name and a short note, never a plan or where to change it, and asks the server for none of it', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', FREE_FEATURES);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    const notice = await screen.findByTestId('plan-locked-CHAMPIONSHIP');
+    expect(notice).toHaveTextContent('League championship');
+    expect(notice).toHaveTextContent('This isn\'t turned on for this league.');
+    expect(notice).not.toHaveTextContent(/plan/i);
+    expect(screen.queryByTestId('plan-locked-CHAMPIONSHIP-change')).not.toBeInTheDocument();
+    expect(getChampionshipMock).not.toHaveBeenCalled();
+    expect(listChampionshipYearsMock).not.toHaveBeenCalled();
+    expect(listCupSeasonsMock).not.toHaveBeenCalled();
+  });
+
+  it('tells a commissioner it is the league\'s plan and links to changing it, with no year in review to send', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER', FREE_FEATURES);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('plan-locked-CHAMPIONSHIP')).toHaveTextContent('Your league\'s plan doesn\'t include this.');
+    expect(screen.getByTestId('plan-locked-CHAMPIONSHIP-change')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(getYearReviewMock).not.toHaveBeenCalled();
+  });
+
+  it('offers only the current year without past years, and locks an earlier year opened from a link', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', featuresWithout(PlanFeature.PAST_YEARS));
+
+    renderChampionships('/league/BIGDAWGS/championships/2025');
+
+    expect(await screen.findByTestId('plan-locked-PAST_YEARS')).toHaveTextContent('Past years');
+    expect(getChampionshipMock).not.toHaveBeenCalled();
+    expect(within(screen.getByTestId('championships-year')).getAllByRole('option').map((option) => option.textContent)).toEqual(['2026', '2025']);
+    expect(listChampionshipYearsMock).not.toHaveBeenCalled();
+    expect(listCupSeasonsMock).not.toHaveBeenCalled();
+  });
+
+  it('locks the Trophy case\'s cups and perpetual trophies each on its own', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', featuresWithout(PlanFeature.CUP_STANDINGS, PlanFeature.TROPHY_SHELF));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('plan-locked-CUP_STANDINGS')).toHaveTextContent('Sports league cups');
+    expect(screen.getByTestId('plan-locked-TROPHY_SHELF')).toHaveTextContent('Trophy shelf');
+    expect(listCupsMock).not.toHaveBeenCalled();
+    expect(listPerpetualTrophiesMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the cups but offers no Ready to crown without crowning', async () => {
+    primeViewer([buildCup({ ...NFL_CUP })], undefined, 'COMMISSIONER', featuresWithout(PlanFeature.CUP_CROWNING));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('cup-card-cup-nfl')).toBeInTheDocument();
+    expect(screen.queryByTestId('ready-to-crown-cup-nfl')).not.toBeInTheDocument();
+  });
+
+  it('shows a crowned cup\'s standings but not its podium without crowning', async () => {
+    primeViewer([CROWNED_NFL_CUP], undefined, 'MEMBER', featuresWithout(PlanFeature.CUP_CROWNING));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-nfl');
+
+    expect(await screen.findByTestId('points-race')).toBeInTheDocument();
+    expect(screen.queryByTestId('cup-podium')).not.toBeInTheDocument();
+  });
+
+  it('locks the Points race and a squad\'s cup points without cups', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', featuresWithout(PlanFeature.CUP_STANDINGS));
+
+    const { unmount } = renderChampionships('/league/BIGDAWGS/championships/2026/race');
+    expect(await screen.findByTestId('plan-locked-CUP_STANDINGS')).toBeInTheDocument();
+    unmount();
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga/squads/team-1');
+    expect(await screen.findByTestId('plan-locked-CUP_STANDINGS')).toBeInTheDocument();
+    expect(listCupsMock).not.toHaveBeenCalled();
+    expect(getCupSquadPointsMock).not.toHaveBeenCalled();
+  });
+
+  it('locks All years and the record book each on its own', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', featuresWithout(PlanFeature.ALL_TIME_SUMMARY, PlanFeature.RECORD_BOOK));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('plan-locked-ALL_TIME_SUMMARY')).toHaveTextContent('All years');
+    expect(screen.getByTestId('plan-locked-RECORD_BOOK')).toHaveTextContent('Record book');
+    expect(getHistorySummaryMock).not.toHaveBeenCalled();
+    expect(listRecordsMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps the summary with the record book locked', async () => {
+    primeViewer(undefined, undefined, 'MEMBER', featuresWithout(PlanFeature.RECORD_BOOK));
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-year-2026')).toBeInTheDocument();
+    expect(screen.getByTestId('plan-locked-RECORD_BOOK')).toBeInTheDocument();
   });
 });

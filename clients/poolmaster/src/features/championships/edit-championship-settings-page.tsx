@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
-import { CupPointsScale, championshipYear } from '@poolmaster/shared/domain';
+import { CupPointsScale, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { updateLeagueCupSettings, type LeagueDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -11,6 +11,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { Checkbox, ChoiceCard, FormField, FormPage, Input } from '@/features/shared/ui';
 import {
   CUP_POINTS_SCALES,
@@ -40,11 +42,12 @@ type ChampionshipSettingsFormValues = z.infer<typeof championshipSettingsFormSch
 
 /**
  * Edit championships: the league championship's name, the points table every cup scores on, and
- * whether the record book shows its Hall of Lame.
+ * whether the record book shows its Hall of Lame. On a plan without championship settings, the
+ * locked note instead; without the record book, no Hall of Lame switch (#948).
  */
 export function EditChampionshipSettingsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  const { league } = useLeagueContext(leagueCode);
+  const { league, viewer } = useLeagueContext(leagueCode);
 
   // The guard above this page has already loaded the league context.
   if (!league) {
@@ -53,6 +56,9 @@ export function EditChampionshipSettingsPage() {
   // An inactive league is read-only; its settings page says why Edit is unavailable.
   if (!league.isActive) {
     return <Navigate replace to={buildLeagueAdminPath(league.leagueCode)} />;
+  }
+  if (!hasPlanFeature(league, PlanFeature.CUP_SETTINGS)) {
+    return <PlanLockedNotice feature={PlanFeature.CUP_SETTINGS} isCommissioner={viewer.isCommissioner} leagueCode={league.leagueCode} />;
   }
 
   // Keyed by the league so a background refetch never overwrites the draft
@@ -208,20 +214,22 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
         open cup and this year&apos;s championship can show different totals for the same contests.
       </p>
 
-      <label className="flex items-start gap-3 text-muted-foreground">
-        <Checkbox
-          checked={hallOfLameVisible}
-          className="mt-1"
-          data-testid="edit-championships-hall-of-lame"
-          disabled={saveMutation.isPending}
-          onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
-        />
-        <span className="text-sm">
-          <strong className="block font-medium text-foreground">Show the Hall of Lame</strong>
-          The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
-          longest run without a win. Turn it off to hide it for everyone in the league.
-        </span>
-      </label>
+      {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
+        <label className="flex items-start gap-3 text-muted-foreground">
+          <Checkbox
+            checked={hallOfLameVisible}
+            className="mt-1"
+            data-testid="edit-championships-hall-of-lame"
+            disabled={saveMutation.isPending}
+            onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
+          />
+          <span className="text-sm">
+            <strong className="block font-medium text-foreground">Show the Hall of Lame</strong>
+            The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
+            longest run without a win. Turn it off to hide it for everyone in the league.
+          </span>
+        </label>
+      ) : null}
     </FormPage>
   );
 }

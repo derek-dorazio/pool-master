@@ -1,4 +1,4 @@
-import { championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -8,6 +8,8 @@ import {
   buildLeagueTrophyCasePath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { LinkButton, PageHeader, SegmentedControl, Select } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { championshipsTitle, championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
@@ -29,6 +31,8 @@ export function ChampionshipsRedirect() {
  * across every sport; Trophy case has a card per sports league cup; Points race is one cup's
  * standings, race chart and contests. The year picker (#837) changes every tab to another year
  * the league has a championship or a cup in; the year is in the path, so a year can be shared.
+ * Without PAST_YEARS on the league's plan it offers only the current year, and an earlier year
+ * opened from a link shows the locked note in place of its page (#948).
  */
 export function ChampionshipsLayout() {
   const { leagueCode = '', year: yearParam } = useParams<{ leagueCode: string; year: string }>();
@@ -37,8 +41,13 @@ export function ChampionshipsLayout() {
   const logger = useMemo(() => getLogger().child({ feature: 'championships-layout' }), []);
   const { league, query: leagueQuery, viewer } = useLeagueContext(leagueCode);
   const year = parseChampionshipYearParam(yearParam);
-  const championshipYearsQuery = useChampionshipYearsQuery(league?.id ?? '');
-  const cupSeasonsQuery = useCupSeasonsQuery(league?.id ?? '');
+  const currentYear = championshipYear(new Date());
+  const hasPastYears = hasPlanFeature(league, PlanFeature.PAST_YEARS);
+  // The year lists name earlier years, so they are asked for only on a plan that shows them.
+  const championshipYearsQuery = useChampionshipYearsQuery(
+    hasPastYears && hasPlanFeature(league, PlanFeature.CHAMPIONSHIP) ? league?.id ?? '' : '',
+  );
+  const cupSeasonsQuery = useCupSeasonsQuery(hasPastYears && hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? league?.id ?? '' : '');
 
   useEffect(() => {
     if (leagueQuery.isError) {
@@ -70,8 +79,9 @@ export function ChampionshipsLayout() {
   const years = championshipYearsOffered(
     [year, ...(championshipYearsQuery.data ?? []).map((row) => row.year)],
     cupSeasonsQuery.data ?? [],
-    championshipYear(new Date()),
+    currentYear,
   );
+  const isPastYearLocked = year < currentYear && !hasPastYears;
 
   return (
     <section className="space-y-6" data-testid="championships-page">
@@ -104,8 +114,10 @@ export function ChampionshipsLayout() {
         )}
         title={championshipsTitle(year, new Date())}
       />
-      <YearReviewBanner isCommissioner={viewer.isCommissioner} leagueId={league?.id ?? ''} />
-      <Outlet />
+      {league ? <YearReviewBanner isCommissioner={viewer.isCommissioner} league={league} /> : null}
+      {isPastYearLocked
+        ? <PlanLockedNotice feature={PlanFeature.PAST_YEARS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
+        : <Outlet />}
     </section>
   );
 }

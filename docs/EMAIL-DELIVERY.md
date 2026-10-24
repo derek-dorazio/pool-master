@@ -83,6 +83,10 @@ category, the same for all their leagues (#844 slice 5, Q7.1). The switchable ca
 suppression list and records an email in a category the recipient turned off as `SKIPPED` with
 the reason `OPTED_OUT`.
 
+An email whose `PlanFeature` the league's plan lacks (*Plans* in `plans/monetization-strategy.md`)
+is recorded as `SKIPPED` with the reason `NOT_IN_PLAN` (#948), checked after the template switch;
+account and membership emails have no feature and always go.
+
 Every email in a switchable category, to someone with an account, carries:
 
 - a footer link, *Stop these emails*, to `${APP_BASE_URL}/email/unsubscribe?token=…`: a page that

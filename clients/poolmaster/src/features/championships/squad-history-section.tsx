@@ -1,8 +1,11 @@
-import { championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { Trophy } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
+import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Select, Tile } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
 import { SquadPerpetualPlates } from './perpetual-trophies';
@@ -17,7 +20,9 @@ import { usePerpetualTrophiesQuery, useSquadHistoryQuery } from './use-champions
  * A squad's results on its squad page (#872, mockup E): the year picked (`?year=`, the current one
  * by default) with its championship, cups and contests; then its trophy case, with its contest
  * medals all time, every trophy it has won and its perpetual trophy plates; then the records it holds; then an All years
- * strip, one line per year it placed in, each opening that year here.
+ * strip, one line per year it placed in, each opening that year here. On the league's plan
+ * (#948): without the trophy shelf its trophy case is the locked note, without past years only
+ * the current year shows, and without the record book no records.
  */
 export function SquadHistorySection({
   leagueCode,
@@ -29,15 +34,18 @@ export function SquadHistorySection({
   squad: Pick<SquadDto, 'id' | 'name'>;
 }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { league, viewer } = useLeagueContext(leagueCode);
+  const hasShelf = hasPlanFeature(league, PlanFeature.TROPHY_SHELF);
+  const hasPastYears = hasPlanFeature(league, PlanFeature.PAST_YEARS);
   const currentYear = championshipYear(new Date());
-  const year = parseChampionshipYearParam(searchParams.get('year') ?? undefined) ?? currentYear;
-  const historyQuery = useSquadHistoryQuery(leagueId, squad.id);
-  const years = championshipYearsOffered([year, ...(historyQuery.data?.years ?? []).map((row) => row.year)], [], currentYear);
+  const year = hasPastYears ? parseChampionshipYearParam(searchParams.get('year') ?? undefined) ?? currentYear : currentYear;
+  const historyQuery = useSquadHistoryQuery(hasShelf ? leagueId : '', squad.id);
+  const years = championshipYearsOffered([year, ...(hasPastYears ? historyQuery.data?.years ?? [] : []).map((row) => row.year)], [], currentYear);
   const chooseYear = (next: number) => {
     setSearchParams(next === currentYear ? {} : { year: String(next) }, { replace: true });
   };
-  const placedYears = squadYearsPlaced(historyQuery.data?.years ?? []);
-  const plates = platesWonBy(usePerpetualTrophiesQuery(leagueId).data ?? [], squad.id);
+  const placedYears = hasPastYears ? squadYearsPlaced(historyQuery.data?.years ?? []) : [];
+  const plates = platesWonBy(usePerpetualTrophiesQuery(hasShelf ? leagueId : '').data ?? [], squad.id);
 
   return (
     <section className="space-y-6" data-testid="squad-history">
@@ -57,7 +65,9 @@ export function SquadHistorySection({
         <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} squad={squad} year={year} />
       </div>
 
-      {historyQuery.isError ? (
+      {!hasShelf ? (
+        <PlanLockedNotice feature={PlanFeature.TROPHY_SHELF} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
+      ) : historyQuery.isError ? (
         <ErrorState body="We couldn't load this squad's trophies and past years." testId="squad-history-error" />
       ) : !historyQuery.data ? (
         <LoadingState body="Loading this squad's trophies..." />
@@ -97,7 +107,7 @@ export function SquadHistorySection({
             ) : null}
           </Tile>
 
-          <SquadRecords leagueId={leagueId} squadId={squad.id} />
+          {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? <SquadRecords leagueId={leagueId} squadId={squad.id} /> : null}
 
           {placedYears.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">

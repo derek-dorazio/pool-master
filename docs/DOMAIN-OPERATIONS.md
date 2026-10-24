@@ -1005,6 +1005,20 @@ contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pur
 | Send the year in review | `commissioner` | `sendYearReview`, `POST /leagues/:id/history/year-review/:year/send` (#872): emails each active owner of an active squad that placed in last year its squad's year (`YEAR_IN_REVIEW`, Results category), then records the send in `league_year_reviews`. 409 `YEAR_REVIEW_NOT_OPEN` for another year, `YEAR_REVIEW_NOTHING_TO_SEND`, `YEAR_REVIEW_ALREADY_SENT` |
 | Get a squad's history | `member` | `getSquadHistory`, `GET /leagues/:id/history/squads/:squadId/years` (#872): the squad's contest medals all time (its championship rows' 1sts, 2nds and 3rds summed over every year, so they match the Championship tab), its trophy shelf (`TrophyKind` `CHAMPIONSHIP` for a championship finished 1st to 3rd with points in a year that is over, `CUP` for a crowned cup's trophy, each with its `CupTrophy` place), and its year as `getSquadYear` reads it for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 `SQUAD_NOT_FOUND` |
 
+**Hidden by plan (#948).** Each view above belongs to a `PlanFeature`
+(`plans/season-cups.md` §7), and its route answers 403 `PLAN_FEATURE_NOT_INCLUDED`, with the
+missing feature in `details.feature` and never a plan name, unless the league's plan has it:
+`CUP_STANDINGS` for the cup reads, `CUP_CROWNING` to crown, `CHAMPIONSHIP` for the championship,
+`TROPHY_SHELF` for perpetual trophies and a squad's history, `ALL_TIME_SUMMARY`, `RECORD_BOOK`,
+and `EMAIL_YEAR_IN_REVIEW` for the year in review. A year before the current one (US Eastern)
+also needs `PAST_YEARS`, and listing the years needs it outright. `CUP_SETTINGS` gates the
+championship settings write and the contest cup weight, and changing `hallOfLameVisible` there
+needs `RECORD_BOOK`. A squad's year stays open, with its championship row null and its cup rows
+empty when the plan lacks them; a year's final contests always stay open. Root admins are held to
+the league's plan too. Nothing is deleted or stops being written, so a higher plan shows it all
+again. The app shows a locked note in place of each view: commissioners get a link to change the
+plan, members are told only that it isn't turned on.
+
 The web app's Championships page lands on the year's **Championship** tab
 (`/league/:code/championships/:year`): the championship's name and who leads it, or, once the
 year is over, the trophy and the podium; the medal tiles; the finish matrix; and the year's
