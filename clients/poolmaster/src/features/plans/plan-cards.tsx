@@ -32,7 +32,7 @@ export function PlanCards({ plans, renderAction }: PlanCardsProps) {
           </div>
           <p className="flex items-baseline gap-1.5" data-testid={`plan-card-${card.plan}-price`}>
             <span className="font-display text-3xl font-bold text-foreground">{index === 0 ? '$0' : 'Free'}</span>
-            <span className="text-sm text-muted-foreground">{index === 0 ? 'forever' : 'for now'}</span>
+            {index === 0 ? null : <span className="text-sm text-muted-foreground">for now</span>}
           </p>
           {renderAction(card.plan)}
           <div className="space-y-2 border-t border-border pt-4">

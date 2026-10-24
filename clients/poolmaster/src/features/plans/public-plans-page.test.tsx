@@ -69,7 +69,7 @@ describe('PublicPlansPage', () => {
     renderPage();
 
     const free = within(await screen.findByTestId('plan-card-FREE'));
-    expect(free.getByTestId('plan-card-FREE-price')).toHaveTextContent('$0forever');
+    expect(free.getByTestId('plan-card-FREE-price')).toHaveTextContent(/^\$0$/);
     expect(free.getByTestId('plan-card-FREE-highlights')).toHaveTextContent('Up to 20 entries per contest');
     for (const plan of [LeaguePlan.PRO, LeaguePlan.PREMIUM, LeaguePlan.PLATINUM]) {
       expect(screen.getByTestId(`plan-card-${plan}-price`)).toHaveTextContent('Freefor now');

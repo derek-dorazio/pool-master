@@ -63,8 +63,8 @@ moves its tick on both pages and its line in the highlights with no deploy
   plan and its price. A group can be collapsed to one summary row showing how many of its items
   each plan has ("4 of 11", "11 of 11"); on the public page Emails starts collapsed because it
   has eleven rows, on the commissioner page everything starts open.
-- **Phone**: all four columns stay, with short headings (Free, Pro, Prem., Plat.) and ticks,
-  which fit a 390 px screen; the one-line descriptions drop to keep rows short.
+- **Phone**: all four columns stay, with the full plan names and ticks, which fit a 390 px
+  screen with no sideways scroll; the one-line descriptions drop to keep rows short.
 
 ## Public plans page
 
