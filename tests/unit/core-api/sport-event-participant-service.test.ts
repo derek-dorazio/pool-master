@@ -23,6 +23,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     participantRounds: store.participantRoundRepo(),
     golfStandings: store.golfStandingRepo(),
     golfRounds: store.golfRoundRepo(),
+    statLines: store.statLineRepo(),
     raceResults: store.raceResultRepo(),
     matches: store.matchRepo(),
     random: () => 0.5,
@@ -330,6 +331,7 @@ describe('SportEventParticipantService — field upload', () => {
       participantRounds: store.participantRoundRepo(),
       golfStandings: store.golfStandingRepo(),
       golfRounds: store.golfRoundRepo(),
+      statLines: store.statLineRepo(),
       raceResults: store.raceResultRepo(),
       matches: store.matchRepo(),
     });

@@ -69,6 +69,8 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     matchPeriodLayout: null,
     squaresFromRound: null,
     noun: null,
+    participantType: null,
+    scoringFamily: null,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

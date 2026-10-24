@@ -1,5 +1,7 @@
 import { ContestTemplateEventType, type Sport, TournamentFormat } from './enums';
 import { getSportDefinition } from './sports/registry';
+import { eventSportDefinition, type SportLeagueEvent } from './sports/sport-league-definition';
+import type { SportDefinition } from './sports/sport-definition';
 
 /**
  * Which tournament formats are played as matches between two sides (#698, #715). Exhaustive, so a
@@ -16,7 +18,20 @@ const PLAYS_MATCHES: Readonly<Record<TournamentFormat, boolean>> = {
 
 /** Whether an event of this sport is played as matches between two sides, by its sport's tournament format. */
 export function sportPlaysMatches(sport: Sport): boolean {
-  return PLAYS_MATCHES[getSportDefinition(sport).tournamentFormat];
+  return definitionPlaysMatches(getSportDefinition(sport));
+}
+
+/** Whether a sport league's events are played as matches, by its definition's tournament format. */
+export function definitionPlaysMatches(definition: SportDefinition): boolean {
+  return PLAYS_MATCHES[definition.tournamentFormat];
+}
+
+/**
+ * Whether the event is played as matches, by its sport league's definition (#934): a team sport's
+ * stat pool league plays no matches, though its sport does.
+ */
+export function eventPlaysMatches(event: SportLeagueEvent): boolean {
+  return definitionPlaysMatches(eventSportDefinition(event));
 }
 
 /**
@@ -24,11 +39,12 @@ export function sportPlaysMatches(sport: Sport): boolean {
  * sport's event of one round, whose games form no bracket (#715), else a knockout; null for a
  * sport whose events are all one kind. An event with no round count has its sport's default.
  */
-export function contestTemplateEventTypeOf(event: { sport: Sport; rounds?: number | null }): ContestTemplateEventType | null {
-  if (!sportPlaysMatches(event.sport)) {
+export function contestTemplateEventTypeOf(event: SportLeagueEvent & { rounds?: number | null }): ContestTemplateEventType | null {
+  const definition = eventSportDefinition(event);
+  if (!definitionPlaysMatches(definition)) {
     return null;
   }
-  const rounds = event.rounds ?? getSportDefinition(event.sport).defaultRounds;
+  const rounds = event.rounds ?? definition.defaultRounds;
   return rounds === 1 ? ContestTemplateEventType.WEEK : ContestTemplateEventType.KNOCKOUT;
 }
 
@@ -39,7 +55,7 @@ export function contestTemplateEventTypeOf(event: { sport: Sport; rounds?: numbe
  */
 export function isTemplateOfferedOn(
   template: { sport: Sport; sportLeagueId: string | null; eventType?: ContestTemplateEventType | null },
-  event: { sport: Sport; sportLeagueId: string; rounds?: number | null },
+  event: SportLeagueEvent & { sportLeagueId: string; rounds?: number | null },
 ): boolean {
   return template.sport === event.sport
     && (template.sportLeagueId === null || template.sportLeagueId === event.sportLeagueId)

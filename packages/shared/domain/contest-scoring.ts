@@ -11,6 +11,7 @@ export const ParticipantScoringDefinitionIdSchema = z.enum([
   'GOLF_RELATIVE_TO_PAR_TOTAL',
   'FINISH_POSITION_POINTS',
   'KNOCKOUT_ROUND_POINTS',
+  'COMPOSITE_TOTAL',
 ]);
 export type ParticipantScoringDefinitionId = z.infer<
   typeof ParticipantScoringDefinitionIdSchema
@@ -97,6 +98,17 @@ export const PARTICIPANT_SCORING_DEFINITIONS = {
     format: (value: number): string => String(value),
     formatRound: null,
   },
+  /**
+   * Composite total (#934): a stat pool player's games summed, each game the sport's composite of
+   * their stats (Box Score for baseball), more is better. A game not played scores 0. The game
+   * columns read the stat lines, not a golf round, so there is no round formatter here.
+   */
+  COMPOSITE_TOTAL: {
+    direction: 'HIGHER_IS_BETTER',
+    unit: 'POINTS',
+    format: (value: number): string => String(value),
+    formatRound: null,
+  },
 } as const satisfies Record<ParticipantScoringDefinitionId, ParticipantScoringDefinition>;
 
 /** The most places a finish-position points table may score. */
@@ -177,6 +189,8 @@ export const PARTICIPANT_SCORING_SETTINGS_SCHEMAS = {
   GOLF_RELATIVE_TO_PAR_TOTAL: z.object({}),
   FINISH_POSITION_POINTS: FinishPositionPointsSettingsSchema,
   KNOCKOUT_ROUND_POINTS: KnockoutRoundPointsSettingsSchema,
+  // The sport fixes the composite's formula, so a stat pool contest sets nothing (#932 Q3).
+  COMPOSITE_TOTAL: z.object({}),
 } as const satisfies Record<ParticipantScoringDefinitionId, z.ZodType>;
 
 /** One definition's settings, as its schema parses them. */
@@ -212,6 +226,10 @@ export const ContestScoringSettingsSchema = z.discriminatedUnion('participantSco
   z.object({
     participantScoringDefinitionId: z.literal('KNOCKOUT_ROUND_POINTS'),
     config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.KNOCKOUT_ROUND_POINTS,
+  }),
+  z.object({
+    participantScoringDefinitionId: z.literal('COMPOSITE_TOTAL'),
+    config: PARTICIPANT_SCORING_SETTINGS_SCHEMAS.COMPOSITE_TOTAL,
   }),
 ]).describe("A contest's participant scoring definition with its settings. The definition must be one the event's sport offers; omitted, the contest takes its template's preset or its sport's default.");
 

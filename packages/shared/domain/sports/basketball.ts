@@ -1,11 +1,25 @@
 import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
+import { SportStat, statValue, type SportComposite } from './sport-stats';
 
 /** What the last rounds of a basketball bracket are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['National Championship', 'Final Four', 'Elite Eight', 'Sweet 16'] as const;
 /** What the opening rounds are called, before the named ones. */
 const OPENING_ROUND_NAMES = ['First Round', 'Second Round', 'Third Round'] as const;
+
+/** The stats Triple Threat counts. */
+const BASKETBALL_STATS = [SportStat.POINTS, SportStat.REBOUNDS, SportStat.ASSISTS] as const;
+/** One of Triple Threat's stats: basketball's typed slice of `SportStat`. */
+type BasketballStat = (typeof BASKETBALL_STATS)[number];
+
+/** Triple Threat (#932): points + rebounds + assists. */
+const basketballComposite: SportComposite<BasketballStat> = {
+  name: 'Triple Threat',
+  stats: BASKETBALL_STATS,
+  defaultGames: 7,
+  score: (line) => statValue(line, SportStat.POINTS) + statValue(line, SportStat.REBOUNDS) + statValue(line, SportStat.ASSISTS),
+};
 
 /**
  * Basketball (#698, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout bracket,
@@ -32,6 +46,7 @@ export const basketballSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   shootout: null,
+  composite: basketballComposite,
   // Quarters, as the NBA, the WNBA and women's college basketball play; men's college basketball
   // plays halves (its sport league's `matchPeriodLayout`).
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,

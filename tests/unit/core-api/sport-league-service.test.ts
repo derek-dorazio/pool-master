@@ -28,6 +28,8 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     tierCount: null,
     matchPeriodLayout: null,
     squaresFromRound: null,
+    participantType: null,
+    scoringFamily: null,
     noun: null,
     displayName: null,
     displayOrder: null,

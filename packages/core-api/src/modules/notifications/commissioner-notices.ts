@@ -39,7 +39,7 @@ import {
   SportEventStatus,
   contestTemplateEventTypeOf,
   countParticipants,
-  getSportDefinition,
+  eventSportDefinition,
   isTemplateOfferedOn,
   type Contest,
   type League,
@@ -327,7 +327,7 @@ export class CommissionerNotices implements DueNotifications {
       this.deps.templates.list({ sport: sportEvent.sport, active: true }),
     ]);
     const fieldSize = fieldSizes.get(sportEvent.id) ?? 0;
-    const field = fieldSize > 0 ? countParticipants(fieldSize, getSportDefinition(sportEvent.sport).vocabulary.participant) : null;
+    const field = fieldSize > 0 ? countParticipants(fieldSize, eventSportDefinition(sportEvent).vocabulary.participant) : null;
     const defaults = templates.filter((template) => template.isDefault && isTemplateOfferedOn(template, sportEvent));
     for (const league of leagues) {
       const setups: ContestSetupLink[] = defaults.map((template) => ({

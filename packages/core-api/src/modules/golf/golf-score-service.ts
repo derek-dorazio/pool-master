@@ -37,12 +37,12 @@ import {
   rankSortedScores,
   type GolfRoundResult,
   type GolfStandingResult,
-  type Sport,
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../ingestion/core/sync-write-diagnostics';
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../ingestion/core/sync-write-diagnostics';
 import { matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../sport-catalog/participant-row-resolver';
+import type { ScoringFamilyEvent } from '../scoring-families/scoring-family-module';
 
 export class GolfScoreError extends Error {
   constructor(
@@ -118,7 +118,7 @@ export interface GolfScoreServiceDeps {
    * Whether an event of this sport keeps golf round scores, by its sport's scoring family. The
    * admin corrections refuse any other event rather than write golf rows onto it.
    */
-  storesGolfRoundScores: (sport: Sport) => boolean;
+  storesGolfRoundScores: (event: ScoringFamilyEvent) => boolean;
   logger?: FastifyBaseLogger;
 }
 
@@ -509,7 +509,7 @@ export class GolfScoreService {
    */
   private async requireGolfScoredEvent(sportEventId: string): Promise<SportEvent | null> {
     const event = await this.deps.events.findById(sportEventId);
-    if (event && !this.deps.storesGolfRoundScores(event.sport)) {
+    if (event && !this.deps.storesGolfRoundScores(event)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused golf round scores for an event whose scoring family does not keep them');
       throw new GolfScoreError(
         `Sport event ${sportEventId} is a ${event.sport} event, whose scoring family does not keep golf round scores.`,

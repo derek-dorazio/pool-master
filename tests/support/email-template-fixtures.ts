@@ -30,6 +30,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueCode: 'OFFICE24',
     leagueHomeUrl: 'http://localhost:5173/league/OFFICE24',
     teamName: 'Morgan\'s Squad',
+    openContests: [{ name: 'Masters Pick 6', url: 'http://localhost:5173/league/OFFICE24/contests/contest-1' }],
   },
   SQUAD_OWNER_INVITE: {
     recipientEmail: 'jordan@example.com',

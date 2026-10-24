@@ -12,7 +12,8 @@ import {
   getTiersInPlay,
   isRosterSelectionType,
   sportAllowsSelectionType,
-  sportPlaysMatches,
+  definitionPlaysMatches,
+  sportLeagueDefinitionOf,
 } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
@@ -814,7 +815,7 @@ describe('Every seeded contest template, whatever its sport', () => {
 
     expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(SCORED_SPORTS));
     const problems = templates.flatMap((template) => {
-      const definition = getSportDefinition(template.sport);
+      const definition = template.sportLeague ? sportLeagueDefinitionOf(template.sport, template.sportLeague) : getSportDefinition(template.sport);
       const parsed = ContestRulesWithEntryLimitSchema.safeParse(template.configJson);
       if (!parsed.success) {
         return [`${template.templateKey}: rules do not parse`];
@@ -856,7 +857,7 @@ describe('Every seeded contest template, whatever its sport', () => {
         switch (rules.selectionType) {
           case SelectionType.TIERED:
             return getTieredRosterSize(
-              getTiersInPlay(template.sportLeague?.tierCount ?? getSportDefinition(template.sport).defaultTierLayout.tierCount, rules.tiersUsed),
+              getTiersInPlay(template.sportLeague?.tierCount ?? (template.sportLeague ? sportLeagueDefinitionOf(template.sport, template.sportLeague) : getSportDefinition(template.sport)).defaultTierLayout.tierCount, rules.tiersUsed),
               rules.picksPerTier,
             );
           case SelectionType.BUDGET_PICK:
@@ -900,6 +901,7 @@ describe('Every seeded contest template, whatever its sport', () => {
       ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport) && !LEAGUES_PLAYED_ONLY_IN_WEEKS.includes(league.name)).map((league) => ({
         name: league.name,
         sport: league.sport.sport,
+        definition: sportLeagueDefinitionOf(league.sport.sport, league),
         offered: templates.filter((template) => template.sport === league.sport.sport
           && (template.sportLeagueId === null || template.sportLeagueId === league.id)),
       })),
@@ -908,13 +910,14 @@ describe('Every seeded contest template, whatever its sport', () => {
         .map((sport) => ({
           name: `${sport} (sport-wide)`,
           sport,
+          definition: getSportDefinition(sport),
           offered: templates.filter((template) => template.sport === sport && template.sportLeagueId === null),
         })),
     ];
 
-    const problems = scopes.flatMap(({ name, sport, offered }) => [
+    const problems = scopes.flatMap(({ name, definition, offered }) => [
       ...(offered.some((template) => template.isDefault) ? [] : [`${name}: no default preset`]),
-      ...getSportDefinition(sport).selectionTypes
+      ...definition.selectionTypes
         .filter((selectionType) => isRosterSelectionType(selectionType))
         .filter((selectionType) => !offered.some((template) => template.selectionType === selectionType))
         .map((selectionType) => `${name}: no ${selectionType} preset`),
@@ -1063,14 +1066,13 @@ describe('Every seeded sport league\'s default templates and their names (#802)'
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
     const scopes = [
       ...leagues.filter((league) => SCORED_SPORTS.includes(league.sport.sport))
-        .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id as string | null })),
+        .map((league) => ({ name: league.name, sport: league.sport.sport, sportLeagueId: league.id as string | null, definition: sportLeagueDefinitionOf(league.sport.sport, league) })),
       ...SCORED_SPORTS.filter((sport) => !leagues.some((league) => league.sport.sport === sport))
-        .map((sport) => ({ name: `${sport} (sport-wide)`, sport, sportLeagueId: null as string | null })),
+        .map((sport) => ({ name: `${sport} (sport-wide)`, sport, sportLeagueId: null as string | null, definition: getSportDefinition(sport) })),
     ];
 
-    const problems = scopes.flatMap(({ name, sport, sportLeagueId }) => {
-      const definition = getSportDefinition(sport);
-      const kinds: Array<{ eventType: ContestTemplateEventType | null; selectionTypes: readonly SelectionType[] }> = sportPlaysMatches(sport)
+    const problems = scopes.flatMap(({ name, sport, sportLeagueId, definition }) => {
+      const kinds: Array<{ eventType: ContestTemplateEventType | null; selectionTypes: readonly SelectionType[] }> = definitionPlaysMatches(definition)
         ? [
           ...(LEAGUES_PLAYED_ONLY_IN_WEEKS.includes(name) ? [] : [{ eventType: ContestTemplateEventType.KNOCKOUT, selectionTypes: KNOCKOUT_SELECTION_TYPES }]),
           ...(name in WEEK_SELECTION_TYPES ? [{ eventType: ContestTemplateEventType.WEEK, selectionTypes: WEEK_SELECTION_TYPES[name] }] : []),

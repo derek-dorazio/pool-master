@@ -617,7 +617,7 @@ export class SelectionService {
         field,
         participantsById: new Map(participants.map((p: Participant) => [p.id, p])),
         valuationBySportEventParticipantId: buildValuationLookup(valuations),
-        sport: sportEvent.sport,
+        event: sportEvent,
       }),
     };
   }

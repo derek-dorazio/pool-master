@@ -24,6 +24,7 @@ export const autoRacingSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   shootout: null,
+  composite: null,
   vocabulary: {
     participant: { one: 'driver', many: 'drivers' },
     event: { one: 'race', many: 'races' },

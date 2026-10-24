@@ -7,7 +7,9 @@ import {
   MatchSide,
   MatchStatus,
   type ParticipantContestScoringRule,
+  ParticipantType,
   PickEmMode,
+  ScoringFamily,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -267,6 +269,8 @@ function createSportEventReader(overrides?: Partial<{
   gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
   squaresFromRound: number | null;
+  participantType: ParticipantType;
+  scoringFamily: ScoringFamily;
 }>): {
   findById: jest.Mock;
   findActiveFieldPrices: jest.Mock;
@@ -300,6 +304,8 @@ function createSportEventReader(overrides?: Partial<{
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       salaryCap: overrides?.salaryCap ?? null,
       squaresFromRound: overrides?.squaresFromRound ?? null,
+      ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
+      ...(overrides?.scoringFamily !== undefined && { scoringFamily: overrides.scoringFamily }),
     }),
   };
 }
@@ -1834,6 +1840,83 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
 });
 
 // #713: a contest covers one or more events of one sport league, kept in start-date order.
+describe('ContestManagementService stat pool scoring (#934)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  const drawRules = { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 3, countedScores: 3 } as const;
+  const request = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    name: 'World Series Box Score pool',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+    contestFormat: 'ROSTER',
+    selectionType: SelectionType.RANDOM_DRAW,
+    configuration: drawRules,
+    ...overrides,
+  });
+
+  /** A contest service whose one event is a World Series stat pool's, or with `statPool` false the MLB postseason's. */
+  function baseballService(statPool = true) {
+    const contestCoreRepo = createContestRepo();
+    const scoringRuleRepo = createParticipantScoringRuleRepo();
+    const service = new ContestManagementService({
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: scoringRuleRepo,
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(statPool
+        ? { sport: Sport.BASEBALL, tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT, rounds: 7, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE }
+        : { sport: Sport.BASEBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4 }),
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+    return { contestCoreRepo, scoringRuleRepo, service };
+  }
+
+  it('scores a stat pool contest sent no scoring by the composite total, the league\'s one definition', async () => {
+    const { scoringRuleRepo, service } = baseballService();
+
+    await service.createContest({ leagueId: 'league-1' }, request());
+
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({
+      scoring: { participantScoringDefinitionId: 'COMPOSITE_TOTAL', config: {} },
+    }));
+  });
+
+  it('refuses a stat pool contest scored by its sport\'s knockout round points with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED, writing nothing', async () => {
+    const { contestCoreRepo, service } = baseballService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, request({
+      configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 2, 4, 8, 16, 32, 64], upsetBonus: { rule: 'NONE' } } } },
+    }))).rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a bracket on a stat pool event, whose players play no matches to predict, with 422 CONTEST_FORMAT_NOT_ALLOWED', async () => {
+    const { contestCoreRepo, service } = baseballService();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, request({
+      contestFormat: 'PREDICTION',
+      selectionType: SelectionType.BRACKET,
+      configuration: { selectionType: SelectionType.BRACKET, startsAtRound: 1, maxEntriesPerSquad: 1, scoring: { participantScoringDefinitionId: 'COMPOSITE_TOTAL', config: {} } },
+    }))).rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses the composite total on the MLB postseason, a league of teams, with 422 CONTEST_SCORING_DEFINITION_NOT_ALLOWED', async () => {
+    const { contestCoreRepo, service } = baseballService(false);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, request({
+      configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'COMPOSITE_TOTAL', config: {} } },
+    }))).rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+});
+
 describe('ContestManagementService — a contest of several events', () => {
   beforeAll(() => {
     jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);

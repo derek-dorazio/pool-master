@@ -5,3 +5,5 @@ export { formatParticipantStatusLabel } from './participant-status-label';
 export { eventRoundLabel } from './round-label';
 export { MATCH_PERIOD_LAYOUTS, matchPeriodLayoutOf, matchPeriodsOf } from './match-periods';
 export { SPORT_LEAGUE_NOUNS, sportLeagueNounOf } from './league-nouns';
+export { SportStat, statValue, type SportComposite, type StatLine } from './sport-stats';
+export { eventSportDefinition, sportLeagueDefinitionOf, type SportLeagueEvent, type SportLeagueOverrides } from './sport-league-definition';

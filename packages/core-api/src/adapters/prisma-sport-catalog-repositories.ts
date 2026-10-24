@@ -271,6 +271,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventMatch.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
+      this.prisma.sportEventParticipantStatLine.deleteMany({ where: { participantRound: field } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: field }),
@@ -544,6 +545,7 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     const own = { sportEventParticipantId: id };
     await this.prisma.$transaction([
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
+      this.prisma.sportEventParticipantStatLine.deleteMany({ where: { participantRound: own } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: own }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: own } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
@@ -770,6 +772,8 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     noun: row.noun,
     displayName: row.displayName,
     displayOrder: row.displayOrder,
+    participantType: row.participantType,
+    scoringFamily: row.scoringFamily,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -789,8 +793,19 @@ function toAffiliation(
   };
 }
 
-/** Every SportEvent read carries its series' sport league, the event's one path to it, and the league's period layout and first squares round. */
-const SPORT_EVENT_INCLUDE = { eventSeries: { select: { sportLeagueId: true, sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true } } } } } as const;
+/**
+ * Every SportEvent read carries its series' sport league, the event's one path to it, and what
+ * the league plays differently from its sport: its period layout, first squares round,
+ * participant type and scoring family.
+ */
+const SPORT_EVENT_INCLUDE = {
+  eventSeries: {
+    select: {
+      sportLeagueId: true,
+      sportLeague: { select: { matchPeriodLayout: true, squaresFromRound: true, participantType: true, scoringFamily: true } },
+    },
+  },
+} as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
   return {
@@ -813,6 +828,8 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     sportLeagueId: row.eventSeries.sportLeagueId,
     ...(row.eventSeries.sportLeague.matchPeriodLayout !== null && { matchPeriodLayout: row.eventSeries.sportLeague.matchPeriodLayout }),
     ...(row.eventSeries.sportLeague.squaresFromRound !== null && { squaresFromRound: row.eventSeries.sportLeague.squaresFromRound }),
+    ...(row.eventSeries.sportLeague.participantType !== null && { participantType: row.eventSeries.sportLeague.participantType }),
+    ...(row.eventSeries.sportLeague.scoringFamily !== null && { scoringFamily: row.eventSeries.sportLeague.scoringFamily }),
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),

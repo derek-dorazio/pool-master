@@ -34,6 +34,7 @@ export const tennisSportDefinition: SportDefinition = {
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // A tennis match always has a winner: no level score to settle.
   shootout: null,
+  composite: null,
   vocabulary: {
     participant: { one: 'player', many: 'players' },
     event: { one: 'draw', many: 'draws' },

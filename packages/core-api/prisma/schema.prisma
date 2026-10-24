@@ -389,6 +389,37 @@ enum PrismaSportLeagueNoun {
   LEAGUE
 }
 
+/// How a sport's results are stored and scored (#934): the shared `ScoringFamily`. Stored only as
+/// a sport league's override; a sport's own family lives in its definition in code.
+enum PrismaScoringFamily {
+  STROKE_PLAY
+  FINISH_POSITION
+  HEAD_TO_HEAD
+  /// A stat pool's (#932): each game, a player scores the sport's composite of their stats.
+  COMPOSITE
+}
+
+/// One component stat of a sport's composite (#934), as a stat line counts it.
+enum PrismaSportStat {
+  TOTAL_BASES
+  RUNS
+  RUNS_BATTED_IN
+  WALKS
+  STOLEN_BASES
+  POINTS
+  REBOUNDS
+  ASSISTS
+  GOALS
+  SHOTS_ON_GOAL
+  PASSING_TOUCHDOWNS
+  RUSHING_TOUCHDOWNS
+  RECEIVING_TOUCHDOWNS
+  RECEPTIONS
+  PASSING_YARDS
+  RUSHING_YARDS
+  RECEIVING_YARDS
+}
+
 /// How one field member's race ended (#622). Mirrors the domain `RaceResultStatus`. Only a
 /// FINISHED runner has a finishing place; every other status scores the contest's
 /// "did not finish" points.
@@ -912,6 +943,14 @@ model SportLeague {
   /// first; null comes after every ordered league, by name. Reference data, set by the migration
   /// that seeds the league.
   displayOrder       Int?                     @map("display_order")
+  /// Who competes in its events, when not its sport's (#934: the World Series stat pool's field is
+  /// players, not teams). Null: the sport's. Reference data, set by the migration that seeds the
+  /// league.
+  participantType    PrismaParticipantType?   @map("participant_type")
+  /// How its events are scored, when not by its sport's family (#934: COMPOSITE for a
+  /// championship stat pool). Null: the sport's. Reference data, set by the migration that seeds
+  /// the league.
+  scoringFamily      PrismaScoringFamily?     @map("scoring_family")
   createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -1769,6 +1808,7 @@ model SportEventParticipantRound {
   sportEventParticipant SportEventParticipant           @relation(fields: [sportEventParticipantId], references: [id])
   sportEventRound       SportEventRound                 @relation(fields: [sportEventRoundId], references: [id])
   golf                  SportEventParticipantGolfRound?
+  statLines             SportEventParticipantStatLine[]
 
   @@unique([sportEventParticipantId, sportEventRoundId])
   @@index([sportEventParticipantId])
@@ -1789,6 +1829,23 @@ model SportEventParticipantGolfRound {
   participantRound SportEventParticipantRound @relation(fields: [participantRoundId], references: [id])
 
   @@map("sport_event_participant_golf_rounds")
+}
+
+/// The composite family's extension of a participant round (#934): one component stat of a
+/// player's game. The composite is computed from a round's lines and never stored. A stat with
+/// no line counts 0.
+model SportEventParticipantStatLine {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  participantRoundId String          @map("participant_round_id") @db.Uuid
+  stat               PrismaSportStat
+  value              Int
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  participantRound SportEventParticipantRound @relation(fields: [participantRoundId], references: [id])
+
+  @@unique([participantRoundId, stat])
+  @@map("sport_event_participant_stat_lines")
 }
 
 /// A participant's running standing in one event, cross-sport.

@@ -266,6 +266,13 @@ filling them in rather than by finding guards scattered through the code:
   sport added to the enum fails the build until it has a definition. A sport is supported
   when it is in the registry; the `Sport` enum and the validity matrices are not a write
   permission (§2 *Validity / Compatibility Matrices Source of Truth*).
+  A sport league may play its sport differently: a championship stat pool league (the World
+  Series under baseball) overrides its sport's participant type and scoring family
+  (`SportLeague.participantType`, `SportLeague.scoringFamily`, null keeping the sport's), and
+  plays its sport's stat pool definition: players, golf's roster formats and shape, scored by
+  the sport's composite. Every event carries its league's overrides, so a reader of an event's
+  selection types, scoring definitions, family, tiers, rounds or whether it plays matches reads
+  `eventSportDefinition(event)` (or `eventPlaysMatches(event)`), never `getSportDefinition(event.sport)`.
 - **The sport's scoring family** holds what is behaviour: how results are stored, scored and
   shown. Several sports share a family (golf is stroke play; basketball, American football,
   hockey, baseball, soccer and tennis are head to head; races are finish position), and each family owns one set of result
@@ -278,13 +285,15 @@ filling them in rather than by finding guards scattered through the code:
   participant scoring rule's `config`, typed per scoring definition by
   `PARTICIPANT_SCORING_SETTINGS_SCHEMAS` on write and read), returns each participant score
   with a detail keyed by family, and declares the one live-score category it accepts, or none.
-  Built: stroke play (golf), finish position (horse racing, auto racing, cycling, running) and
-  head to head (basketball, scored by knockout round points). Head to head's results are its
+  Built: stroke play (golf), finish position (horse racing, auto racing, cycling, running),
+  head to head (basketball, scored by knockout round points) and composite (the championship
+  stat pools, a family a sport league names rather than a sport, whose results are stat lines
+  extending each participant round). Head to head's results are its
   bracket (`SportEventMatch`), part of the event core rather than a family extension table,
   since pick'em reads the same matches. Finish position's admin results entry (the finishing
   order) and head to head's match results live in their folders; golf's score corrections predate the
-  folders and live in `modules/golf`. Each refuses an event whose sport's family does not keep
-  its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.
+  folders and live in `modules/golf`. Each refuses an event whose sport league's family does not
+  keep its results with 422 `EVENT_SCORING_FAMILY_MISMATCH`.
   Settings a definition cannot default (a points table) are required on contest setup rather
   than invented.
   On the web, how a family's results read on the shared contest screens is its entry in

@@ -340,6 +340,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
+    findOpenByLeague: many(),
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
     findByStatuses: many(),

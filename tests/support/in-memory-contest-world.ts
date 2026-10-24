@@ -323,6 +323,10 @@ export class InMemoryContestWorld {
       findById: async (id) => this.contests.get(id) ?? null,
       findByLeague: async (leagueId) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findOpenByLeague: async (leagueId) =>
+        [...this.contests.values()]
+          .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
+          .map(({ id, name }) => ({ id, name })),
       findSportLeagueIdsBySeason: async (leagueId, seasonYear) => this.sportLeagueIdsBySeason(leagueId, seasonYear),
       findBySportEvent: async (sportEventId, filter) =>
         [...this.contests.values()].filter((contest) =>

@@ -74,6 +74,11 @@ export type ParticipantScoreDetail =
     wins: number;
     upsetBonusPoints: number;
     isAlive: boolean;
+  }
+  | {
+    /** Composite (#934): each game the player played, with its composite, in round order. */
+    scoringFamily: typeof ScoringFamily.COMPOSITE;
+    gameScores: Array<{ roundNumber: number; score: number }>;
   };
 
 /**

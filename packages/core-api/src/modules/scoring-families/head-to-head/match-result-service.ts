@@ -45,7 +45,7 @@ import {
   getSportDefinition,
   matchPeriodsOf,
   rankSortedScores,
-  sportPlaysMatches,
+  eventPlaysMatches,
   type SportEvent,
   type SportEventMatch,
   type SportMatchPeriods,
@@ -435,7 +435,7 @@ export class MatchResultService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    if (!sportPlaysMatches(event.sport)) {
+    if (!eventPlaysMatches(event)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a match result for an event that plays no bracket');
       throw new SportEventError(
         `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket.`,

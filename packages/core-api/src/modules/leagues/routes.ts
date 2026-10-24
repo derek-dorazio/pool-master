@@ -11,6 +11,7 @@ import '@poolmaster/shared/dto/leagues.dto';
 // Registers ErrorEnvelope and SuccessResponse, which this module's routes $ref (#192).
 import '@poolmaster/shared/dto';
 import {
+  PrismaContestRepository,
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
@@ -73,6 +74,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
     users: userRepo,
+    contests: new PrismaContestRepository(prisma),
     prisma,
     logger: fastify.log,
     email,
