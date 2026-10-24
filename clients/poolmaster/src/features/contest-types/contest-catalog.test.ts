@@ -70,16 +70,36 @@ describe('the contest types catalog', () => {
     expect(catalog.find(({ sport }) => sport === 'GOLF')?.groups.map(({ name }) => name)).toEqual(['Every tournament']);
   });
 
-  it('gives the public page one tile per format for each sport, in the sport\'s format order, led by a default, with no variations', () => {
+  it('gives the public page one tile per format for each sport, the most popular sport first, in the sport\'s format order, led by a default, with no variations', () => {
     const catalog = buildPublicContestCatalog(TEMPLATES, []);
 
     expect(catalog.map(({ sport, groups }) => [sport, groups.map(({ featured, variations }) => [featured.templateKey, variations.length])])).toEqual([
-      ['GOLF', [['golf-tiered-pick-6', 0], ['golf-budget-pick-6-best-4', 0]]],
       ['AMERICAN_FOOTBALL', [['cfp-tiered-doubling', 0], ['nfl-survivor', 0], ['nfl-squares', 0]]],
+      ['GOLF', [['golf-tiered-pick-6', 0], ['golf-budget-pick-6-best-4', 0]]],
     ]);
   });
 
-  it('gives the public page each sport\'s active leagues by the name shown beside other sports\' leagues, each with the formats it offers, its own templates leading its sport\'s', () => {
+  it('lists the public page\'s sports with the major team sports first and cycling and running last', () => {
+    const sports = ['RUNNING', 'CYCLING', 'GOLF', 'BASEBALL', 'BASKETBALL', 'AMERICAN_FOOTBALL'] as const;
+    const catalog = buildPublicContestCatalog(sports.map((sport) => template(`${sport}-tiered`, { sport, sportLeagueId: null, eventType: null })), []);
+
+    expect(catalog.map(({ sport }) => sport)).toEqual(['AMERICAN_FOOTBALL', 'BASKETBALL', 'BASEBALL', 'GOLF', 'CYCLING', 'RUNNING']);
+  });
+
+  it('lists a sport\'s leagues on the public page in their display order, the NFL before the College Football Playoff, with unordered leagues after them by name', () => {
+    const everyFootballLeague = template('football-pickem', { sportLeagueId: null, eventType: 'WEEK', selectionType: 'PICK_EM' });
+    const catalog = buildPublicContestCatalog([...TEMPLATES, everyFootballLeague], [
+      sportLeagueFixture({ id: CFP, sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff', displayOrder: 20 }),
+      sportLeagueFixture({ id: XFL, sport: 'AMERICAN_FOOTBALL', name: 'XFL', displayOrder: null }),
+      sportLeagueFixture({ id: 'arena', sport: 'AMERICAN_FOOTBALL', name: 'Arena League', displayOrder: null }),
+      sportLeagueFixture({ id: NFL, sport: 'AMERICAN_FOOTBALL', name: 'NFL', displayOrder: 10 }),
+    ]);
+
+    expect(catalog.find(({ sport }) => sport === 'AMERICAN_FOOTBALL')?.leagues.map(({ name }) => name))
+      .toEqual(['NFL', 'College Football Playoff', 'Arena League', 'XFL']);
+  });
+
+  it('gives the public page each sport\'s active leagues, named as they are beside other sports\' leagues, each with the formats it offers, its own templates leading its sport\'s', () => {
     const catalog = buildPublicContestCatalog(TEMPLATES, [
       sportLeagueFixture({ id: PGA, sport: 'GOLF', name: 'PGA TOUR' }),
       sportLeagueFixture({ id: LPGA, sport: 'GOLF', name: 'LPGA Tour' }),
@@ -89,13 +109,13 @@ describe('the contest types catalog', () => {
     ]);
 
     expect(catalog.map(({ sport, leagues }) => [sport, leagues.map(({ name, slug, groups }) => [name, slug, groups.map(({ featured }) => featured.templateKey)])])).toEqual([
-      ['GOLF', [
-        ['LPGA Tour', 'lpga-tour', ['lpga-tour-majors-tiered', 'golf-budget-pick-6-best-4']],
-        ['PGA TOUR', 'pga-tour', ['golf-tiered-pick-6', 'golf-budget-pick-6-best-4']],
-      ]],
       ['AMERICAN_FOOTBALL', [
         ['College Football', 'college-football-playoff', ['cfp-tiered-doubling']],
         ['NFL', 'nfl', ['nfl-tiered-doubling', 'nfl-survivor', 'nfl-squares']],
+      ]],
+      ['GOLF', [
+        ['LPGA Tour', 'lpga-tour', ['lpga-tour-majors-tiered', 'golf-budget-pick-6-best-4']],
+        ['PGA TOUR', 'pga-tour', ['golf-tiered-pick-6', 'golf-budget-pick-6-best-4']],
       ]],
     ]);
   });

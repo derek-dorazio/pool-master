@@ -565,7 +565,7 @@ an operation's shape from a 400 — the answer the `/admin` routes these replace
 
 | Operation | Role | Notes |
 |---|---|---|
-| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
+| List | `public` | `listSportLeagues` takes the sport — the one list that does — and `isActive`. Each row carries its sport, its `displayName` ("NCAA Men's Basketball" where the name alone doesn't say the sport), its `displayOrder` (its place among its sport's leagues, major professional leagues first; reference data), its affiliation and event counts and its `currentEventYear`. Public for the How to Play page (see A11) |
 | Read one | `authenticated` | `getSportLeague` |
 | Create, update | `rootAdmin` | `createSportLeague` takes the sport; unique on `(sportId, name)`. Adding a tour is one call, not a migration |
 | Set the current event year | `rootAdmin` | `updateSportLeague` with `currentEventYear` — one write, so a sport league never has two. 422 `EVENT_YEAR_HAS_NO_EVENTS` for a year the sport league has no events in: the integrity the season foreign key it replaced used to give (#315) |
