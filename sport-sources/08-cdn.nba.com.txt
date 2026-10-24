@@ -1,0 +1,10 @@
+Source: https://cdn.nba.com/static/json/liveData/boxscore/boxscore_0042400401.json
+Final URL: https://cdn.nba.com/static/json/liveData/boxscore/boxscore_0042400401.json
+HTTP 403
+Fetched: 2026-10-24T14:38:55.960Z
+
+Access Denied
+Access Denied
+You don't have permission to access "http://cdn.nba.com/static/json/liveData/boxscore/boxscore_0042400401.json" on this server.
+Reference #18.6407d417.1792852735.c9989609
+https://errors.edgesuite.net/18.6407d417.1792852735.c9989609
