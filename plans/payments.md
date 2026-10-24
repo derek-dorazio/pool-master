@@ -97,7 +97,7 @@ now and annual plans later.
   deleted: contests over Free's cap keep their entries and take no new ones until expanded,
   and Premium features are hidden, not removed (*Moving to a lower plan* in
   `plans/monetization-strategy.md`). This job is the only new code the gift needs; the job
-  can run twice safely.
+  can run twice safely. No grace after the date (Q12).
 - **Extending the gift** is moving the dates out: a root admin action "Extend free Premium"
   that sets every gifted league's date (or one league's) to today + an interval, logged,
   rather than a database script.
@@ -435,6 +435,14 @@ annual plans later, no monthly at first. Later answers win over earlier ones bel
     Stripe Tax when needed.
 11. **Decided (Derek 2026-10-24): nothing needed now.** Test mode uses the bands above; the
     live amounts are set in the billing settings when phase 1 goes live (#985).
+
+12. **Decided (Derek 2026-10-24): no grace** when a gift ends: the league moves to Free on
+    its date; the 30 / 7 / 1 day reminders are the warning.
+13. **Decided (Derek 2026-10-24):** Free keeps what PLAN_CONFIG gives it today: contest
+    opening, receipt and results emails, every contest type and the leaderboard, 20 entries
+    per contest, 5 sports leagues a year. The rest is hidden, never deleted.
+14. **Decided (Derek 2026-10-24):** "Extend free Premium" is a root admin action for one
+    league or every gifted league at once, logging who extended it and to when.
 
 ## 14. Monetization order (Derek 2026-10-24)
 
