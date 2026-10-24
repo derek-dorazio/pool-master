@@ -1798,7 +1798,7 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
     expect(screen.getByTestId('contest-event-event-1')).not.toBeChecked();
     expect(screen.getByTestId('create-contest-sport-leagues-used')).toHaveTextContent('Sports leagues in 2099: 1 of 1.');
     expect(screen.getByTestId('create-contest-sport-leagues-locked')).toHaveTextContent('Your plan allows 1 sports league a year');
-    expect(screen.getByTestId('create-contest-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(screen.getByTestId('create-contest-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(listSportLeaguesUsedMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { seasonYear: 2099 } }));
   });
 

@@ -14,7 +14,7 @@ import { enterContest, getContest, updateContestEntry, type ContestDto, type Con
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
-  buildLeagueAdminPlanEditPath,
+  buildLeagueAdminPlanPath,
   buildLeagueContestEntryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -430,7 +430,7 @@ export function ContestDetailPage() {
                     <Link
                       className="font-medium text-primary underline"
                       data-testid="contest-board-full-plan-link"
-                      to={buildLeagueAdminPlanEditPath(planLeagueCode)}
+                      to={buildLeagueAdminPlanPath(planLeagueCode)}
                     >
                       Change plan
                     </Link>

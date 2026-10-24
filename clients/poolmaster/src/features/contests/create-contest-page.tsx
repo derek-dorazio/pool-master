@@ -34,7 +34,7 @@ import { getLogger } from '@/lib/logger';
 import {
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
-  buildLeagueAdminPlanEditPath,
+  buildLeagueAdminPlanPath,
 } from '@/features/leagues/league-routing';
 import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
@@ -706,7 +706,7 @@ export function CreateContestPage() {
             <Link
               className="font-medium text-primary underline"
               data-testid="create-contest-plan-link"
-              to={buildLeagueAdminPlanEditPath(league.leagueCode)}
+              to={buildLeagueAdminPlanPath(league.leagueCode)}
             >
               Change plan
             </Link>
