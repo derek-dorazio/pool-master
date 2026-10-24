@@ -1,6 +1,6 @@
 import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
 import type { PlanConfig } from '@poolmaster/shared/dto';
-import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PlanEntitlementsService, contestEntriesCap } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { buildLeague } from '../../factories';
 
@@ -79,5 +79,25 @@ describe('PlanEntitlementsService', () => {
 
     await expect(service.forLeague('00000000-0000-4000-8000-000000000000'))
       .rejects.toMatchObject({ code: 'LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('contestEntriesCap (#980)', () => {
+  const { service } = buildService();
+
+  it('is the plan\'s entries per contest while the contest has no expansion', () => {
+    expect(contestEntriesCap(service.forPlan(LeaguePlan.FREE), null)).toBe(20);
+  });
+
+  it('is the expansion when it is above the plan\'s cap', () => {
+    expect(contestEntriesCap(service.forPlan(LeaguePlan.FREE), 200)).toBe(200);
+  });
+
+  it('is the plan\'s cap when it is above the expansion, so an expansion never lowers a contest\'s cap', () => {
+    expect(contestEntriesCap(service.forPlan(LeaguePlan.PREMIUM), 50)).toBe(100);
+  });
+
+  it('stays unlimited on a plan with no cap whatever the expansion', () => {
+    expect(contestEntriesCap(service.forPlan(LeaguePlan.PLATINUM), 1000)).toBeNull();
   });
 });

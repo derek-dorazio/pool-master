@@ -145,9 +145,18 @@ async function createContest(
   });
 }
 
+/** A contest expansion to `entriesPerContest` with its $0 payment history line, as a root admin grant writes them (#980). */
+async function addExpansion(leagueId: string, contestId: string, entriesPerContest: number) {
+  const prisma = getPrisma();
+  const payment = await prisma.leaguePayment.create({
+    data: { leagueId, contestId, kind: 'CONTEST_EXPANSION_GRANT', amountCents: 0, description: `Up to ${entriesPerContest} entries, given free` },
+  });
+  await prisma.contestExpansion.create({ data: { contestId, entriesPerContest, paymentId: payment.id } });
+}
+
 /** An entry made through the port, so it carries a DRAFT status row in each contest event, as production's do. */
 async function createEntry(contestId: string, squadId: string, entryNumber: number, name: string) {
-  const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null }, { entriesPerContest: null });
+  const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null }, { entriesPerContest: () => null });
   if (result.status !== 'created') throw new Error(`seed: entry ${name} refused (${result.status})`);
   return result.entry;
 }
@@ -767,10 +776,10 @@ describe('ContestEntryRepository', () => {
 
     const result = await repos().entries.create(
       { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'One Too Many', tiebreakerValue: null },
-      { entriesPerContest: 1 },
+      { entriesPerContest: () => 1 },
     );
 
-    expect(result).toEqual({ status: 'contestFull' });
+    expect(result).toEqual({ status: 'contestFull', entriesPerContest: 1 });
     expect(await getPrisma().contestEntry.count({ where: { contestId: contest.id } })).toBe(1);
   });
 
@@ -780,11 +789,49 @@ describe('ContestEntryRepository', () => {
 
     const results = await Promise.all(squads.map((squad, index) => repos().entries.create(
       { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Racer ${index + 1}`, tiebreakerValue: null },
-      { entriesPerContest: 1 },
+      { entriesPerContest: () => 1 },
     )));
 
     expect(results.map((result) => result.status).sort()).toEqual(['contestFull', 'created']);
     expect(await getPrisma().contestEntry.count({ where: { contestId: contest.id } })).toBe(1);
+  });
+
+  it('hands the cap the contest\'s highest expansion read under its lock, so a contest expanded from 1 to 2 entries takes a second (#980)', async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Expanded House', ContestStatus.OPEN);
+    await addExpansion(league.id, contest.id, 1);
+    await addExpansion(league.id, contest.id, 2);
+    await createEntry(contest.id, squads[0].id, 1, 'First In');
+    const seen: Array<number | null> = [];
+    const cap = (expandedTo: number | null) => {
+      seen.push(expandedTo);
+      return Math.max(1, expandedTo ?? 0);
+    };
+
+    const second = await repos().entries.create(
+      { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Second In', tiebreakerValue: null },
+      { entriesPerContest: cap },
+    );
+    const third = await repos().entries.create(
+      { contestId: contest.id, squadId: squads[0].id, entryNumber: 2, name: 'One Too Many', tiebreakerValue: null },
+      { entriesPerContest: cap },
+    );
+
+    expect([second.status, third]).toEqual(['created', { status: 'contestFull', entriesPerContest: 2 }]);
+    expect(seen).toEqual([2, 2]);
+  });
+
+  it('hands the cap no expansion for a contest that has none (#980)', async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Plain House', ContestStatus.OPEN);
+    const seen: Array<number | null> = [];
+
+    await repos().entries.create(
+      { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Plain', tiebreakerValue: null },
+      { entriesPerContest: (expandedTo) => { seen.push(expandedTo); return null; } },
+    );
+
+    expect(seen).toEqual([null]);
   });
 
   it('creates an entry a DRAFT in each of its contest\'s events, with no submit time', async () => {
@@ -848,7 +895,7 @@ describe('ContestEntryRepository', () => {
     const contest = await createContest(league.id, event.id, 'Entry Update');
     const created = await repos().entries.create({
       contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Original', tiebreakerValue: 270,
-    }, { entriesPerContest: null });
+    }, { entriesPerContest: () => null });
     const entry = created.status === 'created' ? created.entry : null;
     const stored = expectDefined(entry);
     await repos().entries.setEventStatus(stored.id, event.id, 'SUBMITTED', new Date());

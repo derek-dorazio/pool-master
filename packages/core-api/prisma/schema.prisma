@@ -503,6 +503,12 @@ enum PrismaLeaguePlan {
   PLATINUM
 }
 
+/// What a league payment row records (#980). Mirrors the domain `LeaguePaymentKind`.
+enum PrismaLeaguePaymentKind {
+  CONTEST_EXPANSION_PAYMENTS_OFF
+  CONTEST_EXPANSION_GRANT
+}
+
 /// A cup's state (#841). Mirrors the domain `CupStatus`.
 enum PrismaCupStatus {
   OPEN
@@ -598,6 +604,7 @@ model User {
   emailMessages       EmailMessage[]
   emailOptOuts        EmailOptOut[]
   leaguePlanChanges   LeaguePlanChange[]   @relation("LeaguePlanChangedBy")
+  leaguePayments      LeaguePayment[]      @relation("LeaguePaymentPayer")
 
   @@map("users")
 }
@@ -677,8 +684,53 @@ model League {
   squadOwnerInvitations SquadOwnerInvitation[]
   emailMessages         EmailMessage[]
   planChanges           LeaguePlanChange[]
+  payments              LeaguePayment[]
 
   @@map("leagues")
+}
+
+/// One line of a league's payment history (#980): what was bought or given, for how much, by whom
+/// and when. Written once, never changed. No card details: those stay with the payment provider.
+/// Deleting the contest or the payer keeps the row, with its description, and names nobody.
+model LeaguePayment {
+  id          String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId    String                  @map("league_id") @db.Uuid
+  contestId   String?                 @map("contest_id") @db.Uuid
+  payerId     String?                 @map("payer_id") @db.Uuid
+  kind        PrismaLeaguePaymentKind
+  /// In US cents; 0 for an expansion given free (database check: never negative).
+  amountCents Int                     @map("amount_cents")
+  /// Written when the row is: "Masters pool: up to 200 entries, free while payments are off".
+  description String
+  paidAt      DateTime                @default(now()) @map("paid_at") @db.Timestamptz
+
+  league    League            @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  contest   Contest?          @relation(fields: [contestId], references: [id], onDelete: SetNull)
+  payer     User?             @relation("LeaguePaymentPayer", fields: [payerId], references: [id], onDelete: SetNull)
+  expansion ContestExpansion?
+
+  @@index([leagueId, paidAt(sort: Desc)])
+  @@index([payerId, paidAt(sort: Desc)])
+  @@map("league_payments")
+}
+
+/// One raise of a contest's entry cap (#980), bought or given: the contest takes up to
+/// `entriesPerContest` entries, or its league plan's cap when that is higher. Append-only: a step
+/// up adds a row, so the contest's expansion is its highest row and the rest are its history.
+model ContestExpansion {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId         String   @map("contest_id") @db.Uuid
+  /// The band: the most entries the contest may hold (database check: at least 1).
+  entriesPerContest Int      @map("entries_per_contest")
+  /// The payment history line it came from, $0 when given free.
+  paymentId         String   @unique @map("payment_id") @db.Uuid
+  expandedAt        DateTime @default(now()) @map("expanded_at") @db.Timestamptz
+
+  contest Contest       @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  payment LeaguePayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@unique([contestId, entriesPerContest])
+  @@map("contest_expansions")
 }
 
 /// One change to a league's plan (#944): who moved it from which plan to which, and when. Append-only.
@@ -1088,6 +1140,8 @@ model Contest {
   squaresWinners      ContestSquaresWinner[]
   emailMessages       EmailMessage[]
   yearFinishes        LeagueYearFinish[]
+  expansions          ContestExpansion[]
+  payments            LeaguePayment[]
 
   @@index([leagueId])
   @@index([leagueId, seasonYear])

@@ -428,13 +428,17 @@ export interface ContestEntryWithSquad extends ContestEntry {
 export type ContestEntryCreateResult =
   | { status: 'created'; entry: ContestEntry }
   | { status: 'contestDrawn' }
-  /** The contest already holds its plan's entries per contest (#947), drafts included. */
-  | { status: 'contestFull' };
+  /** The contest already holds its most entries (#947), drafts included: the cap that applied. */
+  | { status: 'contestFull'; entriesPerContest: number };
 
-/** What an entry write is checked against besides the draw: the league's plan cap (#947). */
+/** What an entry write is checked against besides the draw: the contest's entry cap (#947, #980). */
 export interface ContestEntryCreateLimits {
-  /** The most entries the contest may hold, drafts included; null for no limit. */
-  entriesPerContest: number | null;
+  /**
+   * The most entries the contest may hold, drafts included, or null for no limit, given the
+   * contest's expansion (its highest band, or null for none). The adapter reads the expansion
+   * under the contest's lock and asks this, so an expansion landing meanwhile is never missed.
+   */
+  entriesPerContest: (expandedTo: number | null) => number | null;
 }
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 

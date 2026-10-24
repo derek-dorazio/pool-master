@@ -120,7 +120,7 @@ async function createPickEmEntry(sportEventIds: string[]) {
     contestFormat: 'PREDICTION',
     selectionType: 'PICK_EM',
   });
-  const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: null });
+  const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: () => null });
   if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
   return { contest, entry: result.entry };
 }
@@ -267,7 +267,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     const prisma = getPrisma();
     const creator = await prisma.leagueMembership.findFirstOrThrow({ where: { leagueId: contest.leagueId } });
     const squad = await prisma.squad.create({ data: { leagueId: contest.leagueId, createdBy: creator.userId, name: `${name} ${randomUUID().slice(0, 6)}` } });
-    const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name, tiebreakerValue: null }, { entriesPerContest: null });
+    const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name, tiebreakerValue: null }, { entriesPerContest: () => null });
     if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
     return result.entry;
   }
