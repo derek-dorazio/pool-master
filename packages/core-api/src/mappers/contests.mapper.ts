@@ -153,7 +153,7 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
 export function toContestDto(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  opts?: { entryCount?: number },
+  opts: { entriesPerContest: number | null; entryCount?: number },
 ): ContestDto {
   return {
     id: contest.id,
@@ -167,7 +167,8 @@ export function toContestDto(
       return event ? [toContestSportEventDto(event, index + 1)] : [];
     }),
     sport: contest.sport ?? null,
-    entryCount: opts?.entryCount,
+    entryCount: opts.entryCount,
+    entriesPerContest: opts.entriesPerContest,
     startsAt: contest.startsAt?.toISOString() ?? null,
     endsAt: contest.endsAt?.toISOString() ?? null,
     drawnAt: contest.drawnAt?.toISOString() ?? null,
@@ -179,18 +180,23 @@ export function toContestDto(
 export function toContestResponse(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
+  entriesPerContest: number | null,
 ): ContestResponse {
-  return { contest: toContestDto(contest, eventsById) };
+  return { contest: toContestDto(contest, eventsById, { entriesPerContest }) };
 }
 
-/** Each listed contest with its entry count and its events' names and starts (#577). */
+/** Each listed contest with its entry count, its entry cap (#987) and its events' names and starts (#577). */
 export function toContestListResponse(
   contests: ContestRow[],
   entryCounts: ReadonlyMap<string, number>,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
+  entryCaps: ReadonlyMap<string, number | null>,
 ): ContestListResponse {
   return {
-    contests: contests.map((c) => toContestDto(c, eventsById, { entryCount: entryCounts.get(c.id) })),
+    contests: contests.map((c) => toContestDto(c, eventsById, {
+      entryCount: entryCounts.get(c.id),
+      entriesPerContest: entryCaps.get(c.id) ?? null,
+    })),
   };
 }
 

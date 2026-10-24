@@ -153,6 +153,7 @@ export function bracketContestFixture(overrides: Partial<ContestDto> = {}): Cont
   return {
     id: 'contest-1',
     leagueId: 'league-1',
+    entriesPerContest: null,
     sport: 'BASKETBALL',
     name: 'Big Dawgs Bracket',
     status: 'OPEN',

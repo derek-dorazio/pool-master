@@ -165,8 +165,10 @@ function primeMocks(opts?: {
   /** The contest event's scheduled start; far in the future unless given. */
   eventStartDate?: string;
   endsAt?: string;
-  /** The league plan's entries per contest; no limit unless given. */
+  /** The contest's own entry cap, from its plan and any expansion; no limit unless given. */
   entriesPerContest?: number;
+  /** The league plan's entries per contest; the contest's own cap unless given. */
+  planEntriesPerContest?: number;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -185,6 +187,7 @@ function primeMocks(opts?: {
         leagueId: 'league-1',
         sport: 'GOLF',
         entryCount: entries.length,
+        entriesPerContest: opts?.entriesPerContest ?? null,
         sportEvents: [{
           sportEventId: 'event-1',
           sequence: 1,
@@ -223,7 +226,7 @@ function primeMocks(opts?: {
         activeContestCount: 1,
         createdAt: '2026-04-15T00:00:00.000Z',
         planEntitlements: buildPlanEntitlements({
-          caps: { ENTRIES_PER_CONTEST: opts?.entriesPerContest ?? null, SPORTS_LEAGUES_PER_YEAR: null },
+          caps: { ENTRIES_PER_CONTEST: opts?.planEntriesPerContest ?? opts?.entriesPerContest ?? null, SPORTS_LEAGUES_PER_YEAR: null },
         }),
       },
       membership: {
@@ -665,6 +668,7 @@ describe('ContestDetailPage (Contest Board)', () => {
             leagueId: 'league-1',
             sport: 'GOLF',
             entryCount: 0,
+            entriesPerContest: null,
             sportEvents: [{
               sportEventId: 'event-1',
               sequence: 1,
@@ -764,7 +768,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
     });
 
-    it('tells a member the contest is full, without Create entry or the league\'s plan', async () => {
+    it('tells a member the contest is full, without Create entry or a way to expand it', async () => {
       primeMocks({ contestStatus: 'OPEN', entries: fullEntries(), entriesPerContest: 2 });
 
       renderContestBoard();
@@ -772,19 +776,29 @@ describe('ContestDetailPage (Contest Board)', () => {
       expect(await screen.findByTestId('contest-board-full')).toHaveTextContent(/^This contest is full\.$/);
       expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2 of 2');
       expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('contest-board-full-plan-link')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contest-board-full-expand-link')).not.toBeInTheDocument();
     });
 
-    it('tells a commissioner the plan\'s limit and links to changing the plan', async () => {
+    it('links a commissioner to expanding the full contest on its Commissioner tools page', async () => {
       primeMocks({ contestStatus: 'OPEN', entries: fullEntries(), entriesPerContest: 2, role: 'COMMISSIONER' });
 
       renderContestBoard();
 
       await waitFor(() => expect(screen.getByTestId('contest-board-full')).toHaveTextContent(
-        'This contest is full. Your plan allows 2 entries per contest. Change plan',
+        'This contest is full. Expand contest',
       ));
-      expect(screen.getByTestId('contest-board-full-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
+      expect(screen.getByTestId('contest-board-full-expand-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1');
       expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+    });
+
+    it('counts against the contest\'s own cap once it was expanded past its plan\'s, offering Create entry', async () => {
+      primeMocks({ contestStatus: 'OPEN', entries: fullEntries(), entriesPerContest: 50, planEntriesPerContest: 2 });
+
+      renderContestBoard();
+
+      expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2 of 50');
+      expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
     });
 
     it('shows no limit or full note on an unlimited plan', async () => {

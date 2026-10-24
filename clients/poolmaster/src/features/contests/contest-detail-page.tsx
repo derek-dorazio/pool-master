@@ -2,7 +2,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ContestEntryStatus,
   ContestStatus,
-  PlanCap,
   type Sport,
   formatParticipantStatusLabel,
   formatSelectionTypeName,
@@ -14,7 +13,7 @@ import { enterContest, getContest, updateContestEntry, type ContestDto, type Con
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
-  buildLeagueAdminPlanPath,
+  buildLeagueAdminContestPath,
   buildLeagueContestEntryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
@@ -296,11 +295,11 @@ export function ContestDetailPage() {
   const isDraft = contest.status === ContestStatus.DRAFT;
   // Each event takes its own submitted picks (#713): the board shows the current event's.
   const currentEventId = currentContestEvent(contest)?.sportEventId;
-  // The league's plan caps a contest's entries, every squad's drafts included (#947).
-  const entryCap = league?.planEntitlements.caps[PlanCap.ENTRIES_PER_CONTEST] ?? null;
+  // The contest's cap, every squad's drafts included: its plan's (#947), or its expansion (#987).
+  const entryCap = contest.entriesPerContest;
   const isFull = entryCap !== null && totalCount >= entryCap;
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
-  const planLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
+  const adminLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
@@ -420,22 +419,17 @@ export function ContestDetailPage() {
         {entriesOpen && isFull ? (
           <Alert className="mt-3" data-testid="contest-board-full">
             This contest is full.
-            {/* Members never see the league's plan; its commissioners can change it. */}
-            {viewer.isCommissioner ? (
+            {/* Members never see expansions or prices; its commissioners can expand it. */}
+            {viewer.isCommissioner && adminLeagueCode ? (
               <>
-                {' '}Your plan allows {formatPlanLimit(entryCap)} entries per contest.
-                {planLeagueCode ? (
-                  <>
-                    {' '}
-                    <Link
-                      className="font-medium text-primary underline"
-                      data-testid="contest-board-full-plan-link"
-                      to={buildLeagueAdminPlanPath(planLeagueCode)}
-                    >
-                      Change plan
-                    </Link>
-                  </>
-                ) : null}
+                {' '}
+                <Link
+                  className="font-medium text-primary underline"
+                  data-testid="contest-board-full-expand-link"
+                  to={buildLeagueAdminContestPath(adminLeagueCode, contest.id)}
+                >
+                  Expand contest
+                </Link>
               </>
             ) : null}
           </Alert>

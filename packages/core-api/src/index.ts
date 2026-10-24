@@ -42,6 +42,8 @@ import { IngestionService } from './modules/ingestion/ingestion-service';
 import { plansModule } from './modules/plans/routes';
 import { PlanEntitlementsService } from './modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from './modules/plans/plan-settings';
+import { BILLING_SETTINGS } from './modules/billing/billing-settings';
+import { billingModule } from './modules/billing/routes';
 import {
   PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
@@ -217,6 +219,11 @@ export function buildApp() {
   // =========================================================================
   app.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
   app.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
+  app.register(billingModule, {
+    prefix: '/api/v1/leagues/:id/billing',
+    planEntitlements,
+    readBillingConfig: () => appSettings.get(BILLING_SETTINGS),
+  });
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });

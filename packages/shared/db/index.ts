@@ -135,3 +135,9 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
+export type {
+  ContestExpansionRepository,
+  ContestExpansionState,
+  ContestExpansionWrite,
+  ContestExpansionWriteResult,
+} from './billing-ports';

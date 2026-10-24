@@ -204,11 +204,44 @@ export const PlanConfigSchema = z.object({
 }).describe('What each league plan allows: its caps and the plan each feature starts at.');
 export type PlanConfig = z.infer<typeof PlanConfigSchema>;
 
+/** One band of a plan's expansion price list (#980): a contest expanded to it takes up to that many entries. */
+export const ExpansionPriceSchema = z.object({
+  entriesPerContest: z.number().int().min(1).max(100_000).describe('The band: the most entries an expanded contest takes.'),
+  priceCents: z.number().int().min(0).max(1_000_000).describe('What expanding a contest to this band costs, in US cents.'),
+}).describe('One expansion band and its price.');
+export type ExpansionPrice = z.infer<typeof ExpansionPriceSchema>;
+
+const ExpansionPriceListSchema = z.array(ExpansionPriceSchema).max(10).describe(
+  'The plan\'s bands, smallest first; each band and each price above the one before.',
+);
+
+/**
+ * BILLING_CONFIG (#980): whether payments are on, and each plan's expansion price list
+ * (plans/payments.md §3, §9). While payments are off, expanding a contest is free and recorded
+ * as a $0 line in the league's payment history.
+ */
+export const BillingConfigSchema = z.object({
+  paymentsEnabled: z.boolean().describe(
+    'Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.',
+  ),
+  expansionPrices: z.object({
+    FREE: ExpansionPriceListSchema,
+    PRO: ExpansionPriceListSchema,
+    PREMIUM: ExpansionPriceListSchema,
+    PLATINUM: ExpansionPriceListSchema,
+  } satisfies Record<LeaguePlan, typeof ExpansionPriceListSchema>).describe(
+    'Each plan\'s expansion price list. A contest is offered the bands above its cap; a step up costs the difference.',
+  ),
+}).describe('Payments: whether they are on, and what expanding a contest costs on each plan.');
+export type BillingConfig = z.infer<typeof BillingConfigSchema>;
+
 registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
 registerSchema('EmailConfig', EmailConfigSchema);
 registerSchema('BudgetPricingProfile', BudgetPricingProfileSchema);
 registerSchema('BudgetPricingConfig', BudgetPricingConfigSchema);
 registerSchema('PlanCapRow', PlanCapRowSchema);
 registerSchema('PlanConfig', PlanConfigSchema);
+registerSchema('ExpansionPrice', ExpansionPriceSchema);
+registerSchema('BillingConfig', BillingConfigSchema);
 registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);
