@@ -985,7 +985,7 @@ export const RecordType = {
   MOST_RUNNER_UPS: 'MOST_RUNNER_UPS',
   /** Hall of Lame: the most 4th places, just off the podium. */
   MOST_FOURTHS: 'MOST_FOURTHS',
-  /** Hall of Lame: the most last places among the squads, in contests of three or more entries. */
+  /** Hall of Lame: the most last places among the squads, in contests of three or more squads. */
   MOST_LAST_PLACES: 'MOST_LAST_PLACES',
   /** Hall of Lame: the most contests in a row placed in without a win, past or still running. */
   LONGEST_DROUGHT: 'LONGEST_DROUGHT',

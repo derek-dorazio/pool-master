@@ -33,8 +33,8 @@ export interface ChampionshipYearChampions {
   championSquadIds: string[];
 }
 
-/** A last place needs a field of at least this many entries, so a two-entry contest's 2nd is not "last". */
-export const LAST_PLACE_MIN_ENTRIES = 3;
+/** A last place needs at least this many squads in the contest, so a two-squad contest's 2nd is not "last". */
+export const LAST_PLACE_MIN_SQUADS = 3;
 
 /**
  * Every record somebody holds, in `RecordType` order; the Hall of Lame's only when the league shows
@@ -124,7 +124,7 @@ function podiumRuns(counted: readonly LeagueYearFinish[]): RecordCandidate[] {
 }
 
 /**
- * The squads last in each contest of three or more entries: the worst place any squad finished in
+ * The squads last in each contest of three or more squads: the worst place any squad finished in
  * it (each squad's best entry), every squad on it on a tie. A contest everyone won has no last.
  */
 function lastPlaces(counted: readonly LeagueYearFinish[]): LeagueYearFinish[] {
@@ -132,7 +132,7 @@ function lastPlaces(counted: readonly LeagueYearFinish[]): LeagueYearFinish[] {
   for (const finish of counted) byContest.set(finish.contestId, [...(byContest.get(finish.contestId) ?? []), finish]);
   return [...byContest.values()].flatMap((rows) => {
     const worst = Math.max(...rows.map((finish) => finish.place));
-    return worst > 1 && rows.every((finish) => finish.rankedEntryCount >= LAST_PLACE_MIN_ENTRIES)
+    return worst > 1 && rows.length >= LAST_PLACE_MIN_SQUADS
       ? rows.filter((finish) => finish.place === worst)
       : [];
   });

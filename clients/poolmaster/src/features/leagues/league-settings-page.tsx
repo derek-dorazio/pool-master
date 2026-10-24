@@ -142,7 +142,7 @@ export function LeagueSettingsPage() {
         <SettingsRow
           label="Hall of Lame"
           testId="league-settings-hall-of-lame"
-          value={league.hallOfLameVisible ? 'Shown on All years' : 'Hidden'}
+          value={league.hallOfLameVisible ? 'Shown' : 'Hidden'}
         />
       </SettingsSection>
 

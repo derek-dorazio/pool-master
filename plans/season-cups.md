@@ -461,7 +461,7 @@ next best. Ties show every holder.
 | `REPEAT_WINNER` | Most years in a row winning the same recurring contest (#874's key) |
 | `MOST_RUNNER_UPS` | Hall of Lame: most 2nd places |
 | `MOST_FOURTHS` | Hall of Lame: most 4th places, just off the podium |
-| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more entries |
+| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more squads |
 | `LONGEST_DROUGHT` | Hall of Lame: most contests in a row played without a win, past or still running |
 
 - `League.hallOfLameVisible Boolean @default(true)`, on league settings, hides the Hall of Lame
@@ -483,7 +483,7 @@ next best. Ties show every holder.
    `League.hallOfLameVisible` is off, so a hidden Hall of Lame never leaves the server. The setting
    rides on `PUT /cup-settings` with the championship name and points table (Edit championships).
    A last place is the worst place among the squads (each squad's best entry), in contests of
-   `LAST_PLACE_MIN_ENTRIES` (3) or more entries.
+   `LAST_PLACE_MIN_SQUADS` (3) or more squads.
 
 ## 12. Perpetual trophies (#874)
 

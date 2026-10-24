@@ -3,7 +3,7 @@
  * championships of years over, with every holder on a tie and the next best.
  */
 import { CupWeight, RecordType, SelectionType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
-import { LAST_PLACE_MIN_ENTRIES, rankRecords, type RankedRecord } from '../../../packages/core-api/src/modules/history/records';
+import { rankRecords, type RankedRecord } from '../../../packages/core-api/src/modules/history/records';
 
 let settled = 0;
 
@@ -125,19 +125,30 @@ describe('rankRecords', () => {
       expect(stand(record(records, RecordType.MOST_FOURTHS)?.best)).toEqual([1, [['birdies', null, null]]]);
     });
 
-    it('counts a last place as the worst squad place in a contest of three or more entries, every squad on it on a tie', () => {
+    it('counts a last place as the worst squad place in a contest of three or more squads, every squad on it on a tie', () => {
       const contest = (contestId: string, rankedEntryCount: number, rows: Array<[string, number]>) =>
         rows.map(([squadId, place]) => finish(squadId, place, { contestId, rankedEntryCount }));
       const records = rankRecords([
         ...contest('big', 5, [['eagles', 1], ['birdies', 3], ['bogeys', 3]]),
-        ...contest('small', LAST_PLACE_MIN_ENTRIES - 1, [['eagles', 1], ['bogeys', 2]]),
-        ...contest('all-won', 4, [['eagles', 1], ['birdies', 1]]),
-        ...contest('again', 3, [['bogeys', 1], ['birdies', 2]]),
+        ...contest('small', 6, [['eagles', 1], ['bogeys', 2]]),
+        ...contest('all-won', 4, [['eagles', 1], ['birdies', 1], ['bogeys', 1]]),
+        ...contest('again', 3, [['bogeys', 1], ['eagles', 2], ['birdies', 3]]),
       ], [], { hallOfLame: true });
 
-      // Birdies last in big (tied) and again; Bogeys last in big only. A two-entry contest's 2nd is not last.
+      // Birdies last in big (tied) and again; Bogeys last in big only. A contest of fewer than LAST_PLACE_MIN_SQUADS squads has no last.
       expect(stand(record(records, RecordType.MOST_LAST_PLACES)?.best)).toEqual([2, [['birdies', null, null]]]);
       expect(stand(record(records, RecordType.MOST_LAST_PLACES)?.nextBest)).toEqual([1, [['bogeys', null, null]]]);
+    });
+
+    it('gives no last place in a contest of only two squads, however many entries they have', () => {
+      // Eagles hold 1st, 3rd, 4th and 5th of five entries; Birdies' one entry is 2nd: a runner-up, not last.
+      const records = rankRecords([
+        finish('eagles', 1, { contestId: 'two-squads', rankedEntryCount: 5 }),
+        finish('birdies', 2, { contestId: 'two-squads', rankedEntryCount: 5 }),
+      ], [], { hallOfLame: true });
+
+      expect(record(records, RecordType.MOST_LAST_PLACES)).toBeUndefined();
+      expect(stand(record(records, RecordType.MOST_RUNNER_UPS)?.best)).toEqual([1, [['birdies', null, null]]]);
     });
 
     it('counts the longest run of contests placed in without a win, in settlement order, a run still going included', () => {
