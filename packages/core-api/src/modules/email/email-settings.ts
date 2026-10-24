@@ -41,6 +41,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
       EVENT_READY_FOR_CONTESTS: true,
       EVENT_WEEKLY_DIGEST: true,
       LEAGUE_MEMBER_JOINED: true,
+      CONTEST_EXPANDED: true,
       CONTEST_NOT_OPEN: true,
       EVENT_STILL_DRAFT: true,
       YEAR_IN_REVIEW: true,

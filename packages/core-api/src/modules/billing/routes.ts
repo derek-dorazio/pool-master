@@ -29,12 +29,14 @@ import { requireCommissioner } from '../leagues/permissions';
 import { createContestService } from '../contests/wiring';
 import type { PlanModuleOptions } from '../plans/routes';
 import { toLeaguePaymentListResponse } from '../../mappers/billing.mapper';
+import type { ContestExpandedNotices } from '../notifications/contest-expanded-notices';
 import { ContestExpansionService } from './contest-expansion-service';
 import { PaymentHistoryService } from './payment-history-service';
 
 export interface BillingModuleOptions extends PlanModuleOptions {
   /** BILLING_CONFIG as it stands now. */
   readBillingConfig: () => BillingConfig;
+  contestExpanded: Pick<ContestExpandedNotices, 'tellExpanded'>;
 }
 
 type ContestParams = { Params: { id: string; contestId: string } };
@@ -56,6 +58,7 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
     planEntitlements: opts.planEntitlements,
     entryWindow: createContestService(prisma, fastify.log, { planEntitlements: opts.planEntitlements }),
     readConfig: opts.readBillingConfig,
+    expanded: opts.contestExpanded,
     logger: fastify.log,
   });
 
