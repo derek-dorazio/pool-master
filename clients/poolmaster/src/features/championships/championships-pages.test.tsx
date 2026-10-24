@@ -564,7 +564,7 @@ describe('Championships › Year in review', () => {
     expect(screen.getByText('Every squad that placed in 2025 gets its year by email. It can be sent once.')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
 
-    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every squad.');
+    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every squad that placed.');
     expect(sendYearReviewMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', year: '2025' } }));
   });
 

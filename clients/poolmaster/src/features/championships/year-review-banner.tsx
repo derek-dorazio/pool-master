@@ -31,7 +31,7 @@ export function YearReviewBanner({ isCommissioner, leagueId }: { isCommissioner:
   if (sendMutation.isSuccess) {
     return (
       <Alert data-testid="year-review-sent" tone="success">
-        {`The ${sendMutation.data.year} year in review is on its way to every squad.`}
+        {`The ${sendMutation.data.year} year in review is on its way to every squad that placed.`}
       </Alert>
     );
   }
