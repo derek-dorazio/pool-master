@@ -1,7 +1,7 @@
 import { isHallOfLameRecord } from '@poolmaster/shared/domain';
 import type { RecordDto } from '@/lib/api';
 import { ErrorState, Tile } from '@/features/shared/ui';
-import { RECORD_WORDING, describeRecordStand } from './record-book-view';
+import { RECORD_WORDING, describeHeldRecord, describeRecordStand, recordsHeldBy } from './record-book-view';
 import { useRecordsQuery } from './use-championship-query';
 
 /**
@@ -43,6 +43,37 @@ function RecordList({ records, testId, title }: { records: RecordDto[]; testId: 
                 {`Next best: ${describeRecordStand(record.type, record.nextBest)}`}
               </p>
             ) : null}
+          </li>
+        ))}
+      </ul>
+    </Tile>
+  );
+}
+
+/**
+ * The records a squad holds, on its squad page (#872): the record book's rows where it has the
+ * best value, read from the same record book so the two always agree. Nothing shows until it
+ * holds one.
+ */
+export function SquadRecords({ leagueId, squadId }: { leagueId: string; squadId: string }) {
+  const recordsQuery = useRecordsQuery(leagueId);
+
+  if (recordsQuery.isError) {
+    return <ErrorState body="We couldn't load this squad's records." testId="squad-records-error" />;
+  }
+  const held = recordsHeldBy(recordsQuery.data ?? [], squadId);
+  if (!held.length) {
+    return null;
+  }
+
+  return (
+    <Tile className="space-y-3" data-testid="squad-records" padding="sm" radius="lg">
+      <h2 className="text-lg font-semibold text-foreground">Records</h2>
+      <ul className="space-y-2 text-sm">
+        {held.map((record) => (
+          <li className="flex flex-wrap justify-between gap-2" data-testid={`squad-record-${record.type}`} key={record.type}>
+            <span className="font-medium text-foreground">{RECORD_WORDING[record.type].title}</span>
+            <span className="text-foreground">{describeHeldRecord(record)}</span>
           </li>
         ))}
       </ul>

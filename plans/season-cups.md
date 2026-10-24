@@ -432,6 +432,10 @@ email, not another page. Sent through the email outbox (#845), class B.
    `?year=` on the squad page; the strip lists only the years, and the cups, the squad placed in. Perpetual
    trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
+   Built as a Records section under the trophy case, read from the league's record book
+   (`listRecords`, the query All years uses) and kept to the rows where the squad has the best
+   value, so the two cannot disagree; no endpoint of its own. Hall of Lame rows join it with
+   #873 slice 2.
 4. **Year in review email.** After slice 1 and #845's outbox.
    Built as `GET /leagues/:id/history/year-review` and `POST .../year-review/:year/send`, the
    `YEAR_IN_REVIEW` email (Results category, class B) and a `league_year_reviews` row per league

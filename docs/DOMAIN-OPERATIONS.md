@@ -1021,8 +1021,10 @@ championship place with the gap to 1st and its movement (opening the Championshi
 medal counts, its finish matrix row, whose counts narrow its contests below, its place in each cup
 on show (opening its points in that cup), and the counted contests it placed in. A year picker
 (`?year=`, the current year by default) moves it to another year. Under it sit the squad's trophy
-case (its contest 1sts, 2nds and 3rds all time, and each trophy, opening where it was won) and an
-All years strip, one line per year it placed in, which opens that year on the page.
+case (its contest 1sts, 2nds and 3rds all time, and each trophy, opening where it was won), the
+records it holds (the record book's rows where it has the best value, with when it set each, read
+from `listRecords`; left out when it holds none) and an All years strip, one line per year it
+placed in, which opens that year on the page.
 
 ### Squares — `selections`
 
