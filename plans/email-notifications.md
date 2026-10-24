@@ -182,7 +182,8 @@ Commissioner updates category meanwhile.
 **#851 decided (Derek 2026-10-23):** the choice is a league setting, set by its commissioners.
 A new league hears about every sport league, one email per event. A weekly digest the league
 can choose instead replaces both C1 and C2. Part 1 (the league's muted sport leagues, filtering
-C1 and C2) is built; the settings screen and the digest follow.
+C1 and C2) and part 2 (Event emails in Commissioner tools › League settings) are built; the digest
+follows.
 
 **Q3.4 C1 and C2 timing.** **Decided (Derek 2026-10-21):** start with the basic case, one
 email per event: C1 at 10 days, C2 at the later of release and 7 days before start, as above. A

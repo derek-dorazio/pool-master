@@ -9,7 +9,9 @@ import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards'
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
 import { EditLeaguePlanPage } from '@/features/plans/edit-league-plan-page';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
+import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
+import { EditEventEmailsPage } from './edit-event-emails-page';
 import { EditLeaguePage } from './edit-league-page';
 import { LeagueSettingsPage } from './league-settings-page';
 import {
@@ -36,9 +38,11 @@ const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
 const listLeaguePlansMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
+const listSportLeaguesMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const updateLeagueCupSettingsMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
+const updateLeagueEventEmailSettingsMock = vi.fn();
 const updateLeaguePlanMock = vi.fn();
 
 bindApiMocks({
@@ -50,9 +54,11 @@ bindApiMocks({
   listLeagueMembers: listLeagueMembersMock,
   listLeaguePlans: listLeaguePlansMock,
   listLeagueSquads: listLeagueSquadsMock,
+  listSportLeagues: listSportLeaguesMock,
   refreshToken: refreshTokenMock,
   updateLeagueCupSettings: updateLeagueCupSettingsMock,
   updateLeagueDetails: updateLeagueDetailsMock,
+  updateLeagueEventEmailSettings: updateLeagueEventEmailSettingsMock,
   updateLeaguePlan: updateLeaguePlanMock,
 });
 
@@ -69,6 +75,7 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
                   <Route element={<LeagueSettingsPage />} index />
                   <Route element={<EditLeaguePage />} path="edit" />
                   <Route element={<EditChampionshipSettingsPage />} path="championships/edit" />
+                  <Route element={<EditEventEmailsPage />} path="event-emails/edit" />
                   <Route element={<EditLeaguePlanPage />} path="plan/edit" />
                 </Route>
               </Route>
@@ -83,6 +90,14 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
   );
   return { ...view, queryClient };
 }
+
+// Golf lists before basketball, the platform's order; the Champions Tour is no longer active.
+const PGA = sportLeagueFixture({ id: 'sl-pga', name: 'PGA Tour' });
+const LPGA = sportLeagueFixture({ id: 'sl-lpga', name: 'LPGA Tour' });
+const CHAMPIONS = sportLeagueFixture({ id: 'sl-champions', name: 'Champions Tour', isActive: false });
+const NBA = sportLeagueFixture({ id: 'sl-nba', name: 'NBA', sport: 'BASKETBALL', sportId: 'sport-basketball' });
+const WNBA = sportLeagueFixture({ id: 'sl-wnba', name: 'WNBA', sport: 'BASKETBALL', sportId: 'sport-basketball' });
+const SPORT_LEAGUES = [NBA, PGA, WNBA, CHAMPIONS, LPGA];
 
 function primeMocks({
   isActive = true,
@@ -101,6 +116,7 @@ function primeMocks({
     buildLeague({ isActive, ...league }),
     { membership: buildLeagueMembership({ role: leagueRole }) },
   )));
+  listSportLeaguesMock.mockResolvedValue(apiSuccess({ sportLeagues: SPORT_LEAGUES }));
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
     members: [
       buildLeagueMembership({ id: 'm-1', userId: 'user-1', role: 'COMMISSIONER' }),
@@ -125,8 +141,9 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
-    inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, refreshTokenMock,
-    updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeaguePlanMock,
+    inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, listSportLeaguesMock,
+    refreshTokenMock, updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeagueEventEmailSettingsMock,
+    updateLeaguePlanMock,
   ]) {
     mock.mockReset();
   }
@@ -771,5 +788,139 @@ describe('League settings delete and the leagues list', () => {
 
     await screen.findByTestId('welcome-page');
     expect(queryClient.getQueryData(QueryKeys.leagues.list)).toMatchObject({ leagues: [] });
+  });
+});
+
+describe('Event emails', () => {
+  it('says on League settings that a new league hears about every sport league, with an Edit to choose', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    const eventEmails = within(await screen.findByTestId('league-settings-event-emails'));
+    expect(await eventEmails.findByTestId('league-settings-event-emails-sport-leagues')).toHaveTextContent('Every sport league');
+    expect(eventEmails.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/event-emails/edit');
+  });
+
+  it('counts only active sport leagues on League settings, so a muted inactive one leaves every sport league heard', async () => {
+    primeMocks({ league: { mutedSportLeagueIds: [CHAMPIONS.id, NBA.id] } });
+
+    renderCommissionerTools();
+
+    expect(await screen.findByText('3 of 4 sport leagues')).toBeInTheDocument();
+  });
+
+  it('lists the active sport leagues ticked in groups by sport, golf before basketball, each by name', async () => {
+    primeMocks({ league: { mutedSportLeagueIds: [WNBA.id] } });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    const golf = within(await screen.findByTestId('edit-event-emails-sport-GOLF'));
+    const basketball = within(screen.getByTestId('edit-event-emails-sport-BASKETBALL'));
+    expect(screen.getByTestId('edit-event-emails-sport-GOLF').compareDocumentPosition(screen.getByTestId('edit-event-emails-sport-BASKETBALL')))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(screen.getByTestId('edit-event-emails-sport-GOLF')).toHaveTextContent(/^Golf\s*Golf\s*LPGA Tour\s*PGA Tour$/);
+    expect(golf.getByTestId('edit-event-emails-sport-GOLF-all')).toBeChecked();
+    expect(basketball.getByTestId(`edit-event-emails-league-${NBA.id}`)).toBeChecked();
+    expect(basketball.getByTestId(`edit-event-emails-league-${WNBA.id}`)).not.toBeChecked();
+    expect(basketball.getByTestId('edit-event-emails-sport-BASKETBALL-all')).not.toBeChecked();
+    expect(screen.queryByText('Champions Tour')).not.toBeInTheDocument();
+  });
+
+  it('saves the sport leagues left unticked, a whole sport cleared at once, keeping a muted inactive one, and returns to League settings', async () => {
+    primeMocks({ league: { mutedSportLeagueIds: [CHAMPIONS.id] } });
+    const saved = buildLeague({ mutedSportLeagueIds: [CHAMPIONS.id, PGA.id, LPGA.id, NBA.id] });
+    updateLeagueEventEmailSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(saved)));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    fireEvent.click(await screen.findByTestId('edit-event-emails-sport-GOLF-all'));
+    fireEvent.click(screen.getByTestId(`edit-event-emails-league-${NBA.id}`));
+    expect(screen.getByTestId('edit-event-emails-sport-BASKETBALL-all')).not.toBeChecked();
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(saved)));
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByText('1 of 4 sport leagues')).toBeInTheDocument();
+    expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledTimes(1);
+    const { body } = updateLeagueEventEmailSettingsMock.mock.calls[0]?.[0] as { body: { mutedSportLeagueIds: string[] } };
+    expect(body.mutedSportLeagueIds).toHaveLength(4);
+    expect(body.mutedSportLeagueIds).toEqual(expect.arrayContaining([CHAMPIONS.id, PGA.id, LPGA.id, NBA.id]));
+    expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
+  it('mutes every listed sport league with Clear all and hears them all again with Select all, sending only the inactive one', async () => {
+    primeMocks({ league: { mutedSportLeagueIds: [CHAMPIONS.id, NBA.id] } });
+    updateLeagueEventEmailSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ mutedSportLeagueIds: [CHAMPIONS.id] }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    fireEvent.click(await screen.findByTestId('edit-event-emails-none'));
+    for (const id of [PGA.id, LPGA.id, NBA.id, WNBA.id]) {
+      expect(screen.getByTestId(`edit-event-emails-league-${id}`)).not.toBeChecked();
+    }
+    fireEvent.click(screen.getByTestId('edit-event-emails-all'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    await waitFor(() => expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { mutedSportLeagueIds: [CHAMPIONS.id] },
+    })));
+  });
+
+  it('stays on the form with the reason when saving fails', async () => {
+    primeMocks();
+    updateLeagueEventEmailSettingsMock.mockResolvedValue({
+      error: { error: { code: 'SPORT_LEAGUE_NOT_FOUND', message: 'Not a sport league: sl-gone' } },
+    });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not a sport league: sl-gone');
+    expect(screen.getByTestId('edit-event-emails-page')).toBeInTheDocument();
+  });
+
+  it('shows an error instead of the form when the sport leagues cannot be loaded, offering nothing to save', async () => {
+    primeMocks();
+    listSportLeaguesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Sport leagues are down' } } });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    expect(await screen.findByTestId('edit-event-emails-error')).toHaveTextContent('Sport leagues are down');
+    expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
+  });
+
+  it('says on League settings that the plan lacks event emails, linking to the plan instead of Edit, and Edit shows the locked note', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+
+    const view = renderCommissionerTools();
+
+    const eventEmails = within(await screen.findByTestId('league-settings-event-emails'));
+    expect(eventEmails.getByText('Your league\'s plan doesn\'t include event emails.')).toBeInTheDocument();
+    expect(eventEmails.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(eventEmails.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+    view.unmount();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+    expect(await screen.findByTestId('plan-locked-EMAIL_EVENT_COMING_UP')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
+  });
+
+  it('offers the choice on a plan with only "Ready for contests", since the choice decides that email too', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_EVENT_READY_FOR_CONTESTS'] }) } });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    expect(await screen.findByTestId('edit-event-emails-page')).toBeInTheDocument();
+  });
+
+  it('sends a commissioner who opens Edit event emails on an inactive league back to the read-only settings', async () => {
+    primeMocks({ isActive: false });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-event-emails-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-event-emails-edit')).toHaveAttribute('aria-disabled', 'true');
   });
 });

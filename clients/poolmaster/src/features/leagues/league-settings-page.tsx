@@ -14,12 +14,15 @@ import {
 import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
+import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
+import { describeEventEmailSportLeagues, hasEventEmails } from './event-emails-view';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
+  buildLeagueAdminEventEmailsEditPath,
   buildLeagueAdminPlanEditPath,
   buildLeagueAdminTeamsPath,
 } from './league-routing';
@@ -28,8 +31,9 @@ import { useLeagueMembersQuery } from './use-league-members-query';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
- * for all of them, the championship settings with their own Edit, the league's plan (#945) with
- * its Change, then the danger zone.
+ * for all of them, the championship settings with their own Edit, the sport leagues the
+ * commissioners hear about (#851) with theirs, the league's plan (#945) with its Change, then the
+ * danger zone.
  */
 export function LeagueSettingsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -37,6 +41,7 @@ export function LeagueSettingsPage() {
   const leagueId = league?.id ?? '';
   const { members } = useLeagueMembersQuery(leagueId);
   const squadsQuery = useLeagueSquadsQuery(leagueId);
+  const sportLeaguesQuery = useSportLeaguesQuery();
 
   // A commissioner is a membership role; their name comes from the team they own.
   const commissionerNames = useMemo(() => {
@@ -167,6 +172,45 @@ export function LeagueSettingsPage() {
             )}
             description="Your league's plan doesn't include championship settings."
             title="Championships"
+          />
+        </section>
+      )}
+
+      {hasEventEmails(league) ? (
+        <SettingsSection
+          action={(
+            <LinkButton
+              data-testid="league-settings-event-emails-edit"
+              isDisabled={isInactive}
+              size="sm"
+              to={buildLeagueAdminEventEmailsEditPath(league.leagueCode)}
+              variant="secondary"
+            >
+              Edit
+            </LinkButton>
+          )}
+          description="Emails to commissioners when an event is coming up and when it's ready for contests."
+          testId="league-settings-event-emails"
+          title="Event emails"
+        >
+          <SettingsRow
+            label="Sport leagues"
+            testId="league-settings-event-emails-sport-leagues"
+            value={sportLeaguesQuery.data
+              ? describeEventEmailSportLeagues(sportLeaguesQuery.data, league.mutedSportLeagueIds)
+              : <span className="text-muted-foreground">{sportLeaguesQuery.isError ? 'Unavailable' : 'Loading...'}</span>}
+          />
+        </SettingsSection>
+      ) : (
+        <section className="space-y-3" data-testid="league-settings-event-emails">
+          <SettingsSectionHeader
+            action={(
+              <LinkButton data-testid="league-settings-event-emails-plan" size="sm" to={buildLeagueAdminPlanEditPath(league.leagueCode)} variant="secondary">
+                Change plan
+              </LinkButton>
+            )}
+            description="Your league's plan doesn't include event emails."
+            title="Event emails"
           />
         </section>
       )}
