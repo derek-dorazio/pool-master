@@ -47710,7 +47710,7 @@
               "integer",
               "null"
             ],
-            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
           },
           "contestId": {
             "type": [
@@ -47718,7 +47718,7 @@
               "null"
             ],
             "format": "uuid",
-            "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+            "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
           },
           "contestName": {
             "type": [
@@ -47880,7 +47880,7 @@
                     "integer",
                     "null"
                   ],
-                  "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+                  "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
                 },
                 "contestId": {
                   "type": [
@@ -47888,7 +47888,7 @@
                     "null"
                   ],
                   "format": "uuid",
-                  "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+                  "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
                 },
                 "contestName": {
                   "type": [
@@ -47929,6 +47929,7 @@
               "MOST_WINS_ALL_TIME",
               "LONGEST_PODIUM_RUN",
               "BIGGEST_FIELD_WON",
+              "REPEAT_WINNER",
               "MOST_RUNNER_UPS",
               "MOST_FOURTHS",
               "MOST_LAST_PLACES",
@@ -48079,7 +48080,7 @@
                         "integer",
                         "null"
                       ],
-                      "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+                      "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
                     },
                     "contestId": {
                       "type": [
@@ -48087,7 +48088,7 @@
                         "null"
                       ],
                       "format": "uuid",
-                      "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+                      "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
                     },
                     "contestName": {
                       "type": [
@@ -48262,7 +48263,7 @@
                         "integer",
                         "null"
                       ],
-                      "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+                      "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
                     },
                     "contestId": {
                       "type": [
@@ -48270,7 +48271,7 @@
                         "null"
                       ],
                       "format": "uuid",
-                      "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+                      "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
                     },
                     "contestName": {
                       "type": [
@@ -48325,6 +48326,7 @@
                     "MOST_WINS_ALL_TIME",
                     "LONGEST_PODIUM_RUN",
                     "BIGGEST_FIELD_WON",
+                    "REPEAT_WINNER",
                     "MOST_RUNNER_UPS",
                     "MOST_FOURTHS",
                     "MOST_LAST_PLACES",
@@ -48475,7 +48477,7 @@
                               "integer",
                               "null"
                             ],
-                            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+                            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
                           },
                           "contestId": {
                             "type": [
@@ -48483,7 +48485,7 @@
                               "null"
                             ],
                             "format": "uuid",
-                            "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+                            "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
                           },
                           "contestName": {
                             "type": [
@@ -48658,7 +48660,7 @@
                               "integer",
                               "null"
                             ],
-                            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count."
+                            "description": "The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count."
                           },
                           "contestId": {
                             "type": [
@@ -48666,7 +48668,7 @@
                               "null"
                             ],
                             "format": "uuid",
-                            "description": "The contest won, for BIGGEST_FIELD_WON; null otherwise."
+                            "description": "The contest won, for BIGGEST_FIELD_WON, or the last year's contest of a REPEAT_WINNER run; null otherwise."
                           },
                           "contestName": {
                             "type": [

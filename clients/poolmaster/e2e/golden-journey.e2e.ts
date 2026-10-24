@@ -188,6 +188,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expectListPageLoaded(page, '/manage/events', 'root-admin-events-page', 'root-admin-events-table');
       await expectListPageLoaded(page, '/manage/leagues', 'root-admin-manage-leagues-page', 'root-admin-manage-leagues-table');
       await expectListPageLoaded(page, '/manage/users', 'root-admin-manage-users-page', 'root-admin-manage-users-table');
+      await expectListPageLoaded(page, '/manage/plans', 'root-admin-plans-page', 'root-admin-plans-caps');
       await expectListPageLoaded(page, '/manage/sports/golf/events', 'root-admin-sport-event-list-page', 'root-admin-sport-event-list-table');
       await expectListPageLoaded(page, '/manage/sports/golf/participants', 'root-admin-participant-list-page', 'root-admin-participant-list-table');
     });
