@@ -89,6 +89,10 @@ const PUBLIC_ROUTES = new Set([
   // TOUR). Platform reference data, identical for every viewer and tied to no league or user, as
   // the templates are. Reading one sport league, and every write, still need a session.
   'GET /api/v1/sport-leagues',
+  // #971 — what each league plan allows, read by the public Plans page. Built from the plan
+  // settings alone, identical for every viewer and tied to no league or user, so a visitor
+  // comparing plans before signing up may read it. A league's own plan still needs a session.
+  'GET /api/v1/plans',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [

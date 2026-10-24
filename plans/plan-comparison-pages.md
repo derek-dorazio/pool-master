@@ -24,7 +24,7 @@ Two pages, one comparison:
 
 Both are built from the same pieces in `clients/poolmaster/src/features/plans/`: the plan
 cards, the comparison table (`plan-comparison.ts` already builds its rows), and the copy in
-`plan-labels.ts`. Payments, the yearly and monthly prices, and per-event purchases are
+`plan-labels.ts`. Payments, the yearly prices, and per-event purchases are
 designed elsewhere (*Out of scope*).
 
 ## What comes from config, what is copy
@@ -36,7 +36,7 @@ designed elsewhere (*Out of scope*).
 | Each plan's highlight list | Built from the two rows above | Same |
 | Plan names, taglines, feature names and one-line descriptions, group names, questions | `plan-labels.ts` and the page (UI copy) | A code change |
 | "In every plan" rows (members, contest types, leaderboards, results) | The page (UI copy) | A code change |
-| Prices, yearly and monthly | Public `GET /billing/prices` (amounts read from Stripe; empty while payments are off) | A price changes in Stripe |
+| Yearly prices | Payments' public price list (amounts read from Stripe; empty while payments are off) | A price changes in Stripe |
 
 Nothing on either page compares plan names: the rows are built from what the API says each
 plan has, as the current table is, so moving a feature to another plan on `/manage/plans`
@@ -84,8 +84,8 @@ user, so it joins the public routes beside the contest templates and sport leagu
 How to Play reads (`packages/core-api/src/plugins/auth-guard.ts`); its route description says
 so (Q1).
 
-**Buttons while payments are off**: every new league starts on Platinum free, so a button
-that says "Start with Pro" would promise something the app does not do. Every button says
+**Buttons while payments are off**: every new league starts free on the default plan, so a
+button that says "Start with Pro" would promise something the app does not do. Every button says
 **Start free** and goes to sign-up (Q9). Once payments are on, the paid plans' buttons say
 "Start with Pro" and, after sign-up and the first league, open that league's Plan page with Pro
 picked. A signed-in visitor sees **Choose for a league**: straight to the Plan page when they
@@ -136,15 +136,29 @@ billing state from `GET /leagues/:id/billing` and picks, per button:
   subscription.
 
 The confirm says which of these will happen before the commissioner presses it.
-- **Prices** come from `GET /billing/prices`, which payments serves publicly: each paid plan's
-  yearly and monthly amounts, read from Stripe, and an empty list while payments are off. Both
-  pages read it, never config or copy (Derek: monthly is a premium over yearly, for example $99
-  a year or $9.99 a month). The Yearly/Monthly toggle is always shown and picks the interval
-  handed to checkout; while the list is empty, every paid plan shows Free under both (Q2).
+- **Prices** come from payments' public price list, read from Stripe, empty while payments are
+  off. Both pages read it, never config or copy. Yearly only (*Pricing model* below).
+
+## Pricing model (Derek 2026-10-24, `plans/payments.md`)
+
+This supersedes the yearly/monthly parts of this doc, Q2's toggle included.
+
+- **Annual only**, no monthly at first: there is no Yearly/Monthly toggle. Each paid plan
+  shows one yearly price once prices exist, read from payments' price list, never typed in
+  the UI; until then the cards keep "$0" for the lowest plan and "Free for now" for the rest.
+- **Caps** come from PLAN_CONFIG as before (the numbers Derek set: 20 / 50 / 100 / 500 entries
+  per contest, 5 / 15 / 30 / 50 sports leagues a year). Platinum has a cap like the others;
+  no copy says any plan is unlimited, and "Unlimited" shows only where the settings say so.
+- **Each plan has its own per-contest expansion prices** (`plans/payments.md`); a card may
+  list them once payments serves them. Expansions are bought on the contest.
+- **Every league is gifted Premium for 6 months, then drops to Free.** The pages name no
+  default plan, so nothing here changes with it.
+- **Platinum is "Coming soon"** (Derek, payments Q2): not selectable by commissioners, shown as
+  Coming soon on both pages, read from config. Built in #972.
 
 ## Out of scope
 
-- **Payments**, renewal, yearly and monthly pricing: #931, `plans/payments.md`.
+- **Payments**, renewal and yearly pricing: #931, `plans/payments.md`.
 - **Per-event pricing**, paying once to raise one contest's entry cap, which Derek expects to be
   the first thing people pay for: designed after this, #968. Both pages leave room for a "Need
   more room for one pool?" block under the cards.
@@ -153,12 +167,11 @@ The confirm says which of these will happen before the commissioner presses it.
 
 ## Questions
 
-All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle stays, with Free under both.
+All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle was kept, then dropped when pricing went annual only (*Pricing model*).
 
 1. **Decided (Derek 2026-10-24): yes.** **Public page at `/plans`, open to anyone, with `GET /plans` made public?** Recommended: yes.
    It holds no league or user data, and How to Play already reads two public lists the same way.
-2. **Decided (Derek 2026-10-24): yes, but keep the Yearly/Monthly toggle and show Free under
-   both.** **Price slot until prices exist**: while `GET /billing/prices` is empty, the paid
+2. **Decided (Derek 2026-10-24): yes; the toggle he kept was later dropped (annual only).** **Price slot until prices exist**: while `GET /billing/prices` is empty, the paid
    plans show **Free** where the price will go. A "[PRICE]" placeholder or a made-up number on a
    public page would read as broken or binding.
 3. **Decided (Derek 2026-10-24): yes.** **Highlights built from the config**, with three or more features of one group starting at
@@ -184,7 +197,7 @@ All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle st
    Recommended: yes. It is what makes "You use 34" possible, and Create contest keeps its own
    sports leagues call.
 9. **Decided (Derek 2026-10-24): yes.** **Every public button says Start free while payments are off?** Recommended: yes, because every
-   new league starts on Platinum free; per-plan buttons arrive with payments.
+   new league starts free on the default plan; per-plan buttons arrive with payments.
 10. **Decided (Derek 2026-10-24): yes.** **Signed-in visitors** on `/plans` see **Choose for a league**, straight to the Plan page
     when they commission one league, otherwise My leagues? Recommended: yes.
 
@@ -204,7 +217,5 @@ Ticketed under epic #969 as #971, #972 and #973; the issues carry the live state
 
 Slices 2 and 3 run in parallel after 1.
 
-Prices are wired to `GET /billing/prices` when the payments build adds it; until then the
-Yearly/Monthly toggle shows Free under both, which is what the empty list means anyway.
-If the route is not in yet when slice 1 is built, the cards take the prices as an input and the
-pages pass none.
+Prices are wired to payments' price list when the payments build adds it; until then the
+cards show the lowest plan at $0 and the rest free for now, which is what an empty list means.

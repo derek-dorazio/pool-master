@@ -13,7 +13,7 @@ describe('PLAN_SETTINGS', () => {
     });
   });
 
-  it('starts the contest opening, receipt, results and event change emails on Free, the all-years views on Platinum, and every other feature on Pro', () => {
+  it('starts the contest opening, receipt, results and event change emails on Free, the All years summary on Premium, the record book on Platinum, and every other feature on Pro', () => {
     const startingAt = (plan: LeaguePlan) =>
       Object.values(PlanFeature).filter((feature) => defaults.features[feature] === plan).sort();
 
@@ -23,8 +23,8 @@ describe('PLAN_SETTINGS', () => {
       PlanFeature.EMAIL_CONTEST_OPENED,
       PlanFeature.EMAIL_CONTEST_RESULTS,
     ]);
-    expect(startingAt(LeaguePlan.PREMIUM)).toEqual([]);
-    expect(startingAt(LeaguePlan.PLATINUM)).toEqual([PlanFeature.ALL_TIME_SUMMARY, PlanFeature.RECORD_BOOK]);
+    expect(startingAt(LeaguePlan.PREMIUM)).toEqual([PlanFeature.ALL_TIME_SUMMARY]);
+    expect(startingAt(LeaguePlan.PLATINUM)).toEqual([PlanFeature.RECORD_BOOK]);
     expect(startingAt(LeaguePlan.PRO)).toHaveLength(Object.values(PlanFeature).length - 6);
   });
 
