@@ -1,0 +1,138 @@
+{
+  "fetchedAt": "2026-10-24T14:33:28.710Z",
+  "results": [
+    {
+      "url": "https://statsapi.mlb.com/api/v1/schedule?sportId=1&season=2025&gameType=W",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-statsapi.mlb.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250605",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250608",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250611",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250613",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250616",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250619",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20250622",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://api-web.nhle.com/v1/schedule/2025-06-04",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-api-web.nhle.com.txt"
+    },
+    {
+      "url": "https://api-web.nhle.com/v1/schedule/2025-06-11",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-api-web.nhle.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260125",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=20260208",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251024",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251025",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251028",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "16-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251029",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251031",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard?dates=20251101",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "19-site.api.espn.com.txt"
+    }
+  ]
+}
