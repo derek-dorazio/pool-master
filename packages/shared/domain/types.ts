@@ -90,6 +90,11 @@ export interface League extends DomainEntity {
   hallOfLameVisible: boolean;
   /** What the league may do (#943): ask the plan entitlements service, never compare plans. PLATINUM at creation. */
   plan: LeaguePlan;
+  /**
+   * Sport leagues whose upcoming events the league's commissioners are not emailed about (#851):
+   * "Coming up soon" and "Ready for contests". Empty at creation: every sport league.
+   */
+  mutedSportLeagueIds: string[];
 }
 
 /** User membership within a league. */

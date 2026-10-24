@@ -16,6 +16,7 @@ import {
   PrismaLeagueInvitationRepository,
   PrismaSquadMembershipRepository,
   PrismaMembershipTransaction,
+  PrismaSportLeagueRepository,
   PrismaSquadRepository,
   PrismaUserRepository,
 } from '../../adapters';
@@ -31,6 +32,8 @@ import {
   requireMemberOfLeague,
 } from './permissions';
 import { createLeagueHandlers } from './handler';
+import { createLeagueEventEmailSettingsHandler } from './event-email-settings-handler';
+import { LeagueEventEmailSettingsService } from './event-email-settings-service';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createBulkHandlers } from './bulk-handler';
@@ -91,6 +94,11 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
   const league = createLeagueHandlers(
     leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
   );
+  const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettingsService({
+    leagues: leagueRepo,
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    logger: fastify.log,
+  }), opts.planEntitlements);
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const bulk = createBulkHandlers(bulkService);
@@ -223,6 +231,26 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: league.updateLeaguePlan,
+  });
+
+  fastify.put('/:id/event-email-settings', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Choose which sport leagues\' upcoming events the commissioners are emailed about',
+      description:
+        'Allows a commissioner to set which sport leagues an active league\'s commissioners are not emailed about (#851): "Coming up soon" about 10 days before an event, and "Ready for contests" once it is released. The list is replaced whole; [] hears about every sport league, the default. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.',
+      operationId: 'updateLeagueEventEmailSettings',
+      body: schemaRef('UpdateLeagueEventEmailSettingsRequest'),
+      response: {
+        200: schemaRef('LeagueResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: updateLeagueEventEmailSettings,
   });
 
   fastify.post('/:id/inactivate', {

@@ -15,6 +15,7 @@ import type {
   User,
 } from '@poolmaster/shared/domain/types';
 import {
+  BracketAdvancement,
   CupPointsScale,
   LeaguePlan,
   CupWeight,
@@ -26,6 +27,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
+  type SportLeague,
 } from '@poolmaster/shared/domain';
 
 let counter = 0;
@@ -49,6 +51,28 @@ export function buildUser(overrides: Partial<User> = {}): User {
   };
 }
 
+export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
+  const id = nextId();
+  return {
+    id,
+    sportId: 'sport-golf',
+    name: `Sport League ${id}`,
+    displayName: null,
+    matchKeyword: null,
+    currentEventYear: null,
+    isActive: true,
+    bracketAdvancement: BracketAdvancement.FIXED,
+    roundNames: [],
+    tierCount: null,
+    matchPeriodLayout: null,
+    squaresFromRound: null,
+    noun: null,
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+    ...overrides,
+  };
+}
+
 export function buildLeague(overrides: Partial<League> = {}): League {
   const id = nextId();
   return {
@@ -60,6 +84,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     cupCustomPoints: [],
     hallOfLameVisible: true,
     plan: LeaguePlan.PLATINUM,
+    mutedSportLeagueIds: [],
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
     createdAt: new Date('2026-01-01'),

@@ -25,6 +25,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
       cupCustomPoints: [],
       hallOfLameVisible: true,
       plan: LeaguePlan.PLATINUM,
+      mutedSportLeagueIds: [],
       ...input,
       id: 'new-league-id',
       createdAt: new Date(),

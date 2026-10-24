@@ -37,5 +37,6 @@ export function toLeagueDto(
     cupCustomPoints: league.cupCustomPoints,
     hallOfLameVisible: league.hallOfLameVisible,
     planEntitlements: toPlanEntitlementsDto(entitlements),
+    mutedSportLeagueIds: league.mutedSportLeagueIds,
   };
 }

@@ -585,6 +585,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/event-email-settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Choose which sport leagues' upcoming events the commissioners are emailed about
+         * @description Allows a commissioner to set which sport leagues an active league's commissioners are not emailed about (#851): "Coming up soon" about 10 days before an event, and "Ready for contests" once it is released. The list is replaced whole; [] hears about every sport league, the default. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.
+         */
+        put: operations["updateLeagueEventEmailSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/inactivate": {
         parameters: {
             query?: never;
@@ -4237,6 +4257,11 @@ export interface components {
             /** @description Whether the record book shows its Hall of Lame rows, for the whole league. */
             hallOfLameVisible: boolean;
         };
+        /** @description Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced. */
+        UpdateLeagueEventEmailSettingsRequest: {
+            /** @description The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league. */
+            mutedSportLeagueIds: string[];
+        };
         /** @description Commissioner request payload for sending direct email invites. */
         SendLeagueInvitationsRequest: {
             /** @description Email recipients to invite into the league. */
@@ -4361,6 +4386,8 @@ export interface components {
                 /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
                 features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
             };
+            /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+            mutedSportLeagueIds: string[];
         };
         /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
@@ -4584,6 +4611,8 @@ export interface components {
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
                     features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                 };
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             };
         };
         /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
@@ -4642,6 +4671,8 @@ export interface components {
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
                     features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                 };
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             };
             /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
@@ -4846,6 +4877,8 @@ export interface components {
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
                     features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                 };
+                /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
+                mutedSportLeagueIds: string[];
             }[];
             /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
             memberships: {
@@ -20834,6 +20867,68 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    updateLeagueEventEmailSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateLeagueEventEmailSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description Single-league response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeagueResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

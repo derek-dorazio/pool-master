@@ -55,6 +55,7 @@ describe('LeagueSelector', () => {
               cupCustomPoints: [],
               hallOfLameVisible: true,
               planEntitlements: buildPlanEntitlements(),
+              mutedSportLeagueIds: [],
             },
             {
               id: 'league-2',
@@ -69,6 +70,7 @@ describe('LeagueSelector', () => {
               cupCustomPoints: [],
               hallOfLameVisible: true,
               planEntitlements: buildPlanEntitlements(),
+              mutedSportLeagueIds: [],
             },
           ]}
           onCreateLeague={() => undefined}
