@@ -72,6 +72,7 @@ export const ROUTE_AUTHORIZATION_OPT_OUTS = [
     'PUT /api/v1/users/:userId/preferences',
     'GET /api/v1/users/:userId/email-preferences',
     'PUT /api/v1/users/:userId/email-preferences',
+    'GET /api/v1/users/:userId/payments',
     'POST /api/v1/users/:userId/password',
     'POST /api/v1/users/:userId/disable',
     'POST /api/v1/users/:userId/enable',

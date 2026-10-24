@@ -40,6 +40,7 @@ import {
 import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
 import { buildManageUserPath } from '@/features/root-admin/manage-navigation';
+import { MyPaymentsSection } from '@/features/billing/payment-history-sections';
 import { EmailNotificationsDialog, EmailSuppressionBanner } from './email-notifications';
 import { useOwnEmailPreferences } from './email-preferences';
 import { UserAccountSummary } from './user-account-summary';
@@ -566,6 +567,8 @@ export function UserPage() {
           />
         )}
       />
+
+      <MyPaymentsSection />
 
       <FormModal
         canSave={

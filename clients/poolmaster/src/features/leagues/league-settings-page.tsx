@@ -12,6 +12,7 @@ import {
   SettingsSectionHeader,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
+import { LeaguePaymentsSection } from '@/features/billing/payment-history-sections';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { ExtendLeagueGift } from '@/features/plans/extend-league-gift';
 import { useAuth } from '@/features/auth/auth-context';
@@ -267,6 +268,8 @@ export function LeagueSettingsPage() {
         ))}
         {isRootAdmin ? <ExtendLeagueGift league={league} /> : null}
       </SettingsSection>
+
+      <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />
 
       <LeagueDangerZone league={league} />
     </div>

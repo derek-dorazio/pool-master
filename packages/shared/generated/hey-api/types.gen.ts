@@ -833,6 +833,136 @@ export type GrantContestExpansionRequest = {
 };
 
 /**
+ * One line of a league's payment history. No card data is ever kept.
+ */
+export type LeaguePayment = {
+    id: string;
+    /**
+     * When it was paid, or given.
+     */
+    paidAt: string;
+    /**
+     * In US cents; 0 for an expansion that was free.
+     */
+    amountCents: number;
+    /**
+     * What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off".
+     */
+    description: string;
+    /**
+     * The contest it was for; null when that contest was deleted.
+     */
+    contestId: string | null;
+    /**
+     * Who paid; null for a Poolmaster grant or when that account was deleted.
+     */
+    payer: {
+        id: string;
+        /**
+         * Their name, for display.
+         */
+        name: string;
+    } | null;
+};
+
+/**
+ * A league's payment history.
+ */
+export type LeaguePaymentListResponse = {
+    /**
+     * Newest first.
+     */
+    payments: Array<{
+        id: string;
+        /**
+         * When it was paid, or given.
+         */
+        paidAt: string;
+        /**
+         * In US cents; 0 for an expansion that was free.
+         */
+        amountCents: number;
+        /**
+         * What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off".
+         */
+        description: string;
+        /**
+         * The contest it was for; null when that contest was deleted.
+         */
+        contestId: string | null;
+        /**
+         * Who paid; null for a Poolmaster grant or when that account was deleted.
+         */
+        payer: {
+            id: string;
+            /**
+             * Their name, for display.
+             */
+            name: string;
+        } | null;
+    }>;
+};
+
+/**
+ * One payment a user made, in one of their leagues. No card data is ever kept.
+ */
+export type UserPayment = {
+    id: string;
+    /**
+     * When it was paid, or given.
+     */
+    paidAt: string;
+    /**
+     * In US cents; 0 for an expansion that was free.
+     */
+    amountCents: number;
+    /**
+     * What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off".
+     */
+    description: string;
+    /**
+     * The league it was paid in.
+     */
+    league: {
+        id: string;
+        name: string;
+        leagueCode: string;
+    };
+};
+
+/**
+ * Every payment a user made, in any league.
+ */
+export type UserPaymentListResponse = {
+    /**
+     * Newest first.
+     */
+    payments: Array<{
+        id: string;
+        /**
+         * When it was paid, or given.
+         */
+        paidAt: string;
+        /**
+         * In US cents; 0 for an expansion that was free.
+         */
+        amountCents: number;
+        /**
+         * What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off".
+         */
+        description: string;
+        /**
+         * The league it was paid in.
+         */
+        league: {
+            id: string;
+            name: string;
+            leagueCode: string;
+        };
+    }>;
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -23984,6 +24114,48 @@ export type UpdateUserEmailPreferenceResponses = {
 
 export type UpdateUserEmailPreferenceResponse = UpdateUserEmailPreferenceResponses[keyof UpdateUserEmailPreferenceResponses];
 
+export type ListUserPaymentsData = {
+    body?: never;
+    path: {
+        /**
+         * `me` for the authenticated caller, or a user id.
+         */
+        userId: string;
+    };
+    query?: never;
+    url: '/api/v1/users/{userId}/payments';
+};
+
+export type ListUserPaymentsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListUserPaymentsError = ListUserPaymentsErrors[keyof ListUserPaymentsErrors];
+
+export type ListUserPaymentsResponses = {
+    /**
+     * Every payment a user made, in any league.
+     */
+    200: UserPaymentListResponse;
+};
+
+export type ListUserPaymentsResponse = ListUserPaymentsResponses[keyof ListUserPaymentsResponses];
+
 export type ChangeUserPasswordData = {
     body: UserPasswordChangeRequest;
     path: {
@@ -25071,6 +25243,41 @@ export type ListLeaguePlansResponses = {
 };
 
 export type ListLeaguePlansResponse = ListLeaguePlansResponses[keyof ListLeaguePlansResponses];
+
+export type ListLeaguePaymentsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/billing/payments';
+};
+
+export type ListLeaguePaymentsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND — no such contest in this league.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListLeaguePaymentsError = ListLeaguePaymentsErrors[keyof ListLeaguePaymentsErrors];
+
+export type ListLeaguePaymentsResponses = {
+    /**
+     * A league's payment history.
+     */
+    200: LeaguePaymentListResponse;
+};
+
+export type ListLeaguePaymentsResponse = ListLeaguePaymentsResponses[keyof ListLeaguePaymentsResponses];
 
 export type GetContestExpansionData = {
     body?: never;
