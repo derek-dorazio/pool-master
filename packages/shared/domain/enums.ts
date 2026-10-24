@@ -780,19 +780,97 @@ export function isOptionalEmailCategory(category: EmailCategory): category is Op
 }
 
 /**
- * Which service level an email or a view belongs to (#845, #841; Derek 2026-10-22), so that
- * monetization can later offer each only to leagues whose plan includes it. Not tied to plan
- * names: the monetization work maps each class to its plans. Nothing is gated on it yet.
+ * A league's plan (#943), in order: a feature that starts at Pro is in Pro, Premium and
+ * Platinum, and a cap never falls as the plan rises. Every league starts on Platinum, which has
+ * everything, until a commissioner picks a lower one. "Plan" on screen, never "tier": tiers are
+ * player tiers in tiered selection. Only the plan entitlements service compares plans
+ * (`poolmaster/no-plan-branching`); everything else asks it about a cap or a feature.
  */
-export const ServiceClass = {
-  /** Account, security and membership. Every league gets it, on every plan, always. */
-  ESSENTIAL: 'ESSENTIAL',
-  /** The basics, on the free plan too: a contest opening, receipts, final results. */
-  A: 'A',
-  /** Paid plans from Pro (plans/season-cups.md §7, plans/email-notifications.md *Class*). */
-  B: 'B',
+export const LeaguePlan = {
+  FREE: 'FREE',
+  PRO: 'PRO',
+  PREMIUM: 'PREMIUM',
+  PLATINUM: 'PLATINUM',
 } as const;
-export type ServiceClass = (typeof ServiceClass)[keyof typeof ServiceClass];
+export type LeaguePlan = (typeof LeaguePlan)[keyof typeof LeaguePlan];
+
+/** Every plan, lowest first. The order is what "starts at" and "never falls" mean. */
+export const LEAGUE_PLANS: readonly LeaguePlan[] = [
+  LeaguePlan.FREE,
+  LeaguePlan.PRO,
+  LeaguePlan.PREMIUM,
+  LeaguePlan.PLATINUM,
+];
+
+/** The plans a cap can limit: every plan but Platinum, which is always unlimited. */
+export type CappedLeaguePlan = Exclude<LeaguePlan, typeof LeaguePlan.PLATINUM>;
+export const CAPPED_LEAGUE_PLANS: readonly CappedLeaguePlan[] = [LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM];
+
+/**
+ * What a plan can switch on or off (#944), each with the first plan that gets it in
+ * PLAN_CONFIG. One per optional email and one per championship or history view
+ * (plans/season-cups.md §7). What every league always has (account, security and membership
+ * emails, contest results and places) is not here, because no plan can take it away.
+ */
+export const PlanFeature = {
+  EMAIL_CONTEST_OPENED: 'EMAIL_CONTEST_OPENED',
+  EMAIL_CONTEST_ENTRY_COMPLETED: 'EMAIL_CONTEST_ENTRY_COMPLETED',
+  EMAIL_CONTEST_RESULTS: 'EMAIL_CONTEST_RESULTS',
+  EMAIL_CONTEST_EVENT_CHANGED: 'EMAIL_CONTEST_EVENT_CHANGED',
+  EMAIL_CONTEST_STARTED_SUMMARY: 'EMAIL_CONTEST_STARTED_SUMMARY',
+  EMAIL_CONTEST_ENTRY_REMINDER: 'EMAIL_CONTEST_ENTRY_REMINDER',
+  EMAIL_CONTEST_STANDINGS: 'EMAIL_CONTEST_STANDINGS',
+  EMAIL_EVENT_COMING_UP: 'EMAIL_EVENT_COMING_UP',
+  EMAIL_EVENT_READY_FOR_CONTESTS: 'EMAIL_EVENT_READY_FOR_CONTESTS',
+  EMAIL_CONTEST_NOT_OPEN: 'EMAIL_CONTEST_NOT_OPEN',
+  EMAIL_YEAR_IN_REVIEW: 'EMAIL_YEAR_IN_REVIEW',
+  CUP_STANDINGS: 'CUP_STANDINGS',
+  CUP_CROWNING: 'CUP_CROWNING',
+  CHAMPIONSHIP: 'CHAMPIONSHIP',
+  TROPHY_SHELF: 'TROPHY_SHELF',
+  CUP_SETTINGS: 'CUP_SETTINGS',
+  PAST_YEARS: 'PAST_YEARS',
+  ALL_TIME_SUMMARY: 'ALL_TIME_SUMMARY',
+  RECORD_BOOK: 'RECORD_BOOK',
+} as const;
+export type PlanFeature = (typeof PlanFeature)[keyof typeof PlanFeature];
+
+/** The groups the Plans page lists features under. */
+export const PlanFeatureGroup = {
+  EMAILS: 'EMAILS',
+  CHAMPIONSHIPS: 'CHAMPIONSHIPS',
+  HISTORY: 'HISTORY',
+} as const;
+export type PlanFeatureGroup = (typeof PlanFeatureGroup)[keyof typeof PlanFeatureGroup];
+
+export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>> = {
+  EMAIL_CONTEST_OPENED: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_ENTRY_COMPLETED: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_RESULTS: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_EVENT_CHANGED: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_STARTED_SUMMARY: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_ENTRY_REMINDER: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_STANDINGS: PlanFeatureGroup.EMAILS,
+  EMAIL_EVENT_COMING_UP: PlanFeatureGroup.EMAILS,
+  EMAIL_EVENT_READY_FOR_CONTESTS: PlanFeatureGroup.EMAILS,
+  EMAIL_CONTEST_NOT_OPEN: PlanFeatureGroup.EMAILS,
+  EMAIL_YEAR_IN_REVIEW: PlanFeatureGroup.EMAILS,
+  CUP_STANDINGS: PlanFeatureGroup.CHAMPIONSHIPS,
+  CUP_CROWNING: PlanFeatureGroup.CHAMPIONSHIPS,
+  CHAMPIONSHIP: PlanFeatureGroup.CHAMPIONSHIPS,
+  TROPHY_SHELF: PlanFeatureGroup.CHAMPIONSHIPS,
+  CUP_SETTINGS: PlanFeatureGroup.CHAMPIONSHIPS,
+  PAST_YEARS: PlanFeatureGroup.HISTORY,
+  ALL_TIME_SUMMARY: PlanFeatureGroup.HISTORY,
+  RECORD_BOOK: PlanFeatureGroup.HISTORY,
+};
+
+/** The limits a plan sets (#944): entries per contest, and sports leagues per calendar year. */
+export const PlanCap = {
+  ENTRIES_PER_CONTEST: 'ENTRIES_PER_CONTEST',
+  SPORTS_LEAGUES_PER_YEAR: 'SPORTS_LEAGUES_PER_YEAR',
+} as const;
+export type PlanCap = (typeof PlanCap)[keyof typeof PlanCap];
 
 /** The system emails core-api can send, one per template. */
 export const EmailTemplateKey = {

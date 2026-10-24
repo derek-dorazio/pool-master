@@ -12058,6 +12058,137 @@ export interface components {
                 name: string;
             }[];
         };
+        /** @description One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises. */
+        PlanCapRow: {
+            /** @description The most this plan allows, or null for unlimited. */
+            FREE: number | null;
+            /** @description The most this plan allows, or null for unlimited. */
+            PRO: number | null;
+            /** @description The most this plan allows, or null for unlimited. */
+            PREMIUM: number | null;
+        };
+        /** @description What each league plan allows: its caps and the plan each feature starts at. */
+        PlanConfig: {
+            /** @description Each cap's limit on each plan. */
+            caps: {
+                /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                ENTRIES_PER_CONTEST: {
+                    /** @description The most this plan allows, or null for unlimited. */
+                    FREE: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PRO: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PREMIUM: number | null;
+                };
+                /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /** @description The most this plan allows, or null for unlimited. */
+                    FREE: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PRO: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PREMIUM: number | null;
+                };
+            };
+            /** @description The plan each feature starts at. */
+            features: {
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+            };
+        };
         /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
         IngestionScheduleConfigOverride: {
             scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
@@ -12306,7 +12437,7 @@ export interface components {
          * @description The stored key of a settings group.
          * @enum {string}
          */
-        SettingsGroupKey: "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG" | "BUDGET_PRICING_CONFIG";
+        SettingsGroupKey: "INGESTION_SCHEDULE_CONFIG" | "EMAIL_CONFIG" | "BUDGET_PRICING_CONFIG" | "PLAN_CONFIG";
         /** @description The root admin who saved a settings change. */
         SettingsActor: {
             /**
@@ -12715,6 +12846,277 @@ export interface components {
                     name: string;
                 }[];
             };
+        } | {
+            /** @enum {string} */
+            key: "PLAN_CONFIG";
+            /** @description Short display name of the group. */
+            title: string;
+            /** @description What the group controls. */
+            description: string;
+            /**
+             * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+             * @enum {string}
+             */
+            source: "stored" | "defaults";
+            /**
+             * Format: date-time
+             * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+             */
+            updatedAt: string | null;
+            /** @description Who last saved the stored value, when known. */
+            updatedBy: {
+                /**
+                 * Format: uuid
+                 * @description The user id of the root admin who made the change.
+                 */
+                id: string;
+                /** @description The admin's full name, for display. */
+                name: string;
+            } | null;
+            /** @description The value in use. */
+            value: {
+                /** @description Each cap's limit on each plan. */
+                caps: {
+                    /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                    ENTRIES_PER_CONTEST: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                    /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                    SPORTS_LEAGUES_PER_YEAR: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                };
+                /** @description The plan each feature starts at. */
+                features: {
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                };
+            };
+            /** @description The value a reset would store. */
+            defaults: {
+                /** @description Each cap's limit on each plan. */
+                caps: {
+                    /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                    ENTRIES_PER_CONTEST: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                    /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                    SPORTS_LEAGUES_PER_YEAR: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                };
+                /** @description The plan each feature starts at. */
+                features: {
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                };
+            };
         };
         /** @description Every settings group the platform has. */
         SettingsGroupList: {
@@ -13116,6 +13518,277 @@ export interface components {
                         name: string;
                     }[];
                 };
+            } | {
+                /** @enum {string} */
+                key: "PLAN_CONFIG";
+                /** @description Short display name of the group. */
+                title: string;
+                /** @description What the group controls. */
+                description: string;
+                /**
+                 * @description `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+                 * @enum {string}
+                 */
+                source: "stored" | "defaults";
+                /**
+                 * Format: date-time
+                 * @description When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+                 */
+                updatedAt: string | null;
+                /** @description Who last saved the stored value, when known. */
+                updatedBy: {
+                    /**
+                     * Format: uuid
+                     * @description The user id of the root admin who made the change.
+                     */
+                    id: string;
+                    /** @description The admin's full name, for display. */
+                    name: string;
+                } | null;
+                /** @description The value in use. */
+                value: {
+                    /** @description Each cap's limit on each plan. */
+                    caps: {
+                        /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                        ENTRIES_PER_CONTEST: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                        /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                        SPORTS_LEAGUES_PER_YEAR: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                    };
+                    /** @description The plan each feature starts at. */
+                    features: {
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    };
+                };
+                /** @description The value a reset would store. */
+                defaults: {
+                    /** @description Each cap's limit on each plan. */
+                    caps: {
+                        /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                        ENTRIES_PER_CONTEST: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                        /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                        SPORTS_LEAGUES_PER_YEAR: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                    };
+                    /** @description The plan each feature starts at. */
+                    features: {
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    };
+                };
             })[];
         };
         /** @description A whole new value for one settings group. `key` must match the path. */
@@ -13280,6 +13953,136 @@ export interface components {
                     /** @description The profile's name, such as "Standard". */
                     name: string;
                 }[];
+            };
+            /**
+             * Format: date-time
+             * @description The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+             */
+            expectedUpdatedAt: string | null;
+        } | {
+            /** @enum {string} */
+            key: "PLAN_CONFIG";
+            /** @description The whole new value. */
+            value: {
+                /** @description Each cap's limit on each plan. */
+                caps: {
+                    /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                    ENTRIES_PER_CONTEST: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                    /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                    SPORTS_LEAGUES_PER_YEAR: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                };
+                /** @description The plan each feature starts at. */
+                features: {
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                };
             };
             /**
              * Format: date-time
@@ -13664,6 +14467,270 @@ export interface components {
                     name: string;
                 }[];
             };
+        } | {
+            /** @enum {string} */
+            key: "PLAN_CONFIG";
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            changedAt: string;
+            /** @description Who saved it, when known. */
+            changedBy: {
+                /**
+                 * Format: uuid
+                 * @description The user id of the root admin who made the change.
+                 */
+                id: string;
+                /** @description The admin's full name, for display. */
+                name: string;
+            } | null;
+            /** @description The stored value before the save; null when the save created the first stored value. */
+            previousValue: {
+                /** @description Each cap's limit on each plan. */
+                caps: {
+                    /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                    ENTRIES_PER_CONTEST: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                    /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                    SPORTS_LEAGUES_PER_YEAR: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                };
+                /** @description The plan each feature starts at. */
+                features: {
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                };
+            } | null;
+            /** @description The value the save stored. */
+            newValue: {
+                /** @description Each cap's limit on each plan. */
+                caps: {
+                    /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                    ENTRIES_PER_CONTEST: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                    /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                    SPORTS_LEAGUES_PER_YEAR: {
+                        /** @description The most this plan allows, or null for unlimited. */
+                        FREE: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PRO: number | null;
+                        /** @description The most this plan allows, or null for unlimited. */
+                        PREMIUM: number | null;
+                    };
+                };
+                /** @description The plan each feature starts at. */
+                features: {
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                };
+            };
         };
         /** @description Recent changes to one settings group. */
         SettingsChangeList: {
@@ -14043,6 +15110,270 @@ export interface components {
                         /** @description The profile's name, such as "Standard". */
                         name: string;
                     }[];
+                };
+            } | {
+                /** @enum {string} */
+                key: "PLAN_CONFIG";
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                changedAt: string;
+                /** @description Who saved it, when known. */
+                changedBy: {
+                    /**
+                     * Format: uuid
+                     * @description The user id of the root admin who made the change.
+                     */
+                    id: string;
+                    /** @description The admin's full name, for display. */
+                    name: string;
+                } | null;
+                /** @description The stored value before the save; null when the save created the first stored value. */
+                previousValue: {
+                    /** @description Each cap's limit on each plan. */
+                    caps: {
+                        /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                        ENTRIES_PER_CONTEST: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                        /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                        SPORTS_LEAGUES_PER_YEAR: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                    };
+                    /** @description The plan each feature starts at. */
+                    features: {
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    };
+                } | null;
+                /** @description The value the save stored. */
+                newValue: {
+                    /** @description Each cap's limit on each plan. */
+                    caps: {
+                        /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                        ENTRIES_PER_CONTEST: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                        /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                        SPORTS_LEAGUES_PER_YEAR: {
+                            /** @description The most this plan allows, or null for unlimited. */
+                            FREE: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PRO: number | null;
+                            /** @description The most this plan allows, or null for unlimited. */
+                            PREMIUM: number | null;
+                        };
+                    };
+                    /** @description The plan each feature starts at. */
+                    features: {
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    };
                 };
             })[];
         };

@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { CupTrophy, EmailCategory, ServiceClass, formatDollars } from '@poolmaster/shared/domain';
+import { CupTrophy, EmailCategory, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -586,8 +586,11 @@ type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
 export interface EmailTemplateDefinition<Key extends SystemEmailTemplateKey> {
   /** Decides whether a member can turn the email off, and which unsubscribe link it carries. */
   category: EmailCategory;
-  /** The service level the email belongs to, for monetization to gate on later (#845). */
-  serviceClass: ServiceClass;
+  /**
+   * The plan feature that sends it (#944), so a league whose plan lacks it gets none; null for
+   * an email every league always gets (account, security and membership, root admin notices).
+   */
+  planFeature: PlanFeature | null;
   /**
    * Whether EMAIL_CONFIG has a switch for this email, under its key. An email without one (an
    * account email such as a password reset) follows only the overall switch.
@@ -690,7 +693,7 @@ export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
 export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   LEAGUE_MEMBER_INVITE: {
     category: EmailCategory.MEMBERSHIP,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -698,7 +701,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   LEAGUE_JOIN_SUCCESS: {
     category: EmailCategory.MEMBERSHIP,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -706,7 +709,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   SQUAD_OWNER_INVITE: {
     category: EmailCategory.MEMBERSHIP,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -714,7 +717,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   SQUAD_OWNER_ADDED: {
     category: EmailCategory.MEMBERSHIP,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -722,7 +725,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_ENTRY_COMPLETED: {
     category: EmailCategory.RECEIPTS,
-    serviceClass: ServiceClass.A,
+    planFeature: PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -730,7 +733,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_STARTED_SUMMARY: {
     category: EmailCategory.LIVE_STANDINGS,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_CONTEST_STARTED_SUMMARY,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -738,7 +741,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_ENTRY_REMINDER: {
     category: EmailCategory.CONTEST_UPDATES,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_CONTEST_ENTRY_REMINDER,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -746,7 +749,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_OPENED: {
     category: EmailCategory.CONTEST_UPDATES,
-    serviceClass: ServiceClass.A,
+    planFeature: PlanFeature.EMAIL_CONTEST_OPENED,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -754,7 +757,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_STANDINGS: {
     category: EmailCategory.LIVE_STANDINGS,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_CONTEST_STANDINGS,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -762,7 +765,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_RESULTS: {
     category: EmailCategory.RESULTS,
-    serviceClass: ServiceClass.A,
+    planFeature: PlanFeature.EMAIL_CONTEST_RESULTS,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -770,7 +773,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_EVENT_CHANGED: {
     category: EmailCategory.CONTEST_UPDATES,
-    serviceClass: ServiceClass.A,
+    planFeature: PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -778,7 +781,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   EVENT_COMING_UP: {
     category: EmailCategory.COMMISSIONER_UPDATES,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_EVENT_COMING_UP,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -786,7 +789,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   EVENT_READY_FOR_CONTESTS: {
     category: EmailCategory.COMMISSIONER_UPDATES,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -794,7 +797,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   CONTEST_NOT_OPEN: {
     category: EmailCategory.COMMISSIONER_UPDATES,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_CONTEST_NOT_OPEN,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -802,7 +805,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   EVENT_STILL_DRAFT: {
     category: EmailCategory.ROOT_ADMIN,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,
@@ -810,7 +813,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   PASSWORD_RESET: {
     category: EmailCategory.ACCOUNT,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: false,
     keepsContent: false,
     // A reset email is never sent after its link is dead.
@@ -819,7 +822,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   PASSWORD_CHANGED: {
     category: EmailCategory.ACCOUNT,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: false,
     keepsContent: true,
     sendWithinMs: null,
@@ -827,7 +830,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   EMAIL_TEST: {
     category: EmailCategory.ROOT_ADMIN,
-    serviceClass: ServiceClass.ESSENTIAL,
+    planFeature: null,
     settingsSwitch: false,
     keepsContent: true,
     sendWithinMs: null,
@@ -835,7 +838,7 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
   },
   YEAR_IN_REVIEW: {
     category: EmailCategory.RESULTS,
-    serviceClass: ServiceClass.B,
+    planFeature: PlanFeature.EMAIL_YEAR_IN_REVIEW,
     settingsSwitch: true,
     keepsContent: true,
     sendWithinMs: null,

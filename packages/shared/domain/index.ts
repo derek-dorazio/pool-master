@@ -17,6 +17,7 @@ export * from './squares';
 export * from './predicted-choice';
 export * from './cup-points';
 export * from './championship';
+export * from './league-plans';
 export { assertNever } from './assert-never';
 export {
   compareScores,

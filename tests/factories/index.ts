@@ -17,6 +17,7 @@ import type {
 import {
   BracketAdvancement,
   CupPointsScale,
+  LeaguePlan,
   CupWeight,
   ContestStatus,
   ContestFormat,
@@ -82,6 +83,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     cupPointsScale: CupPointsScale.STANDARD,
     cupCustomPoints: [],
     hallOfLameVisible: true,
+    plan: LeaguePlan.PLATINUM,
     mutedSportLeagueIds: [],
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
