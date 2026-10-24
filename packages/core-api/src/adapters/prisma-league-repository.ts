@@ -52,7 +52,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return rows.map(mapToLeague);
   }
 
-  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds'>): Promise<League> {
+  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League> {
     const row = await this.prisma.league.create({
       data: {
         leagueCode: league.leagueCode,
@@ -100,6 +100,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         ...(updates.cupCustomPoints !== undefined && { cupCustomPoints: updates.cupCustomPoints }),
         ...(updates.hallOfLameVisible !== undefined && { hallOfLameVisible: updates.hallOfLameVisible }),
         ...(updates.mutedSportLeagueIds !== undefined && { mutedSportLeagueIds: updates.mutedSportLeagueIds }),
+        ...(updates.eventEmailDelivery !== undefined && { eventEmailDelivery: updates.eventEmailDelivery }),
       },
     });
     return mapToLeague(row);
@@ -121,6 +122,7 @@ function mapToLeague(row: PrismaLeague): League {
     hallOfLameVisible: row.hallOfLameVisible,
     plan: row.plan,
     mutedSportLeagueIds: row.mutedSportLeagueIds,
+    eventEmailDelivery: row.eventEmailDelivery,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
