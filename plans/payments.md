@@ -367,7 +367,9 @@ authority, like the SES events endpoint.
   `POST /leagues/:id/billing/portal` (returns a portal link),
   `POST /leagues/:id/billing/take-over`, `GET /leagues/:id/billing` (plan paid, renewal date,
   payer, status, next plan, payments), `GET /users/me/payments` (what I paid, for which
-  league), `POST /billing/stripe-events`. All contract-first with DTOs and the generated
+  league), `GET /billing/prices` (public, so the marketing page can use it too: each paid
+  plan's annual and monthly amount, read from Stripe and cached briefly; empty while payments
+  are off), `POST /billing/stripe-events`. All contract-first with DTOs and the generated
   client (`rules/service-rules.md` §4 *DTOs, Mappers, and OpenAPI*).
 - **Screens**: the commissioner plan comparison page (its own thread) links each plan into
   checkout or a plan change; league settings Plan gains price, period, renewal date, payer,
