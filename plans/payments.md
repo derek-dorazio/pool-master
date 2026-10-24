@@ -6,8 +6,8 @@ Per-contest purchases: #968 (designed here, as phase 1).
 Written 2026-10-24 for Derek's review; revised the same day after review on PR #967 and
 Derek's direction: start with per-contest purchases on a capped Premium (100 on day 1, no
 payment required), subscriptions later.
-Design only; nothing here is built, and the build is deferred until Derek's go. Questions are
-in §13, each with a recommendation; answer only where you disagree.
+Design only; nothing here is built, and the build is deferred until Derek's go. Phase 1 questions
+(§13) were all decided by Derek on 2026-10-24; phase 2 questions wait for phase 2.
 
 ## TL;DR
 
