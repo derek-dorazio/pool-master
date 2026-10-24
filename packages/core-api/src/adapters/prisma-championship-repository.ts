@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ChampionshipRepository, FinalContest } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
 import { ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
 
 const FINISH_SELECT = {
@@ -97,6 +97,46 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         selectionType: row.selectionType,
         sportLeagueName: firstEvent.sportEvent.eventSeries.sportLeague.name,
         completedAt: row.endsAt,
+      }];
+    });
+  }
+
+  async findSeriesContests(leagueId: string): Promise<SeriesContest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.COMPLETED },
+      select: {
+        id: true,
+        name: true,
+        selectionType: true,
+        cupWeight: true,
+        endsAt: true,
+        sportEvents: {
+          take: 2,
+          select: {
+            sportEvent: {
+              select: {
+                eventYear: true,
+                eventSeries: { select: { id: true, name: true, sportLeague: { select: { name: true } } } },
+                matches: { select: { advancesToMatchId: true, sportEventRound: { select: { roundNumber: true } } } },
+              },
+            },
+          },
+        },
+      },
+    });
+    return rows.flatMap((row) => {
+      const only = row.sportEvents.length === 1 ? row.sportEvents[0]?.sportEvent : undefined;
+      return only === undefined ? [] : [{
+        id: row.id,
+        name: row.name,
+        selectionType: row.selectionType,
+        cupWeight: row.cupWeight,
+        eventSeriesId: only.eventSeries.id,
+        seriesName: only.eventSeries.name,
+        sportLeagueName: only.eventSeries.sportLeague.name,
+        eventYear: only.eventYear,
+        completedAt: row.endsAt,
+        games: only.matches.map((match) => ({ roundNumber: match.sportEventRound.roundNumber, sendsWinnerOn: match.advancesToMatchId !== null })),
       }];
     });
   }

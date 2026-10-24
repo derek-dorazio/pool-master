@@ -87,6 +87,22 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions)
     handler: handlers.getHistorySummary,
   });
 
+  fastify.get('/trophies', {
+    schema: {
+      tags: ['History'],
+      summary: 'List the perpetual trophies',
+      description: `The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. ${MEMBERS_ONLY}`,
+      operationId: 'listPerpetualTrophies',
+      response: {
+        200: schemaRef('PerpetualTrophyListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listPerpetualTrophies,
+  });
+
   fastify.get('/records', {
     schema: {
       tags: ['History'],

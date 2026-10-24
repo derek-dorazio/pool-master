@@ -506,3 +506,10 @@ pick'em, 2022 Gimme Putts, 2023 Fore Play, 2024 Gimme Putts".
 
 1. **Perpetual trophies.** The endpoint, the Trophy case section, plates on squad pages. After
    #863 slice 1 and #841 slice 4.
+   Built as `GET /leagues/:id/history/trophies` (`listPerpetualTrophies`) in the `history` module,
+   worked out by pure functions in `history/perpetual-trophies.ts` from the completed one-event
+   contests (their series, event year and games) and the finishes. Each NFL regular-season week is
+   its own series with one edition a year, so the series rule alone would make "NFL Week 1
+   Pick'em" a trophy; a week of games (several games, one round, none sending its winner on) earns
+   none (Derek, 2026-10-24). A plate's year is the event's year; Not counted contests are left out. The squad page
+   reads the same list and keeps the plates naming the squad. `REPEAT_WINNER` follows.

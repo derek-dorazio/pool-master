@@ -188,6 +188,28 @@ export const RecordListResponseSchema = z.object({
 }).describe('The league\'s record book.');
 export type RecordListResponse = z.infer<typeof RecordListResponseSchema>;
 
+export const PerpetualTrophyPlateDtoSchema = z.object({
+  year: z.number().int().describe('The year of the event the contest was on: the 2026 Masters.'),
+  contestId: z.string().uuid(),
+  contestName: z.string(),
+  winners: z.array(ChampionshipSquadDtoSchema).describe('The contest\'s 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.'),
+}).describe('One plate of a perpetual trophy: a year\'s contest and its winners.');
+export type PerpetualTrophyPlateDto = z.infer<typeof PerpetualTrophyPlateDtoSchema>;
+
+export const PerpetualTrophyDtoSchema = z.object({
+  eventSeriesId: z.string().uuid(),
+  seriesName: z.string().describe('The event series the contest is run on every year, such as "Masters Tournament".'),
+  sportLeagueName: z.string(),
+  selectionType: z.nativeEnum(SelectionType).describe('How the contest is picked: a series run as two ways of picking is two trophies.'),
+  plates: z.array(PerpetualTrophyPlateDtoSchema).describe('Newest year first; a year the league did not run it has no plate.'),
+}).describe('A perpetual trophy: a contest of one event the league has run in two or more years.');
+export type PerpetualTrophyDto = z.infer<typeof PerpetualTrophyDtoSchema>;
+
+export const PerpetualTrophyListResponseSchema = z.object({
+  trophies: z.array(PerpetualTrophyDtoSchema).describe('In sports league, series and selection type order.'),
+}).describe('The league\'s perpetual trophies.');
+export type PerpetualTrophyListResponse = z.infer<typeof PerpetualTrophyListResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
@@ -212,3 +234,6 @@ registerSchema('RecordHolderDto', RecordHolderDtoSchema);
 registerSchema('RecordStandDto', RecordStandDtoSchema);
 registerSchema('RecordDto', RecordDtoSchema);
 registerSchema('RecordListResponse', RecordListResponseSchema);
+registerSchema('PerpetualTrophyPlateDto', PerpetualTrophyPlateDtoSchema);
+registerSchema('PerpetualTrophyDto', PerpetualTrophyDtoSchema);
+registerSchema('PerpetualTrophyListResponse', PerpetualTrophyListResponseSchema);

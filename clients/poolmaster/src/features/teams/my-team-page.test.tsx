@@ -31,6 +31,7 @@ const getSquadYearMock = vi.fn();
 const getSquadHistoryMock = vi.fn();
 const listContestResultsMock = vi.fn();
 const listRecordsMock = vi.fn();
+const listPerpetualTrophiesMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -52,6 +53,7 @@ bindApiMocks({
   listContestResults: listContestResultsMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
+  listPerpetualTrophies: listPerpetualTrophiesMock,
   listRecords: listRecordsMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
@@ -148,6 +150,7 @@ function primeTeam({
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [] }));
   getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory({ medals: { firsts: 0, seconds: 0, thirds: 0 }, trophies: [], years: [] }) }));
   listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
+  listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
 }
 
 function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED') {
@@ -203,7 +206,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock,
+    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
     mock.mockReset();
   }
@@ -516,6 +519,29 @@ describe('My team › Trophies and past years', () => {
     expect(screen.getByTestId('squad-record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Masters Pick 6 (2025)');
     // Next best is not a record held, so the all-time count stays on the record book only.
     expect(screen.queryByTestId('squad-record-MOST_WINS_ALL_TIME')).not.toBeInTheDocument();
+  });
+
+  it('puts each perpetual trophy plate the squad won in its trophy case, and none it did not win', async () => {
+    primeTeam();
+    const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Super Bowl',
+      sportLeagueName: 'NFL',
+      selectionType: 'SQUARES',
+      plates: [
+        { year: 2025, contestId: 'bowl-2025', contestName: 'Bowl 2025', winners: [mine, rival] },
+        { year: 2024, contestId: 'bowl-2024', contestName: 'Bowl 2024', winners: [rival] },
+      ],
+    }] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-plate-bowl-2025')).toHaveTextContent('2025 Super Bowl Squares');
+    expect(screen.queryByTestId('squad-history-plate-bowl-2024')).not.toBeInTheDocument();
+    // A plate is a trophy, so the empty shelf's note gives way to it.
+    expect(screen.queryByTestId('squad-history-trophies-none')).not.toBeInTheDocument();
   });
 
   it('shows no records section for a squad that holds none', async () => {
