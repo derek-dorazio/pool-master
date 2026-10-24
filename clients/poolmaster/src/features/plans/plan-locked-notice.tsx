@@ -12,10 +12,13 @@ export function PlanLockedNotice({
   feature,
   isCommissioner,
   leagueCode,
+  title = PLAN_FEATURE_LABEL[feature],
 }: {
   feature: PlanFeature;
   isCommissioner: boolean;
   leagueCode: string;
+  /** The page's own name, when it stands for more than its feature. */
+  title?: string;
 }) {
   return (
     <EmptyState
@@ -28,7 +31,7 @@ export function PlanLockedNotice({
         ? 'Your league\'s plan doesn\'t include this. On a plan that does, it shows again with everything recorded meanwhile.'
         : 'This isn\'t turned on for this league.'}
       testId={`plan-locked-${feature}`}
-      title={PLAN_FEATURE_LABEL[feature]}
+      title={title}
     />
   );
 }

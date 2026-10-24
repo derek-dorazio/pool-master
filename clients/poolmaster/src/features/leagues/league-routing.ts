@@ -143,6 +143,11 @@ export function buildLeagueAdminChampionshipsEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/championships/edit`;
 }
 
+/** Which sport leagues' upcoming events the league's commissioners are emailed about (#851). */
+export function buildLeagueAdminEventEmailsEditPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/event-emails/edit`;
+}
+
 /** The league's plan picker and comparison table (#945). */
 export function buildLeagueAdminPlanEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/plan/edit`;

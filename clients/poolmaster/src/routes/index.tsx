@@ -29,6 +29,7 @@ import { JoinLeaguePage } from '@/features/leagues/join-league-page';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
 import { EditLeaguePage } from '@/features/leagues/edit-league-page';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
+import { EditEventEmailsPage } from '@/features/leagues/edit-event-emails-page';
 import { EditLeaguePlanPage } from '@/features/plans/edit-league-plan-page';
 import { EditContestCupWeightPage } from '@/features/contests/edit-contest-cup-weight-page';
 import { LeagueHomePage } from '@/features/leagues/league-home-page';
@@ -170,6 +171,10 @@ export const router = createBrowserRouter([
                   {
                     path: 'championships/edit',
                     element: <EditChampionshipSettingsPage />,
+                  },
+                  {
+                    path: 'event-emails/edit',
+                    element: <EditEventEmailsPage />,
                   },
                   {
                     path: 'plan/edit',

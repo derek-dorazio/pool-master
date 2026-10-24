@@ -461,14 +461,15 @@ in the Commissioner updates category:
   hours. Not for a contest created in the last 6 hours. It goes to the contest's league's
   commissioners and links to the contest's commissioner page.
 
-C1 and C2 go to every active commissioner of every active league, each league sending its own;
-a league that joins after the others were told is told on the next sweep. A league hears about
+C1 and C2 go to every active commissioner of every active league, each league sending its own; a
+league that joins after the others were told is told on the next sweep. A league hears about
 every sport league unless its commissioners mute one (#851): the league's `mutedSportLeagueIds`,
-set with `PUT /api/v1/leagues/{id}/event-email-settings`, and a league muting an event's sport
-league is not told of it. A sport league added later is heard about until muted. A sport league whose
-events are weeks (each NFL week its own event) is told of its season's first week only. The
-idempotency key (event, league, person; for C4, contest, person) sends each once, and a league or
-contest already told is skipped before its email is built.
+set with `PUT /api/v1/leagues/{id}/event-email-settings` from Commissioner tools › League
+settings › Event emails, and a league muting an event's sport league is not told of it. A sport
+league added later is heard about until muted. A sport league whose events are weeks (each NFL
+week its own event) is told of its season's first week only. The idempotency key (event, league,
+person; for C4, contest, person) sends each once, and a league or contest already told is skipped
+before its email is built.
 
 Event still in draft emails (`EVENT_STILL_DRAFT`, #845 G1, category Root admin, which can't be
 turned off) are the step's fourth kind. While an event starts within 7 days and is still a draft,
