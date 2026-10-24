@@ -778,7 +778,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     ]);
   });
 
-  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s', async () => {
+  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s and the championship stat pools last', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       select: { name: true, displayOrder: true, sport: { select: { sport: true } } },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
@@ -792,8 +792,8 @@ describe('The seeded NFL league and its knockout templates', () => {
       const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
       expect(new Set(orders).size).toBe(orders.length);
     }
-    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Finals']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
   });
 });
