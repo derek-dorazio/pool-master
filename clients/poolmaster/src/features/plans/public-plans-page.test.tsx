@@ -114,7 +114,7 @@ describe('PublicPlansPage', () => {
 
     const choose = await screen.findByTestId('public-plans-card-PRO-start');
     expect(choose).toHaveTextContent('Choose for a league');
-    await vi.waitFor(() => expect(choose).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit'));
+    await vi.waitFor(() => expect(choose).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan'));
   });
 
   it('sends a signed-in member who runs no league, or several, to their leagues', async () => {

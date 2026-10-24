@@ -197,7 +197,7 @@ All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle wa
    `/league/:code/admin/plan` with the old path redirecting? Recommended: yes; one page to
    compare and choose, instead of a radio list over a table.
 8. **Decided (Derek 2026-10-24): yes.** **Usage on the commissioner page**: sports leagues this year (already served) and the
-   biggest open contest's entry count (new), from one small `GET /leagues/:id/plan-usage`?
+   biggest open contest's entry count (new), from one small `GET /leagues/:id/contests/plan-usage`?
    Recommended: yes. It is what makes "You use 34" possible, and Create contest keeps its own
    sports leagues call.
 9. **Decided (Derek 2026-10-24): yes.** **Every public button says Start free while payments are off?** Recommended: yes, because every

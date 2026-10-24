@@ -7,7 +7,7 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
-import { EditLeaguePlanPage } from '@/features/plans/edit-league-plan-page';
+import { LeaguePlanEditRedirect, LeaguePlanPage } from '@/features/plans/league-plan-page';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
@@ -34,6 +34,7 @@ const activateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const getLeaguePlanUsageMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
 const listLeaguePlansMock = vi.fn();
@@ -50,6 +51,7 @@ bindApiMocks({
   deleteLeague: deleteLeagueMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  getLeaguePlanUsage: getLeaguePlanUsageMock,
   inactivateLeague: inactivateLeagueMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeaguePlans: listLeaguePlansMock,
@@ -76,7 +78,8 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
                   <Route element={<EditLeaguePage />} path="edit" />
                   <Route element={<EditChampionshipSettingsPage />} path="championships/edit" />
                   <Route element={<EditEventEmailsPage />} path="event-emails/edit" />
-                  <Route element={<EditLeaguePlanPage />} path="plan/edit" />
+                  <Route element={<LeaguePlanPage />} path="plan" />
+                  <Route element={<LeaguePlanEditRedirect />} path="plan/edit" />
                 </Route>
               </Route>
             </Route>
@@ -140,7 +143,7 @@ function primeMocks({
 
 afterEach(() => {
   for (const mock of [
-    activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
+    activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock, getLeaguePlanUsageMock,
     inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, listSportLeaguesMock,
     refreshTokenMock, updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeagueEventEmailSettingsMock,
     updateLeaguePlanMock,
@@ -612,7 +615,7 @@ describe('Championship settings', () => {
 
     const championships = within(await screen.findByTestId('league-settings-championships'));
     expect(championships.getByText('Your league\'s plan doesn\'t include championship settings.')).toBeInTheDocument();
-    expect(championships.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(championships.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(championships.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     expect(championships.queryByTestId('league-settings-points-table')).not.toBeInTheDocument();
   });
@@ -655,11 +658,28 @@ const FREE_PLAN = buildPlanEntitlements({
   features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS'],
 });
 
+const PRO_PLAN = buildPlanEntitlements({
+  plan: 'PRO',
+  caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 },
+  features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'],
+});
+
+function primeUsage(overrides: { openContests?: Array<{ contestId: string; name: string; entryCount: number }> } = {}) {
+  getLeaguePlanUsageMock.mockResolvedValue(apiSuccess({
+    seasonYear: 2026,
+    sportLeagueIds: [PGA.id, NBA.id],
+    openContests: overrides.openContests ?? [
+      { contestId: 'c-1', name: 'NBA Finals Picks', entryCount: 12 },
+      { contestId: 'c-2', name: 'Masters Tiers Pool', entryCount: 34 },
+    ],
+  }));
+}
+
 function primePlanList() {
   listLeaguePlansMock.mockResolvedValue(apiSuccess({
     plans: [
       FREE_PLAN,
-      buildPlanEntitlements({ plan: 'PRO', caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 }, features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'] }),
+      PRO_PLAN,
       buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 } }),
       buildPlanEntitlements(),
     ],
@@ -676,7 +696,7 @@ describe('League plan', () => {
     expect(plan.getByTestId('league-settings-plan-name')).toHaveTextContent('Free');
     expect(plan.getByTestId('league-settings-plan-cap-ENTRIES_PER_CONTEST')).toHaveTextContent('20');
     expect(plan.getByTestId('league-settings-plan-cap-SPORTS_LEAGUES_PER_YEAR')).toHaveTextContent('1');
-    expect(plan.getByRole('link', { name: 'Change' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(plan.getByRole('link', { name: 'Change' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
   });
 
   it('shows Platinum, the plan every league starts on, as unlimited', async () => {
@@ -691,8 +711,9 @@ describe('League plan', () => {
   it('compares every plan side by side: its limits, what every plan includes, and which features it has', async () => {
     primeMocks();
     primePlanList();
+    primeUsage({ openContests: [] });
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
 
     const table = within(await screen.findByTestId('plan-comparison-table'));
     const [head, ...sections] = table.getAllByRole('rowgroup');
@@ -705,70 +726,169 @@ describe('League plan', () => {
       .toEqual(['Not included', 'Included', 'Included', 'Included']);
   });
 
-  it('moves the league to the chosen plan in one request and returns to League settings showing it', async () => {
+  it('shows what the league uses now: its plan, this year\'s sports leagues by name, and its fullest open contest against the plan\'s limits', async () => {
+    primeMocks({ league: { planEntitlements: PRO_PLAN } });
+    primePlanList();
+    primeUsage();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    const now = within(await screen.findByTestId('league-plan-now'));
+    expect(now.getByTestId('league-plan-now-plan')).toHaveTextContent('Pro');
+    expect(await now.findByTestId('league-plan-now-sport-leagues')).toHaveTextContent('2 of 3PGA Tour, NBA');
+    expect(now.getByTestId('league-plan-now-entries')).toHaveTextContent('34 of 50 entriesMasters Tiers Pool');
+    expect(screen.getByTestId('league-plan-card-PRO-current')).toHaveTextContent('Your plan');
+    expect(screen.getByTestId('league-plan-card-PREMIUM-move')).toHaveTextContent('Move up to Premium');
+    expect(screen.getByTestId('league-plan-card-FREE-move')).toHaveTextContent('Move to Free');
+  });
+
+  it('marks under a lower plan\'s limit what the league already uses past it', async () => {
+    primeMocks({ league: { planEntitlements: PRO_PLAN } });
+    primePlanList();
+    primeUsage();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    expect(await screen.findByTestId('plan-comparison-over-ENTRIES_PER_CONTEST-FREE')).toHaveTextContent('You use 34');
+    expect(screen.getByTestId('plan-comparison-over-SPORTS_LEAGUES_PER_YEAR-FREE')).toHaveTextContent('You use 2');
+    expect(screen.queryByTestId('plan-comparison-over-ENTRIES_PER_CONTEST-PRO')).not.toBeInTheDocument();
+  });
+
+  it('confirms a move down first, naming the three fullest contests over its entry limit and how many more, the sports leagues and the features it hides', async () => {
+    primeMocks({ league: { planEntitlements: PRO_PLAN } });
+    primePlanList();
+    primeUsage({
+      openContests: [
+        { contestId: 'c-1', name: 'Masters Tiers Pool', entryCount: 34 },
+        { contestId: 'c-2', name: 'Finals Picks', entryCount: 21 },
+        { contestId: 'c-3', name: 'Open Draft', entryCount: 25 },
+        { contestId: 'c-4', name: 'Derby Draw', entryCount: 22 },
+        { contestId: 'c-5', name: 'Small Pool', entryCount: 8 },
+      ],
+    });
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+    await screen.findByTestId('league-plan-now-entries');
+
+    fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
+
+    const confirm = within(screen.getByTestId('league-plan-confirm'));
+    expect(confirm.getByText('Move to Free?')).toBeInTheDocument();
+    expect(confirm.getByTestId('league-plan-confirm-entries')).toHaveTextContent(
+      'Masters Tiers Pool has 34 entries.Open Draft has 25 entries.Derby Draw has 22 entries.And 1 more.On Free each keeps them all, but takes no new entries past 20.',
+    );
+    expect(confirm.getByTestId('league-plan-confirm-sport-leagues')).toHaveTextContent('This year\'s contests use 2 sports leagues: PGA Tour, NBA. Free allows 1 a year');
+    expect(within(confirm.getByTestId('league-plan-confirm-hidden')).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['League championship']);
+    expect(updateLeaguePlanMock).not.toHaveBeenCalled();
+  });
+
+  it('moves up with no warnings, since a higher plan stops and hides nothing', async () => {
+    primeMocks({ league: { planEntitlements: PRO_PLAN } });
+    primePlanList();
+    primeUsage();
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+    await screen.findByTestId('league-plan-now-entries');
+
+    fireEvent.click(await screen.findByTestId('league-plan-card-PREMIUM-move'));
+
+    const confirm = within(screen.getByTestId('league-plan-confirm'));
+    expect(confirm.getByText('Move to Premium?')).toBeInTheDocument();
+    expect(confirm.queryByTestId('league-plan-confirm-entries')).not.toBeInTheDocument();
+    expect(confirm.queryByTestId('league-plan-confirm-sport-leagues')).not.toBeInTheDocument();
+    expect(confirm.queryByTestId('league-plan-confirm-hidden')).not.toBeInTheDocument();
+  });
+
+  it('moves the league to the confirmed plan in one request and shows it as Your plan', async () => {
     primeMocks();
     primePlanList();
+    primeUsage();
     updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ planEntitlements: FREE_PLAN }))));
-    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/plan');
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
 
-    expect(await screen.findByTestId('edit-plan-option-PLATINUM')).toBeChecked();
-    fireEvent.click(screen.getByTestId('edit-plan-option-FREE'));
+    fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
     getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague({ planEntitlements: FREE_PLAN }))));
-    fireEvent.click(screen.getByRole('button', { name: 'Save plan' }));
+    fireEvent.click(screen.getByTestId('league-plan-confirm-save'));
 
-    expect(await screen.findByTestId('league-settings-plan-name')).toHaveTextContent('Free');
+    expect(await screen.findByTestId('league-plan-card-FREE-current')).toHaveTextContent('Your plan');
+    expect(screen.queryByTestId('league-plan-confirm')).not.toBeInTheDocument();
     expect(updateLeaguePlanMock).toHaveBeenCalledTimes(1);
     expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, body: { plan: 'FREE' } }));
     // The root admin's league list shows each league's plan.
     expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.rootAdmin.manageLeagues }));
   });
 
+  it('closes the confirm on Keep, changing nothing', async () => {
+    primeMocks();
+    primePlanList();
+    primeUsage();
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
+    fireEvent.click(screen.getByRole('button', { name: 'Keep Platinum' }));
+
+    expect(screen.queryByTestId('league-plan-confirm')).not.toBeInTheDocument();
+    expect(updateLeaguePlanMock).not.toHaveBeenCalled();
+  });
+
   it('lets a root admin who is not a commissioner change the plan', async () => {
     primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
     primePlanList();
+    primeUsage();
     updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ planEntitlements: FREE_PLAN }))));
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
 
-    fireEvent.click(await screen.findByTestId('edit-plan-option-FREE'));
-    fireEvent.click(screen.getByRole('button', { name: 'Save plan' }));
+    fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
+    fireEvent.click(screen.getByTestId('league-plan-confirm-save'));
 
     await waitFor(() => expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ body: { plan: 'FREE' } })));
   });
 
-  it('stays on the plan picker with the reason when the change fails', async () => {
+  it('keeps the confirm open with the reason when the change fails', async () => {
     primeMocks();
     primePlanList();
+    primeUsage();
     updateLeaguePlanMock.mockResolvedValue({
       error: { error: { code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', message: 'Inactive leagues are read-only outside lifecycle actions' } },
     });
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Save plan' }));
+    fireEvent.click(await screen.findByTestId('league-plan-card-FREE-move'));
+    fireEvent.click(screen.getByTestId('league-plan-confirm-save'));
 
-    expect(await screen.findByText('Inactive leagues are read-only outside lifecycle actions')).toBeInTheDocument();
-    expect(screen.getByTestId('edit-plan-page')).toBeInTheDocument();
+    expect(await screen.findByTestId('league-plan-confirm-error')).toHaveTextContent('Inactive leagues are read-only outside lifecycle actions');
+    expect(screen.getByTestId('league-plan-confirm')).toBeInTheDocument();
   });
 
-  it('says so in place of the table when the plans cannot be loaded, still letting the plan be chosen', async () => {
+  it('says the plans are unavailable, offering no move, when they cannot be loaded', async () => {
     primeMocks();
+    primeUsage();
     listLeaguePlansMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
 
-    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
 
-    expect(await screen.findByText("We couldn't load the plans.")).toBeInTheDocument();
-    expect(screen.getByTestId('edit-plan-option-FREE')).toBeInTheDocument();
+    expect(await screen.findByText('Plans unavailable')).toBeInTheDocument();
+    expect(screen.queryByTestId('league-plan-card-FREE-move')).not.toBeInTheDocument();
   });
 
-  it('sends a commissioner who opens the plan picker on an inactive league back to the read-only settings, where Change is unavailable', async () => {
-    primeMocks({ isActive: false });
+  it('opens the Plan page from the old Choose a plan link', async () => {
+    primeMocks();
+    primePlanList();
+    primeUsage();
 
     renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
 
+    expect(await screen.findByTestId('league-plan-page')).toBeInTheDocument();
+  });
+
+  it('sends a commissioner who opens the Plan page on an inactive league back to the read-only settings, where Change is unavailable', async () => {
+    primeMocks({ isActive: false });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
-    expect(screen.queryByTestId('edit-plan-page')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('league-plan-page')).not.toBeInTheDocument();
     expect(screen.getByTestId('league-settings-plan-edit')).toHaveAttribute('aria-disabled', 'true');
   });
 });
@@ -936,7 +1056,7 @@ describe('Event emails', () => {
 
     const eventEmails = within(await screen.findByTestId('league-settings-event-emails'));
     expect(eventEmails.getByText('Your league\'s plan doesn\'t include event emails.')).toBeInTheDocument();
-    expect(eventEmails.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(eventEmails.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(eventEmails.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
     view.unmount();
 
