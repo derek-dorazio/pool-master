@@ -1,6 +1,6 @@
 # Monetization strategy
 
-**Tracking issue:** #581. First build: epic #943. Payments: #931.
+**Tracking issue:** #581. First build: epic #943. Payments: #931. Plan comparison pages: #969 (`plans/plan-comparison-pages.md`). Per-event pricing: #970.
 
 Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22; first build of plans designed 2026-10-23. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
