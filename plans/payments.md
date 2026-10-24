@@ -304,7 +304,7 @@ All deferred until Derek's go (2026-10-24), filed under #931.
 1. **Stripe account and secrets** (#979). You create the Stripe account (test mode is
    enough) and one Price per expansion band; a thread adds the two secrets to Terraform for
    QA and the `BILLING_CONFIG` group, switch off. No behaviour change.
-2. **Launch plan setup.** Platinum gets a cap (1000), the default plan becomes Premium,
+2. **Launch plan setup** (#986). Platinum gets a cap (1000), the default plan becomes Premium,
    existing leagues move to Premium, the picker change from Q2. The cap numbers and the
    features' "starts at" are then set on the Plans page by the root admin, on the day you
    choose. Can be built before any payments.
@@ -312,7 +312,7 @@ All deferred until Derek's go (2026-10-24), filed under #931.
    plan and expansion. No behaviour change.
 4. **Checkout and webhook** (#981). The `billing` module, expansion checkout, the webhook,
    the daily check, prices route, "Finishing your payment". Switch on in QA.
-5. **Commissioner screens and history.** The full notice and Expand choice, payment history
+5. **Commissioner screens and history** (#987). The full notice and Expand choice, payment history
    on league settings and Account, the two emails, root admin payments and grants,
    `docs/PAYMENTS.md` runbook (refunds, disputes, rotating keys).
 6. **Going live** (#985). With production (#917) and Terms (#921): live keys and Prices,
