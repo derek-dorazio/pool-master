@@ -769,6 +769,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
     displayName: row.displayName,
+    displayOrder: row.displayOrder,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

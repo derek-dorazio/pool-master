@@ -15637,6 +15637,13 @@
             ],
             "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
           },
+          "displayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -15670,6 +15677,7 @@
           "squaresFromRound",
           "noun",
           "displayName",
+          "displayOrder",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -15817,6 +15825,13 @@
                   ],
                   "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
                 },
+                "displayOrder": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -15850,6 +15865,7 @@
                 "squaresFromRound",
                 "noun",
                 "displayName",
+                "displayOrder",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -15976,6 +15992,13 @@
                 ],
                 "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
               },
+              "displayOrder": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -16009,6 +16032,7 @@
               "squaresFromRound",
               "noun",
               "displayName",
+              "displayOrder",
               "affiliationCount",
               "sportEventCount",
               "createdAt",

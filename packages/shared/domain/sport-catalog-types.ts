@@ -57,6 +57,12 @@ export interface SportLeague extends DomainEntity {
    * Reference data, set where the league is seeded.
    */
   displayName: string | null;
+  /**
+   * Where it sits among its sport's leagues wherever they are listed together: the major
+   * professional leagues first, then the NCAA's. Lower comes first; null comes after every
+   * ordered league. Reference data, set where the league is seeded.
+   */
+  displayOrder: number | null;
 }
 
 /**

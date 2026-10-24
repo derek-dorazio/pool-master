@@ -30,6 +30,7 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     squaresFromRound: null,
     noun: null,
     displayName: null,
+    displayOrder: null,
     currentEventYear: null,
     isActive: true,
     createdAt: new Date('2026-01-01'),
