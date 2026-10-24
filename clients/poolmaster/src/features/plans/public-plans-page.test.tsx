@@ -76,7 +76,7 @@ describe('PublicPlansPage', () => {
     }
     const pro = within(screen.getByTestId('plan-card-PRO'));
     expect(pro.getByText('Everything in Free, plus')).toBeInTheDocument();
-    expect(pro.getByTestId('plan-card-PRO-highlights')).toHaveTextContent('7 more emails');
+    expect(pro.getByTestId('plan-card-PRO-highlights')).toHaveTextContent('8 more emails');
     expect(screen.getByTestId('plan-card-PREMIUM-highlights')).toHaveTextContent('All years');
     expect(screen.getByTestId('public-plans-free-note')).toHaveTextContent('Every plan is free for now');
     expect(listLeaguesMock).not.toHaveBeenCalled();
@@ -91,11 +91,11 @@ describe('PublicPlansPage', () => {
     expect(screen.getByTestId('public-plans-start-footer')).toHaveTextContent('Start free');
   });
 
-  it('starts the comparison with the eleven emails folded to a count per plan, and opens them on a tap', async () => {
+  it('starts the comparison with the twelve emails folded to a count per plan, and opens them on a tap', async () => {
     renderPage();
     const emails = within(await screen.findByTestId('plan-comparison-section-EMAILS'));
 
-    expect(emails.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['4 of 11', '11 of 11', '11 of 11', '11 of 11']);
+    expect(emails.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['4 of 12', '12 of 12', '12 of 12', '12 of 12']);
     expect(emails.queryByTestId('plan-comparison-row-EMAIL_CONTEST_ENTRY_REMINDER')).not.toBeInTheDocument();
 
     fireEvent.click(emails.getByTestId('plan-comparison-toggle-EMAILS'));

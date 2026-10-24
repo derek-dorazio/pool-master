@@ -93,6 +93,7 @@ export const PLAN_FEATURE_DESCRIPTION: Readonly<Record<PlanFeature, string>> = {
   [PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS]: 'For commissioners: an event is ready to set up.',
   [PlanFeature.EMAIL_CONTEST_NOT_OPEN]: 'For commissioners: a contest still needs opening.',
   [PlanFeature.EMAIL_YEAR_IN_REVIEW]: 'The season\'s winners, once the year is over.',
+  [PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED]: 'For commissioners: who joined the league.',
   [PlanFeature.CUP_STANDINGS]: 'A season-long cup for each sports league.',
   [PlanFeature.CUP_CROWNING]: 'A cup winner crowned at the end of the season.',
   [PlanFeature.CHAMPIONSHIP]: 'One standings table across every sport.',
