@@ -138,9 +138,10 @@ An **expansion** is a one-time purchase that raises one contest's entry cap.
   moves to a plan with a higher cap, the higher number wins.
 - **A free expansion from the root admin** (Q7): for a favour, a dispute or testing, logged,
   shown in the payment history as $0 with the reason.
-- **Refunds**: case by case from the Stripe dashboard (Q8). A refund removes the expansion;
-  entries already in stay (never remove), and the contest takes no new ones while over cap.
-  A cancelled contest is not refunded automatically.
+- **Refunds**: case by case from the Stripe dashboard (Derek 2026-10-24). A refund, full or
+  part, only records the money returned; the expansion stays, with no special case. If you
+  want the cap back down, a root admin lowers the band. A cancelled contest is not refunded
+  automatically.
 
 ## 5. Buying an expansion, step by step
 
@@ -194,7 +195,7 @@ authority, like the SES events endpoint. It serves both phases.
   outbox as always, never sent inside the webhook.
 - **Events in phase 1**: `checkout.session.completed` (and
   `checkout.session.async_payment_succeeded` if a slower payment method is ever enabled),
-  `charge.refunded` (removes the expansion, records the refund). Anything else is stored and
+  `charge.refunded` (records the refund in the history; the expansion stays). Anything else is stored and
   ignored. Phase 2 adds the subscription events and a locked re-read (§17).
 - **Daily check.** A daily job lists the last few days of paid Checkout Sessions from Stripe
   and applies any the webhook missed, through the same code. This covers a webhook lost for
@@ -275,7 +276,7 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
   customers.
 - **Model changes, phase 1** (`rules/model-change-rules.md`):
   - `contest_expansions`: contest, band (entry cap), the payment it came from (or the root
-    admin grant and reason), who bought, when, removed-at for a refund. One current
+    admin grant and reason), who bought, when. One current
     expansion per contest; a step up replaces it, keeping history.
   - `league_billing`: one row per league: Stripe customer id, open Checkout Session ids.
   - `billing_events`: Stripe event id (unique), type, received and processed times, and
@@ -361,22 +362,19 @@ subscriptions later, annual or monthly with monthly at a premium.
 6. **Decided (Derek 2026-10-24): yes.** Buy any time until the contest stops taking entries.
 7. **Decided (Derek 2026-10-24): yes.** The root admin can grant an expansion free, with a
    reason; it shows in the history as $0.
-8. **No automatic refunds; you refund case by case in Stripe, which removes the expansion
-   but keeps the entries?** Recommended: yes, written into the Terms (#921). In practice: a
-   commissioner who wants money back emails you; you open the payment from the root admin
+8. **Decided (Derek 2026-10-24): no automatic refunds; you refund case by case in Stripe.**
+   A commissioner who wants money back emails you; you open the payment from the root admin
    link and press Refund in Stripe (full or part); Stripe returns the money to the card in
    5 to 10 days and emails a refund receipt; the webhook marks the payment refunded in the
-   history and removes the expansion. Entries already in stay, but the contest takes no new
-   ones while over its cap. A part refund keeps the expansion. A cancelled contest is not
-   refunded automatically; you decide each time. Stripe keeps its fee on a refunded payment
-   (about 59¢ on $10).
+   history. The expansion stays (Derek: whichever is simpler). A cancelled contest is not
+   refunded automatically. Stripe keeps its fee on a refunded payment (about 59¢ on $10).
+   Written into the Terms (#921).
 9. **Decided (Derek 2026-10-24): yes.** Stripe sends receipts; we send only the cap-date
    notice and "contest expanded".
 10. **Decided (Derek 2026-10-24):** no sales tax at launch; ask an accountant, turn on
     Stripe Tax when needed.
-11. **Prices final before going live, not now?** Recommended: yes. Nothing is needed now:
-    test mode uses the bands above, and the live amounts are typed into Stripe when phase 1
-    goes live (#985).
+11. **Decided (Derek 2026-10-24): nothing needed now.** Test mode uses the bands above; the
+    live amounts are typed into Stripe when phase 1 goes live (#985).
 
 ## 14. Monetization order (Derek 2026-10-24)
 
