@@ -73,6 +73,7 @@ function ownerInvitationService() {
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     prisma,
+    memberJoined: { tellJoined: async () => undefined },
     membershipTransaction: new PrismaMembershipTransaction(prisma),
     email: emailServiceInto(),
     appBaseUrl: 'https://app.example.test',

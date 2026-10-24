@@ -142,6 +142,7 @@ export function fakeLeagueMembershipRepo(
     findByUser: many(),
     countActiveByLeagues: jest.fn().mockResolvedValue(new Map()),
     findByLeagueAndUser: one(),
+    findActiveJoinedSince: many(),
     create: echoCreate('league-membership'),
     update: echoUpdate(),
     ...overrides,
