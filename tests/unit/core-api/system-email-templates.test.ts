@@ -652,8 +652,32 @@ describe('new member joined', () => {
   });
 });
 
+describe('contest expanded', () => {
+  it('says who expanded which contest to how many entries, that it is in the payment history, with a Manage contest button', () => {
+    const message = renderSystemEmailTemplate('CONTEST_EXPANDED', EMAIL_TEMPLATE_FIXTURES.CONTEST_EXPANDED, UTC);
+
+    expect(message.subject).toBe('Masters Pool now takes 50 entries');
+    expect(message.text).toContain("Masters Pool was expanded to 50 entries by Sam Commissioner. It's in Office League's payment history.");
+    expect(message.text).toContain('Manage contest: http://localhost:5173/league/OFFICE24/admin/contests/contest-1');
+    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/contests/contest-1"');
+  });
+
+  it('names Poolmaster for a grant, and escapes the contest\'s name', () => {
+    const message = renderSystemEmailTemplate('CONTEST_EXPANDED', {
+      ...EMAIL_TEMPLATE_FIXTURES.CONTEST_EXPANDED,
+      contestName: 'Pool <b>One</b>',
+      entriesPerContest: 500,
+      expandedBy: null,
+    }, UTC);
+
+    expect(message.text).toContain('Pool <b>One</b> was expanded to 500 entries by Poolmaster.');
+    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt; was expanded to 500 entries by Poolmaster.');
+    expect(message.html).not.toContain('<b>One</b>');
+  });
+});
+
 describe('the email template registry', () => {
-  it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails and the root admin\'s test email ones a member can\'t turn off', () => {
+  it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails, the contest expanded email and the root admin\'s test email ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(Object.values(EmailTemplateKey).sort());
     expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.category]))).toEqual({
       LEAGUE_MEMBER_INVITE: EmailCategory.MEMBERSHIP,
@@ -678,6 +702,7 @@ describe('the email template registry', () => {
       EMAIL_TEST: EmailCategory.ROOT_ADMIN,
       YEAR_IN_REVIEW: EmailCategory.RESULTS,
       LEAGUE_MEMBER_JOINED: EmailCategory.COMMISSIONER_UPDATES,
+      CONTEST_EXPANDED: EmailCategory.ACCOUNT,
     });
   });
 
@@ -705,6 +730,7 @@ describe('the email template registry', () => {
       EMAIL_TEST: null,
       YEAR_IN_REVIEW: PlanFeature.EMAIL_YEAR_IN_REVIEW,
       LEAGUE_MEMBER_JOINED: PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED,
+      CONTEST_EXPANDED: null,
     });
   });
 

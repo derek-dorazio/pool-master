@@ -155,16 +155,25 @@ thrown away at launch.
 
 ## 5. Screens
 
+The contest type is **Clutch Card** on screen, its players **stars** in copy (Derek, 2026-10-24);
+the name lives in one place on the web (`stat-pool-copy.ts`) so #995 can rename it. Create
+contest names a new Clutch Card "<event> Stars" ("NBA Finals Stars") whichever format it uses. The
+setups keep `rules/ux-rules.md` §12's "<Format>: <how you pick>, <how it scores>" names with stars
+for players ("Tiered: 1 star per tier, best 4 count"), since the league already names the event
+wherever a setup is listed (#995).
+
 - **Create contest:** golf's format cards, with the composite's name and formula shown on the
-  setup. There is no stat picker.
-- **Entry page:** golf's player picker, with each player's team, position and regular-season
-  composite beside their tier.
-- **Leaderboard:** golf's, with Game 1 to Game 7 columns and a dash for a game not yet played.
-  A player's row opens to their component stats for each game.
+  setup ("Each player scores Box Score: total bases + runs + RBI + walks + stolen bases, each
+  game."). There is no stat picker, and a stat pool event is offered only for its own formats.
+- **Entry page:** golf's player picker, with each player's team and position on their row and
+  their ranking (seeded from the regular-season composite) beside their tier. The composite
+  total itself is not stored on the field, only the rank it gave.
+- **Leaderboard:** golf's, with a G1, G2 column for each game any player has a line in, and a
+  dash for a game a player did not play. A player's name opens their stats in each game.
 - **Admin results:** a per-game stat grid on the event's results page for checking and
   correcting loaded lines.
-- **How to Play and Contest types:** a stat pools paragraph naming each sport's composite and
-  formula, and each sport's blurb in `sport-blurbs.ts` names its championship stat pool.
+- **How to Play and Contest types:** a Clutch Card section naming each stat pool league's
+  composite and formula, and each sport's blurb in `sport-blurbs.ts` names its Clutch Card.
 
 ---
 

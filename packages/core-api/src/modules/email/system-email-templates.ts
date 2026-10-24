@@ -503,6 +503,19 @@ export interface LeagueMemberJoinedEmailData {
   membersUrl: string;
 }
 
+/** A contest was expanded (#987), for the league's commissioners other than whoever expanded it. */
+export interface ContestExpandedEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  /** The contest's entry cap now. */
+  entriesPerContest: number;
+  /** The commissioner who expanded it; null when Poolmaster (a root admin) gave the expansion. */
+  expandedBy: string | null;
+  /** The contest's Manage contest page. */
+  contestUrl: string;
+}
+
 /** Where the league stands on an event in its weekly digest. */
 export const DigestEventState = {
   /** The league already has a contest on it. */
@@ -652,6 +665,7 @@ export interface SystemEmailTemplateDataByKey {
   YEAR_IN_REVIEW: YearInReviewEmailData;
   EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
   LEAGUE_MEMBER_JOINED: LeagueMemberJoinedEmailData;
+  CONTEST_EXPANDED: ContestExpandedEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -733,6 +747,7 @@ export interface EmailTemplateScopeByKey {
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
   EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_MEMBER_JOINED: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_EXPANDED: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -961,6 +976,15 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     sendWithinMs: null,
     render: renderLeagueMemberJoinedEmail,
   },
+  CONTEST_EXPANDED: {
+    // About the league's account, so always sent (plans/payments.md §8).
+    category: EmailCategory.ACCOUNT,
+    planFeature: null,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestExpandedEmail,
+  },
 };
 
 function renderLeagueMemberInviteEmail(
@@ -1084,6 +1108,31 @@ function renderLeagueMemberJoinedEmail(
       total,
       '',
       `Members and owners: ${data.membersUrl}`,
+    ],
+  });
+}
+
+function renderContestExpandedEmail(
+  data: ContestExpandedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? 'Poolmaster'}.`;
+  return buildMessage(context, {
+    templateKey: 'CONTEST_EXPANDED',
+    subject: `${data.contestName} now takes ${data.entriesPerContest} entries`,
+    preheader: intro,
+    title: 'Contest expanded',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(`${escapeHtml(intro)} It's in ${escapeHtml(data.leagueName)}'s payment history.`),
+      button('Manage contest', data.contestUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      `${intro} It's in ${data.leagueName}'s payment history.`,
+      '',
+      `Manage contest: ${data.contestUrl}`,
     ],
   });
 }

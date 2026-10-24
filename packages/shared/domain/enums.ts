@@ -909,6 +909,8 @@ export const EmailTemplateKey = {
   EVENT_WEEKLY_DIGEST: 'EVENT_WEEKLY_DIGEST',
   /** A member joined the league, for its commissioners: at once, or a busy day's rest the next day (#903). */
   LEAGUE_MEMBER_JOINED: 'LEAGUE_MEMBER_JOINED',
+  /** A contest was expanded, for the league's other commissioners (#987). */
+  CONTEST_EXPANDED: 'CONTEST_EXPANDED',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 

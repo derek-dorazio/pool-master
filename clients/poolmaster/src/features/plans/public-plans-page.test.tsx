@@ -6,7 +6,7 @@ import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
 import { apiSuccess, buildLeague, buildLeagueMembership, listLeaguesData } from '@/features/leagues/test/fixtures';
 import { bindApiMocks } from '@/test/msw-api';
 import { PublicPlansPage } from './public-plans-page';
-import { buildPlanEntitlements } from './test/fixtures';
+import { buildPlanEntitlements, buildPlanListResponse } from './test/fixtures';
 
 const { authState, listLeaguePlansMock, listLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -38,10 +38,10 @@ const FREE_FEATURES = [
 const PRO_FEATURES = Object.values(PlanFeature).filter((feature) => feature !== PlanFeature.ALL_TIME_SUMMARY && feature !== PlanFeature.RECORD_BOOK);
 
 const PLANS = [
-  buildPlanEntitlements({ plan: LeaguePlan.FREE, caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 }, features: FREE_FEATURES }),
-  buildPlanEntitlements({ plan: LeaguePlan.PRO, caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 }, features: PRO_FEATURES }),
-  buildPlanEntitlements({ plan: LeaguePlan.PREMIUM, caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 }, features: [...PRO_FEATURES, PlanFeature.ALL_TIME_SUMMARY] }),
-  buildPlanEntitlements(),
+  buildPlanEntitlements({ plan: LeaguePlan.FREE, caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 5 }, features: FREE_FEATURES, commissionerSelectable: true }),
+  buildPlanEntitlements({ plan: LeaguePlan.PRO, caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 15 }, features: PRO_FEATURES, commissionerSelectable: true }),
+  buildPlanEntitlements({ plan: LeaguePlan.PREMIUM, caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 30 }, features: [...PRO_FEATURES, PlanFeature.ALL_TIME_SUMMARY, PlanFeature.RECORD_BOOK], commissionerSelectable: true }),
+  buildPlanEntitlements({ caps: { ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 } }),
 ];
 
 function renderPage() {
@@ -58,14 +58,14 @@ function renderPage() {
 describe('PublicPlansPage', () => {
   beforeEach(() => {
     authState.isAuthenticated = false;
-    listLeaguePlansMock.mockResolvedValue(apiSuccess({ plans: PLANS }));
+    listLeaguePlansMock.mockResolvedValue(apiSuccess(buildPlanListResponse(PLANS)));
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  it('shows a visitor all four plans with the caps from the plan settings, every one free for now', async () => {
+  it('shows a visitor all four plans with the caps from the plan settings, every one free for now, and the Premium preview period every new league gets', async () => {
     renderPage();
 
     const free = within(await screen.findByTestId('plan-card-FREE'));
@@ -78,8 +78,33 @@ describe('PublicPlansPage', () => {
     expect(pro.getByText('Everything in Free, plus')).toBeInTheDocument();
     expect(pro.getByTestId('plan-card-PRO-highlights')).toHaveTextContent('8 more emails');
     expect(screen.getByTestId('plan-card-PREMIUM-highlights')).toHaveTextContent('All years');
-    expect(screen.getByTestId('public-plans-free-note')).toHaveTextContent('Every plan is free for now');
+    expect(screen.getByTestId('public-plans-free-note')).toHaveTextContent('Every new league gets Premium free for a 6-month preview period');
     expect(listLeaguesMock).not.toHaveBeenCalled();
+  });
+
+  it('lists each plan\'s contest expansion prices, free while payments are off', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('plan-card-FREE-expansion'))
+      .toHaveTextContent('Bigger contests: 50 entries $10 · 100 entries $20 · 200 entries $30 · 500 entries $40Expanding is free for now.');
+    expect(screen.getByTestId('plan-card-PLATINUM-expansion')).toHaveTextContent('Bigger contests: 1,000 entries $30 · 2,000 entries $40');
+  });
+
+  it('lists the expansion prices without the free note once payments are on', async () => {
+    listLeaguePlansMock.mockResolvedValue(apiSuccess(buildPlanListResponse(PLANS, { paymentsEnabled: true })));
+
+    renderPage();
+
+    expect(await screen.findByTestId('plan-card-PRO-expansion')).toHaveTextContent('Bigger contests: 100 entries $15 · 200 entries $20 · 500 entries $30');
+    expect(screen.getByTestId('plan-card-PRO-expansion')).not.toHaveTextContent('free for now');
+  });
+
+  it('shows a plan not offered yet as Coming soon, with no Start free button', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('public-plans-card-PLATINUM-coming-soon')).toHaveTextContent('Coming soon');
+    expect(screen.queryByTestId('public-plans-card-PLATINUM-start')).not.toBeInTheDocument();
+    expect(screen.getByTestId('public-plans-card-PREMIUM-start')).toBeInTheDocument();
   });
 
   it('sends every Start free button to sign-up, since every new league starts free', async () => {

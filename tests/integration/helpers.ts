@@ -63,7 +63,7 @@ import {
 } from '../../packages/core-api/src/modules/email';
 import { snsSigner, TEST_TOPIC_ARN } from '../support/sns-messages';
 import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/routes';
-import { createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
+import { createContestExpandedNotices, createMemberJoinedNotices } from '../../packages/core-api/src/modules/notifications';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
@@ -200,11 +200,16 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
-  testApp.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
+  testApp.register(plansModule, {
+    prefix: '/api/v1/plans',
+    planEntitlements,
+    readBillingConfig: () => settings.get(BILLING_SETTINGS),
+  });
   testApp.register(billingModule, {
     prefix: '/api/v1/leagues/:id/billing',
     planEntitlements,
     readBillingConfig: () => settings.get(BILLING_SETTINGS),
+    contestExpanded: createContestExpandedNotices(prisma, { email, appBaseUrl: readApplicationBaseUrl(process.env), logger: testApp.log }),
   });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });

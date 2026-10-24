@@ -1,4 +1,5 @@
-import { formatParticipantStatusLabel, getSportDefinition, type Sport, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import { eventSportDefinition, formatParticipantStatusLabel, getSportDefinition, type Sport, type SportDefinition, type SportNoun, type SportVocabulary } from '@poolmaster/shared/domain';
+import type { ContestDto } from '@/lib/api';
 import type { SelectionParticipant } from './contest-entry-selection';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type { EntryTiebreakerUi } from './scoring-family-ui/types';
@@ -9,6 +10,24 @@ import type { EntryTiebreakerUi } from './scoring-family-ui/types';
  * of the `sport: null` the contest contract still allows, not a stand-in for one.
  */
 const PARTICIPANT_WITHOUT_SPORT: SportNoun = { one: 'participant', many: 'participants' };
+
+/**
+ * The definition a contest plays (#936): its events' sport league's, so a World Series stat pool
+ * plays baseball's composite with players, not its bracket. A contest covers one sport league, so
+ * its first event's overrides are every event's. Null for a contest with no sport.
+ */
+export function contestSportDefinition(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportDefinition | null {
+  if (!contest.sport) {
+    return null;
+  }
+  const first = contest.sportEvents.at(0);
+  return eventSportDefinition({ sport: contest.sport, participantType: first?.participantType, scoringFamily: first?.scoringFamily });
+}
+
+/** "player" in a stat pool, "golfer" in golf: what a roster contest's screens call one pick. */
+export function contestRosterParticipantNoun(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): SportNoun {
+  return contestSportDefinition(contest)?.vocabulary.participant ?? PARTICIPANT_WITHOUT_SPORT;
+}
 
 /** "golfer" for a golf contest, "horse" for a horse race: the contest's sport's word for a participant. */
 export function contestParticipantNoun(sport: Sport | null | undefined): SportNoun {
@@ -47,11 +66,12 @@ export function contestTieLabel(sport: Sport | null | undefined): string {
 }
 
 /**
- * The tiebreaker a contest's entries predict, from its sport's scoring family: a golf entry's
- * winning score against par, none for a race. A contest with no sport asks for none.
+ * The tiebreaker a contest's entries predict, from its scoring family: a golf entry's winning
+ * score against par, none for a race or a stat pool. A contest with no sport asks for none.
  */
-export function contestEntryTiebreaker(sport: Sport | null | undefined): EntryTiebreakerUi | null {
-  return sport ? getScoringFamilyUi(getSportDefinition(sport)).entryTiebreaker : null;
+export function contestEntryTiebreaker(contest: Pick<ContestDto, 'sport' | 'sportEvents'>): EntryTiebreakerUi | null {
+  const definition = contestSportDefinition(contest);
+  return definition ? getScoringFamilyUi(definition).entryTiebreaker : null;
 }
 
 /**
@@ -67,4 +87,16 @@ export function selectionParticipantLabel(participant: Pick<SelectionParticipant
   return participant.seedNumber === null
     ? participant.participantName
     : `(${participant.seedNumber}) ${participant.participantName}`;
+}
+
+/**
+ * Who a participant plays for, with their position when it is known, as a roster row's second
+ * line: "Los Angeles Dodgers · SS" for a stat pool player (#936). Null for a participant with no
+ * team, such as a golfer.
+ */
+export function participantAffiliation(participant: Pick<SelectionParticipant, 'team' | 'role'>): string | null {
+  if (!participant.team) {
+    return null;
+  }
+  return participant.role ? `${participant.team} · ${participant.role}` : participant.team;
 }

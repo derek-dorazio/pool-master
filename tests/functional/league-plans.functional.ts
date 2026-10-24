@@ -68,4 +68,13 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     expect(plans[2]?.features).toContain(PlanFeature.RECORD_BOOK);
     expect(plans[3]?.caps).toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
   });
+
+  it('tells a visitor how long every new league\'s Premium gift runs, and each plan\'s contest expansion prices, free while payments are off', async () => {
+    const list = LeaguePlanListResponseSchema.parse(expectDefined((await listLeaguePlans({ client: getSdkClient() })).data));
+
+    expect(list.previewPeriodMonths).toBe(6);
+    expect(list.paymentsEnabled).toBe(false);
+    expect(list.expansionPrices.FREE[0]).toEqual({ entriesPerContest: 50, priceCents: 1000 });
+    expect(list.expansionPrices.PLATINUM.map((band) => band.entriesPerContest)).toEqual([1000, 2000]);
+  });
 });

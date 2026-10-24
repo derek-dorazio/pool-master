@@ -177,26 +177,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/auth/email-change/undo": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Put back an account's old email address
-         * @description Public; the token from the link in the "your email address was changed" email, sent to the old address, is the whole authority. Puts the old address back, replaces the password with a random one nobody knows (an account without a password stays without one), cancels the links from any later email change and the account's open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.
-         */
-        post: operations["undoEmailChange"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/users/": {
         parameters: {
             query?: never;
@@ -920,7 +900,7 @@ export interface paths {
         };
         /**
          * List what each league plan allows
-         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.
+         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also how long the Premium gift every new league starts with runs, and each plan's contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listLeaguePlans"];
         put?: never;
@@ -3817,11 +3797,6 @@ export interface components {
             /** @description Repeat of the new password to guard against typing mistakes. */
             confirmNewPassword: string;
         };
-        /** @description Puts back the email address an account had before a change. The password is replaced with a random one and every session of the account is signed out. */
-        EmailChangeUndoRequest: {
-            /** @description The one-time token from the link in the email sent to the old address. It works once and for 7 days. */
-            token: string;
-        };
         /** @description Successful authentication response returned after registration or login. */
         AuthResponse: {
             /** @description A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row. */
@@ -3888,6 +3863,414 @@ export interface components {
             /** @description Access-token lifetime in seconds from the time it was issued. */
             expiresIn: number;
         };
+        /**
+         * @description A system email template.
+         * @enum {string}
+         */
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED";
+        /** @description Whether and how system email is sent. */
+        EmailConfig: {
+            /** @description Whether any system email is sent. Off: every email is skipped and logged. */
+            enabled: boolean;
+            /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
+            allowedRecipients: string[];
+            /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
+            sendRatePerSecond: number;
+            /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
+            entryReminderHours: number[];
+            /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
+            standingsBufferMinutes: number;
+            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
+            weeklyDigestHour: number;
+            /** @description Per-template switches. A template that is off is skipped even while email is on. */
+            templates: {
+                /** @description Whether this email is sent. */
+                LEAGUE_MEMBER_INVITE: boolean;
+                /** @description Whether this email is sent. */
+                LEAGUE_JOIN_SUCCESS: boolean;
+                /** @description Whether this email is sent. */
+                SQUAD_OWNER_INVITE: boolean;
+                /** @description Whether this email is sent. */
+                SQUAD_OWNER_ADDED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_ENTRY_COMPLETED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_STARTED_SUMMARY: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_ENTRY_REMINDER: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_OPENED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_STANDINGS: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_RESULTS: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_EVENT_CHANGED: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_COMING_UP: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_READY_FOR_CONTESTS: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_WEEKLY_DIGEST: boolean;
+                /** @description Whether this email is sent. */
+                LEAGUE_MEMBER_JOINED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_EXPANDED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_NOT_OPEN: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_STILL_DRAFT: boolean;
+                /** @description Whether this email is sent. */
+                YEAR_IN_REVIEW: boolean;
+            };
+        };
+        /** @description A named set of budget pricing values. */
+        BudgetPricingProfile: {
+            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+            salaryCap: number;
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+            unit: number;
+            /** @description The best seed's price, as a percentage of the salary cap. */
+            topSharePercent: number;
+            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+            floorSharePercent: number;
+            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+            steepness: number;
+            /** @description The profile's name, such as "Standard". */
+            name: string;
+        };
+        /** @description The named sets of values an event's field is priced with for budget contests. */
+        BudgetPricingConfig: {
+            /** @description The pricing profiles, the default first. Names are unique. */
+            profiles: {
+                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+                salaryCap: number;
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+                unit: number;
+                /** @description The best seed's price, as a percentage of the salary cap. */
+                topSharePercent: number;
+                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+                floorSharePercent: number;
+                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+                steepness: number;
+                /** @description The profile's name, such as "Standard". */
+                name: string;
+            }[];
+        };
+        /** @description One cap's limit on each plan. A limit never falls as the plan rises. */
+        PlanCapRow: {
+            /** @description The most this plan allows, or null for unlimited. */
+            FREE: number | null;
+            /** @description The most this plan allows, or null for unlimited. */
+            PRO: number | null;
+            /** @description The most this plan allows, or null for unlimited. */
+            PREMIUM: number | null;
+            /** @description The most this plan allows, or null for unlimited. */
+            PLATINUM: number | null;
+        };
+        /** @description What each league plan allows: its caps and the plan each feature starts at. */
+        PlanConfig: {
+            /** @description Each cap's limit on each plan. */
+            caps: {
+                /** @description Entries per contest, drafts included. Checked when an entry is added. */
+                ENTRIES_PER_CONTEST: {
+                    /** @description The most this plan allows, or null for unlimited. */
+                    FREE: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PRO: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PREMIUM: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PLATINUM: number | null;
+                };
+                /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /** @description The most this plan allows, or null for unlimited. */
+                    FREE: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PRO: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PREMIUM: number | null;
+                    /** @description The most this plan allows, or null for unlimited. */
+                    PLATINUM: number | null;
+                };
+            };
+            /** @description The plan each feature starts at. */
+            features: {
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+            };
+        };
+        /** @description One expansion band and its price. */
+        ExpansionPrice: {
+            /** @description The band: the most entries an expanded contest takes. */
+            entriesPerContest: number;
+            /** @description What expanding a contest to this band costs, in US cents. */
+            priceCents: number;
+        };
+        /** @description Payments: whether they are on, and what expanding a contest costs on each plan. */
+        BillingConfig: {
+            /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
+            paymentsEnabled: boolean;
+            /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
+            expansionPrices: {
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                FREE: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PRO: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PREMIUM: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PLATINUM: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+            };
+        };
+        /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
+        IngestionScheduleConfigOverride: {
+            scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
+            /** @description Partial feed-scheduling override payload. */
+            healthCheck?: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled?: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+            /** @description Partial feed-scheduling override payload. */
+            eventParticipants?: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled?: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+            /** @description Partial feed-scheduling override payload. */
+            eventLiveScores?: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled?: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+        };
+        /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
+        IngestionScheduleConfig: {
+            /**
+             * @description Sports that scheduled ingestion is allowed to run automatically.
+             * @default [
+             *       "GOLF",
+             *       "HORSE_RACING",
+             *       "AUTO_RACING",
+             *       "CYCLING",
+             *       "RUNNING",
+             *       "BASKETBALL",
+             *       "AMERICAN_FOOTBALL",
+             *       "HOCKEY",
+             *       "BASEBALL",
+             *       "SOCCER",
+             *       "TENNIS"
+             *     ]
+             */
+            scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
+            /** @description Scheduling policy for provider health checks. */
+            healthCheck: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+            /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
+            eventParticipants: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+            /** @description Scheduling policy for live score polling. */
+            eventLiveScores: {
+                /** @description Whether the feed should be scheduled automatically. */
+                enabled: boolean;
+                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                intervalMinutes?: number;
+                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                intervalSeconds?: number;
+                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                lookaheadDays?: number;
+            };
+            /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
+            perSportOverrides: {
+                [key: string]: {
+                    scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
+                    /** @description Partial feed-scheduling override payload. */
+                    healthCheck?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventParticipants?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                    /** @description Partial feed-scheduling override payload. */
+                    eventLiveScores?: {
+                        /** @description Whether the feed should be scheduled automatically. */
+                        enabled?: boolean;
+                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
+                        intervalMinutes?: number;
+                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
+                        intervalSeconds?: number;
+                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
+                        lookaheadDays?: number;
+                    };
+                };
+            };
+        };
         /** @description Each cap's limit on one plan. */
         PlanCapsDto: {
             /** @description Entries per contest, drafts included, or null for unlimited. */
@@ -3914,7 +4297,7 @@ export interface components {
             /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
             commissionerSelectable: boolean;
         };
-        /** @description What each league plan allows. */
+        /** @description What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan. */
         LeaguePlanListResponse: {
             /** @description Every plan, lowest first, for comparing them. */
             plans: {
@@ -3935,6 +4318,41 @@ export interface components {
                 /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                 commissionerSelectable: boolean;
             }[];
+            /** @description How many months of Premium every new league is gifted from signup (#986), before it moves to Free. */
+            previewPeriodMonths: number;
+            /** @description Whether expanding a contest is charged. While false, expanding is free. */
+            paymentsEnabled: boolean;
+            /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
+            expansionPrices: {
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                FREE: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PRO: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PREMIUM: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+                /** @description The plan's bands, smallest first; each band and each price above the one before. */
+                PLATINUM: {
+                    /** @description The band: the most entries an expanded contest takes. */
+                    entriesPerContest: number;
+                    /** @description What expanding a contest to this band costs, in US cents. */
+                    priceCents: number;
+                }[];
+            };
         };
         /** @description A league's new plan. */
         UpdateLeaguePlanRequest: {
@@ -11357,6 +11775,16 @@ export interface components {
              * @enum {string}
              */
             status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /**
+             * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
         };
         /** @description Request payload for setting the events a contest covers. */
         SetContestSportEventsRequest: {
@@ -11434,6 +11862,16 @@ export interface components {
                  * @enum {string}
                  */
                 status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /**
+                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -11614,6 +12052,18 @@ export interface components {
                 /** @description False once the team has lost a match. */
                 isAlive: boolean;
             } | null;
+            /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+            composite: {
+                /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                points: number | null;
+                /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                games: {
+                    /** @description The game: the event's round number. */
+                    roundNumber: number;
+                    /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                    score: number;
+                }[];
+            } | null;
         };
         /** @description One entry's standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick's score lives in its sport's block. */
         ContestEntryStandingDto: {
@@ -11688,6 +12138,18 @@ export interface components {
                     /** @description False once the team has lost a match. */
                     isAlive: boolean;
                 } | null;
+                /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+                composite: {
+                    /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                    points: number | null;
+                    /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                    games: {
+                        /** @description The game: the event's round number. */
+                        roundNumber: number;
+                        /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                        score: number;
+                    }[];
+                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -11711,6 +12173,16 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             /**
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
@@ -12007,6 +12479,18 @@ export interface components {
                         /** @description False once the team has lost a match. */
                         isAlive: boolean;
                     } | null;
+                    /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+                    composite: {
+                        /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                        points: number | null;
+                        /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                        games: {
+                            /** @description The game: the event's round number. */
+                            roundNumber: number;
+                            /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                            score: number;
+                        }[];
+                    } | null;
                 }[];
             }[];
             /**
@@ -12046,6 +12530,16 @@ export interface components {
                      * @enum {string}
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /**
+                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM" | null;
+                    /**
+                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -12098,6 +12592,16 @@ export interface components {
                      * @enum {string}
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /**
+                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM" | null;
+                    /**
+                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -12890,412 +13394,6 @@ export interface components {
             }[];
         };
         /**
-         * @description A system email template.
-         * @enum {string}
-         */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED";
-        /** @description Whether and how system email is sent. */
-        EmailConfig: {
-            /** @description Whether any system email is sent. Off: every email is skipped and logged. */
-            enabled: boolean;
-            /** @description When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit. */
-            allowedRecipients: string[];
-            /** @description The most emails each API server task sends a second. SES accounts start at 14 a second in all. */
-            sendRatePerSecond: number;
-            /** @description How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment. */
-            entryReminderHours: number[];
-            /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
-            standingsBufferMinutes: number;
-            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
-            weeklyDigestHour: number;
-            /** @description Per-template switches. A template that is off is skipped even while email is on. */
-            templates: {
-                /** @description Whether this email is sent. */
-                LEAGUE_MEMBER_INVITE: boolean;
-                /** @description Whether this email is sent. */
-                LEAGUE_JOIN_SUCCESS: boolean;
-                /** @description Whether this email is sent. */
-                SQUAD_OWNER_INVITE: boolean;
-                /** @description Whether this email is sent. */
-                SQUAD_OWNER_ADDED: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_ENTRY_COMPLETED: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_STARTED_SUMMARY: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_ENTRY_REMINDER: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_OPENED: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_STANDINGS: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_RESULTS: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_EVENT_CHANGED: boolean;
-                /** @description Whether this email is sent. */
-                EVENT_COMING_UP: boolean;
-                /** @description Whether this email is sent. */
-                EVENT_READY_FOR_CONTESTS: boolean;
-                /** @description Whether this email is sent. */
-                EVENT_WEEKLY_DIGEST: boolean;
-                /** @description Whether this email is sent. */
-                LEAGUE_MEMBER_JOINED: boolean;
-                /** @description Whether this email is sent. */
-                CONTEST_NOT_OPEN: boolean;
-                /** @description Whether this email is sent. */
-                EVENT_STILL_DRAFT: boolean;
-                /** @description Whether this email is sent. */
-                YEAR_IN_REVIEW: boolean;
-            };
-        };
-        /** @description A named set of budget pricing values. */
-        BudgetPricingProfile: {
-            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-            salaryCap: number;
-            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-            unit: number;
-            /** @description The best seed's price, as a percentage of the salary cap. */
-            topSharePercent: number;
-            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-            floorSharePercent: number;
-            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-            steepness: number;
-            /** @description The profile's name, such as "Standard". */
-            name: string;
-        };
-        /** @description The named sets of values an event's field is priced with for budget contests. */
-        BudgetPricingConfig: {
-            /** @description The pricing profiles, the default first. Names are unique. */
-            profiles: {
-                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
-                salaryCap: number;
-                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
-                unit: number;
-                /** @description The best seed's price, as a percentage of the salary cap. */
-                topSharePercent: number;
-                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
-                floorSharePercent: number;
-                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
-                steepness: number;
-                /** @description The profile's name, such as "Standard". */
-                name: string;
-            }[];
-        };
-        /** @description One cap's limit on each plan. A limit never falls as the plan rises. */
-        PlanCapRow: {
-            /** @description The most this plan allows, or null for unlimited. */
-            FREE: number | null;
-            /** @description The most this plan allows, or null for unlimited. */
-            PRO: number | null;
-            /** @description The most this plan allows, or null for unlimited. */
-            PREMIUM: number | null;
-            /** @description The most this plan allows, or null for unlimited. */
-            PLATINUM: number | null;
-        };
-        /** @description What each league plan allows: its caps and the plan each feature starts at. */
-        PlanConfig: {
-            /** @description Each cap's limit on each plan. */
-            caps: {
-                /** @description Entries per contest, drafts included. Checked when an entry is added. */
-                ENTRIES_PER_CONTEST: {
-                    /** @description The most this plan allows, or null for unlimited. */
-                    FREE: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PRO: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PREMIUM: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PLATINUM: number | null;
-                };
-                /** @description Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created. */
-                SPORTS_LEAGUES_PER_YEAR: {
-                    /** @description The most this plan allows, or null for unlimited. */
-                    FREE: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PRO: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PREMIUM: number | null;
-                    /** @description The most this plan allows, or null for unlimited. */
-                    PLATINUM: number | null;
-                };
-            };
-            /** @description The plan each feature starts at. */
-            features: {
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_OPENED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_ENTRY_COMPLETED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_RESULTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_EVENT_CHANGED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_STARTED_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_ENTRY_REMINDER: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_EVENT_COMING_UP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_EVENT_READY_FOR_CONTESTS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_CONTEST_NOT_OPEN: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                CUP_CROWNING: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                CHAMPIONSHIP: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                TROPHY_SHELF: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                CUP_SETTINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                PAST_YEARS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                ALL_TIME_SUMMARY: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-                /**
-                 * @description The first plan that has the feature; every plan above it has it too.
-                 * @enum {string}
-                 */
-                RECORD_BOOK: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
-            };
-        };
-        /** @description One expansion band and its price. */
-        ExpansionPrice: {
-            /** @description The band: the most entries an expanded contest takes. */
-            entriesPerContest: number;
-            /** @description What expanding a contest to this band costs, in US cents. */
-            priceCents: number;
-        };
-        /** @description Payments: whether they are on, and what expanding a contest costs on each plan. */
-        BillingConfig: {
-            /** @description Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free. */
-            paymentsEnabled: boolean;
-            /** @description Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference. */
-            expansionPrices: {
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
-                FREE: {
-                    /** @description The band: the most entries an expanded contest takes. */
-                    entriesPerContest: number;
-                    /** @description What expanding a contest to this band costs, in US cents. */
-                    priceCents: number;
-                }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
-                PRO: {
-                    /** @description The band: the most entries an expanded contest takes. */
-                    entriesPerContest: number;
-                    /** @description What expanding a contest to this band costs, in US cents. */
-                    priceCents: number;
-                }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
-                PREMIUM: {
-                    /** @description The band: the most entries an expanded contest takes. */
-                    entriesPerContest: number;
-                    /** @description What expanding a contest to this band costs, in US cents. */
-                    priceCents: number;
-                }[];
-                /** @description The plan's bands, smallest first; each band and each price above the one before. */
-                PLATINUM: {
-                    /** @description The band: the most entries an expanded contest takes. */
-                    entriesPerContest: number;
-                    /** @description What expanding a contest to this band costs, in US cents. */
-                    priceCents: number;
-                }[];
-            };
-        };
-        /** @description Partial ingestion scheduling override used for global updates and per-sport overrides. */
-        IngestionScheduleConfigOverride: {
-            scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
-            /** @description Partial feed-scheduling override payload. */
-            healthCheck?: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled?: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Partial feed-scheduling override payload. */
-            eventParticipants?: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled?: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Partial feed-scheduling override payload. */
-            eventLiveScores?: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled?: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-        };
-        /** @description Feed-aware ingestion scheduling configuration exposed to root-admin tooling. */
-        IngestionScheduleConfig: {
-            /**
-             * @description Sports that scheduled ingestion is allowed to run automatically.
-             * @default [
-             *       "GOLF",
-             *       "HORSE_RACING",
-             *       "AUTO_RACING",
-             *       "CYCLING",
-             *       "RUNNING",
-             *       "BASKETBALL",
-             *       "AMERICAN_FOOTBALL",
-             *       "HOCKEY",
-             *       "BASEBALL",
-             *       "SOCCER",
-             *       "TENNIS"
-             *     ]
-             */
-            scheduledSports: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
-            /** @description Scheduling policy for provider health checks. */
-            healthCheck: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked. */
-            eventParticipants: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Scheduling policy for live score polling. */
-            eventLiveScores: {
-                /** @description Whether the feed should be scheduled automatically. */
-                enabled: boolean;
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-            };
-            /** @description Per-sport scheduling overrides applied on top of the global feed policies. */
-            perSportOverrides: {
-                [key: string]: {
-                    scheduledSports?: ("GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS")[];
-                    /** @description Partial feed-scheduling override payload. */
-                    healthCheck?: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled?: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Partial feed-scheduling override payload. */
-                    eventParticipants?: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled?: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                    /** @description Partial feed-scheduling override payload. */
-                    eventLiveScores?: {
-                        /** @description Whether the feed should be scheduled automatically. */
-                        enabled?: boolean;
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                    };
-                };
-            };
-        };
-        /**
          * @description What the SNS message is: a delivery report, or one step of the subscription handshake.
          * @enum {string}
          */
@@ -13711,6 +13809,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
@@ -13764,6 +13864,8 @@ export interface components {
                     EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -14512,6 +14614,8 @@ export interface components {
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
+                        /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
@@ -14565,6 +14669,8 @@ export interface components {
                         EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -15162,6 +15268,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
@@ -15656,6 +15764,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
@@ -15709,6 +15819,8 @@ export interface components {
                     EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -16422,6 +16534,8 @@ export interface components {
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
+                        /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
@@ -16475,6 +16589,8 @@ export interface components {
                         EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -20922,57 +21038,6 @@ export interface operations {
             };
         };
     };
-    undoEmailChange: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["EmailChangeUndoRequest"];
-            };
-        };
-        responses: {
-            /** @description Minimal success response envelope. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SuccessResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     listUsers: {
         parameters: {
             query?: {
@@ -23104,7 +23169,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description What each league plan allows. */
+            /** @description What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan. */
             200: {
                 headers: {
                     [name: string]: unknown;

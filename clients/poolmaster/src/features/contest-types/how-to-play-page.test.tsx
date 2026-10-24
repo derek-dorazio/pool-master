@@ -209,6 +209,40 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-register')).not.toBeInTheDocument();
   });
 
+  describe('a championship stat pool league', () => {
+    // Baseball's sport-wide bracket, the MLB postseason's own survivor, and the World Series' stat pool setups.
+    const BASEBALL = [
+      template('mlb-bracket', { sport: 'BASEBALL', selectionType: 'BRACKET', contestFormat: 'BRACKET', configuration: { selectionType: 'BRACKET', startsAtRound: 1, maxEntriesPerSquad: 1 } }),
+      template('world-series-tiered', { sport: 'BASEBALL', sportLeagueId: 'world-series' }),
+    ];
+    const BASEBALL_LEAGUES = [
+      sportLeagueFixture({ id: 'mlb', sport: 'BASEBALL', name: 'MLB Postseason', displayOrder: 10 }),
+      sportLeagueFixture({ id: 'world-series', sport: 'BASEBALL', name: 'World Series', displayOrder: 20, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' }),
+    ];
+
+    it('explains the Clutch Card with Box Score\'s formula, and offers only the stat pool\'s formats, not baseball\'s bracket', async () => {
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
+      renderPage('/how-to-play?sport=baseball&league=world-series');
+
+      const guide = await screen.findByTestId('how-to-play-clutch-card');
+      expect(guide).toHaveTextContent('Clutch Card');
+      expect(within(guide).getByTestId('how-to-play-clutch-card-world-series'))
+        .toHaveTextContent('World Series. Box Score: total bases + runs + RBI + walks + stolen bases, each game.');
+      expect(screen.getByTestId('how-to-play-format-TIERED')).toBeInTheDocument();
+      expect(screen.queryByTestId('how-to-play-format-BRACKET')).not.toBeInTheDocument();
+    });
+
+    it('shows no Clutch Card on a league that plays its sport\'s own way', async () => {
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
+      renderPage('/how-to-play?sport=baseball&league=mlb-postseason');
+
+      expect(await screen.findByTestId('how-to-play-format-BRACKET')).toBeInTheDocument();
+      expect(screen.queryByTestId('how-to-play-clutch-card')).not.toBeInTheDocument();
+    });
+  });
+
   it('says the contest types could not be loaded when the template list fails', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } });
     renderPage();

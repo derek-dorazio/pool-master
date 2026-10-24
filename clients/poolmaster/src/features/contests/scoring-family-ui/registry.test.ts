@@ -58,6 +58,7 @@ const unplayedPick: ScoredContestEntryPickDto = {
   golf: { scoreToPar: 16, unplayedRoundNumbers: [1, 2] },
   race: null,
   knockout: null,
+  composite: null,
 };
 
 const entry: ContestEntryStandingDto = {
@@ -79,6 +80,8 @@ const golfLeaderboard: ContestLeaderboardResponse = {
   contestId: 'contest-1',
   sportEventId: 'event-1',
   sport: 'GOLF',
+  participantType: null,
+  scoringFamily: null,
   scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
   countingRule: { type: 'BEST_N', count: 1 },
   participants: [cutGolfer],
