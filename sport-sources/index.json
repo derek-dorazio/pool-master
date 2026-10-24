@@ -1,145 +1,131 @@
 {
-  "fetchedAt": "2026-10-24T15:06:29.296Z",
+  "fetchedAt": "2026-10-24T15:11:48.695Z",
   "results": [
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030411/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874171",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "01-api-web.nhle.com.txt"
+      "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030412/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874172",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "02-api-web.nhle.com.txt"
+      "file": "02-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030413/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874173",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-api-web.nhle.com.txt"
+      "file": "03-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030414/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874174",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "04-api-web.nhle.com.txt"
+      "file": "04-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030415/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874175",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "05-api-web.nhle.com.txt"
+      "file": "05-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/gamecenter/2025030416/boxscore",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401874176",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "06-api-web.nhle.com.txt"
+      "file": "06-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/roster/CAR/20252026",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859963",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-api-web.nhle.com.txt"
+      "file": "07-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/roster/VGK/20252026",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859964",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-api-web.nhle.com.txt"
+      "file": "08-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/club-stats/CAR/20252026/2",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859965",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "09-api-web.nhle.com.txt"
+      "file": "09-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/club-stats/VGK/20252026/2",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859966",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "10-api-web.nhle.com.txt"
+      "file": "10-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260602",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401859967",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "11-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260604",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/boxscores/202606030SAS.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "12-site.api.espn.com.txt"
+      "file": "12-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260606",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/boxscores/202606050SAS.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "13-site.api.espn.com.txt"
+      "file": "13-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260609",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/boxscores/202606080NYK.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "14-site.api.espn.com.txt"
+      "file": "14-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260611",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/boxscores/202606100NYK.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "15-site.api.espn.com.txt"
+      "file": "15-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260614",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/boxscores/202606130SAS.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "16-site.api.espn.com.txt"
+      "file": "16-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260603",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/teams/NYK/2026.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "17-site.api.espn.com.txt"
+      "file": "17-basketball-reference.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260605",
-      "rendered": false,
+      "url": "https://www.basketball-reference.com/teams/SAS/2026.html",
+      "rendered": true,
       "status": "OK",
       "httpStatus": 200,
-      "file": "18-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260608",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "19-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260610",
-      "rendered": false,
-      "status": "OK",
-      "httpStatus": 200,
-      "file": "20-site.api.espn.com.txt"
+      "file": "18-basketball-reference.com.txt"
     }
   ]
 }
