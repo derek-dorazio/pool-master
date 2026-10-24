@@ -1,4 +1,5 @@
 import { LeaguePlan, PlanCap, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
+import { STAT_POOL_CONTEST_TYPE } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 
 /** What each league plan is called on screen (#943). Always "plan", never "tier". */
 export const LEAGUE_PLAN_LABEL: Readonly<Record<LeaguePlan, string>> = {
@@ -26,7 +27,7 @@ export const EVERY_CONTEST_TYPE_LABEL = 'Every contest type';
 /** What every plan includes (#971): the comparison table's "In every plan" rows. Not plan settings. */
 export const EVERY_PLAN_INCLUDES: readonly { key: string; label: string; description: string; value: string | true }[] = [
   { key: 'members', label: 'Members and invites', description: 'Invite as many people as you like.', value: 'Unlimited' },
-  { key: 'contest-types', label: EVERY_CONTEST_TYPE_LABEL, description: 'Tiers, budget, snake draft, pick\'em, survivor, brackets, squares and more.', value: true },
+  { key: 'contest-types', label: EVERY_CONTEST_TYPE_LABEL, description: `Tiers, budget, snake draft, pick'em, survivor, brackets, squares, ${STAT_POOL_CONTEST_TYPE}s and more.`, value: true },
   { key: 'leaderboards', label: 'Live leaderboards', description: 'Standings move as the scores come in.', value: true },
   { key: 'results', label: 'Contest results and history', description: 'Places and results for every finished contest.', value: true },
 ];

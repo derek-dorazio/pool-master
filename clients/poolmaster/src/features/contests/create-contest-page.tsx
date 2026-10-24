@@ -48,7 +48,7 @@ import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import { SquaresGamePicker } from './squares-game-picker';
 import { useSquaresGameChoices } from './use-squares-game-choices';
-import { STAT_POOL_STARS, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
+import { STAT_POOL_STARS, statPoolContestName, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
 import {
   Alert,
   ChoiceCard,
@@ -535,9 +535,12 @@ export function CreateContestPage() {
     }
   }, [form, presets, setFormValues, tierCount]);
 
-  // The name follows the event and the rules until the commissioner types their own.
+  // The name follows the event and the rules until the commissioner types their own; a Clutch
+  // Card is "<event> Stars" whichever way its stars are picked (#995).
   const suggestedName = selectedEvent
-    ? suggestContestName(selectedEvent.name, selectionType, parsedRules.configuration, tierCount)
+    ? statPoolScoring !== null
+      ? statPoolContestName(selectedEvent.name)
+      : suggestContestName(selectedEvent.name, selectionType, parsedRules.configuration, tierCount)
     : '';
   useEffect(() => {
     if (!isNameEdited && suggestedName && form.getValues('contestName') !== suggestedName) {

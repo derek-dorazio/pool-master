@@ -610,6 +610,18 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
   });
 
+  it('names an NBA Finals Clutch Card "NBA Finals Stars", not after its format as a tiered pool is named', async () => {
+    primeBasketballMocks([basketballEvent({
+      id: 'nba-finals', name: 'NBA Finals', rounds: 7, sportLeagueId: 'nba-finals', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE',
+    })]);
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+
+    await waitFor(() => expect(screen.getByTestId('contest-name')).toHaveValue('NBA Finals Stars'));
+  });
+
   it('creates a confidence pick\'em on its first week as a prediction contest with the mode chosen and no scoring settings, since the mode alone scores it', async () => {
     primeBasketballMocks([basketballEvent({ id: 'week-1', name: 'Week 1', rounds: 1 })]);
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-pick-em' } } });
