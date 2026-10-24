@@ -50,6 +50,8 @@ moves its tick on both pages and its line in the highlights with no deploy
   they stack.
 - **Highlights**, built per plan: its cap values that differ from the plan below ("Up to 50
   entries per contest", "3 sports leagues a year"), then the features that start at this plan.
+  Free has no plan below, so its card lists its caps, "Every contest type", and the features it
+  has.
   When three or more features of one group start at the same plan they show as one line with a
   count ("7 more emails"), so a card never turns into a list of email names (Q3). The mockup's
   hand-written lines show the shape, not final wording.
@@ -96,13 +98,17 @@ path redirects to it. Linked from the Plan row on league settings and from every
 allows ..." note commissioners see when a cap or a locked feature stops them (#947, #948).
 
 1. **Your league now**: current plan, sports leagues this year ("2 of 3", with their names),
-   and the biggest open contest ("34 of 50 entries", with its name) (Q8).
+   and the biggest open contest ("34 of 50 entries", with its name) (Q8). "Open" means still
+   taking entries; its entries are counted the way the entry cap counts them (#947), drafts
+   included.
 2. **Plan cards**: the current one marked **Your plan**; every other one has a button,
    **Move up to Premium** above the current plan and **Move to Pro** below it.
 3. **Confirm**, inline above the cards, before anything changes:
    - "Every plan is free for now, so this takes effect at once and costs nothing."
-   - For a lower plan, a warning for each cap the league is already over ("Masters Tiers Pool
-     has 34 entries. On Free it keeps them all, but takes no new entries past 20.") and the
+   - For a lower plan, a warning for each cap the league is already over. The entries warning
+     names every open contest over the lower cap, up to three and then "and 2 more" ("Masters
+     Tiers Pool has 34 entries. On Free it keeps them all, but takes no new entries past 20.");
+     the sports leagues warning names this year's sports leagues. Then the
      list of features that will be hidden, and come back as they were on moving up. These
      follow *Moving to a lower plan* in `plans/monetization-strategy.md`.
    - **Move to Pro** saves through the existing `PUT /leagues/:id/plan`; **Keep Platinum**
@@ -116,14 +122,20 @@ Members never reach this page and never see a plan name, as now.
 
 ### Choosing a plan once payments are on
 
-This page only hands over; the flow itself is `plans/payments.md`.
+This page only hands over; the flow itself is `plans/payments.md`. What each plan button does
+depends on the league's billing state, and the table in `plans/payments.md` §6 *Who is in
+charge of the plan* is the rule; this page does not restate it. The page reads the league's
+billing state from `GET /leagues/:id/billing` and picks, per button:
 
-- **Moving up** past what the league has paid for: the button leads into the payment and
-  renewal flow: checkout takes the chosen plan and interval (yearly or monthly)
-  (`plans/payments.md`).
-- **Moving down**: confirmed here, free, and takes effect at the end of the paid period
-  (`plans/payments.md` §7); the current plan card then says "Platinum until [date], then Pro"
-  with **Keep Platinum** to undo.
+- the free change through `PUT /leagues/:id/plan`, at once (payments off, or before the
+  renewal date; or moving down with no subscription after it);
+- a plan change through billing, with no new checkout, when a subscription exists: up applies
+  now with a prorated charge, down is scheduled for the period end (§7). The current plan card
+  then says "Platinum until [date], then Pro" with **Keep Platinum** to undo;
+- checkout with the chosen plan and interval, when moving up after the renewal date with no
+  subscription.
+
+The confirm says which of these will happen before the commissioner presses it.
 - **Prices** come from `GET /billing/prices`, which payments serves publicly: each paid plan's
   yearly and monthly amounts, read from Stripe, and an empty list while payments are off. Both
   pages read it, never config or copy (Derek: monthly is a premium over yearly, for example $99
@@ -156,7 +168,9 @@ All answered (Derek 2026-10-24): every recommendation agreed; on 2 the toggle st
    `PLAN_SETTINGS`. **Premium has no feature of its own today**, only bigger caps: every feature starts at Free,
    Pro or Platinum. Move **All years** to Premium on `/manage/plans`, keeping the record book at
    Platinum? Recommended: yes, so every step up adds something to name on its card. It is a
-   setting, so it needs no build; the page works either way.
+   setting, so it needs no build; the page works either way. Note the code default only applies
+   where PLAN_CONFIG has never been saved; on QA, where it has, the change is a save on
+   `/manage/plans`.
 5. **Decided (Derek 2026-10-24): no badge.** **A "Most popular" badge?** Recommended: none for now. Nobody pays yet, so there is nothing
    true to say; the card style supports one later (the mockup's tweak shows it).
 6. **Decided (Derek 2026-10-24): yes.** **A one-line description under each feature** (in `plan-labels.ts`), on the public table and
@@ -182,7 +196,8 @@ Ticketed under epic #969 as #971, #972 and #973; the issues carry the live state
    feature descriptions in `plan-labels.ts`, the highlight builder beside
    `buildPlanComparison`, the plan cards and the table with collapsible groups. Tests for the
    builder (a feature moved in config moves its tick and its highlight).
-2. **Commissioner Plan page**: the new page and redirect, `plan-usage`, the confirm with its
+2. **Commissioner Plan page**: the new page and redirect, `plan-usage` (this year's sports
+   leagues, and each open contest's name and entry count), the confirm with its
    warnings and hidden-feature list, links from league settings and the cap notices.
 3. **Public plans page**: the route, header and How to Play links, questions, Start free, the
    signed-in button, phone layout.
