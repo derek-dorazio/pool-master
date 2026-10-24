@@ -169,8 +169,6 @@ LeagueYearFinish                    one per squad per counted contest; unique (c
   place           Int               1 best
   tiedCount       Int               entries sharing the place, for the point split
   rankedEntryCount Int              entries ranked in the contest, for FIELD_BEATEN, records and last places
-  eventSeriesId   String?           the series of a single-edition contest (the Masters), for perpetual trophies (§12)
-  selectionType   SelectionType     the contest's, so a Masters pick'em and a Masters squares keep separate trophies
   weight          CupWeight         at settlement
   points          Int               tenths, from the points table at settlement
   settledAt
@@ -327,8 +325,8 @@ journey row once a page exists.
 
 1. **Storage and read.** `LeagueYearFinish`, `League.cupName`, written at settlement, backfill,
    `GET /championship/:year` and `/championship`. Plus the guard and best-entry function if #841
-   slice 1 hasn't landed them. Writes `eventSeriesId` and `selectionType` now, so #874 needs no
-   second backfill.
+   slice 1 hasn't landed them. (It also wrote the contest's series and selection type; #874 reads
+   those from the contest, so #954 dropped them.)
 2. **The page.** The Championship tab (trophy, podium, tiles, matrix); cup name setting (landed with #841 slice 3);
    championship trophies on the shelf, which comes with the shelf itself in #872 slice 2. Builds the page shell if #841 slice 2 hasn't.
 

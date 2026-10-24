@@ -2,7 +2,7 @@
  * The record book (#873): each record ranked from the league's counted contest finishes and its
  * championships of years over, with every holder on a tie and the next best.
  */
-import { CupWeight, RecordType, SelectionType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { CupWeight, RecordType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
 import { rankRecords, type RankedRecord } from '../../../packages/core-api/src/modules/history/records';
 
 let settled = 0;
@@ -18,8 +18,6 @@ function finish(squadId: string, place: number, overrides: Partial<LeagueYearFin
     place,
     tiedCount: 1,
     rankedEntryCount: 10,
-    eventSeriesId: null,
-    selectionType: SelectionType.TIERED,
     weight: CupWeight.NORMAL,
     points: 100,
     settledAt: new Date(Date.UTC(2025, 0, 1) + settled * 60_000),

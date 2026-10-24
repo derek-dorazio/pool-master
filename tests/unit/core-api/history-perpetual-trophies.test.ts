@@ -30,8 +30,6 @@ function win(contestId: string, squadId: string, place = 1): LeagueYearFinish {
     place,
     tiedCount: 1,
     rankedEntryCount: 8,
-    eventSeriesId: null,
-    selectionType: SelectionType.TIERED,
     weight: CupWeight.NORMAL,
     points: 100,
     settledAt: new Date('2025-04-14T00:00:00.000Z'),

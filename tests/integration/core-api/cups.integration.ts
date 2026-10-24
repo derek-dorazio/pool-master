@@ -261,8 +261,8 @@ describe('PrismaCupRepository (#841)', () => {
     const settledAt = new Date('2026-04-12T23:00:00.000Z');
     await prisma.leagueYearFinish.createMany({
       data: [
-        { leagueId: league.id, year: 2026, squadId: squads.eagles.id, contestId: masters.id, place: 1, tiedCount: 1, rankedEntryCount: 3, selectionType: 'TIERED', weight: 'BONUS', points: 1500, settledAt },
-        { leagueId: league.id, year: 2026, squadId: squads.birdies.id, contestId: masters.id, place: 2, tiedCount: 2, rankedEntryCount: 3, selectionType: 'TIERED', weight: 'BONUS', points: 1088, settledAt },
+        { leagueId: league.id, year: 2026, squadId: squads.eagles.id, contestId: masters.id, place: 1, tiedCount: 1, rankedEntryCount: 3, weight: 'BONUS', points: 1500, settledAt },
+        { leagueId: league.id, year: 2026, squadId: squads.birdies.id, contestId: masters.id, place: 2, tiedCount: 2, rankedEntryCount: 3, weight: 'BONUS', points: 1088, settledAt },
       ],
     });
 

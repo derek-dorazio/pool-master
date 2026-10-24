@@ -84,8 +84,6 @@ function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {
       place,
       tiedCount,
       rankedEntryCount: 6,
-      eventSeriesId: null,
-      selectionType: SelectionType.TIERED,
       weight,
       points: weight === CupWeight.NOT_COUNTED ? 0 : 1000 - place * 100,
       settledAt,

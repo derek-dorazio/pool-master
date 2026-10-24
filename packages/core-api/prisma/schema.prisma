@@ -895,7 +895,6 @@ model EventSeries {
 
   sportLeague  SportLeague        @relation(fields: [sportLeagueId], references: [id])
   sportEvents  SportEvent[]
-  yearFinishes LeagueYearFinish[]
 
   @@unique([sportLeagueId, name])
   @@map("event_series")
@@ -1080,9 +1079,6 @@ model LeagueYearFinish {
   tiedCount        Int                 @map("tied_count")
   /// Entries ranked in the contest.
   rankedEntryCount Int                 @map("ranked_entry_count")
-  /// The series of a single-event contest (the Masters), for perpetual trophies (#874); null for a contest of several events.
-  eventSeriesId    String?             @map("event_series_id") @db.Uuid
-  selectionType    PrismaSelectionType @map("selection_type")
   weight           PrismaCupWeight
   /// Tenths of a point, from the points table and weight at settlement.
   points           Int
@@ -1093,7 +1089,6 @@ model LeagueYearFinish {
   league      League       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   squad       Squad        @relation(fields: [squadId], references: [id], onDelete: Cascade)
   contest     Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  eventSeries EventSeries? @relation(fields: [eventSeriesId], references: [id], onDelete: SetNull)
 
   @@unique([contestId, squadId])
   @@index([leagueId, year])

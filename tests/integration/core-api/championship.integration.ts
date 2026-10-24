@@ -199,8 +199,6 @@ describe('PrismaChampionshipRepository (#863)', () => {
       place,
       tiedCount: 1,
       rankedEntryCount: 2,
-      eventSeriesId: null,
-      selectionType: SelectionType.TIERED,
       weight: CupWeight.NORMAL,
       points: place === 1 ? 1000 : 800,
       settledAt: new Date('2026-04-12T23:00:00.000Z'),
@@ -217,16 +215,6 @@ describe('PrismaChampionshipRepository (#863)', () => {
     ]);
     await expect(repo.findByLeagueYear(league.id, 2025)).resolves.toEqual([]);
     await expect(repo.findByLeague(league.id)).resolves.toHaveLength(2);
-  });
-
-  it('reads a one-event contest\'s series and none for a contest of several events', async () => {
-    const repo = new PrismaChampionshipRepository(getPrisma());
-    const { contest } = await seedLeague();
-    const masters = await contest('Masters');
-    const majors = await contest('Majors', { events: 2 });
-
-    await expect(repo.findSingleEventSeries(masters.id)).resolves.toBe(masters.sportEvents[0]?.sportEvent.eventSeriesId);
-    await expect(repo.findSingleEventSeries(majors.id)).resolves.toBeNull();
   });
 
   it('reads the league\'s cup name, and counts its open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
