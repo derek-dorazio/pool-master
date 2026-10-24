@@ -243,9 +243,10 @@ goes about 10 days before and C2 when the event opens for contests.
 Each has a recommendation; a one-word answer per number is enough.
 
 1. **Which events get a page?** Every event in the app belongs to a series, and that includes
-   weeks of games ("NFL Week 7", Premier League weeks), so there are hundreds. Recommend
-   hand-picked pages only, the calendar's events to start; How to Play stays the place to browse
-   everything else. A page takes one migration row plus a line of copy.
+   weeks of games ("NFL Week 7", Premier League weeks), so there are hundreds. **Decided (Derek
+   2026-10-24):** hand-picked pages only, the calendar's events to start; How to Play stays the
+   place to browse everything else. A page takes one migration row plus a line of copy. Derek
+   also agreed Championship Weekend offers no Pick'em (Pick'em runs only on weeks).
 2. **Event names.** Recommend real names on our own pages (as in the app today) and generic
    names in paid ads ("the big game", "Championship Weekend", not "AFC/NFC"); no logos, teams or
    players anywhere. A short check with a trademark lawyer before the first paid ad is cheap
