@@ -26,12 +26,12 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
-  getSportDefinition,
+  eventSportDefinition,
   SportEventStatus,
   TierSource,
   ValuationSource,
   type EventPricingConfig,
-  type Sport,
+  type SportDefinition,
   type SportEvent,
   type SportEventParticipant,
   type SportEventTier,
@@ -99,12 +99,12 @@ export class SportEventTierService {
    * editable afterwards; the tier count is however many rows exist, not a stored parameter
    * (plans/124 §4.5a).
    */
-  async ensureDefaultTiers(sportEventId: string, sport: Sport, leagueTierCount: number | null): Promise<SportEventTier[]> {
+  async ensureDefaultTiers(sportEventId: string, definition: SportDefinition, leagueTierCount: number | null): Promise<SportEventTier[]> {
     const existing = await this.deps.tiers.findBySportEvent(sportEventId);
     if (existing.length > 0) {
       return existing;
     }
-    const tierCount = leagueTierCount ?? getSportDefinition(sport).defaultTierLayout.tierCount;
+    const tierCount = leagueTierCount ?? definition.defaultTierLayout.tierCount;
     await this.deps.tiers.createMany(sportEventId, Array.from({ length: tierCount }, (_, index) => ({
       tierKey: `tier-${index + 1}`,
       label: `Tier ${index + 1}`,
@@ -178,7 +178,7 @@ export class SportEventTierService {
     const active = (await this.deps.field.findBySportEvent(input.sportEventId)).filter((entry) => entry.isActive);
     const ordered = [...active].sort((left, right) => compareForTiering(left, right, input.source));
     const source = input.source === TierSource.RANKING ? ValuationSource.AUTO_RANKING : ValuationSource.AUTO_ODDS;
-    const layout = getSportDefinition(event.sport).defaultTierLayout;
+    const layout = eventSportDefinition(event).defaultTierLayout;
     const fitsLayout = tiers.length === layout.tierCount && ordered.length > (tiers.length - 1) * layout.tierSize;
     const tierSize = input.tierSize ?? (fitsLayout ? layout.tierSize : undefined);
     const tierIndexAt = tierSize === undefined

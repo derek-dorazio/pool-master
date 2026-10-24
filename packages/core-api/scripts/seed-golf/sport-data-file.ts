@@ -292,6 +292,8 @@ const SeedResults = {
   MATCH_RESULTS: 'MATCH_RESULTS',
   /** A race: each field entry's raceResult. */
   FINISHING_ORDER: 'FINISHING_ORDER',
+  /** A stat pool: each game's player stat lines, which the loader takes from #935. */
+  STAT_LINES: 'STAT_LINES',
 } as const;
 type SeedResults = (typeof SeedResults)[keyof typeof SeedResults];
 
@@ -299,6 +301,7 @@ const SEED_RESULTS: Readonly<Record<ScoringFamily, SeedResults>> = {
   [ScoringFamily.STROKE_PLAY]: SeedResults.STROKE_ROUNDS,
   [ScoringFamily.HEAD_TO_HEAD]: SeedResults.MATCH_RESULTS,
   [ScoringFamily.FINISH_POSITION]: SeedResults.FINISHING_ORDER,
+  [ScoringFamily.COMPOSITE]: SeedResults.STAT_LINES,
 };
 
 function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar: boolean, playsBracket: boolean, results: SeedResults, problems: string[]): void {

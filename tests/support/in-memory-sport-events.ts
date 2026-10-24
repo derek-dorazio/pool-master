@@ -9,6 +9,7 @@
  */
 
 import type {
+  SportEventParticipantStatLineRepository,
   GolfRoundWrite,
   GolfStandingWrite,
   EventSeriesRepository,
@@ -36,6 +37,7 @@ import type {
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { MatchEnding, BracketAdvancement, findSportRow, MatchSide, MatchStatus, ParticipantInactiveReason, ParticipantStatus, ValuationSource } from '@poolmaster/shared/domain';
 import type {
+  SportEventParticipantStatLine,
   GolfRoundResult,
   GolfStandingResult,
   Participant,
@@ -91,6 +93,7 @@ export class InMemorySportEvents {
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
   raceResultRows: SportEventParticipantRaceResult[] = [];
+  statLineRows: SportEventParticipantStatLine[] = [];
   matchRows: SportEventMatch[] = [];
 
   id(prefix: string): string {
@@ -107,7 +110,7 @@ export class InMemorySportEvents {
   }
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, currentEventYear: null, isActive: true });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -169,7 +172,7 @@ export class InMemorySportEvents {
       )),
       findBySportAndName: async (sportId, name) => this.sportLeagues.find((row) => row.sportId === sportId && row.name === name) ?? null,
       create: async (input) => {
-        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, currentEventYear: null, isActive: true });
+        const created = stamp({ id: this.id('sport-league'), ...input, roundNames: [], tierCount: null, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayName: null, participantType: null, scoringFamily: null, currentEventYear: null, isActive: true });
         this.sportLeagues.push(created);
         return created;
       },
@@ -683,6 +686,16 @@ export class InMemorySportEvents {
       deletePeriodScore: async (sportEventMatchId, periodNumber) => {
         const row = requireRow(sportEventMatchId);
         row.periodScores = row.periodScores.filter((other) => other.periodNumber !== periodNumber);
+      },
+    };
+  }
+
+  statLineRepo(): SportEventParticipantStatLineRepository {
+    return {
+      findBySportEvent: async (sportEventId) => {
+        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
+        const roundIds = new Set(this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).map((row) => row.id));
+        return this.statLineRows.filter((row) => roundIds.has(row.participantRoundId)).map((row) => ({ ...row }));
       },
     };
   }

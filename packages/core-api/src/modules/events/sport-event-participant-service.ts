@@ -25,6 +25,7 @@ import type {
   ParticipantRepository,
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
+  SportEventParticipantStatLineRepository,
   SportEventParticipantPatch,
   SportEventMatchRepository,
   SportEventParticipantRaceResultRepository,
@@ -37,7 +38,7 @@ import type {
 import {
   getSportDefinition,
   ParticipantStatus,
-  sportPlaysMatches,
+  eventPlaysMatches,
   SportEventStatus,
   type ParticipantInactiveReason,
   type Participant,
@@ -46,6 +47,7 @@ import {
   type SportEventParticipant,
   type SportEventParticipantGolfRound,
   type SportEventParticipantGolfStanding,
+  type SportEventParticipantStatLine,
   type SportEventParticipantRaceResult,
   type SportEventParticipantRound,
   type SportEventParticipantStanding,
@@ -65,6 +67,8 @@ import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 export interface ParticipantRoundView {
   round: SportEventParticipantRound;
   golf: SportEventParticipantGolfRound | null;
+  /** The composite family's extension (#934): a stat pool player's stats in the game, empty for any other family. */
+  statLines: SportEventParticipantStatLine[];
 }
 
 /** A standing row with its sport extension. */
@@ -193,6 +197,7 @@ export interface SportEventParticipantServiceDeps {
   participantRounds: SportEventParticipantRoundRepository;
   golfStandings: SportEventParticipantGolfStandingRepository;
   golfRounds: SportEventParticipantGolfRoundRepository;
+  statLines: Pick<SportEventParticipantStatLineRepository, 'findBySportEvent'>;
   raceResults: Pick<SportEventParticipantRaceResultRepository, 'findBySportEvent'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   random?: () => number;
@@ -206,13 +211,14 @@ export class SportEventParticipantService {
   async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const [participants, valuations, standings, rounds, golfStandings, golfRounds, raceResults, matches, affiliated] = await Promise.all([
+    const [participants, valuations, standings, rounds, golfStandings, golfRounds, statLines, raceResults, matches, affiliated] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
       this.deps.valuations.findBySportEvent(sportEventId),
       this.deps.standings.findBySportEvent(sportEventId),
       this.deps.participantRounds.findBySportEvent(sportEventId),
       this.deps.golfStandings.findBySportEvent(sportEventId),
       this.deps.golfRounds.findBySportEvent(sportEventId),
+      this.deps.statLines.findBySportEvent(sportEventId),
       this.deps.raceResults.findBySportEvent(sportEventId),
       this.deps.matches.findBySportEvent(sportEventId),
       this.affiliatedParticipantIds(event),
@@ -223,11 +229,15 @@ export class SportEventParticipantService {
     const standingByEntry = new Map(standings.map((standing) => [standing.sportEventParticipantId, standing]));
     const golfByStanding = new Map(golfStandings.map((result) => [result.standing.id, result.golf]));
     const golfByRound = new Map(golfRounds.map((result) => [result.participantRound.id, result.golf]));
+    const statLinesByRound = new Map<string, SportEventParticipantStatLine[]>();
+    for (const line of statLines) {
+      statLinesByRound.set(line.participantRoundId, [...(statLinesByRound.get(line.participantRoundId) ?? []), line]);
+    }
     const raceResultByEntry = new Map(raceResults.map((result) => [result.sportEventParticipantId, result]));
     const roundsByEntry = new Map<string, ParticipantRoundView[]>();
     for (const round of rounds) {
       const list = roundsByEntry.get(round.sportEventParticipantId) ?? [];
-      list.push({ round, golf: golfByRound.get(round.id) ?? null });
+      list.push({ round, golf: golfByRound.get(round.id) ?? null, statLines: statLinesByRound.get(round.id) ?? [] });
       roundsByEntry.set(round.sportEventParticipantId, list);
     }
 
@@ -321,7 +331,7 @@ export class SportEventParticipantService {
       }
     }
     const field = await this.deps.field.findBySportEvent(sportEventId);
-    const seedsLocked = sportPlaysMatches(event.sport) && event.status !== SportEventStatus.DRAFT;
+    const seedsLocked = eventPlaysMatches(event) && event.status !== SportEventStatus.DRAFT;
     if (seedsLocked) {
       const seedById = new Map(field.map((entry) => [entry.id, entry.seedNumber ?? null]));
       const reseeded = updates.filter((update) => update.seedNumber !== undefined
@@ -341,7 +351,7 @@ export class SportEventParticipantService {
       && playInById.has(update.sportEventParticipantId)
       && update.isPlayInPlace !== playInById.get(update.sportEventParticipantId));
     if (remarked.length > 0) {
-      if (!sportPlaysMatches(event.sport)) {
+      if (!eventPlaysMatches(event)) {
         this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a play-in place on an event that plays no bracket');
         throw new SportEventError(
           `A ${getSportDefinition(event.sport).name.toLowerCase()} event is not played as a bracket, so it has no play-in places.`,

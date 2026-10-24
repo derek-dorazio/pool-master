@@ -1,6 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
-import { sportStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
+import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -24,7 +24,7 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
     mappings: store.mappingRepo(),
     golfRounds: store.golfRoundRepo(),
     golfStandings: store.golfStandingRepo(),
-    storesGolfRoundScores: sportStoresGolfRoundScores,
+    storesGolfRoundScores: eventStoresGolfRoundScores,
   });
   return { store, service, event, anaEntry, benEntry, sport };
 }
@@ -33,11 +33,11 @@ const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status
 
 describe('GolfScoreService — events of another scoring family', () => {
   it('takes golf round scores for a golf event, whose stroke-play family keeps them', () => {
-    expect(sportStoresGolfRoundScores(Sport.GOLF)).toBe(true);
+    expect(eventStoresGolfRoundScores({ sport: Sport.GOLF })).toBe(true);
   });
 
   it('refuses preview, apply and a single correction for a horse racing event with 422 EVENT_SCORING_FAMILY_MISMATCH, writing no golf round', async () => {
-    expect(sportStoresGolfRoundScores(Sport.HORSE_RACING)).toBe(false);
+    expect(eventStoresGolfRoundScores({ sport: Sport.HORSE_RACING })).toBe(false);
     const { store, service, event, anaEntry } = setup({ sport: Sport.HORSE_RACING });
     const mismatch = { code: 'EVENT_SCORING_FAMILY_MISMATCH', statusCode: 422 };
 
@@ -306,7 +306,7 @@ describe('GolfScoreService — provider sync', () => {
       mappings: store.mappingRepo(),
       golfRounds: store.golfRoundRepo(),
       golfStandings: store.golfStandingRepo(),
-      storesGolfRoundScores: sportStoresGolfRoundScores,
+      storesGolfRoundScores: eventStoresGolfRoundScores,
       logger,
     });
     return { store, service, event, anaEntry, benEntry, logger };

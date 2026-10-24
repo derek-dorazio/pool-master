@@ -54,7 +54,7 @@ import {
   PlanCap,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
-  getSportDefinition,
+  eventSportDefinition,
 } from '@poolmaster/shared/domain';
 import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode } from '@poolmaster/shared/dto';
 import {
@@ -630,6 +630,7 @@ export class ContestService {
       contestId,
       sportEventId: shownEvent.id,
       sport: shownEvent.sport,
+      scoringFamily: eventSportDefinition(shownEvent).scoringFamily,
       scoringDefinitionId,
       countingRule: shownCountingRule,
       participants: shown.field,
@@ -1252,7 +1253,7 @@ export class ContestService {
     // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
     // nothing left to change.
     const quickPick = rules?.selectionType === SelectionType.RANDOM_DRAW;
-    const golf = getSportDefinition(sportEvent.sport).scoringFamily === ScoringFamily.STROKE_PLAY;
+    const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
     const data = {
       leagueName: league.name,
       contestName: entry.contest.name,

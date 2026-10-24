@@ -15,7 +15,7 @@ import {
   eventRoundLabel,
   formatContestRules,
   formatEntriesPerTeamSentence,
-  getSportDefinition,
+  eventSportDefinition,
   pluralize,
   type Contest,
   type ContestSelectionConfig,
@@ -65,7 +65,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
     rules: formatContestRules(
       rules,
       rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
-      getSportDefinition(first.sport).vocabulary.participant,
+      eventSportDefinition(first).vocabulary.participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
       rules.selectionType === SelectionType.BRACKET ? await roundNameOf(deps, first) : undefined,
     ),
@@ -94,7 +94,7 @@ export async function contestClosesAt(
 /** A knockout's rounds by name, in its sport league's words where it has them ("Sweet 16"). */
 async function roundNameOf(deps: Pick<ContestSummaryDeps, 'sportLeagues'>, sportEvent: SportEvent): Promise<RoundName> {
   const roundNames = (await deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
-  const roundCount = sportEvent.rounds ?? getSportDefinition(sportEvent.sport).defaultRounds;
+  const roundCount = sportEvent.rounds ?? eventSportDefinition(sportEvent).defaultRounds;
   return (roundNumber) => eventRoundLabel(sportEvent.sport, roundNames, roundNumber, roundCount);
 }
 

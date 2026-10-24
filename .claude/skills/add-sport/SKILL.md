@@ -59,6 +59,10 @@ no seed, so a sport seeded by odds needs only its odds before pricing.
      single games. A league its sport's word for a sport league does not fit (tennis's "tour"
      for the NCAA's championships) sets `SportLeague.noun`, seeded with the league.
    - Finish position: points by place (horse racing, auto racing, cycling).
+   - Composite: a championship stat pool's players, each game scored by the sport's composite
+     of their stat lines (Box Score for baseball). No sport is scored by it: a sport league
+     names it, with a field of players (`SportLeague.scoringFamily`, `SportLeague.participantType`),
+     and plays the sport's stat pool definition (`sportLeagueDefinitionOf`).
    Reusing a family is the normal case and needs no new tables. A **new** family is a model
    change and a much larger slice: stop and confirm with the user.
 2. **Participant type.** Individual or team.
@@ -203,6 +207,13 @@ and the closing slice folds the lessons in. Check each against the code before w
 down: a lesson that was true mid-series may not be by the end.
 
 ## Where this goes wrong
+
+- **Reading an event's definition off its sport alone.** A sport league can override its
+  sport's participant type and scoring family (a team sport's stat pool), so anything decided
+  for an event (its family, selection types, scoring definitions, tiers, rounds, whether it
+  plays matches) reads `eventSportDefinition(event)` or `eventPlaysMatches(event)`. Whatever
+  builds an event shape for a service (contest setup's event reader) carries the overrides
+  along, or the event silently plays its sport's way.
 
 - **Comparing the sport by value.** `event.sport === Sport.TENNIS` outside the sport registry
   and scoring-family folders is the bug this structure exists to prevent; lint rejects it.

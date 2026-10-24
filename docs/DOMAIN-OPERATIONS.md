@@ -683,6 +683,20 @@ The per-round join and the running standing. **The score lives in the sport exte
 | Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write. Golf corrections: `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event. A race's standings are written by its finishing order (below) |
 | Rank | *(every score write)* | `position` and `displayPosition` are computed from the extension's score after each write — the feed or a correction — across the whole event, so no reader re-derives them (#246). Ties share a position and display as "T3"; a withdrawn or eliminated golfer is unranked. The provider supplies no live rank to copy |
 
+### SportEventParticipantStatLine — the composite extension
+
+One component stat of a stat pool player's game (#934): `stat` (a `PrismaSportStat` value such
+as `TOTAL_BASES`) and an integer `value`, one row per participant round and stat, removed with
+its round. A game is a round, and a player's round is their game. The composite (Box Score,
+Triple Threat, Power Play, Redzone) is computed from a round's lines and never stored; a stat
+with no line counts 0. Only events of a sport league scored by the composite family have lines.
+
+| Operation | Role | Notes |
+|---|---|---|
+| Read for an event | `authenticated` | On each `listEventParticipants` round as its stat lines, empty for any other family |
+| Write | *(sport data loader, #935)* | No route writes them yet: the loader's box score files and the admin stat grid come next |
+| Score | *(contest scoring)* | `COMPOSITE_TOTAL`: a player's games summed, each game the sport's composite of its lines; a game with no lines scores 0. Nothing is scored until the event's first lines are in. A correction to a line rescores every contest on the event until it settles |
+
 ### SportEventParticipantRaceResult — the finish-position extension
 
 How one runner's race ended (#622): `resultStatus` (`FINISHED`, `DID_NOT_FINISH`,

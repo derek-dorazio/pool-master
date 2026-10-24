@@ -45,6 +45,7 @@ export {
 } from './prisma-golf-repositories';
 export { PrismaSportEventMatchRepository } from './prisma-match-repositories';
 export { PrismaSportEventParticipantRaceResultRepository } from './prisma-race-repositories';
+export { PrismaSportEventParticipantStatLineRepository } from './prisma-stat-line-repositories';
 export { lockContestRow, lockContestRows } from './contest-row-lock';
 export { PrismaSquaresRepository } from './prisma-squares-repository';
 export { PrismaCupRepository } from './prisma-cup-repository';

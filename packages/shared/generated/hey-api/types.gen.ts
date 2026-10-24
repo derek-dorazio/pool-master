@@ -3077,6 +3077,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'BUDGET_PICK';
@@ -3137,6 +3142,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 } | {
@@ -3199,6 +3209,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'PICK_EM';
@@ -3260,6 +3275,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'BRACKET';
@@ -3316,6 +3336,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 } | {
@@ -3374,6 +3399,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'SURVIVOR';
@@ -3430,6 +3460,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 };
@@ -3884,6 +3919,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -3944,6 +3984,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -4006,6 +4051,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -4067,6 +4117,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -4123,6 +4178,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -4181,6 +4241,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -4237,6 +4302,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -4633,6 +4703,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -4693,6 +4768,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -4755,6 +4835,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -4816,6 +4901,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -4872,6 +4962,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -4930,6 +5025,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'SURVIVOR';
@@ -4986,6 +5086,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         };
@@ -5083,6 +5188,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -5143,6 +5253,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -5205,6 +5320,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -5266,6 +5386,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -5322,6 +5447,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -5380,6 +5510,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -5436,6 +5571,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -5568,6 +5708,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -5628,6 +5773,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -5690,6 +5840,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -5751,6 +5906,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -5807,6 +5967,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -5865,6 +6030,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'SURVIVOR';
@@ -5921,6 +6091,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         };
@@ -9431,6 +9606,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -9491,6 +9671,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -9553,6 +9738,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -9614,6 +9804,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -9670,6 +9865,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -9728,6 +9928,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -9784,6 +9989,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -10107,7 +10317,7 @@ export type ContestEntryParticipantDetailDto = {
     pickedAt: string;
 };
 
-export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
+export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
 
 /**
  * Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes.
@@ -10368,7 +10578,7 @@ export type ContestLeaderboardResponse = {
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
-    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
     /**
      * How an entry's picks combine into its total.
      */

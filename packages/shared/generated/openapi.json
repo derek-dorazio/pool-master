@@ -6738,6 +6738,27 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -6921,6 +6942,27 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7097,6 +7139,27 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -7288,6 +7351,27 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7459,6 +7543,27 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -7643,6 +7748,27 @@
                       "config"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
                   }
                 ],
                 "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -7811,6 +7937,27 @@
                         ],
                         "additionalProperties": false,
                         "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                      }
+                    },
+                    "required": [
+                      "participantScoringDefinitionId",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "participantScoringDefinitionId": {
+                        "type": "string",
+                        "enum": [
+                          "COMPOSITE_TOTAL"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -8737,6 +8884,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -8920,6 +9088,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -9096,6 +9285,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -9287,6 +9497,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -9458,6 +9689,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -9642,6 +9894,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -9810,6 +10083,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -10664,6 +10958,27 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -10847,6 +11162,27 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -11023,6 +11359,27 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -11214,6 +11571,27 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -11385,6 +11763,27 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -11569,6 +11968,27 @@
                                 "config"
                               ],
                               "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
                             }
                           ],
                           "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -11737,6 +12157,27 @@
                                   ],
                                   "additionalProperties": false,
                                   "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                                }
+                              },
+                              "required": [
+                                "participantScoringDefinitionId",
+                                "config"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "participantScoringDefinitionId": {
+                                  "type": "string",
+                                  "enum": [
+                                    "COMPOSITE_TOTAL"
+                                  ]
+                                },
+                                "config": {
+                                  "type": "object",
+                                  "properties": {},
+                                  "additionalProperties": false
                                 }
                               },
                               "required": [
@@ -11990,6 +12431,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -12173,6 +12635,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -12349,6 +12832,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -12540,6 +13044,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -12711,6 +13236,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -12895,6 +13441,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -13063,6 +13630,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -13362,6 +13950,27 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -13545,6 +14154,27 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -13721,6 +14351,27 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -13912,6 +14563,27 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -14083,6 +14755,27 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -14267,6 +14960,27 @@
                               "config"
                             ],
                             "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
                           }
                         ],
                         "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -14435,6 +15149,27 @@
                                 ],
                                 "additionalProperties": false,
                                 "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                              }
+                            },
+                            "required": [
+                              "participantScoringDefinitionId",
+                              "config"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "participantScoringDefinitionId": {
+                                "type": "string",
+                                "enum": [
+                                  "COMPOSITE_TOTAL"
+                                ]
+                              },
+                              "config": {
+                                "type": "object",
+                                "properties": {},
+                                "additionalProperties": false
                               }
                             },
                             "required": [
@@ -21457,6 +22192,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -21640,6 +22396,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -21816,6 +22593,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -22007,6 +22805,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -22178,6 +22997,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -22362,6 +23202,27 @@
                           "config"
                         ],
                         "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
                       }
                     ],
                     "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring."
@@ -22530,6 +23391,27 @@
                             ],
                             "additionalProperties": false,
                             "description": "Knockout round-points settings: the value of a win in each round and the upset bonus."
+                          }
+                        },
+                        "required": [
+                          "participantScoringDefinitionId",
+                          "config"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "participantScoringDefinitionId": {
+                            "type": "string",
+                            "enum": [
+                              "COMPOSITE_TOTAL"
+                            ]
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {},
+                            "additionalProperties": false
                           }
                         },
                         "required": [
@@ -23247,7 +24129,8 @@
         "enum": [
           "GOLF_RELATIVE_TO_PAR_TOTAL",
           "FINISH_POSITION_POINTS",
-          "KNOCKOUT_ROUND_POINTS"
+          "KNOCKOUT_ROUND_POINTS",
+          "COMPOSITE_TOTAL"
         ]
       },
       "ScoredContestEntryPickGolfDto": {
@@ -23715,7 +24598,8 @@
             "enum": [
               "GOLF_RELATIVE_TO_PAR_TOTAL",
               "FINISH_POSITION_POINTS",
-              "KNOCKOUT_ROUND_POINTS"
+              "KNOCKOUT_ROUND_POINTS",
+              "COMPOSITE_TOTAL"
             ],
             "description": "The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds."
           },

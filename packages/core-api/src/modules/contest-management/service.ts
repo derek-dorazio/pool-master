@@ -57,7 +57,9 @@ import type {
   ContestScoringSettings,
   ContestSelectionConfig,
   ParticipantContestScoringRule,
+  ParticipantType,
   ParticipantScoringDefinitionId,
+  ScoringFamily,
   SportEventStatus,
   TieredContestRules,
   TournamentFormat,
@@ -71,7 +73,7 @@ import {
   SelectionType,
   assertNever,
   canFillBudgetRoster,
-  getSportDefinition,
+  eventSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
   getTiersInPlay,
@@ -109,6 +111,12 @@ export interface ContestCreateSportEventState {
   salaryCap: number | null;
   /** Its sport league's first round of single games a squares contest can be played on; null for every round (#787). */
   squaresFromRound: number | null;
+  /**
+   * Its sport league's participant type and scoring family when not its sport's (#934: a stat
+   * pool's players and composite scoring). Read through `eventSportDefinition`.
+   */
+  participantType?: ParticipantType;
+  scoringFamily?: ScoringFamily;
 }
 
 export interface ContestCreateSportEventReader {
@@ -931,7 +939,7 @@ export class ContestManagementService {
     // One sport league, so one sport: the first event answers the sport's questions, and every
     // event is checked where the events can differ (tiers, prices, rounds).
     const sportEvent = this.assertOneSportLeague(sportEvents);
-    const definition = getSportDefinition(sportEvent.sport);
+    const definition = eventSportDefinition(sportEvent);
     if (!sportAllowsSelectionType(definition, rules.selectionType)) {
       this.logger.warn({
         sportEventId: sportEvent.id,
@@ -1121,7 +1129,7 @@ export class ContestManagementService {
     sportEvent: ContestCreateSportEventState,
     { requested, kept }: ContestScoringInput,
   ): ContestScoringSettings {
-    const definition = getSportDefinition(sportEvent.sport);
+    const definition = eventSportDefinition(sportEvent);
     const offered = (id: ParticipantScoringDefinitionId) => definition.scoringDefinitions.includes(id);
     if (requested) {
       if (!offered(requested.participantScoringDefinitionId)) {
@@ -1193,6 +1201,7 @@ export class ContestManagementService {
     switch (scoring.participantScoringDefinitionId) {
       case 'GOLF_RELATIVE_TO_PAR_TOTAL':
       case 'FINISH_POSITION_POINTS':
+      case 'COMPOSITE_TOTAL':
         return;
       case 'KNOCKOUT_ROUND_POINTS': {
         const valueCount = scoring.config.roundValues.length;
@@ -1406,6 +1415,8 @@ function defaultContestScoringSettings(
 ): ContestScoringSettings | null {
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
+      return { participantScoringDefinitionId, config: {} };
+    case 'COMPOSITE_TOTAL':
       return { participantScoringDefinitionId, config: {} };
     // A points table, and a knockout table of one value per round of the event, come from the
     // commissioner or a template, never from the server.

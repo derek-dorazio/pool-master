@@ -5662,6 +5662,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5705,6 +5709,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5748,6 +5756,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5794,6 +5806,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5835,6 +5851,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5876,6 +5896,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5917,6 +5941,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         };
         /** @description One inherited event tier and its participant assignments. */
@@ -6207,6 +6235,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6250,6 +6282,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6293,6 +6329,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6339,6 +6379,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6380,6 +6424,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6421,6 +6469,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6462,6 +6514,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
         };
@@ -6732,6 +6788,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6775,6 +6835,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6818,6 +6882,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6864,6 +6932,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6905,6 +6977,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6946,6 +7022,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6987,6 +7067,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 };
             }[];
@@ -7048,6 +7132,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7091,6 +7179,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7134,6 +7226,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7180,6 +7276,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7221,6 +7321,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7262,6 +7366,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7303,6 +7411,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
         };
@@ -7399,6 +7511,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7442,6 +7558,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7485,6 +7605,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7531,6 +7655,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7572,6 +7700,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7613,6 +7745,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7654,6 +7790,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 };
             };
@@ -10352,6 +10492,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10395,6 +10539,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10438,6 +10586,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10484,6 +10636,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10525,6 +10681,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10566,6 +10726,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10607,6 +10771,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
             /**
@@ -10855,7 +11023,7 @@ export interface components {
             pickedAt: string;
         };
         /** @enum {string} */
-        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
+        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
             /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
@@ -11004,7 +11172,7 @@ export interface components {
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */
-            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
+            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
             /** @description How an entry's picks combine into its total. */
             countingRule: {
                 /**
