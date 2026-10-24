@@ -150,7 +150,7 @@ Free on 2026-10-24:
   `primetimeleague.app`, `primetimeplay.app`, `playprimetime.app`, `goprimetime.app`,
   `getprimetime.app`, `joinprimetime.app`, `primetimers.app`, `primetimegroup.app`,
   `primetime.club`, `primetime.pics`.
-- **Office pool names:** `ultimateofficepool.com`/`.net`/`.app`, `ultimatepoolmanager.com`,
+- **Office pool names:** `ultimateofficepool.com`/`.net`/`.app`, `ultimateofficepoolmanager.net`/`.app`, `ultimatepoolmanager.com`,
   `theofficepoolmanager.com`, `officepoolmanager.app`, `officepoolclub.com`, `uopm.app`.
 - **Pool and commissioner names:** `poolcommish.app`, `thecommissioner.club`, `poolboss.club`,
   `thepoolhouse.app`, `thepoolroom.app`, `thepoolmanager.app`, `thepoolmaster.app`,
