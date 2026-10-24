@@ -183,6 +183,19 @@ this: new leagues already default to Platinum, and the screens keep "Every plan 
 now". When paying is built (#931), it needs each league's signup date and a renewal point
 taken from it, and what a league moves to at renewal if its commissioner does not pay.
 
+### Billing periods and what sells first (Derek, 2026-10-24)
+
+- **Plans are sold annual or monthly**, monthly at a premium: $99 a year or $9.99 a month
+  as the example. Payments are designed in `plans/payments.md` (#931); clicking a plan on the
+  commissioner comparison page leads into payment.
+- **Free plus per-event fees comes first.** Derek expects the first money from per-event
+  purchases, not plans: someday Free allows 10 entries per pool, and $10 expands one pool.
+  These raise caps only, no advanced features. Few will pay around $200 a year for Platinum
+  until they have paid per-event fees and see they would pay more than that over a year.
+  Plans are designed first because per-event purchases reuse their payment plumbing; the
+  per-event design is #968. This revives the per-contest unlock idea in *Strategy ideas*,
+  limited to caps.
+
 ### Conflicts with the older sections
 
 1. **Default plan.** Older sections make Free the default, with root-admin grants and a free
