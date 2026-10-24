@@ -51,3 +51,4 @@ export { PrismaSquaresRepository } from './prisma-squares-repository';
 export { PrismaCupRepository } from './prisma-cup-repository';
 export { PrismaChampionshipRepository } from './prisma-championship-repository';
 export { PrismaLeagueYearReviewRepository } from './prisma-league-year-review-repository';
+export { PrismaContestExpansionRepository } from './prisma-contest-expansion-repository';

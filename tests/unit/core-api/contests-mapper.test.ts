@@ -27,10 +27,12 @@ describe('toContestListResponse', () => {
       [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
       new Map([['contest-1', 3]]),
       new Map([['event-1', masters]]),
+      new Map([['contest-1', 50]]),
     );
 
     expect(response.contests[0]).toMatchObject({
       entryCount: 3,
+      entriesPerContest: 50,
       sportEvents: [{
         sportEventId: 'event-1',
         sequence: 1,
@@ -46,6 +48,7 @@ describe('toContestListResponse', () => {
       [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
       new Map(),
       new Map([['event-2', pga], ['event-1', masters]]),
+      new Map(),
     );
 
     expect(response.contests[0]?.sportEvents.map((event) => [event.sequence, event.name]))
@@ -57,6 +60,7 @@ describe('toContestListResponse', () => {
       [buildContest({ id: 'lost-event', sportEventIds: ['event-gone'] })],
       new Map(),
       new Map([['event-1', masters]]),
+      new Map(),
     );
 
     expect(response.contests[0]?.sportEvents).toEqual([]);
@@ -65,7 +69,7 @@ describe('toContestListResponse', () => {
 
 describe('toContestResponse events', () => {
   it('gives a single-contest read its events too, so a page reads each event\'s name and status from it', () => {
-    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]])).contest.sportEvents)
+    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents)
       .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
 
@@ -74,11 +78,16 @@ describe('toContestResponse events', () => {
       id: 'event-1', name: 'World Series', startDate: new Date('2026-10-23T00:08:00.000Z'), status: SportEventStatus.SCHEDULED,
       participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE,
     };
-    const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]])).contest.sportEvents;
-    const [statPoolEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]])).contest.sportEvents;
+    const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
+    const [statPoolEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
 
     expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([null, null]);
     expect([statPoolEvent.participantType, statPoolEvent.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.COMPOSITE]);
+  });
+
+  it('gives a single-contest read its entry cap, and a contest with no cap none', () => {
+    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), 200).contest.entriesPerContest).toBe(200);
+    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), null).contest.entriesPerContest).toBeNull();
   });
 
   function masters() {

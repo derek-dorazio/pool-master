@@ -11,9 +11,8 @@
  *   - any comparison (equality or order) with a `LeaguePlan.X` member on either side;
  *   - an equality test between a `plan` value (`plan`, `x.plan`) and a string literal;
  *   - a `switch` on a `plan` value, or with a `case LeaguePlan.X`;
- *   - `LEAGUE_PLANS` or `CAPPED_LEAGUE_PLANS` `.indexOf(...)` or `.includes(...)`: where a plan
- *     sits in the order, or whether it is capped, is the same comparison in another form.
- *     Iterating those arrays (listing every plan) is allowed.
+ *   - `LEAGUE_PLANS` `.indexOf(...)` or `.includes(...)`: where a plan sits in the order is the
+ *     same comparison in another form. Iterating it (listing every plan) is allowed.
  *
  * Comparing two plan values (`a.plan === b.plan`, "did the plan change") is allowed. The
  * plans folder is exempt in eslint.config.js.
@@ -35,7 +34,7 @@ function isPlanValue(node) {
     && node.property.name === 'plan';
 }
 
-const PLAN_ORDER_ARRAYS = new Set(['LEAGUE_PLANS', 'CAPPED_LEAGUE_PLANS']);
+const PLAN_ORDER_ARRAYS = new Set(['LEAGUE_PLANS']);
 const ORDER_LOOKUPS = new Set(['indexOf', 'includes', 'lastIndexOf']);
 
 function isPlanOrderLookup(node) {

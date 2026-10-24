@@ -407,8 +407,8 @@ describe('RootAdminSettingsPage budget pricing card (#93)', () => {
 describe('RootAdminSettingsPage plans card', () => {
   const PLAN_DEFAULTS = {
     caps: {
-      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: null },
-      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: null, PLATINUM: null },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: 50 },
     },
     features: {
       EMAIL_CONTEST_OPENED: 'FREE', EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE', EMAIL_CONTEST_RESULTS: 'FREE',
@@ -437,19 +437,111 @@ describe('RootAdminSettingsPage plans card', () => {
     });
   });
 
-  it('lists each cap\'s limit on every plan, Free to Platinum, with Platinum always unlimited', async () => {
+  it('lists each cap\'s limit on every plan, Free to Platinum, Platinum\'s included', async () => {
     renderPage();
 
     const card = within(await screen.findByTestId('root-admin-settings-group-PLAN_CONFIG'));
     expect(card.getByText('Entries per contest')).toBeInTheDocument();
     expect(card.getByText('Free 20 · Pro 50 · Premium Unlimited · Platinum Unlimited')).toBeInTheDocument();
     expect(card.getByText('Sports leagues a year')).toBeInTheDocument();
-    expect(card.getByText('Free 1 · Pro 3 · Premium 10 · Platinum Unlimited')).toBeInTheDocument();
+    expect(card.getByText('Free 5 · Pro 15 · Premium 30 · Platinum 50')).toBeInTheDocument();
   });
 
   it('links the plans section to the Plans page, where the caps and features are edited', async () => {
     renderPage();
 
     expect(await screen.findByTestId('root-admin-settings-edit-PLAN_CONFIG')).toHaveAttribute('href', '/manage/plans');
+  });
+});
+
+const BILLING_DEFAULTS = {
+  paymentsEnabled: false,
+  expansionPrices: {
+    FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2000 }],
+    PRO: [{ entriesPerContest: 100, priceCents: 1500 }],
+    PREMIUM: [],
+    PLATINUM: [{ entriesPerContest: 1000, priceCents: 3000 }],
+  },
+};
+
+const DEFAULT_BILLING: SettingsGroup = {
+  key: 'BILLING_CONFIG',
+  title: 'Payments',
+  description: 'Whether payments are on, and what expanding a contest costs on each plan.',
+  source: 'defaults',
+  updatedAt: null,
+  updatedBy: null,
+  value: BILLING_DEFAULTS,
+  defaults: BILLING_DEFAULTS,
+};
+
+describe('RootAdminSettingsPage payments card', () => {
+  beforeEach(() => {
+    listSettingsGroupsMock.mockReset();
+    listSettingsGroupHistoryMock.mockReset();
+    updateSettingsGroupMock.mockReset();
+    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [DEFAULT_BILLING] } });
+  });
+
+  it('says payments are off, so expanding is free, and lists each plan\'s sizes with their prices', async () => {
+    renderPage();
+
+    const card = within(await screen.findByTestId('root-admin-settings-group-BILLING_CONFIG'));
+    expect(card.getByText('Off: expanding a contest is free')).toBeInTheDocument();
+    expect(card.getByText('50 entries $10 · 100 entries $20')).toBeInTheDocument();
+    expect(card.getByText('100 entries $15')).toBeInTheDocument();
+    expect(card.getByText('None')).toBeInTheDocument();
+  });
+
+  it('saves a changed price and an added size in cents, keeping payments off, with the version it was read at', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_BILLING });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-billing-FREE-price-1'), { target: { value: '22.5' } });
+    fireEvent.click(screen.getByTestId('root-admin-billing-PREMIUM-add'));
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-entries-0'), { target: { value: '200' } });
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-price-0'), { target: { value: '15' } });
+    fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
+
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    expect(updateSettingsGroupMock.mock.calls[0][0]).toEqual(expect.objectContaining({
+      path: { key: 'BILLING_CONFIG' },
+      body: {
+        key: 'BILLING_CONFIG',
+        expectedUpdatedAt: null,
+        value: {
+          paymentsEnabled: false,
+          expansionPrices: {
+            FREE: [{ entriesPerContest: 50, priceCents: 1000 }, { entriesPerContest: 100, priceCents: 2250 }],
+            PRO: [{ entriesPerContest: 100, priceCents: 1500 }],
+            PREMIUM: [{ entriesPerContest: 200, priceCents: 1500 }],
+            PLATINUM: [{ entriesPerContest: 1000, priceCents: 3000 }],
+          },
+        },
+      },
+    }));
+  });
+
+  it('refuses to save a size left blank, without sending anything', async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-billing-PREMIUM-add'));
+    fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
+
+    expect(await screen.findByText('Enter a number of entries.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('shows the server\'s reason when the sizes do not rise down a list', async () => {
+    updateSettingsGroupMock.mockResolvedValue({
+      error: { error: { code: 'VALIDATION_ERROR', message: 'Each Free size must be larger than the one above it.' } },
+      status: 400,
+    });
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-billing-FREE-entries-1'), { target: { value: '40' } });
+    fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
+
+    expect(await screen.findByTestId('root-admin-billing-settings-error')).toHaveTextContent('Each Free size must be larger than the one above it.');
   });
 });

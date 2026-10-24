@@ -153,6 +153,7 @@ export function bracketContestFixture(overrides: Partial<ContestDto> = {}): Cont
   return {
     id: 'contest-1',
     leagueId: 'league-1',
+    entriesPerContest: null,
     sport: 'BASKETBALL',
     name: 'Big Dawgs Bracket',
     status: 'OPEN',
@@ -261,6 +262,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       cupCustomPoints: [],
       hallOfLameVisible: true,
       planEntitlements: buildPlanEntitlements(),
+      planRenewsAt: '2027-04-24T00:00:00.000Z',
       mutedSportLeagueIds: [],
       eventEmailDelivery: 'PER_EVENT',
     },

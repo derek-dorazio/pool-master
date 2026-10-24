@@ -18,6 +18,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { ContestExpansionSection } from '@/features/billing/contest-expansion-section';
 import { CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import {
   buildLeagueAdminContestCupWeightPath,
@@ -110,7 +111,7 @@ export function ManageContestPage() {
   const navigate = useNavigate();
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
-  const { league } = useLeagueContext(leagueCode);
+  const { league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
@@ -303,6 +304,13 @@ export function ManageContestPage() {
           value={formatEntriesPerTeam(configuration.maxEntriesPerSquad)}
         />
       </SettingsSection>
+
+      <ContestExpansionSection
+        canGrant={viewer.isRootAdmin}
+        contestId={contest.id}
+        isLeagueActive={league.isActive}
+        leagueId={league.id}
+      />
 
       {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
         <SettingsSection

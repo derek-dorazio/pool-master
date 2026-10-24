@@ -5,6 +5,8 @@
  */
 import { randomUUID } from 'node:crypto';
 import { LeaguePaymentKind } from '@poolmaster/shared/domain';
+import type { ContestExpansionWrite } from '@poolmaster/shared/db';
+import { PrismaContestExpansionRepository } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
   createTestUser,
@@ -106,5 +108,55 @@ describe('contest_expansions and league_payments', () => {
     await getPrisma().user.delete({ where: { id: payer.id } });
 
     await expect(getPrisma().leaguePayment.findUnique({ where: { id: expansion.paymentId } })).resolves.toMatchObject({ payerId: null });
+  });
+});
+
+describe('PrismaContestExpansionRepository (#987)', () => {
+  const repo = () => new PrismaContestExpansionRepository(getPrisma());
+  const write = (leagueId: string, contestId: string, payerId: string, entriesPerContest: number): ContestExpansionWrite => ({
+    contestId,
+    leagueId,
+    entriesPerContest,
+    payerId,
+    kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF,
+    amountCents: 0,
+    describe: (expandedTo) => `${expandedTo ?? 'none'} to ${entriesPerContest}`,
+  });
+
+  it('reads a contest with no expansion and no entries as such', async () => {
+    const { contest } = await createLeagueAndContest();
+
+    await expect(repo().findState(contest.id)).resolves.toEqual({ expandedTo: null, entryCount: 0 });
+  });
+
+  it('writes the expansion with its payment line, described from the band it had, and reads the highest band back', async () => {
+    const { league, contest, payer } = await createLeagueAndContest();
+
+    await expect(repo().expand(write(league.id, contest.id, payer.id, 100))).resolves.toEqual({ status: 'expanded', expandedTo: 100 });
+    await expect(repo().expand(write(league.id, contest.id, payer.id, 200))).resolves.toEqual({ status: 'expanded', expandedTo: 200 });
+
+    await expect(repo().findState(contest.id)).resolves.toEqual({ expandedTo: 200, entryCount: 0 });
+    const lines = await getPrisma().leaguePayment.findMany({ where: { leagueId: league.id }, orderBy: { paidAt: 'asc' } });
+    expect(lines.map((line) => line.description)).toEqual(['none to 100', '100 to 200']);
+  });
+
+  it('writes nothing for a band at or below the contest\'s highest, answering notAbove with that band', async () => {
+    const { league, contest, payer } = await createLeagueAndContest();
+    await repo().expand(write(league.id, contest.id, payer.id, 200));
+
+    await expect(repo().expand(write(league.id, contest.id, payer.id, 100))).resolves.toEqual({ status: 'notAbove', expandedTo: 200 });
+    await expect(getPrisma().leaguePayment.count({ where: { leagueId: league.id } })).resolves.toBe(1);
+  });
+
+  it('lets only one of two commissioners expanding to the same band at once write it', async () => {
+    const { league, contest, payer } = await createLeagueAndContest();
+
+    const results = await Promise.all([
+      repo().expand(write(league.id, contest.id, payer.id, 100)),
+      repo().expand(write(league.id, contest.id, payer.id, 100)),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual(['expanded', 'notAbove']);
+    await expect(getPrisma().leaguePayment.count({ where: { leagueId: league.id } })).resolves.toBe(1);
   });
 });

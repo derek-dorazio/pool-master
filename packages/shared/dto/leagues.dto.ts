@@ -189,8 +189,9 @@ export const LeagueDtoSchema = z.object({
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
   hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.'),
   planEntitlements: PlanEntitlementsDtoSchema.describe(
-    'The league\'s plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
+    'The league\'s plan and what it allows now: its caps and features. Premium at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
   ),
+  planRenewsAt: z.string().datetime().describe('When the league\'s gifted plan ends: six months after signup, unless a root admin extended it.'),
   mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
   eventEmailDelivery: z.nativeEnum(EventEmailDelivery).describe('How the league\'s commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks\' events instead.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');

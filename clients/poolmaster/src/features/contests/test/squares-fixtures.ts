@@ -15,6 +15,7 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
   return {
     id: 'contest-1',
     leagueId: 'league-1',
+    entriesPerContest: null,
     sport: 'AMERICAN_FOOTBALL',
     name: 'Super Bowl Squares',
     status: 'OPEN',

@@ -12,6 +12,7 @@ import {
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { throwApiError, extractErrorMessage } from '@/lib/errors';
+import { BillingSettingsForm } from '@/features/billing/billing-settings-form';
 import { BudgetPricingSettingsForm } from './root-admin-budget-pricing-settings-form';
 import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
@@ -20,6 +21,7 @@ import { ManagePageIntro } from './manage-page-intro';
 import { PLANS_PATH, SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
+  summarizeBilling,
   summarizeBudgetPricing,
   summarizePlans,
   summarizeEmail,
@@ -30,7 +32,8 @@ import {
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * its own pages under Settings, and Plans on its own Manage page; Email is edited in its section.
+ * its own pages under Settings, and Plans on its own Manage page; Email, budget pricing and
+ * Payments are edited in their sections.
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
@@ -81,6 +84,7 @@ function SettingsGroupSection({ group }: { group: SettingsGroup }) {
           </>
         ) : null}
         {group.key === 'BUDGET_PRICING_CONFIG' ? <BudgetPricingSettingsForm group={group} /> : null}
+        {group.key === 'BILLING_CONFIG' ? <BillingSettingsForm group={group} /> : null}
         <p className="text-sm text-muted-foreground" data-testid={`root-admin-settings-last-change-${group.key}`}>
           {group.updatedAt ? (
             <>
@@ -136,6 +140,9 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
           </LinkButton>
         ),
       };
+    case 'BILLING_CONFIG':
+      // Edited in place: the section carries the form.
+      return { summary: summarizeBilling(group.value), actions: null };
   }
 }
 

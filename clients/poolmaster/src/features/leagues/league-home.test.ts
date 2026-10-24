@@ -14,6 +14,7 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
+    entriesPerContest: null,
     sportEvents: [],
     ...overrides,
   };

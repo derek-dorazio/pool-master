@@ -72,6 +72,11 @@ export const QueryKeys = {
     /** A squares contest's board (#711): its boxes, numbers and winners. */
     squaresBoard: (contestId: QueryKeyId) => ['poolmaster', 'contest', contestId, 'squares-board'] as const,
   },
+  /** A contest's entry cap and the expansions its commissioners can choose (#987). */
+  contestExpansions: {
+    all: ['poolmaster', 'contest-expansion'] as const,
+    detail: (leagueId: QueryKeyId, contestId: QueryKeyId) => ['poolmaster', 'contest-expansion', leagueId, contestId] as const,
+  },
   managedContests: {
     all: ['poolmaster', 'managed-contest'] as const,
     detail: (contestId: QueryKeyId) => ['poolmaster', 'managed-contest', contestId] as const,

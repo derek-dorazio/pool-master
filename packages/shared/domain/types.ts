@@ -89,8 +89,10 @@ export interface League extends DomainEntity {
   cupCustomPoints: number[];
   /** Whether the record book shows its Hall of Lame rows (#873). On at creation. */
   hallOfLameVisible: boolean;
-  /** What the league may do (#943): ask the plan entitlements service, never compare plans. PLATINUM at creation. */
+  /** What the league may do (#943): ask the plan entitlements service, never compare plans. PREMIUM at creation. */
   plan: LeaguePlan;
+  /** When the league's gifted plan ends (#986, plans/payments.md §3): six months after signup at creation. */
+  planRenewsAt: Date;
   /**
    * Sport leagues whose upcoming events the league's commissioners are not emailed about (#851):
    * "Coming up soon" and "Ready for contests". Empty at creation: every sport league.

@@ -4,9 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
 import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
+import { ExtendRunningGifts } from "@/features/plans/extend-running-gifts";
 import {
   ManagementListPage,
   StatusBadge,
+  Tile,
+  formatDateDisplay,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -78,6 +81,13 @@ export function RootAdminManageLeaguesPage() {
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
+      columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt), {
+        id: "planRenewsAt",
+        header: "Preview ends",
+        cell: ({ getValue }) => (
+          <span className="text-foreground">{getValue()}</span>
+        ),
+      }),
       columnHelper.accessor((league) => String(league.memberCount), {
         id: "memberCount",
         header: "Members",
@@ -101,29 +111,34 @@ export function RootAdminManageLeaguesPage() {
   );
 
   return (
-    <ManagementListPage
-      columns={columns}
-      data={leaguesQuery.data ?? []}
-      emptyMessage="No leagues matched the current filters."
-      errorBody={extractErrorMessage(
-        leaguesQuery.error,
-        { fallback: "We could not load leagues right now." },
-      )}
-      getRowId={(league) => league.id}
-      getRowLink={(league) => buildLeaguePath(league.leagueCode)}
-      loadingBody="Loading leagues..."
-      pageSize={MANAGE_LIST_PAGE_SIZE}
-      rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
-      search={{ label: "Find a league", testId: "root-admin-manage-leagues-search" }}
-      state={
-        leaguesQuery.isLoading
-          ? "loading"
-          : leaguesQuery.isError
-            ? "error"
-            : "ready"
-      }
-      tableTestId="root-admin-manage-leagues-table"
-      testId="root-admin-manage-leagues-page"
-    />
+    <div className="space-y-4">
+      <Tile>
+        <ExtendRunningGifts />
+      </Tile>
+      <ManagementListPage
+        columns={columns}
+        data={leaguesQuery.data ?? []}
+        emptyMessage="No leagues matched the current filters."
+        errorBody={extractErrorMessage(
+          leaguesQuery.error,
+          { fallback: "We could not load leagues right now." },
+        )}
+        getRowId={(league) => league.id}
+        getRowLink={(league) => buildLeaguePath(league.leagueCode)}
+        loadingBody="Loading leagues..."
+        pageSize={MANAGE_LIST_PAGE_SIZE}
+        rowTestId={(league) => `root-admin-manage-leagues-link-${league.id}`}
+        search={{ label: "Find a league", testId: "root-admin-manage-leagues-search" }}
+        state={
+          leaguesQuery.isLoading
+            ? "loading"
+            : leaguesQuery.isError
+              ? "error"
+              : "ready"
+        }
+        tableTestId="root-admin-manage-leagues-table"
+        testId="root-admin-manage-leagues-page"
+      />
+    </div>
   );
 }

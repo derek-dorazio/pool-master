@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   PlanCap,
   findFallingPlanLimit,
-  type CappedLeaguePlan,
   type LeaguePlan,
   type PlanFeature,
 } from '@poolmaster/shared/domain';
@@ -14,19 +13,20 @@ export type PlanCapCellDraft = { unlimited: boolean; limit: string };
 
 /** PLAN_CONFIG as the Plans page edits it (#946). */
 export type PlanSettingsDraft = {
-  caps: Record<PlanCap, Record<CappedLeaguePlan, PlanCapCellDraft>>;
+  caps: Record<PlanCap, Record<LeaguePlan, PlanCapCellDraft>>;
   features: Record<PlanFeature, LeaguePlan>;
 };
 
 export const PLAN_CAP_LIMIT_MESSAGE = 'Enter a whole number from 1 to 100,000, or choose Unlimited.';
 export const PLAN_CAP_FALLING_MESSAGE = 'Can\'t be lower than the plan before it: a limit never falls as the plan rises.';
 
-function mapCaps<T>(map: (cap: PlanCap, plan: CappedLeaguePlan) => T): Record<PlanCap, Record<CappedLeaguePlan, T>> {
+function mapCaps<T>(map: (cap: PlanCap, plan: LeaguePlan) => T): Record<PlanCap, Record<LeaguePlan, T>> {
   const row = (cap: PlanCap) => ({
     FREE: map(cap, 'FREE'),
     PRO: map(cap, 'PRO'),
     PREMIUM: map(cap, 'PREMIUM'),
-  } satisfies Record<CappedLeaguePlan, T>);
+    PLATINUM: map(cap, 'PLATINUM'),
+  } satisfies Record<LeaguePlan, T>);
   return {
     ENTRIES_PER_CONTEST: row(PlanCap.ENTRIES_PER_CONTEST),
     SPORTS_LEAGUES_PER_YEAR: row(PlanCap.SPORTS_LEAGUES_PER_YEAR),

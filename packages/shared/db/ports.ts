@@ -173,8 +173,11 @@ export interface LeagueRepository {
    */
   findByUser(userId: string): Promise<League[]>;
 
-  /** The points table starts STANDARD, the plan PLATINUM, no sport league muted and event emails per event, from the database defaults. */
-  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League>;
+  /**
+   * The points table starts STANDARD, the plan PREMIUM renewing six months from now, no sport
+   * league muted and event emails per event, from the database defaults.
+   */
+  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'planRenewsAt' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
 
   /**
@@ -183,6 +186,19 @@ export interface LeagueRepository {
    * logging nothing, when the league is no longer on `change.fromPlan`.
    */
   changePlan(leagueId: string, change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }): Promise<League | null>;
+
+  /**
+   * Moves the league's renewal date out to `change.renewsAt` and logs who moved it from which
+   * date (#986), in one transaction. A date already at or past `renewsAt` is left alone and
+   * nothing is logged, so an extension never shortens a gift. Returns null for a missing league.
+   */
+  extendPlanRenewal(leagueId: string, change: { renewsAt: Date; changedById: string }): Promise<League | null>;
+
+  /**
+   * The same for every league whose gift still runs at `change.now` (its renewal date is later),
+   * in one transaction: each one moved is logged. Returns how many moved.
+   */
+  extendRunningPlanRenewals(change: { renewsAt: Date; now: Date; changedById: string }): Promise<number>;
 }
 
 export interface LeagueMembershipRepository {

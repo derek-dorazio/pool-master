@@ -27,12 +27,12 @@ export const PLAN_SETTINGS = defineSettingsGroup<PlanConfig>({
   title: 'Plans',
   description: 'What each league plan allows: its caps, and the plan each feature starts at.',
   schema: PlanSettingsSchema,
-  // Derek's starting numbers (2026-10-22), and each feature at the plan of its old class:
-  // the basics free, the rest from Pro, the all-years views Platinum only.
+  // Derek's plan matrix (2026-10-24, plans/payments.md §3): every plan capped, the basics free,
+  // the rest from Pro, the all-years summary and record book from Premium.
   defaults: () => ({
     caps: {
-      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100 },
-      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100, PLATINUM: 500 },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: 50 },
     },
     features: {
       EMAIL_CONTEST_OPENED: LeaguePlan.FREE,
@@ -54,7 +54,7 @@ export const PLAN_SETTINGS = defineSettingsGroup<PlanConfig>({
       CUP_SETTINGS: LeaguePlan.PRO,
       PAST_YEARS: LeaguePlan.PRO,
       ALL_TIME_SUMMARY: LeaguePlan.PREMIUM,
-      RECORD_BOOK: LeaguePlan.PLATINUM,
+      RECORD_BOOK: LeaguePlan.PREMIUM,
     },
   }),
 });
