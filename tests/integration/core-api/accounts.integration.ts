@@ -388,6 +388,43 @@ describe('profile, username and preferences', () => {
     expect(errorCode(taken)).toBe('ACCOUNT_USERNAME_TAKEN');
   });
 
+  // Email and username have separate unique indexes, so one account's username and another's
+  // email can hold the same string (two renames racing make it). The other account's row is
+  // written last, so Postgres returns the subject's own row first for the OR lookup.
+  it('refuses an email that is the subject\'s own username but another account\'s email with 409 ACCOUNT_EMAIL_TAKEN, not a server error', async () => {
+    const session = await signedIn();
+    const other = await signedIn();
+    const shared = newIdentity().email;
+    await getPrisma().user.update({ where: { id: session.userId }, data: { username: shared } });
+    await getPrisma().user.update({ where: { id: other.userId }, data: { email: shared } });
+
+    const response = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/users/me/profile',
+      headers: session.bearer,
+      payload: { email: shared, firstName: 'Grace', lastName: 'Hopper' },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(errorCode(response)).toBe('ACCOUNT_EMAIL_TAKEN');
+  });
+
+  it('refuses a username that is the subject\'s own email but another account\'s username with 409 ACCOUNT_USERNAME_TAKEN, not a server error', async () => {
+    const session = await signedIn();
+    const other = await signedIn();
+    await getPrisma().user.update({ where: { id: other.userId }, data: { username: session.identity.email } });
+
+    const response = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/users/me/username',
+      headers: session.bearer,
+      payload: { username: session.identity.email },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(errorCode(response)).toBe('ACCOUNT_USERNAME_TAKEN');
+  });
+
   it('leaves an omitted preference unchanged and clears one sent as null', async () => {
     const session = await signedIn();
     await getApp().inject({
