@@ -1,6 +1,0 @@
-Source: https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260601-20260630&limit=100
-Final URL: https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260601-20260630&limit=100
-HTTP 400
-Fetched: 2026-10-24T15:03:02.967Z
-
-{"code":400,"message":"Failed to get events endpoint."}

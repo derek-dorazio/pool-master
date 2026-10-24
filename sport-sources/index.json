@@ -1,26 +1,124 @@
 {
-  "fetchedAt": "2026-10-24T15:03:03.138Z",
+  "fetchedAt": "2026-10-24T15:05:06.440Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=20260601-20260630&limit=100",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 400,
-      "file": "01-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20260601-20260630&limit=100",
-      "rendered": false,
-      "status": "HTTP_ERROR",
-      "httpStatus": 400,
-      "file": "02-site.api.espn.com.txt"
-    },
-    {
-      "url": "https://api-web.nhle.com/v1/playoff-series/carousel/20252026",
+      "url": "https://api-web.nhle.com/v1/schedule/playoff-series/20252026/o",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "03-api-web.nhle.com.txt"
+      "file": "01-api-web.nhle.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/2976212",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4567048",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4429022",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/3043275",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4386544",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4722893",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4372414",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4241983",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4360294",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4427600",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4240021",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4401805",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/3044720",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/3139602",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/4361100",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "16-site.web.api.espn.com.txt"
+    },
+    {
+      "url": "https://www.basketball-reference.com/playoffs/NBA_2026.html",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-basketball-reference.com.txt"
     }
   ]
 }
