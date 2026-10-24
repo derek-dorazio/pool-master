@@ -179,13 +179,14 @@ This replaces *At launch: Platinum free, pricing at renewal* below. Design in
 `plans/payments.md` (#931, PR #967); the build is deferred.
 
 - Every league, new and existing, is on **Premium**, with every feature set to start at
-  Premium on the Plans page, and Premium's entry cap lowered to **20 per contest** on a date
-  Derek announces.
+  Premium on the Plans page, and a cap of **100 entries per contest** on day 1, so nobody has
+  to pay and adoption is not blocked. Payments are built and tested but not required; later
+  Derek may lower the cap (for example to 20) on an announced date.
 - Commissioners pay once to **expand one contest** (for example $10 for up to 50 entries).
   Subscriptions come later, annual or monthly.
 - **Platinum is capped at 1000 entries per contest** long term, not unlimited, so Q9 below
   ("Platinum fixed at unlimited") no longer holds; Platinum joins the capped plans, still
-  checked so caps never fall as the plan rises. Premium returns to 100 once plans are sold.
+  checked so caps never fall as the plan rises. 
 
 ### At launch: Platinum free, pricing at renewal (Derek, 2026-10-24)
 
