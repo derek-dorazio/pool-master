@@ -1,4 +1,4 @@
-import { loginUser, refreshToken, undoEmailChange, updateUserProfile } from '@poolmaster/shared/generated/hey-api';
+import { loginUser, refreshToken, requestPasswordReset, undoEmailChange, updateUserProfile } from '@poolmaster/shared/generated/hey-api';
 import { SuccessResponseSchema } from '@poolmaster/shared/dto';
 import type { CapturedMail } from '../support/smtp-sink';
 import { buildRegisteredUser } from './builders';
@@ -36,7 +36,7 @@ function undoTokenIn(mail: CapturedMail): string {
 }
 
 describe('SDK Functional: undoing an email change (#903 A5)', () => {
-  it('emails the old address when the email changes, and its link puts the address back and signs everyone out', async () => {
+  it('emails the old address when the email changes, and its link puts the address back, clears the password and signs everyone out', async () => {
     const user = await buildRegisteredUser({ password: 'Original-Pass1' });
     const newEmail = createFunctionalEmail('taken-over');
 
@@ -59,8 +59,13 @@ describe('SDK Functional: undoing an email change (#903 A5)', () => {
       await refreshToken({ client: createCookieSessionClient(user.login.tokens) }),
       { status: 401, code: 'INVALID_REFRESH_TOKEN' },
     );
-    const signedIn = await loginUser({ client: getSdkClient(), body: { identifier: user.email, password: 'Original-Pass1' } });
-    expect(signedIn.data?.user.email).toBe(user.email);
+    // Whoever changed the address knew this password, so the undo replaced it.
+    expectFunctionalError(
+      await loginUser({ client: getSdkClient(), body: { identifier: user.email, password: 'Original-Pass1' } }),
+      { status: 401, code: 'INVALID_CREDENTIALS' },
+    );
+    await requestPasswordReset({ client: getSdkClient(), body: { identifier: user.email } });
+    expect(await awaitSentMailTo(user.email, 1, 'Reset your Prime Time Commissioner password')).toHaveLength(1);
   });
 
   it('refuses a used link with EMAIL_CHANGE_UNDO_LINK_INVALID in the error envelope', async () => {
