@@ -637,16 +637,17 @@ model League {
 }
 
 /// One change to a league's plan (#944): who moved it from which plan to which, and when. Append-only.
+/// Deleting the user who made it keeps the row with nobody named, like platform_runtime_config_history.
 model LeaguePlanChange {
   id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId    String           @map("league_id") @db.Uuid
   fromPlan    PrismaLeaguePlan @map("from_plan")
   toPlan      PrismaLeaguePlan @map("to_plan")
-  changedById String           @map("changed_by_id") @db.Uuid
+  changedById String?          @map("changed_by_id") @db.Uuid
   changedAt   DateTime         @default(now()) @map("changed_at") @db.Timestamptz
 
   league    League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  changedBy User   @relation("LeaguePlanChangedBy", fields: [changedById], references: [id])
+  changedBy User?  @relation("LeaguePlanChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
 
   @@index([leagueId, changedAt(sort: Desc)])
   @@map("league_plan_changes")

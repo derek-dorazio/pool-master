@@ -307,8 +307,8 @@ journey row once a page exists.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
    movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
    a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
-   slice 2 adds the Championship tab. The `ChampionshipFeature` map in code waits for the first
-   gate; this table is the categorization until then.
+   slice 2 adds the Championship tab. Each view's feature is now a `PlanFeature` (#944, §7);
+   the views are gated on it with #948.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy

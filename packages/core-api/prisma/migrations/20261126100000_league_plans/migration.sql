@@ -13,7 +13,7 @@ CREATE TABLE "league_plan_changes" (
     "league_id" UUID NOT NULL,
     "from_plan" "PrismaLeaguePlan" NOT NULL,
     "to_plan" "PrismaLeaguePlan" NOT NULL,
-    "changed_by_id" UUID NOT NULL,
+    "changed_by_id" UUID,
     "changed_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "league_plan_changes_pkey" PRIMARY KEY ("id")
@@ -26,5 +26,5 @@ CREATE INDEX "league_plan_changes_league_id_changed_at_idx" ON "league_plan_chan
 ALTER TABLE "league_plan_changes" ADD CONSTRAINT "league_plan_changes_league_id_fkey" FOREIGN KEY ("league_id") REFERENCES "leagues"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "league_plan_changes" ADD CONSTRAINT "league_plan_changes_changed_by_id_fkey" FOREIGN KEY ("changed_by_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "league_plan_changes" ADD CONSTRAINT "league_plan_changes_changed_by_id_fkey" FOREIGN KEY ("changed_by_id") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

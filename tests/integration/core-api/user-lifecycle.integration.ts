@@ -20,7 +20,7 @@ import {
   revokeUserSessions,
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
-import { LeagueIconKey, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueIconKey, LeaguePlan, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -79,6 +79,23 @@ describe('shared user delete cascade (#202)', () => {
     await expect(
       prisma.leagueInvitation.count({ where: { invitedBy: user.id } }),
     ).resolves.toBe(0);
+  });
+
+  it('deletes a user who changed a league\'s plan, keeping the plan change with nobody named as who made it', async () => {
+    const prisma = getPrisma();
+    const { user } = await createTestUser({ lastName: 'PlanChanger' });
+    const league = await prisma.league.create({
+      data: { cupName: 'Test Cup', leagueCode: `${LEAGUE_CODE_PREFIX}3`, name: 'Plan Change League', isActive: true, iconKey: LeagueIconKey.TROPHY },
+    });
+    const change = await prisma.leaguePlanChange.create({
+      data: { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: user.id },
+    });
+
+    await prisma.$transaction((tx) => deleteUserCascade(tx, user.id));
+
+    await expect(prisma.user.findUnique({ where: { id: user.id } })).resolves.toBeNull();
+    await expect(prisma.leaguePlanChange.findUnique({ where: { id: change.id } }))
+      .resolves.toMatchObject({ fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: null });
   });
 
   it('counts league-scoped dependencies that must block a delete', async () => {
