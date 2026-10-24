@@ -1,145 +1,110 @@
 {
-  "fetchedAt": "2026-10-24T14:41:51.068Z",
+  "fetchedAt": "2026-10-24T14:57:56.632Z",
   "results": [
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250604",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777455",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "01-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250606",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777456",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250609",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777457",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "03-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250612",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777458",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250614",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777459",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "05-site.api.espn.com.txt"
     },
     {
-      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard?dates=20250617",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401777460",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "06-site.api.espn.com.txt"
     },
     {
-      "url": "https://statsapi.mlb.com/api/v1/teams/119/roster?rosterType=active&date=2025-10-24&hydrate=person(stats(type=season,season=2025,group=hitting))",
+      "url": "https://api-web.nhle.com/v1/roster/FLA/20242025",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "07-statsapi.mlb.com.txt"
+      "file": "07-api-web.nhle.com.txt"
     },
     {
-      "url": "https://statsapi.mlb.com/api/v1/teams/141/roster?rosterType=active&date=2025-10-24&hydrate=person(stats(type=season,season=2025,group=hitting))",
+      "url": "https://api-web.nhle.com/v1/roster/EDM/20242025",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "08-statsapi.mlb.com.txt"
+      "file": "08-api-web.nhle.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/club-stats/FLA/20242025/2",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/25/roster",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "09-api-web.nhle.com.txt"
+      "file": "09-site.api.espn.com.txt"
     },
     {
-      "url": "https://api-web.nhle.com/v1/club-stats/EDM/20242025/2",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams/11/roster",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
-      "file": "10-api-web.nhle.com.txt"
+      "file": "10-site.api.espn.com.txt"
     },
     {
-      "url": "https://www.nba.com/game/ind-vs-okc-0042400401/box-score",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "11-nba.com.txt"
+      "url": "https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?season=2025&seasontype=2&limit=600",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-site.web.api.espn.com.txt"
     },
     {
-      "url": "https://www.nba.com/game/ind-vs-okc-0042400402/box-score",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "12-nba.com.txt"
+      "url": "https://stats.nba.com/stats/boxscoretraditionalv3?GameID=0042400401&StartPeriod=0&EndPeriod=0&StartRange=0&EndRange=0&RangeType=0",
+      "rendered": false,
+      "status": "FAILED",
+      "reason": "The operation was aborted due to timeout",
+      "file": null
     },
     {
-      "url": "https://www.nba.com/game/okc-vs-ind-0042400403/box-score",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "13-nba.com.txt"
+      "url": "https://stats.nba.com/stats/leaguedashplayerstats?Season=2024-25&SeasonType=Regular%20Season&PerMode=Totals&MeasureType=Base&LeagueID=00",
+      "rendered": false,
+      "status": "FAILED",
+      "reason": "The operation was aborted due to timeout",
+      "file": null
     },
     {
-      "url": "https://www.nba.com/game/okc-vs-ind-0042400404/box-score",
+      "url": "https://www.basketball-reference.com/boxscores/202506050OKC.html",
       "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "14-nba.com.txt"
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-basketball-reference.com.txt"
     },
     {
-      "url": "https://www.nba.com/game/ind-vs-okc-0042400405/box-score",
+      "url": "https://www.espn.com/nba/boxscore/_/gameId/401766122",
       "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "15-nba.com.txt"
-    },
-    {
-      "url": "https://www.nba.com/game/okc-vs-ind-0042400406/box-score",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "16-nba.com.txt"
-    },
-    {
-      "url": "https://www.nba.com/game/ind-vs-okc-0042400407/box-score",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "17-nba.com.txt"
-    },
-    {
-      "url": "https://www.pro-football-reference.com/boxscores/202601250den.htm",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "18-pro-football-reference.com.txt"
-    },
-    {
-      "url": "https://www.pro-football-reference.com/boxscores/202601250sea.htm",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "19-pro-football-reference.com.txt"
-    },
-    {
-      "url": "https://www.pro-football-reference.com/boxscores/202602080nwe.htm",
-      "rendered": true,
-      "status": "HTTP_ERROR",
-      "httpStatus": 403,
-      "file": "20-pro-football-reference.com.txt"
+      "status": "OK",
+      "httpStatus": 202,
+      "file": "15-espn.com.txt"
     }
   ]
 }
