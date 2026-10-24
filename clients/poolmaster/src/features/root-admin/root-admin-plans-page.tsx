@@ -73,7 +73,8 @@ export function RootAdminPlansPage() {
   const settingsQuery = useSettingsGroupsQuery();
   const group = settingsQuery.data?.find(isPlanSettingsGroup);
 
-  const pageState = settingsQuery.isError ? 'error' : settingsQuery.isLoading || !group ? 'loading' : 'ready';
+  // A settings list without PLAN_CONFIG is an error, not a page still loading.
+  const pageState = settingsQuery.isError || (settingsQuery.data && !group) ? 'error' : settingsQuery.isLoading ? 'loading' : 'ready';
 
   return (
     <AsyncPage

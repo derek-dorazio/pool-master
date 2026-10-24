@@ -63,6 +63,14 @@ describe('RootAdminPlansPage', () => {
     expect(screen.getByTestId('root-admin-plans-last-change')).toHaveTextContent('Never changed: using the starting values.');
   });
 
+  it('shows an error, not an endless loading state, when the settings list has no plans group', async () => {
+    listSettingsGroupsMock.mockResolvedValue({ data: { groups: [] } });
+    renderPage();
+
+    expect(await screen.findByText('We could not load the plans right now.')).toBeInTheDocument();
+    expect(screen.queryByText('Loading plans...')).not.toBeInTheDocument();
+  });
+
   it('lists every feature under Emails, Championships or History with the plan it starts at, and the always-included rows read-only', async () => {
     renderPage();
 
