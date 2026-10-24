@@ -246,6 +246,14 @@ caps, features) from the same service, so the app gates on a cap or feature it w
 shows the plan's name to commissioners only. A plan change goes through `LeaguePlanService`,
 which writes the league and its `league_plan_changes` row in one transaction.
 
+A cap is checked live where the new thing is made, from `forLeague` at that moment, never
+stored with the contest or entry, so a plan change applies to the next create at once. A count
+that two requests can race for is taken inside the create's transaction under the row lock the
+create already holds (the entries-per-contest cap counts under the contest's lock), never as a
+read before the write. The plan entitlements service is a required dependency of every service
+that checks one, passed from the one instance in `index.ts`; there is no default for a test to
+fall back on.
+
 ### Sport extension
 
 What differs between sports lives in exactly two places, so a new sport is added by

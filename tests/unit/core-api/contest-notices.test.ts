@@ -210,7 +210,7 @@ describe('ContestNotices', () => {
       const drafting = member(league.id, 'Dana');
       const onlooker = member(league.id, 'Nora');
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
-        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: null });
         if (created.status !== 'created') throw new Error('entry not created');
         if (submitted) await world.entryRepo().setEventStatus(created.entry.id, week.id, ContestEntryStatus.SUBMITTED, new Date());
       }
@@ -332,7 +332,7 @@ describe('ContestNotices', () => {
       const drafting = member(league.id, 'Dana');
       const onlooker = member(league.id, 'Sam');
       for (const [owner, submitted] of [[entrant, true], [drafting, false]] as const) {
-        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+        const created = await world.entryRepo().create({ contestId: contest.id, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: null });
         if (created.status !== 'created') throw new Error('entry not created');
         if (submitted) await world.entryRepo().setEventStatus(created.entry.id, event.id, ContestEntryStatus.SUBMITTED, new Date());
       }
@@ -377,7 +377,7 @@ describe('ContestNotices', () => {
   describe('sportEventChanged (C6, C7)', () => {
     /** An entry of the member's squad in the contest, submitted for the event or left a draft. */
     async function enter(contestId: string, owner: { squad: { id: string } }, sportEventId: string, submitted: boolean) {
-      const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+      const created = await world.entryRepo().create({ contestId, squadId: owner.squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: null });
       if (created.status !== 'created') throw new Error('entry not created');
       if (submitted) await world.entryRepo().setEventStatus(created.entry.id, sportEventId, ContestEntryStatus.SUBMITTED, new Date());
     }

@@ -8,6 +8,7 @@ import type {
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { CupService } from '../cups/service';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type {
   ContestManagementDetailDto,
   ContestManagementSportEventDto,
@@ -77,6 +78,7 @@ import {
   isContestFormatValidForTournamentFormat,
   isSquaresRound,
   UpsetBonusRule,
+  PlanCap,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
@@ -151,6 +153,8 @@ export interface ContestManagementServiceDeps {
   sportEventReader: ContestCreateSportEventReader;
   /** Makes the cup a new contest counts toward, when its league has none yet (#841). */
   cups: Pick<CupService, 'ensureCup'>;
+  /** The league's plan caps (#947): how many sports leagues a year its contests may use. */
+  planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
@@ -165,6 +169,7 @@ export class ContestManagementService {
   private readonly sportEventTierService: SportEventTierService;
   private readonly sportEventReader: ContestCreateSportEventReader;
   private readonly cups: Pick<CupService, 'ensureCup'>;
+  private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
   private readonly now: () => Date;
@@ -177,6 +182,7 @@ export class ContestManagementService {
     this.sportEventTierService = deps.tiers;
     this.sportEventReader = deps.sportEventReader;
     this.cups = deps.cups;
+    this.planEntitlements = deps.planEntitlements;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
     this.now = deps.now ?? (() => new Date());
@@ -254,6 +260,7 @@ export class ContestManagementService {
     // Its season is its first event's year (#841): a pick'em season's January playoff weeks keep
     // the season's year, because an edition's year is the one it is branded with.
     const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.eventYear ?? sportEvent.eventYear;
+    await this.assertSportsLeagueWithinPlan(context.leagueId, seasonYear, sportEvent.sportLeagueId);
     const contest = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventIds,
@@ -759,6 +766,30 @@ export class ContestManagementService {
    * A squares contest takes one entry per squad (#711, design Q3.3): the box limit is per entry, so
    * a second entry would double a squad's boxes. Any other entry limit, or none, is refused.
    */
+  /** The sports leagues the league's contests use in one season (#947), for Create contest's counter. */
+  async listSportLeaguesUsed(leagueId: string, seasonYear: number): Promise<string[]> {
+    this.logger.debug({ leagueId, seasonYear }, 'contest management list sports leagues used start');
+    return this.contestRepo.findSportLeagueIdsBySeason(leagueId, seasonYear);
+  }
+
+  /**
+   * A league's plan caps the different sports leagues its contests use in a season (#947). Checked
+   * live: over the cap, new contests can still be made in the sports leagues already used.
+   */
+  private async assertSportsLeagueWithinPlan(leagueId: string, seasonYear: number, sportLeagueId: string): Promise<void> {
+    const { caps } = await this.planEntitlements.forLeague(leagueId);
+    const cap = caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
+    if (cap === null) return;
+    const used = await this.contestRepo.findSportLeagueIdsBySeason(leagueId, seasonYear);
+    if (used.includes(sportLeagueId) || used.length < cap) return;
+    this.logger.warn({ leagueId, seasonYear, sportLeagueId, used: used.length, cap }, 'contest management create contest refused past the plan\'s sports leagues a year');
+    throw new ContestManagementError(
+      `This league's plan allows ${cap} ${cap === 1 ? 'sports league' : 'sports leagues'} a year, and ${seasonYear} already has contests in ${used.length}. New contests can only be in those.`,
+      'PLAN_SPORTS_LEAGUE_LIMIT_REACHED',
+      409,
+    );
+  }
+
   private assertOneEntryPerSquadForSquares(selectionType: SelectionType, maxEntriesPerSquad: number | null | undefined): void {
     if (selectionType !== SelectionType.SQUARES || maxEntriesPerSquad === 1) return;
     this.logger.warn({ selectionType, maxEntriesPerSquad }, 'contest management refused a squares contest that allows more than one entry per squad');

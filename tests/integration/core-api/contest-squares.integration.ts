@@ -240,7 +240,7 @@ describe('PrismaSquaresRepository recording the draw', () => {
 
     expect(await new PrismaContestEntryRepository(prisma).create({
       contestId: fixture.contestId, squadId: entry.squadId, entryNumber: 2, name: 'Late Entry', tiebreakerValue: null,
-    })).toEqual({ status: 'contestDrawn' });
+    }, { entriesPerContest: null })).toEqual({ status: 'contestDrawn' });
   });
 });
 

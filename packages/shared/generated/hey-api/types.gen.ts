@@ -657,6 +657,30 @@ export type UpdateLeaguePlanRequest = {
 };
 
 /**
+ * Which season's sports leagues to list.
+ */
+export type ListSportLeaguesUsedQuery = {
+    /**
+     * The season to count, such as 2026: a contest counts in the season of its first event's year.
+     */
+    seasonYear: number;
+};
+
+/**
+ * The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts.
+ */
+export type SportLeaguesUsedResponse = {
+    /**
+     * The season counted.
+     */
+    seasonYear: number;
+    /**
+     * The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.
+     */
+    sportLeagueIds: Array<string>;
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -24003,7 +24027,7 @@ export type CreateContestErrors = {
      */
     403: ErrorEnvelope;
     /**
-     * Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.
+     * PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league's contests of the new contest's season already use its plan's sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.
      */
     409: ErrorEnvelope;
     /**
@@ -24022,6 +24046,46 @@ export type CreateContestResponses = {
 };
 
 export type CreateContestResponse = CreateContestResponses[keyof CreateContestResponses];
+
+export type ListSportLeaguesUsedData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query: {
+        /**
+         * The season to count, such as 2026: a contest counts in the season of its first event's year.
+         */
+        seasonYear: number;
+    };
+    url: '/api/v1/leagues/{id}/contests/sports-leagues-used';
+};
+
+export type ListSportLeaguesUsedErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListSportLeaguesUsedError = ListSportLeaguesUsedErrors[keyof ListSportLeaguesUsedErrors];
+
+export type ListSportLeaguesUsedResponses = {
+    /**
+     * The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts.
+     */
+    200: SportLeaguesUsedResponse;
+};
+
+export type ListSportLeaguesUsedResponse = ListSportLeaguesUsedResponses[keyof ListSportLeaguesUsedResponses];
 
 export type GetContestConfigurationData = {
     body?: never;

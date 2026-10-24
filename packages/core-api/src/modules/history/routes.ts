@@ -13,6 +13,7 @@ import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../l
 import { createHistoryHandlers } from './handler';
 import { createHistoryService, createYearReviewService } from './wiring';
 import type { MailModuleOptions } from '../email';
+import type { PlanModuleOptions } from '../plans/routes';
 
 const COMMISSIONERS_ONLY = 'Active commissioners only (root admins bypass).';
 
@@ -27,14 +28,14 @@ const YEAR_PARAMS = {
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
-export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const memberships = new PrismaLeagueMembershipRepository(prisma);
   const membersOnly = requireMemberOfLeague(memberships, leagueFromPath);
   const commissionersOnly = requireCommissioner(memberships);
-  const history = createHistoryService(prisma, fastify.log);
+  const history = createHistoryService(prisma, fastify.log, opts.planEntitlements);
   const handlers = createHistoryHandlers(history, createYearReviewService(prisma, { history, email: opts.email, logger: fastify.log }));
 
   fastify.get('/year-review', {

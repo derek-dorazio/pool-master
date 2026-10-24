@@ -18,6 +18,7 @@ export type {
   ContestUpdate,
   ContestStatusFilter,
   ContestStatusTransition,
+  ContestEntryCreateLimits,
   ContestEntryCreateResult,
   ContestEntryDeleteResult,
   ContestEntryRepository,

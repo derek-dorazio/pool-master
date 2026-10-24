@@ -12,6 +12,7 @@ import {
   Sport,
   SportEventStatus,
   TournamentFormat,
+  LeaguePlan,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -64,6 +65,8 @@ import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
+import { buildLeague } from '../../factories';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 
@@ -320,6 +323,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(cupsAsked),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.createContest(
@@ -381,6 +385,7 @@ describe('ContestManagementService', () => {
         loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(
@@ -418,6 +423,7 @@ describe('ContestManagementService', () => {
         tiers: createSportEventTierServiceStub(tierCount),
         sportEventReader: createSportEventReader({ participantCount: 80, loadedParticipantCount: 80 }),
         cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
       });
       const create = (rules: { tiersUsed: number; countedScores: number }) => service.createContest(
         { leagueId: 'league-1' },
@@ -477,6 +483,7 @@ describe('ContestManagementService', () => {
         loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(
@@ -523,6 +530,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     const contest = await contestCoreRepo.findById('contest-1');
 
@@ -548,6 +556,7 @@ describe('ContestManagementService', () => {
         tiers: createSportEventTierServiceStub(),
         sportEventReader: createSportEventReader({ sportLeagueId: eventLeagueId }),
         cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
       });
       const created = service.createContest({ leagueId: 'league-1' }, {
         name: 'Major Pick 6',
@@ -613,6 +622,7 @@ describe('ContestManagementService', () => {
         sportEventReader: createSportEventReader(),
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
       });
       return { service, contestCoreRepo };
     }
@@ -693,6 +703,7 @@ describe('ContestManagementService', () => {
         contestOpened: options?.contestOpened,
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
       });
       return { service, contestCoreRepo };
     }
@@ -809,6 +820,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -853,6 +865,7 @@ describe('ContestManagementService', () => {
         loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(
@@ -882,6 +895,7 @@ describe('ContestManagementService', () => {
         loadedParticipantCount: 80,
       }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -907,6 +921,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.getContest('contest-1');
@@ -930,6 +945,7 @@ describe('ContestManagementService', () => {
       tiers: golfTierService,
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.getContest('contest-1');
@@ -981,6 +997,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     const result = await service.createContest(
@@ -1026,6 +1043,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await service.createContest(
@@ -1065,6 +1083,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(
@@ -1099,6 +1118,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(
@@ -1131,6 +1151,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     let thrown: unknown;
@@ -1165,6 +1186,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     let thrown: unknown;
@@ -1191,6 +1213,7 @@ describe('ContestManagementService', () => {
         loadedParticipantCount: 0,
       }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(service.createContest(
@@ -1243,6 +1266,7 @@ describe('ContestManagementService', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader({ ...event, loadedParticipantCount: 72 }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
 
     await expect(service.createContest(
@@ -1290,6 +1314,7 @@ describe('ContestManagementService', () => {
         sportEventReader: options.reader ?? createSportEventReader(),
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
       });
       return { service, contestRepo, configurationRepo };
     }
@@ -1447,6 +1472,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: reader,
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -1582,6 +1608,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader({ salaryCap: null }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -1671,6 +1698,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, tournamentFormat: TournamentFormat.RACE }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -1726,6 +1754,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -1899,6 +1928,7 @@ describe('ContestManagementService — a contest of several events', () => {
       sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
       cups: createCupKeeper(cupsAsked),
+      planEntitlements: platinumEntitlements(),
     });
     jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
       { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
@@ -2179,6 +2209,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: reader,
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, contestConfigurationRepo, reader, scoringRuleRepo, service };
   }
@@ -2404,6 +2435,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: reader,
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -2512,6 +2544,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
       }),
       now: () => now,
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     const request = (startsAtRound: number): CreateContestRequest => ({
       name: 'Second chance',
@@ -2645,6 +2678,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       tiers: createSportEventTierServiceStub(),
       sportEventReader: reader,
       cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
     });
     return { contestCoreRepo, contestConfigurationRepo, reader, service };
   }
@@ -2755,5 +2789,70 @@ describe('ContestManagementService squares rules (#711)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('ContestManagementService sports leagues a year (#947)', () => {
+  beforeAll(() => {
+    jest.useFakeTimers().setSystemTime(CONTEST_MANAGEMENT_TEST_NOW);
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
+  /** A Free league (1 sports league a year) whose 2026 contests already use `usedSportLeagueIds`. */
+  function serviceForFreeLeague(usedSportLeagueIds: string[]) {
+    const contests = createContestRepo();
+    const askedSeasons: Array<[string, number]> = [];
+    contests.findSportLeagueIdsBySeason = async (leagueId, seasonYear) => {
+      askedSeasons.push([leagueId, seasonYear]);
+      return usedSportLeagueIds;
+    };
+    const service = new ContestManagementService({
+      contests,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
+    });
+    return { service, contests, askedSeasons };
+  }
+
+  const MASTERS_CONTEST: Parameters<ContestManagementService['createContest']>[1] = {
+    name: 'Masters Pick 6',
+    sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+    contestFormat: ContestFormat.ROSTER,
+    selectionType: SelectionType.TIERED,
+    configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+  };
+
+  it('refuses a contest in a new sports league once the season holds the plan\'s sports leagues, with 409 PLAN_SPORTS_LEAGUE_LIMIT_REACHED, creating nothing', async () => {
+    const { service, contests, askedSeasons } = serviceForFreeLeague(['nfl-league']);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
+      .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', statusCode: 409 });
+    expect(contests.create).not.toHaveBeenCalled();
+    // Counted for the new contest's own season: its event's year.
+    expect(askedSeasons).toEqual([['league-1', 2026]]);
+  });
+
+  it('still creates a contest in a sports league the season already uses, however many it holds', async () => {
+    const { service, contests } = serviceForFreeLeague([PGA_TOUR_LEAGUE_ID, 'nfl-league']);
+
+    await service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST);
+
+    expect(contests.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates the season\'s first contest in any sports league', async () => {
+    const { service, contests } = serviceForFreeLeague([]);
+
+    await service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST);
+
+    expect(contests.create).toHaveBeenCalledTimes(1);
   });
 });

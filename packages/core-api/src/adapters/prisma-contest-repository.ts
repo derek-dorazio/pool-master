@@ -47,6 +47,23 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
+  async findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]> {
+    const rows = await this.prisma.eventSeries.findMany({
+      where: {
+        sportEvents: {
+          some: {
+            contests: {
+              some: { contest: { leagueId, seasonYear } },
+            },
+          },
+        },
+      },
+      select: { sportLeagueId: true },
+      distinct: ['sportLeagueId'],
+    });
+    return rows.map((row) => row.sportLeagueId);
+  }
+
   async findBySportEvent(
     sportEventId: string,
     filter?: ContestStatusFilter,

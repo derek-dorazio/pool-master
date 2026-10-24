@@ -48,6 +48,7 @@ import { mockFn } from '../../support/mock-fn';
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { platinumEntitlements } from '../../support/plan-entitlements';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -207,6 +208,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     leagues: fakeLeagueRepo({
       findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Big Dawgs', leagueCode: 'BIGDAWGS' }),
     }),
+    planEntitlements: platinumEntitlements(),
     users: fakeUserRepo({
       findById: jest.fn().mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })),
     }),
@@ -602,7 +604,7 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
-      }));
+      }), { entriesPerContest: null });
     });
 
     it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
@@ -894,7 +896,7 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 2,
         name: "Derek's Squad Entry 2",
-      }));
+      }), { entriesPerContest: null });
     });
 
     it('returns the joined entry state for pre-draft contest views', async () => {

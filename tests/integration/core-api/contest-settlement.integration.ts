@@ -12,6 +12,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
+import { integrationPlanEntitlements } from '../plan-entitlements';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -23,7 +24,7 @@ afterAll(async () => {
 describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
   it('pool-master-eux.6: freezes final standings, completes the sport event\'s contests, tells the league its final places once per completion, and is idempotent', async () => {
     const prisma = getPrisma();
-    const contests = createContestService(prisma, fakeLogger());
+    const contests = createContestService(prisma, fakeLogger(), { planEntitlements: integrationPlanEntitlements() });
     // What the final results email reads, read when settlement tells it the contest completed.
     const told: Array<{ contestId: string; final: ContestFinalStandings }> = [];
     const service = createContestSettlementService(prisma, undefined, {

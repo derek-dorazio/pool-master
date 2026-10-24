@@ -12,16 +12,17 @@ import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../leagues/permissions';
 import { createCupHandlers } from './handler';
 import { createCupService } from './wiring';
+import type { PlanModuleOptions } from '../plans/routes';
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
-export function cupsModule(fastify: FastifyInstance): void {
+export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const membersOnly = requireMemberOfLeague(membershipRepo, leagueFromPath);
-  const handlers = createCupHandlers(createCupService(prisma, fastify.log));
+  const handlers = createCupHandlers(createCupService(prisma, fastify.log, opts.planEntitlements));
 
   fastify.get('/', {
     schema: {

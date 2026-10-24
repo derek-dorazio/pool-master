@@ -24,25 +24,26 @@ import {
   requireOwnSquad,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
-import { createContestHandlers, createCreateContestHandler } from './handler';
+import { createContestHandlers, createCreateContestHandler, createListSportLeaguesUsedHandler } from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import type { PlanModuleOptions } from '../plans/routes';
 
-export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
+    planEntitlements: opts.planEntitlements,
     email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
   const handlers = createContestHandlers(contestService);
-  const createContest = createCreateContestHandler(
-    contestService,
-    createContestManagementService(prisma, fastify.log),
-  );
+  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements);
+  const createContest = createCreateContestHandler(contestService, contestManagementService);
+  const listSportLeaguesUsed = createListSportLeaguesUsedHandler(contestManagementService);
 
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId
@@ -82,7 +83,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
         403: schemaRef('ErrorEnvelope'),
         409: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event\'s golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.',
+          description: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league\'s contests of the new contest\'s season already use its plan\'s sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event\'s golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.',
         },
         422: {
           ...schemaRef('ErrorEnvelope'),
@@ -93,18 +94,38 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
     preHandler: requireCommissioner(membershipRepo),
     handler: createContest,
   });
+
+  fastify.get('/sports-leagues-used', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'List the sports leagues a league\'s contests use in a season',
+      description:
+        'The different sports leagues of the league\'s contests of one season, drafts included (#947): what the plan\'s sports leagues a year counts. Create contest shows the counter and, at the cap, locks the events of other sports leagues. Commissioners of the league only.',
+      operationId: 'listSportLeaguesUsed',
+      querystring: schemaRef('ListSportLeaguesUsedQuery'),
+      response: {
+        200: schemaRef('SportLeaguesUsedResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: listSportLeaguesUsed,
+  });
 }
 
 /**
  * Standalone contest routes — registered at /api/v1/contests for
  * operations that use contestId rather than leagueId.
  */
-export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const contestService = createContestService(prisma, fastify.log, {
+    planEntitlements: opts.planEntitlements,
     email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
   });
@@ -280,7 +301,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Create the current user contest entry',
       description:
-        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event\'s scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.',
+        'Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event\'s scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad. 409 CONTEST_ENTRY_LIMIT_REACHED when the squad holds the contest\'s most entries per squad, and 409 CONTEST_FULL when the contest holds its league plan\'s entries per contest (#947), drafts included; entries already in stay and stay editable.',
       operationId: 'enterContest',
       response: {
         201: schemaRef('ContestEntryResponse'),

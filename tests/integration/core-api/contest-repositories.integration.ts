@@ -29,6 +29,7 @@ import { deliverQueuedEmail, emailServiceOver } from '../../support/email-servic
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
+import { integrationPlanEntitlements } from '../plan-entitlements';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -144,7 +145,7 @@ async function createContest(
 
 /** An entry made through the port, so it carries a DRAFT status row in each contest event, as production's do. */
 async function createEntry(contestId: string, squadId: string, entryNumber: number, name: string) {
-  const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null });
+  const result = await repos().entries.create({ contestId, squadId, entryNumber, name, tiebreakerValue: null }, { entriesPerContest: null });
   if (result.status !== 'created') throw new Error(`seed: entry ${name} refused (${result.status})`);
   return result.entry;
 }
@@ -370,6 +371,49 @@ describe('ContestRepository', () => {
     expect(byEvent(reread.events)).toEqual([[later.event.id, 'DRAFT']]);
     const picks = await repos().picks.findByEntriesWithParticipant([entry.id]);
     expect(picks.map((pick) => [pick.sportEventParticipantId, pick.sportEventId])).toEqual([[later.field[0].id, later.event.id]]);
+  });
+});
+
+describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
+  it('lists the different sports leagues of the league\'s contests of one season, drafts included, and nothing from other seasons or leagues', async () => {
+    const prisma = getPrisma();
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const other = await createLeagueAndEvent();
+    const fixtureTourId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId;
+    // A second sports league: a real one from the reference data, with a series of this test's own.
+    const secondTour = await prisma.sportLeague.findFirstOrThrow({ where: { id: { not: fixtureTourId } } });
+    const series = await prisma.eventSeries.create({ data: { sportLeagueId: secondTour.id, name: `Plan Cap Series ${suffix}` } });
+    const secondEvent = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: series.id,
+        eventYear: 2026,
+        externalId: `plan-cap-${suffix}`,
+        providerId: 'integration-test',
+        sport: Sport.GOLF,
+        name: `Plan Cap Classic ${suffix}`,
+        startDate: new Date('2026-08-04T12:00:00.000Z'),
+        status: 'SCHEDULED',
+      },
+    });
+    try {
+      await createContest(league.id, event.id, 'Fixture One');
+      await createContest(league.id, event.id, 'Fixture Draft', ContestStatus.DRAFT);
+      await createContest(league.id, secondEvent.id, 'Second Tour');
+      await repos().contests.create({
+        leagueId: league.id, seasonYear: 2025, sportEventIds: [event.id], name: 'Last Year',
+        status: ContestStatus.COMPLETED, contestFormat: 'ROSTER', selectionType: 'TIERED',
+      });
+      await createContest(other.league.id, secondEvent.id, 'Another League');
+
+      expect((await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).sort())
+        .toEqual([fixtureTourId, secondTour.id].sort());
+      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2025)).toEqual([fixtureTourId]);
+      expect(await repos().contests.findSportLeagueIdsBySeason(other.league.id, 2025)).toEqual([]);
+    } finally {
+      await prisma.contest.deleteMany({ where: { sportEvents: { some: { sportEventId: secondEvent.id } } } });
+      await prisma.sportEvent.delete({ where: { id: secondEvent.id } });
+      await prisma.eventSeries.delete({ where: { id: series.id } });
+    }
   });
 });
 
@@ -622,6 +666,33 @@ describe('ContestConfigurationRepository.findByTemplateEventSeries (#714)', () =
 });
 
 describe('ContestEntryRepository', () => {
+  it('refuses an entry with contestFull once the contest holds its plan\'s entries per contest, counting drafts, and stores nothing (#947)', async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Full House', ContestStatus.OPEN);
+    await createEntry(contest.id, squads[0].id, 1, 'Only Draft');
+
+    const result = await repos().entries.create(
+      { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'One Too Many', tiebreakerValue: null },
+      { entriesPerContest: 1 },
+    );
+
+    expect(result).toEqual({ status: 'contestFull' });
+    expect(await getPrisma().contestEntry.count({ where: { contestId: contest.id } })).toBe(1);
+  });
+
+  it('lets only one of two entries racing for a contest\'s last place in, the other refused contestFull (#947)', async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Last Place', ContestStatus.OPEN);
+
+    const results = await Promise.all(squads.map((squad, index) => repos().entries.create(
+      { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: `Racer ${index + 1}`, tiebreakerValue: null },
+      { entriesPerContest: 1 },
+    )));
+
+    expect(results.map((result) => result.status).sort()).toEqual(['contestFull', 'created']);
+    expect(await getPrisma().contestEntry.count({ where: { contestId: contest.id } })).toBe(1);
+  });
+
   it('creates an entry a DRAFT in each of its contest\'s events, with no submit time', async () => {
     const { league, squads, event, suffix } = await createLeagueAndEvent();
     const later = await createLaterEvent(suffix);
@@ -683,7 +754,7 @@ describe('ContestEntryRepository', () => {
     const contest = await createContest(league.id, event.id, 'Entry Update');
     const created = await repos().entries.create({
       contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Original', tiebreakerValue: 270,
-    });
+    }, { entriesPerContest: null });
     const entry = created.status === 'created' ? created.entry : null;
     const stored = expectDefined(entry);
     await repos().entries.setEventStatus(stored.id, event.id, 'SUBMITTED', new Date());
@@ -997,6 +1068,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
+        planEntitlements: integrationPlanEntitlements(),
       }),
     });
 
@@ -1057,6 +1129,7 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
         email: emailServiceOver({ providerName: 'smtp', send }),
         appBaseUrl: 'https://app.example.test',
         logger: fakeLogger(),
+        planEntitlements: integrationPlanEntitlements(),
       }),
     });
 
