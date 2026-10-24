@@ -48,6 +48,7 @@ const EMAIL_DEFAULTS = {
   sendRatePerSecond: 10,
   entryReminderHours: [48, 24, 3],
   standingsBufferMinutes: 30,
+  weeklyDigestHour: 3,
   templates: {
     LEAGUE_MEMBER_INVITE: true,
     LEAGUE_JOIN_SUCCESS: true,
@@ -60,6 +61,7 @@ const EMAIL_DEFAULTS = {
     CONTEST_EVENT_CHANGED: true,
     EVENT_COMING_UP: true,
     EVENT_READY_FOR_CONTESTS: true,
+    EVENT_WEEKLY_DIGEST: true,
     CONTEST_NOT_OPEN: true,
     EVENT_STILL_DRAFT: true,
     SQUAD_OWNER_INVITE: true,
@@ -181,6 +183,7 @@ describe('RootAdminSettingsPage email card', () => {
           sendRatePerSecond: 10,
           entryReminderHours: [48, 24, 3],
           standingsBufferMinutes: 30,
+          weeklyDigestHour: 3,
           templates: { ...EMAIL_DEFAULTS.templates, CONTEST_STARTED_SUMMARY: false },
         },
       },
@@ -235,6 +238,24 @@ describe('RootAdminSettingsPage email card', () => {
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
     const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { standingsBufferMinutes: number } } }];
     expect(request.body.value.standingsBufferMinutes).toBe(45);
+  });
+
+  it('saves the weekly event digest hour, and refuses one past 23', async () => {
+    updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
+    renderPage();
+
+    const field = await screen.findByTestId('root-admin-email-settings-digest-hour');
+    expect(field).toHaveValue(3);
+    fireEvent.change(field, { target: { value: '24' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+    expect(await screen.findByText(/less than or equal to 23/)).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+
+    fireEvent.change(field, { target: { value: '5' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+    await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
+    const [request] = updateSettingsGroupMock.mock.calls[0] as [{ body: { value: { weeklyDigestHour: number } } }];
+    expect(request.body.value.weeklyDigestHour).toBe(5);
   });
 
   it('refuses to save a standings email delay over 240 minutes', async () => {

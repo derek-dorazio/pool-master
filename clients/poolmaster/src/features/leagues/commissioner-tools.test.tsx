@@ -862,8 +862,47 @@ describe('Event emails', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
 
     await waitFor(() => expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { mutedSportLeagueIds: [CHAMPIONS.id] },
+      body: { mutedSportLeagueIds: [CHAMPIONS.id], eventEmailDelivery: 'PER_EVENT' },
     })));
+  });
+
+  it('starts a league on an email for each event, saves a switch to the weekly digest, and shows it on League settings', async () => {
+    primeMocks();
+    const saved = buildLeague({ eventEmailDelivery: 'WEEKLY_DIGEST' });
+    updateLeagueEventEmailSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(saved)));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    expect(await screen.findByTestId('edit-event-emails-delivery-PER_EVENT')).toBeChecked();
+    expect(screen.getByTestId('edit-event-emails-delivery-WEEKLY_DIGEST')).toHaveTextContent('One email early each Monday listing the next two weeks\' events');
+    fireEvent.click(screen.getByTestId('edit-event-emails-delivery-WEEKLY_DIGEST'));
+    expect(screen.getByTestId('edit-event-emails-delivery-WEEKLY_DIGEST')).toBeChecked();
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(saved)));
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    expect(await screen.findByTestId('league-settings-event-emails-delivery')).toHaveTextContent('Weekly digest');
+    expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { mutedSportLeagueIds: [], eventEmailDelivery: 'WEEKLY_DIGEST' },
+    }));
+  });
+
+  it('offers no weekly digest on a plan without "Coming up soon", and saves an email for each event even if the digest was chosen before', async () => {
+    primeMocks({ league: { eventEmailDelivery: 'WEEKLY_DIGEST', planEntitlements: buildPlanEntitlements({ features: ['EMAIL_EVENT_READY_FOR_CONTESTS'] }) } });
+    updateLeagueEventEmailSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague())));
+
+    const view = renderCommissionerTools('/league/BIGDAWGS/admin/event-emails/edit');
+
+    await screen.findByTestId('edit-event-emails-page');
+    expect(screen.queryByTestId('edit-event-emails-delivery-WEEKLY_DIGEST')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+    await waitFor(() => expect(updateLeagueEventEmailSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { mutedSportLeagueIds: [], eventEmailDelivery: 'PER_EVENT' },
+    })));
+    view.unmount();
+
+    renderCommissionerTools();
+    await screen.findByTestId('league-settings-event-emails-sport-leagues');
+    expect(screen.queryByTestId('league-settings-event-emails-delivery')).not.toBeInTheDocument();
   });
 
   it('stays on the form with the reason when saving fails', async () => {

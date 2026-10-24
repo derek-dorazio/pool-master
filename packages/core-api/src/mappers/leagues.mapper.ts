@@ -38,5 +38,6 @@ export function toLeagueDto(
     hallOfLameVisible: league.hallOfLameVisible,
     planEntitlements: toPlanEntitlementsDto(entitlements),
     mutedSportLeagueIds: league.mutedSportLeagueIds,
+    eventEmailDelivery: league.eventEmailDelivery,
   };
 }

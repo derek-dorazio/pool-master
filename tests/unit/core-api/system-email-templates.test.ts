@@ -621,6 +621,7 @@ describe('the email template registry', () => {
       CONTEST_EVENT_CHANGED: EmailCategory.CONTEST_UPDATES,
       EVENT_COMING_UP: EmailCategory.COMMISSIONER_UPDATES,
       EVENT_READY_FOR_CONTESTS: EmailCategory.COMMISSIONER_UPDATES,
+      EVENT_WEEKLY_DIGEST: EmailCategory.COMMISSIONER_UPDATES,
       CONTEST_NOT_OPEN: EmailCategory.COMMISSIONER_UPDATES,
       EVENT_STILL_DRAFT: EmailCategory.ROOT_ADMIN,
       SQUAD_OWNER_INVITE: EmailCategory.MEMBERSHIP,
@@ -645,6 +646,7 @@ describe('the email template registry', () => {
       CONTEST_EVENT_CHANGED: PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
       EVENT_COMING_UP: PlanFeature.EMAIL_EVENT_COMING_UP,
       EVENT_READY_FOR_CONTESTS: PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS,
+      EVENT_WEEKLY_DIGEST: PlanFeature.EMAIL_EVENT_COMING_UP,
       CONTEST_NOT_OPEN: PlanFeature.EMAIL_CONTEST_NOT_OPEN,
       EVENT_STILL_DRAFT: null,
       SQUAD_OWNER_INVITE: null,
@@ -656,9 +658,12 @@ describe('the email template registry', () => {
     });
   });
 
-  it('sends every email plan feature from exactly one template, so no email feature on the Plans page switches nothing', () => {
+  it('sends every email plan feature from one template, the weekly digest sharing "Coming up soon"\'s, so no email feature on the Plans page switches nothing', () => {
     const emailFeatures = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === PlanFeatureGroup.EMAILS);
-    const sentBy = Object.values(EMAIL_TEMPLATES).map((template) => template.planFeature).filter((feature) => feature !== null);
+    const sentBy = Object.entries(EMAIL_TEMPLATES)
+      .filter(([key]) => key !== 'EVENT_WEEKLY_DIGEST')
+      .map(([, template]) => template.planFeature)
+      .filter((feature) => feature !== null);
 
     expect([...sentBy].sort()).toEqual([...emailFeatures].sort());
   });
