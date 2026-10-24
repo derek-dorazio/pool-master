@@ -231,7 +231,7 @@ describe('LeagueService — lifecycle', () => {
     ['activateLeague', (service: LeagueService) => service.activateLeague('missing')],
     ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x', iconKey: LeagueIconKey.TROPHY })],
     ['deleteInactiveLeague', (service: LeagueService) => service.deleteInactiveLeague('missing', 'X')],
-    ['updateCupSettings', (service: LeagueService) => service.updateCupSettings('missing', { cupName: 'Cup', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [] })],
+    ['updateCupSettings', (service: LeagueService) => service.updateCupSettings('missing', { cupName: 'Cup', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true })],
   ])('%s on an unknown league throws LeagueNotFoundError naming the league', async (_name, act) => {
     const attempt = act(serviceFor(inMemoryLeagueWorld()));
     await expect(attempt).rejects.toBeInstanceOf(LeagueNotFoundError);
@@ -297,7 +297,7 @@ describe('LeagueService — editing details and icon', () => {
 });
 
 describe('LeagueService — championship settings', () => {
-  it('stores a trimmed championship name and a custom points table on an active league', async () => {
+  it('stores a trimmed championship name, a custom points table and a hidden Hall of Lame on an active league', async () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague();
 
@@ -305,12 +305,14 @@ describe('LeagueService — championship settings', () => {
       cupName: '  Big Dawgs Cup  ',
       cupPointsScale: CupPointsScale.CUSTOM,
       cupCustomPoints: [10, 6, 3],
+      hallOfLameVisible: false,
     });
 
     expect(world.tables.leagues.get(league.id)).toMatchObject({
       cupName: 'Big Dawgs Cup',
       cupPointsScale: CupPointsScale.CUSTOM,
       cupCustomPoints: [10, 6, 3],
+      hallOfLameVisible: false,
     });
   });
 
@@ -322,6 +324,7 @@ describe('LeagueService — championship settings', () => {
       cupName: league.cupName,
       cupPointsScale: CupPointsScale.TOP_TEN,
       cupCustomPoints: [],
+      hallOfLameVisible: true,
     });
 
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupPointsScale: CupPointsScale.TOP_TEN, cupCustomPoints: [] });
@@ -334,7 +337,7 @@ describe('LeagueService — championship settings', () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ cupName: 'Old Cup' });
 
-    await expect(serviceFor(world).updateCupSettings(league.id, { cupName: 'New Cup', cupPointsScale, cupCustomPoints }))
+    await expect(serviceFor(world).updateCupSettings(league.id, { cupName: 'New Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true }))
       .rejects.toMatchObject({ code: 'CUP_CUSTOM_POINTS_INVALID', statusCode: 400 });
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Old Cup', cupPointsScale: CupPointsScale.STANDARD });
   });
@@ -347,6 +350,7 @@ describe('LeagueService — championship settings', () => {
       cupName: 'Thawed Cup',
       cupPointsScale: CupPointsScale.STANDARD,
       cupCustomPoints: [],
+      hallOfLameVisible: true,
     })).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Frozen Cup' });
   });

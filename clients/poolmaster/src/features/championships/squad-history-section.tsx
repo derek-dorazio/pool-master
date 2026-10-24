@@ -5,16 +5,19 @@ import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Select, Tile } from '@/features/shared/ui';
 import { historyYearTitle } from './championship-view';
+import { SquadPerpetualPlates } from './perpetual-trophies';
+import { SquadRecords } from './record-book';
 import { championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
 import { SquadYearSection } from './squad-year-section';
 import { describeSquadTrophy, describeSquadYearLine, isChampionshipTrophy, squadYearsPlaced } from './squad-year-view';
-import { useSquadHistoryQuery } from './use-championship-query';
+import { platesWonBy } from './perpetual-trophy-view';
+import { usePerpetualTrophiesQuery, useSquadHistoryQuery } from './use-championship-query';
 
 /**
  * A squad's results on its squad page (#872, mockup E): the year picked (`?year=`, the current one
  * by default) with its championship, cups and contests; then its trophy case, with its contest
- * medals all time and every trophy it has won; then an All years strip, one line per year it
- * placed in, each opening that year here.
+ * medals all time, every trophy it has won and its perpetual trophy plates; then the records it holds; then an All years
+ * strip, one line per year it placed in, each opening that year here.
  */
 export function SquadHistorySection({
   leagueCode,
@@ -34,6 +37,7 @@ export function SquadHistorySection({
     setSearchParams(next === currentYear ? {} : { year: String(next) }, { replace: true });
   };
   const placedYears = squadYearsPlaced(historyQuery.data?.years ?? []);
+  const plates = platesWonBy(usePerpetualTrophiesQuery(leagueId).data ?? [], squad.id);
 
   return (
     <section className="space-y-6" data-testid="squad-history">
@@ -83,12 +87,17 @@ export function SquadHistorySection({
                   </li>
                 ))}
               </ul>
-            ) : (
+            ) : null}
+            <SquadPerpetualPlates plates={plates} />
+            {!historyQuery.data.trophies.length && !plates.length ? (
               <p className="text-sm text-muted-foreground" data-testid="squad-history-trophies-none">
-                No trophies yet. A podium finish in a crowned cup or a finished championship puts one here.
+                No trophies yet. A podium finish in a crowned cup or a finished championship, or a win in a
+                contest the league runs every year, puts one here.
               </p>
-            )}
+            ) : null}
           </Tile>
+
+          <SquadRecords leagueId={leagueId} squadId={squad.id} />
 
           {placedYears.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">

@@ -4,7 +4,7 @@
  * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
   CupContestCount,
@@ -16,6 +16,7 @@ import {
   championshipYear,
   championshipYearStart,
   trophyForPlace,
+  type RecordType,
   type SelectionType,
   type LeagueYearFinish,
   type Squad,
@@ -23,6 +24,11 @@ import {
 
 import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearView } from '../championship/service';
 import type { CupService, CupStandingView, CupView } from '../cups/service';
+import { buildPerpetualTrophies, type PerpetualTrophy } from './perpetual-trophies';
+import { rankRecords, type RecordStand } from './records';
+
+/** No date range: the record book names its contests by id alone. */
+const NO_DATE = new Date(0);
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -138,9 +144,43 @@ export interface SquadHistoryView {
   years: SquadYearView[];
 }
 
+/** One holder of a record value: the squad, and the year or contest it was set in when the record names one. */
+export interface RecordHolderView {
+  squad: Squad;
+  year: number | null;
+  contest: FinalContest | null;
+}
+
+export interface RecordStandView {
+  value: number;
+  /** In squad name order, then newest year first. */
+  holders: RecordHolderView[];
+}
+
+/** One record of the league's record book (#873): its holders, every one on a tie, and the next best. */
+export interface RecordView {
+  type: RecordType;
+  best: RecordStandView;
+  nextBest: RecordStandView | null;
+}
+
+/** A plate of a perpetual trophy (#874): the year's contest and its winners, none for no result. */
+export interface PerpetualPlateView {
+  year: number;
+  contestId: string;
+  /** In name order. */
+  winners: Squad[];
+}
+
+/** One perpetual trophy (#874): a contest the league runs every year, with a plate per year. */
+export interface PerpetualTrophyView extends Omit<PerpetualTrophy, 'plates'> {
+  plates: PerpetualPlateView[];
+}
+
 export interface HistoryServiceDeps {
-  finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
+  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests' | 'findSeriesContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
+  leagues: Pick<LeagueRepository, 'findById'>;
   championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
   logger?: HistoryLogger;
@@ -193,6 +233,66 @@ export class HistoryService {
       tiles: [mostOf(SummaryTile.MOST_CHAMPIONSHIPS, championships), mostOf(SummaryTile.MOST_CUPS, cupWins)],
       years,
     };
+  }
+
+  /**
+   * The record book (#873): every record somebody holds, worked out from the league's counted
+   * contest finishes and its championships of years over, with the Hall of Lame's records unless
+   * the league hides them. A squad that has since gone inactive still holds its records.
+   */
+  async getRecords(leagueId: string): Promise<RecordView[]> {
+    const [finishes, championshipYears, squads, league] = await Promise.all([
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.championship.listYears(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+      this.deps.leagues.findById(leagueId),
+    ]);
+    // The route has checked membership, so the league is there; were it gone, the Hall of Lame stays hidden.
+    const hallOfLame = league?.hallOfLameVisible ?? false;
+    const ranked = rankRecords(finishes, championshipYears
+      .filter((row) => row.isOver)
+      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), { hallOfLame });
+    const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
+      .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
+    const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
+    const standView = (stand: RecordStand): RecordStandView => ({
+      value: stand.value,
+      holders: stand.holders
+        .flatMap((holder): RecordHolderView[] => {
+          const squad = squadsById.get(holder.squadId);
+          return squad === undefined ? [] : [{ squad, year: holder.year, contest: holder.contestId === null ? null : contestsById.get(holder.contestId) ?? null }];
+        })
+        .sort((left, right) => left.squad.name.localeCompare(right.squad.name) || (right.year ?? 0) - (left.year ?? 0)),
+    });
+    this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length, hallOfLame } }, 'Read the league\'s record book');
+    return ranked.map((record) => ({ type: record.type, best: standView(record.best), nextBest: record.nextBest === null ? null : standView(record.nextBest) }));
+  }
+
+  /**
+   * The league's perpetual trophies (#874): every contest of one event it has run in two or more
+   * years, the same series and selection type, with a plate per year naming its winners. A week of
+   * games and a contest not counted earn none. A squad that has since gone inactive keeps its plates.
+   */
+  async getPerpetualTrophies(leagueId: string): Promise<PerpetualTrophyView[]> {
+    const [contests, finishes, squads] = await Promise.all([
+      this.deps.finishes.findSeriesContests(leagueId),
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+    ]);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const trophies = buildPerpetualTrophies(contests, finishes).map((trophy) => ({
+      ...trophy,
+      plates: trophy.plates.map(({ winnerSquadIds, ...plate }) => ({
+        ...plate,
+        winners: winnerSquadIds
+          .flatMap((squadId) => squadsById.get(squadId) ?? [])
+          .sort((left, right) => left.name.localeCompare(right.name)),
+      })),
+    }));
+    this.deps.logger?.debug({ action: 'history.perpetualTrophies', data: { leagueId, trophyCount: trophies.length } }, 'Read the league\'s perpetual trophies');
+    return trophies;
   }
 
   /**

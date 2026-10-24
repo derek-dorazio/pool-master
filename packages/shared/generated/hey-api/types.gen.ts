@@ -1181,7 +1181,7 @@ export type UpdateLeagueDetailsRequest = {
 };
 
 /**
- * Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.
+ * Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.
  */
 export type UpdateLeagueCupSettingsRequest = {
     /**
@@ -1196,6 +1196,10 @@ export type UpdateLeagueCupSettingsRequest = {
      * CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale.
      */
     cupCustomPoints: Array<number>;
+    /**
+     * Whether the record book shows its Hall of Lame rows, for the whole league.
+     */
+    hallOfLameVisible: boolean;
 };
 
 /**
@@ -1365,6 +1369,10 @@ export type LeagueDto = {
      * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
      */
     cupCustomPoints: Array<number>;
+    /**
+     * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+     */
+    hallOfLameVisible: boolean;
 };
 
 /**
@@ -1634,6 +1642,10 @@ export type LeagueResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     };
 };
 
@@ -1693,6 +1705,10 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -1925,6 +1941,10 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -20100,6 +20120,374 @@ export type YearReviewResponse = {
 };
 
 /**
+ * One holder of a record value.
+ */
+export type RecordHolderDto = {
+    /**
+     * A squad named on the championship: a leader, a champion or a tile holder.
+     */
+    squad: {
+        squadId: string;
+        /**
+         * The squad's current name.
+         */
+        squadName: string;
+        /**
+         * The squad's built-in team icon.
+         */
+        squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+    };
+    /**
+     * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+     */
+    year: number | null;
+    /**
+     * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+     */
+    contestId: string | null;
+    /**
+     * That contest's name; null otherwise.
+     */
+    contestName: string | null;
+};
+
+/**
+ * One value of a record and who holds it.
+ */
+export type RecordStandDto = {
+    /**
+     * Championships, years in a row, wins, contests in a row or ranked entries, by the record's type.
+     */
+    value: number;
+    /**
+     * Every holder of the value, in squad name order, then newest year first.
+     */
+    holders: Array<{
+        /**
+         * A squad named on the championship: a leader, a champion or a tile holder.
+         */
+        squad: {
+            squadId: string;
+            /**
+             * The squad's current name.
+             */
+            squadName: string;
+            /**
+             * The squad's built-in team icon.
+             */
+            squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        };
+        /**
+         * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+         */
+        year: number | null;
+        /**
+         * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+         */
+        contestId: string | null;
+        /**
+         * That contest's name; null otherwise.
+         */
+        contestName: string | null;
+    }>;
+};
+
+/**
+ * One record of the league's record book.
+ */
+export type RecordDto = {
+    /**
+     * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
+     */
+    type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
+    /**
+     * One value of a record and who holds it.
+     */
+    best: {
+        /**
+         * Championships, years in a row, wins, contests in a row or ranked entries, by the record's type.
+         */
+        value: number;
+        /**
+         * Every holder of the value, in squad name order, then newest year first.
+         */
+        holders: Array<{
+            /**
+             * A squad named on the championship: a leader, a champion or a tile holder.
+             */
+            squad: {
+                squadId: string;
+                /**
+                 * The squad's current name.
+                 */
+                squadName: string;
+                /**
+                 * The squad's built-in team icon.
+                 */
+                squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+            };
+            /**
+             * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+             */
+            year: number | null;
+            /**
+             * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+             */
+            contestId: string | null;
+            /**
+             * That contest's name; null otherwise.
+             */
+            contestName: string | null;
+        }>;
+    };
+    /**
+     * The next value down and its holders; null when nobody else has one.
+     */
+    nextBest: {
+        /**
+         * Championships, years in a row, wins, contests in a row or ranked entries, by the record's type.
+         */
+        value: number;
+        /**
+         * Every holder of the value, in squad name order, then newest year first.
+         */
+        holders: Array<{
+            /**
+             * A squad named on the championship: a leader, a champion or a tile holder.
+             */
+            squad: {
+                squadId: string;
+                /**
+                 * The squad's current name.
+                 */
+                squadName: string;
+                /**
+                 * The squad's built-in team icon.
+                 */
+                squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+            };
+            /**
+             * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+             */
+            year: number | null;
+            /**
+             * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+             */
+            contestId: string | null;
+            /**
+             * That contest's name; null otherwise.
+             */
+            contestName: string | null;
+        }>;
+    } | null;
+};
+
+/**
+ * The league's record book.
+ */
+export type RecordListResponse = {
+    /**
+     * Every record somebody holds, in RecordType order; a record nobody holds yet is left out.
+     */
+    records: Array<{
+        /**
+         * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
+         */
+        type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
+        /**
+         * One value of a record and who holds it.
+         */
+        best: {
+            /**
+             * Championships, years in a row, wins, contests in a row or ranked entries, by the record's type.
+             */
+            value: number;
+            /**
+             * Every holder of the value, in squad name order, then newest year first.
+             */
+            holders: Array<{
+                /**
+                 * A squad named on the championship: a leader, a champion or a tile holder.
+                 */
+                squad: {
+                    squadId: string;
+                    /**
+                     * The squad's current name.
+                     */
+                    squadName: string;
+                    /**
+                     * The squad's built-in team icon.
+                     */
+                    squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+                };
+                /**
+                 * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+                 */
+                year: number | null;
+                /**
+                 * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                 */
+                contestId: string | null;
+                /**
+                 * That contest's name; null otherwise.
+                 */
+                contestName: string | null;
+            }>;
+        };
+        /**
+         * The next value down and its holders; null when nobody else has one.
+         */
+        nextBest: {
+            /**
+             * Championships, years in a row, wins, contests in a row or ranked entries, by the record's type.
+             */
+            value: number;
+            /**
+             * Every holder of the value, in squad name order, then newest year first.
+             */
+            holders: Array<{
+                /**
+                 * A squad named on the championship: a leader, a champion or a tile holder.
+                 */
+                squad: {
+                    squadId: string;
+                    /**
+                     * The squad's current name.
+                     */
+                    squadName: string;
+                    /**
+                     * The squad's built-in team icon.
+                     */
+                    squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+                };
+                /**
+                 * The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.
+                 */
+                year: number | null;
+                /**
+                 * The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                 */
+                contestId: string | null;
+                /**
+                 * That contest's name; null otherwise.
+                 */
+                contestName: string | null;
+            }>;
+        } | null;
+    }>;
+};
+
+/**
+ * One plate of a perpetual trophy: a year's contest and its winners.
+ */
+export type PerpetualTrophyPlateDto = {
+    /**
+     * The year of the event the contest was on: the 2026 Masters.
+     */
+    year: number;
+    contestId: string;
+    /**
+     * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
+     */
+    winners: Array<{
+        squadId: string;
+        /**
+         * The squad's current name.
+         */
+        squadName: string;
+        /**
+         * The squad's built-in team icon.
+         */
+        squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+    }>;
+};
+
+/**
+ * A perpetual trophy: a contest of one event the league has run in two or more years.
+ */
+export type PerpetualTrophyDto = {
+    eventSeriesId: string;
+    /**
+     * The event series the contest is run on every year, such as "Masters Tournament".
+     */
+    seriesName: string;
+    sportLeagueName: string;
+    /**
+     * How the contest is picked: a series run as two ways of picking is two trophies.
+     */
+    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+    /**
+     * Newest year first; a year the league did not run it has no plate.
+     */
+    plates: Array<{
+        /**
+         * The year of the event the contest was on: the 2026 Masters.
+         */
+        year: number;
+        contestId: string;
+        /**
+         * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
+         */
+        winners: Array<{
+            squadId: string;
+            /**
+             * The squad's current name.
+             */
+            squadName: string;
+            /**
+             * The squad's built-in team icon.
+             */
+            squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+        }>;
+    }>;
+};
+
+/**
+ * The league's perpetual trophies.
+ */
+export type PerpetualTrophyListResponse = {
+    /**
+     * In sports league, series and selection type order.
+     */
+    trophies: Array<{
+        eventSeriesId: string;
+        /**
+         * The event series the contest is run on every year, such as "Masters Tournament".
+         */
+        seriesName: string;
+        sportLeagueName: string;
+        /**
+         * How the contest is picked: a series run as two ways of picking is two trophies.
+         */
+        selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+        /**
+         * Newest year first; a year the league did not run it has no plate.
+         */
+        plates: Array<{
+            /**
+             * The year of the event the contest was on: the 2026 Masters.
+             */
+            year: number;
+            contestId: string;
+            /**
+             * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
+             */
+            winners: Array<{
+                squadId: string;
+                /**
+                 * The squad's current name.
+                 */
+                squadName: string;
+                /**
+                 * The squad's built-in team icon.
+                 */
+                squadIconKey: 'CAPTAIN_SMILE_SUNSET' | 'CAPTAIN_SMILE_FIELD' | 'CAPTAIN_SMILE_OCEAN' | 'CAPTAIN_SMILE_MIDNIGHT' | 'CAPTAIN_SMILE_CANDY' | 'CAPTAIN_WINK_SUNSET' | 'CAPTAIN_WINK_FIELD' | 'CAPTAIN_WINK_OCEAN' | 'CAPTAIN_WINK_MIDNIGHT' | 'CAPTAIN_WINK_CANDY' | 'CHAMPION_BEARD_SUNSET' | 'CHAMPION_BEARD_FIELD' | 'CHAMPION_BEARD_OCEAN' | 'CHAMPION_BEARD_MIDNIGHT' | 'CHAMPION_BEARD_CANDY' | 'MAVERICK_MASK_SUNSET' | 'MAVERICK_MASK_FIELD' | 'MAVERICK_MASK_OCEAN' | 'MAVERICK_MASK_MIDNIGHT' | 'MAVERICK_MASK_CANDY' | 'STARFACE_SUNSET' | 'STARFACE_FIELD' | 'STARFACE_OCEAN' | 'STARFACE_MIDNIGHT' | 'STARFACE_CANDY' | 'HELMET_STRIPE_SUNSET' | 'HELMET_STRIPE_FIELD' | 'HELMET_STRIPE_OCEAN' | 'HELMET_STRIPE_MIDNIGHT' | 'HELMET_STRIPE_CANDY' | 'HELMET_BOLT_SUNSET' | 'HELMET_BOLT_FIELD' | 'HELMET_BOLT_OCEAN' | 'HELMET_BOLT_MIDNIGHT' | 'HELMET_BOLT_CANDY' | 'HELMET_HORN_SUNSET' | 'HELMET_HORN_FIELD' | 'HELMET_HORN_OCEAN' | 'HELMET_HORN_MIDNIGHT' | 'HELMET_HORN_CANDY' | 'HELMET_WING_SUNSET' | 'HELMET_WING_FIELD' | 'HELMET_WING_OCEAN' | 'HELMET_WING_MIDNIGHT' | 'HELMET_WING_CANDY' | 'HELMET_GRID_SUNSET' | 'HELMET_GRID_FIELD' | 'HELMET_GRID_OCEAN' | 'HELMET_GRID_MIDNIGHT' | 'HELMET_GRID_CANDY' | 'GOLF_BAG_SUNSET' | 'GOLF_BAG_FIELD' | 'GOLF_BAG_OCEAN' | 'GOLF_BAG_MIDNIGHT' | 'GOLF_BAG_CANDY' | 'WHISTLE_BADGE_SUNSET' | 'WHISTLE_BADGE_FIELD' | 'WHISTLE_BADGE_OCEAN' | 'WHISTLE_BADGE_MIDNIGHT' | 'WHISTLE_BADGE_CANDY' | 'STOPWATCH_BADGE_SUNSET' | 'STOPWATCH_BADGE_FIELD' | 'STOPWATCH_BADGE_OCEAN' | 'STOPWATCH_BADGE_MIDNIGHT' | 'STOPWATCH_BADGE_CANDY' | 'MEGAPHONE_SUNSET' | 'MEGAPHONE_FIELD' | 'MEGAPHONE_OCEAN' | 'MEGAPHONE_MIDNIGHT' | 'MEGAPHONE_CANDY' | 'FOAM_FINGER_SUNSET' | 'FOAM_FINGER_FIELD' | 'FOAM_FINGER_OCEAN' | 'FOAM_FINGER_MIDNIGHT' | 'FOAM_FINGER_CANDY' | 'BULL_HEAD_SUNSET' | 'BULL_HEAD_FIELD' | 'BULL_HEAD_OCEAN' | 'BULL_HEAD_MIDNIGHT' | 'BULL_HEAD_CANDY' | 'LUCKY_DUCK_SUNSET' | 'LUCKY_DUCK_FIELD' | 'LUCKY_DUCK_OCEAN' | 'LUCKY_DUCK_MIDNIGHT' | 'LUCKY_DUCK_CANDY' | 'TURBO_TURTLE_SUNSET' | 'TURBO_TURTLE_FIELD' | 'TURBO_TURTLE_OCEAN' | 'TURBO_TURTLE_MIDNIGHT' | 'TURBO_TURTLE_CANDY' | 'FIRE_PIZZA_SUNSET' | 'FIRE_PIZZA_FIELD' | 'FIRE_PIZZA_OCEAN' | 'FIRE_PIZZA_MIDNIGHT' | 'FIRE_PIZZA_CANDY' | 'BANANA_BAT_SUNSET' | 'BANANA_BAT_FIELD' | 'BANANA_BAT_OCEAN' | 'BANANA_BAT_MIDNIGHT' | 'BANANA_BAT_CANDY';
+            }>;
+        }>;
+    }>;
+};
+
+/**
  * Feed-aware event sync request.
  */
 export type EventSyncRequest = {
@@ -24477,6 +24865,68 @@ export type GetHistorySummaryResponses = {
 };
 
 export type GetHistorySummaryResponse = GetHistorySummaryResponses[keyof GetHistorySummaryResponses];
+
+export type ListPerpetualTrophiesData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/history/trophies';
+};
+
+export type ListPerpetualTrophiesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListPerpetualTrophiesError = ListPerpetualTrophiesErrors[keyof ListPerpetualTrophiesErrors];
+
+export type ListPerpetualTrophiesResponses = {
+    /**
+     * The league's perpetual trophies.
+     */
+    200: PerpetualTrophyListResponse;
+};
+
+export type ListPerpetualTrophiesResponse = ListPerpetualTrophiesResponses[keyof ListPerpetualTrophiesResponses];
+
+export type ListRecordsData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/history/records';
+};
+
+export type ListRecordsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListRecordsError = ListRecordsErrors[keyof ListRecordsErrors];
+
+export type ListRecordsResponses = {
+    /**
+     * The league's record book.
+     */
+    200: RecordListResponse;
+};
+
+export type ListRecordsResponse = ListRecordsResponses[keyof ListRecordsResponses];
 
 export type GetSquadHistoryData = {
     body?: never;

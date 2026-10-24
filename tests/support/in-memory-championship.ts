@@ -1,9 +1,9 @@
 /**
  * An in-memory ChampionshipRepository (#863): the league championship's finishes, each league's
- * cup name, the single-event series of contests, the unfinished contest count and the completed
- * contests, held in plain fields so a service test can settle contests and read a year back.
+ * cup name, the single-event series of contests, the unfinished contest count, the completed
+ * contests and the one-event ones with their series (#874), held in plain fields so a service test can settle contests and read a year back.
  */
-import type { ChampionshipRepository, FinalContest } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
 import type { LeagueYearFinish } from '@poolmaster/shared/domain';
 
 export class InMemoryChampionship implements ChampionshipRepository {
@@ -12,6 +12,7 @@ export class InMemoryChampionship implements ChampionshipRepository {
   readonly singleEventSeries = new Map<string, string>();
   unfinishedContests = 0;
   readonly finalContests: Array<{ leagueId: string; contest: FinalContest }> = [];
+  readonly seriesContests: Array<{ leagueId: string; contest: SeriesContest }> = [];
 
   async recordFinishes(finishes: readonly LeagueYearFinish[]): Promise<number> {
     const fresh = finishes.filter((finish) => !this.finishes.some((kept) =>
@@ -45,5 +46,9 @@ export class InMemoryChampionship implements ChampionshipRepository {
       .filter((row) => row.leagueId === leagueId && (contestIds.includes(row.contest.id)
         || (row.contest.completedAt !== null && row.contest.completedAt >= from && row.contest.completedAt < to)))
       .map((row) => row.contest);
+  }
+
+  async findSeriesContests(leagueId: string): Promise<SeriesContest[]> {
+    return this.seriesContests.filter((row) => row.leagueId === leagueId).map((row) => row.contest);
   }
 }

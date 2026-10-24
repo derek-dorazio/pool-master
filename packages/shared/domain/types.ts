@@ -86,6 +86,8 @@ export interface League extends DomainEntity {
   cupPointsScale: CupPointsScale;
   /** CUSTOM's points for 1st, 2nd ...; empty for every other scale (a database check holds it). */
   cupCustomPoints: number[];
+  /** Whether the record book shows its Hall of Lame rows (#873). On at creation. */
+  hallOfLameVisible: boolean;
   /** What the league may do (#943): ask the plan entitlements service, never compare plans. PLATINUM at creation. */
   plan: LeaguePlan;
 }

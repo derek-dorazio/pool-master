@@ -30,6 +30,8 @@ const getContestLeaderboardMock = vi.fn();
 const getSquadYearMock = vi.fn();
 const getSquadHistoryMock = vi.fn();
 const listContestResultsMock = vi.fn();
+const listRecordsMock = vi.fn();
+const listPerpetualTrophiesMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -51,6 +53,8 @@ bindApiMocks({
   listContestResults: listContestResultsMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
+  listPerpetualTrophies: listPerpetualTrophiesMock,
+  listRecords: listRecordsMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -145,6 +149,8 @@ function primeTeam({
   getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: null, cups: [] }) }));
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [] }));
   getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory({ medals: { firsts: 0, seconds: 0, thirds: 0 }, trophies: [], years: [] }) }));
+  listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
+  listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
 }
 
 function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED') {
@@ -200,7 +206,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock,
+    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
     mock.mockReset();
   }
@@ -483,6 +489,69 @@ describe('My team › Trophies and past years', () => {
     expect(screen.getByTestId('squad-history-year')).toHaveValue('2025');
     fireEvent.change(screen.getByTestId('squad-history-year'), { target: { value: String(YEAR) } });
     await waitFor(() => expect(screen.getByTestId('squad-history-year')).toHaveValue(String(YEAR)));
+  });
+
+  it('shows the records the squad holds, with when it set each, and leaves out the ones another squad holds', async () => {
+    primeTeam();
+    const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      {
+        type: 'MOST_WINS_IN_A_YEAR',
+        best: { value: 4, holders: [{ squad: rival, year: 2025, contestId: null, contestName: null }, { squad: mine, year: 2024, contestId: null, contestName: null }] },
+        nextBest: null,
+      },
+      {
+        type: 'MOST_WINS_ALL_TIME',
+        best: { value: 9, holders: [{ squad: rival, year: null, contestId: null, contestName: null }] },
+        nextBest: { value: 7, holders: [{ squad: mine, year: null, contestId: null, contestName: null }] },
+      },
+      {
+        type: 'BIGGEST_FIELD_WON',
+        best: { value: 48, holders: [{ squad: mine, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
+        nextBest: null,
+      },
+    ] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a year4 wins · 2024');
+    expect(screen.getByTestId('squad-record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Masters Pick 6 (2025)');
+    // Next best is not a record held, so the all-time count stays on the record book only.
+    expect(screen.queryByTestId('squad-record-MOST_WINS_ALL_TIME')).not.toBeInTheDocument();
+  });
+
+  it('puts each perpetual trophy plate the squad won in its trophy case, and none it did not win', async () => {
+    primeTeam();
+    const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Super Bowl',
+      sportLeagueName: 'NFL',
+      selectionType: 'SQUARES',
+      plates: [
+        { year: 2025, contestId: 'bowl-2025', winners: [mine, rival] },
+        { year: 2024, contestId: 'bowl-2024', winners: [rival] },
+      ],
+    }] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-plate-bowl-2025')).toHaveTextContent('2025 Super Bowl Squares (NFL)');
+    expect(screen.queryByTestId('squad-history-plate-bowl-2024')).not.toBeInTheDocument();
+    // A plate is a trophy, so the empty shelf's note gives way to it.
+    expect(screen.queryByTestId('squad-history-trophies-none')).not.toBeInTheDocument();
+  });
+
+  it('shows no records section for a squad that holds none', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-trophies-none')).toBeInTheDocument();
+    await waitFor(() => expect(listRecordsMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('squad-records')).not.toBeInTheDocument();
   });
 
   it('says the trophies could not load, and still shows the year', async () => {

@@ -410,6 +410,19 @@ describe('identity cluster repositories (#202)', () => {
   // #202 — new in step 3.3, backing the admin league list. Asserted against a real
   // database because it is a grouped query: the FAPI suite proves the league list still
   // responds, but asserts nothing about the counts themselves.
+  describe('LeagueRepository Hall of Lame setting (#873)', () => {
+    it('shows the Hall of Lame on a new league, and stores it hidden and shown again', async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueRepository(prisma);
+      const league = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}H1`, 'Lame');
+
+      expect((await repo.findById(league.id))?.hallOfLameVisible).toBe(true);
+      expect((await repo.update(league.id, { hallOfLameVisible: false })).hallOfLameVisible).toBe(false);
+      expect((await repo.findById(league.id))?.hallOfLameVisible).toBe(false);
+      expect((await repo.update(league.id, { hallOfLameVisible: true })).hallOfLameVisible).toBe(true);
+    });
+  });
+
   describe('LeagueMembershipRepository.countActiveByLeagues', () => {
     it('counts active members per league and omits leagues with none', async () => {
       const prisma = getPrisma();

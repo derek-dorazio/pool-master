@@ -5,7 +5,7 @@
  * squad's year for its squad page (#872).
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile, TrophyKind, YearReviewStatus } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, RecordType, SelectionType, SummaryTile, TrophyKind, YearReviewStatus } from '@poolmaster/shared/domain';
 import { ChampionshipSquadDtoSchema, ChampionshipStandingRowDtoSchema } from './championship.dto';
 import { CupStandingRowDtoSchema } from './cups.dto';
 import { DateTimeSchema } from './common.dto';
@@ -162,6 +162,53 @@ export const YearReviewResponseSchema = z.object({
 }).describe('Where the league\'s year in review for last year stands.');
 export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
 
+export const RecordHolderDtoSchema = z.object({
+  squad: ChampionshipSquadDtoSchema,
+  year: z.number().int().nullable().describe('The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.'),
+  contestId: z.string().uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON; null otherwise.'),
+  contestName: z.string().nullable().describe('That contest\'s name; null otherwise.'),
+}).describe('One holder of a record value.');
+export type RecordHolderDto = z.infer<typeof RecordHolderDtoSchema>;
+
+export const RecordStandDtoSchema = z.object({
+  value: z.number().int().describe('Championships, years in a row, wins, contests in a row or ranked entries, by the record\'s type.'),
+  holders: z.array(RecordHolderDtoSchema).describe('Every holder of the value, in squad name order, then newest year first.'),
+}).describe('One value of a record and who holds it.');
+export type RecordStandDto = z.infer<typeof RecordStandDtoSchema>;
+
+export const RecordDtoSchema = z.object({
+  type: z.nativeEnum(RecordType).describe('MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).'),
+  best: RecordStandDtoSchema,
+  nextBest: RecordStandDtoSchema.nullable().describe('The next value down and its holders; null when nobody else has one.'),
+}).describe('One record of the league\'s record book.');
+export type RecordDto = z.infer<typeof RecordDtoSchema>;
+
+export const RecordListResponseSchema = z.object({
+  records: z.array(RecordDtoSchema).describe('Every record somebody holds, in RecordType order; a record nobody holds yet is left out.'),
+}).describe('The league\'s record book.');
+export type RecordListResponse = z.infer<typeof RecordListResponseSchema>;
+
+export const PerpetualTrophyPlateDtoSchema = z.object({
+  year: z.number().int().describe('The year of the event the contest was on: the 2026 Masters.'),
+  contestId: z.string().uuid(),
+  winners: z.array(ChampionshipSquadDtoSchema).describe('The contest\'s 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.'),
+}).describe('One plate of a perpetual trophy: a year\'s contest and its winners.');
+export type PerpetualTrophyPlateDto = z.infer<typeof PerpetualTrophyPlateDtoSchema>;
+
+export const PerpetualTrophyDtoSchema = z.object({
+  eventSeriesId: z.string().uuid(),
+  seriesName: z.string().describe('The event series the contest is run on every year, such as "Masters Tournament".'),
+  sportLeagueName: z.string(),
+  selectionType: z.nativeEnum(SelectionType).describe('How the contest is picked: a series run as two ways of picking is two trophies.'),
+  plates: z.array(PerpetualTrophyPlateDtoSchema).describe('Newest year first; a year the league did not run it has no plate.'),
+}).describe('A perpetual trophy: a contest of one event the league has run in two or more years.');
+export type PerpetualTrophyDto = z.infer<typeof PerpetualTrophyDtoSchema>;
+
+export const PerpetualTrophyListResponseSchema = z.object({
+  trophies: z.array(PerpetualTrophyDtoSchema).describe('In sports league, series and selection type order.'),
+}).describe('The league\'s perpetual trophies.');
+export type PerpetualTrophyListResponse = z.infer<typeof PerpetualTrophyListResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
@@ -182,3 +229,10 @@ registerSchema('SquadHistoryDto', SquadHistoryDtoSchema);
 registerSchema('SquadHistoryResponse', SquadHistoryResponseSchema);
 registerSchema('YearReviewDto', YearReviewDtoSchema);
 registerSchema('YearReviewResponse', YearReviewResponseSchema);
+registerSchema('RecordHolderDto', RecordHolderDtoSchema);
+registerSchema('RecordStandDto', RecordStandDtoSchema);
+registerSchema('RecordDto', RecordDtoSchema);
+registerSchema('RecordListResponse', RecordListResponseSchema);
+registerSchema('PerpetualTrophyPlateDto', PerpetualTrophyPlateDtoSchema);
+registerSchema('PerpetualTrophyDto', PerpetualTrophyDtoSchema);
+registerSchema('PerpetualTrophyListResponse', PerpetualTrophyListResponseSchema);

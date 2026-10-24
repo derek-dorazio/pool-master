@@ -434,6 +434,10 @@ email, not another page. Sent through the email outbox (#845), class B.
    `?year=` on the squad page; the strip lists only the years, and the cups, the squad placed in. Perpetual
    trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
+   Built as a Records section under the trophy case, read from the league's record book
+   (`listRecords`, the query All years uses) and kept to the rows where the squad has the best
+   value, so the two cannot disagree; no endpoint of its own. Hall of Lame rows it holds show
+   there too, unless the league hides them.
 4. **Year in review email.** After slice 1 and #845's outbox.
    Built as `GET /leagues/:id/history/year-review` and `POST .../year-review/:year/send`, the
    `YEAR_IN_REVIEW` email (Results category, class B) and a `league_year_reviews` row per league
@@ -459,7 +463,7 @@ next best. Ties show every holder.
 | `REPEAT_WINNER` | Most years in a row winning the same recurring contest (#874's key) |
 | `MOST_RUNNER_UPS` | Hall of Lame: most 2nd places |
 | `MOST_FOURTHS` | Hall of Lame: most 4th places, just off the podium |
-| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more entries |
+| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more squads |
 | `LONGEST_DROUGHT` | Hall of Lame: most contests in a row played without a win, past or still running |
 
 - `League.hallOfLameVisible Boolean @default(true)`, on league settings, hides the Hall of Lame
@@ -472,26 +476,41 @@ next best. Ties show every holder.
 
 1. **Record book.** The endpoint, the record book rows, the section on All years. After #863
    slice 1 and #837 slice 3. `REPEAT_WINNER` waits for #874.
+   Built as `GET /leagues/:id/history/records` (`listRecords`, members), worked out by pure
+   functions in `history/records.ts`; the record book sits under the All years tiles. Each record
+   shows its best value and the next value down, every holder of each; a record nobody holds is
+   left out.
 2. **Hall of Lame.** Its rows and the league setting.
+   Built as four more `RecordType`s from the same `rankRecords`, which leaves them out when
+   `League.hallOfLameVisible` is off, so a hidden Hall of Lame never leaves the server. The setting
+   rides on `PUT /cup-settings` with the championship name and points table (Edit championships).
+   A last place is the worst place among the squads (each squad's best entry), in contests of
+   `LAST_PLACE_MIN_SQUADS` (3) or more squads.
 
 ## 12. Perpetual trophies (#874)
 
 One trophy per contest a league runs every year, with a plate per year's winner: "The Masters
 pick'em, 2022 Gimme Putts, 2023 Fore Play, 2024 Gimme Putts".
 
-- **What makes a contest recurring:** all its events are in one event series that has one
-  edition a year (the Masters, the Super Bowl). Its `LeagueYearFinish` rows carry that
-  `eventSeriesId`; contests across several series, or a series with many events a year (NFL
-  weeks), get none. Trophies are keyed by (`eventSeriesId`, `selectionType`), so the Masters
+- **What makes a contest recurring:** it has exactly one event, and an event is one edition of
+  its series a year (the Masters, the Super Bowl), so the same series and selection type in a
+  later year is the same contest run again. A week of games (several games, one round, none
+  sending its winner on) earns none: each NFL regular-season week is its own series, and Week 1
+  Pick'em is not a trophy (Derek, 2026-10-24). Contests over several events and Not counted
+  contests get none. Trophies are keyed by (`eventSeriesId`, `selectionType`), so the Masters
   pick'em and the Masters squares are two trophies.
-- A trophy appears once the league has run it in two years. Each plate shows the year and the
-  winner(s); a year it didn't run is skipped, and a year with no result says so.
-- The name is built from the series and the selection type ("The Masters pick'em"), no setting.
+- A trophy appears once the league has run it in two event years. Each plate shows the event's
+  year and the winner(s); a year it didn't run is skipped, and a year with no result says so.
+- The name is built from the series and the selection type ("Masters Tournament Tiered"), no
+  setting, with the sports league beside it so the ATP and WTA "US Open Bracket" tell apart.
 - Shown on the Trophy case tab under the cups, and as plates on each winner's squad page.
-- `GET /leagues/:leagueId/trophies/perpetual` returns `PerpetualTrophyDto[]`. Class:
+- `GET /leagues/:id/history/trophies` (`listPerpetualTrophies`) returns `{ trophies }`. Class:
   `TROPHY_SHELF`, B.
 
 ### Slices (#874)
 
 1. **Perpetual trophies.** The endpoint, the Trophy case section, plates on squad pages. After
    #863 slice 1 and #841 slice 4.
+   Built in the `history` module by pure functions in `history/perpetual-trophies.ts`, from the
+   completed one-event contests (their series, event year and games) and the finishes. The squad
+   page reads the same list and keeps the plates naming the squad. `REPEAT_WINNER` follows.

@@ -24,6 +24,7 @@ type LeagueFixture = Pick<
   | 'cupName'
   | 'cupPointsScale'
   | 'cupCustomPoints'
+  | 'hallOfLameVisible'
 >;
 
 type CurrentUserFixture = Pick<
@@ -123,6 +124,7 @@ const baseLeague: LeagueFixture = {
   cupName: 'Big Dawgs Cup',
   cupPointsScale: 'STANDARD',
   cupCustomPoints: [],
+  hallOfLameVisible: true,
 };
 
 const baseSquadMember: LeagueSquadMemberFixture = {

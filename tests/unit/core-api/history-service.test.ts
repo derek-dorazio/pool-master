@@ -6,6 +6,7 @@
 import type { FinalContest } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
+  RecordType,
   CupContestCount,
   CupStatus,
   CupTrophy,
@@ -25,7 +26,8 @@ import {
   HistorySquadRequiredError,
 } from '../../../packages/core-api/src/modules/history/service';
 import { InMemoryChampionship } from '../../support/in-memory-championship';
-import { fakeSquadRepo } from '../../support/repo-fakes';
+import { fakeLeagueRepo, fakeSquadRepo } from '../../support/repo-fakes';
+import { buildLeague } from '../../factories';
 
 const LEAGUE = 'league-1';
 
@@ -47,10 +49,11 @@ const BIRDIES = squad('birdies', 'Birdies');
 const BOGEYS = squad('bogeys', 'Bogeys');
 const SQUADS = [EAGLES, BIRDIES, BOGEYS];
 
-function build() {
+function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {}) {
   const finishes = new InMemoryChampionship();
   const service = new HistoryService({
     finishes,
+    leagues: fakeLeagueRepo({ findById: jest.fn().mockResolvedValue(buildLeague({ id: LEAGUE, hallOfLameVisible })) }),
     squads: fakeSquadRepo({
       findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       findByLeague: jest.fn().mockResolvedValue(SQUADS),
@@ -88,10 +91,72 @@ function build() {
       settledAt,
     })));
   };
-  return { contest, finish, service };
+  return { contest, finish, finishes, service };
 }
 
 describe('HistoryService (#837)', () => {
+  it('ranks the record book with each holder\'s squad, the year and the contest won, holders in name order', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 2], ['bogeys', 1, 2], ['birdies', 3, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    const biggest = records.find((row) => row.type === RecordType.BIGGEST_FIELD_WON);
+    expect(biggest?.best.holders.map((holder) => [holder.squad.name, holder.year, holder.contest?.name])).toEqual([
+      ['Bogeys', 2025, 'masters'],
+      ['Eagles', 2025, 'masters'],
+    ]);
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+      RecordType.MOST_LAST_PLACES,
+      RecordType.LONGEST_DROUGHT,
+    ]);
+  });
+
+  it('names each perpetual trophy plate\'s winners as squads, in name order', async () => {
+    const { finish, finishes, service } = build();
+    for (const year of [2024, 2025]) {
+      finishes.seriesContests.push({ leagueId: LEAGUE, contest: {
+        id: `masters-${year}`,
+        selectionType: SelectionType.TIERED,
+        cupWeight: CupWeight.NORMAL,
+        eventSeriesId: 'masters',
+        seriesName: 'Masters Tournament',
+        sportLeagueName: 'PGA Tour',
+        eventYear: year,
+        completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
+        games: [],
+      } });
+    }
+    finish('masters-2024', 2024, [['eagles', 1, 2], ['bogeys', 1, 2]]);
+    finish('masters-2025', 2025, [['birdies', 1, 1], ['eagles', 2, 1]]);
+
+    const trophies = await service.getPerpetualTrophies(LEAGUE);
+
+    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
+      ['Masters Tournament', [[2025, 'masters-2025', ['Birdies']], [2024, 'masters-2024', ['Bogeys', 'Eagles']]]],
+    ]);
+  });
+
+  it('leaves the Hall of Lame out of the record book of a league that hides it', async () => {
+    const { contest, finish, service } = build({ hallOfLameVisible: false });
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 1], ['birdies', 2, 1], ['bogeys', 4, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+    ]);
+  });
+
   it('lists every contest that went final in the year newest first, counted, not counted or without a result, with co-winners in name order and the entries ranked', async () => {
     const { contest, finish, service } = build();
     contest('masters', '2026-04-13T22:00:00.000Z');
@@ -210,6 +275,7 @@ describe('HistoryService summary (#837)', () => {
   function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>) {
     return new HistoryService({
       finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo(),
       championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue(years) },
       cups: {
@@ -312,6 +378,7 @@ describe('HistoryService squad year (#872)', () => {
     const listSeasonCups = jest.fn().mockResolvedValue(cups);
     const service = new HistoryService({
       finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo({
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),
@@ -399,6 +466,7 @@ describe('HistoryService squad history (#872)', () => {
     const yearNumbers = [...byYear.keys()].sort((left, right) => right - left);
     return new HistoryService({
       finishes,
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo({
         findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       }),
