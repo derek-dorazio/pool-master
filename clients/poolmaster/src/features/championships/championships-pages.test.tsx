@@ -29,7 +29,7 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, listRecordsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getHistorySummaryMock: vi.fn(),
@@ -42,6 +42,7 @@ const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjecti
   listContestResultsMock: vi.fn(),
   listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
+  listRecordsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
   sendYearReviewMock: vi.fn(),
 }));
@@ -59,6 +60,7 @@ bindApiMocks({
   listContestResults: listContestResultsMock,
   listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
+  listRecords: listRecordsMock,
   refreshToken: refreshTokenMock,
   sendYearReview: sendYearReviewMock,
 });
@@ -108,6 +110,7 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'NOTHING_TO_SEND', sentAt: null, sentByName: null } }));
+  listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
 }
 
 /** The year's final contests, newest first: a counted one, a not-counted one, one rained out. */
@@ -184,7 +187,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock, sendYearReviewMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
     mock.mockReset();
   }
 });
@@ -866,6 +869,43 @@ describe('Championships › All years', () => {
 
     expect(await screen.findByTestId('all-years-year-link-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025');
     expect(screen.getByTestId('all-years-cup-cup-nfl-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025/race/sport-league-nfl');
+  });
+
+  it('shows the record book: each record\'s holders, every one on a tie, with the year or contest it was set in, and the next best', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      {
+        type: 'MOST_WINS_IN_A_YEAR',
+        best: { value: 4, holders: [{ squad: birdies, year: 2025, contestId: null, contestName: null }, { squad: casey, year: 2024, contestId: null, contestName: null }] },
+        nextBest: { value: 1, holders: [{ squad: casey, year: 2025, contestId: null, contestName: null }] },
+      },
+      {
+        type: 'BIGGEST_FIELD_WON',
+        best: { value: 48, holders: [{ squad: casey, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
+        nextBest: null,
+      },
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a year4 wins · Birdie Bandits (2025) and Casey Crushers (2024)');
+    expect(screen.getByTestId('record-MOST_WINS_IN_A_YEAR-next')).toHaveTextContent('Next best: 1 win · Casey Crushers (2025)');
+    expect(screen.getByTestId('record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Casey Crushers, Masters Pick 6 (2025)');
+    expect(screen.queryByTestId('record-BIGGEST_FIELD_WON-next')).not.toBeInTheDocument();
+  });
+
+  it('shows no record book until a record is held', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-year-2026')).toBeInTheDocument();
+    await waitFor(() => expect(listRecordsMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('record-book')).not.toBeInTheDocument();
   });
 
   it('says nothing has counted yet for a league with no history', async () => {

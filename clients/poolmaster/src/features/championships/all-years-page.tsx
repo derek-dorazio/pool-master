@@ -9,6 +9,7 @@ import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { EmptyState, ErrorState, LinkButton, LoadingState, MetricGrid, MetricTile, PageHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { joinNames } from './cup-view';
+import { RecordBook } from './record-book';
 import {
   SUMMARY_TILE_LABELS,
   describeHistoryChampions,
@@ -19,9 +20,9 @@ import {
 import { useHistorySummaryQuery } from './use-championship-query';
 
 /**
- * All years (#837, mockup C): tiles for the most championships and cups won, then each year newest
- * first with its champion and cup champions ("2026 so far" while the year runs). A year opens that
- * year's Championship tab; a cup opens its Points race.
+ * All years (#837, mockup C): tiles for the most championships and cups won, the record book
+ * (#873), then each year newest first with its champion and cup champions ("2026 so far" while
+ * the year runs). A year opens that year's Championship tab; a cup opens its Points race.
  */
 export function AllYearsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -52,7 +53,7 @@ export function AllYearsPage() {
             Championships
           </LinkButton>
         )}
-        description="Every year's champions, and who has won the most."
+        description="Every year's champions, the league's records, and who has won the most."
         title="All years"
       />
       {summaryQuery.isError ? (
@@ -72,6 +73,8 @@ export function AllYearsPage() {
               </div>
             ))}
           </MetricGrid>
+
+          <RecordBook leagueId={league?.id ?? ''} />
 
           {years.length ? (
             <div className="space-y-3" data-testid="all-years-list">

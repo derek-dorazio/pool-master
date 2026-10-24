@@ -470,6 +470,10 @@ next best. Ties show every holder.
 
 1. **Record book.** The endpoint, the record book rows, the section on All years. After #863
    slice 1 and #837 slice 3. `REPEAT_WINNER` waits for #874.
+   Built as `GET /leagues/:id/history/records` (`listRecords`, members), worked out by pure
+   functions in `history/records.ts`; the record book sits under the All years tiles. Each record
+   shows its best value and the next value down, every holder of each; a record nobody holds is
+   left out.
 2. **Hall of Lame.** Its rows and the league setting.
 
 ## 12. Perpetual trophies (#874)

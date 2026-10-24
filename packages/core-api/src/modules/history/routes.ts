@@ -87,6 +87,22 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions)
     handler: handlers.getHistorySummary,
   });
 
+  fastify.get('/records', {
+    schema: {
+      tags: ['History'],
+      summary: 'List the record book',
+      description: `The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. ${MEMBERS_ONLY}`,
+      operationId: 'listRecords',
+      response: {
+        200: schemaRef('RecordListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listRecords,
+  });
+
   fastify.get('/squads/:squadId/years', {
     schema: {
       tags: ['History'],

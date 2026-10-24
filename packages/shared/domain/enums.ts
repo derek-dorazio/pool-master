@@ -964,6 +964,27 @@ export const SummaryTile = {
 export type SummaryTile = (typeof SummaryTile)[keyof typeof SummaryTile];
 
 /**
+ * The league's record book on All years (#873), each worked out on read from its counted
+ * contest finishes and championships. A record shows its holders and the next best; ties show
+ * every holder.
+ */
+export const RecordType = {
+  /** League championships won, years over only. */
+  MOST_CHAMPIONSHIPS: 'MOST_CHAMPIONSHIPS',
+  /** The longest run of championships in consecutive years, two or more. */
+  BACK_TO_BACK_CHAMPIONS: 'BACK_TO_BACK_CHAMPIONS',
+  /** The most contest wins in one year. */
+  MOST_WINS_IN_A_YEAR: 'MOST_WINS_IN_A_YEAR',
+  /** The most contest wins of all time. */
+  MOST_WINS_ALL_TIME: 'MOST_WINS_ALL_TIME',
+  /** The most contests in a row on the podium, of the contests a squad placed in, in settlement order. */
+  LONGEST_PODIUM_RUN: 'LONGEST_PODIUM_RUN',
+  /** A contest win with the most ranked entries. */
+  BIGGEST_FIELD_WON: 'BIGGEST_FIELD_WON',
+} as const;
+export type RecordType = (typeof RecordType)[keyof typeof RecordType];
+
+/**
  * Which trophy a squad page's trophy shelf (#872) shows: a league championship finished 1st to 3rd
  * in a year that is over, or a crowned cup's trophy. Both use `CupTrophy` for the place.
  */

@@ -4,7 +4,7 @@
  * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
   CupContestCount,
@@ -16,6 +16,7 @@ import {
   championshipYear,
   championshipYearStart,
   trophyForPlace,
+  type RecordType,
   type SelectionType,
   type LeagueYearFinish,
   type Squad,
@@ -23,6 +24,10 @@ import {
 
 import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearView } from '../championship/service';
 import type { CupService, CupStandingView, CupView } from '../cups/service';
+import { rankRecords, type RecordStand } from './records';
+
+/** No date range: the record book names its contests by id alone. */
+const NO_DATE = new Date(0);
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -138,8 +143,28 @@ export interface SquadHistoryView {
   years: SquadYearView[];
 }
 
+/** One holder of a record value: the squad, and the year or contest it was set in when the record names one. */
+export interface RecordHolderView {
+  squad: Squad;
+  year: number | null;
+  contest: FinalContest | null;
+}
+
+export interface RecordStandView {
+  value: number;
+  /** In squad name order, then newest year first. */
+  holders: RecordHolderView[];
+}
+
+/** One record of the league's record book (#873): its holders, every one on a tie, and the next best. */
+export interface RecordView {
+  type: RecordType;
+  best: RecordStandView;
+  nextBest: RecordStandView | null;
+}
+
 export interface HistoryServiceDeps {
-  finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
+  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
   championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
@@ -193,6 +218,38 @@ export class HistoryService {
       tiles: [mostOf(SummaryTile.MOST_CHAMPIONSHIPS, championships), mostOf(SummaryTile.MOST_CUPS, cupWins)],
       years,
     };
+  }
+
+  /**
+   * The record book (#873): every record somebody holds, worked out from the league's counted
+   * contest finishes and its championships of years over. A squad that has since gone inactive
+   * still holds its records.
+   */
+  async getRecords(leagueId: string): Promise<RecordView[]> {
+    const [finishes, championshipYears, squads] = await Promise.all([
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.championship.listYears(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+    ]);
+    const ranked = rankRecords(finishes, championshipYears
+      .filter((row) => row.isOver)
+      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })));
+    const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
+      .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
+    const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
+    const standView = (stand: RecordStand): RecordStandView => ({
+      value: stand.value,
+      holders: stand.holders
+        .flatMap((holder): RecordHolderView[] => {
+          const squad = squadsById.get(holder.squadId);
+          return squad === undefined ? [] : [{ squad, year: holder.year, contest: holder.contestId === null ? null : contestsById.get(holder.contestId) ?? null }];
+        })
+        .sort((left, right) => left.squad.name.localeCompare(right.squad.name) || (right.year ?? 0) - (left.year ?? 0)),
+    });
+    this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length } }, 'Read the league\'s record book');
+    return ranked.map((record) => ({ type: record.type, best: standView(record.best), nextBest: record.nextBest === null ? null : standView(record.nextBest) }));
   }
 
   /**

@@ -5,7 +5,7 @@
  * squad's year for its squad page (#872).
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile, TrophyKind, YearReviewStatus } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, RecordType, SelectionType, SummaryTile, TrophyKind, YearReviewStatus } from '@poolmaster/shared/domain';
 import { ChampionshipSquadDtoSchema, ChampionshipStandingRowDtoSchema } from './championship.dto';
 import { CupStandingRowDtoSchema } from './cups.dto';
 import { DateTimeSchema } from './common.dto';
@@ -162,6 +162,32 @@ export const YearReviewResponseSchema = z.object({
 }).describe('Where the league\'s year in review for last year stands.');
 export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
 
+export const RecordHolderDtoSchema = z.object({
+  squad: ChampionshipSquadDtoSchema,
+  year: z.number().int().nullable().describe('The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.'),
+  contestId: z.string().uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON; null otherwise.'),
+  contestName: z.string().nullable().describe('That contest\'s name; null otherwise.'),
+}).describe('One holder of a record value.');
+export type RecordHolderDto = z.infer<typeof RecordHolderDtoSchema>;
+
+export const RecordStandDtoSchema = z.object({
+  value: z.number().int().describe('Championships, years in a row, wins, contests in a row or ranked entries, by the record\'s type.'),
+  holders: z.array(RecordHolderDtoSchema).describe('Every holder of the value, in squad name order, then newest year first.'),
+}).describe('One value of a record and who holds it.');
+export type RecordStandDto = z.infer<typeof RecordStandDtoSchema>;
+
+export const RecordDtoSchema = z.object({
+  type: z.nativeEnum(RecordType).describe('MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries).'),
+  best: RecordStandDtoSchema,
+  nextBest: RecordStandDtoSchema.nullable().describe('The next value down and its holders; null when nobody else has one.'),
+}).describe('One record of the league\'s record book.');
+export type RecordDto = z.infer<typeof RecordDtoSchema>;
+
+export const RecordListResponseSchema = z.object({
+  records: z.array(RecordDtoSchema).describe('Every record somebody holds, in RecordType order; a record nobody holds yet is left out.'),
+}).describe('The league\'s record book.');
+export type RecordListResponse = z.infer<typeof RecordListResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
@@ -182,3 +208,7 @@ registerSchema('SquadHistoryDto', SquadHistoryDtoSchema);
 registerSchema('SquadHistoryResponse', SquadHistoryResponseSchema);
 registerSchema('YearReviewDto', YearReviewDtoSchema);
 registerSchema('YearReviewResponse', YearReviewResponseSchema);
+registerSchema('RecordHolderDto', RecordHolderDtoSchema);
+registerSchema('RecordStandDto', RecordStandDtoSchema);
+registerSchema('RecordDto', RecordDtoSchema);
+registerSchema('RecordListResponse', RecordListResponseSchema);

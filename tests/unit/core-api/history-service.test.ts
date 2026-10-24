@@ -6,6 +6,7 @@
 import type { FinalContest } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
+  RecordType,
   CupContestCount,
   CupStatus,
   CupTrophy,
@@ -92,6 +93,21 @@ function build() {
 }
 
 describe('HistoryService (#837)', () => {
+  it('ranks the record book with each holder\'s squad, the year and the contest won, holders in name order', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 2], ['bogeys', 1, 2], ['birdies', 3, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    const biggest = records.find((row) => row.type === RecordType.BIGGEST_FIELD_WON);
+    expect(biggest?.best.holders.map((holder) => [holder.squad.name, holder.year, holder.contest?.name])).toEqual([
+      ['Bogeys', 2025, 'masters'],
+      ['Eagles', 2025, 'masters'],
+    ]);
+    expect(records.map((row) => row.type)).toEqual([RecordType.MOST_WINS_IN_A_YEAR, RecordType.MOST_WINS_ALL_TIME, RecordType.LONGEST_PODIUM_RUN, RecordType.BIGGEST_FIELD_WON]);
+  });
+
   it('lists every contest that went final in the year newest first, counted, not counted or without a result, with co-winners in name order and the entries ranked', async () => {
     const { contest, finish, service } = build();
     contest('masters', '2026-04-13T22:00:00.000Z');
