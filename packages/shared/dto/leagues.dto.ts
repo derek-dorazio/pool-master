@@ -16,6 +16,7 @@ import {
 import { DateTimeSchema, EmailInputSchema } from './common.dto';
 import { SquadMembershipDtoSchema } from './squads.dto';
 import { UserDtoSchema } from './users.dto';
+import { PlanEntitlementsDtoSchema } from './plans.dto';
 
 /** The curated league icon catalog, shared by the league response and the details update. */
 const LeagueIconKeySchema = z.enum([
@@ -177,6 +178,9 @@ export const LeagueDtoSchema = z.object({
   cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
   hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.'),
+  planEntitlements: PlanEntitlementsDtoSchema.describe(
+    'The league\'s plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
+  ),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 

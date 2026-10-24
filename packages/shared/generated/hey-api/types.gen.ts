@@ -574,6 +574,89 @@ export type TokenRefreshResponse = {
 };
 
 /**
+ * Each cap's limit on one plan.
+ */
+export type PlanCapsDto = {
+    /**
+     * Entries per contest, drafts included, or null for unlimited.
+     */
+    ENTRIES_PER_CONTEST: number | null;
+    /**
+     * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+     */
+    SPORTS_LEAGUES_PER_YEAR: number | null;
+};
+
+/**
+ * What a league on one plan may do, from the current plan settings.
+ */
+export type PlanEntitlementsDto = {
+    /**
+     * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+     */
+    plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+    /**
+     * Each cap's limit on one plan.
+     */
+    caps: {
+        /**
+         * Entries per contest, drafts included, or null for unlimited.
+         */
+        ENTRIES_PER_CONTEST: number | null;
+        /**
+         * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+         */
+        SPORTS_LEAGUES_PER_YEAR: number | null;
+    };
+    /**
+     * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+     */
+    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+};
+
+/**
+ * What each league plan allows.
+ */
+export type LeaguePlanListResponse = {
+    /**
+     * Every plan, lowest first, for comparing them.
+     */
+    plans: Array<{
+        /**
+         * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+         */
+        plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * Each cap's limit on one plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included, or null for unlimited.
+             */
+            ENTRIES_PER_CONTEST: number | null;
+            /**
+             * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+             */
+            SPORTS_LEAGUES_PER_YEAR: number | null;
+        };
+        /**
+         * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+         */
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+    }>;
+};
+
+/**
+ * A league's new plan.
+ */
+export type UpdateLeaguePlanRequest = {
+    /**
+     * The plan to move the league to. It applies at once and costs nothing.
+     */
+    plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -1373,6 +1456,32 @@ export type LeagueDto = {
      * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
      */
     hallOfLameVisible: boolean;
+    /**
+     * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+     */
+    planEntitlements: {
+        /**
+         * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+         */
+        plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * Each cap's limit on one plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included, or null for unlimited.
+             */
+            ENTRIES_PER_CONTEST: number | null;
+            /**
+             * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+             */
+            SPORTS_LEAGUES_PER_YEAR: number | null;
+        };
+        /**
+         * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+         */
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+    };
 };
 
 /**
@@ -1646,6 +1755,32 @@ export type LeagueResponse = {
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
+        /**
+         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         */
+        planEntitlements: {
+            /**
+             * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+             */
+            plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * Each cap's limit on one plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included, or null for unlimited.
+                 */
+                ENTRIES_PER_CONTEST: number | null;
+                /**
+                 * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: number | null;
+            };
+            /**
+             * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+             */
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        };
     };
 };
 
@@ -1709,6 +1844,32 @@ export type LeagueContextResponse = {
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
+        /**
+         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         */
+        planEntitlements: {
+            /**
+             * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+             */
+            plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * Each cap's limit on one plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included, or null for unlimited.
+                 */
+                ENTRIES_PER_CONTEST: number | null;
+                /**
+                 * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: number | null;
+            };
+            /**
+             * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+             */
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        };
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -1945,6 +2106,32 @@ export type LeagueListResponse = {
          * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
          */
         hallOfLameVisible: boolean;
+        /**
+         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         */
+        planEntitlements: {
+            /**
+             * The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.
+             */
+            plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * Each cap's limit on one plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included, or null for unlimited.
+                 */
+                ENTRIES_PER_CONTEST: number | null;
+                /**
+                 * Different sports leagues among the league's contests in a calendar year, or null for unlimited.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: number | null;
+            };
+            /**
+             * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
+             */
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        };
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -22662,6 +22849,49 @@ export type UpdateLeagueCupSettingsResponses = {
 
 export type UpdateLeagueCupSettingsResponse = UpdateLeagueCupSettingsResponses[keyof UpdateLeagueCupSettingsResponses];
 
+export type UpdateLeaguePlanData = {
+    body: UpdateLeaguePlanRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/plan';
+};
+
+export type UpdateLeaguePlanErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type UpdateLeaguePlanError = UpdateLeaguePlanErrors[keyof UpdateLeaguePlanErrors];
+
+export type UpdateLeaguePlanResponses = {
+    /**
+     * Single-league response.
+     */
+    200: LeagueResponse;
+};
+
+export type UpdateLeaguePlanResponse = UpdateLeaguePlanResponses[keyof UpdateLeaguePlanResponses];
+
 export type InactivateLeagueData = {
     body?: never;
     path: {
@@ -23053,6 +23283,31 @@ export type ImportMembersResponses = {
 };
 
 export type ImportMembersResponse = ImportMembersResponses[keyof ImportMembersResponses];
+
+export type ListLeaguePlansData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/v1/plans/';
+};
+
+export type ListLeaguePlansErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+};
+
+export type ListLeaguePlansError = ListLeaguePlansErrors[keyof ListLeaguePlansErrors];
+
+export type ListLeaguePlansResponses = {
+    /**
+     * What each league plan allows.
+     */
+    200: LeaguePlanListResponse;
+};
+
+export type ListLeaguePlansResponse = ListLeaguePlansResponses[keyof ListLeaguePlansResponses];
 
 export type ListLeagueSquadsData = {
     body?: never;

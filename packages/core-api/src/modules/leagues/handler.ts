@@ -3,7 +3,9 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { LeagueListResponse } from '@poolmaster/shared/dto';
+import type { LeagueListResponse, UpdateLeaguePlanRequest } from '@poolmaster/shared/dto';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import type { LeaguePlanService } from '../plans/league-plan-service';
 import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
@@ -25,7 +27,13 @@ export function createLeagueHandlers(
   _membershipRepo: LeagueMembershipRepository,
   squadMembershipRepo: SquadMembershipRepository,
   userRepo: UserRepository,
+  planEntitlements: PlanEntitlementsService,
+  leaguePlanService: LeaguePlanService,
 ) {
+  /** A league as the API returns it, with what its plan allows under the current plan settings. */
+  const leagueDto = (league: League, counts?: Parameters<typeof toLeagueDto>[2]) =>
+    toLeagueDto(league, planEntitlements.forPlan(league.plan), counts);
+
   return {
     listLeagues,
     createLeague,
@@ -33,6 +41,7 @@ export function createLeagueHandlers(
     getLeagueByCode,
     updateLeagueDetails,
     updateLeagueCupSettings,
+    updateLeaguePlan,
     inactivateLeague,
     activateLeague,
     deleteLeague,
@@ -110,7 +119,7 @@ export function createLeagueHandlers(
     // as fields repeated on every row. Under `scope: 'all'` it is legitimately shorter than
     // the league list, and empty for a root admin who belongs to none of them.
     return {
-      leagues: rows.map((row) => toLeagueDto(row.league, {
+      leagues: rows.map((row) => leagueDto(row.league, {
         memberCount: row.memberCount,
         activeContestCount: row.activeContestCount,
       })),
@@ -169,7 +178,7 @@ export function createLeagueHandlers(
       data: { leagueId: result.league.id, userId },
     }, 'Created league');
     return reply.status(201).send({
-      league: toLeagueDto(result.league, { memberCount: 1, activeContestCount: 0 }),
+      league: leagueDto(result.league, { memberCount: 1, activeContestCount: 0 }),
       membership: viewer ? mapLeagueMembershipToDto(result.membership, viewer) : null,
       // Null by construction: a league has no squads the instant it is created.
       squadMembership: null,
@@ -301,7 +310,7 @@ export function createLeagueHandlers(
       data: { ...logData, leagueId: result.league.id, memberCount: result.members.length },
     }, 'Loaded league context');
     return reply.send({
-      league: toLeagueDto(result.league, {
+      league: leagueDto(result.league, {
         memberCount: counts.memberCounts.get(result.league.id) ?? 0,
         activeContestCount: counts.activeContestCounts.get(result.league.id) ?? 0,
       }),
@@ -329,7 +338,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Inactivated league');
       return reply.send({
-        league: toLeagueDto(league),
+        league: leagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -366,7 +375,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Activated league');
       return reply.send({
-        league: toLeagueDto(league),
+        league: leagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -406,7 +415,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Updated league details');
       return reply.send({
-        league: toLeagueDto(league),
+        league: leagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -445,7 +454,7 @@ export function createLeagueHandlers(
         action: 'leagueRoute.updateCupSettings.success',
         data: { leagueId: request.params.id },
       }, 'Updated league cup settings');
-      return reply.send({ league: toLeagueDto(league) });
+      return reply.send({ league: leagueDto(league) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({
@@ -459,6 +468,49 @@ export function createLeagueHandlers(
           action: 'leagueRoute.updateCupSettings.invalid',
           data: { leagueId: request.params.id, errorCode: err.code },
         }, 'Rejected league cup settings update');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function updateLeaguePlan(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: UpdateLeaguePlanRequest;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueRoute.updatePlan.enter',
+      data: { leagueId: request.params.id, plan: request.body.plan },
+    }, 'Handling update league plan request');
+    const userId = request.authUser?.userId;
+    if (!userId) {
+      logger.warn({ action: 'leagueRoute.updatePlan.unauthenticated' }, 'Rejected league plan change without authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    }
+    try {
+      const league = await leaguePlanService.changePlan(request.params.id, request.body.plan, userId);
+      logger.info({
+        action: 'leagueRoute.updatePlan.success',
+        data: { leagueId: request.params.id, plan: league.plan },
+      }, 'Updated league plan');
+      return reply.send({ league: leagueDto(league) });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        logger.warn({
+          action: 'leagueRoute.updatePlan.notFound',
+          data: { leagueId: request.params.id },
+        }, 'Cannot change the plan of a missing league');
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof LeagueOperationError) {
+        logger.warn({
+          action: 'leagueRoute.updatePlan.invalid',
+          data: { leagueId: request.params.id, errorCode: err.code },
+        }, 'Rejected league plan change');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;

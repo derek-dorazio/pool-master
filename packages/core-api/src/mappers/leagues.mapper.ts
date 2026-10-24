@@ -10,9 +10,13 @@
  */
 import type { LeagueDto } from '@poolmaster/shared/dto';
 import type { League } from '@poolmaster/shared/domain';
+import type { PlanEntitlements } from '../modules/plans/plan-entitlements-service';
+import { toPlanEntitlementsDto } from './plans.mapper';
 
+/** `entitlements` is what the league's plan allows now, from the plan entitlements service (#945). */
 export function toLeagueDto(
   league: League,
+  entitlements: PlanEntitlements,
   counts?: {
     memberCount?: number;
     activeContestCount?: number;
@@ -32,5 +36,6 @@ export function toLeagueDto(
     cupPointsScale: league.cupPointsScale,
     cupCustomPoints: league.cupCustomPoints,
     hallOfLameVisible: league.hallOfLameVisible,
+    planEntitlements: toPlanEntitlementsDto(entitlements),
   };
 }
