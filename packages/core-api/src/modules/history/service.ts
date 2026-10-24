@@ -168,7 +168,6 @@ export interface RecordView {
 export interface PerpetualPlateView {
   year: number;
   contestId: string;
-  contestName: string;
   /** In name order. */
   winners: Squad[];
 }

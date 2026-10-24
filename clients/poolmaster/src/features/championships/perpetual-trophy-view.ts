@@ -7,6 +7,14 @@ export function perpetualTrophyName(trophy: Pick<PerpetualTrophyDto, 'seriesName
   return `${trophy.seriesName} ${formatSelectionTypeName(trophy.selectionType)}`;
 }
 
+/**
+ * A plate's line on a squad's trophy case, with the sports league so the men's and women's
+ * trophies of a shared series tell apart: "2026 US Open Bracket (ATP)".
+ */
+export function describeWonPlate({ trophy, plate }: WonPlate): string {
+  return `${plate.year} ${perpetualTrophyName(trophy)} (${trophy.sportLeagueName})`;
+}
+
 /** Who a plate names: "Gimme Putts", "Gimme Putts and Fore Play", or "No result" when nobody placed. */
 export function describePlateWinners(plate: PerpetualTrophyPlateDto): string {
   return plate.winners.length ? joinNames(plate.winners.map((squad) => squad.squadName)) : 'No result';

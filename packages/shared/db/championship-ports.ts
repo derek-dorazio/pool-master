@@ -18,7 +18,6 @@ export interface FinalContest {
  */
 export interface SeriesContest {
   id: string;
-  name: string;
   selectionType: SelectionType;
   cupWeight: CupWeight;
   eventSeriesId: string;

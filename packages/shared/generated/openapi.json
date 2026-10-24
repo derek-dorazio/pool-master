@@ -44663,9 +44663,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "contestName": {
-            "type": "string"
-          },
           "winners": {
             "type": "array",
             "items": {
@@ -44800,7 +44797,6 @@
         "required": [
           "year",
           "contestId",
-          "contestName",
           "winners"
         ],
         "additionalProperties": false,
@@ -44845,9 +44841,6 @@
                 "contestId": {
                   "type": "string",
                   "format": "uuid"
-                },
-                "contestName": {
-                  "type": "string"
                 },
                 "winners": {
                   "type": "array",
@@ -44983,7 +44976,6 @@
               "required": [
                 "year",
                 "contestId",
-                "contestName",
                 "winners"
               ],
               "additionalProperties": false,
@@ -45046,9 +45038,6 @@
                       "contestId": {
                         "type": "string",
                         "format": "uuid"
-                      },
-                      "contestName": {
-                        "type": "string"
                       },
                       "winners": {
                         "type": "array",
@@ -45184,7 +45173,6 @@
                     "required": [
                       "year",
                       "contestId",
-                      "contestName",
                       "winners"
                     ],
                     "additionalProperties": false,

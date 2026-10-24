@@ -482,9 +482,9 @@ describe('Championships › Trophy case', () => {
       sportLeagueName: 'NFL',
       selectionType: 'SQUARES',
       plates: [
-        { year: 2026, contestId: 'bowl-2026', contestName: 'Bowl Squares 2026', winners: [casey, birdies] },
-        { year: 2025, contestId: 'bowl-2025', contestName: 'Bowl Squares 2025', winners: [] },
-        { year: 2024, contestId: 'bowl-2024', contestName: 'Bowl Squares 2024', winners: [birdies] },
+        { year: 2026, contestId: 'bowl-2026', winners: [casey, birdies] },
+        { year: 2025, contestId: 'bowl-2025', winners: [] },
+        { year: 2024, contestId: 'bowl-2024', winners: [birdies] },
       ],
     }] }));
 
@@ -498,6 +498,26 @@ describe('Championships › Trophy case', () => {
     expect(screen.getByTestId('cup-card-cup-pga')).toBeInTheDocument();
   });
 
+  it('tells apart the men\'s and women\'s trophies of a shared series by their sports league', async () => {
+    primeViewer([buildRunningCup()]);
+    const draw = (eventSeriesId: string, sportLeagueName: string) => ({
+      eventSeriesId,
+      seriesName: 'US Open',
+      sportLeagueName,
+      selectionType: 'BRACKET',
+      plates: [{ year: 2026, contestId: `${sportLeagueName}-2026`, winners: [] }, { year: 2025, contestId: `${sportLeagueName}-2025`, winners: [] }],
+    } as const);
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [
+      draw('11111111-1111-4111-8111-111111111111', 'ATP'),
+      draw('22222222-2222-4222-8222-222222222222', 'WTA'),
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('perpetual-trophy-11111111-1111-4111-8111-111111111111-BRACKET')).toHaveTextContent('US Open BracketATP');
+    expect(screen.getByTestId('perpetual-trophy-22222222-2222-4222-8222-222222222222-BRACKET')).toHaveTextContent('US Open BracketWTA');
+  });
+
   it('shows the perpetual trophies even in a year with no cup on show', async () => {
     primeViewer([NBA_CUP]);
     listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
@@ -505,7 +525,7 @@ describe('Championships › Trophy case', () => {
       seriesName: 'Masters Tournament',
       sportLeagueName: 'PGA Tour',
       selectionType: 'TIERED',
-      plates: [{ year: 2025, contestId: 'masters-2025', contestName: 'Masters', winners: [] }, { year: 2024, contestId: 'masters-2024', contestName: 'Masters', winners: [] }],
+      plates: [{ year: 2025, contestId: 'masters-2025', winners: [] }, { year: 2024, contestId: 'masters-2024', winners: [] }],
     }] }));
 
     renderChampionships('/league/BIGDAWGS/championships/2026/trophies');

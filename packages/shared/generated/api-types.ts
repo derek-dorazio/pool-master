@@ -16822,7 +16822,6 @@ export interface components {
             year: number;
             /** Format: uuid */
             contestId: string;
-            contestName: string;
             /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
             winners: {
                 /** Format: uuid */
@@ -16854,7 +16853,6 @@ export interface components {
                 year: number;
                 /** Format: uuid */
                 contestId: string;
-                contestName: string;
                 /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
                 winners: {
                     /** Format: uuid */
@@ -16889,7 +16887,6 @@ export interface components {
                     year: number;
                     /** Format: uuid */
                     contestId: string;
-                    contestName: string;
                     /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
                     winners: {
                         /** Format: uuid */

@@ -9,7 +9,6 @@ import { buildPerpetualTrophies, isWeekOfGames } from '../../../packages/core-ap
 function contest(id: string, eventYear: number, overrides: Partial<SeriesContest> = {}): SeriesContest {
   return {
     id,
-    name: id,
     selectionType: SelectionType.TIERED,
     cupWeight: CupWeight.NORMAL,
     eventSeriesId: 'masters',

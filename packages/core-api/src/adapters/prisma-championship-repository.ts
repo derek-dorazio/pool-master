@@ -106,7 +106,6 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       where: { leagueId, status: ContestStatus.COMPLETED },
       select: {
         id: true,
-        name: true,
         selectionType: true,
         cupWeight: true,
         endsAt: true,
@@ -128,7 +127,6 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       const only = row.sportEvents.length === 1 ? row.sportEvents[0]?.sportEvent : undefined;
       return only === undefined ? [] : [{
         id: row.id,
-        name: row.name,
         selectionType: row.selectionType,
         cupWeight: row.cupWeight,
         eventSeriesId: only.eventSeries.id,

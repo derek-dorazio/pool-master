@@ -121,7 +121,6 @@ export function toPerpetualTrophyDto(view: PerpetualTrophyView): PerpetualTrophy
     plates: view.plates.map((plate) => ({
       year: plate.year,
       contestId: plate.contestId,
-      contestName: plate.contestName,
       winners: plate.winners.map(toChampionshipSquadDto),
     })),
   };

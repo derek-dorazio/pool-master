@@ -191,7 +191,6 @@ export type RecordListResponse = z.infer<typeof RecordListResponseSchema>;
 export const PerpetualTrophyPlateDtoSchema = z.object({
   year: z.number().int().describe('The year of the event the contest was on: the 2026 Masters.'),
   contestId: z.string().uuid(),
-  contestName: z.string(),
   winners: z.array(ChampionshipSquadDtoSchema).describe('The contest\'s 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.'),
 }).describe('One plate of a perpetual trophy: a year\'s contest and its winners.');
 export type PerpetualTrophyPlateDto = z.infer<typeof PerpetualTrophyPlateDtoSchema>;

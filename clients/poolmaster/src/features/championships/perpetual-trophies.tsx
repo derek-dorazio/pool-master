@@ -1,6 +1,6 @@
 import { Award } from 'lucide-react';
 import { ErrorState, Tile } from '@/features/shared/ui';
-import { describePlateWinners, perpetualTrophyName, type WonPlate } from './perpetual-trophy-view';
+import { describePlateWinners, describeWonPlate, perpetualTrophyName, type WonPlate } from './perpetual-trophy-view';
 import { usePerpetualTrophiesQuery } from './use-championship-query';
 
 /**
@@ -27,6 +27,7 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
             <Award aria-hidden className="text-primary" size={18} />
             {perpetualTrophyName(trophy)}
           </h3>
+          <p className="text-xs text-muted-foreground">{trophy.sportLeagueName}</p>
           <ul className="space-y-1 text-sm">
             {trophy.plates.map((plate) => (
               <li className="flex flex-wrap justify-between gap-2" data-testid={`perpetual-plate-${plate.contestId}`} key={plate.contestId}>
@@ -49,10 +50,10 @@ export function SquadPerpetualPlates({ plates }: { plates: WonPlate[] }) {
 
   return (
     <ul className="space-y-1 text-sm" data-testid="squad-history-plates">
-      {plates.map(({ trophy, plate }) => (
-        <li className="inline-flex w-full items-center gap-2 text-foreground" data-testid={`squad-history-plate-${plate.contestId}`} key={plate.contestId}>
+      {plates.map((won) => (
+        <li className="inline-flex w-full items-center gap-2 text-foreground" data-testid={`squad-history-plate-${won.plate.contestId}`} key={won.plate.contestId}>
           <Award aria-hidden className="text-muted-foreground" size={16} />
-          {`${plate.year} ${perpetualTrophyName(trophy)}`}
+          {describeWonPlate(won)}
         </li>
       ))}
     </ul>

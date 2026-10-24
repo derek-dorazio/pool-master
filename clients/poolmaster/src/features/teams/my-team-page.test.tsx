@@ -531,14 +531,14 @@ describe('My team › Trophies and past years', () => {
       sportLeagueName: 'NFL',
       selectionType: 'SQUARES',
       plates: [
-        { year: 2025, contestId: 'bowl-2025', contestName: 'Bowl 2025', winners: [mine, rival] },
-        { year: 2024, contestId: 'bowl-2024', contestName: 'Bowl 2024', winners: [rival] },
+        { year: 2025, contestId: 'bowl-2025', winners: [mine, rival] },
+        { year: 2024, contestId: 'bowl-2024', winners: [rival] },
       ],
     }] }));
 
     renderTeamRoutes();
 
-    expect(await screen.findByTestId('squad-history-plate-bowl-2025')).toHaveTextContent('2025 Super Bowl Squares');
+    expect(await screen.findByTestId('squad-history-plate-bowl-2025')).toHaveTextContent('2025 Super Bowl Squares (NFL)');
     expect(screen.queryByTestId('squad-history-plate-bowl-2024')).not.toBeInTheDocument();
     // A plate is a trophy, so the empty shelf's note gives way to it.
     expect(screen.queryByTestId('squad-history-trophies-none')).not.toBeInTheDocument();

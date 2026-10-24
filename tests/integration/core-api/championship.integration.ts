@@ -287,11 +287,11 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const contests = await repo.findSeriesContests(league.id);
 
     const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId }, select: { name: true, sportLeague: { select: { name: true } } } });
-    expect(contests.map((row) => [row.name, row.cupWeight, row.eventYear, row.games.map((one) => [one.roundNumber, one.sendsWinnerOn]).sort((left, right) => Number(left[0]) - Number(right[0]))]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
+    expect(contests.map((row) => [row.id === masters.id ? 'Masters' : 'Final', row.cupWeight, row.eventYear, row.games.map((one) => [one.roundNumber, one.sendsWinnerOn]).sort((left, right) => Number(left[0]) - Number(right[0]))]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
       ['Final', CupWeight.NORMAL, 2026, [[1, true], [2, false]]],
       ['Masters', CupWeight.NOT_COUNTED, 2026, []],
     ]);
-    expect(contests.find((row) => row.name === 'Masters')).toMatchObject({
+    expect(contests.find((row) => row.id === masters.id)).toMatchObject({
       eventSeriesId: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId,
       seriesName: series.name,
       sportLeagueName: series.sportLeague.name,

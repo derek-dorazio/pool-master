@@ -19009,7 +19009,6 @@ export type PerpetualTrophyPlateDto = {
      */
     year: number;
     contestId: string;
-    contestName: string;
     /**
      * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
      */
@@ -19049,7 +19048,6 @@ export type PerpetualTrophyDto = {
          */
         year: number;
         contestId: string;
-        contestName: string;
         /**
          * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
          */
@@ -19094,7 +19092,6 @@ export type PerpetualTrophyListResponse = {
              */
             year: number;
             contestId: string;
-            contestName: string;
             /**
              * The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.
              */

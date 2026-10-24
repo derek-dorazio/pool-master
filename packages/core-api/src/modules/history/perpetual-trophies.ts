@@ -14,7 +14,6 @@ export const PERPETUAL_TROPHY_MIN_YEARS = 2;
 export interface PerpetualPlate {
   year: number;
   contestId: string;
-  contestName: string;
   /** The contest's 1st place squads, every one on a tie; none for a contest with no result. */
   winnerSquadIds: string[];
 }
@@ -65,7 +64,7 @@ export function buildPerpetualTrophies(contests: readonly SeriesContest[], finis
         selectionType: first.selectionType,
         plates: [...runs]
           .sort((left, right) => right.eventYear - left.eventYear || (right.completedAt?.getTime() ?? 0) - (left.completedAt?.getTime() ?? 0))
-          .map((contest) => ({ year: contest.eventYear, contestId: contest.id, contestName: contest.name, winnerSquadIds: winners.get(contest.id) ?? [] })),
+          .map((contest) => ({ year: contest.eventYear, contestId: contest.id, winnerSquadIds: winners.get(contest.id) ?? [] })),
       };
     })
     .sort((left, right) => left.sportLeagueName.localeCompare(right.sportLeagueName)

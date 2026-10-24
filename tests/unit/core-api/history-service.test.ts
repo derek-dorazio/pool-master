@@ -122,7 +122,6 @@ describe('HistoryService (#837)', () => {
     for (const year of [2024, 2025]) {
       finishes.seriesContests.push({ leagueId: LEAGUE, contest: {
         id: `masters-${year}`,
-        name: `Masters ${year}`,
         selectionType: SelectionType.TIERED,
         cupWeight: CupWeight.NORMAL,
         eventSeriesId: 'masters',
@@ -138,8 +137,8 @@ describe('HistoryService (#837)', () => {
 
     const trophies = await service.getPerpetualTrophies(LEAGUE);
 
-    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestName, plate.winners.map((squad) => squad.name)])])).toEqual([
-      ['Masters Tournament', [[2025, 'Masters 2025', ['Birdies']], [2024, 'Masters 2024', ['Bogeys', 'Eagles']]]],
+    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
+      ['Masters Tournament', [[2025, 'masters-2025', ['Birdies']], [2024, 'masters-2024', ['Bogeys', 'Eagles']]]],
     ]);
   });
 
