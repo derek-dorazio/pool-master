@@ -28,13 +28,14 @@ export function useSportLeaguesQuery(sport: Sport) {
 
 /**
  * How an event's rounds are labelled (#706): by its sport league's round names where the league
- * has them (the NBA's "Conference Finals"), otherwise by the sport's. It reads the sport's
+ * has them (the NBA's "Conference Finals"), otherwise by its sport league definition's (a stat
+ * pool's games). It reads the sport's
  * leagues, which the Manage screens already hold; until they load, rounds take the sport's names.
  */
-export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLeagueId'>): (roundNumber: number, roundCount: number) => string {
+export function useEventRoundLabel(event: Pick<SportEventDto, 'sport' | 'sportLeagueId' | 'participantType' | 'scoringFamily'>): (roundNumber: number, roundCount: number) => string {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
   const roundNames = leaguesQuery.data?.find((league) => league.id === event.sportLeagueId)?.roundNames ?? [];
-  return (roundNumber, roundCount) => eventRoundLabel(event.sport, roundNames, roundNumber, roundCount);
+  return (roundNumber, roundCount) => eventRoundLabel(event, roundNames, roundNumber, roundCount);
 }
 
 /**

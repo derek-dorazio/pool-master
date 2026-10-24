@@ -778,7 +778,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     ]);
   });
 
-  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s', async () => {
+  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s and the championship stat pools last', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       select: { name: true, displayOrder: true, sport: { select: { sport: true } } },
       orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
@@ -792,8 +792,8 @@ describe('The seeded NFL league and its knockout templates', () => {
       const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
       expect(new Set(orders).size).toBe(orders.length);
     }
-    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Finals']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
   });
 });
@@ -1150,5 +1150,58 @@ describe('Every seeded sport league\'s test data', () => {
     const leagues = await getPrisma().sportLeague.findMany({ include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => `${league.sport.sport} ${league.name}`).filter((key) => !covered.has(key))).toEqual([]);
+  });
+});
+
+
+// The championship stat pools (#934): one sport league per championship, of players scored by
+// the composite family, each with golf's three roster formats on the composite total.
+describe('The seeded championship stat pool leagues and their templates', () => {
+  const STAT_POOL_LEAGUES = [
+    { sport: Sport.BASEBALL, league: 'World Series', prefix: 'world-series', composite: 'box-score' },
+    { sport: Sport.BASKETBALL, league: 'NBA Finals', prefix: 'nba-finals', composite: 'triple-threat' },
+    { sport: Sport.HOCKEY, league: 'Stanley Cup Final', prefix: 'stanley-cup-final', composite: 'power-play' },
+    { sport: Sport.AMERICAN_FOOTBALL, league: 'Championship Weekend', prefix: 'championship-weekend', composite: 'redzone' },
+    { sport: Sport.AMERICAN_FOOTBALL, league: 'Super Bowl', prefix: 'super-bowl', composite: 'redzone' },
+  ];
+
+  it('seeds exactly the five championships as composite leagues of players', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
+
+    expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(
+      [...STAT_POOL_LEAGUES].sort((left, right) => left.league.localeCompare(right.league))
+        .map(({ sport, league }) => [sport, league, 'INDIVIDUAL', 'COMPOSITE']),
+    );
+  });
+
+  it.each(STAT_POOL_LEAGUES)('gives $league a Tiered (6 tiers, best 4), a Budget (6 players, best 4) and a Quick pick (3 players) default, Tiered first, each scored by the composite total', async ({ league, prefix, composite }) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE' } },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    expect(templates.map((template) => [template.templateKey, template.eventType, template.isDefault])).toEqual([
+      [`${prefix}-tiered-${composite}`, null, true],
+      [`${prefix}-budget-${composite}`, null, true],
+      [`${prefix}-quick-pick-${composite}`, null, true],
+    ]);
+    const shapes = templates.map((template) => {
+      const rules = ContestRulesWithEntryLimitSchema.parse(template.configJson);
+      expect(rules.scoring).toEqual({ participantScoringDefinitionId: 'COMPOSITE_TOTAL', config: {} });
+      switch (rules.selectionType) {
+        case SelectionType.TIERED:
+          return [rules.picksPerTier, rules.countedScores];
+        case SelectionType.BUDGET_PICK:
+          return [rules.rosterSize, rules.countedScores];
+        case SelectionType.RANDOM_DRAW:
+          return [rules.picksPerEntry, rules.countedScores];
+        case SelectionType.SQUARES:
+        case SelectionType.PICK_EM:
+        case SelectionType.BRACKET:
+        case SelectionType.SURVIVOR:
+          return [rules.selectionType];
+      }
+    });
+    expect(shapes).toEqual([[1, 4], [6, 4], [3, 3]]);
   });
 });

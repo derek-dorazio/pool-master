@@ -66,7 +66,7 @@ export type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';
-export type { SportEventParticipantStatLineRepository } from './stat-line-ports';
+export type { GameStatLineWrite, SportEventParticipantStatLineRepository } from './stat-line-ports';
 export type {
   RaceResultApply,
   RaceResultWrite,

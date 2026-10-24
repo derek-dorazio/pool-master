@@ -415,6 +415,7 @@ describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
       status,
       completedAt: null,
       golf: { strokes, scoreToPar: strokes - 71, thru: 18 },
+      statLines: [],
     };
   }
 

@@ -115,8 +115,8 @@ export interface ContestCreateSportEventState {
    * Its sport league's participant type and scoring family when not its sport's (#934: a stat
    * pool's players and composite scoring). Read through `eventSportDefinition`.
    */
-  participantType?: ParticipantType;
-  scoringFamily?: ScoringFamily;
+  participantType?: ParticipantType | null;
+  scoringFamily?: ScoringFamily | null;
 }
 
 export interface ContestCreateSportEventReader {
