@@ -407,8 +407,8 @@ describe('RootAdminSettingsPage budget pricing card (#93)', () => {
 describe('RootAdminSettingsPage plans card', () => {
   const PLAN_DEFAULTS = {
     caps: {
-      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: null },
-      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: null, PLATINUM: null },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: 50 },
     },
     features: {
       EMAIL_CONTEST_OPENED: 'FREE', EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE', EMAIL_CONTEST_RESULTS: 'FREE',
@@ -437,14 +437,14 @@ describe('RootAdminSettingsPage plans card', () => {
     });
   });
 
-  it('lists each cap\'s limit on every plan, Free to Platinum, with Platinum always unlimited', async () => {
+  it('lists each cap\'s limit on every plan, Free to Platinum, Platinum\'s included', async () => {
     renderPage();
 
     const card = within(await screen.findByTestId('root-admin-settings-group-PLAN_CONFIG'));
     expect(card.getByText('Entries per contest')).toBeInTheDocument();
     expect(card.getByText('Free 20 · Pro 50 · Premium Unlimited · Platinum Unlimited')).toBeInTheDocument();
     expect(card.getByText('Sports leagues a year')).toBeInTheDocument();
-    expect(card.getByText('Free 1 · Pro 3 · Premium 10 · Platinum Unlimited')).toBeInTheDocument();
+    expect(card.getByText('Free 5 · Pro 15 · Premium 30 · Platinum 50')).toBeInTheDocument();
   });
 
   it('links the plans section to the Plans page, where the caps and features are edited', async () => {

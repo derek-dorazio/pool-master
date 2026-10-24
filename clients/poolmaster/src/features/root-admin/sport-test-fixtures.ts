@@ -204,19 +204,19 @@ export function budgetPricingGroupFixture(): Extract<SettingsGroup, { key: 'BUDG
   };
 }
 
-/** The Plans settings group at its starting values (#944), never changed. */
+/** The Plans settings group at its code defaults (the plan matrix, #986), never changed. */
 export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' }> {
   const value = {
     caps: {
-      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100 },
-      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100, PLATINUM: 500 },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: 50 },
     },
     features: {
       EMAIL_CONTEST_OPENED: 'FREE', EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE', EMAIL_CONTEST_RESULTS: 'FREE',
       EMAIL_CONTEST_EVENT_CHANGED: 'FREE', EMAIL_CONTEST_STARTED_SUMMARY: 'PRO', EMAIL_CONTEST_ENTRY_REMINDER: 'PRO',
       EMAIL_CONTEST_STANDINGS: 'PRO', EMAIL_EVENT_COMING_UP: 'PRO', EMAIL_EVENT_READY_FOR_CONTESTS: 'PRO',
       EMAIL_CONTEST_NOT_OPEN: 'PRO', EMAIL_YEAR_IN_REVIEW: 'PRO', EMAIL_LEAGUE_MEMBER_JOINED: 'PRO', CUP_STANDINGS: 'PRO', CUP_CROWNING: 'PRO', CHAMPIONSHIP: 'PRO',
-      TROPHY_SHELF: 'PRO', CUP_SETTINGS: 'PRO', PAST_YEARS: 'PRO', ALL_TIME_SUMMARY: 'PLATINUM', RECORD_BOOK: 'PLATINUM',
+      TROPHY_SHELF: 'PRO', CUP_SETTINGS: 'PRO', PAST_YEARS: 'PRO', ALL_TIME_SUMMARY: 'PREMIUM', RECORD_BOOK: 'PREMIUM',
     },
   } satisfies Extract<SettingsGroup, { key: 'PLAN_CONFIG' }>['value'];
   return {

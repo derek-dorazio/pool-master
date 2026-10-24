@@ -596,16 +596,17 @@ model User {
   squadOwnerInvitationsSent     SquadOwnerInvitation[] @relation("SquadOwnerInvitedBy")
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
 
-  contestDraws        ContestDraw[]
-  yearReviewsSent     LeagueYearReview[]
-  squaresClaimed      ContestEntrySquare[]
-  squaresDrawn        ContestSquaresDraw[]
-  refreshTokens       RefreshToken[]
-  passwordResetTokens PasswordResetToken[]
-  emailMessages       EmailMessage[]
-  emailOptOuts        EmailOptOut[]
-  leaguePlanChanges   LeaguePlanChange[]   @relation("LeaguePlanChangedBy")
-  leaguePayments      LeaguePayment[]      @relation("LeaguePaymentPayer")
+  contestDraws             ContestDraw[]
+  yearReviewsSent          LeagueYearReview[]
+  squaresClaimed           ContestEntrySquare[]
+  squaresDrawn             ContestSquaresDraw[]
+  refreshTokens            RefreshToken[]
+  passwordResetTokens      PasswordResetToken[]
+  emailMessages            EmailMessage[]
+  emailOptOuts             EmailOptOut[]
+  leaguePlanChanges        LeaguePlanChange[]        @relation("LeaguePlanChangedBy")
+  leaguePlanRenewalChanges LeaguePlanRenewalChange[] @relation("LeaguePlanRenewalChangedBy")
+  leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
 
   @@map("users")
 }
@@ -663,8 +664,10 @@ model League {
   cupName             String                   @map("cup_name")
   /// Whether the record book shows its Hall of Lame rows (#873): most 2nds, 4ths and last places, the longest drought.
   hallOfLameVisible   Boolean                  @default(true) @map("hall_of_lame_visible")
-  /// What the league may do (#943): its caps and features come from PLAN_CONFIG. Platinum, which has everything, until a commissioner picks another.
-  plan                PrismaLeaguePlan         @default(PLATINUM)
+  /// What the league may do (#943): its caps and features come from PLAN_CONFIG. Premium at signup, a gift until `planRenewsAt` (plans/payments.md §3).
+  plan                PrismaLeaguePlan         @default(PREMIUM)
+  /// When the league's gifted plan ends (#986): six months after signup. Extending the gift moves it out.
+  planRenewsAt        DateTime                 @default(dbgenerated("(now() + '6 mons'::interval)")) @map("plan_renews_at") @db.Timestamptz
   /// Sport leagues whose upcoming events this league's commissioners are not emailed about (#851):
   /// "Coming up soon" and "Ready for contests". Empty, the default: every sport league. A business
   /// list of sport league ids, checked when set, not a foreign key.
@@ -685,6 +688,7 @@ model League {
   squadOwnerInvitations SquadOwnerInvitation[]
   emailMessages         EmailMessage[]
   planChanges           LeaguePlanChange[]
+  planRenewalChanges    LeaguePlanRenewalChange[]
   payments              LeaguePayment[]
 
   @@map("leagues")
@@ -749,6 +753,23 @@ model LeaguePlanChange {
 
   @@index([leagueId, changedAt(sort: Desc)])
   @@map("league_plan_changes")
+}
+
+/// One move of a league's renewal date (#986): a root admin extending its gifted plan, from which date to which. Append-only.
+/// Deleting the user who made it keeps the row with nobody named, like league_plan_changes.
+model LeaguePlanRenewalChange {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId     String   @map("league_id") @db.Uuid
+  fromRenewsAt DateTime @map("from_renews_at") @db.Timestamptz
+  toRenewsAt   DateTime @map("to_renews_at") @db.Timestamptz
+  changedById  String?  @map("changed_by_id") @db.Uuid
+  changedAt    DateTime @default(now()) @map("changed_at") @db.Timestamptz
+
+  league    League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  changedBy User?  @relation("LeaguePlanRenewalChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([leagueId, changedAt(sort: Desc)])
+  @@map("league_plan_renewal_changes")
 }
 
 model LeagueMembership {

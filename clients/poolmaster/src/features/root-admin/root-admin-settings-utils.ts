@@ -1,4 +1,4 @@
-import { CAPPED_LEAGUE_PLANS, LEAGUE_PLANS, LeaguePlan, PlanCap } from '@poolmaster/shared/domain';
+import { LEAGUE_PLANS, PlanCap } from '@poolmaster/shared/domain';
 import type { BillingConfig, BudgetPricingConfig, EmailConfig, IngestionScheduleConfig, PlanConfig, SettingsChange } from '@/lib/api';
 import { describeExpansionPrices, describePayments } from '@/features/billing/billing-format';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
@@ -95,15 +95,12 @@ export function summarizeBudgetPricing(config: BudgetPricingConfig): SettingsSum
   }));
 }
 
-/** Each plan cap's limit on every plan, Free to Platinum; Platinum is always unlimited (#944). */
+/** Each plan cap's limit on every plan, Free to Platinum (#944). */
 export function summarizePlans(config: PlanConfig): SettingsSummaryItem[] {
   return Object.values(PlanCap).map((cap) => ({
     id: cap,
     label: PLAN_CAP_LABEL[cap],
-    value: [
-      ...CAPPED_LEAGUE_PLANS.map((plan) => `${LEAGUE_PLAN_LABEL[plan]} ${formatPlanLimit(config.caps[cap][plan])}`),
-      `${LEAGUE_PLAN_LABEL[LeaguePlan.PLATINUM]} ${formatPlanLimit(null)}`,
-    ].join(' · '),
+    value: LEAGUE_PLANS.map((plan) => `${LEAGUE_PLAN_LABEL[plan]} ${formatPlanLimit(config.caps[cap][plan])}`).join(' · '),
   }));
 }
 

@@ -13,6 +13,8 @@ import {
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { hasPlanFeature } from '@/features/plans/plan-features';
+import { ExtendLeagueGift } from '@/features/plans/extend-league-gift';
+import { useAuth } from '@/features/auth/auth-context';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import {
@@ -48,6 +50,7 @@ export function LeagueSettingsPage() {
   const { members } = useLeagueMembersQuery(leagueId);
   const squadsQuery = useLeagueSquadsQuery(leagueId);
   const sportLeaguesQuery = useSportLeaguesQuery();
+  const { isRootAdmin } = useAuth();
 
   // A commissioner is a membership role; their name comes from the team they own.
   const commissionerNames = useMemo(() => {
@@ -249,6 +252,11 @@ export function LeagueSettingsPage() {
           testId="league-settings-plan-name"
           value={<span className="font-semibold">{LEAGUE_PLAN_LABEL[league.planEntitlements.plan]}</span>}
         />
+        <SettingsRow
+          label="Premium preview period ends"
+          testId="league-settings-plan-renews"
+          value={formatDateDisplay(league.planRenewsAt)}
+        />
         {Object.values(PlanCap).map((cap) => (
           <SettingsRow
             key={cap}
@@ -257,6 +265,7 @@ export function LeagueSettingsPage() {
             value={formatPlanLimit(league.planEntitlements.caps[cap])}
           />
         ))}
+        {isRootAdmin ? <ExtendLeagueGift league={league} /> : null}
       </SettingsSection>
 
       <LeagueDangerZone league={league} />

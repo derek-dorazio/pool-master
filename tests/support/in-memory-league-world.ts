@@ -122,6 +122,8 @@ export interface InMemoryLeagueWorld {
   transaction: MembershipTransaction;
   /** Every plan change `leagues.changePlan` logged, oldest first. */
   planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }>;
+  /** Every renewal date move the extend methods logged, oldest first. */
+  planRenewalChanges: Array<{ leagueId: string; fromRenewsAt: Date; toRenewsAt: Date; changedById: string }>;
   tables: {
     users: Table<User>;
     leagues: Table<League>;
@@ -145,11 +147,19 @@ export interface InMemoryLeagueWorld {
   squadMembershipOf(leagueId: string, userId: string): SquadMembership | null;
 }
 
+/** A new league's renewal date, as the database default sets it. */
+function sixMonthsFromNow(): Date {
+  const date = new Date();
+  date.setUTCMonth(date.getUTCMonth() + 6);
+  return date;
+}
+
 export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const users = new Table<User>('user');
   const leagues = new Table<League>('league');
   /** Every plan change, in the order made, as league_plan_changes keeps them. */
   const planChanges: InMemoryLeagueWorld['planChanges'] = [];
+  const planRenewalChanges: InMemoryLeagueWorld['planRenewalChanges'] = [];
   const memberships = new Table<LeagueMembership>('membership');
   const squads = new Table<Squad>('squad');
   const squadMemberships = new Table<SquadMembership>('squad-membership');
@@ -194,8 +204,18 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       );
       return leagues.where((row) => leagueIds.has(row.id));
     },
-    // The points table starts STANDARD, the Hall of Lame shown, the plan PLATINUM and no sport league muted, as the database defaults have them.
-    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, plan: LeaguePlan.PLATINUM, mutedSportLeagueIds: [], eventEmailDelivery: EventEmailDelivery.PER_EVENT, ...row }),
+    // The points table starts STANDARD, the Hall of Lame shown, the plan PREMIUM renewing in six
+    // months and no sport league muted, as the database defaults have them.
+    create: async (row) => leagues.insert({
+      cupPointsScale: CupPointsScale.STANDARD,
+      cupCustomPoints: [],
+      hallOfLameVisible: true,
+      plan: LeaguePlan.PREMIUM,
+      planRenewsAt: sixMonthsFromNow(),
+      mutedSportLeagueIds: [],
+      eventEmailDelivery: EventEmailDelivery.PER_EVENT,
+      ...row,
+    }),
     update: async (id, updates) => leagues.patch(id, updates),
     changePlan: async (leagueId, change) => {
       if (leagues.get(leagueId)?.plan !== change.fromPlan) {
@@ -203,6 +223,25 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       }
       planChanges.push({ leagueId, ...change });
       return leagues.patch(leagueId, { plan: change.toPlan });
+    },
+    extendPlanRenewal: async (leagueId, change) => {
+      const league = leagues.get(leagueId);
+      if (!league) {
+        return null;
+      }
+      if (league.planRenewsAt >= change.renewsAt) {
+        return league;
+      }
+      planRenewalChanges.push({ leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById });
+      return leagues.patch(leagueId, { planRenewsAt: change.renewsAt });
+    },
+    extendRunningPlanRenewals: async (change) => {
+      const running = leagues.where((row) => row.planRenewsAt > change.now && row.planRenewsAt < change.renewsAt);
+      for (const league of running) {
+        planRenewalChanges.push({ leagueId: league.id, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById });
+        leagues.patch(league.id, { planRenewsAt: change.renewsAt });
+      }
+      return running.length;
     },
   };
 
@@ -362,6 +401,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     ownerInvitations: ownerInvitationRepo,
     transaction,
     planChanges,
+    planRenewalChanges,
     tables: { users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations },
     addUser(overrides = {}) {
       userSequence += 1;
@@ -386,6 +426,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         cupCustomPoints: [],
         hallOfLameVisible: true,
         plan: LeaguePlan.PLATINUM,
+        planRenewsAt: new Date('2027-04-24T12:00:00.000Z'),
         mutedSportLeagueIds: [],
         eventEmailDelivery: EventEmailDelivery.PER_EVENT,
         ...overrides,

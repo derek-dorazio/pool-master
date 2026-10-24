@@ -538,15 +538,19 @@ describe('identity cluster repositories (#202)', () => {
   });
 
   describe('LeagueRepository.create — the plan (#944)', () => {
-    it('starts a new league on Platinum, which has everything, until a commissioner picks another plan', async () => {
+    it('starts a new league on a Premium gift that runs about six months from its creation', async () => {
       const repo = new PrismaLeagueRepository(getPrisma());
 
       const league = await repo.create({
         leagueCode: `${LEAGUE_CODE_PREFIX}P1`, name: 'Plan Default', isActive: true, iconKey: LeagueIconKey.TROPHY, cupName: 'Plan Default Cup',
       });
 
-      expect(league.plan).toBe(LeaguePlan.PLATINUM);
-      expect((await repo.findById(league.id))?.plan).toBe(LeaguePlan.PLATINUM);
+      const fiveMonthsOut = Date.now() + 150 * 24 * 60 * 60 * 1000;
+      const sevenMonthsOut = Date.now() + 215 * 24 * 60 * 60 * 1000;
+      expect(league.plan).toBe(LeaguePlan.PREMIUM);
+      expect((await repo.findById(league.id))?.plan).toBe(LeaguePlan.PREMIUM);
+      expect(league.planRenewsAt.getTime()).toBeGreaterThan(fiveMonthsOut);
+      expect(league.planRenewsAt.getTime()).toBeLessThan(sevenMonthsOut);
     });
   });
 
