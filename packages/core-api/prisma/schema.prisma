@@ -191,6 +191,7 @@ enum PrismaEmailTemplateKey {
   CONTEST_EVENT_CHANGED
   EVENT_COMING_UP
   EVENT_READY_FOR_CONTESTS
+  EVENT_WEEKLY_DIGEST
   CONTEST_NOT_OPEN
   EVENT_STILL_DRAFT
   SQUAD_OWNER_INVITE
@@ -450,6 +451,12 @@ enum PrismaCupWeight {
 
 /// A league's points table for cups and the championship (#841). Mirrors the domain
 /// `CupPointsScale`.
+/// How a league's commissioners hear about upcoming events (#851). Mirrors the domain `EventEmailDelivery`.
+enum PrismaEventEmailDelivery {
+  PER_EVENT
+  WEEKLY_DIGEST
+}
+
 enum PrismaCupPointsScale {
   STANDARD
   TOP_TEN
@@ -603,28 +610,30 @@ model PasswordResetToken {
 // =============================================================================
 
 model League {
-  id                  String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueCode          String               @unique @map("league_code") @db.VarChar(16)
+  id                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueCode          String                   @unique @map("league_code") @db.VarChar(16)
   name                String
   description         String?
-  isActive            Boolean              @default(true) @map("is_active")
-  iconKey             PrismaLeagueIconKey  @default(TROPHY) @map("icon_key")
+  isActive            Boolean                  @default(true) @map("is_active")
+  iconKey             PrismaLeagueIconKey      @default(TROPHY) @map("icon_key")
   /// The points table every cup and the championship score with (#841).
-  cupPointsScale      PrismaCupPointsScale @default(STANDARD) @map("cup_points_scale")
+  cupPointsScale      PrismaCupPointsScale     @default(STANDARD) @map("cup_points_scale")
   /// The commissioner's points for 1st, 2nd ... ; set only for CUSTOM, empty otherwise (database check).
-  cupCustomPoints     Int[]                @default([]) @map("cup_custom_points")
+  cupCustomPoints     Int[]                    @default([]) @map("cup_custom_points")
   /// The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". Set to "<league name> Cup" at creation.
-  cupName             String               @map("cup_name")
+  cupName             String                   @map("cup_name")
   /// Whether the record book shows its Hall of Lame rows (#873): most 2nds, 4ths and last places, the longest drought.
-  hallOfLameVisible   Boolean              @default(true) @map("hall_of_lame_visible")
+  hallOfLameVisible   Boolean                  @default(true) @map("hall_of_lame_visible")
   /// What the league may do (#943): its caps and features come from PLAN_CONFIG. Platinum, which has everything, until a commissioner picks another.
-  plan                PrismaLeaguePlan     @default(PLATINUM)
+  plan                PrismaLeaguePlan         @default(PLATINUM)
   /// Sport leagues whose upcoming events this league's commissioners are not emailed about (#851):
   /// "Coming up soon" and "Ready for contests". Empty, the default: every sport league. A business
   /// list of sport league ids, checked when set, not a foreign key.
-  mutedSportLeagueIds String[]             @default([]) @map("muted_sport_league_ids") @db.Uuid
-  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  /// How the commissioners hear about upcoming events (#851). Mirrors the domain `EventEmailDelivery`.
+  eventEmailDelivery  PrismaEventEmailDelivery @default(PER_EVENT) @map("event_email_delivery")
+  mutedSportLeagueIds String[]                 @default([]) @map("muted_sport_league_ids") @db.Uuid
+  createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships           LeagueMembership[]
   cups                  Cup[]

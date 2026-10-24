@@ -15,7 +15,13 @@ import { describePointsTable } from '@/features/championships/cup-settings-view'
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { describeEventEmailSportLeagues, describeEventEmailsSection, hasEventEmails } from './event-emails-view';
+import {
+  EVENT_EMAIL_DELIVERY_COPY,
+  describeEventEmailSportLeagues,
+  describeEventEmailsSection,
+  hasEventEmails,
+  hasWeeklyDigest,
+} from './event-emails-view';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
@@ -200,6 +206,13 @@ export function LeagueSettingsPage() {
               ? describeEventEmailSportLeagues(sportLeaguesQuery.data, league.mutedSportLeagueIds)
               : <span className="text-muted-foreground">{sportLeaguesQuery.isError ? 'Unavailable' : 'Loading...'}</span>}
           />
+          {hasWeeklyDigest(league) ? (
+            <SettingsRow
+              label="Delivery"
+              testId="league-settings-event-emails-delivery"
+              value={EVENT_EMAIL_DELIVERY_COPY[league.eventEmailDelivery].label}
+            />
+          ) : null}
         </SettingsSection>
       ) : (
         <section className="space-y-3" data-testid="league-settings-event-emails">

@@ -6,6 +6,7 @@
  */
 import {
   ContestStatus,
+  EventEmailDelivery,
   LeagueRole,
   SelectionType,
   Sport,
@@ -14,6 +15,7 @@ import {
   type ContestTemplateEventType,
   type League,
   type SportEvent,
+  type SportLeague,
 } from '@poolmaster/shared/domain';
 import type { ContestFinalStandings } from '../../../packages/core-api/src/modules/contests/service';
 import { EMAIL_SETTINGS, EmailService } from '../../../packages/core-api/src/modules/email';
@@ -28,6 +30,10 @@ const NOW = new Date('2026-04-02T12:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 const inDays = (days: number) => new Date(NOW.getTime() + days * DAY);
+/** A Monday at 3am US Eastern (daylight time), when every weekly digest goes by default. */
+const MONDAY = new Date('2026-04-06T07:00:00.000Z');
+const mondayPlus = (days: number) => new Date(MONDAY.getTime() + days * DAY);
+const SPORT_LEAGUE_NAMES: Record<string, string> = { 'pga-tour': 'PGA Tour', lpga: 'LPGA Tour', nfl: 'NFL' };
 
 describe('CommissionerNotices', () => {
   let world: InMemoryContestWorld;
@@ -63,6 +69,8 @@ describe('CommissionerNotices', () => {
       matches: { findBySportEvent: async () => [] },
       templates: { list: async () => templates },
       leagues: world.leagueRepo(),
+      readConfig: () => config,
+      sportLeagues: { findById: async (id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague) },
       memberships: world.membershipRepo(),
       users: world.userRepo(),
       finalStandings: { finalStandingsOf: async (contest) => finals.get(contest.id) ?? { scoringDefinitionId: null, entries: [] } },
@@ -261,6 +269,96 @@ describe('CommissionerNotices', () => {
 
       expect(sent('EVENT_READY_FOR_CONTESTS')).toHaveLength(2);
       expect(textTo('EVENT_READY_FOR_CONTESTS', jordan.id, later)).not.toContain('Field:');
+    });
+  });
+
+  describe('Weekly digest', () => {
+    it("sends each commissioner of a league that chose the digest one email on Monday listing the next two weeks' events by week, with where the league stands on each, instead of the per-event emails", async () => {
+      const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+      const perEvent = world.addLeague({ name: 'Per Event League' });
+      const casey = person(office.id, 'Casey');
+      person(office.id, 'Morgan', LeagueRole.MEMBER);
+      const riley = person(perEvent.id, 'Riley');
+      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      const heritage = event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
+      world.addContest(office.id, { status: ContestStatus.DRAFT, sportEventIds: [heritage.id] });
+      event({ name: 'Valero Texas Open', status: SportEventStatus.DRAFT, startDate: mondayPlus(9) });
+      event({ name: 'Too Far Open', startDate: mondayPlus(15) });
+      event({ name: 'Already Started', startDate: new Date(MONDAY.getTime() - HOUR) });
+      event({ name: 'Called Off', status: SportEventStatus.CANCELLED, startDate: mondayPlus(3) });
+
+      await notices().queueDue(MONDAY);
+      await notices().queueDue(new Date(MONDAY.getTime() + HOUR));
+
+      expect(sent('EVENT_WEEKLY_DIGEST').map(({ userId, leagueId }) => `${userId}@${leagueId}`)).toEqual([`${casey.id}@${office.id}`]);
+      expect(outbox.rows.filter((row) => row.leagueId === office.id).map((row) => row.templateKey)).toEqual(['EVENT_WEEKLY_DIGEST']);
+      expect(sent('EVENT_READY_FOR_CONTESTS').map(({ userId }) => userId)).toEqual([riley.id, riley.id]);
+      const text = textTo('EVENT_WEEKLY_DIGEST', casey.id, office);
+      expect(text).toContain([
+        'This week:',
+        '',
+        'The Masters (PGA Tour), Apr 8, 2026, 7:00 AM UTC',
+        'Ready for contests. Create contest: https://app.example.test/league/OFFICE24/admin/contests/new',
+        '',
+        'RBC Heritage (PGA Tour), Apr 10, 2026, 7:00 AM UTC',
+        'Contest set up',
+        '',
+        'Next week:',
+        '',
+        'Valero Texas Open (PGA Tour), Apr 15, 2026, 7:00 AM UTC',
+        'Not ready for contests yet',
+      ].join('\n'));
+      expect(text).not.toContain('Too Far Open');
+      expect(text).not.toContain('Already Started');
+      expect(text).not.toContain('Called Off');
+    });
+
+    it("goes to every league at once, from 3am on Monday US Eastern, and once a week", async () => {
+      const office = world.addLeague({ eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+      const family = world.addLeague({ eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
+      const casey = person(office.id, 'Casey');
+      world.addMember(family.id, casey.id, { role: LeagueRole.COMMISSIONER });
+      const kim = person(family.id, 'Kim');
+      event({ name: 'The Masters', startDate: mondayPlus(3) });
+      event({ name: 'RBC Heritage', startDate: mondayPlus(10) });
+      const digests = () => sent('EVENT_WEEKLY_DIGEST').map(({ userId, leagueId }) => `${userId}@${leagueId}`).sort();
+      const firstWeek = [`${casey.id}@${office.id}`, `${casey.id}@${family.id}`, `${kim.id}@${family.id}`].sort();
+
+      // 2:30am Monday Eastern, and 3am on the Sunday before: not yet.
+      await notices().queueDue(new Date('2026-04-06T06:30:00.000Z'));
+      await notices().queueDue(new Date('2026-04-05T07:00:00.000Z'));
+      expect(digests()).toEqual([]);
+      await notices().queueDue(MONDAY);
+      await notices().queueDue(new Date(MONDAY.getTime() + 5 * HOUR));
+      expect(digests()).toEqual(firstWeek);
+      await notices().queueDue(mondayPlus(7));
+
+      expect(digests()).toHaveLength(6);
+    });
+
+    it("leaves out muted sport leagues and a football season's later weeks, and sends nothing when no event is coming up", async () => {
+      const league = world.addLeague({ eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST, mutedSportLeagueIds: ['lpga'] });
+      const casey = person(league.id, 'Casey');
+      event({ name: 'LPGA Open', sportLeagueId: 'lpga', startDate: mondayPlus(3) });
+      await notices().queueDue(MONDAY);
+      expect(sent('EVENT_WEEKLY_DIGEST')).toEqual([]);
+
+      const week = (name: string, days: number) => event({
+        name,
+        sport: Sport.AMERICAN_FOOTBALL,
+        rounds: 1,
+        sportLeagueId: 'nfl',
+        eventYear: 2026,
+        startDate: mondayPlus(days),
+      });
+      week('Week 1', 5);
+      week('Week 2', 12);
+      await notices().queueDue(new Date(MONDAY.getTime() + HOUR));
+
+      const text = textTo('EVENT_WEEKLY_DIGEST', casey.id, league);
+      expect(text).toContain('Week 1 (NFL)');
+      expect(text).not.toContain('Week 2');
+      expect(text).not.toContain('LPGA Open');
     });
   });
 

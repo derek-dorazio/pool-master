@@ -1,17 +1,21 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { updateLeagueEventEmailSettings, type LeagueDto } from '@/lib/api';
+import { EventEmailDelivery } from '@poolmaster/shared/domain';
+import { updateLeagueEventEmailSettings, type LeagueDto, type UpdateLeagueEventEmailSettingsRequest } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
-import { Button, Checkbox, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
+import { Button, Checkbox, ChoiceCard, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
 import {
+  EVENT_EMAIL_DELIVERIES,
+  EVENT_EMAIL_DELIVERY_COPY,
   EVENT_EMAIL_FEATURES,
   describeEventEmailsPage,
   groupEventEmailSportLeagues,
   hasEventEmails,
+  hasWeeklyDigest,
   type EventEmailSport,
 } from './event-emails-view';
 import { syncLeagueCaches } from './league-cache';
@@ -65,6 +69,9 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
   // Muted ids of sport leagues not listed (no longer active) stay muted: the save sends them back.
   const [muted, setMuted] = useState(() => new Set(league.mutedSportLeagueIds));
   const allIds = sports.flatMap((sport) => sport.sportLeagues.map((sportLeague) => sportLeague.id));
+  const offersDigest = hasWeeklyDigest(league);
+  // On a plan without the digest, a saved digest choice goes back to an email for each event.
+  const [delivery, setDelivery] = useState<EventEmailDelivery>(() => (offersDigest ? league.eventEmailDelivery : EventEmailDelivery.PER_EVENT));
 
   const setHeard = (ids: readonly string[], heard: boolean) => {
     setMuted((current) => {
@@ -81,11 +88,8 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
   };
 
   const saveMutation = useInvalidatingMutation({
-    mutationFn: async (mutedSportLeagueIds: string[]) => {
-      const response = await updateLeagueEventEmailSettings({
-        path: { id: league.id },
-        body: { mutedSportLeagueIds },
-      });
+    mutationFn: async (body: UpdateLeagueEventEmailSettingsRequest) => {
+      const response = await updateLeagueEventEmailSettings({ path: { id: league.id }, body });
       if (!response.data?.league) {
         throwApiError(response.error, 'Event email settings response is missing data.');
       }
@@ -95,7 +99,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
       syncLeagueCaches(queryClient, updated);
       navigate(settingsPath);
     },
-    // Nothing else shows which sport leagues the league hears about.
+    // Nothing else shows how the league hears about events.
     invalidates: [],
   });
   const isPending = saveMutation.isPending;
@@ -110,7 +114,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
       isPending={isPending}
       onSubmit={(event) => {
         event.preventDefault();
-        saveMutation.mutate([...muted]);
+        saveMutation.mutate({ mutedSportLeagueIds: [...muted], eventEmailDelivery: delivery });
       }}
       pendingLabel="Saving..."
       submitLabel="Save settings"
@@ -118,6 +122,28 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
       testId="edit-event-emails-page"
       title="Edit event emails"
     >
+      {offersDigest ? (
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium text-foreground">How you get them</legend>
+          <div aria-label="How you get them" className="grid gap-2" role="radiogroup">
+            {EVENT_EMAIL_DELIVERIES.map((option) => (
+              <ChoiceCard
+                isDisabled={isPending}
+                isSelected={option === delivery}
+                key={option}
+                onSelect={() => setDelivery(option)}
+                testId={`edit-event-emails-delivery-${option}`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="font-semibold">{EVENT_EMAIL_DELIVERY_COPY[option].label}</span>
+                  <span className="block text-xs text-muted-foreground">{EVENT_EMAIL_DELIVERY_COPY[option].description}</span>
+                </span>
+              </ChoiceCard>
+            ))}
+          </div>
+        </fieldset>
+      ) : null}
+
       <div className="flex flex-wrap gap-2">
         <Button data-testid="edit-event-emails-all" disabled={isPending} onClick={() => setHeard(allIds, true)} size="sm" type="button" variant="secondary">
           Select all
