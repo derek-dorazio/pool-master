@@ -807,7 +807,7 @@
           "token"
         ],
         "additionalProperties": false,
-        "description": "Puts back the email address an account had before a change. Every session of the account is signed out."
+        "description": "Puts back the email address an account had before a change. The password is replaced with a random one and every session of the account is signed out."
       },
       "AuthResponse": {
         "type": "object",
@@ -56347,7 +56347,7 @@
         "tags": [
           "Auth"
         ],
-        "description": "Public; the token from the link in the \"your email address was changed\" email, sent to the old address, is the whole authority. Puts the old address back, cancels the links from any later email change and the account's open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.",
+        "description": "Public; the token from the link in the \"your email address was changed\" email, sent to the old address, is the whole authority. Puts the old address back, replaces the password with a random one nobody knows (an account without a password stays without one), cancels the links from any later email change and the account's open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.",
         "requestBody": {
           "required": true,
           "content": {

@@ -98,7 +98,7 @@ export const EmailChangeUndoRequestSchema = z.object({
     .min(1)
     .max(256)
     .describe('The one-time token from the link in the email sent to the old address. It works once and for 7 days.'),
-}).describe('Puts back the email address an account had before a change. Every session of the account is signed out.');
+}).describe('Puts back the email address an account had before a change. The password is replaced with a random one and every session of the account is signed out.');
 export type EmailChangeUndoRequest = z.infer<typeof EmailChangeUndoRequestSchema>;
 
 // --- Response Sub-schemas ---

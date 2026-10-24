@@ -30,7 +30,8 @@ function UndoTile({ children, title }: { children: ReactNode; title: string }) {
  * Puts back an account's old email address from the link in the "your email address was changed"
  * email (#903 A5). The link only opens this page; the button does the undo, so a mail scanner
  * opening the link changes nothing. The undo signs out every session, including this browser's,
- * and the page then sends the person to set a new password, which now reaches their address.
+ * and replaces the password with one nobody knows, so the page then sends the person to set a new
+ * password, which now reaches their address.
  */
 export function UndoEmailChangePage() {
   const logger = getLogger().child({ feature: "undo-email-change-page" });
@@ -83,7 +84,7 @@ export function UndoEmailChangePage() {
     return (
       <UndoTile title="Your email address is back">
         <p className="text-sm text-muted-foreground" data-testid="undo-email-change-done">
-          {"Your account uses your old email address again, and everyone is signed out of it. Set a new password now, so whoever changed your address can't sign in again."}
+          {"Your account uses your old email address again. Everyone is signed out of it, and its old password no longer works. Set a new password to sign in."}
         </p>
         <LinkButton data-testid="undo-email-change-reset-password" to={FORGOT_PASSWORD_PATH}>
           Set a new password
@@ -95,8 +96,8 @@ export function UndoEmailChangePage() {
   return (
     <UndoTile title="Put your email address back">
       <p className="text-sm text-muted-foreground">
-        Your account goes back to the email address this link was sent to, and everyone is signed out
-        of it, you included.
+        Your account goes back to the email address this link was sent to. Everyone is signed out of
+        it, you included, and its password is cleared, so you&apos;ll set a new one.
       </p>
       {undoMutation.isError ? (
         <Alert data-testid="undo-email-change-error" tone="danger">

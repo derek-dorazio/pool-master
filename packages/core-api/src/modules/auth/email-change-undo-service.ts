@@ -4,8 +4,9 @@
  * When an account's email changes, the old address hears about it, as it is the one place
  * someone who took the account over can't read. A password reset can't be its "wasn't you?" link:
  * a reset goes to the account's address, which is now the new one. So the email carries its own
- * link, which puts the old address back and signs the account out everywhere; the person then
- * sets a new password through the usual reset, which now reaches them.
+ * link, which puts the old address back, replaces the password with a random one nobody knows
+ * (whoever changed the address knew the old one) and signs the account out everywhere; the person
+ * then sets a new password through the usual reset, which now reaches them.
  *
  * The link is a random 256-bit token stored only as its SHA-256, like a reset link, usable once
  * and live for 7 days. Using one cancels the account's links from later changes, so whoever made
@@ -16,15 +17,16 @@
  * change or reaches the caller.
  */
 
+import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
+import { Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { EmailMessageStatus, EmailTemplateKey, type User } from '@poolmaster/shared/domain';
 import type { EmailChangedBy, EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
-import { hashResetToken, readPerMinuteLimit } from './password-reset-service';
+import { BCRYPT_ROUNDS, hashResetToken, readPerMinuteLimit } from './password-reset-service';
 
 /** An account's undo rows older than this are deleted on its next email change. */
 const UNDO_ROW_RETENTION_DAYS = 30;
@@ -140,9 +142,10 @@ export class EmailChangeUndoService {
   }
 
   /**
-   * Puts back the address a live link was sent to, cancels the links from later changes and the
-   * open reset links, and signs the account out everywhere, in one transaction. Unknown, used,
-   * cancelled and expired links are one answer, `EMAIL_CHANGE_UNDO_LINK_INVALID`.
+   * Puts back the address a live link was sent to, replaces the password with a random one, cancels
+   * the links from later changes and the open reset links, and signs the account out everywhere,
+   * in one transaction. Unknown, used, cancelled and expired links are one answer,
+   * `EMAIL_CHANGE_UNDO_LINK_INVALID`.
    */
   async undo(token: string): Promise<void> {
     const tokenHash = hashResetToken(token);
@@ -158,37 +161,51 @@ export class EmailChangeUndoService {
     const holders = await this.deps.prisma.user.count({
       where: { id: { not: link.userId }, OR: [{ email: link.oldEmail }, { username: link.oldEmail }] },
     });
-    if (holders > 0) {
-      this.deps.logger?.warn({
-        action: 'authService.emailChangeUndo.addressTaken',
-        data: { userId: link.userId },
-      }, 'Rejected email change undo: another account has the old address now');
-      throw new EmailChangeUndoError(
-        'Another account uses that email address now, so it can\'t be put back.',
-        'EMAIL_CHANGE_UNDO_ADDRESS_TAKEN',
-        409,
-      );
-    }
+    if (holders > 0) this.rejectTakenAddress(link.userId);
+    // Hashed before the transaction, as bcrypt is slow. Not a null hash: a reset treats an account
+    // without one as passwordless and sends nothing.
+    const unknownPasswordHash = await bcrypt.hash(randomBytes(32).toString('base64url'), BCRYPT_ROUNDS);
 
-    const undone = await this.deps.prisma.$transaction(async (tx) => {
-      // The claim and the check are one statement, so two clicks at once cannot both win.
-      const claimed = await tx.emailChangeUndoToken.updateMany({ where: live, data: { usedAt: now } });
-      if (claimed.count !== 1) return false;
-      const { createdAt } = await tx.emailChangeUndoToken.findUniqueOrThrow({ where: { tokenHash }, select: { createdAt: true } });
-      await tx.emailChangeUndoToken.updateMany({
-        where: { userId: link.userId, usedAt: null, cancelledAt: null, createdAt: { gte: createdAt } },
-        data: { cancelledAt: now },
+    let undone: boolean;
+    try {
+      undone = await this.deps.prisma.$transaction(async (tx) => {
+        // The claim and the check are one statement, so two clicks at once cannot both win.
+        const claimed = await tx.emailChangeUndoToken.updateMany({ where: live, data: { usedAt: now } });
+        if (claimed.count !== 1) return false;
+        const { createdAt } = await tx.emailChangeUndoToken.findUniqueOrThrow({ where: { tokenHash }, select: { createdAt: true } });
+        await tx.emailChangeUndoToken.updateMany({
+          where: { userId: link.userId, usedAt: null, cancelledAt: null, createdAt: { gte: createdAt } },
+          data: { cancelledAt: now },
+        });
+        await tx.user.update({ where: { id: link.userId }, data: { email: link.oldEmail } });
+        // An account that signs in without a password stays without one.
+        await tx.user.updateMany({ where: { id: link.userId, passwordHash: { not: null } }, data: { passwordHash: unknownPasswordHash } });
+        await cancelOpenPasswordResetTokens(tx, link.userId, now);
+        await revokeUserSessions(tx, link.userId);
+        return true;
       });
-      await tx.user.update({ where: { id: link.userId }, data: { email: link.oldEmail } });
-      await cancelOpenPasswordResetTokens(tx, link.userId, now);
-      await revokeUserSessions(tx, link.userId);
-      return true;
-    });
+    } catch (err) {
+      // Another account took the address between the check above and this write.
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') this.rejectTakenAddress(link.userId);
+      throw err;
+    }
     if (!undone) this.rejectDeadLink();
     this.deps.logger?.info({
       action: 'authService.emailChangeUndo.confirmed',
       data: { userId: link.userId },
-    }, 'Put back the old email address and signed the account out everywhere');
+    }, 'Put back the old email address, replaced the password and signed the account out everywhere');
+  }
+
+  private rejectTakenAddress(userId: string): never {
+    this.deps.logger?.warn({
+      action: 'authService.emailChangeUndo.addressTaken',
+      data: { userId },
+    }, 'Rejected email change undo: another account has the old address now');
+    throw new EmailChangeUndoError(
+      'Another account uses that email address now, so it can\'t be put back.',
+      'EMAIL_CHANGE_UNDO_ADDRESS_TAKEN',
+      409,
+    );
   }
 
   private rejectDeadLink(): never {

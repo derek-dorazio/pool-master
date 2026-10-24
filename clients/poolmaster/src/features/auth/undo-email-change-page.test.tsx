@@ -74,7 +74,7 @@ describe('UndoEmailChangePage', () => {
 
     putBack();
 
-    expect(await screen.findByTestId('undo-email-change-done')).toHaveTextContent('Your account uses your old email address again');
+    expect(await screen.findByTestId('undo-email-change-done')).toHaveTextContent('Your account uses your old email address again. Everyone is signed out of it, and its old password no longer works. Set a new password to sign in.');
     expect(undoEmailChangeMock).toHaveBeenCalledWith(expect.objectContaining({ body: { token: 'undo-token-123' } }));
     expect(screen.getByRole('link', { name: 'Set a new password' })).toHaveAttribute('href', '/forgot-password');
   });

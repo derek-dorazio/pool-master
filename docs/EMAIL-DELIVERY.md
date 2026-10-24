@@ -361,7 +361,8 @@ and when, and carry a "Put my address back" link (`/undo-email-change#token=...`
 stored only as its SHA-256 in `email_change_undo_tokens`). A password reset can't be that link,
 as a reset goes to the account's new address. The link opens a page whose button calls
 `POST /api/v1/auth/email-change/undo`, which puts the old address back, cancels the links from
-any later change and the open reset links, and signs the account out everywhere; the person then
+any later change and the open reset links, replaces the password with a random one nobody knows
+(whoever changed the address knew the old one), and signs the account out everywhere; the person then
 resets their password. Like the reset, the email has no switch in EMAIL_CONFIG, the outbox keeps
 no copy of it once sent, and it is never sent after its link is dead. A failure to queue one is
 logged and never undoes the change.

@@ -38,7 +38,7 @@ describe('EMAIL_CHANGED email', () => {
       '',
       'Prime Time Commissioner sends everything to the new address now, so this is the last email to this one.',
       '',
-      "If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for 7 days and signs everyone out of your account. Put your address back:",
+      "If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for 7 days. It signs everyone out of your account and clears its password, and then you set a new one. Put your address back:",
       'https://app.example.test/undo-email-change#token=abc',
     ].join('\n'));
     expect(message.html).toContain('href="https://app.example.test/undo-email-change#token=abc"');

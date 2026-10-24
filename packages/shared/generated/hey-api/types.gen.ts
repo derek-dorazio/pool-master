@@ -468,7 +468,7 @@ export type PasswordResetConfirmRequest = {
 };
 
 /**
- * Puts back the email address an account had before a change. Every session of the account is signed out.
+ * Puts back the email address an account had before a change. The password is replaced with a random one and every session of the account is signed out.
  */
 export type EmailChangeUndoRequest = {
     /**

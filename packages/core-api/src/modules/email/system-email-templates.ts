@@ -2011,7 +2011,7 @@ function renderEmailChangedEmail(
     : `The email address for your ${BRAND_NAME} account (${data.username}) was changed to ${data.newEmail} on ${when}.`;
   const lastEmailSentence = `${BRAND_NAME} sends everything to the new address now, so this is the last email to this one.`;
   const undoDays = data.undoDays === 1 ? '1 day' : `${String(data.undoDays)} days`;
-  const undoSentence = `If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for ${undoDays} and signs everyone out of your account.`;
+  const undoSentence = `If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for ${undoDays}. It signs everyone out of your account and clears its password, and then you set a new one.`;
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.firstName)},`),
     paragraph(escapeHtml(changedSentence)),
