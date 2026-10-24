@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { ScoringFamily, Sport, SportStat, TournamentFormat } from '@poolmaster/shared/domain';
 import {
   ContestLeaderboardResponseSchema,
+  ContestResponseSchema,
   SportEventParticipantListResponseSchema,
   SportEventResponseSchema,
   SportLeagueListResponseSchema,
@@ -232,6 +233,24 @@ describe('World Series stat pool contest — scored from its players\' stat line
       [sluggers.id, '1', 9],
       [speedsters.id, '2', 5],
     ]);
+  });
+
+  it('names the stat pool on the board and the contest read, and gives each pick its points and each game\'s Box Score, so the screens draw game columns', async () => {
+    const { owner, contest, ace, blaze, line, sluggers } = await seedContest();
+    await line(ace, 1, { TOTAL_BASES: 4, RUNS: 1, RUNS_BATTED_IN: 2 });
+    await line(ace, 2, { WALKS: 1, STOLEN_BASES: 1 });
+
+    const leaderboard = await board(contest.id, owner.headers);
+    const contestRead = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}`, headers: owner.headers });
+
+    expect([leaderboard.participantType, leaderboard.scoringFamily]).toEqual(['INDIVIDUAL', 'COMPOSITE']);
+    const picks = leaderboard.entries.find((entry) => entry.entryId === sluggers.id)?.picks ?? [];
+    expect(picks.find((pick) => pick.sportEventParticipantId === ace.id)?.composite)
+      .toEqual({ points: 9, games: [{ roundNumber: 1, score: 7 }, { roundNumber: 2, score: 2 }] });
+    expect(picks.find((pick) => pick.sportEventParticipantId === blaze.id)?.composite).toEqual({ points: 0, games: [] });
+    expect(picks.every((pick) => pick.golf === null && pick.race === null && pick.knockout === null)).toBe(true);
+    expect(ContestResponseSchema.parse(contestRead.json()).contest.sportEvents.map((event) => [event.participantType, event.scoringFamily]))
+      .toEqual([['INDIVIDUAL', 'COMPOSITE']]);
   });
 
   it('rescores the board when a stat line is corrected, and settles on the corrected lines', async () => {

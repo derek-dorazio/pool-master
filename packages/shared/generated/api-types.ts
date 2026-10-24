@@ -11332,6 +11332,16 @@ export interface components {
              * @enum {string}
              */
             status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /**
+             * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
         };
         /** @description Request payload for setting the events a contest covers. */
         SetContestSportEventsRequest: {
@@ -11409,6 +11419,16 @@ export interface components {
                  * @enum {string}
                  */
                 status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /**
+                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -11589,6 +11609,18 @@ export interface components {
                 /** @description False once the team has lost a match. */
                 isAlive: boolean;
             } | null;
+            /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+            composite: {
+                /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                points: number | null;
+                /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                games: {
+                    /** @description The game: the event's round number. */
+                    roundNumber: number;
+                    /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                    score: number;
+                }[];
+            } | null;
         };
         /** @description One entry's standing in a contest leaderboard: its contest total, its result in each event, and its picks in the shown event. Each pick's score lives in its sport's block. */
         ContestEntryStandingDto: {
@@ -11663,6 +11695,18 @@ export interface components {
                     /** @description False once the team has lost a match. */
                     isAlive: boolean;
                 } | null;
+                /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+                composite: {
+                    /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                    points: number | null;
+                    /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                    games: {
+                        /** @description The game: the event's round number. */
+                        roundNumber: number;
+                        /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                        score: number;
+                    }[];
+                } | null;
             }[];
         };
         /** @description How an entry's picks combine into its total. */
@@ -11686,6 +11730,16 @@ export interface components {
              * @enum {string}
              */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             /**
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
@@ -11982,6 +12036,18 @@ export interface components {
                         /** @description False once the team has lost a match. */
                         isAlive: boolean;
                     } | null;
+                    /** @description Present for a championship stat pool, scored by composite; null otherwise. */
+                    composite: {
+                        /** @description The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines. */
+                        points: number | null;
+                        /** @description Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds. */
+                        games: {
+                            /** @description The game: the event's round number. */
+                            roundNumber: number;
+                            /** @description The player's composite for the game, from its stat lines. Can be below 0 where yards are lost. */
+                            score: number;
+                        }[];
+                    } | null;
                 }[];
             }[];
             /**
@@ -12021,6 +12087,16 @@ export interface components {
                      * @enum {string}
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /**
+                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM" | null;
+                    /**
+                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -12073,6 +12149,16 @@ export interface components {
                      * @enum {string}
                      */
                     status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /**
+                     * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    participantType: "INDIVIDUAL" | "TEAM" | null;
+                    /**
+                     * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+                     * @enum {string|null}
+                     */
+                    scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;

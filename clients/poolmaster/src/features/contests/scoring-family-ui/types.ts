@@ -44,11 +44,19 @@ export interface LeaderboardFootnote {
   text: string;
 }
 
+/** How a pick's score was made, one line per part (a stat pool player's games), opened from the row. */
+export interface LeaderboardPickBreakdown {
+  testId: string;
+  lines: Array<{ key: string; label: string; text: string }>;
+}
+
 /** The family's part of one pick's row. */
 export interface LeaderboardPickDetail {
   /** The pick's score in this contest, formatted; what the entry's total sums. Null while unscored. */
   total: string | null;
   detailCells: LeaderboardDetailCell[];
+  /** What the row opens to, for a family whose cells are made of parts; absent for every other. */
+  breakdown?: LeaderboardPickBreakdown;
 }
 
 /** The family's part of one leaderboard, resolved against that leaderboard's response. */

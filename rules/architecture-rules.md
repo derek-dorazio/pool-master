@@ -298,7 +298,9 @@ filling them in rather than by finding guards scattered through the code:
   than invented.
   On the web, how a family's results read on the shared contest screens is its entry in
   `SCORING_FAMILY_UI` (`clients/poolmaster/src/features/contests/scoring-family-ui/`), also a
-  `Record<ScoringFamily, …>`, reached from a response's `sport` through its sport definition.
+  `Record<ScoringFamily, …>`, reached through the definition of the response's event: its `sport`
+  with the sport league overrides the response carries (`participantType`, `scoringFamily` on a
+  leaderboard and on each of a contest's `sportEvents`), read by `eventSportDefinition`.
   How an admin enters a family's results in Manage is its entry in `SCORING_FAMILY_ADMIN_UI`
   (`clients/poolmaster/src/features/root-admin/scoring-family-admin.ts`), the same kind of
   record: one set of Manage event, field, tier, participant and sport league pages serves every

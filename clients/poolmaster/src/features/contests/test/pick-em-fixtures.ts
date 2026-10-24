@@ -130,8 +130,8 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
     contestFormat: 'PREDICTION',
     selectionType: 'PICK_EM',
     sportEvents: [
-      { sportEventId: 'week-1', sequence: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'SCHEDULED' },
-      { sportEventId: 'week-2', sequence: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'SCHEDULED' },
+      { sportEventId: 'week-1', sequence: 1, name: 'Week 1', startDate: WEEK_1_START, status: 'SCHEDULED', participantType: null, scoringFamily: null },
+      { sportEventId: 'week-2', sequence: 2, name: 'Week 2', startDate: WEEK_2_START, status: 'SCHEDULED', participantType: null, scoringFamily: null },
     ],
     ...overrides,
   };
@@ -287,7 +287,7 @@ export function playoffSurvivorContestFixture(overrides: Partial<ContestDto> = {
   return pickEmContestFixture({
     selectionType: 'SURVIVOR',
     status: 'ACTIVE',
-    sportEvents: [{ sportEventId: 'playoffs', sequence: 1, name: 'Playoffs', startDate: WEEK_1_START, status: 'IN_PROGRESS' }],
+    sportEvents: [{ sportEventId: 'playoffs', sequence: 1, name: 'Playoffs', startDate: WEEK_1_START, status: 'IN_PROGRESS', participantType: null, scoringFamily: null }],
     ...overrides,
   });
 }

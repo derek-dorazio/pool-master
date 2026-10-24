@@ -46,7 +46,7 @@ describe('ContestListCard', () => {
 
   it('shows when the contest starts, from the event start the contest list carries, without reading the event', () => {
     renderCard('OPEN', {
-      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED' }],
+      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED', participantType: null, scoringFamily: null }],
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
@@ -58,7 +58,7 @@ describe('ContestListCard', () => {
   it('shows the contest\'s own start once it is set, ahead of its event\'s scheduled start', () => {
     renderCard('ACTIVE', {
       startsAt: '2026-04-10T08:00:00.000Z',
-      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED' }],
+      sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'SCHEDULED', participantType: null, scoringFamily: null }],
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(

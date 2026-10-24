@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trophy } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import {
   getContest,
@@ -33,10 +33,11 @@ import {
   LEADERBOARD_ERROR_MESSAGES,
   buildLeaderboardView,
   type LeaderboardEntryRow,
+  type LeaderboardPickRow,
   type LeaderboardView,
 } from './contest-leaderboard';
 import { fetchContestEntries } from './use-contest-entries';
-import { ContestStatus, SelectionType, SportEventStatus, getSportDefinition } from '@poolmaster/shared/domain';
+import { ContestStatus, SelectionType, SportEventStatus, eventSportDefinition } from '@poolmaster/shared/domain';
 import { BracketLeaderboard } from './bracket-leaderboard';
 import { PickEmLeaderboard } from './pick-em-leaderboard';
 import { SquaresLeaderboard } from './squares-pages';
@@ -112,6 +113,69 @@ function leaderboardGridColumns(view: LeaderboardView) {
     'minmax(48px,0.4fr)',
     ...view.detailColumns.map((column) => column.width),
   ].join(' ');
+}
+
+/**
+ * One participant under an entry. Where the family breaks a score into parts (a stat pool
+ * player's games), the name opens them beneath the row.
+ */
+function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; gridTemplateColumns: string; pick: LeaderboardPickRow }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { breakdown } = pick;
+  const nameClassName = cn(
+    'min-w-0 truncate',
+    // The worst M - N picks: visibly present, visibly excluded from the total.
+    pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground',
+  );
+  return (
+    <div data-testid={`contest-leaderboard-pick-${entryId}-${pick.pickId}`}>
+      <div className="grid gap-2 px-4 py-2 text-sm" style={{ gridTemplateColumns }}>
+        <span className="text-muted-foreground">{pick.position ?? NO_SCORE}</span>
+        {breakdown ? (
+          <Button
+            aria-controls={breakdown.testId}
+            aria-expanded={isOpen}
+            className={cn(nameClassName, 'h-auto justify-start p-0 text-left text-sm font-normal underline-offset-2 hover:underline')}
+            data-testid={`${breakdown.testId}-toggle`}
+            onClick={() => setIsOpen((open) => !open)}
+            size="auto"
+            variant="ghost"
+          >
+            {pick.participantName}
+          </Button>
+        ) : (
+          <span className={nameClassName}>{pick.participantName}</span>
+        )}
+        <span className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}>
+          {pick.total ?? NO_SCORE}
+        </span>
+        {pick.detailCells.map((cell) => (
+          // #478 — a cell the participant did not play counts at a fixed value; set apart
+          // so the total is explainable, and named for a screen reader.
+          <span
+            aria-label={cell.unplayed?.ariaLabel}
+            className={cn('text-right text-muted-foreground', cell.unplayed && 'italic')}
+            data-testid={cell.testId}
+            data-unplayed={cell.unplayed ? true : undefined}
+            key={cell.key}
+            title={cell.unplayed?.title}
+          >
+            {cell.text ?? NO_SCORE}
+          </span>
+        ))}
+      </div>
+      {breakdown && isOpen ? (
+        <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-4 pb-3 text-xs text-muted-foreground" data-testid={breakdown.testId} id={breakdown.testId}>
+          {breakdown.lines.map((line) => (
+            <Fragment key={line.key}>
+              <dt className="font-medium text-foreground">{line.label}</dt>
+              <dd>{line.text}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      ) : null}
+    </div>
+  );
 }
 
 function EntryBlock({
@@ -204,40 +268,7 @@ function EntryBlock({
       ) : (
         <div className="divide-y divide-border" id={picksId}>
           {entry.picks.map((pick) => (
-            <div
-              className="grid gap-2 px-4 py-2 text-sm"
-              data-testid={`contest-leaderboard-pick-${entry.entryId}-${pick.pickId}`}
-              key={pick.pickId}
-              style={{ gridTemplateColumns }}
-            >
-              <span className="text-muted-foreground">{pick.position ?? NO_SCORE}</span>
-              <span
-                className={cn(
-                  'min-w-0 truncate',
-                  // The worst M - N picks: visibly present, visibly excluded from the total.
-                  pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground',
-                )}
-              >
-                {pick.participantName}
-              </span>
-              <span className={cn('text-right font-medium', pick.isDropped ? 'text-muted-foreground line-through' : 'text-foreground')}>
-                {pick.total ?? NO_SCORE}
-              </span>
-              {pick.detailCells.map((cell) => (
-                // #478 — a cell the participant did not play counts at a fixed value; set apart
-                // so the total is explainable, and named for a screen reader.
-                <span
-                  aria-label={cell.unplayed?.ariaLabel}
-                  className={cn('text-right text-muted-foreground', cell.unplayed && 'italic')}
-                  data-testid={cell.testId}
-                  data-unplayed={cell.unplayed ? true : undefined}
-                  key={cell.key}
-                  title={cell.unplayed?.title}
-                >
-                  {cell.text ?? NO_SCORE}
-                </span>
-              ))}
-            </div>
+            <PickRow entryId={entry.entryId} gridTemplateColumns={gridTemplateColumns} key={pick.pickId} pick={pick} />
           ))}
         </div>
       )}
@@ -385,7 +416,7 @@ export function ContestLeaderboardPage() {
 
   const contest = contestQuery.data;
   const view = buildLeaderboardView(leaderboardQuery.data);
-  const participantNoun = getSportDefinition(leaderboardQuery.data.sport).vocabulary.participant;
+  const participantNoun = eventSportDefinition(leaderboardQuery.data).vocabulary.participant;
   const gridTemplateColumns = leaderboardGridColumns(view);
   const isMultiEvent = contest.sportEvents.length > 1;
   const contestEvents = isMultiEvent

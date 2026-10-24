@@ -24532,6 +24532,32 @@
               "POSTPONED"
             ],
             "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
+          },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league."
           }
         },
         "required": [
@@ -24539,7 +24565,9 @@
           "sequence",
           "name",
           "startDate",
-          "status"
+          "status",
+          "participantType",
+          "scoringFamily"
         ],
         "additionalProperties": false,
         "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
@@ -24740,6 +24768,32 @@
                     "POSTPONED"
                   ],
                   "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
+                },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league."
                 }
               },
               "required": [
@@ -24747,7 +24801,9 @@
                 "sequence",
                 "name",
                 "startDate",
-                "status"
+                "status",
+                "participantType",
+                "scoringFamily"
               ],
               "additionalProperties": false,
               "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
@@ -25293,6 +25349,51 @@
             ],
             "additionalProperties": false,
             "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
+          },
+          "composite": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "points": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines."
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "roundNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "The game: the event's round number."
+                    },
+                    "score": {
+                      "type": "integer",
+                      "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
+                    }
+                  },
+                  "required": [
+                    "roundNumber",
+                    "score"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One game a stat pool player played, and their composite in it."
+                },
+                "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
+              }
+            },
+            "required": [
+              "points",
+              "games"
+            ],
+            "additionalProperties": false,
+            "description": "Present for a championship stat pool, scored by composite; null otherwise."
           }
         },
         "required": [
@@ -25304,7 +25405,8 @@
           "isDropped",
           "golf",
           "race",
-          "knockout"
+          "knockout",
+          "composite"
         ],
         "additionalProperties": false,
         "description": "One pick on a contest entry, with whether it counts."
@@ -25524,6 +25626,51 @@
                   ],
                   "additionalProperties": false,
                   "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
+                },
+                "composite": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "points": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines."
+                    },
+                    "games": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "roundNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "The game: the event's round number."
+                          },
+                          "score": {
+                            "type": "integer",
+                            "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
+                          }
+                        },
+                        "required": [
+                          "roundNumber",
+                          "score"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One game a stat pool player played, and their composite in it."
+                      },
+                      "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
+                    }
+                  },
+                  "required": [
+                    "points",
+                    "games"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Present for a championship stat pool, scored by composite; null otherwise."
                 }
               },
               "required": [
@@ -25535,7 +25682,8 @@
                 "isDropped",
                 "golf",
                 "race",
-                "knockout"
+                "knockout",
+                "composite"
               ],
               "additionalProperties": false,
               "description": "One pick on a contest entry, with whether it counts."
@@ -25610,6 +25758,32 @@
               "TENNIS"
             ],
             "description": "Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with."
+          },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does."
           },
           "scoringDefinitionId": {
             "type": "string",
@@ -26440,6 +26614,51 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present for a head-to-head contest (a basketball bracket); null otherwise."
+                      },
+                      "composite": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "points": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "description": "The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines."
+                          },
+                          "games": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "roundNumber": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "description": "The game: the event's round number."
+                                },
+                                "score": {
+                                  "type": "integer",
+                                  "description": "The player's composite for the game, from its stat lines. Can be below 0 where yards are lost."
+                                }
+                              },
+                              "required": [
+                                "roundNumber",
+                                "score"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One game a stat pool player played, and their composite in it."
+                            },
+                            "description": "Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds."
+                          }
+                        },
+                        "required": [
+                          "points",
+                          "games"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Present for a championship stat pool, scored by composite; null otherwise."
                       }
                     },
                     "required": [
@@ -26451,7 +26670,8 @@
                       "isDropped",
                       "golf",
                       "race",
-                      "knockout"
+                      "knockout",
+                      "composite"
                     ],
                     "additionalProperties": false,
                     "description": "One pick on a contest entry, with whether it counts."
@@ -26491,6 +26711,8 @@
           "contestId",
           "sportEventId",
           "sport",
+          "participantType",
+          "scoringFamily",
           "scoringDefinitionId",
           "countingRule",
           "participants",
@@ -26578,6 +26800,32 @@
                         "POSTPONED"
                       ],
                       "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
+                    },
+                    "participantType": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "INDIVIDUAL",
+                        "TEAM",
+                        null
+                      ],
+                      "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league."
+                    },
+                    "scoringFamily": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "STROKE_PLAY",
+                        "FINISH_POSITION",
+                        "HEAD_TO_HEAD",
+                        "COMPOSITE",
+                        null
+                      ],
+                      "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league."
                     }
                   },
                   "required": [
@@ -26585,7 +26833,9 @@
                     "sequence",
                     "name",
                     "startDate",
-                    "status"
+                    "status",
+                    "participantType",
+                    "scoringFamily"
                   ],
                   "additionalProperties": false,
                   "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
@@ -26755,6 +27005,32 @@
                           "POSTPONED"
                         ],
                         "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
+                      },
+                      "participantType": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "INDIVIDUAL",
+                          "TEAM",
+                          null
+                        ],
+                        "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league."
+                      },
+                      "scoringFamily": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "STROKE_PLAY",
+                          "FINISH_POSITION",
+                          "HEAD_TO_HEAD",
+                          "COMPOSITE",
+                          null
+                        ],
+                        "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league."
                       }
                     },
                     "required": [
@@ -26762,7 +27038,9 @@
                       "sequence",
                       "name",
                       "startDate",
-                      "status"
+                      "status",
+                      "participantType",
+                      "scoringFamily"
                     ],
                     "additionalProperties": false,
                     "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
