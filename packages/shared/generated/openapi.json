@@ -1458,7 +1458,7 @@
               "name"
             ],
             "additionalProperties": false,
-            "description": "Who paid, or the root admin who gave it; null when that account was deleted."
+            "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
           }
         },
         "required": [
@@ -1526,7 +1526,7 @@
                     "name"
                   ],
                   "additionalProperties": false,
-                  "description": "Who paid, or the root admin who gave it; null when that account was deleted."
+                  "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
                 }
               },
               "required": [

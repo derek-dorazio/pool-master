@@ -3969,7 +3969,7 @@ export interface components {
              * @description The contest it was for; null when that contest was deleted.
              */
             contestId: string | null;
-            /** @description Who paid, or the root admin who gave it; null when that account was deleted. */
+            /** @description Who paid; null for a Poolmaster grant or when that account was deleted. */
             payer: {
                 /** Format: uuid */
                 id: string;
@@ -3997,7 +3997,7 @@ export interface components {
                  * @description The contest it was for; null when that contest was deleted.
                  */
                 contestId: string | null;
-                /** @description Who paid, or the root admin who gave it; null when that account was deleted. */
+                /** @description Who paid; null for a Poolmaster grant or when that account was deleted. */
                 payer: {
                     /** Format: uuid */
                     id: string;

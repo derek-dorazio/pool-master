@@ -54,7 +54,7 @@ export const LeaguePaymentSchema = z.object({
   payer: z.object({
     id: z.string().uuid(),
     name: z.string().describe('Their name, for display.'),
-  }).nullable().describe('Who paid, or the root admin who gave it; null when that account was deleted.'),
+  }).nullable().describe('Who paid; null for a Poolmaster grant or when that account was deleted.'),
 }).describe('One line of a league\'s payment history. No card data is ever kept.');
 export type LeaguePayment = z.infer<typeof LeaguePaymentSchema>;
 

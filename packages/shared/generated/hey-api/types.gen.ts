@@ -822,7 +822,7 @@ export type LeaguePayment = {
      */
     contestId: string | null;
     /**
-     * Who paid, or the root admin who gave it; null when that account was deleted.
+     * Who paid; null for a Poolmaster grant or when that account was deleted.
      */
     payer: {
         id: string;
@@ -859,7 +859,7 @@ export type LeaguePaymentListResponse = {
          */
         contestId: string | null;
         /**
-         * Who paid, or the root admin who gave it; null when that account was deleted.
+         * Who paid; null for a Poolmaster grant or when that account was deleted.
          */
         payer: {
             id: string;
