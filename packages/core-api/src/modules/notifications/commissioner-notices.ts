@@ -174,7 +174,7 @@ export class CommissionerNotices implements DueNotifications {
         await this.deps.email.send('EVENT_COMING_UP', {
           to: { email: user.email, userId: user.id, timeZone: user.timezone },
           about: `${sportEvent.id}:${league.id}`,
-          league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+          league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
             userName: formatUserName(user),
             leagueName: league.name,
@@ -231,7 +231,7 @@ export class CommissionerNotices implements DueNotifications {
         await this.deps.email.send('EVENT_READY_FOR_CONTESTS', {
           to: { email: user.email, userId: user.id, timeZone: user.timezone },
           about: `${sportEvent.id}:${league.id}`,
-          league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+          league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
             userName: formatUserName(user),
             leagueName: league.name,
@@ -289,7 +289,7 @@ export class CommissionerNotices implements DueNotifications {
       await this.deps.email.send('CONTEST_NOT_OPEN', {
         to: { email: user.email, userId: user.id, timeZone: user.timezone },
         about: contest.id,
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },
         data: {
           userName: formatUserName(user),

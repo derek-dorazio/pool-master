@@ -18,6 +18,7 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ContestFormat,
   LeagueMembershipStatus,
+  LeaguePlan,
   LeagueRole,
   SelectionType,
   Sport,
@@ -1372,7 +1373,7 @@ describe('ContestService', () => {
       const service = buildService({
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
         users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
@@ -1448,7 +1449,7 @@ describe('ContestService', () => {
           findById: jest.fn().mockResolvedValue({ ...STARTED_EVENT, sport: Sport.AUTO_RACING }),
         }),
         leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
         users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1503,7 +1504,7 @@ describe('ContestService', () => {
           }),
         }),
         leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
         users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1551,7 +1552,7 @@ describe('ContestService', () => {
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         configurations: createMockContestConfigurationRepo(),
         leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
         users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
@@ -1596,7 +1597,7 @@ describe('ContestService', () => {
         contests: createMockContestRepo({ findById: jest.fn().mockResolvedValue(contest) }),
         configurations: createMockContestConfigurationRepo(),
         leagues: fakeLeagueRepo({
-          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS' }),
+          findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
         users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),

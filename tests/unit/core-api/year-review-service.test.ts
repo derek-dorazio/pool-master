@@ -26,7 +26,7 @@ import {
   YearReviewNotOpenError,
   YearReviewService,
 } from '../../../packages/core-api/src/modules/history/year-review-service';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { InMemoryChampionship } from '../../support/in-memory-championship';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -116,6 +116,7 @@ describe('YearReviewService', () => {
         messages: outbox,
         providerName: 'smtp',
         readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+        planEntitlements: TEST_PLAN_ENTITLEMENTS,
         senderAddress: 'noreply@poolmaster.test',
         suppressions: inMemoryEmailSuppressions(),
         optOuts: inMemoryEmailOptOuts(),

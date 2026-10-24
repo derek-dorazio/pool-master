@@ -209,7 +209,7 @@ export class EntryReminders implements DueNotifications {
       await this.deps.email.send('CONTEST_ENTRY_REMINDER', {
         to: { email: user.email, userId: user.id, timeZone: user.timezone },
         about: `${contest.id}:${sportEvent.id}:${due.hours}h`,
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },
         data: {
           userName: formatUserName(user),

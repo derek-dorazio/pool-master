@@ -2,6 +2,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { GetSquadYearQuery, ListContestResultsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
 import { toContestResultSummaryDto, toHistorySummaryDto, toPerpetualTrophyDto, toRecordDto, toSquadHistoryDto, toSquadYearDto, toYearReviewDto } from '../../mappers/history.mapper';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import { squadHistoryInPlan, squadYearInPlan } from './plan-visibility';
 import { HistorySquadNotFoundError, HistorySquadRequiredError, type HistoryService } from './service';
 import {
   YearReviewAlreadySentError,
@@ -10,7 +12,11 @@ import {
   type YearReviewService,
 } from './year-review-service';
 
-export function createHistoryHandlers(service: HistoryService, yearReviews: YearReviewService) {
+export function createHistoryHandlers(
+  service: HistoryService,
+  yearReviews: YearReviewService,
+  planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>,
+) {
   return { listContestResults, getHistorySummary, getSquadYear, getSquadHistory, getYearReview, sendYearReview, listRecords, listPerpetualTrophies };
 
   async function getYearReview(
@@ -55,7 +61,8 @@ export function createHistoryHandlers(service: HistoryService, yearReviews: Year
   ): Promise<void> {
     try {
       const view = await service.getSquadHistory(request.params.id, request.params.squadId);
-      return reply.send({ squadHistory: toSquadHistoryDto(view) });
+      const { features } = await planEntitlements.forLeague(request.params.id);
+      return reply.send({ squadHistory: toSquadHistoryDto(squadHistoryInPlan(view, features, new Date())) });
     } catch (error) {
       if (error instanceof HistorySquadNotFoundError) {
         return sendError(reply, 404, error.code, error.message);
@@ -70,7 +77,8 @@ export function createHistoryHandlers(service: HistoryService, yearReviews: Year
   ): Promise<void> {
     try {
       const view = await service.getSquadYear(request.params.id, request.params.squadId, request.query.year);
-      return reply.send({ squadYear: toSquadYearDto(view) });
+      const { features } = await planEntitlements.forLeague(request.params.id);
+      return reply.send({ squadYear: toSquadYearDto(squadYearInPlan(view, features)) });
     } catch (error) {
       if (error instanceof HistorySquadNotFoundError) {
         return sendError(reply, 404, error.code, error.message);

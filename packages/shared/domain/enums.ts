@@ -944,6 +944,8 @@ export const EmailSkipReason = {
   SUPPRESSED: 'SUPPRESSED',
   /** The recipient turned this email's category off on their account, or unsubscribed from it. */
   OPTED_OUT: 'OPTED_OUT',
+  /** The league's plan lacks the email's plan feature (#948): a higher-plan email is simply not sent. */
+  NOT_IN_PLAN: 'NOT_IN_PLAN',
 } as const;
 export type EmailSkipReason = (typeof EmailSkipReason)[keyof typeof EmailSkipReason];
 

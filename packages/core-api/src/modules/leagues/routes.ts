@@ -3,6 +3,7 @@
  */
 
 import type { FastifyInstance } from 'fastify';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components this module's routes $ref (#192).
@@ -37,6 +38,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanModuleOptions } from '../plans/routes';
+import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
 
 export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
@@ -187,7 +189,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'Update the league\'s championship settings',
       description:
-        'Allows a commissioner to set an active league\'s championship name and points table (#841, #863) in one request. Cups score on read, so they follow the new table at once; the championship keeps the points each contest earned when it went final. 400 CUP_CUSTOM_POINTS_INVALID when CUSTOM has no points or another scale sends some; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.',
+        `Allows a commissioner to set an active league's championship name and points table (#841, #863) in one request. Cups score on read, so they follow the new table at once; the championship keeps the points each contest earned when it went final. 400 CUP_CUSTOM_POINTS_INVALID when CUSTOM has no points or another scale sends some; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league. ${describePlanFeatureGate([PlanFeature.CUP_SETTINGS])} Changing hallOfLameVisible also needs RECORD_BOOK, the same 403 otherwise.`,
       operationId: 'updateLeagueCupSettings',
       body: schemaRef('UpdateLeagueCupSettingsRequest'),
       response: {
@@ -198,7 +200,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
         404: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: requireCommissioner(membershipRepo),
+    preHandler: [requireCommissioner(membershipRepo), requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_SETTINGS])],
     handler: league.updateLeagueCupSettings,
   });
 

@@ -130,7 +130,7 @@ export class YearReviewService {
       if (user === undefined || squad === undefined) continue;
       await this.deps.email.send('YEAR_IN_REVIEW', {
         to: { email: user.email, userId: user.id, timeZone: user.timezone },
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         about: `${league.id}:${String(year)}`,
         data: {
           ...squad.data,

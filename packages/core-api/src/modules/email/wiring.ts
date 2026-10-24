@@ -14,6 +14,7 @@ import {
   PrismaUserRepository,
 } from '../../adapters';
 import { readAppEnv, readJwtSecret } from '../../core/config';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { EmailDeliveryEvents } from './email-delivery-events';
 import { EmailPreferencesService } from './email-preferences-service';
 import { EmailSender } from './email-sender';
@@ -36,6 +37,7 @@ export interface EmailOutbox {
 export function createEmailOutbox(options: {
   prisma: PrismaClient;
   readConfig: () => EmailConfig;
+  planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
   env?: NodeJS.ProcessEnv;
   logger?: FastifyBaseLogger;
 }): EmailOutbox {
@@ -58,6 +60,7 @@ export function createEmailOutbox(options: {
     unsubscribe: { tokens: unsubscribeTokens, appBaseUrl: readApplicationBaseUrl(options.env) },
     providerName: transport.providerName,
     readConfig: options.readConfig,
+    planEntitlements: options.planEntitlements,
     senderAddress: mailConfig.fromEmail,
     onQueued: () => { sender.wake(); },
     logger: options.logger,

@@ -1585,9 +1585,9 @@ export type LeagueMembershipDto = {
 export type EmailMessageStatus = 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'BOUNCED' | 'COMPLAINED' | 'FAILED' | 'SKIPPED';
 
 /**
- * Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam.
+ * Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED the address bounced for good or marked an earlier email as spam, OPTED_OUT the recipient turned this kind of email off, NOT_IN_PLAN the league's plan does not include this email.
  */
-export type EmailSkipReason = 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT';
+export type EmailSkipReason = 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN';
 
 /**
  * Invitation record returned from commissioner invite-management APIs.
@@ -1648,7 +1648,7 @@ export type LeagueInvitationDto = {
     /**
      * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
      */
-    emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+    emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
     /**
      * Invitation creation timestamp.
      */
@@ -2489,7 +2489,7 @@ export type SendLeagueInvitationsResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2572,7 +2572,7 @@ export type GenerateInviteLinkResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2647,7 +2647,7 @@ export type ListLeagueInvitationsResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -2722,7 +2722,7 @@ export type ResendLeagueInvitationResponse = {
         /**
          * Why the latest email of an email invite was not sent; null unless emailStatus is SKIPPED.
          */
-        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+        emailSkipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
         /**
          * Invitation creation timestamp.
          */
@@ -12517,7 +12517,7 @@ export type EmailTestResponse = {
     /**
      * Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, NOT_ALLOWED_IN_ENVIRONMENT when the address is not in "Only send to" or is a reserved domain, SUPPRESSED when the address bounced or complained before.
      */
-    skipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | null;
+    skipReason: 'EMAIL_DISABLED' | 'TEMPLATE_DISABLED' | 'NOT_ALLOWED_IN_ENVIRONMENT' | 'SUPPRESSED' | 'OPTED_OUT' | 'NOT_IN_PLAN' | null;
     /**
      * The provider's error from the last failed try, or null.
      */

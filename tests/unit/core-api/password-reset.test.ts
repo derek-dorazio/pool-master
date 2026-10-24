@@ -21,7 +21,7 @@ import {
 import type { EmailConfig } from '../../../packages/shared/dto';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions } from '../../support/in-memory-email-messages';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { AuthProvider, type User } from '../../../packages/shared/domain';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -75,6 +75,7 @@ function buildService(overrides: {
       unsubscribe: TEST_UNSUBSCRIBE,
       providerName: 'smtp',
       readConfig: () => overrides.emailConfig ?? EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+      planEntitlements: TEST_PLAN_ENTITLEMENTS,
       senderAddress: 'noreply@poolmaster.test',
     }),
     appBaseUrl: 'https://app.example.test',
@@ -344,6 +345,7 @@ describe('PasswordChangedNotifier', () => {
         unsubscribe: TEST_UNSUBSCRIBE,
         providerName: 'smtp',
         readConfig: () => config,
+        planEntitlements: TEST_PLAN_ENTITLEMENTS,
         senderAddress: 'noreply@poolmaster.test',
       }),
       'https://app.example.test',

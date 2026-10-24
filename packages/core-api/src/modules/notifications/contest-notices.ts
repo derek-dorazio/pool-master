@@ -109,7 +109,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     await this.sendEach('CONTEST_OPENED', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_OPENED', {
       to: { email: user.email, userId: user.id, timeZone: user.timezone },
       about: contest.id,
-      league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
       data: {
         userName: formatUserName(user),
@@ -146,7 +146,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_STARTED_SUMMARY', {
       to: { email: user.email, userId: user.id, timeZone: user.timezone },
       about: `${contest.id}:${sportEvent.id}`,
-      league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
       data: {
         userName: formatUserName(user),
@@ -182,7 +182,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     const send = (user: User, outcome: ContestResultsOutcome) => this.deps.email.send('CONTEST_RESULTS', {
       to: { email: user.email, userId: user.id, timeZone: user.timezone },
       about: contest.id,
-      league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
       data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, outcome, leaderboardUrl, contestUrl },
     });
@@ -276,7 +276,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => this.deps.email.send('CONTEST_EVENT_CHANGED', {
         to: { email: user.email, userId: user.id, timeZone: user.timezone },
         about: `${contest.id}:${about}`,
-        league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+        league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },
         data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, eventName: sportEvent.name, change: contestChange, contestUrl },
       }));
