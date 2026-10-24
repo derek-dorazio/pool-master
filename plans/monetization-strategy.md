@@ -1,6 +1,6 @@
 # Monetization strategy
 
-**Tracking issue:** #581. First build: epic #943. Payments: #931. Plan comparison pages: #969 (`plans/plan-comparison-pages.md`). Per-event pricing: #968.
+**Tracking issue:** #581. First build: epic #943. Payments: #931, designed in `plans/payments.md` (per-contest purchases, #968, are its phase 1). Plan comparison pages: #969 (`plans/plan-comparison-pages.md`).
 
 Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22; first build of plans designed 2026-10-23. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
@@ -173,7 +173,23 @@ Kept for later refinement and tickets, none scheduled:
   counts, pick popularity, projected finish, contests per event, organisation accounts,
   member subscriptions, ads.
 
+### At launch: six months of free Premium, then Free (Derek, 2026-10-24, later the same day)
+
+This replaces *At launch: Platinum free, pricing at renewal* below. Design in
+`plans/payments.md` (#931, PR #967), which holds the plan matrix; the build is deferred.
+
+- Every league, new and existing, is **gifted Premium for six months** from its signup (or
+  from the move, for existing leagues), recorded as a renewal date. On that date it drops to
+  **Free**; extending the gift is moving the dates out.
+- Commissioners pay once to **expand one contest**, at their plan's price list (cheaper on
+  higher plans). Annual plans come later; no monthly at first.
+- **Every plan is capped**: entries per contest Free 20, Pro 50, Premium 100, Platinum 500
+  (expandable to 2000), and sports leagues per year 5 / 15 / 30 / 50. So Q9 below
+  ("Platinum fixed at unlimited") no longer holds.
+
 ### At launch: Platinum free, pricing at renewal (Derek, 2026-10-24)
+
+*Superseded by the section above.*
 
 Derek's launch plan: the plans exist and are defined, but every league gets **Platinum free**
 when it signs up. Leagues try every contest type and sport, and use history and notifications,
@@ -182,6 +198,22 @@ months after its signup date** (Derek leans to 6). Nothing changes in the first 
 this: new leagues already default to Platinum, and the screens keep "Every plan is free for
 now". When paying is built (#931), it needs each league's signup date and a renewal point
 taken from it, and what a league moves to at renewal if its commissioner does not pay.
+
+### Billing periods and what sells first (Derek, 2026-10-24)
+
+*Superseded by* At launch: six months of free Premium, then Free *above:
+phase 1 sells per-contest expansions, annual plans come in phase 2.*
+
+- **Plans are sold annual or monthly**, monthly at a premium: $99 a year or $9.99 a month
+  as the example. Payments are designed in `plans/payments.md` (#931); clicking a plan on the
+  commissioner comparison page leads into payment.
+- **Free plus per-event fees comes first.** Derek expects the first money from per-event
+  purchases, not plans: someday Free allows 10 entries per pool, and $10 expands one pool.
+  These raise caps only, no advanced features. Few will pay around $200 a year for Platinum
+  until they have paid per-event fees and see they would pay more than that over a year.
+  Plans are designed first because per-event purchases reuse their payment plumbing; the
+  per-event design is #968. This revives the per-contest unlock idea in *Strategy ideas*,
+  limited to caps.
 
 ### Conflicts with the older sections
 

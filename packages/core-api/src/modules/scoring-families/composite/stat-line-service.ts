@@ -16,7 +16,7 @@ import type {
   SportEventRepository,
   SportEventRoundRepository,
 } from '@poolmaster/shared/db';
-import { eventSportDefinition, ScoringFamily, type SportStat } from '@poolmaster/shared/domain';
+import { eventSportDefinition, ScoringFamily, sportStatValueMin, type SportStat } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 export class StatLineError extends Error {
@@ -51,7 +51,8 @@ export class StatLineService {
   /**
    * Stores the game's lines. Refuses an event not scored by the composite family, a game the
    * event does not schedule, and, naming every problem, a row whose player is not in the field or
-   * is named twice, or whose stat is not one the sport's composite counts or is given twice.
+   * is named twice, or whose stat is not one the sport's composite counts, is given twice, or is
+   * below 0 when it is not yards.
    */
   async applyGameLines(sportEventId: string, roundNumber: number, rows: readonly GameStatLineRowInput[]): Promise<void> {
     const event = await this.deps.events.findById(sportEventId);
@@ -83,6 +84,9 @@ export class StatLineService {
       for (const stat of new Set(stats)) {
         if (!counted.has(stat)) problems.push(`participant ${row.participantId}: ${stat} is not a stat the ${definition.composite.name} counts`);
         if (stats.filter((candidate) => candidate === stat).length > 1) problems.push(`participant ${row.participantId}: ${stat} is given more than once`);
+      }
+      for (const line of row.stats) {
+        if (line.value < sportStatValueMin(line.stat)) problems.push(`participant ${row.participantId}: ${line.stat} is ${line.value}; only yards go below 0`);
       }
     }
     if (problems.length > 0) {

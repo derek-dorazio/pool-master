@@ -34,6 +34,29 @@ export const SPORT_DEFINITIONS: Readonly<Record<Sport, SportDefinition>> = {
 /** Every supported sport, in enum order. */
 export const SUPPORTED_SPORTS: readonly Sport[] = Object.values(Sport);
 
+/**
+ * Where each sport sits wherever sports are listed for people choosing one, as on How to Play:
+ * the most popular first, the ancillary sports (cycling, running) last. Lower comes first.
+ * Exhaustive over `Sport`, so a new sport fails the build until it has a place.
+ */
+const SPORT_POPULARITY_RANK: Readonly<Record<Sport, number>> = {
+  [Sport.AMERICAN_FOOTBALL]: 1,
+  [Sport.BASKETBALL]: 2,
+  [Sport.BASEBALL]: 3,
+  [Sport.HOCKEY]: 4,
+  [Sport.SOCCER]: 5,
+  [Sport.GOLF]: 6,
+  [Sport.AUTO_RACING]: 7,
+  [Sport.TENNIS]: 8,
+  [Sport.HORSE_RACING]: 9,
+  [Sport.CYCLING]: 10,
+  [Sport.RUNNING]: 11,
+};
+
+/** Every supported sport, the most popular first. */
+export const SPORTS_BY_POPULARITY: readonly Sport[] = [...SUPPORTED_SPORTS]
+  .sort((left, right) => SPORT_POPULARITY_RANK[left] - SPORT_POPULARITY_RANK[right]);
+
 export function getSportDefinition(sport: Sport): SportDefinition {
   return SPORT_DEFINITIONS[sport];
 }

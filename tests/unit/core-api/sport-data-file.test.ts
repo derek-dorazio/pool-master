@@ -606,7 +606,7 @@ describe('sport data stat pool box scores (#935)', () => {
     const seed = worldSeries();
     seed.testData = true;
     seed.scope.contents.push('RESULTS');
-    delete seed.sportLeagues[0].events[0].field[1].ranking;
+    delete seed.sportLeagues[0].events[0].field[1]['ranking'];
 
     expect(problemsOf(seed, true)).toEqual(['World Series, World Series: mlb-bo-bichette needs a ranking in test data, to tier the field by.']);
   });

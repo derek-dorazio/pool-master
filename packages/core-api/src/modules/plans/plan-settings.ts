@@ -52,7 +52,7 @@ export const PLAN_SETTINGS = defineSettingsGroup<PlanConfig>({
       TROPHY_SHELF: LeaguePlan.PRO,
       CUP_SETTINGS: LeaguePlan.PRO,
       PAST_YEARS: LeaguePlan.PRO,
-      ALL_TIME_SUMMARY: LeaguePlan.PLATINUM,
+      ALL_TIME_SUMMARY: LeaguePlan.PREMIUM,
       RECORD_BOOK: LeaguePlan.PLATINUM,
     },
   }),

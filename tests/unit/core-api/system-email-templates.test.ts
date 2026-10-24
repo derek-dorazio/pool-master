@@ -40,6 +40,7 @@ describe('pool-master-98i system email templates', () => {
       leagueName: 'Mathworks',
       leagueCode: 'MATHWORKS',
       leagueHomeUrl: 'https://app.primetimecommissioner.com/leagues/league-1',
+      openContests: [],
     }, UTC);
 
     expect(message.templateKey).toBe('LEAGUE_JOIN_SUCCESS');
@@ -563,9 +564,12 @@ describe('pool-master-98i system email templates', () => {
       leagueName: '<League & Co>',
       leagueCode: 'LEAGUE',
       leagueHomeUrl: 'https://app.primetimecommissioner.com/leagues/league-1?x=<bad>',
+      openContests: [{ name: '<Pool & Co>', url: 'https://app.primetimecommissioner.com/contests/c?x="bad"' }],
     }, UTC);
 
     expect(message.html).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
+    expect(message.html).toContain('&lt;Pool &amp; Co&gt;</a>');
+    expect(message.html).not.toContain('x="bad"');
     expect(message.html).toContain('&lt;League &amp; Co&gt;');
     expect(message.html).not.toContain('<script>alert');
     expect(message.html).not.toContain('href="https://app.primetimecommissioner.com/leagues/league-1?x=<bad>"');

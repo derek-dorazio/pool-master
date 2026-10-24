@@ -6,18 +6,20 @@
 -- not teams, and it is scored by the composite family, each game a player's sport composite (Box
 -- Score for baseball). Each holds one event a season; the NFL's are two events, Conference
 -- Championship weekend and the Super Bowl. Idempotent on the (sport_id, name) unique: an admin
--- who already created a league keeps their row, with its overrides set.
-INSERT INTO "sport_leagues" ("id", "sport_id", "name", "bracket_advancement", "participant_type", "scoring_family", "is_active", "created_at", "updated_at")
-SELECT gen_random_uuid(), s."id", league."name", 'FIXED', 'INDIVIDUAL', 'COMPOSITE', TRUE, NOW(), NOW()
+-- who already created a league keeps their row, with its overrides set. Each sits after its
+-- sport's regular leagues wherever they are listed together (How to Play's chips), the NFL's
+-- Championship Weekend before the Super Bowl.
+INSERT INTO "sport_leagues" ("id", "sport_id", "name", "bracket_advancement", "participant_type", "scoring_family", "display_order", "is_active", "created_at", "updated_at")
+SELECT gen_random_uuid(), s."id", league."name", 'FIXED', 'INDIVIDUAL', 'COMPOSITE', league."display_order", TRUE, NOW(), NOW()
 FROM "sports" s
 JOIN (VALUES
-  ('BASEBALL', 'World Series'),
-  ('BASKETBALL', 'NBA Finals'),
-  ('HOCKEY', 'Stanley Cup Final'),
-  ('AMERICAN_FOOTBALL', 'Championship Weekend'),
-  ('AMERICAN_FOOTBALL', 'Super Bowl')
-) AS league("sport", "name") ON s."sport"::text = league."sport"
-ON CONFLICT ("sport_id", "name") DO UPDATE SET "participant_type" = EXCLUDED."participant_type", "scoring_family" = EXCLUDED."scoring_family";
+  ('BASEBALL', 'World Series', 20),
+  ('BASKETBALL', 'NBA Finals', 50),
+  ('HOCKEY', 'Stanley Cup Final', 50),
+  ('AMERICAN_FOOTBALL', 'Championship Weekend', 30),
+  ('AMERICAN_FOOTBALL', 'Super Bowl', 40)
+) AS league("sport", "name", "display_order") ON s."sport"::text = league."sport"
+ON CONFLICT ("sport_id", "name") DO UPDATE SET "participant_type" = EXCLUDED."participant_type", "scoring_family" = EXCLUDED."scoring_family", "display_order" = EXCLUDED."display_order";
 
 -- Each league's templates, named and defaulted as `rules/ux-rules.md` §12 says: one default per
 -- roster format, Tiered first (six tiers, best four count), then Budget (six players, best four)

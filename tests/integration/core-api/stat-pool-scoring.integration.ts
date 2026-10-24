@@ -346,7 +346,7 @@ describe('applyEventGameStatLines (#935)', () => {
     await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(1), runs(2)] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
     await expectRefusal(await sendGame(event.id, 3, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 422, 'ROUND_BEYOND_SCHEDULE');
     await expectRefusal(await sendGame(golfEvent.id, 1, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
-    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(-1)] }], admin.headers), 400);
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(-1)] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
     await expectRefusal(await sendGame(randomUUID(), 1, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 404);
     await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(1)] }], member.headers), 403);
     expect(await prisma.sportEventParticipantStatLine.count({ where: { participantRound: { sportEventParticipant: { sportEventId: event.id } } } })).toBe(0);

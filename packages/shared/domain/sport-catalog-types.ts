@@ -60,6 +60,12 @@ export interface SportLeague extends DomainEntity {
    */
   displayName: string | null;
   /**
+   * Where it sits among its sport's leagues wherever they are listed together: the major
+   * professional leagues first, then the NCAA's. Lower comes first; null comes after every
+   * ordered league. Reference data, set where the league is seeded.
+   */
+  displayOrder: number | null;
+  /**
    * Who competes and how its events are scored, when not as its sport (#934: the World Series
    * stat pool's players, scored by the composite family); null takes the sport's. Read through
    * `sportLeagueDefinitionOf`. Reference data, set where the league is seeded.

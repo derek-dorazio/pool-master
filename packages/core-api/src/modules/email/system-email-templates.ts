@@ -27,6 +27,8 @@ export interface LeagueJoinSuccessEmailData {
   leagueCode: string;
   leagueHomeUrl: string;
   teamName?: string;
+  /** The league's contests open for entries (#903 B3), oldest first; empty for none. */
+  openContests: Array<{ name: string; url: string }>;
 }
 
 /** B4: someone with no account yet is invited to co-own a squad; accepting signs them up. */
@@ -941,12 +943,23 @@ function renderLeagueJoinSuccessEmail(
       ['League code', data.leagueCode],
       ...(data.teamName ? ([['Playing as', data.teamName]] as Array<[string, string]>) : []),
     ]),
+    ...(data.openContests.length > 0
+      ? [
+        sectionTitle('Open for entries'),
+        paragraph(data.openContests
+          .map((contest) => `<a href="${escapeAttribute(contest.url)}" style="color:${EMAIL_THEME.navy};">${escapeHtml(contest.name)}</a>`)
+          .join('<br>')),
+      ]
+      : []),
     button('Open league', data.leagueHomeUrl),
   ].join('');
   const textLines = [
     `${data.userName}, your account is registered and you joined ${data.leagueName}.`,
     `League code: ${data.leagueCode}`,
     ...(data.teamName ? [`Playing as: ${data.teamName}`] : []),
+    ...(data.openContests.length > 0
+      ? ['', 'Open for entries:', ...data.openContests.map((contest) => `${contest.name}: ${contest.url}`), '']
+      : []),
     `Open league: ${data.leagueHomeUrl}`,
   ];
 

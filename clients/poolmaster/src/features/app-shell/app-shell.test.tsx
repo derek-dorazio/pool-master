@@ -333,22 +333,26 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('mock-league-menu')).not.toBeInTheDocument();
   });
 
-  it('links a signed-out visitor to How to Play from the header and the footer', () => {
+  it('links a signed-out visitor to How to Play and Plans from the header and the footer', () => {
     authState.isAuthenticated = false;
 
     renderAppShell(['/']);
 
     expect(screen.getByTestId('app-shell-how-to-play')).toHaveAttribute('href', '/how-to-play');
     expect(screen.getByTestId('app-shell-footer-how-to-play')).toHaveAttribute('href', '/how-to-play');
+    expect(screen.getByTestId('app-shell-plans')).toHaveAttribute('href', '/plans');
+    expect(screen.getByTestId('app-shell-footer-plans')).toHaveAttribute('href', '/plans');
   });
 
-  it('keeps How to Play in a signed-in member\'s footer, with the header given to their account menu', async () => {
+  it('keeps How to Play and Plans in a signed-in member\'s footer, with the header given to their account menu', async () => {
     listLeaguesMock.mockResolvedValue({ data: { leagues: [], memberships: [] } });
 
     renderAppShell(['/welcome']);
 
     expect(screen.getByTestId('app-shell-footer-how-to-play')).toHaveAttribute('href', '/how-to-play');
+    expect(screen.getByTestId('app-shell-footer-plans')).toHaveAttribute('href', '/plans');
     expect(screen.queryByTestId('app-shell-how-to-play')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('app-shell-plans')).not.toBeInTheDocument();
     await waitFor(() => expect(listLeaguesMock).toHaveBeenCalled());
   });
 

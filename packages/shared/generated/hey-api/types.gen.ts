@@ -6796,6 +6796,10 @@ export type SportLeagueDto = {
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
     /**
+     * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+     */
+    displayOrder: number | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -6896,6 +6900,10 @@ export type SportLeagueListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
+         * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+         */
+        displayOrder: number | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -6982,6 +6990,10 @@ export type SportLeagueResponse = {
          * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        /**
+         * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+         */
+        displayOrder: number | null;
         /**
          * Participants currently affiliated with the sport league.
          */
@@ -23835,15 +23847,6 @@ export type ListLeaguePlansData = {
     query?: never;
     url: '/api/v1/plans/';
 };
-
-export type ListLeaguePlansErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-};
-
-export type ListLeaguePlansError = ListLeaguePlansErrors[keyof ListLeaguePlansErrors];
 
 export type ListLeaguePlansResponses = {
     /**

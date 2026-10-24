@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
+import { PublicPlansPage } from '@/features/plans/public-plans-page';
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
 import { ResetPasswordPage } from '@/features/auth/reset-password-page';
 import { EmailUnsubscribePage } from '@/features/account/email-unsubscribe-page';
@@ -101,6 +102,10 @@ export const router = createBrowserRouter([
       {
         path: 'how-to-play',
         element: <HowToPlayPage />,
+      },
+      {
+        path: 'plans',
+        element: <PublicPlansPage />,
       },
       {
         path: 'forgot-password',

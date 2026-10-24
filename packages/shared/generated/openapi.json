@@ -16398,6 +16398,13 @@
             ],
             "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
           },
+          "displayOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -16433,6 +16440,7 @@
           "displayName",
           "participantType",
           "scoringFamily",
+          "displayOrder",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -16606,6 +16614,13 @@
                   ],
                   "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
                 },
+                "displayOrder": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -16641,6 +16656,7 @@
                 "displayName",
                 "participantType",
                 "scoringFamily",
+                "displayOrder",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -16793,6 +16809,13 @@
                 ],
                 "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
               },
+              "displayOrder": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -16828,6 +16851,7 @@
               "displayName",
               "participantType",
               "scoringFamily",
+              "displayOrder",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -56214,7 +56238,7 @@
         "tags": [
           "Plans"
         ],
-        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.",
+        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.",
         "responses": {
           "200": {
             "description": "What each league plan allows.",
@@ -56222,16 +56246,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaguePlanListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
