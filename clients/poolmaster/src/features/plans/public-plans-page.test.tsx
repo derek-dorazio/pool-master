@@ -87,7 +87,7 @@ describe('PublicPlansPage', () => {
 
     expect(await screen.findByTestId('plan-card-FREE-expansion'))
       .toHaveTextContent('Bigger contests: 50 entries $10 · 100 entries $20 · 200 entries $30 · 500 entries $40Expanding is free for now.');
-    expect(screen.getByTestId('plan-card-PLATINUM-expansion')).toHaveTextContent('Bigger contests: 1000 entries $30 · 2000 entries $40');
+    expect(screen.getByTestId('plan-card-PLATINUM-expansion')).toHaveTextContent('Bigger contests: 1,000 entries $30 · 2,000 entries $40');
   });
 
   it('lists the expansion prices without the free note once payments are on', async () => {
