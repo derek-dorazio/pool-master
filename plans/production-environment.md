@@ -132,12 +132,16 @@ uses the primary domain, so the hostnames, certificate and SES identity above mo
 
 Availability from whois/RDAP on 2026-10-24. Nothing has been bought; re-check before buying.
 
-Worth buying:
+Buy list (Derek, 2026-10-24): protect all three names on `.com`, `.net` and `.app`, plus the
+short redirects. 13 domains, about $245 a year to renew at Route 53 prices (.com $16, .net $17,
+.app $20, .co $38), plus $0.50 a month per hosted zone.
 
-- **Protect the brand:** `primetimecommissioner.net`, `.co`, `.app`.
-- **Short redirects:** `primetimecommish.com`, `primecommish.com`, `ptcommish.com`.
-- **Old name:** `ultimateofficepool.com`, `.net`, `.app` (it may become primary; drop `.net`/`.app` at
-  renewal if it does not).
+| Name | Domains | Owned now |
+|---|---|---|
+| primetimecommissioner | `.com`, `.net`, `.app`, `.co` | `.com` |
+| ultimateofficepool | `.com`, `.net`, `.app` | none |
+| ultimateofficepoolmanager | `.com`, `.net`, `.app` | `.com` |
+| Short redirects | `primetimecommish.com`, `primecommish.com`, `ptcommish.com` | none |
 
 Free on 2026-10-24:
 
