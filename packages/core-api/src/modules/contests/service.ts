@@ -51,7 +51,6 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
-  PlanCap,
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
   eventSportDefinition,
@@ -104,7 +103,7 @@ import {
 } from './entry-window';
 import type { SportEventParticipantService } from '../events/sport-event-participant-service';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
-import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
   EntryReceiptKind,
   buildEntryUrl,
@@ -1051,8 +1050,9 @@ export class ContestService {
     // deletes the first entry and keeps the later ones, so a count would reuse a number still
     // taken, and (contest, squad, entry number) is unique.
     const nextEntryNumber = (await this.findHighestEntryNumber(contestId, squad.id)) + 1;
-    // Checked live against the plan the league is on now (#947): a contest keeps no plan of its own.
-    const { caps } = await this.deps.planEntitlements.forLeague(context.contest.leagueId);
+    // Checked live against the plan the league is on now (#947): a contest keeps no plan of its
+    // own, only its expansion (#980), which the repository reads under the contest's lock.
+    const entitlements = await this.deps.planEntitlements.forLeague(context.contest.leagueId);
     const result = await this.deps.entries.create({
       contestId,
       squadId: squad.id,
@@ -1060,12 +1060,12 @@ export class ContestService {
       name: buildDefaultEntryName(squad.name, nextEntryNumber),
       // Born a draft in each of the contest's events; the owner submits each once its lineup is
       // complete (#481, #713).
-    }, { entriesPerContest: caps[PlanCap.ENTRIES_PER_CONTEST] });
+    }, { entriesPerContest: (expandedTo) => contestEntriesCap(entitlements, expandedTo) });
     if (result.status === 'contestFull') {
       this.logger.warn({
         contestId,
         userId,
-        entriesPerContest: caps[PlanCap.ENTRIES_PER_CONTEST],
+        entriesPerContest: result.entriesPerContest,
       }, 'contest entry create contest full');
       throw new ContestEntryOperationError('This contest is full', 'CONTEST_FULL');
     }
