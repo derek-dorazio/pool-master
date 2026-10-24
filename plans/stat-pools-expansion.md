@@ -130,9 +130,10 @@ composite and formula. The CFP scores **Redzone** and the Final Four scores **Tr
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
 
-Open: the soccer composite's name (#994).
+**Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
+considered. Derek may change it once he sees the contest (#994).
 
-Soccer composite name options:
+Soccer composite name options considered:
 
 - **Hat Trick** (recommended): soccer's best-known feat, says "goals" at once, and sits with
   Triple Threat and Power Play as a phrase fans already use.
