@@ -4,7 +4,7 @@
  * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, FinalContest, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
   CupContestCount,
@@ -166,6 +166,7 @@ export interface RecordView {
 export interface HistoryServiceDeps {
   finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
+  leagues: Pick<LeagueRepository, 'findById'>;
   championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
   logger?: HistoryLogger;
@@ -222,18 +223,21 @@ export class HistoryService {
 
   /**
    * The record book (#873): every record somebody holds, worked out from the league's counted
-   * contest finishes and its championships of years over. A squad that has since gone inactive
-   * still holds its records.
+   * contest finishes and its championships of years over, with the Hall of Lame's records unless
+   * the league hides them. A squad that has since gone inactive still holds its records.
    */
   async getRecords(leagueId: string): Promise<RecordView[]> {
-    const [finishes, championshipYears, squads] = await Promise.all([
+    const [finishes, championshipYears, squads, league] = await Promise.all([
       this.deps.finishes.findByLeague(leagueId),
       this.deps.championship.listYears(leagueId),
       this.deps.squads.findByLeague(leagueId, true),
+      this.deps.leagues.findById(leagueId),
     ]);
+    // The route has checked membership, so the league is there; were it gone, the Hall of Lame stays hidden.
+    const hallOfLame = league?.hallOfLameVisible ?? false;
     const ranked = rankRecords(finishes, championshipYears
       .filter((row) => row.isOver)
-      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })));
+      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), { hallOfLame });
     const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
       .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
     const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);
@@ -248,7 +252,7 @@ export class HistoryService {
         })
         .sort((left, right) => left.squad.name.localeCompare(right.squad.name) || (right.year ?? 0) - (left.year ?? 0)),
     });
-    this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length } }, 'Read the league\'s record book');
+    this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length, hallOfLame } }, 'Read the league\'s record book');
     return ranked.map((record) => ({ type: record.type, best: standView(record.best), nextBest: record.nextBest === null ? null : standView(record.nextBest) }));
   }
 

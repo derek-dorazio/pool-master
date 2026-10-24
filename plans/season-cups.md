@@ -432,6 +432,10 @@ email, not another page. Sent through the email outbox (#845), class B.
    `?year=` on the squad page; the strip lists only the years, and the cups, the squad placed in. Perpetual
    trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
+   Built as a Records section under the trophy case, read from the league's record book
+   (`listRecords`, the query All years uses) and kept to the rows where the squad has the best
+   value, so the two cannot disagree; no endpoint of its own. Hall of Lame rows it holds show
+   there too, unless the league hides them.
 4. **Year in review email.** After slice 1 and #845's outbox.
    Built as `GET /leagues/:id/history/year-review` and `POST .../year-review/:year/send`, the
    `YEAR_IN_REVIEW` email (Results category, class B) and a `league_year_reviews` row per league
@@ -457,7 +461,7 @@ next best. Ties show every holder.
 | `REPEAT_WINNER` | Most years in a row winning the same recurring contest (#874's key) |
 | `MOST_RUNNER_UPS` | Hall of Lame: most 2nd places |
 | `MOST_FOURTHS` | Hall of Lame: most 4th places, just off the podium |
-| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more entries |
+| `MOST_LAST_PLACES` | Hall of Lame: most last places, in contests of three or more squads |
 | `LONGEST_DROUGHT` | Hall of Lame: most contests in a row played without a win, past or still running |
 
 - `League.hallOfLameVisible Boolean @default(true)`, on league settings, hides the Hall of Lame
@@ -475,6 +479,11 @@ next best. Ties show every holder.
    shows its best value and the next value down, every holder of each; a record nobody holds is
    left out.
 2. **Hall of Lame.** Its rows and the league setting.
+   Built as four more `RecordType`s from the same `rankRecords`, which leaves them out when
+   `League.hallOfLameVisible` is off, so a hidden Hall of Lame never leaves the server. The setting
+   rides on `PUT /cup-settings` with the championship name and points table (Edit championships).
+   A last place is the worst place among the squads (each squad's best entry), in contests of
+   `LAST_PLACE_MIN_SQUADS` (3) or more squads.
 
 ## 12. Perpetual trophies (#874)
 

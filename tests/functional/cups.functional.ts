@@ -315,7 +315,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const custom = await updateLeagueCupSettings({
       client: commissioner.client,
       path: { id: league.id },
-      body: { cupName: '  Harriers Shield  ', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5] },
+      body: { cupName: '  Harriers Shield  ', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5], hallOfLameVisible: true },
     });
     expect(LeagueResponseSchema.parse(expectDefined(custom.data)).league).toMatchObject({
       cupName: 'Harriers Shield',
@@ -379,7 +379,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     await updateLeagueCupSettings({
       client: commissioner.client,
       path: { id: league.id },
-      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [] },
+      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true },
     });
     const kept = CupResponseSchema.parse(expectDefined((await getCup({ client: member.client, path: { id: league.id, cupId } })).data)).cup;
     expect(Object.fromEntries(kept.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', [row.points, row.pointsAfter, row.trophy]])))
@@ -396,13 +396,29 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       [SummaryTile.MOST_CUPS, 1, 2],
     ]);
 
-    // --- The record book: each squad won once and placed in both, no year is over yet ---
-    const records = RecordListResponseSchema.parse(expectDefined((await listRecords({ client: member.client, path: { id: league.id } })).data)).records;
+    // --- The record book: each squad won once and was 2nd once, no year is over yet ---
+    const readRecords = async () => RecordListResponseSchema.parse(expectDefined((await listRecords({ client: member.client, path: { id: league.id } })).data)).records;
+    const records = await readRecords();
     expect(records.map((record) => [record.type, record.best.value, record.best.holders.map((holder) => [holder.year, holder.contestName]), record.nextBest])).toEqual([
       [RecordType.MOST_WINS_IN_A_YEAR, 1, [[year, null], [year, null]], null],
       [RecordType.MOST_WINS_ALL_TIME, 1, [[null, null], [null, null]], null],
       [RecordType.LONGEST_PODIUM_RUN, 2, [[year, null], [year, null]], null],
       [RecordType.BIGGEST_FIELD_WON, 2, expect.arrayContaining([[year, `Harbour Picks ${RUN}`], [year, `Valley Picks ${RUN}`]]), null],
+      // The Hall of Lame: no 4th or last place in two-entry contests; each squad went one without a win.
+      [RecordType.MOST_RUNNER_UPS, 1, [[null, null], [null, null]], null],
+      [RecordType.LONGEST_DROUGHT, 1, [[year, null], [year, null]], null],
+    ]);
+    // Hiding the Hall of Lame takes its rows out for every member, and leaves the record book.
+    await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: false },
+    });
+    expect((await readRecords()).map((record) => record.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
     ]);
 
     // --- The member's squad page (#872): its championship row this year, and its 2099 cup row ---
@@ -445,7 +461,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
     const update = (client: typeof member.client, cupPointsScale: CupPointsScale, cupCustomPoints: number[]) =>
-      updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints } });
+      updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true } });
 
     expect((await update(member.client, CupPointsScale.TOP_TEN, [])).response.status).toBe(403);
     const empty = await update(commissioner.client, CupPointsScale.CUSTOM, []);

@@ -897,6 +897,25 @@ describe('Championships › All years', () => {
     expect(screen.queryByTestId('record-BIGGEST_FIELD_WON-next')).not.toBeInTheDocument();
   });
 
+  it('shows the Hall of Lame below the record book, each with its own records', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      { type: 'MOST_WINS_ALL_TIME', best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_RUNNER_UPS', best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'LONGEST_DROUGHT', best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    const lame = await screen.findByTestId('hall-of-lame');
+    expect(within(lame).getByTestId('record-MOST_RUNNER_UPS')).toHaveTextContent('Most runner-ups5 2nd places · Casey Crushers');
+    expect(within(lame).getByTestId('record-LONGEST_DROUGHT')).toHaveTextContent('Longest drought7 contests without a win · Casey Crushers (2026)');
+    expect(within(screen.getByTestId('record-book')).getByTestId('record-MOST_WINS_ALL_TIME')).toBeInTheDocument();
+    expect(within(screen.getByTestId('record-book')).queryByTestId('record-MOST_RUNNER_UPS')).not.toBeInTheDocument();
+  });
+
   it('shows no record book until a record is held', async () => {
     primeViewer();
     getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
@@ -906,6 +925,7 @@ describe('Championships › All years', () => {
     expect(await screen.findByTestId('all-years-year-2026')).toBeInTheDocument();
     await waitFor(() => expect(listRecordsMock).toHaveBeenCalled());
     expect(screen.queryByTestId('record-book')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('hall-of-lame')).not.toBeInTheDocument();
   });
 
   it('says nothing has counted yet for a league with no history', async () => {

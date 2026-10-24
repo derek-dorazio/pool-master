@@ -981,8 +981,28 @@ export const RecordType = {
   LONGEST_PODIUM_RUN: 'LONGEST_PODIUM_RUN',
   /** A contest win with the most ranked entries. */
   BIGGEST_FIELD_WON: 'BIGGEST_FIELD_WON',
+  /** Hall of Lame: the most 2nd places. */
+  MOST_RUNNER_UPS: 'MOST_RUNNER_UPS',
+  /** Hall of Lame: the most 4th places, just off the podium. */
+  MOST_FOURTHS: 'MOST_FOURTHS',
+  /** Hall of Lame: the most last places among the squads, in contests of three or more squads. */
+  MOST_LAST_PLACES: 'MOST_LAST_PLACES',
+  /** Hall of Lame: the most contests in a row placed in without a win, past or still running. */
+  LONGEST_DROUGHT: 'LONGEST_DROUGHT',
 } as const;
 export type RecordType = (typeof RecordType)[keyof typeof RecordType];
+
+/** The Hall of Lame's records (#873): shown below the record book, and hidden with the league's setting. */
+export const HALL_OF_LAME_RECORD_TYPES: readonly RecordType[] = [
+  RecordType.MOST_RUNNER_UPS,
+  RecordType.MOST_FOURTHS,
+  RecordType.MOST_LAST_PLACES,
+  RecordType.LONGEST_DROUGHT,
+];
+
+export function isHallOfLameRecord(type: RecordType): boolean {
+  return HALL_OF_LAME_RECORD_TYPES.includes(type);
+}
 
 /**
  * Which trophy a squad page's trophy shelf (#872) shows: a league championship finished 1st to 3rd

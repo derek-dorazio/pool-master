@@ -593,20 +593,22 @@ model PasswordResetToken {
 // =============================================================================
 
 model League {
-  id              String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueCode      String               @unique @map("league_code") @db.VarChar(16)
-  name            String
-  description     String?
-  isActive        Boolean              @default(true) @map("is_active")
-  iconKey         PrismaLeagueIconKey  @default(TROPHY) @map("icon_key")
+  id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueCode        String               @unique @map("league_code") @db.VarChar(16)
+  name              String
+  description       String?
+  isActive          Boolean              @default(true) @map("is_active")
+  iconKey           PrismaLeagueIconKey  @default(TROPHY) @map("icon_key")
   /// The points table every cup and the championship score with (#841).
-  cupPointsScale  PrismaCupPointsScale @default(STANDARD) @map("cup_points_scale")
+  cupPointsScale    PrismaCupPointsScale @default(STANDARD) @map("cup_points_scale")
   /// The commissioner's points for 1st, 2nd ... ; set only for CUSTOM, empty otherwise (database check).
-  cupCustomPoints Int[]                @default([]) @map("cup_custom_points")
+  cupCustomPoints   Int[]                @default([]) @map("cup_custom_points")
   /// The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". Set to "<league name> Cup" at creation.
-  cupName         String               @map("cup_name")
-  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  cupName           String               @map("cup_name")
+  /// Whether the record book shows its Hall of Lame rows (#873): most 2nds, 4ths and last places, the longest drought.
+  hallOfLameVisible Boolean              @default(true) @map("hall_of_lame_visible")
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz
 
   memberships           LeagueMembership[]
   cups                  Cup[]

@@ -22,6 +22,7 @@ export function createHistoryService(prisma: PrismaClient, logger: FastifyBaseLo
   return new HistoryService({
     finishes: new PrismaChampionshipRepository(prisma),
     squads: new PrismaSquadRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
     championship: createChampionshipService(prisma, logger),
     cups: createCupService(prisma, logger),
     logger,

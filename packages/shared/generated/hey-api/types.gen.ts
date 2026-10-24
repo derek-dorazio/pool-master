@@ -1181,7 +1181,7 @@ export type UpdateLeagueDetailsRequest = {
 };
 
 /**
- * Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.
+ * Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.
  */
 export type UpdateLeagueCupSettingsRequest = {
     /**
@@ -1196,6 +1196,10 @@ export type UpdateLeagueCupSettingsRequest = {
      * CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale.
      */
     cupCustomPoints: Array<number>;
+    /**
+     * Whether the record book shows its Hall of Lame rows, for the whole league.
+     */
+    hallOfLameVisible: boolean;
 };
 
 /**
@@ -1365,6 +1369,10 @@ export type LeagueDto = {
      * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
      */
     cupCustomPoints: Array<number>;
+    /**
+     * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+     */
+    hallOfLameVisible: boolean;
 };
 
 /**
@@ -1634,6 +1642,10 @@ export type LeagueResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     };
 };
 
@@ -1693,6 +1705,10 @@ export type LeagueContextResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -1925,6 +1941,10 @@ export type LeagueListResponse = {
          * CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.
          */
         cupCustomPoints: Array<number>;
+        /**
+         * Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.
+         */
+        hallOfLameVisible: boolean;
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -18800,9 +18820,9 @@ export type RecordStandDto = {
  */
 export type RecordDto = {
     /**
-     * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries).
+     * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
      */
-    type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON';
+    type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
     /**
      * One value of a record and who holds it.
      */
@@ -18894,9 +18914,9 @@ export type RecordListResponse = {
      */
     records: Array<{
         /**
-         * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries).
+         * MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
          */
-        type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON';
+        type: 'MOST_CHAMPIONSHIPS' | 'BACK_TO_BACK_CHAMPIONS' | 'MOST_WINS_IN_A_YEAR' | 'MOST_WINS_ALL_TIME' | 'LONGEST_PODIUM_RUN' | 'BIGGEST_FIELD_WON' | 'MOST_RUNNER_UPS' | 'MOST_FOURTHS' | 'MOST_LAST_PLACES' | 'LONGEST_DROUGHT';
         /**
          * One value of a record and who holds it.
          */

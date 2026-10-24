@@ -11,7 +11,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ChoiceCard, FormField, FormPage, Input } from '@/features/shared/ui';
+import { Checkbox, ChoiceCard, FormField, FormPage, Input } from '@/features/shared/ui';
 import {
   CUP_POINTS_SCALES,
   CUP_POINTS_SCALE_COPY,
@@ -25,6 +25,7 @@ const championshipSettingsFormSchema = z.object({
   cupName: z.string().trim().min(1, 'Championship name is required').max(100, 'Championship name must be 100 characters or fewer'),
   cupPointsScale: z.nativeEnum(CupPointsScale),
   customPoints: z.string(),
+  hallOfLameVisible: z.boolean(),
 }).superRefine((values, context) => {
   if (values.cupPointsScale !== CupPointsScale.CUSTOM) {
     return;
@@ -37,7 +38,10 @@ const championshipSettingsFormSchema = z.object({
 
 type ChampionshipSettingsFormValues = z.infer<typeof championshipSettingsFormSchema>;
 
-/** Edit championships: the league championship's name and the points table every cup scores on. */
+/**
+ * Edit championships: the league championship's name, the points table every cup scores on, and
+ * whether the record book shows its Hall of Lame.
+ */
 export function EditChampionshipSettingsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const { league } = useLeagueContext(leagueCode);
@@ -91,11 +95,13 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       cupName: league.cupName,
       cupPointsScale: league.cupPointsScale,
       customPoints: formatCustomPoints(league.cupCustomPoints),
+      hallOfLameVisible: league.hallOfLameVisible,
     },
   });
   const scale = form.watch('cupPointsScale');
   const customPoints = form.watch('customPoints');
   const cupName = form.watch('cupName').trim();
+  const hallOfLameVisible = form.watch('hallOfLameVisible');
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (values: ChampionshipSettingsFormValues) => {
@@ -107,6 +113,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
           cupPointsScale: values.cupPointsScale,
           // The resolver has checked the custom points; every other table sends none.
           cupCustomPoints: isCustom ? parseCustomPoints(values.customPoints).points ?? [] : [],
+          hallOfLameVisible: values.hallOfLameVisible,
         },
       });
       if (!response.data?.league) {
@@ -200,6 +207,21 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
         crowned cups keep the points their contests earned when they went final, so after a change an
         open cup and this year&apos;s championship can show different totals for the same contests.
       </p>
+
+      <label className="flex items-start gap-3 text-muted-foreground">
+        <Checkbox
+          checked={hallOfLameVisible}
+          className="mt-1"
+          data-testid="edit-championships-hall-of-lame"
+          disabled={saveMutation.isPending}
+          onChange={(event) => form.setValue('hallOfLameVisible', event.target.checked, { shouldDirty: true })}
+        />
+        <span className="text-sm">
+          <strong className="block font-medium text-foreground">Show the Hall of Lame</strong>
+          The record book&apos;s lighter side: most 2nd places, most 4th places, most last places and the
+          longest run without a win. Turn it off to hide it for everyone in the league.
+        </span>
+      </label>
     </FormPage>
   );
 }

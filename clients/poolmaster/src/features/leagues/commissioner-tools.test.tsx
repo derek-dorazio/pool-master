@@ -501,7 +501,7 @@ describe('Championship settings', () => {
     expect(updateLeagueCupSettingsMock).toHaveBeenCalledTimes(1);
     expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { id: 'league-1' },
-      body: { cupName: 'Dawg Bowl', cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 6, 3] },
+      body: { cupName: 'Dawg Bowl', cupPointsScale: 'CUSTOM', cupCustomPoints: [10, 6, 3], hallOfLameVisible: true },
     }));
     // Open cups score on the table as it stands, so they are read again.
     expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.cups.all }));
@@ -521,8 +521,26 @@ describe('Championship settings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
 
     await waitFor(() => expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { cupName: 'Big Dawgs Cup', cupPointsScale: 'TOP_TEN', cupCustomPoints: [] },
+      body: { cupName: 'Big Dawgs Cup', cupPointsScale: 'TOP_TEN', cupCustomPoints: [], hallOfLameVisible: true },
     })));
+  });
+
+  it('hides the Hall of Lame for the whole league when the commissioner unticks it, and League settings says so', async () => {
+    primeMocks();
+    updateLeagueCupSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ hallOfLameVisible: false }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    const hallOfLame = await screen.findByTestId('edit-championships-hall-of-lame');
+    expect(hallOfLame).toBeChecked();
+    fireEvent.click(hallOfLame);
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague({ hallOfLameVisible: false }))));
+    fireEvent.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    await waitFor(() => expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { cupName: 'Big Dawgs Cup', cupPointsScale: 'STANDARD', cupCustomPoints: [], hallOfLameVisible: false },
+    })));
+    expect(await screen.findByTestId('league-settings-hall-of-lame')).toHaveTextContent('Hidden');
   });
 
   it('blocks saving custom points that are not whole numbers and says why next to the field, sending nothing', async () => {

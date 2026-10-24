@@ -91,7 +91,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions)
     schema: {
       tags: ['History'],
       summary: 'List the record book',
-      description: `The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. ${MEMBERS_ONLY}`,
+      description: `The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. ${MEMBERS_ONLY}`,
       operationId: 'listRecords',
       response: {
         200: schemaRef('RecordListResponse'),

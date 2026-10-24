@@ -1618,7 +1618,7 @@ export interface paths {
         };
         /**
          * List the record book
-         * @description The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listRecords"];
         put?: never;
@@ -4111,7 +4111,7 @@ export interface components {
              */
             iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
         };
-        /** @description Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table. */
+        /** @description Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table. */
         UpdateLeagueCupSettingsRequest: {
             /** @description The league championship's name, shown after its year. */
             cupName: string;
@@ -4122,6 +4122,8 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale. */
             cupCustomPoints: number[];
+            /** @description Whether the record book shows its Hall of Lame rows, for the whole league. */
+            hallOfLameVisible: boolean;
         };
         /** @description Commissioner request payload for sending direct email invites. */
         SendLeagueInvitationsRequest: {
@@ -4228,6 +4230,8 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
             cupCustomPoints: number[];
+            /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+            hallOfLameVisible: boolean;
         };
         /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
@@ -4432,6 +4436,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
             };
         };
         /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
@@ -4471,6 +4477,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
             };
             /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
@@ -4656,6 +4664,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
             }[];
             /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
             memberships: {
@@ -16654,10 +16664,10 @@ export interface components {
         /** @description One record of the league's record book. */
         RecordDto: {
             /**
-             * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries).
+             * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
              * @enum {string}
              */
-            type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON";
+            type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
             /** @description One value of a record and who holds it. */
             best: {
                 /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
@@ -16722,10 +16732,10 @@ export interface components {
             /** @description Every record somebody holds, in RecordType order; a record nobody holds yet is left out. */
             records: {
                 /**
-                 * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries).
+                 * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
                  * @enum {string}
                  */
-                type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON";
+                type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
                 /** @description One value of a record and who holds it. */
                 best: {
                     /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */

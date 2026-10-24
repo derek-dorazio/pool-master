@@ -1,5 +1,5 @@
 import { RecordType } from '@poolmaster/shared/domain';
-import type { RecordHolderDto, RecordStandDto } from '@/lib/api';
+import type { RecordDto, RecordHolderDto, RecordStandDto } from '@/lib/api';
 import { joinNames } from './cup-view';
 
 /**
@@ -13,6 +13,10 @@ export const RECORD_WORDING: Record<RecordType, { title: string; value: (value: 
   [RecordType.MOST_WINS_ALL_TIME]: { title: 'Most wins', value: (value) => plural(value, 'win') },
   [RecordType.LONGEST_PODIUM_RUN]: { title: 'Longest podium run', value: (value) => inARow(value, 'podium', 'podiums') },
   [RecordType.BIGGEST_FIELD_WON]: { title: 'Biggest field won', value: (value) => plural(value, 'entry', 'entries') },
+  [RecordType.MOST_RUNNER_UPS]: { title: 'Most runner-ups', value: (value) => plural(value, '2nd place') },
+  [RecordType.MOST_FOURTHS]: { title: 'Most 4th places', value: (value) => plural(value, '4th place') },
+  [RecordType.MOST_LAST_PLACES]: { title: 'Most last places', value: (value) => plural(value, 'last place') },
+  [RecordType.LONGEST_DROUGHT]: { title: 'Longest drought', value: (value) => `${plural(value, 'contest')} without a win` },
 };
 
 function plural(count: number, one: string, many = `${one}s`): string {
@@ -33,4 +37,31 @@ export function describeRecordHolder(holder: RecordHolderDto): string {
 /** A record value and its holders: "7 wins · Eagles (2025) and Birdies (2024)". */
 export function describeRecordStand(type: RecordType, stand: RecordStandDto): string {
   return `${RECORD_WORDING[type].value(stand.value)} · ${joinNames(stand.holders.map(describeRecordHolder))}`;
+}
+
+/** A record one squad holds, with each time it set the best value. */
+export interface HeldRecord {
+  type: RecordType;
+  value: number;
+  holdings: RecordHolderDto[];
+}
+
+/** The records a squad holds outright or shares at the top, in the record book's order. */
+export function recordsHeldBy(records: RecordDto[], squadId: string): HeldRecord[] {
+  return records.flatMap((record) => {
+    const holdings = record.best.holders.filter((holder) => holder.squad.squadId === squadId);
+    return holdings.length ? [{ type: record.type, value: record.best.value, holdings }] : [];
+  });
+}
+
+/** A held record's value and when: "4 wins · 2025", "48 entries · Masters Pick 6 (2025)", "9 wins". */
+export function describeHeldRecord(record: HeldRecord): string {
+  const value = RECORD_WORDING[record.type].value(record.value);
+  const when = record.holdings.flatMap((holding) => {
+    if (holding.contestName !== null) {
+      return [holding.year === null ? holding.contestName : `${holding.contestName} (${holding.year})`];
+    }
+    return holding.year === null ? [] : [String(holding.year)];
+  });
+  return when.length ? `${value} · ${joinNames(when)}` : value;
 }
