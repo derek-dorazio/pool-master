@@ -1455,6 +1455,268 @@
         "additionalProperties": false,
         "description": "A root admin gives a contest an expansion free, with a reason."
       },
+      "LeaguePayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was paid, or given."
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "In US cents; 0 for an expansion that was free."
+          },
+          "description": {
+            "type": "string",
+            "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+          },
+          "contestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The contest it was for; null when that contest was deleted."
+          },
+          "payer": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "description": "Their name, for display."
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false,
+            "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
+          }
+        },
+        "required": [
+          "id",
+          "paidAt",
+          "amountCents",
+          "description",
+          "contestId",
+          "payer"
+        ],
+        "additionalProperties": false,
+        "description": "One line of a league's payment history. No card data is ever kept."
+      },
+      "LeaguePaymentListResponse": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was paid, or given."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "In US cents; 0 for an expansion that was free."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+                },
+                "contestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The contest it was for; null when that contest was deleted."
+                },
+                "payer": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Their name, for display."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
+                }
+              },
+              "required": [
+                "id",
+                "paidAt",
+                "amountCents",
+                "description",
+                "contestId",
+                "payer"
+              ],
+              "additionalProperties": false,
+              "description": "One line of a league's payment history. No card data is ever kept."
+            },
+            "description": "Newest first."
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "additionalProperties": false,
+        "description": "A league's payment history."
+      },
+      "UserPayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was paid, or given."
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "In US cents; 0 for an expansion that was free."
+          },
+          "description": {
+            "type": "string",
+            "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+          },
+          "league": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "leagueCode": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "leagueCode"
+            ],
+            "additionalProperties": false,
+            "description": "The league it was paid in."
+          }
+        },
+        "required": [
+          "id",
+          "paidAt",
+          "amountCents",
+          "description",
+          "league"
+        ],
+        "additionalProperties": false,
+        "description": "One payment a user made, in one of their leagues. No card data is ever kept."
+      },
+      "UserPaymentListResponse": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was paid, or given."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "In US cents; 0 for an expansion that was free."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+                },
+                "league": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "leagueCode": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "leagueCode"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league it was paid in."
+                }
+              },
+              "required": [
+                "id",
+                "paidAt",
+                "amountCents",
+                "description",
+                "league"
+              ],
+              "additionalProperties": false,
+              "description": "One payment a user made, in one of their leagues. No card data is ever kept."
+            },
+            "description": "Newest first."
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "additionalProperties": false,
+        "description": "Every payment a user made, in any league."
+      },
       "SquadMembershipDto": {
         "type": "object",
         "properties": {
@@ -57023,6 +57285,80 @@
         }
       }
     },
+    "/api/v1/users/{userId}/payments": {
+      "get": {
+        "operationId": "listUserPayments",
+        "summary": "List the payments a user made",
+        "tags": [
+          "Users"
+        ],
+        "description": "Every payment the user made, in any of their leagues, newest first (#987): date, amount in US cents, what it was for and the league. While payments are off, each expansion is a $0 line that says it was free. No card data is kept. Access rule A6: the subject themselves, or a root admin.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            },
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every payment a user made, in any league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPaymentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/{userId}/password": {
       "post": {
         "operationId": "changeUserPassword",
@@ -59073,6 +59409,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaguePlanListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/payments": {
+      "get": {
+        "operationId": "listLeaguePayments",
+        "summary": "List a league's payment history",
+        "tags": [
+          "Billing"
+        ],
+        "description": "Every payment made in the league, newest first (#987): date, amount in US cents, what it was for, its contest and who paid. While payments are off, each expansion is a $0 line that says it was free; a root admin's gift is a $0 line with its reason. No card data is kept. Commissioners and root admins only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A league's payment history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaguePaymentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }

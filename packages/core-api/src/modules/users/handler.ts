@@ -17,6 +17,7 @@ import type {
   UserProfileUpdateRequest,
 } from '@poolmaster/shared/dto';
 import { toUserDto } from '../../mappers/users.mapper';
+import { toUserPaymentListResponse } from '../../mappers/billing.mapper';
 import { sendError } from '../../core/error-handler';
 import {
   createClearedSessionCookieHeaders,
@@ -25,6 +26,7 @@ import {
 } from '../../core/session-cookies';
 import type { AuthService } from '../auth/auth-service';
 import type { EmailPreferencesService } from '../email/email-preferences-service';
+import type { PaymentHistoryService } from '../billing/payment-history-service';
 import { AuthError } from '../auth/auth-service';
 import { UserOperationError } from './user-errors';
 import type { UserService, UserWriteActor } from './user-service';
@@ -36,6 +38,7 @@ export function createUserHandlers(
   userService: UserService,
   authService: AuthService,
   emailPreferences: EmailPreferencesService,
+  payments: Pick<PaymentHistoryService, 'listForPayer'>,
 ) {
   return {
     listUsers,
@@ -45,6 +48,7 @@ export function createUserHandlers(
     updatePreferences,
     readEmailPreferences,
     updateEmailPreference,
+    listPayments,
     changePassword,
     resetPassword,
     disableUser,
@@ -180,6 +184,17 @@ export function createUserHandlers(
     return run(request, reply, 'user.readEmailPreferences', async (actor) => {
       const user = await userService.readUser(actor, subjectOf(actor, request.params.userId));
       return reply.send(await emailPreferences.read(user));
+    });
+  }
+
+  async function listPayments(
+    request: FastifyRequest<{ Params: { userId: string } }>,
+    reply: FastifyReply,
+  ) {
+    return run(request, reply, 'user.listPayments', async (actor) => {
+      // Payments are the account's own: the subject themselves, or a root admin (A6).
+      const user = await userService.readUser(actor, subjectOf(actor, request.params.userId));
+      return reply.send(toUserPaymentListResponse(await payments.listForPayer(user.id)));
     });
   }
 
