@@ -1,5 +1,6 @@
 import { LeagueIconKey, LeagueRole, TeamIconKey } from '@poolmaster/shared/domain';
 import type { UserDto, GenerateInviteLinkResponse, InvitationPreviewResponse, LeagueContextResponse, LeagueDto, LeagueInvitationDto, LeagueListResponse, LeagueMembershipDto, LeagueMembershipResponse, LeagueResponse, SquadDto, SquadListResponse, SquadResponse, SuccessResponse } from '@/lib/api';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 export type CurrentUser = UserDto;
 export type LeagueSquadMember = NonNullable<SquadDto['members']>[number];
@@ -25,6 +26,7 @@ type LeagueFixture = Pick<
   | 'cupPointsScale'
   | 'cupCustomPoints'
   | 'hallOfLameVisible'
+  | 'planEntitlements'
 >;
 
 type CurrentUserFixture = Pick<
@@ -125,6 +127,7 @@ const baseLeague: LeagueFixture = {
   cupPointsScale: 'STANDARD',
   cupCustomPoints: [],
   hallOfLameVisible: true,
+  planEntitlements: buildPlanEntitlements(),
 };
 
 const baseSquadMember: LeagueSquadMemberFixture = {

@@ -143,6 +143,11 @@ export function buildLeagueAdminChampionshipsEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/championships/edit`;
 }
 
+/** The league's plan picker and comparison table (#945). */
+export function buildLeagueAdminPlanEditPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/plan/edit`;
+}
+
 export function buildInvitePath(inviteCode: string) {
   return `/invite/${inviteCode}`;
 }

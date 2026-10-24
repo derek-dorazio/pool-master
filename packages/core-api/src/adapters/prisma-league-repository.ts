@@ -4,7 +4,7 @@
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
-import type { League, LeagueIconKey } from '@poolmaster/shared/domain';
+import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
@@ -63,6 +63,19 @@ export class PrismaLeagueRepository implements LeagueRepository {
         cupName: league.cupName,
       },
     });
+    return mapToLeague(row);
+  }
+
+  async changePlan(
+    leagueId: string,
+    change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string },
+  ): Promise<League> {
+    const [row] = await this.prisma.$transaction([
+      this.prisma.league.update({ where: { id: leagueId }, data: { plan: change.toPlan } }),
+      this.prisma.leaguePlanChange.create({
+        data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changedById: change.changedById },
+      }),
+    ]);
     return mapToLeague(row);
   }
 

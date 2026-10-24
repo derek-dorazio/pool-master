@@ -945,6 +945,215 @@
         "additionalProperties": false,
         "description": "Token refresh response carrying the rotated access, refresh and CSRF tokens."
       },
+      "PlanCapsDto": {
+        "type": "object",
+        "properties": {
+          "ENTRIES_PER_CONTEST": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Entries per contest, drafts included, or null for unlimited."
+          },
+          "SPORTS_LEAGUES_PER_YEAR": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+          }
+        },
+        "required": [
+          "ENTRIES_PER_CONTEST",
+          "SPORTS_LEAGUES_PER_YEAR"
+        ],
+        "additionalProperties": false,
+        "description": "Each cap's limit on one plan."
+      },
+      "PlanEntitlementsDto": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+          },
+          "caps": {
+            "type": "object",
+            "properties": {
+              "ENTRIES_PER_CONTEST": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Entries per contest, drafts included, or null for unlimited."
+              },
+              "SPORTS_LEAGUES_PER_YEAR": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+              }
+            },
+            "required": [
+              "ENTRIES_PER_CONTEST",
+              "SPORTS_LEAGUES_PER_YEAR"
+            ],
+            "additionalProperties": false,
+            "description": "Each cap's limit on one plan."
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "EMAIL_CONTEST_OPENED",
+                "EMAIL_CONTEST_ENTRY_COMPLETED",
+                "EMAIL_CONTEST_RESULTS",
+                "EMAIL_CONTEST_EVENT_CHANGED",
+                "EMAIL_CONTEST_STARTED_SUMMARY",
+                "EMAIL_CONTEST_ENTRY_REMINDER",
+                "EMAIL_CONTEST_STANDINGS",
+                "EMAIL_EVENT_COMING_UP",
+                "EMAIL_EVENT_READY_FOR_CONTESTS",
+                "EMAIL_CONTEST_NOT_OPEN",
+                "EMAIL_YEAR_IN_REVIEW",
+                "CUP_STANDINGS",
+                "CUP_CROWNING",
+                "CHAMPIONSHIP",
+                "TROPHY_SHELF",
+                "CUP_SETTINGS",
+                "PAST_YEARS",
+                "ALL_TIME_SUMMARY",
+                "RECORD_BOOK"
+              ]
+            },
+            "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+          }
+        },
+        "required": [
+          "plan",
+          "caps",
+          "features"
+        ],
+        "additionalProperties": false,
+        "description": "What a league on one plan may do, from the current plan settings."
+      },
+      "LeaguePlanListResponse": {
+        "type": "object",
+        "properties": {
+          "plans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "plan": {
+                  "type": "string",
+                  "enum": [
+                    "FREE",
+                    "PRO",
+                    "PREMIUM",
+                    "PLATINUM"
+                  ],
+                  "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+                },
+                "caps": {
+                  "type": "object",
+                  "properties": {
+                    "ENTRIES_PER_CONTEST": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "Entries per contest, drafts included, or null for unlimited."
+                    },
+                    "SPORTS_LEAGUES_PER_YEAR": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+                    }
+                  },
+                  "required": [
+                    "ENTRIES_PER_CONTEST",
+                    "SPORTS_LEAGUES_PER_YEAR"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Each cap's limit on one plan."
+                },
+                "features": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ]
+                  },
+                  "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                }
+              },
+              "required": [
+                "plan",
+                "caps",
+                "features"
+              ],
+              "additionalProperties": false,
+              "description": "What a league on one plan may do, from the current plan settings."
+            },
+            "description": "Every plan, lowest first, for comparing them."
+          }
+        },
+        "required": [
+          "plans"
+        ],
+        "additionalProperties": false,
+        "description": "What each league plan allows."
+      },
+      "UpdateLeaguePlanRequest": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "string",
+            "enum": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "description": "The plan to move the league to. It applies at once and costs nothing."
+          }
+        },
+        "required": [
+          "plan"
+        ],
+        "additionalProperties": false,
+        "description": "A league's new plan."
+      },
       "SquadMembershipDto": {
         "type": "object",
         "properties": {
@@ -2831,6 +3040,81 @@
           "hallOfLameVisible": {
             "type": "boolean",
             "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
+          },
+          "planEntitlements": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+              },
+              "caps": {
+                "type": "object",
+                "properties": {
+                  "ENTRIES_PER_CONTEST": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Entries per contest, drafts included, or null for unlimited."
+                  },
+                  "SPORTS_LEAGUES_PER_YEAR": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+                  }
+                },
+                "required": [
+                  "ENTRIES_PER_CONTEST",
+                  "SPORTS_LEAGUES_PER_YEAR"
+                ],
+                "additionalProperties": false,
+                "description": "Each cap's limit on one plan."
+              },
+              "features": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "EMAIL_CONTEST_OPENED",
+                    "EMAIL_CONTEST_ENTRY_COMPLETED",
+                    "EMAIL_CONTEST_RESULTS",
+                    "EMAIL_CONTEST_EVENT_CHANGED",
+                    "EMAIL_CONTEST_STARTED_SUMMARY",
+                    "EMAIL_CONTEST_ENTRY_REMINDER",
+                    "EMAIL_CONTEST_STANDINGS",
+                    "EMAIL_EVENT_COMING_UP",
+                    "EMAIL_EVENT_READY_FOR_CONTESTS",
+                    "EMAIL_CONTEST_NOT_OPEN",
+                    "EMAIL_YEAR_IN_REVIEW",
+                    "CUP_STANDINGS",
+                    "CUP_CROWNING",
+                    "CHAMPIONSHIP",
+                    "TROPHY_SHELF",
+                    "CUP_SETTINGS",
+                    "PAST_YEARS",
+                    "ALL_TIME_SUMMARY",
+                    "RECORD_BOOK"
+                  ]
+                },
+                "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+              }
+            },
+            "required": [
+              "plan",
+              "caps",
+              "features"
+            ],
+            "additionalProperties": false,
+            "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
           }
         },
         "required": [
@@ -2844,7 +3128,8 @@
           "cupName",
           "cupPointsScale",
           "cupCustomPoints",
-          "hallOfLameVisible"
+          "hallOfLameVisible",
+          "planEntitlements"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3306,6 +3591,81 @@
               "hallOfLameVisible": {
                 "type": "boolean",
                 "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
+              },
+              "planEntitlements": {
+                "type": "object",
+                "properties": {
+                  "plan": {
+                    "type": "string",
+                    "enum": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+                  },
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "Entries per contest, drafts included, or null for unlimited."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on one plan."
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "EMAIL_CONTEST_OPENED",
+                        "EMAIL_CONTEST_ENTRY_COMPLETED",
+                        "EMAIL_CONTEST_RESULTS",
+                        "EMAIL_CONTEST_EVENT_CHANGED",
+                        "EMAIL_CONTEST_STARTED_SUMMARY",
+                        "EMAIL_CONTEST_ENTRY_REMINDER",
+                        "EMAIL_CONTEST_STANDINGS",
+                        "EMAIL_EVENT_COMING_UP",
+                        "EMAIL_EVENT_READY_FOR_CONTESTS",
+                        "EMAIL_CONTEST_NOT_OPEN",
+                        "EMAIL_YEAR_IN_REVIEW",
+                        "CUP_STANDINGS",
+                        "CUP_CROWNING",
+                        "CHAMPIONSHIP",
+                        "TROPHY_SHELF",
+                        "CUP_SETTINGS",
+                        "PAST_YEARS",
+                        "ALL_TIME_SUMMARY",
+                        "RECORD_BOOK"
+                      ]
+                    },
+                    "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  }
+                },
+                "required": [
+                  "plan",
+                  "caps",
+                  "features"
+                ],
+                "additionalProperties": false,
+                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
               }
             },
             "required": [
@@ -3319,7 +3679,8 @@
               "cupName",
               "cupPointsScale",
               "cupCustomPoints",
-              "hallOfLameVisible"
+              "hallOfLameVisible",
+              "planEntitlements"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3423,6 +3784,81 @@
               "hallOfLameVisible": {
                 "type": "boolean",
                 "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
+              },
+              "planEntitlements": {
+                "type": "object",
+                "properties": {
+                  "plan": {
+                    "type": "string",
+                    "enum": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+                  },
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "Entries per contest, drafts included, or null for unlimited."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on one plan."
+                  },
+                  "features": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "EMAIL_CONTEST_OPENED",
+                        "EMAIL_CONTEST_ENTRY_COMPLETED",
+                        "EMAIL_CONTEST_RESULTS",
+                        "EMAIL_CONTEST_EVENT_CHANGED",
+                        "EMAIL_CONTEST_STARTED_SUMMARY",
+                        "EMAIL_CONTEST_ENTRY_REMINDER",
+                        "EMAIL_CONTEST_STANDINGS",
+                        "EMAIL_EVENT_COMING_UP",
+                        "EMAIL_EVENT_READY_FOR_CONTESTS",
+                        "EMAIL_CONTEST_NOT_OPEN",
+                        "EMAIL_YEAR_IN_REVIEW",
+                        "CUP_STANDINGS",
+                        "CUP_CROWNING",
+                        "CHAMPIONSHIP",
+                        "TROPHY_SHELF",
+                        "CUP_SETTINGS",
+                        "PAST_YEARS",
+                        "ALL_TIME_SUMMARY",
+                        "RECORD_BOOK"
+                      ]
+                    },
+                    "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  }
+                },
+                "required": [
+                  "plan",
+                  "caps",
+                  "features"
+                ],
+                "additionalProperties": false,
+                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
               }
             },
             "required": [
@@ -3436,7 +3872,8 @@
               "cupName",
               "cupPointsScale",
               "cupCustomPoints",
-              "hallOfLameVisible"
+              "hallOfLameVisible",
+              "planEntitlements"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3834,6 +4271,81 @@
                 "hallOfLameVisible": {
                   "type": "boolean",
                   "description": "Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation."
+                },
+                "planEntitlements": {
+                  "type": "object",
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "enum": [
+                        "FREE",
+                        "PRO",
+                        "PREMIUM",
+                        "PLATINUM"
+                      ],
+                      "description": "The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM."
+                    },
+                    "caps": {
+                      "type": "object",
+                      "properties": {
+                        "ENTRIES_PER_CONTEST": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Entries per contest, drafts included, or null for unlimited."
+                        },
+                        "SPORTS_LEAGUES_PER_YEAR": {
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "description": "Different sports leagues among the league's contests in a calendar year, or null for unlimited."
+                        }
+                      },
+                      "required": [
+                        "ENTRIES_PER_CONTEST",
+                        "SPORTS_LEAGUES_PER_YEAR"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Each cap's limit on one plan."
+                    },
+                    "features": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "EMAIL_CONTEST_OPENED",
+                          "EMAIL_CONTEST_ENTRY_COMPLETED",
+                          "EMAIL_CONTEST_RESULTS",
+                          "EMAIL_CONTEST_EVENT_CHANGED",
+                          "EMAIL_CONTEST_STARTED_SUMMARY",
+                          "EMAIL_CONTEST_ENTRY_REMINDER",
+                          "EMAIL_CONTEST_STANDINGS",
+                          "EMAIL_EVENT_COMING_UP",
+                          "EMAIL_EVENT_READY_FOR_CONTESTS",
+                          "EMAIL_CONTEST_NOT_OPEN",
+                          "EMAIL_YEAR_IN_REVIEW",
+                          "CUP_STANDINGS",
+                          "CUP_CROWNING",
+                          "CHAMPIONSHIP",
+                          "TROPHY_SHELF",
+                          "CUP_SETTINGS",
+                          "PAST_YEARS",
+                          "ALL_TIME_SUMMARY",
+                          "RECORD_BOOK"
+                        ]
+                      },
+                      "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                    }
+                  },
+                  "required": [
+                    "plan",
+                    "caps",
+                    "features"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
                 }
               },
               "required": [
@@ -3847,7 +4359,8 @@
                 "cupName",
                 "cupPointsScale",
                 "cupCustomPoints",
-                "hallOfLameVisible"
+                "hallOfLameVisible",
+                "planEntitlements"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -53146,6 +53659,88 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/plan": {
+      "put": {
+        "operationId": "updateLeaguePlan",
+        "summary": "Change the league's plan",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeaguePlanRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/inactivate": {
       "post": {
         "operationId": "inactivateLeague",
@@ -53868,6 +54463,38 @@
             }
           },
           "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/plans/": {
+      "get": {
+        "operationId": "listLeaguePlans",
+        "summary": "List what each league plan allows",
+        "tags": [
+          "Plans"
+        ],
+        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.",
+        "responses": {
+          "200": {
+            "description": "What each league plan allows.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaguePlanListResponse"
+                }
+              }
+            }
+          },
+          "401": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

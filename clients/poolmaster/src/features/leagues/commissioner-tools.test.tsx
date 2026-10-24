@@ -7,6 +7,8 @@ import { AuthProvider } from '@/features/auth/auth-provider';
 import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
+import { EditLeaguePlanPage } from '@/features/plans/edit-league-plan-page';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
 import { EditLeaguePage } from './edit-league-page';
 import { LeagueSettingsPage } from './league-settings-page';
@@ -32,10 +34,12 @@ const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
+const listLeaguePlansMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const updateLeagueCupSettingsMock = vi.fn();
 const updateLeagueDetailsMock = vi.fn();
+const updateLeaguePlanMock = vi.fn();
 
 bindApiMocks({
   activateLeague: activateLeagueMock,
@@ -44,10 +48,12 @@ bindApiMocks({
   getLeagueByCode: getLeagueByCodeMock,
   inactivateLeague: inactivateLeagueMock,
   listLeagueMembers: listLeagueMembersMock,
+  listLeaguePlans: listLeaguePlansMock,
   listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
   updateLeagueCupSettings: updateLeagueCupSettingsMock,
   updateLeagueDetails: updateLeagueDetailsMock,
+  updateLeaguePlan: updateLeaguePlanMock,
 });
 
 function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
@@ -63,6 +69,7 @@ function renderCommissionerTools(path = '/league/BIGDAWGS/admin') {
                   <Route element={<LeagueSettingsPage />} index />
                   <Route element={<EditLeaguePage />} path="edit" />
                   <Route element={<EditChampionshipSettingsPage />} path="championships/edit" />
+                  <Route element={<EditLeaguePlanPage />} path="plan/edit" />
                 </Route>
               </Route>
             </Route>
@@ -118,8 +125,8 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
-    inactivateLeagueMock, listLeagueMembersMock, listLeagueSquadsMock, refreshTokenMock,
-    updateLeagueCupSettingsMock, updateLeagueDetailsMock,
+    inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, refreshTokenMock,
+    updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeaguePlanMock,
   ]) {
     mock.mockReset();
   }
@@ -588,6 +595,130 @@ describe('Championship settings', () => {
 
     expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
     expect(screen.queryByTestId('edit-championships-page')).not.toBeInTheDocument();
+  });
+});
+
+const FREE_PLAN = buildPlanEntitlements({
+  plan: 'FREE',
+  caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 },
+  features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS'],
+});
+
+function primePlanList() {
+  listLeaguePlansMock.mockResolvedValue(apiSuccess({
+    plans: [
+      FREE_PLAN,
+      buildPlanEntitlements({ plan: 'PRO', caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 }, features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'] }),
+      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 } }),
+      buildPlanEntitlements(),
+    ],
+  }));
+}
+
+describe('League plan', () => {
+  it('shows the league\'s plan and its limits on League settings, with a Change to pick another', async () => {
+    primeMocks({ league: { planEntitlements: FREE_PLAN } });
+
+    renderCommissionerTools();
+
+    const plan = within(await screen.findByTestId('league-settings-plan'));
+    expect(plan.getByTestId('league-settings-plan-name')).toHaveTextContent('Free');
+    expect(plan.getByTestId('league-settings-plan-cap-ENTRIES_PER_CONTEST')).toHaveTextContent('20');
+    expect(plan.getByTestId('league-settings-plan-cap-SPORTS_LEAGUES_PER_YEAR')).toHaveTextContent('1');
+    expect(plan.getByRole('link', { name: 'Change' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+  });
+
+  it('shows Platinum, the plan every league starts on, as unlimited', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-settings-plan-name')).toHaveTextContent('Platinum');
+    expect(screen.getByTestId('league-settings-plan-cap-ENTRIES_PER_CONTEST')).toHaveTextContent('Unlimited');
+  });
+
+  it('compares every plan side by side, its limits and which features it includes', async () => {
+    primeMocks();
+    primePlanList();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    const table = within(await screen.findByTestId('plan-comparison-table'));
+    const [head, ...sections] = table.getAllByRole('rowgroup');
+    expect(within(head).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['What the plan includes', 'Free', 'Pro', 'Premium', 'Platinum']);
+    expect(sections.map((section) => within(section).getAllByRole('columnheader')[0]?.textContent)).toEqual(['Limits', 'Emails', 'Championships', 'History']);
+    const entries = within(table.getByTestId('plan-comparison-row-ENTRIES_PER_CONTEST'));
+    expect(entries.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['20', '50', '100', 'Unlimited']);
+    const championship = within(table.getByTestId('plan-comparison-row-CHAMPIONSHIP'));
+    expect(championship.getAllByLabelText(/included/i).map((icon) => icon.getAttribute('aria-label')))
+      .toEqual(['Not included', 'Included', 'Included', 'Included']);
+  });
+
+  it('moves the league to the chosen plan in one request and returns to League settings showing it', async () => {
+    primeMocks();
+    primePlanList();
+    updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ planEntitlements: FREE_PLAN }))));
+    const { queryClient } = renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    expect(await screen.findByTestId('edit-plan-option-PLATINUM')).toBeChecked();
+    fireEvent.click(screen.getByTestId('edit-plan-option-FREE'));
+    getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(buildLeague({ planEntitlements: FREE_PLAN }))));
+    fireEvent.click(screen.getByRole('button', { name: 'Save plan' }));
+
+    expect(await screen.findByTestId('league-settings-plan-name')).toHaveTextContent('Free');
+    expect(updateLeaguePlanMock).toHaveBeenCalledTimes(1);
+    expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, body: { plan: 'FREE' } }));
+    // The root admin's league list shows each league's plan.
+    expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.rootAdmin.manageLeagues }));
+  });
+
+  it('lets a root admin who is not a commissioner change the plan', async () => {
+    primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+    primePlanList();
+    updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ planEntitlements: FREE_PLAN }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    fireEvent.click(await screen.findByTestId('edit-plan-option-FREE'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save plan' }));
+
+    await waitFor(() => expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ body: { plan: 'FREE' } })));
+  });
+
+  it('stays on the plan picker with the reason when the change fails', async () => {
+    primeMocks();
+    primePlanList();
+    updateLeaguePlanMock.mockResolvedValue({
+      error: { error: { code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', message: 'Inactive leagues are read-only outside lifecycle actions' } },
+    });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save plan' }));
+
+    expect(await screen.findByText('Inactive leagues are read-only outside lifecycle actions')).toBeInTheDocument();
+    expect(screen.getByTestId('edit-plan-page')).toBeInTheDocument();
+  });
+
+  it('says so in place of the table when the plans cannot be loaded, still letting the plan be chosen', async () => {
+    primeMocks();
+    listLeaguePlansMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    expect(await screen.findByText("We couldn't load the plans.")).toBeInTheDocument();
+    expect(screen.getByTestId('edit-plan-option-FREE')).toBeInTheDocument();
+  });
+
+  it('sends a commissioner who opens the plan picker on an inactive league back to the read-only settings, where Change is unavailable', async () => {
+    primeMocks({ isActive: false });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    expect(await screen.findByTestId('league-settings-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-plan-page')).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-plan-edit')).toHaveAttribute('aria-disabled', 'true');
   });
 });
 
