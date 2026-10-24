@@ -17,6 +17,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { LeaguePaymentKind } from '@poolmaster/shared/domain';
 import type {
   LeagueContextResponse,
   SquadListResponse,
@@ -68,7 +69,7 @@ describe('Deleting an inactive league', () => {
         leagueId: league.id,
         contestId: contest.id,
         payerId: commissioner.user.id,
-        kind: 'CONTEST_EXPANSION_PAYMENTS_OFF',
+        kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF,
         amountCents: 0,
         description: 'Doomed Contest: up to 200 entries, free while payments are off',
       },

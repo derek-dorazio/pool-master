@@ -4,6 +4,7 @@
  * entry repository in contest-repositories.integration.ts.
  */
 import { randomUUID } from 'node:crypto';
+import { LeaguePaymentKind } from '@poolmaster/shared/domain';
 import {
   cleanupTestData,
   createTestUser,
@@ -42,7 +43,7 @@ async function expand(leagueId: string, contestId: string, entriesPerContest: nu
       leagueId,
       contestId,
       payerId,
-      kind: 'CONTEST_EXPANSION_PAYMENTS_OFF',
+      kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF,
       amountCents: 0,
       description: `Masters Pool: up to ${entriesPerContest} entries, free while payments are off`,
     },
@@ -73,10 +74,10 @@ describe('contest_expansions and league_payments', () => {
     const prisma = getPrisma();
 
     await expect(prisma.leaguePayment.create({
-      data: { leagueId: league.id, kind: 'CONTEST_EXPANSION_GRANT', amountCents: -100, description: 'Below zero' },
+      data: { leagueId: league.id, kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: -100, description: 'Below zero' },
     })).rejects.toThrow(/league_payments_amount_cents_not_negative/);
     const payment = await prisma.leaguePayment.create({
-      data: { leagueId: league.id, contestId: contest.id, kind: 'CONTEST_EXPANSION_GRANT', amountCents: 0, description: 'Given free' },
+      data: { leagueId: league.id, contestId: contest.id, kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Given free' },
     });
     await expect(prisma.contestExpansion.create({
       data: { contestId: contest.id, entriesPerContest: 0, paymentId: payment.id },

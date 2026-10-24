@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, LeaguePaymentKind, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
@@ -149,7 +149,7 @@ async function createContest(
 async function addExpansion(leagueId: string, contestId: string, entriesPerContest: number) {
   const prisma = getPrisma();
   const payment = await prisma.leaguePayment.create({
-    data: { leagueId, contestId, kind: 'CONTEST_EXPANSION_GRANT', amountCents: 0, description: `Up to ${entriesPerContest} entries, given free` },
+    data: { leagueId, contestId, kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: `Up to ${entriesPerContest} entries, given free` },
   });
   await prisma.contestExpansion.create({ data: { contestId, entriesPerContest, paymentId: payment.id } });
 }
