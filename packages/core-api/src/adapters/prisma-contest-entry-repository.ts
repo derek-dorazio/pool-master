@@ -47,6 +47,18 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
   }
 
+  async countByContests(contestIds: readonly string[]): Promise<Map<string, number>> {
+    const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
+    if (!contestIds.length) return counts;
+    const rows = await this.prisma.contestEntry.groupBy({
+      by: ['contestId'],
+      where: { contestId: { in: [...contestIds] } },
+      _count: { _all: true },
+    });
+    for (const row of rows) counts.set(row.contestId, row._count._all);
+    return counts;
+  }
+
   async findByContest(contestId: string): Promise<ContestEntry[]> {
     // Creation order, then id — the order a selection room lists entries in (#324). Previously
     // unordered, so no caller could have depended on anything else.

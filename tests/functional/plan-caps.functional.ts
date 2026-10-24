@@ -1,4 +1,5 @@
 import {
+  acceptInvitation,
   addEventParticipants,
   applyEventParticipantUpload,
   autoAssignEventPrices,
@@ -7,6 +8,7 @@ import {
   createEvent,
   createParticipant,
   enterContest,
+  generateInviteLink,
   getLeaguePlanUsage,
   listContestConfigTemplates,
   listSportLeagues,
@@ -151,7 +153,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     expect((await enter()).response.status).toBe(201);
   });
 
-  it('shows the commissioner each contest still taking entries with every entry it holds, drafts included, and refuses a member with 403', async () => {
+  it('shows the commissioner each contest still taking entries with every entry it holds, drafts included, and refuses a league member who is not a commissioner with 403', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Usage Reader', leagueName: `Usage Club ${RUN}` });
     const { contestId } = await seedContestFixture(league.id, {
       name: `Usage Picks ${RUN}`,
@@ -174,7 +176,10 @@ describe('SDK Functional: plan caps (#947)', () => {
       openContests: [{ contestId, name: `Usage Picks ${RUN}`, entryCount: 2 }],
     });
 
-    const member = await buildRegisteredUser({ displayName: 'Usage Bystander' });
+    // A member of the league, not a commissioner, never sees the plan or what it uses.
+    const member = await buildRegisteredUser({ displayName: 'Usage Member' });
+    const invite = expectDefined((await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } })).data);
+    expect((await acceptInvitation({ client: member.client, body: { inviteCode: invite.invitation.inviteCode } })).data?.membership.userId).toBe(member.userId);
     expect((await getLeaguePlanUsage({ client: member.client, path: { id: league.id } })).response.status).toBe(403);
   });
 });

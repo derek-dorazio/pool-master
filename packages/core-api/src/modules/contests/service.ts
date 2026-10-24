@@ -267,10 +267,10 @@ export class ContestService {
     this.logger.debug({ leagueId }, 'contest open usage list start');
     const contests = (await this.deps.contests.findByLeague(leagueId))
       .filter((contest) => contest.status === ContestStatus.OPEN);
-    const usage = await Promise.all(contests.map(async (contest) => (await this.areEntriesOpen(contest))
-      ? { contestId: contest.id, name: contest.name, entryCount: (await this.deps.entries.findByContest(contest.id)).length }
-      : null));
-    return usage.filter((contest) => contest !== null);
+    const open = (await Promise.all(contests.map(async (contest) => ((await this.areEntriesOpen(contest)) ? contest : null))))
+      .filter((contest) => contest !== null);
+    const counts = await this.deps.entries.countByContests(open.map((contest) => contest.id));
+    return open.map((contest) => ({ contestId: contest.id, name: contest.name, entryCount: counts.get(contest.id) ?? 0 }));
   }
 
   /** A draft contest is its commissioners' alone until they open it (#117); root admins see all. */
