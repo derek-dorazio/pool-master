@@ -12,7 +12,8 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
 // Choosing a plan end to end (#945): a commissioner reads the comparison table, moves the league
-// down to Free and back up, a member is refused, and a root admin outside the league changes it.
+// down to Free, a member is refused, the commissioner may not pick Platinum (#986), and a root
+// admin outside the league moves it there.
 
 afterAll(async () => {
   await cleanupFunctionalData();
@@ -20,7 +21,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: choosing a league plan (#945)', () => {
-  it('lets a commissioner and a root admin change the plan at once, refuses a member, and every read of the league carries the new plan', async () => {
+  it('lets a commissioner and a root admin change the plan at once, refuses a member and a commissioner\'s Platinum, and every read of the league carries the new plan', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Plan Picker', leagueName: 'Plan Pickers' });
     const member = await buildRegisteredUser({ displayName: 'Plan Bystander' });
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
@@ -34,7 +35,7 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     const free = await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.FREE } });
     expect(LeagueResponseSchema.parse(expectDefined(free.data)).league.planEntitlements).toMatchObject({
       plan: LeaguePlan.FREE,
-      caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 },
+      caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 5 },
     });
     const memberView = LeagueContextResponseSchema.parse(expectDefined((await getLeague({ client: member.client, path: { id: league.id } })).data));
     expect(memberView.league.planEntitlements.features).not.toContain(PlanFeature.CHAMPIONSHIP);
@@ -43,11 +44,16 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     const refused = await updateLeaguePlan({ client: member.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
     expect(refused.response.status).toBe(403);
 
-    // --- A root admin outside the league moves it back up --------------------------------------
+    // --- Platinum is not offered to commissioners yet ------------------------------------------
+    const notYet = await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
+    expect(notYet.response.status).toBe(400);
+    expect(notYet.error?.error.code).toBe('LEAGUE_PLAN_NOT_AVAILABLE');
+
+    // --- A root admin outside the league moves it to Platinum -----------------------------------
     const admin = await buildRegisteredUser({ displayName: 'Plan Director' });
     await promoteToRootAdmin(admin);
     const restored = await updateLeaguePlan({ client: admin.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
     expect(LeagueResponseSchema.parse(expectDefined(restored.data)).league.planEntitlements.caps)
-      .toEqual({ ENTRIES_PER_CONTEST: null, SPORTS_LEAGUES_PER_YEAR: null });
+      .toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
   });
 });

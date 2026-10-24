@@ -7,12 +7,15 @@ import {
   createEvent,
   createParticipant,
   enterContest,
+  getSettingsGroup,
   listContestConfigTemplates,
   listSportLeagues,
   listSportLeaguesUsed,
   listSports,
   releaseEvent,
+  resetSettingsGroup,
   updateLeaguePlan,
+  updateSettingsGroup,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, LeaguePlan, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
 import { SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
@@ -21,9 +24,9 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { standardEventPricing } from '../support/budget-pricing';
 
-// A plan's caps end to end (#947). On Free a league's 2099 contests may be in one sports league:
-// its first men's Majors contest is made, a women's one is refused, and a second men's one is
-// made. A Free contest takes 20 entries and refuses the 21st, which goes in once the league moves
+// A plan's caps end to end (#947). With Free's sports leagues a year saved as one, a league's 2099
+// contests may be in one sports league: its first men's Majors contest is made, a women's one is
+// refused, and a second men's one is made. The plan settings go back to their defaults after. A Free contest takes 20 entries and refuses the 21st, which goes in once the league moves
 // up to Pro.
 
 const RUN = `plan-caps-${Date.now()}`;
@@ -57,7 +60,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: plan caps (#947)', () => {
-  it('lets a Free league\'s contests in a year use one sports league, refusing a second with 409 and listing the one used', async () => {
+  it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Caps Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -93,40 +96,57 @@ describe('SDK Functional: plan caps (#947)', () => {
 
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Cap Keeper', leagueName: `Cap Harriers ${RUN}` });
     expect((await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.FREE } })).response.status).toBe(200);
-    const templateFor = async (sportLeagueId: string, templateKey: string) => expectDefined(expectDefined((await listContestConfigTemplates({
-      client: commissioner.client,
-      query: { sport: Sport.RUNNING, sportLeagueId, active: true },
-    })).data).templates.find((template) => template.templateKey === templateKey)).id;
-    const menTemplate = await templateFor(majorsMen.id, 'wmm-men-tiered-top-10');
-    const womenTemplate = await templateFor(majorsWomen.id, 'wmm-women-tiered-top-10');
-    const create = (name: string, eventId: string, templateId: string) => createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: { name: `${name} ${RUN}`, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId },
+    // Free allows 5 sports leagues a year; two running leagues show the cap with Free saved at one.
+    const plans = expectDefined((await getSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } })).data);
+    if (plans.key !== 'PLAN_CONFIG') throw new Error('Expected the PLAN_CONFIG settings group');
+    const saved = await updateSettingsGroup({
+      client: a,
+      path: { key: 'PLAN_CONFIG' },
+      body: {
+        key: 'PLAN_CONFIG',
+        value: { ...plans.value, caps: { ...plans.value.caps, SPORTS_LEAGUES_PER_YEAR: { ...plans.value.caps.SPORTS_LEAGUES_PER_YEAR, FREE: 1 } } },
+        expectedUpdatedAt: plans.updatedAt,
+      },
     });
-    const used = async () => SportLeaguesUsedResponseSchema.parse(expectDefined((await listSportLeaguesUsed({
-      client: commissioner.client,
-      path: { id: league.id },
-      query: { seasonYear: SEASON },
-    })).data));
+    expect(saved.response.status).toBe(200);
+    try {
+      const templateFor = async (sportLeagueId: string, templateKey: string) => expectDefined(expectDefined((await listContestConfigTemplates({
+        client: commissioner.client,
+        query: { sport: Sport.RUNNING, sportLeagueId, active: true },
+      })).data).templates.find((template) => template.templateKey === templateKey)).id;
+      const menTemplate = await templateFor(majorsMen.id, 'wmm-men-tiered-top-10');
+      const womenTemplate = await templateFor(majorsWomen.id, 'wmm-women-tiered-top-10');
+      const create = (name: string, eventId: string, templateId: string) => createContest({
+        client: commissioner.client,
+        path: { id: league.id },
+        body: { name: `${name} ${RUN}`, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId },
+      });
+      const used = async () => SportLeaguesUsedResponseSchema.parse(expectDefined((await listSportLeaguesUsed({
+        client: commissioner.client,
+        path: { id: league.id },
+        query: { seasonYear: SEASON },
+      })).data));
 
-    expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [] });
-    const harbour = await releaseRace(majorsMen.id, 'Harbour Marathon', `${SEASON}-04-19T13:30:00.000Z`);
-    expect((await create('Harbour Picks', harbour, menTemplate)).response.status).toBe(201);
-    expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
+      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [] });
+      const harbour = await releaseRace(majorsMen.id, 'Harbour Marathon', `${SEASON}-04-19T13:30:00.000Z`);
+      expect((await create('Harbour Picks', harbour, menTemplate)).response.status).toBe(201);
+      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
 
-    const ridge = await releaseRace(majorsWomen.id, 'Ridge Marathon', `${SEASON}-05-03T13:30:00.000Z`);
-    const refused = await create('Ridge Picks', ridge, womenTemplate);
-    expect(refused.response.status).toBe(409);
-    expect(refused.error?.error.code).toBe('PLAN_SPORTS_LEAGUE_LIMIT_REACHED');
+      const ridge = await releaseRace(majorsWomen.id, 'Ridge Marathon', `${SEASON}-05-03T13:30:00.000Z`);
+      const refused = await create('Ridge Picks', ridge, womenTemplate);
+      expect(refused.response.status).toBe(409);
+      expect(refused.error?.error.code).toBe('PLAN_SPORTS_LEAGUE_LIMIT_REACHED');
 
-    const valley = await releaseRace(majorsMen.id, 'Valley Marathon', `${SEASON}-10-11T13:30:00.000Z`);
-    expect((await create('Valley Picks', valley, menTemplate)).response.status).toBe(201);
-    expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
+      const valley = await releaseRace(majorsMen.id, 'Valley Marathon', `${SEASON}-10-11T13:30:00.000Z`);
+      expect((await create('Valley Picks', valley, menTemplate)).response.status).toBe(201);
+      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
 
-    // A member may not read the usage; it is the commissioner's Create contest counter.
-    const member = await buildRegisteredUser({ displayName: 'Cap Bystander' });
-    expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response.status).toBe(403);
+      // A member may not read the usage; it is the commissioner's Create contest counter.
+      const member = await buildRegisteredUser({ displayName: 'Cap Bystander' });
+      expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response.status).toBe(403);
+    } finally {
+      await resetSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } });
+    }
   });
 
   it('refuses a Free contest\'s 21st entry with 409 CONTEST_FULL and takes it once the league moves up to Pro', async () => {
