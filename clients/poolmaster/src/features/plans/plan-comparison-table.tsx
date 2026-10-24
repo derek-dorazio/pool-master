@@ -21,8 +21,8 @@ function foldedCounts(section: PlanComparisonSection, planCount: number): string
 
 /**
  * Every plan side by side (#945, #971): its limits, what every plan includes, then which
- * features it has, each row lined up across the plans. The first column stays put while the
- * table scrolls sideways on a phone.
+ * features it has, each row lined up across the plans. On a phone the descriptions drop so all
+ * four plans fit; the first column stays put if the table still has to scroll.
  */
 export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanComparisonTableProps) {
   const sections = buildPlanComparison(plans);
@@ -39,14 +39,14 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border bg-card" data-testid="plan-comparison-table">
-      <table className="w-full min-w-[34rem] text-sm">
+      <table className="w-full text-xs sm:text-sm">
         <thead>
           <tr className="border-b border-border text-left">
             <th className="sticky left-0 bg-card px-3 py-2 font-medium text-muted-foreground" scope="col">
               <span className="sr-only">What the plan includes</span>
             </th>
             {plans.map((plan) => (
-              <th className="px-2 py-2 text-center font-display font-bold" key={plan.plan} scope="col">
+              <th className="px-1 py-2 text-center font-display font-bold sm:px-2" key={plan.plan} scope="col">
                 {LEAGUE_PLAN_LABEL[plan.plan]}
               </th>
             ))}
@@ -57,7 +57,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
           const isFolded = group !== null && folded.has(group);
           return (
             <tbody data-testid={`plan-comparison-section-${section.key}`} key={section.key}>
-              <tr className="bg-muted/40">
+              <tr className="bg-muted">
                 <th className="sticky left-0 bg-muted px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="colgroup">
                   {group === null ? section.title : (
                     <Button
@@ -74,17 +74,17 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
                   )}
                 </th>
                 {isFolded ? foldedCounts(section, plans.length).map((count, index) => (
-                  <td className="px-2 py-2 text-center text-xs font-semibold text-muted-foreground tabular-nums" key={plans[index]?.plan ?? index}>{count}</td>
+                  <td className="px-1 py-2 text-center text-xs font-semibold text-muted-foreground tabular-nums sm:px-2" key={plans[index]?.plan ?? index}>{count}</td>
                 )) : null}
               </tr>
               {isFolded ? null : section.rows.map((row) => (
                 <tr className="border-t border-border" data-testid={`plan-comparison-row-${row.key}`} key={row.key}>
-                  <th className="sticky left-0 bg-card px-3 py-2 text-left font-normal" scope="row">
+                  <th className="sticky left-0 bg-card px-2 py-2 text-left font-normal sm:px-3" scope="row">
                     {row.label}
-                    <span className="block text-xs text-muted-foreground">{row.description}</span>
+                    <span className="hidden text-xs text-muted-foreground sm:block">{row.description}</span>
                   </th>
                   {row.cells.map((cell, index) => (
-                    <td className="px-2 py-2 text-center tabular-nums" key={plans[index]?.plan ?? index}>
+                    <td className="px-1 py-2 text-center tabular-nums sm:px-2" key={plans[index]?.plan ?? index}>
                       {typeof cell === 'string' ? cell : cell
                         ? <Check aria-label="Included" className="mx-auto text-primary" size={16} />
                         : <Minus aria-label="Not included" className="mx-auto text-muted-foreground" size={16} />}
