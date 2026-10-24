@@ -11,9 +11,13 @@ export const STAT_POOL_CONTEST_TYPE = 'Clutch Card';
 /** What copy calls the players on a Clutch Card. Screens that list them keep the sport's word. */
 export const STAT_POOL_STARS: SportNoun = { one: 'star', many: 'stars' };
 
-/** "World Series Stars": the name Create contest suggests for a Clutch Card on an event (#995). */
+/**
+ * "World Series Stars": the name Create contest suggests for a Clutch Card on an event (#995). A
+ * single final drops the word, so the Stanley Cup Final's is "Stanley Cup Stars"; "NBA Finals
+ * Stars" keeps its plural, as the series is called.
+ */
 export function statPoolContestName(eventName: string): string {
-  return `${eventName} Stars`;
+  return `${eventName.replace(/ Final$/, '')} Stars`;
 }
 
 /** How a Clutch Card goes, on How to Play: a line, then three steps, as each way to play's guide. */

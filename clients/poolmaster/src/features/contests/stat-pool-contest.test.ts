@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getSportDefinition, ParticipantType, ScoringFamily, SelectionType, Sport, SUPPORTED_SPORTS, eventSportDefinition } from '@poolmaster/shared/domain';
 import { contestEventsFor } from './contest-template-events';
 import { contestEntryTiebreaker, contestRosterParticipantNoun, contestSportDefinition, participantAffiliation } from './contest-sport';
-import { STAT_POOL_FORMULAS, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
+import { STAT_POOL_FORMULAS, statPoolContestName, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
 import { buildContest, buildContestSportEvent, buildSportEvent } from './test/contest-admin-fixtures';
 
 // A championship stat pool's contest screens (#936): the World Series is baseball, but its events
@@ -63,5 +63,13 @@ describe('how a stat pool scores, in words', () => {
     expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.HOCKEY, ...statPool })))
       .toBe('Power Play: 2 × goals + assists + shots on goal, each game.');
     expect(statPoolScoringLine(getSportDefinition(Sport.BASEBALL))).toBeNull();
+  });
+});
+
+describe('a Clutch Card contest\'s suggested name', () => {
+  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl and Championship Weekend Stars', () => {
+    expect(['World Series', 'NBA Finals', 'Stanley Cup Final', 'Super Bowl', 'Championship Weekend'].map(statPoolContestName)).toEqual([
+      'World Series Stars', 'NBA Finals Stars', 'Stanley Cup Stars', 'Super Bowl Stars', 'Championship Weekend Stars',
+    ]);
   });
 });

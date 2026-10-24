@@ -1,7 +1,7 @@
 -- #995: the championship stat pools' setups call their players stars, as the Clutch Card's copy
 -- does: "Tiered: 1 star per tier, best 4 count", and "Pick one star from each of the six tiers".
--- Only the setups #935 seeded on the composite leagues change; replace() leaves a name an admin
--- has already reworded alone where it no longer says player.
+-- Every setup on a composite (stat pool) league whose name or description says player changes,
+-- which today is the fifteen #935 seeded; replace() leaves one that no longer says player alone.
 UPDATE "contest_config_templates" t
 SET "name" = replace(t."name", 'player', 'star'),
     "description" = replace(t."description", 'player', 'star'),
