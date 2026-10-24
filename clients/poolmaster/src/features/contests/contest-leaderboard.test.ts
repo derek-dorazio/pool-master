@@ -107,6 +107,7 @@ function pickFixture(
     golf: null,
     race: null,
     knockout: null,
+    composite: null,
     ...overrides,
   };
 }
@@ -118,6 +119,8 @@ function responseFixture(
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: 'GOLF',
+    participantType: null,
+    scoringFamily: null,
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 2 },
     participants: [],
@@ -503,5 +506,39 @@ describe('formatThru', () => {
 
   it('shows a dash for a golfer with no standing yet', () => {
     expect(formatThru(participantFixture({ id: 'sep-1' }))).toBeNull();
+  });
+});
+
+describe('buildLeaderboardView on a championship stat pool', () => {
+  it('reads the World Series through its stat pool definition: game columns and a "Game 1" header, not baseball\'s bracket', () => {
+    const view = buildLeaderboardView(responseFixture({
+      sport: Sport.BASEBALL,
+      participantType: 'INDIVIDUAL',
+      scoringFamily: 'COMPOSITE',
+      scoringDefinitionId: 'COMPOSITE_TOTAL',
+      participants: [participantFixture({
+        id: 'sep-1',
+        name: 'Shohei Ohtani',
+        rounds: [roundFixture({ roundNumber: 1, status: 'COMPLETED', statLines: [{ stat: 'TOTAL_BASES', value: 4 }] })],
+      })],
+      entries: [{
+        entryId: 'entry-1',
+        entryName: 'Blue Crew',
+        entryNumber: 1,
+        squadId: 'squad-1',
+        squadName: 'Blue Crew',
+        position: 1,
+        displayPosition: '1',
+        countingPickLimit: 4,
+        scoredPickCount: 1,
+        totalScore: 4,
+        events: [],
+        picks: [pickFixture({ pickId: 'pick-1', sportEventParticipantId: 'sep-1', composite: { points: 4, games: [{ roundNumber: 1, score: 4 }] } })],
+      }],
+    }));
+
+    expect(view.detailColumns.map((column) => column.label)).toEqual(['G1']);
+    expect(view.currentRoundLabel).toContain('Game 1');
+    expect(view.entries[0]?.picks[0]).toMatchObject({ participantName: 'Shohei Ohtani', total: '4', detailCells: [{ text: '4' }] });
   });
 });

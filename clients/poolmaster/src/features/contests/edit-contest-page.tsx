@@ -1,4 +1,4 @@
-import { ContestStatus, PickEmMode, SelectionType, getSportDefinition, formatSelectionTypeName  } from '@poolmaster/shared/domain';
+import { ContestStatus, PickEmMode, SelectionType, eventSportDefinition, formatSelectionTypeName } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -98,7 +98,7 @@ function EditContestForm({
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
   // Every event of a tiered contest has the same number of tiers; the server checks it.
   const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
-  const { participant } = getSportDefinition(event.sport).vocabulary;
+  const { participant } = eventSportDefinition(event).vocabulary;
   const { selectionType } = configuration;
   const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
   const [rulesError, setRulesError] = useState<string | null>(null);

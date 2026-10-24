@@ -89,7 +89,7 @@ function primeMocks(role: 'COMMISSIONER' | 'MEMBER') {
     },
   });
   listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: TEMPLATES } });
-  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NFL, name: 'NFL' }, { id: NBA, name: 'NBA' }] } });
+  listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NFL, name: 'NFL', sport: 'AMERICAN_FOOTBALL', participantType: null, scoringFamily: null }, { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null }] } });
   listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
     data: { events: options.query?.sport === 'AMERICAN_FOOTBALL' ? [NFL_WEEK] : [] },
   }));
@@ -127,6 +127,20 @@ describe('League › Contest types', () => {
     expect(tiered).toHaveTextContent('nfl-tiered-doubling description.');
     expect(within(tiered).getByTestId('contest-type-nfl-tiered-doubling-variations')).toHaveTextContent('nfl-tiered-doubling-upset-bonus name');
     expect(screen.getByTestId('contest-types-sport-BASKETBALL')).toHaveTextContent('NBA');
+  });
+
+  it('says a stat pool league\'s group is a Clutch Card and how its players score, and nothing of the kind on its sport\'s own league', async () => {
+    primeMocks('MEMBER');
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: [...TEMPLATES, template('nba-finals-tiered', { id: 'tpl-nba-finals', sport: 'BASKETBALL', sportLeagueId: 'nba-finals', eventType: null })] } });
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+      { id: NBA, name: 'NBA', sport: 'BASKETBALL', participantType: null, scoringFamily: null },
+      { id: 'nba-finals', name: 'NBA Finals', sport: 'BASKETBALL', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' },
+    ] } });
+    renderPage();
+
+    expect(await screen.findByTestId('contest-types-stat-pool-nba-finals'))
+      .toHaveTextContent('Clutch Card. Each star scores Triple Threat: points + rebounds + assists, each game.');
+    expect(screen.queryByTestId(`contest-types-stat-pool-${NBA}`)).not.toBeInTheDocument();
   });
 
   it('gives a member the menu without any create links, so they can see what else the league could run', async () => {
@@ -173,7 +187,7 @@ describe('League › Contest types', () => {
     function primeBrackets(event: Record<string, unknown>) {
       primeMocks('COMMISSIONER');
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BRACKETS } });
-      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NCAA_MEN, name: 'NCAA Men' }] } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [{ id: NCAA_MEN, name: 'NCAA Men', sport: 'BASKETBALL', participantType: null, scoringFamily: null }] } });
       listEventsMock.mockImplementation((options: { query?: { sport?: string } }) => Promise.resolve({
         data: { events: options.query?.sport === 'BASKETBALL' ? [event] : [] },
       }));

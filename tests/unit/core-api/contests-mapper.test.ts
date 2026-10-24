@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { ParticipantType, ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
   toContestLeaderboardResponse,
@@ -73,6 +73,18 @@ describe('toContestResponse events', () => {
       .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
 
+  it('names a stat pool event\'s overrides on the contest\'s event, so a page reads the event\'s definition (players, games) rather than its sport\'s', () => {
+    const worldSeries = {
+      id: 'event-1', name: 'World Series', startDate: new Date('2026-10-23T00:08:00.000Z'), status: SportEventStatus.SCHEDULED,
+      participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE,
+    };
+    const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
+    const [statPoolEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
+
+    expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([null, null]);
+    expect([statPoolEvent.participantType, statPoolEvent.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.COMPOSITE]);
+  });
+
   it('gives a single-contest read its entry cap, and a contest with no cap none', () => {
     expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), 200).contest.entriesPerContest).toBe(200);
     expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), null).contest.entriesPerContest).toBeNull();
@@ -89,7 +101,8 @@ describe('toContestLeaderboardResponse', () => {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       sport: Sport.GOLF,
-      scoringFamily: ScoringFamily.STROKE_PLAY,
+      participantType: null,
+      scoringFamily: null,
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4 },
       participants: [],
@@ -106,7 +119,8 @@ describe('toContestLeaderboardResponse', () => {
       contestId: 'contest-1',
       sportEventId: 'event-1',
       sport: Sport.HORSE_RACING,
-      scoringFamily: ScoringFamily.FINISH_POSITION,
+      participantType: null,
+      scoringFamily: null,
       scoringDefinitionId: 'FINISH_POSITION_POINTS',
       countingRule: { type: 'BEST_N', count: 3 },
       participants: [],
@@ -145,5 +159,53 @@ describe('toContestLeaderboardResponse', () => {
     expect(entry.totalScore).toBe(8);
     expect([entry.picks[0].golf, entry.picks[0].race]).toEqual([null, { points: 5 }]);
     expect(entry.events).toEqual([{ sportEventId: 'event-1', totalScore: 8, position: 1, displayPosition: '1' }]);
+  });
+
+  it('publishes a stat pool\'s overrides and each pick\'s points and per-game composites on the composite block, the other blocks null', () => {
+    const response = toContestLeaderboardResponse({
+      contestId: 'contest-1',
+      sportEventId: 'event-1',
+      sport: Sport.BASEBALL,
+      participantType: ParticipantType.INDIVIDUAL,
+      scoringFamily: ScoringFamily.COMPOSITE,
+      scoringDefinitionId: 'COMPOSITE_TOTAL',
+      countingRule: { type: 'BEST_N', count: 4 },
+      participants: [],
+      entries: [{
+        entryId: 'entry-1',
+        entryName: 'Blue Crew',
+        entryNumber: 1,
+        squadId: 'squad-1',
+        squadName: 'Blue Crew',
+        score: 19,
+        position: 1,
+        displayPosition: '1',
+        countingPickLimit: 4,
+        scoredPickCount: 1,
+        events: [{ sportEventId: 'event-1', score: 19, position: 1, displayPosition: '1' }],
+        picks: [{
+          pickId: 'pick-1',
+          sportEventParticipantId: 'sep-1',
+          pickedAt: new Date('2026-10-20T12:00:00.000Z'),
+          slot: null,
+          isCounting: true,
+          isDropped: false,
+          participant: {
+            sportEventParticipantId: 'sep-1',
+            name: 'Shohei Ohtani',
+            score: 19,
+            detail: { scoringFamily: ScoringFamily.COMPOSITE, gameScores: [{ roundNumber: 1, score: 2 }, { roundNumber: 3, score: 17 }] },
+            asOf: null,
+          },
+        }],
+      }],
+      asOf: null,
+    });
+
+    const parsed = ContestLeaderboardResponseSchema.parse(response);
+    expect([parsed.participantType, parsed.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.COMPOSITE]);
+    const [pick] = parsed.entries[0].picks;
+    expect([pick.golf, pick.race, pick.knockout]).toEqual([null, null, null]);
+    expect(pick.composite).toEqual({ points: 19, games: [{ roundNumber: 1, score: 2 }, { roundNumber: 3, score: 17 }] });
   });
 });

@@ -15,6 +15,12 @@ import type { League, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueNotFoundError, LeagueOperationError } from '../leagues/service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
+/**
+ * How long the Premium gift every new league starts with runs (plans/payments.md §3). The
+ * `leagues.plan_renews_at` column default adds the same six months at signup.
+ */
+export const PREMIUM_PREVIEW_PERIOD_MONTHS = 6;
+
 export interface LeaguePlanServiceDeps {
   leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals'>;
   planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;

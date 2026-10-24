@@ -635,6 +635,8 @@ describe('Contract verification (web)', () => {
       name: sportEvent.name,
       startDate: sportEvent.startDate.toISOString(),
       status: sportEvent.status,
+      participantType: null,
+      scoringFamily: null,
     }]);
   });
 

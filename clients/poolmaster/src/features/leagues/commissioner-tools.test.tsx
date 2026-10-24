@@ -8,7 +8,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
 import { LeaguePlanEditRedirect, LeaguePlanPage } from '@/features/plans/league-plan-page';
-import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
+import { buildPlanEntitlements, buildPlanListResponse } from '@/features/plans/test/fixtures';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { CommissionerToolsLayout } from './commissioner-tools-layout';
 import { EditEventEmailsPage } from './edit-event-emails-page';
@@ -684,14 +684,12 @@ function primeUsage(overrides: { openContests?: Array<{ contestId: string; name:
 }
 
 function primePlanList() {
-  listLeaguePlansMock.mockResolvedValue(apiSuccess({
-    plans: [
-      FREE_PLAN,
-      PRO_PLAN,
-      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 }, commissionerSelectable: true }),
-      buildPlanEntitlements(),
-    ],
-  }));
+  listLeaguePlansMock.mockResolvedValue(apiSuccess(buildPlanListResponse([
+    FREE_PLAN,
+    PRO_PLAN,
+    buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 }, commissionerSelectable: true }),
+    buildPlanEntitlements(),
+  ])));
 }
 
 describe('League plan', () => {

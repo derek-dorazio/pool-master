@@ -1,5 +1,5 @@
 import { formatParticipantStatusLabel, type Sport, type SportNoun } from "@poolmaster/shared/domain";
-import { selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
+import { participantAffiliation, selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
 import {
@@ -128,7 +128,7 @@ export function SelectionParticipantCard({
               {selectionParticipantLabel(participant)}
             </div>
             <div className="mt-1 text-sm text-muted-foreground">
-              {participant.team ?? participant.role ?? "In the field"}
+              {participantAffiliation(participant) ?? participant.role ?? "In the field"}
             </div>
           </div>
           <StatusBadge tone={isSelected ? "success" : "neutral"}>
@@ -299,9 +299,7 @@ export function LockedSelectionGroup({
                     {selectionParticipantLabel(participant)}
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
-                    {participant.team ??
-                      participant.role ??
-                      "In the field"}
+                    {participantAffiliation(participant) ?? participant.role ?? "In the field"}
                   </div>
                 </div>
                 <span className="text-right text-foreground">

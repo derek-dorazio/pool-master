@@ -23,6 +23,7 @@ import {
   formatContestRules,
   formatEntriesPerTeamSentence,
   formatSelectionTypeName,
+  eventSportDefinition,
   getSportDefinition,
   pluralize,
   sportAllowsSelectionType,
@@ -47,6 +48,7 @@ import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import { SquaresGamePicker } from './squares-game-picker';
 import { useSquaresGameChoices } from './use-squares-game-choices';
+import { STAT_POOL_STARS, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
 import {
   Alert,
   ChoiceCard,
@@ -115,6 +117,12 @@ const FORMAT_CHOICES: Record<CreatableSelectionType, { describe: (participant: S
     describe: () => 'A 10x10 grid on one game. Members claim boxes, you draw the numbers, and the box matching each team\'s last digit wins each quarter and the final score.',
   },
 };
+
+/** The definition of the event the form has chosen, else its sport's (#936). */
+function definitionOfEvent(sport: Sport, events: readonly SportEventDto[] | undefined, sportEventId: string): SportDefinition {
+  const event = events?.find((candidate) => candidate.id === sportEventId);
+  return event ? eventSportDefinition(event) : getSportDefinition(sport);
+}
 
 /**
  * The formats a sport's contests may use, in its definition's order: those whose entries have a
@@ -224,8 +232,6 @@ export function CreateContestPage() {
   });
   const values = form.watch();
   const { contestName, scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventMatchId } = values;
-  const sportDefinition = getSportDefinition(sport);
-  const { participant } = sportDefinition.vocabulary;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
   // The sport, sport league and kind of event whose default preset was applied last: their default
@@ -275,6 +281,11 @@ export function CreateContestPage() {
     [contestEvents, lockedEventIds],
   );
   const selectedEvent = selectableEvents.find((event) => event.id === sportEventId) ?? null;
+  // The chosen event's definition, its sport's until one is chosen: a stat pool event plays its
+  // sport's composite with players (#936), not its bracket.
+  const sportDefinition = selectedEvent ? eventSportDefinition(selectedEvent) : getSportDefinition(sport);
+  const { participant } = sportDefinition.vocabulary;
+  const statPoolScoring = statPoolScoringLine(sportDefinition);
   // The events that can start a requested template, whatever format the page is on.
   const requestedEvents = useMemo(
     () => (requestedTemplate ? contestEventsForTemplate(eventsQuery.data ?? [], requestedTemplate) : []),
@@ -344,7 +355,7 @@ export function CreateContestPage() {
     const current = form.getValues();
     const scoring: ContestScoringSettings | undefined = configuration.scoring;
     const definitionId = scoring?.participantScoringDefinitionId
-      ?? getSportDefinition(current.sport).scoringDefinitions[0];
+      ?? definitionOfEvent(current.sport, eventsQuery.data, current.sportEventId).scoringDefinitions[0];
     const rules = toContestRulesValues(configuration, current);
     return {
       ...rules,
@@ -359,7 +370,7 @@ export function CreateContestPage() {
         })
         : {}),
     };
-  }, [form]);
+  }, [eventsQuery.data, form]);
 
   const selectPreset = useCallback((templateId: string) => {
     const template = presets.find((candidate) => candidate.id === templateId);
@@ -399,8 +410,15 @@ export function CreateContestPage() {
   // A contest-ready event takes the full bracket; a knockout under way starts its second-chance
   // bracket at the first round it offers.
   const chooseEvent = useCallback((event: SportEventDto) => {
-    setFormValues({ sportEventId: event.id, startsAtRound: event.contestEligible ? '1' : '2' });
-  }, [setFormValues]);
+    const { scoringDefinitions } = eventSportDefinition(event);
+    const current = form.getValues('scoringDefinitionId');
+    setFormValues({
+      sportEventId: event.id,
+      startsAtRound: event.contestEligible ? '1' : '2',
+      // A stat pool event scores by its composite, whatever the sport's bracket scores by.
+      scoringDefinitionId: scoringDefinitions.includes(current) ? current : scoringDefinitions[0],
+    });
+  }, [form, setFormValues]);
 
   // A squares contest starts on the first game offered: the event's final when it is to come.
   const firstSquaresGameId = squaresGames.games.at(0)?.id;
@@ -449,7 +467,7 @@ export function CreateContestPage() {
     }
     const startingFormat = leagueStartingFormatOf(
       templatesQuery.data,
-      (format) => sportAllowsSelectionType(getSportDefinition(sport), format)
+      (format) => sportAllowsSelectionType(sportDefinition, format)
         && !(format === SelectionType.BUDGET_PICK && isBudgetUnavailable)
         && (selectedEvent === null || contestEventsFor([selectedEvent], format).length > 0),
     );
@@ -466,7 +484,7 @@ export function CreateContestPage() {
     if (defaultPreset) {
       selectPreset(defaultPreset.id);
     }
-  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportLeagueId, templatesQuery.data]);
+  }, [eventType, form, isBudgetUnavailable, presets, selectFormat, selectPreset, selectedEvent, sport, sportDefinition, sportLeagueId, templatesQuery.data]);
 
   // A requested template is settled once, when the templates of the event it starts on arrive: it
   // is applied over the league's default the effect above may have started on. With no event that
@@ -545,7 +563,7 @@ export function CreateContestPage() {
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
-      const submittedParticipant = getSportDefinition(submitted.sport).vocabulary.participant;
+      const submittedParticipant = eventSportDefinition(event).vocabulary.participant;
       const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount, submittedParticipant);
       if (parsed.error !== null) {
         throw new Error(parsed.error);
@@ -782,6 +800,11 @@ export function CreateContestPage() {
       </SetupSection>
 
       <SetupSection step={3} testId="create-contest-rules" title="Rules">
+        {statPoolScoring !== null ? (
+          <p className="text-sm text-muted-foreground" data-testid="create-contest-stat-pool-scoring">
+            {`Each ${STAT_POOL_STARS.one} scores ${statPoolScoring}`}
+          </p>
+        ) : null}
         <ContestRulesFields
           bracketStartRounds={bracketStartRounds}
           onChange={(next) => setFormValues({ ...next, selectedTemplateId: '' })}

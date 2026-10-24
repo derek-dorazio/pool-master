@@ -70,6 +70,7 @@ const pick: ScoredContestEntryPickDto = {
   golf: null,
   race: { points: 5 },
   knockout: null,
+  composite: null,
 };
 
 const entry: ContestEntryStandingDto = {
@@ -92,6 +93,8 @@ function raceLeaderboard(participants: SportEventParticipantDto[]): ContestLeade
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: Sport.HORSE_RACING,
+    participantType: null,
+    scoringFamily: null,
     scoringDefinitionId: 'FINISH_POSITION_POINTS',
     countingRule: { type: 'BEST_N', count: 3 },
     participants,
