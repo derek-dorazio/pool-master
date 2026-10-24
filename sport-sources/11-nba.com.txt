@@ -1,0 +1,10 @@
+Source: https://www.nba.com/game/ind-vs-okc-0042400401/box-score
+Final URL: https://www.nba.com/game/ind-vs-okc-0042400401/box-score
+HTTP 403
+Fetched: 2026-10-24T14:41:02.206Z
+
+Access Denied
+Access Denied
+You don't have permission to access "http://www.nba.com/game/ind-vs-okc-0042400401/box-score" on this server.
+Reference #18.c5df3517.1792852861.2d2ef50b
+https://errors.edgesuite.net/18.c5df3517.1792852861.2d2ef50b
