@@ -1,6 +1,6 @@
 # Monetization strategy
 
-**Tracking issue:** #581
+**Tracking issue:** #581. First build: epic #943. Payments: #931.
 
 Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22; first build of plans designed 2026-10-23. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
@@ -200,8 +200,8 @@ Kept for later refinement and tickets, none scheduled:
 
 ### Open questions: first build
 
-Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5 and 7 to 11 agreed;
-6 changed to no league size cap.
+Each has a recommendation; answer only where you disagree. All answered (Derek 2026-10-24): 1 to 5 and 7 to 12
+agreed; 6 changed to no league size cap.
 
 1. **Decided (Derek 2026-10-24): yes.** **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
    "Tier" already means player tiers in tiered selection, on Create contest and in the root
@@ -233,10 +233,12 @@ Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 t
 11. **Decided (Derek 2026-10-24): yes**, one list with one dropdown per feature, on the same page as the caps. **A dedicated Plans page in the root admin, saved as one `PLAN_CONFIG` settings group?**
     Recommended: yes. It reuses the settings history and refresh, and a grid by plan is
     easier to read than the generic settings form.
-12. **What a commissioner sees**: a plan picker on league settings with the comparison table,
+12. **Decided (Derek 2026-10-24): yes.** **What a commissioner sees**: a plan picker on league settings with the comparison table,
     and counters where caps bite ("18 of 20 entries", "1 of 1 sports leagues this year")? Recommended: yes; members see only "full" messages, never a plan name.
 
-### Proposed slices (after Derek agrees)
+### Slices
+
+Ticketed as epic #943 (2026-10-24); the issues carry the live state.
 
 1. **Plan model**: `LeaguePlan` enum and column (default Platinum), change log, `PLAN_CONFIG`
    settings group, the feature list replacing `ServiceClass`, and the entitlements function.
