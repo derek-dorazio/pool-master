@@ -3,6 +3,7 @@ import { Outlet, useLocation, useParams } from 'react-router-dom';
 import { AdminAreaLayout } from '@/features/shared/ui';
 import {
   buildLeagueAdminChampionshipsEditPath,
+  buildLeagueAdminPlanEditPath,
   buildLeagueAdminContestsPath,
   buildLeagueAdminEditPath,
   buildLeagueAdminInvitesPath,
@@ -40,7 +41,8 @@ export function CommissionerToolsLayout() {
         {
           isActive: pathname === settingsPath
             || pathname === buildLeagueAdminEditPath(leagueCode)
-            || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode),
+            || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode)
+            || pathname === buildLeagueAdminPlanEditPath(leagueCode),
           label: 'League settings',
           testId: 'commissioner-tools-menu-settings',
           to: settingsPath,

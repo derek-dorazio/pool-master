@@ -129,6 +129,7 @@ export function fakeLeagueRepo(overrides: Partial<LeagueRepository> = {}): Leagu
     findByUser: many(),
     create: echoCreate('league'),
     update: echoUpdate(),
+    changePlan: jest.fn().mockImplementation(async (id: string, change: { toPlan: string }) => ({ id, plan: change.toPlan })),
     ...overrides,
   };
 }

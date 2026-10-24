@@ -71,10 +71,10 @@ describe('RootAdminPlansPage', () => {
     expect(emails.getByTestId('root-admin-plans-feature-EMAIL_CONTEST_RESULTS')).toHaveValue('FREE');
     expect(emails.getByTestId('root-admin-plans-feature-EMAIL_CONTEST_STANDINGS')).toHaveValue('PRO');
     const championships = within(screen.getByTestId('root-admin-plans-features-CHAMPIONSHIPS'));
-    expect(championships.getByRole('combobox', { name: 'Cup standings starts at' })).toHaveValue('PRO');
+    expect(championships.getByRole('combobox', { name: 'Sports league cups starts at' })).toHaveValue('PRO');
     const history = within(screen.getByTestId('root-admin-plans-features-HISTORY'));
     expect(history.getByText('Contest results and places, and the Contests page History view')).toBeInTheDocument();
-    expect(history.getByRole('combobox', { name: 'Record book and Hall of Lame starts at' })).toHaveValue('PLATINUM');
+    expect(history.getByRole('combobox', { name: 'Record book starts at' })).toHaveValue('PLATINUM');
     // Each always-included row says so and offers nothing to change.
     expect(history.getAllByRole('combobox')).toHaveLength(3);
     expect(history.getByText('Always')).toBeInTheDocument();

@@ -136,6 +136,10 @@ export const QueryKeys = {
     all: ['poolmaster', 'league-teams'] as const,
     byLeague: (leagueId: QueryKeyId) => ['poolmaster', 'league-teams', leagueId] as const,
   },
+  /** Every plan's caps and features: the commissioner's comparison table (#945). */
+  plans: {
+    list: ['poolmaster', 'plans'] as const,
+  },
   championship: {
     all: ['poolmaster', 'championship'] as const,
     byYear: (leagueId: QueryKeyId, year: number) => ['poolmaster', 'championship', leagueId, year] as const,

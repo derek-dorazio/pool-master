@@ -14,8 +14,6 @@ const FINISH_SELECT = {
   place: true,
   tiedCount: true,
   rankedEntryCount: true,
-  eventSeriesId: true,
-  selectionType: true,
   weight: true,
   points: true,
   settledAt: true,
@@ -31,15 +29,6 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
     // Settlement can run twice for one contest (an event re-sent as final): the first write stands.
     const result = await this.prisma.leagueYearFinish.createMany({ data: [...finishes], skipDuplicates: true });
     return result.count;
-  }
-
-  async findSingleEventSeries(contestId: string): Promise<string | null> {
-    const events = await this.prisma.contestSportEvent.findMany({
-      where: { contestId },
-      select: { sportEvent: { select: { eventSeriesId: true } } },
-      take: 2,
-    });
-    return events.length === 1 ? events[0]?.sportEvent.eventSeriesId ?? null : null;
   }
 
   async findByLeague(leagueId: string): Promise<LeagueYearFinish[]> {

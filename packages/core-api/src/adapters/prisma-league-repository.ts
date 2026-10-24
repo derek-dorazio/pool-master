@@ -4,7 +4,7 @@
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
-import type { League, LeagueIconKey } from '@poolmaster/shared/domain';
+import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
@@ -64,6 +64,26 @@ export class PrismaLeagueRepository implements LeagueRepository {
       },
     });
     return mapToLeague(row);
+  }
+
+  async changePlan(
+    leagueId: string,
+    change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string },
+  ): Promise<League | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // Only a league still on the from-plan moves, so the log never records a stale from-plan.
+      const moved = await tx.league.updateMany({
+        where: { id: leagueId, plan: change.fromPlan },
+        data: { plan: change.toPlan },
+      });
+      if (moved.count === 0) {
+        return null;
+      }
+      await tx.leaguePlanChange.create({
+        data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changedById: change.changedById },
+      });
+      return mapToLeague(await tx.league.findUniqueOrThrow({ where: { id: leagueId } }));
+    });
   }
 
   async update(id: string, updates: Partial<League>): Promise<League> {

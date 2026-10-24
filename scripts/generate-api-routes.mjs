@@ -74,6 +74,7 @@ const MANIFEST = {
     details: 'updateLeagueDetails',
     inactivate: 'inactivateLeague',
     activate: 'activateLeague',
+    plan: 'updateLeaguePlan',
     byCode: 'getLeagueByCode',
     members: 'listLeagueMembers',
     leave: 'leaveLeague',
@@ -82,6 +83,9 @@ const MANIFEST = {
     inviteLink: 'generateInviteLink',
     contests: 'listContests',
     squads: 'listLeagueSquads',
+  },
+  plans: {
+    list: 'listLeaguePlans',
   },
   squads: {
     list: 'listLeagueSquads',

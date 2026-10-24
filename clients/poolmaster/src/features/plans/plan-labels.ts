@@ -19,30 +19,30 @@ export function formatPlanLimit(limit: number | null): string {
   return limit === null ? 'Unlimited' : limit.toLocaleString('en-US');
 }
 
-/** What each plan feature is called on screen (#946); an email's name is its template's. */
+/** What each plan feature is called on screen, in the comparison table and the admin Plans page. */
 export const PLAN_FEATURE_LABEL: Readonly<Record<PlanFeature, string>> = {
-  [PlanFeature.EMAIL_CONTEST_OPENED]: 'New contest open',
-  [PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED]: 'Entry confirmation',
-  [PlanFeature.EMAIL_CONTEST_RESULTS]: 'Final results',
-  [PlanFeature.EMAIL_CONTEST_EVENT_CHANGED]: 'Event postponed or cancelled',
-  [PlanFeature.EMAIL_CONTEST_STARTED_SUMMARY]: 'Contest started',
-  [PlanFeature.EMAIL_CONTEST_ENTRY_REMINDER]: 'Entry reminders',
-  [PlanFeature.EMAIL_CONTEST_STANDINGS]: 'Live standings',
-  [PlanFeature.EMAIL_EVENT_COMING_UP]: 'Event coming up (commissioners)',
-  [PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS]: 'Event ready for contests (commissioners)',
-  [PlanFeature.EMAIL_CONTEST_NOT_OPEN]: 'Contest not open yet (commissioners)',
-  [PlanFeature.EMAIL_YEAR_IN_REVIEW]: 'Year in review',
-  [PlanFeature.CUP_STANDINGS]: 'Cup standings',
-  [PlanFeature.CUP_CROWNING]: 'Crowning cup winners',
-  [PlanFeature.CHAMPIONSHIP]: 'The Championship tab',
+  [PlanFeature.EMAIL_CONTEST_OPENED]: 'Contest open email',
+  [PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED]: 'Entry confirmation email',
+  [PlanFeature.EMAIL_CONTEST_RESULTS]: 'Contest results email',
+  [PlanFeature.EMAIL_CONTEST_EVENT_CHANGED]: 'Event change email',
+  [PlanFeature.EMAIL_CONTEST_STARTED_SUMMARY]: 'Contest started email',
+  [PlanFeature.EMAIL_CONTEST_ENTRY_REMINDER]: 'Entry reminder email',
+  [PlanFeature.EMAIL_CONTEST_STANDINGS]: 'Standings email',
+  [PlanFeature.EMAIL_EVENT_COMING_UP]: 'Coming up email',
+  [PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS]: 'Ready for contests email',
+  [PlanFeature.EMAIL_CONTEST_NOT_OPEN]: 'Contest not open email',
+  [PlanFeature.EMAIL_YEAR_IN_REVIEW]: 'Year in review email',
+  [PlanFeature.CUP_STANDINGS]: 'Sports league cups',
+  [PlanFeature.CUP_CROWNING]: 'Crowning cups',
+  [PlanFeature.CHAMPIONSHIP]: 'League championship',
   [PlanFeature.TROPHY_SHELF]: 'Trophy shelf',
-  [PlanFeature.CUP_SETTINGS]: 'Cup settings',
+  [PlanFeature.CUP_SETTINGS]: 'Championship settings',
   [PlanFeature.PAST_YEARS]: 'Past years',
   [PlanFeature.ALL_TIME_SUMMARY]: 'All years',
-  [PlanFeature.RECORD_BOOK]: 'Record book and Hall of Lame',
+  [PlanFeature.RECORD_BOOK]: 'Record book',
 };
 
-/** What each group of plan features is called on screen (#946). */
+/** What each group of plan features is called on screen. */
 export const PLAN_FEATURE_GROUP_LABEL: Readonly<Record<PlanFeatureGroup, string>> = {
   [PlanFeatureGroup.EMAILS]: 'Emails',
   [PlanFeatureGroup.CHAMPIONSHIPS]: 'Championships',
