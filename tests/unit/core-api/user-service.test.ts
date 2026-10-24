@@ -21,10 +21,17 @@ import { asPrismaClient } from '../../support/prisma-double';
 import { DateFormat, TimeFormat, type User } from '../../../packages/shared/domain';
 import { stubInstance } from '../../support/stub-instance';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
+import type { EmailChange } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
+import { EmailChangedBy } from '../../../packages/core-api/src/modules/email';
 
 /** A notifier that sends nothing: these tests are about the password write, not its email. */
 function quietNotifier(): PasswordChangedNotifier {
   return stubInstance(PasswordChangedNotifier, { notify: jest.fn() });
+}
+
+/** Tells nobody of an email change: the email and its undo link are tested on their own. */
+function quietEmailChanged() {
+  return { tellOldAddress: jest.fn((_change: EmailChange) => Promise.resolve()) };
 }
 
 function buildUser(overrides: Partial<User> = {}): User {
@@ -78,7 +85,8 @@ function serviceFor(user: User | null, extra: Parameters<typeof fakeUserRepo>[0]
     ...extra,
   });
   const { prisma, tx } = createPrismaMock();
-  return { users, prisma, tx, service: new UserService(users, asPrismaClient(prisma), quietNotifier()) };
+  const emailChanged = quietEmailChanged();
+  return { users, prisma, tx, emailChanged, service: new UserService(users, asPrismaClient(prisma), quietNotifier(), emailChanged) };
 }
 
 beforeEach(() => {
@@ -202,6 +210,38 @@ describe('profile, username and preferences', () => {
     expect(users.update).toHaveBeenCalled();
   });
 
+  it('tells the old address when the account owner changes their email, naming the owner as who changed it', async () => {
+    const { emailChanged, service } = serviceFor(buildUser());
+
+    await service.updateProfile(self, 'user-1', { firstName: 'Derek', lastName: 'Dorazio', email: 'New@Example.com' });
+
+    expect(emailChanged.tellOldAddress).toHaveBeenCalledTimes(1);
+    expect(emailChanged.tellOldAddress).toHaveBeenCalledWith(expect.objectContaining({
+      oldEmail: 'user@example.com',
+      changedBy: EmailChangedBy.ACCOUNT_OWNER,
+      user: expect.objectContaining({ id: 'user-1', email: 'new@example.com' }),
+    }));
+  });
+
+  it('tells the old address when a root admin changes someone\'s email, naming the admin as who changed it', async () => {
+    const { emailChanged, service } = serviceFor(buildUser());
+
+    await service.updateProfile(rootAdmin, 'user-1', { firstName: 'Derek', lastName: 'Dorazio', email: 'new@example.com' });
+
+    expect(emailChanged.tellOldAddress).toHaveBeenCalledWith(expect.objectContaining({
+      oldEmail: 'user@example.com',
+      changedBy: EmailChangedBy.ROOT_ADMIN,
+    }));
+  });
+
+  it('tells nobody when a profile save keeps the same email, even typed in another case', async () => {
+    const { emailChanged, service } = serviceFor(buildUser());
+
+    await service.updateProfile(self, 'user-1', { firstName: 'Dee', lastName: 'Dorazio', email: ' USER@example.com ' });
+
+    expect(emailChanged.tellOldAddress).not.toHaveBeenCalled();
+  });
+
   it('writes only the preferences the caller named, and clears the ones passed as null', async () => {
     const { users, service } = serviceFor(buildUser());
 
@@ -235,7 +275,7 @@ describe('passwords', () => {
     // A6 separates the two by SUBJECT: changing your own requires the current password,
     // resetting another's does not. They are two operations, and this is the self one.
     const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
-    const service = new UserService(users, asPrismaClient(createPrismaMock('hash').prisma), quietNotifier());
+    const service = new UserService(users, asPrismaClient(createPrismaMock('hash').prisma), quietNotifier(), quietEmailChanged());
 
     await expect(service.changeOwnPassword(rootAdmin, 'user-1', {
       currentPassword: 'CurrentPass123!',
@@ -248,21 +288,21 @@ describe('passwords', () => {
     const users = fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) });
     const hashed = await bcrypt.hash('CurrentPass123!', 10);
 
-    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma), quietNotifier())
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma), quietNotifier(), quietEmailChanged())
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'WrongPass123!',
         newPassword: 'NewPass456!',
         confirmNewPassword: 'NewPass456!',
       })).rejects.toMatchObject({ code: 'INVALID_CURRENT_PASSWORD', statusCode: 400 });
 
-    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma), quietNotifier())
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(hashed).prisma), quietNotifier(), quietEmailChanged())
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'CurrentPass123!',
         newPassword: 'NewPass456!',
         confirmNewPassword: 'Different789!',
       })).rejects.toMatchObject({ code: 'PASSWORD_CONFIRMATION_MISMATCH', statusCode: 400 });
 
-    await expect(new UserService(users, asPrismaClient(createPrismaMock(null).prisma), quietNotifier())
+    await expect(new UserService(users, asPrismaClient(createPrismaMock(null).prisma), quietNotifier(), quietEmailChanged())
       .changeOwnPassword(self, 'user-1', {
         currentPassword: 'AnyPass123!',
         newPassword: 'NewPass456!',

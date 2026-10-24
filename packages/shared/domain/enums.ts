@@ -899,6 +899,8 @@ export const EmailTemplateKey = {
   EVENT_STILL_DRAFT: 'EVENT_STILL_DRAFT',
   PASSWORD_RESET: 'PASSWORD_RESET',
   PASSWORD_CHANGED: 'PASSWORD_CHANGED',
+  /** An account's email address was changed, to the old address, with a link to undo it (#903). */
+  EMAIL_CHANGED: 'EMAIL_CHANGED',
   /** A root admin's test of the email setup, from the Email settings (#910). */
   EMAIL_TEST: 'EMAIL_TEST',
   /** A squad's year in the league, sent by the commissioner after the year ends (#872). */
@@ -914,14 +916,15 @@ export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTempl
 
 /**
  * The emails EMAIL_CONFIG has a switch for. Account emails (the password reset and the
- * password-changed notice) have none: switching one off would silently break password recovery
- * or hide a takeover. Nor does the test email: it tests the setup as it stands. They all still
+ * password-changed and email-changed notices) have none: switching one off would silently break
+ * password recovery or hide a takeover. Nor does the test email: it tests the setup as it stands. They all still
  * obey the overall switch.
  */
 export type SwitchableEmailTemplateKey = Exclude<
   EmailTemplateKey,
   | typeof EmailTemplateKey.PASSWORD_RESET
   | typeof EmailTemplateKey.PASSWORD_CHANGED
+  | typeof EmailTemplateKey.EMAIL_CHANGED
   | typeof EmailTemplateKey.EMAIL_TEST
 >;
 

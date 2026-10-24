@@ -36,7 +36,7 @@ const RESET_ROW_RETENTION_DAYS = 30;
  */
 const DEFAULT_REQUESTS_PER_MINUTE = 5;
 const DEFAULT_CONFIRMS_PER_MINUTE = 10;
-const BCRYPT_ROUNDS = 12;
+export const BCRYPT_ROUNDS = 12;
 const MINUTE_MS = 60_000;
 const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 24 * HOUR_MS;
@@ -290,7 +290,8 @@ function buildResetUrl(appBaseUrl: string, token: string): string {
   return `${appBaseUrl}/reset-password#token=${token}`;
 }
 
-function readPerMinuteLimit(name: string, fallback: number): number {
+/** A per-minute limit from the environment, or `fallback` when it isn't set. */
+export function readPerMinuteLimit(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === '') return fallback;
   const parsed = Number.parseInt(raw, 10);

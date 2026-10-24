@@ -3,6 +3,7 @@ import {
   ContestEventChangeKind,
   ContestResultsKind,
   DigestEventState,
+  EmailChangedBy,
   EntryReceiptKind,
   EntryReminderKind,
   MemberJoinedTiming,
@@ -210,6 +211,15 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     username: 'morgan',
     changedAt: new Date('2026-10-22T14:05:00.000Z'),
     forgotPasswordUrl: 'https://app.example.com/forgot-password',
+  },
+  EMAIL_CHANGED: {
+    firstName: 'Morgan',
+    username: 'morgan',
+    newEmail: 'morgan.new@example.com',
+    changedAt: new Date('2026-10-22T14:05:00.000Z'),
+    changedBy: EmailChangedBy.ACCOUNT_OWNER,
+    undoUrl: 'https://app.example.com/undo-email-change#token=example-token',
+    undoDays: 7,
   },
   EMAIL_TEST: {
     environment: 'qa',

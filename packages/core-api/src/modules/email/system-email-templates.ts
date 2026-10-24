@@ -1,5 +1,5 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
-import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
+import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import { CupTrophy, EmailCategory, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
@@ -585,6 +585,25 @@ export interface PasswordChangedEmailData {
   forgotPasswordUrl: string;
 }
 
+/** Who changed an account's email address, for the email-changed email (#903 A5). */
+export const EmailChangedBy = {
+  ACCOUNT_OWNER: 'ACCOUNT_OWNER',
+  ROOT_ADMIN: 'ROOT_ADMIN',
+} as const;
+export type EmailChangedBy = (typeof EmailChangedBy)[keyof typeof EmailChangedBy];
+
+/** Sent to the account's old address, which is no longer the account's. */
+export interface EmailChangedEmailData {
+  firstName: string;
+  username: string;
+  newEmail: string;
+  changedAt: Date;
+  changedBy: EmailChangedBy;
+  /** Puts the old address back and signs every session out. */
+  undoUrl: string;
+  undoDays: number;
+}
+
 /** A root admin's test of the email setup (#910): no league, no member data. */
 export interface EmailTestEmailData {
   /** POOLMASTER_ENVIRONMENT, so a test from QA can't be mistaken for one from prod. */
@@ -641,6 +660,7 @@ export interface SystemEmailTemplateDataByKey {
   EVENT_STILL_DRAFT: EventStillDraftEmailData;
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
+  EMAIL_CHANGED: EmailChangedEmailData;
   EMAIL_TEST: EmailTestEmailData;
   YEAR_IN_REVIEW: YearInReviewEmailData;
   EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
@@ -722,6 +742,7 @@ export interface EmailTemplateScopeByKey {
   EVENT_STILL_DRAFT: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
+  EMAIL_CHANGED: typeof EmailTemplateScope.PLATFORM;
   EMAIL_TEST: typeof EmailTemplateScope.PLATFORM;
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
   EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
@@ -911,6 +932,16 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderPasswordChangedEmail,
+  },
+  EMAIL_CHANGED: {
+    category: EmailCategory.ACCOUNT,
+    planFeature: null,
+    settingsSwitch: false,
+    // The email carries the undo link, so the outbox keeps no copy of it, and never sends it
+    // after the link is dead.
+    keepsContent: false,
+    sendWithinMs: EMAIL_CHANGE_UNDO_LINK_DAYS * 24 * 60 * 60_000,
+    render: renderEmailChangedEmail,
   },
   EMAIL_TEST: {
     category: EmailCategory.ROOT_ADMIN,
@@ -2013,6 +2044,46 @@ function renderPasswordChangedEmail(
     subject,
     preheader: `Your ${BRAND_NAME} password was changed.`,
     title: 'Password changed',
+    bodyBlocks,
+    textLines,
+  });
+}
+
+function renderEmailChangedEmail(
+  data: EmailChangedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const subject = `Your ${BRAND_NAME} email address was changed`;
+  const when = formatInstant(data.changedAt, context.timeZone);
+  const changedSentence = data.changedBy === EmailChangedBy.ROOT_ADMIN
+    ? `A ${BRAND_NAME} admin changed the email address for your account (${data.username}) to ${data.newEmail} on ${when}.`
+    : `The email address for your ${BRAND_NAME} account (${data.username}) was changed to ${data.newEmail} on ${when}.`;
+  const lastEmailSentence = `${BRAND_NAME} sends everything to the new address now, so this is the last email to this one.`;
+  const undoDays = data.undoDays === 1 ? '1 day' : `${String(data.undoDays)} days`;
+  const undoSentence = `If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for ${undoDays}. It signs everyone out of your account and clears its password, and then you set a new one.`;
+  const bodyBlocks = [
+    paragraph(`Hi ${escapeHtml(data.firstName)},`),
+    paragraph(escapeHtml(changedSentence)),
+    paragraph(escapeHtml(lastEmailSentence)),
+    paragraph(escapeHtml(undoSentence)),
+    button('Put my address back', data.undoUrl),
+  ].join('');
+  const textLines = [
+    `Hi ${data.firstName},`,
+    '',
+    changedSentence,
+    '',
+    lastEmailSentence,
+    '',
+    `${undoSentence} Put your address back:`,
+    data.undoUrl,
+  ];
+
+  return buildMessage(context, {
+    templateKey: 'EMAIL_CHANGED',
+    subject,
+    preheader: `Your ${BRAND_NAME} email address was changed to ${data.newEmail}.`,
+    title: 'Email address changed',
     bodyBlocks,
     textLines,
   });
