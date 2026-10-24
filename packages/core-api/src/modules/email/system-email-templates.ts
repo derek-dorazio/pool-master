@@ -1725,7 +1725,7 @@ function renderEventWeeklyDigestEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const count = data.thisWeek.length + data.nextWeek.length;
-  const intro = `${count === 1 ? 'One event starts' : `${count} events start`} in the next two weeks in the sport leagues ${data.leagueName} hears about.`;
+  const intro = `${count === 1 ? 'One event starts' : `${count} events start`} in the next two weeks in the sport leagues you get event emails for.`;
   const weeks = [
     { title: 'This week', events: data.thisWeek },
     { title: 'Next week', events: data.nextWeek },
