@@ -136,7 +136,8 @@ Worth buying:
 
 - **Protect the brand:** `primetimecommissioner.net`, `.co`, `.app`.
 - **Short redirects:** `primetimecommish.com`, `primecommish.com`, `ptcommish.com`.
-- **Old name:** `ultimateofficepool.com` (primary or redirect).
+- **Old name:** `ultimateofficepool.com`, `.net`, `.app` (it may become primary; drop `.net`/`.app` at
+  renewal if it does not).
 
 Free on 2026-10-24:
 
