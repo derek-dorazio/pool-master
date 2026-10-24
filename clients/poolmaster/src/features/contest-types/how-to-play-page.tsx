@@ -9,6 +9,7 @@ import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeag
 import { FORMAT_GUIDES } from './format-guides';
 import { FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
 import { SPORT_BLURBS } from './sport-blurbs';
+import { STAT_POOL_CONTEST_TYPE, STAT_POOL_GUIDE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 
 /** How a pool runs, in three steps, each with its picture. */
@@ -98,6 +99,38 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
           )}
         </div>
       ) : null}
+    </Tile>
+  );
+}
+
+/**
+ * The Clutch Card (#936): how a championship stat pool plays, and how each shown stat pool
+ * league's stat is counted. Its formats are the cards beside it; this says what they score.
+ */
+function ClutchCardGuide({ leagues }: { leagues: readonly PublicCatalogLeague[] }) {
+  const lines = leagues.flatMap((league) => {
+    const line = statPoolScoringLine(league.definition);
+    return line === null ? [] : [{ league, line }];
+  });
+  if (lines.length === 0) {
+    return null;
+  }
+  return (
+    <Tile className="space-y-3" data-testid="how-to-play-clutch-card" padding="md" radius="md">
+      <div>
+        <h3 className="font-display text-lg font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</p>
+      </div>
+      <ol className="list-decimal space-y-1 pl-5 text-sm text-foreground">
+        {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
+      </ol>
+      <ul className="space-y-1 text-sm text-muted-foreground">
+        {lines.map(({ league, line }) => (
+          <li data-testid={`how-to-play-clutch-card-${league.slug}`} key={league.sportLeagueId}>
+            <span className="font-semibold text-foreground">{league.name}.</span> {line}
+          </li>
+        ))}
+      </ul>
     </Tile>
   );
 }
@@ -256,6 +289,8 @@ export function HowToPlayPage() {
               </div>
             </Tile>
           ) : null}
+
+          <ClutchCardGuide leagues={chosenLeague ? [chosenLeague] : (chosenSport ? [chosenSport] : catalog).flatMap((sport) => sport.leagues)} />
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {formats.map((selectionType) => (

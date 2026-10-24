@@ -1,4 +1,4 @@
-import { SPORTS_BY_POPULARITY, SUPPORTED_SPORTS, getSportDefinition, type SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { SPORTS_BY_POPULARITY, SUPPORTED_SPORTS, getSportDefinition, sportLeagueDefinitionOf, type SelectionType, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportLeagueDto } from '@/lib/api';
 
 /**
@@ -87,6 +87,8 @@ export interface PublicCatalogLeague {
   name: string;
   /** Its name in the page's link: `?sport=basketball&league=wnba`. */
   slug: string;
+  /** What it plays: its sport's definition, or a stat pool's for a championship stat pool league (#936). */
+  definition: SportDefinition;
   groups: ContestTypeTile[];
 }
 
@@ -127,7 +129,7 @@ function bySportLeagueDisplayOrder(left: SportLeagueDto, right: SportLeagueDto) 
  * The public How to Play page's catalog: each sport, the most popular first, with its formats,
  * one tile each, led by the format's default of the first sport league to offer it; then each of
  * its active sport leagues in display order, with the formats it offers, its own templates leading
- * its sport's. A sport league that offers none is left out, as is a sport with no templates.
+ * its sport's, and the definition it plays (a stat pool's for the World Series). A sport league that offers none is left out, as is a sport with no templates.
  */
 export function buildPublicContestCatalog(
   templates: readonly ContestConfigTemplateDto[],
@@ -140,17 +142,23 @@ export function buildPublicContestCatalog(
     const leagues = sportLeagues
       .filter((sportLeague) => sportLeague.sport === sport && sportLeague.isActive)
       .sort(bySportLeagueDisplayOrder)
-      .map((sportLeague) => ({
-        sportLeagueId: sportLeague.id,
-        name: sportLeague.displayName ?? sportLeague.name,
-        slug: catalogSlug(sportLeague.name),
-        groups: toFormatTiles(
-          `${sport}/${sportLeague.id}`,
-          sportTemplates.filter((template) => template.sportLeagueId === null || template.sportLeagueId === sportLeague.id),
-          definition.selectionTypes,
-          (template) => template.sportLeagueId === sportLeague.id,
-        ),
-      }))
+      .map((sportLeague) => {
+        const leagueDefinition = sportLeagueDefinitionOf(sport, sportLeague);
+        return {
+          sportLeagueId: sportLeague.id,
+          name: sportLeague.displayName ?? sportLeague.name,
+          slug: catalogSlug(sportLeague.name),
+          definition: leagueDefinition,
+          groups: toFormatTiles(
+            `${sport}/${sportLeague.id}`,
+            // Only the formats the league plays: a World Series stat pool takes none of baseball's brackets.
+            sportTemplates.filter((template) => (template.sportLeagueId === null || template.sportLeagueId === sportLeague.id)
+              && leagueDefinition.selectionTypes.includes(template.selectionType)),
+            leagueDefinition.selectionTypes,
+            (template) => template.sportLeagueId === sportLeague.id,
+          ),
+        };
+      })
       .filter((league) => league.groups.length > 0);
     return groups.length ? [{ sport, name: definition.name, groups, leagues }] : [];
   });

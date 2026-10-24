@@ -594,6 +594,22 @@ describe('Commissioner tools › Contests › Create contest', () => {
     expect(screen.getByTestId('contest-format-BRACKET')).toBeInTheDocument();
   });
 
+  it('offers an NBA Finals stat pool only the roster formats and says how its players score, where basketball also offers brackets', async () => {
+    primeBasketballMocks([basketballEvent({
+      id: 'nba-finals', name: 'NBA Finals', rounds: 7, sportLeagueId: 'nba-finals', participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE',
+    })]);
+    renderCreateContestPage();
+    await waitForStartingChoices();
+
+    fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
+
+    expect(await screen.findByTestId('create-contest-stat-pool-scoring'))
+      .toHaveTextContent('Each star scores Triple Threat: points + rebounds + assists, each game.');
+    expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
+    expect(screen.queryByTestId('contest-format-BRACKET')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();
+  });
+
   it('creates a confidence pick\'em on its first week as a prediction contest with the mode chosen and no scoring settings, since the mode alone scores it', async () => {
     primeBasketballMocks([basketballEvent({ id: 'week-1', name: 'Week 1', rounds: 1 })]);
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-pick-em' } } });

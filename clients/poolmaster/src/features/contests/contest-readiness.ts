@@ -1,4 +1,4 @@
-import { SportEventStatus, TournamentFormat, getSportDefinition, countParticipants  } from '@poolmaster/shared/domain';
+import { SportEventStatus, TournamentFormat, eventSportDefinition, countParticipants } from '@poolmaster/shared/domain';
 import type { SportEventDto } from '@/lib/api';
 
 const HOUR_MS = 60 * 60_000;
@@ -37,7 +37,7 @@ export type ContestReadinessCheck = { id: string; isMet: boolean; label: string 
  * say when the contest is created.
  */
 export function isKnockoutUnderWay(event: SportEventDto) {
-  return getSportDefinition(event.sport).tournamentFormat === TournamentFormat.MATCHES
+  return eventSportDefinition(event).tournamentFormat === TournamentFormat.MATCHES
     && event.status === SportEventStatus.IN_PROGRESS
     && event.readinessReasons.length > 0
     && event.readinessReasons.every((reason) => reason === 'EVENT_STARTED');
@@ -57,7 +57,7 @@ export function getContestReadinessChecks(
   const isReleased = event.readinessStatus !== 'NOT_RELEASED';
   const hasStarted = event.readinessStatus === 'EVENT_STARTED'
     || new Date(event.startDate).getTime() <= now.getTime();
-  const { participant } = getSportDefinition(event.sport).vocabulary;
+  const { participant } = eventSportDefinition(event).vocabulary;
   const golfers = countParticipants(event.loadedParticipantCount, participant);
   const tiers = `${event.tierCount} tier${event.tierCount === 1 ? '' : 's'}`;
 

@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import type { Sport } from '@poolmaster/shared/domain';
+import { sportLeagueDefinitionOf, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
@@ -16,6 +16,7 @@ import { getLogger } from '@/lib/logger';
 import { buildLeagueContestCatalog } from './contest-catalog';
 import { ContestTypeTileCard } from './contest-type-tile';
 import { SPORT_BLURBS } from './sport-blurbs';
+import { STAT_POOL_CONTEST_TYPE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 
 /**
@@ -36,6 +37,12 @@ export function LeagueContestTypesPage() {
     templatesQuery.data ?? [],
     new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name])),
   ), [sportLeaguesQuery.data, templatesQuery.data]);
+
+  // A championship stat pool league's group says it is a Clutch Card and how its stat is counted (#936).
+  const statPoolLines = useMemo(() => new Map((sportLeaguesQuery.data ?? []).flatMap((sportLeague) => {
+    const line = statPoolScoringLine(sportLeagueDefinitionOf(sportLeague.sport, sportLeague));
+    return line === null ? [] : [[sportLeague.id, `${STAT_POOL_CONTEST_TYPE}. Each star scores ${line}`] as const];
+  })), [sportLeaguesQuery.data]);
 
   // A commissioner's create links need each sport's events: a contest type with none coming up
   // says so instead of linking.
@@ -86,6 +93,11 @@ export function LeagueContestTypesPage() {
               {sport.groups.map((group) => (
                 <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
                   <h4 className="text-sm font-semibold uppercase text-muted-foreground">{group.name}</h4>
+                  {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
+                    <p className="text-sm text-muted-foreground" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`}>
+                      {statPoolLines.get(group.sportLeagueId)}
+                    </p>
+                  ) : null}
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {group.tiles.map((tile) => <ContestTypeTileCard createPathFor={createPathFor} key={tile.key} tile={tile} />)}
                   </div>
