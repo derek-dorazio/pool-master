@@ -449,14 +449,14 @@ enum PrismaCupWeight {
   NOT_COUNTED
 }
 
-/// A league's points table for cups and the championship (#841). Mirrors the domain
-/// `CupPointsScale`.
 /// How a league's commissioners hear about upcoming events (#851). Mirrors the domain `EventEmailDelivery`.
 enum PrismaEventEmailDelivery {
   PER_EVENT
   WEEKLY_DIGEST
 }
 
+/// A league's points table for cups and the championship (#841). Mirrors the domain
+/// `CupPointsScale`.
 enum PrismaCupPointsScale {
   STANDARD
   TOP_TEN
@@ -629,9 +629,9 @@ model League {
   /// Sport leagues whose upcoming events this league's commissioners are not emailed about (#851):
   /// "Coming up soon" and "Ready for contests". Empty, the default: every sport league. A business
   /// list of sport league ids, checked when set, not a foreign key.
+  mutedSportLeagueIds String[]                 @default([]) @map("muted_sport_league_ids") @db.Uuid
   /// How the commissioners hear about upcoming events (#851). Mirrors the domain `EventEmailDelivery`.
   eventEmailDelivery  PrismaEventEmailDelivery @default(PER_EVENT) @map("event_email_delivery")
-  mutedSportLeagueIds String[]                 @default([]) @map("muted_sport_league_ids") @db.Uuid
   createdAt           DateTime                 @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime                 @updatedAt @map("updated_at") @db.Timestamptz
 

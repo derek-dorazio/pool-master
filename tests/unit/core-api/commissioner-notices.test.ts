@@ -294,6 +294,7 @@ describe('CommissionerNotices', () => {
       expect(outbox.rows.filter((row) => row.leagueId === office.id).map((row) => row.templateKey)).toEqual(['EVENT_WEEKLY_DIGEST']);
       expect(sent('EVENT_READY_FOR_CONTESTS').map(({ userId }) => userId)).toEqual([riley.id, riley.id]);
       const text = textTo('EVENT_WEEKLY_DIGEST', casey.id, office);
+      expect(text).toContain('3 events start in the next two weeks in the sport leagues you get event emails for.');
       expect(text).toContain([
         'This week:',
         '',
@@ -334,6 +335,13 @@ describe('CommissionerNotices', () => {
       await notices().queueDue(mondayPlus(7));
 
       expect(digests()).toHaveLength(6);
+
+      // In winter (EST) 3am Eastern is 08:00 UTC.
+      event({ name: 'Winter Open', startDate: new Date('2026-11-05T12:00:00.000Z') });
+      await notices().queueDue(new Date('2026-11-02T07:30:00.000Z'));
+      expect(digests()).toHaveLength(6);
+      await notices().queueDue(new Date('2026-11-02T08:00:00.000Z'));
+      expect(digests()).toHaveLength(9);
     });
 
     it("leaves out muted sport leagues and a football season's later weeks, and sends nothing when no event is coming up", async () => {
