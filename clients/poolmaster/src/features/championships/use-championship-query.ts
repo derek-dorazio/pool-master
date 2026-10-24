@@ -7,10 +7,12 @@ import {
   getYearReview,
   listChampionshipYears,
   listContestResults,
+  listRecords,
   type ChampionshipDto,
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
   type HistorySummaryDto,
+  type RecordDto,
   type SquadHistoryDto,
   type SquadYearDto,
   type YearReviewDto,
@@ -96,6 +98,24 @@ export function useHistorySummaryQuery(leagueId: string) {
       }
 
       return response.data.summary;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/** The league's record book (#873): every record somebody holds, with the next best. */
+export function useRecordsQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.records(leagueId),
+    queryFn: async (): Promise<RecordDto[]> => {
+      const response = await listRecords({ path: { id: leagueId } });
+
+      if (!response.data?.records) {
+        throwApiError(response.error, 'Records response is missing data.');
+      }
+
+      return response.data.records;
     },
     enabled: Boolean(leagueId),
     retry: false,

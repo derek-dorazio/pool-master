@@ -22,6 +22,7 @@ import {
   listChampionshipYears,
   listContestConfigTemplates,
   listContestResults,
+  listRecords,
   listCupSeasons,
   listCups,
   listEventParticipants,
@@ -35,7 +36,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, TrophyKind, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -48,6 +49,7 @@ import {
   CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueResponseSchema,
+  RecordListResponseSchema,
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
@@ -392,6 +394,15 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(summary.tiles.map((tile) => [tile.tile, tile.count, tile.squads.length])).toEqual([
       [SummaryTile.MOST_CHAMPIONSHIPS, 0, 0],
       [SummaryTile.MOST_CUPS, 1, 2],
+    ]);
+
+    // --- The record book: each squad won once and placed in both, no year is over yet ---
+    const records = RecordListResponseSchema.parse(expectDefined((await listRecords({ client: member.client, path: { id: league.id } })).data)).records;
+    expect(records.map((record) => [record.type, record.best.value, record.best.holders.map((holder) => [holder.year, holder.contestName]), record.nextBest])).toEqual([
+      [RecordType.MOST_WINS_IN_A_YEAR, 1, [[year, null], [year, null]], null],
+      [RecordType.MOST_WINS_ALL_TIME, 1, [[null, null], [null, null]], null],
+      [RecordType.LONGEST_PODIUM_RUN, 2, [[year, null], [year, null]], null],
+      [RecordType.BIGGEST_FIELD_WON, 2, expect.arrayContaining([[year, `Harbour Picks ${RUN}`], [year, `Valley Picks ${RUN}`]]), null],
     ]);
 
     // --- The member's squad page (#872): its championship row this year, and its 2099 cup row ---

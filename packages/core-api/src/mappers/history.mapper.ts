@@ -1,7 +1,7 @@
 import { TrophyKind } from '@poolmaster/shared/domain';
-import type { ContestResultSummaryDto, HistorySummaryDto, SquadHistoryDto, SquadYearDto, YearReviewDto } from '@poolmaster/shared/dto';
+import type { ContestResultSummaryDto, HistorySummaryDto, RecordDto, RecordStandDto, SquadHistoryDto, SquadYearDto, YearReviewDto } from '@poolmaster/shared/dto';
 import { formatUserName } from '../modules/email/email-content';
-import type { ContestResultView, HistorySummaryView, SquadHistoryView, SquadYearView } from '../modules/history/service';
+import type { ContestResultView, HistorySummaryView, RecordStandView, RecordView, SquadHistoryView, SquadYearView } from '../modules/history/service';
 import type { YearReviewView } from '../modules/history/year-review-service';
 import { championshipName, toChampionshipSquadDto, toChampionshipStandingRowDto } from './championship.mapper';
 import { cupName, toCupStandingRowDto } from './cups.mapper';
@@ -93,5 +93,21 @@ export function toYearReviewDto(view: YearReviewView): YearReviewDto {
     status: view.status,
     sentAt: view.sentAt?.toISOString() ?? null,
     sentByName: view.sentBy === null ? null : formatUserName(view.sentBy),
+  };
+}
+
+export function toRecordDto(view: RecordView): RecordDto {
+  return { type: view.type, best: toRecordStandDto(view.best), nextBest: view.nextBest === null ? null : toRecordStandDto(view.nextBest) };
+}
+
+function toRecordStandDto(view: RecordStandView): RecordStandDto {
+  return {
+    value: view.value,
+    holders: view.holders.map((holder) => ({
+      squad: toChampionshipSquadDto(holder.squad),
+      year: holder.year,
+      contestId: holder.contest?.id ?? null,
+      contestName: holder.contest?.name ?? null,
+    })),
   };
 }
