@@ -895,6 +895,12 @@ payments are off"; while it is on, Expand answers 409 `PAYMENTS_CHECKOUT_UNAVAIL
 checkout exists (#981), never a pretend charge. A root admin can give any band above the cap
 free with a reason (`POST …/expansion/grant`), recorded as a $0 line naming the reason.
 
+**Payment history** (#987). A league's commissioners and root admins see every `league_payments`
+line under League settings › Payments (`GET /api/v1/leagues/:id/billing/payments`), newest
+first, with its contest and payer; a user sees the payments they made in any league on My
+profile (`GET /api/v1/users/:userId/payments`, the user themselves or a root admin). Lines keep
+their description when the contest or payer is later deleted.
+
 **An entry counts only once submitted** (#481). It is created `DRAFT`, and its owner submits it
 when the lineup is complete. The leaderboard, settlement, the contest-started email and a
 contest's `entryCount` read `SUBMITTED` entries alone. A draft is kept, never deleted, so its

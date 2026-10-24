@@ -37,6 +37,7 @@ const getLeagueByCodeMock = vi.fn();
 const getLeaguePlanUsageMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
+const listLeaguePaymentsMock = vi.fn();
 const listLeaguePlansMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const listSportLeaguesMock = vi.fn();
@@ -54,6 +55,7 @@ bindApiMocks({
   getLeaguePlanUsage: getLeaguePlanUsageMock,
   inactivateLeague: inactivateLeagueMock,
   listLeagueMembers: listLeagueMembersMock,
+  listLeaguePayments: listLeaguePaymentsMock,
   listLeaguePlans: listLeaguePlansMock,
   listLeagueSquads: listLeagueSquadsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -120,6 +122,7 @@ function primeMocks({
     { membership: buildLeagueMembership({ role: leagueRole }) },
   )));
   listSportLeaguesMock.mockResolvedValue(apiSuccess({ sportLeagues: SPORT_LEAGUES }));
+  listLeaguePaymentsMock.mockResolvedValue(apiSuccess({ payments: [] }));
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
     members: [
       buildLeagueMembership({ id: 'm-1', userId: 'user-1', role: 'COMMISSIONER' }),
@@ -144,7 +147,8 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock, getLeaguePlanUsageMock,
-    inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, listSportLeaguesMock,
+    inactivateLeagueMock, listLeagueMembersMock, listLeaguePaymentsMock, listLeaguePlansMock, listLeagueSquadsMock,
+    listSportLeaguesMock,
     refreshTokenMock, updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeagueEventEmailSettingsMock,
     updateLeaguePlanMock,
   ]) {
@@ -894,6 +898,53 @@ describe('League plan', () => {
 });
 
 // The leagues list is only touched by delete; it must drop the league.
+describe('League payments', () => {
+  it('lists the league\'s payments on League settings, newest first, each linking to its contest', async () => {
+    primeMocks();
+    listLeaguePaymentsMock.mockResolvedValue(apiSuccess({
+      payments: [
+        {
+          id: '0f6e3c1a-1111-4b4b-9c9c-000000000002',
+          paidAt: '2026-10-24T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Masters Pool: 50 to 100 entries, free while payments are off',
+          contestId: 'contest-1',
+          payer: { id: 'user-1', name: 'Casey Commissioner' },
+        },
+        {
+          id: '0f6e3c1a-1111-4b4b-9c9c-000000000001',
+          paidAt: '2026-10-23T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Old Pool: up to 50 entries, free while payments are off',
+          contestId: null,
+          payer: null,
+        },
+      ],
+    }));
+
+    renderCommissionerTools();
+
+    const payments = within(await screen.findByTestId('league-payments'));
+    const lines = await payments.findAllByTestId(/^league-payment-/);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveTextContent('Casey Commissioner');
+    expect(lines[0]).toHaveTextContent('$0');
+    expect(within(lines[0]).getByRole('link', { name: 'Masters Pool: 50 to 100 entries, free while payments are off' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+    // A deleted contest's line keeps its description, with nothing to link to.
+    expect(within(lines[1]).queryByRole('link')).not.toBeInTheDocument();
+    expect(listLeaguePaymentsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
+  it('says there are no payments yet when the league has none', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-payments-empty')).toHaveTextContent('No payments yet.');
+  });
+});
+
 describe('League settings delete and the leagues list', () => {
   it('removes a deleted league from the cached leagues list', async () => {
     primeMocks({ isActive: false });

@@ -4,10 +4,12 @@ import {
   getContest,
   getContestExpansion,
   grantContestExpansion,
+  listLeaguePayments,
+  listUserPayments,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
 import { LeaguePaymentKind, LeaguePlan, SelectionType } from '@poolmaster/shared/domain';
-import { ContestExpansionResponseSchema } from '@poolmaster/shared/dto';
+import { ContestExpansionResponseSchema, LeaguePaymentListResponseSchema, UserPaymentListResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -165,5 +167,44 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect(await paymentLines(league.id)).toEqual([
       { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
     ]);
+  });
+
+  it('lists the league\'s payment history newest first, with each payer, to its commissioners and root admins only', async () => {
+    const { commissioner, league, contestId } = await freeContest('Ledger House');
+    const admin = await buildRegisteredUser({ firstName: 'Ledger', lastName: 'Admin' });
+    await promoteToRootAdmin(admin);
+    const outsider = await buildRegisteredUser({ displayName: 'Ledger Peeker' });
+    const path = { id: league.id, contestId };
+    await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
+    await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 300, reason: 'Office party' } });
+
+    const byCommissioner = LeaguePaymentListResponseSchema.parse(expectDefined((await listLeaguePayments({ client: commissioner.client, path: { id: league.id } })).data));
+    const byAdmin = await listLeaguePayments({ client: admin.client, path: { id: league.id } });
+    const byOutsider = await listLeaguePayments({ client: outsider.client, path: { id: league.id } });
+
+    expect(byCommissioner.payments.map(({ amountCents, description, contestId: lineContestId, payer }) => ({ amountCents, description, contestId: lineContestId, payer }))).toEqual([
+      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Poolmaster: Office party', contestId, payer: { id: admin.userId, name: 'Ledger Admin' } },
+      { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contestId, payer: { id: commissioner.userId, name: commissioner.displayName } },
+    ]);
+    expect(byAdmin.data?.payments).toHaveLength(2);
+    expect(byOutsider.response.status).toBe(403);
+  });
+
+  it('lists a user\'s own payments across their leagues on their account, and nobody else\'s', async () => {
+    const first = await freeContest('Purse One');
+    const other = await buildRegisteredUser({ displayName: 'Purse Snoop' });
+    await expandContest({ client: first.commissioner.client, path: { id: first.league.id, contestId: first.contestId }, body: { entriesPerContest: 100 } });
+
+    const mine = UserPaymentListResponseSchema.parse(expectDefined((await listUserPayments({ client: first.commissioner.client, path: { userId: 'me' } })).data));
+    const snooped = await listUserPayments({ client: other.client, path: { userId: first.commissioner.userId } });
+    const theirOwn = await listUserPayments({ client: other.client, path: { userId: 'me' } });
+
+    expect(mine.payments).toEqual([expect.objectContaining({
+      amountCents: 0,
+      description: 'Purse One Picks: up to 100 entries, free while payments are off',
+      league: { id: first.league.id, name: first.league.name, leagueCode: first.league.leagueCode },
+    })]);
+    expect(snooped.response.status).toBe(403);
+    expect(theirOwn.data?.payments).toEqual([]);
   });
 });

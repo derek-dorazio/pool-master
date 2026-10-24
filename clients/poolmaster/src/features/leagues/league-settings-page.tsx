@@ -12,6 +12,7 @@ import {
   SettingsSectionHeader,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
+import { LeaguePaymentsSection } from '@/features/billing/payment-history-sections';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
@@ -258,6 +259,8 @@ export function LeagueSettingsPage() {
           />
         ))}
       </SettingsSection>
+
+      <LeaguePaymentsSection leagueCode={league.leagueCode} leagueId={league.id} />
 
       <LeagueDangerZone league={league} />
     </div>

@@ -24,6 +24,7 @@ const {
   disableUserMock,
   enableUserMock,
   getUserMock,
+  listUserPaymentsMock,
   logoutUserMock,
   refreshTokenMock,
   updateUserPreferencesMock,
@@ -47,6 +48,7 @@ const {
     disableUserMock: vi.fn(),
     enableUserMock: vi.fn(),
     getUserMock: vi.fn(),
+    listUserPaymentsMock: vi.fn(),
     logoutUserMock: vi.fn(),
     refreshTokenMock: vi.fn(),
     updateUserPreferencesMock: vi.fn(),
@@ -62,6 +64,7 @@ bindApiMocks({
   disableUser: disableUserMock,
   enableUser: enableUserMock,
   getUser: getUserMock,
+  listUserPayments: listUserPaymentsMock,
   logoutUser: logoutUserMock,
   refreshToken: refreshTokenMock,
   updateUserPreferences: updateUserPreferencesMock,
@@ -152,6 +155,7 @@ function primeUserRead(pathUserId: string, user: AuthSessionUser) {
 function primeCurrentUser(overrides: Partial<AuthSessionUser> = {}) {
   primeUserRead('me', buildCurrentUser(overrides));
   refreshTokenMock.mockResolvedValue({ data: null });
+  listUserPaymentsMock.mockResolvedValue({ data: { payments: [] } });
 }
 
 function primeCurrentUserThenRefetches(updatedUser: AuthSessionUser) {
@@ -176,6 +180,7 @@ describe('UserPage', () => {
     disableUserMock.mockReset();
     enableUserMock.mockReset();
     getUserMock.mockReset();
+    listUserPaymentsMock.mockReset();
     primedUsersByPath.clear();
     logoutUserMock.mockReset();
     refreshTokenMock.mockReset();
@@ -200,6 +205,38 @@ describe('UserPage', () => {
     expect(
       screen.getByText('Manage your user profile, preferences, login, and account information.'),
     ).toBeVisible();
+  });
+
+  it('lists the payments you made in your leagues, each naming its league and linking to it', async () => {
+    primeCurrentUser();
+    listUserPaymentsMock.mockResolvedValue({
+      data: {
+        payments: [{
+          id: '0f6e3c1a-2222-4b4b-9c9c-000000000001',
+          paidAt: '2026-10-24T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Masters Pool: up to 50 entries, free while payments are off',
+          league: { id: 'league-1', name: 'Big Dawgs', leagueCode: 'BIGDAWGS' },
+        }],
+      },
+    });
+
+    renderUserPage();
+
+    const line = await screen.findByTestId('my-payment-0f6e3c1a-2222-4b4b-9c9c-000000000001');
+    expect(line).toHaveTextContent('Big Dawgs');
+    expect(line).toHaveTextContent('$0');
+    expect(within(line).getByRole('link', { name: 'Masters Pool: up to 50 entries, free while payments are off' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS');
+    expect(listUserPaymentsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { userId: 'me' } }));
+  });
+
+  it('says you have no payments yet when you have made none', async () => {
+    primeCurrentUser();
+
+    renderUserPage();
+
+    expect(await screen.findByTestId('my-payments-empty')).toHaveTextContent('No payments yet.');
   });
 
   it('pool-master-aph keeps identity fields in a dedicated profile summary tile', async () => {

@@ -57,6 +57,7 @@ export function ContestExpansionSection({
     QueryKeys.contestExpansions.detail(leagueId, contestId),
     QueryKeys.contests.detail(contestId),
     QueryKeys.contests.list({ leagueId }),
+    QueryKeys.payments.all,
   ];
 
   const expandMutation = useInvalidatingMutation({

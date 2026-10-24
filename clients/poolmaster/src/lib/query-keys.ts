@@ -77,6 +77,12 @@ export const QueryKeys = {
     all: ['poolmaster', 'contest-expansion'] as const,
     detail: (leagueId: QueryKeyId, contestId: QueryKeyId) => ['poolmaster', 'contest-expansion', leagueId, contestId] as const,
   },
+  /** Payment history lines (#987): a league's, for its commissioners, and the signed-in user's own. */
+  payments: {
+    all: ['poolmaster', 'payments'] as const,
+    league: (leagueId: QueryKeyId) => ['poolmaster', 'payments', 'league', leagueId] as const,
+    mine: ['poolmaster', 'payments', 'mine'] as const,
+  },
   managedContests: {
     all: ['poolmaster', 'managed-contest'] as const,
     detail: (contestId: QueryKeyId) => ['poolmaster', 'managed-contest', contestId] as const,

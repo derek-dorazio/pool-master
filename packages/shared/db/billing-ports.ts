@@ -40,3 +40,38 @@ export interface ContestExpansionRepository {
    */
   expand(write: ContestExpansionWrite): Promise<ContestExpansionWriteResult>;
 }
+
+/** Who a league's payment history line names as its payer: enough to show their name. */
+export interface PaymentPayer {
+  id: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+}
+
+/** One line of a league's payment history (#987), with its payer when they still exist. */
+export interface LeaguePaymentRecord {
+  id: string;
+  contestId: string | null;
+  payer: PaymentPayer | null;
+  amountCents: number;
+  description: string;
+  paidAt: Date;
+}
+
+/** One payment a user made (#987), with the league it was made in. */
+export interface PayerPaymentRecord {
+  id: string;
+  league: { id: string; name: string; leagueCode: string };
+  amountCents: number;
+  description: string;
+  paidAt: Date;
+}
+
+export interface LeaguePaymentRepository {
+  /** The league's payment history, newest first. */
+  listForLeague(leagueId: string): Promise<LeaguePaymentRecord[]>;
+  /** Every payment the user made, in any league, newest first. */
+  listForPayer(userId: string): Promise<PayerPaymentRecord[]>;
+}

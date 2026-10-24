@@ -305,6 +305,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{userId}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the payments a user made
+         * @description Every payment the user made, in any of their leagues, newest first (#987): date, amount in US cents, what it was for and the league. While payments are off, each expansion is a $0 line that says it was free. No card data is kept. Access rule A6: the subject themselves, or a root admin.
+         */
+        get: operations["listUserPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{userId}/password": {
         parameters: {
             query?: never;
@@ -843,6 +863,26 @@ export interface paths {
          * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listLeaguePlans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/billing/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a league's payment history
+         * @description Every payment made in the league, newest first (#987): date, amount in US cents, what it was for, its contest and who paid. While payments are off, each expansion is a $0 line that says it was free; a root admin's gift is a $0 line with its reason. No card data is kept. Commissioners and root admins only.
+         */
+        get: operations["listLeaguePayments"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3910,6 +3950,106 @@ export interface components {
             entriesPerContest: number;
             /** @description Why it is given free; shown in the league's payment history. */
             reason: string;
+        };
+        /** @description One line of a league's payment history. No card data is ever kept. */
+        LeaguePayment: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When it was paid, or given.
+             */
+            paidAt: string;
+            /** @description In US cents; 0 for an expansion that was free. */
+            amountCents: number;
+            /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
+            description: string;
+            /**
+             * Format: uuid
+             * @description The contest it was for; null when that contest was deleted.
+             */
+            contestId: string | null;
+            /** @description Who paid, or the root admin who gave it; null when that account was deleted. */
+            payer: {
+                /** Format: uuid */
+                id: string;
+                /** @description Their name, for display. */
+                name: string;
+            } | null;
+        };
+        /** @description A league's payment history. */
+        LeaguePaymentListResponse: {
+            /** @description Newest first. */
+            payments: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: date-time
+                 * @description When it was paid, or given.
+                 */
+                paidAt: string;
+                /** @description In US cents; 0 for an expansion that was free. */
+                amountCents: number;
+                /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
+                description: string;
+                /**
+                 * Format: uuid
+                 * @description The contest it was for; null when that contest was deleted.
+                 */
+                contestId: string | null;
+                /** @description Who paid, or the root admin who gave it; null when that account was deleted. */
+                payer: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description Their name, for display. */
+                    name: string;
+                } | null;
+            }[];
+        };
+        /** @description One payment a user made, in one of their leagues. No card data is ever kept. */
+        UserPayment: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: date-time
+             * @description When it was paid, or given.
+             */
+            paidAt: string;
+            /** @description In US cents; 0 for an expansion that was free. */
+            amountCents: number;
+            /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
+            description: string;
+            /** @description The league it was paid in. */
+            league: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                leagueCode: string;
+            };
+        };
+        /** @description Every payment a user made, in any league. */
+        UserPaymentListResponse: {
+            /** @description Newest first. */
+            payments: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: date-time
+                 * @description When it was paid, or given.
+                 */
+                paidAt: string;
+                /** @description In US cents; 0 for an expansion that was free. */
+                amountCents: number;
+                /** @description What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off". */
+                description: string;
+                /** @description The league it was paid in. */
+                league: {
+                    /** Format: uuid */
+                    id: string;
+                    name: string;
+                    leagueCode: string;
+                };
+            }[];
         };
         /** @description Squad membership summary. */
         SquadMembershipDto: {
@@ -21156,6 +21296,65 @@ export interface operations {
             };
         };
     };
+    listUserPayments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description `me` for the authenticated caller, or a user id. */
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every payment a user made, in any league. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPaymentListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     changeUserPassword: {
         parameters: {
             query?: never;
@@ -22594,6 +22793,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaguePlanListResponse"];
+                };
+            };
+        };
+    };
+    listLeaguePayments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A league's payment history. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaguePaymentListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_NOT_FOUND — no such contest in this league. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
