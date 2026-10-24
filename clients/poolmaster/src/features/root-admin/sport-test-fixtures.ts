@@ -198,3 +198,30 @@ export function budgetPricingGroupFixture(): Extract<SettingsGroup, { key: 'BUDG
     defaults: { profiles },
   };
 }
+
+/** The Plans settings group at its starting values (#944), never changed. */
+export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' }> {
+  const value = {
+    caps: {
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: 100 },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+    },
+    features: {
+      EMAIL_CONTEST_OPENED: 'FREE', EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE', EMAIL_CONTEST_RESULTS: 'FREE',
+      EMAIL_CONTEST_EVENT_CHANGED: 'FREE', EMAIL_CONTEST_STARTED_SUMMARY: 'PRO', EMAIL_CONTEST_ENTRY_REMINDER: 'PRO',
+      EMAIL_CONTEST_STANDINGS: 'PRO', EMAIL_EVENT_COMING_UP: 'PRO', EMAIL_EVENT_READY_FOR_CONTESTS: 'PRO',
+      EMAIL_CONTEST_NOT_OPEN: 'PRO', EMAIL_YEAR_IN_REVIEW: 'PRO', CUP_STANDINGS: 'PRO', CUP_CROWNING: 'PRO', CHAMPIONSHIP: 'PRO',
+      TROPHY_SHELF: 'PRO', CUP_SETTINGS: 'PRO', PAST_YEARS: 'PRO', ALL_TIME_SUMMARY: 'PLATINUM', RECORD_BOOK: 'PLATINUM',
+    },
+  } satisfies Extract<SettingsGroup, { key: 'PLAN_CONFIG' }>['value'];
+  return {
+    key: 'PLAN_CONFIG',
+    title: 'Plans',
+    description: 'What each league plan allows: its caps, and the plan each feature starts at.',
+    source: 'defaults',
+    updatedAt: null,
+    updatedBy: null,
+    value,
+    defaults: value,
+  };
+}

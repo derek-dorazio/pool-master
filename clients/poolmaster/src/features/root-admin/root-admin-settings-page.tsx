@@ -17,7 +17,7 @@ import { EmailSettingsForm } from './root-admin-email-settings-form';
 import { EmailTestForm } from './root-admin-email-test-form';
 import { useSettingsGroupsQuery } from './use-settings-groups';
 import { ManagePageIntro } from './manage-page-intro';
-import { SETTINGS_PATH } from './manage-navigation';
+import { PLANS_PATH, SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeBudgetPricing,
@@ -30,7 +30,7 @@ import {
 /**
  * /manage/settings (#450) — one settings section per group: what is in use, whether it is saved
  * or the defaults, who last changed it, and its recent changes. The ingestion schedule edits on
- * its own pages under Settings; Email is edited in its section.
+ * its own pages under Settings, and Plans on its own Manage page; Email is edited in its section.
  */
 export function RootAdminSettingsPage() {
   const settingsQuery = useSettingsGroupsQuery();
@@ -128,7 +128,14 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
       // Edited in place: the section carries the form.
       return { summary: summarizeBudgetPricing(group.value), actions: null };
     case 'PLAN_CONFIG':
-      return { summary: summarizePlans(group.value), actions: null };
+      return {
+        summary: summarizePlans(group.value),
+        actions: (
+          <LinkButton data-testid="root-admin-settings-edit-PLAN_CONFIG" to={PLANS_PATH}>
+            Edit plans
+          </LinkButton>
+        ),
+      };
   }
 }
 
