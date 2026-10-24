@@ -2,7 +2,8 @@
  * The record book (#873): each record ranked from the league's counted contest finishes and its
  * championships of years over, with every holder on a tie and the next best.
  */
-import { CupWeight, RecordType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import { CupWeight, RecordType, SelectionType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import type { PerpetualTrophy } from '../../../packages/core-api/src/modules/history/perpetual-trophies';
 import { rankRecords, type RankedRecord } from '../../../packages/core-api/src/modules/history/records';
 
 let settled = 0;
@@ -27,7 +28,7 @@ function finish(squadId: string, place: number, overrides: Partial<LeagueYearFin
 
 /** The record book alone, the Hall of Lame hidden, as for most tests here. */
 function rankBook(finishes: LeagueYearFinish[], championships: Parameters<typeof rankRecords>[1]): RankedRecord[] {
-  return rankRecords(finishes, championships, { hallOfLame: false });
+  return rankRecords(finishes, championships, [], { hallOfLame: false });
 }
 
 function record(records: RankedRecord[], type: RecordType): RankedRecord | undefined {
@@ -108,6 +109,45 @@ describe('rankRecords', () => {
     expect(stand(record(records, RecordType.BIGGEST_FIELD_WON)?.nextBest)).toEqual([12, [['eagles', 2025, 'masters']]]);
   });
 
+  describe('repeat winner', () => {
+    /** A perpetual trophy with a plate per `[year, contestId, winners]`, newest first as the trophy keeps them. */
+    const trophy = (plates: Array<[number, string, string[]]>): PerpetualTrophy => ({
+      eventSeriesId: 'masters',
+      seriesName: 'Masters Tournament',
+      sportLeagueName: 'PGA Tour',
+      selectionType: SelectionType.TIERED,
+      plates: plates.map(([year, contestId, winnerSquadIds]) => ({ year, contestId, winnerSquadIds })),
+    });
+    const repeat = (trophies: PerpetualTrophy[]) => record(rankRecords([], [], trophies, { hallOfLame: false }), RecordType.REPEAT_WINNER);
+
+    it('counts the most years in a row winning one perpetual trophy, ending in its last year and naming that year\'s contest', () => {
+      const best = repeat([trophy([
+        [2026, 'masters-2026', ['eagles']],
+        [2025, 'masters-2025', ['eagles', 'birdies']],
+        [2024, 'masters-2024', ['eagles']],
+        [2023, 'masters-2023', ['birdies']],
+      ])]);
+
+      // Eagles won 2024 to 2026; Birdies' 2023 and 2025 (a shared 1st) are not in a row.
+      expect(stand(best?.best)).toEqual([3, [['eagles', 2026, 'masters-2026']]]);
+      expect(best?.nextBest).toBeNull();
+    });
+
+    it('breaks a run on a year the league did not run the contest, and keeps wins of different trophies apart', () => {
+      const best = repeat([
+        trophy([[2026, 'masters-2026', ['eagles']], [2024, 'masters-2024', ['eagles']]]),
+        { ...trophy([[2026, 'bowl-2026', ['birdies']], [2025, 'bowl-2025', ['birdies']]]), eventSeriesId: 'super-bowl', selectionType: SelectionType.SQUARES },
+        { ...trophy([[2025, 'open-2025', ['eagles']]]), eventSeriesId: 'us-open' },
+      ]);
+
+      expect(stand(best?.best)).toEqual([2, [['birdies', 2026, 'bowl-2026']]]);
+    });
+
+    it('holds no record for a trophy nobody has won twice in a row', () => {
+      expect(repeat([trophy([[2026, 'masters-2026', ['eagles']], [2025, 'masters-2025', ['birdies']]])])).toBeUndefined();
+    });
+  });
+
   describe('Hall of Lame', () => {
     it('counts 2nd and 4th places, a shared place counting for each, and leaves out contests not counted', () => {
       const records = rankRecords([
@@ -116,7 +156,7 @@ describe('rankRecords', () => {
         finish('birdies', 2, { tiedCount: 2, contestId: 'contest-2' }),
         finish('birdies', 4),
         finish('birdies', 2, { weight: CupWeight.NOT_COUNTED }),
-      ], [], { hallOfLame: true });
+      ], [], [], { hallOfLame: true });
 
       expect(stand(record(records, RecordType.MOST_RUNNER_UPS)?.best)).toEqual([2, [['eagles', null, null]]]);
       expect(stand(record(records, RecordType.MOST_RUNNER_UPS)?.nextBest)).toEqual([1, [['birdies', null, null]]]);
@@ -131,7 +171,7 @@ describe('rankRecords', () => {
         ...contest('small', 6, [['eagles', 1], ['bogeys', 2]]),
         ...contest('all-won', 4, [['eagles', 1], ['birdies', 1], ['bogeys', 1]]),
         ...contest('again', 3, [['bogeys', 1], ['eagles', 2], ['birdies', 3]]),
-      ], [], { hallOfLame: true });
+      ], [], [], { hallOfLame: true });
 
       // Birdies last in big (tied) and again; Bogeys last in big only. A contest of fewer than LAST_PLACE_MIN_SQUADS squads has no last.
       expect(stand(record(records, RecordType.MOST_LAST_PLACES)?.best)).toEqual([2, [['birdies', null, null]]]);
@@ -143,7 +183,7 @@ describe('rankRecords', () => {
       const records = rankRecords([
         finish('eagles', 1, { contestId: 'two-squads', rankedEntryCount: 5 }),
         finish('birdies', 2, { contestId: 'two-squads', rankedEntryCount: 5 }),
-      ], [], { hallOfLame: true });
+      ], [], [], { hallOfLame: true });
 
       expect(record(records, RecordType.MOST_LAST_PLACES)).toBeUndefined();
       expect(stand(record(records, RecordType.MOST_RUNNER_UPS)?.best)).toEqual([1, [['birdies', null, null]]]);
@@ -157,7 +197,7 @@ describe('rankRecords', () => {
         finish('birdies', 3, { year: 2025 }),
         finish('eagles', 4, { year: 2025 }),
         finish('birdies', 2, { year: 2026 }),
-      ], [], { hallOfLame: true });
+      ], [], [], { hallOfLame: true });
 
       // Eagles went two without a win to 2024, then won; Birdies' two is still running in 2026.
       expect(stand(record(records, RecordType.LONGEST_DROUGHT)?.best)).toEqual([2, [['eagles', 2024, null], ['birdies', 2026, null]]]);
@@ -167,8 +207,8 @@ describe('rankRecords', () => {
     it('leaves the Hall of Lame out when the league hides it, the record book unchanged', () => {
       const finishes = [finish('eagles', 1), finish('birdies', 2), finish('bogeys', 4)];
 
-      const shown = rankRecords(finishes, [], { hallOfLame: true }).map((row) => row.type);
-      const hidden = rankRecords(finishes, [], { hallOfLame: false }).map((row) => row.type);
+      const shown = rankRecords(finishes, [], [], { hallOfLame: true }).map((row) => row.type);
+      const hidden = rankRecords(finishes, [], [], { hallOfLame: false }).map((row) => row.type);
 
       expect(shown).toEqual(expect.arrayContaining([RecordType.MOST_RUNNER_UPS, RecordType.MOST_FOURTHS, RecordType.LONGEST_DROUGHT]));
       expect(hidden).toEqual(shown.filter((type) => !isHallOfLameRecord(type)));

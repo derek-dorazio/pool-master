@@ -1059,6 +1059,8 @@ export const RecordType = {
   LONGEST_PODIUM_RUN: 'LONGEST_PODIUM_RUN',
   /** A contest win with the most ranked entries. */
   BIGGEST_FIELD_WON: 'BIGGEST_FIELD_WON',
+  /** The most years in a row winning the same perpetual trophy (#874's contest run every year), two or more. */
+  REPEAT_WINNER: 'REPEAT_WINNER',
   /** Hall of Lame: the most 2nd places. */
   MOST_RUNNER_UPS: 'MOST_RUNNER_UPS',
   /** Hall of Lame: the most 4th places, just off the podium. */
