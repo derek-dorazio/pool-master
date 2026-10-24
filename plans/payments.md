@@ -86,11 +86,16 @@ and adoption is not blocked. Payments are built and tested (on QA in Stripe's te
 they are ready; lowering the cap to make them matter is a later decision, one save on the
 Plans page. Almost all of it is plan settings that already exist; only two things need code.
 
-- **Every league on Premium.** The default plan for new leagues moves from Platinum to
-  Premium, and existing leagues move from Platinum to Premium (Q1), logged in the plan change
-  log as a root admin change. Commissioners keep the free plan picker as built; while "Every
-  plan is free for now" stays, a commissioner who picks Platinum gets its higher cap free, so
-  the picker is hidden from commissioners once expansions are on sale (Q2).
+- **Every league on Premium** (Derek 2026-10-24). The default plan for new leagues moves from
+  Platinum to Premium, and existing leagues move from Platinum to Premium, logged in the plan
+  change log as a root admin change.
+- **Renewal date: six months out** (Derek 2026-10-24). Each league gets `League.planRenewsAt`:
+  signup + 6 months for a new league, the day of the move + 6 months for an existing one.
+  Phase 1 only stores and shows it (to commissioners, on the plan page); nothing happens on
+  the date until phase 2 says what renewal means.
+- **Platinum is "Coming soon"** (Derek 2026-10-24). The commissioner plan picker shows
+  Platinum but it can't be selected, labelled "Coming soon"; Free, Pro and Premium stay
+  selectable, which only ever lowers a league's caps. The root admin can still set any plan.
 - **Every feature on Premium.** On the Plans page, each feature's "starts at" is set to
   Premium or lower. Platinum then differs from Premium only by its caps until subscriptions
   are sold.
@@ -278,6 +283,8 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
     `REFUND`; `SUBSCRIPTION` in phase 2), amount, currency, description, Stripe payment id
     and receipt link.
   - Platinum joins `CAPPED_LEAGUE_PLANS`; the default plan becomes `PREMIUM`.
+  - `League.planRenewsAt` (date): signup + 6 months, or the move date + 6 months for
+    existing leagues; phase 1 only shows it.
 - **Routes, phase 1**: `POST /contests/:id/expansions/checkout`, `GET /billing/prices`
   (public: bands now, plan prices in phase 2; empty while payments are off),
   `GET /leagues/:id/payments`, `GET /users/me/payments`, `POST /billing/stripe-events`, and
@@ -314,9 +321,9 @@ All deferred until Derek's go (2026-10-24), filed under #931.
    enough) and one Price per expansion band; a thread adds the two secrets to Terraform for
    QA and the `BILLING_CONFIG` group, switch off. No behaviour change.
 2. **Launch plan setup** (#986). Platinum gets a cap (1000), the default plan becomes Premium,
-   existing leagues move to Premium, the picker change from Q2. The cap numbers and the
-   features' "starts at" are then set on the Plans page by the root admin, on the day you
-   choose. Can be built before any payments.
+   existing leagues move to Premium with a renewal date six months out, and Platinum shows as
+   "Coming soon" in the picker. The day 1 caps and the features' "starts at" are then set on
+   the Plans page by the root admin. Can be built before any payments.
 3. **Model** (#980). Expansions, billing, events and payments tables; entitlements combine
    plan and expansion. No behaviour change.
 4. **Checkout and webhook** (#981). The `billing` module, expansion checkout, the webhook,
@@ -339,12 +346,10 @@ cap 100 on day 1 with payments built and tested but not required;
 Platinum capped at 1000 long term; our own payment history with a link to Stripe's receipt;
 subscriptions later, annual or monthly with monthly at a premium.
 
-1. **Move existing leagues to Premium too, not only new ones?** Recommended: yes. One set of
-   rules for everyone; with every feature on Premium, nobody loses anything until the cap.
-2. **What does the free plan picker do once payments are on?** Recommended: hide it from
-   commissioners until subscriptions exist, and drop "Every plan is free for now". Otherwise
-   any commissioner could pick Platinum and get 1000 entries free, which makes expansions
-   pointless. The root admin can still change a league's plan.
+1. **Decided (Derek 2026-10-24): yes**, existing leagues move to Premium too, and every league
+   gets a renewal date six months out (§3).
+2. **Decided (Derek 2026-10-24): Platinum shown as "Coming soon" and not selectable**; the
+   other plans stay in the picker (§3).
 3. **Day 1 caps: Free 20, Pro 50, Premium 100, Platinum 1000 entries; Premium and Platinum
    unlimited sports leagues?** Recommended: yes. Premium 100 is your call; the rest just
    keep the order, and every league can try every sport.
