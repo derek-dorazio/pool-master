@@ -38,7 +38,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
   const memberships = new PrismaLeagueMembershipRepository(prisma);
   const membersOnly = requireMemberOfLeague(memberships, leagueFromPath);
   const commissionersOnly = requireCommissioner(memberships);
-  const history = createHistoryService(prisma, fastify.log);
+  const history = createHistoryService(prisma, fastify.log, opts.planEntitlements);
   const handlers = createHistoryHandlers(
     history,
     createYearReviewService(prisma, { history, email: opts.email, logger: fastify.log }),

@@ -116,14 +116,14 @@ export function buildApp() {
     logger: app.log,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
-  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
+  const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log, planEntitlements });
   const contestSettlement = createContestSettlementService(prisma, app.log, { contestSettled: contestNotices });
   const eventLifecycleService = createEventLifecycleService(prisma, {
     logger: app.log,
     contestStarted: contestNotices,
     sportEventChanged: contestNotices,
     contestSettlement,
-    releasedEditionContests: createContestManagementService(prisma, app.log),
+    releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
   });
   const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
@@ -132,8 +132,8 @@ export function buildApp() {
     eventLifecycleService,
     notificationsDue: [
       createEntryReminders(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
-      createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
-      createCommissionerNotices(prisma, { email, appBaseUrl, logger: app.log }),
+      createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
+      createCommissionerNotices(prisma, { email, appBaseUrl, logger: app.log, planEntitlements }),
       createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
     ],
     logger: app.log,
@@ -218,13 +218,13 @@ export function buildApp() {
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });
-  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email });
+  app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',
     email,
     planEntitlements,
   });
-  app.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
+  app.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
   app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
   app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
@@ -253,7 +253,7 @@ export function buildApp() {
   // =========================================================================
   // Draft module
   // =========================================================================
-  app.register(selectionsModule, { prefix: '/api/v1/selections', email });
+  app.register(selectionsModule, { prefix: '/api/v1/selections', email, planEntitlements });
 
   // =========================================================================
   // Lifecycle hooks

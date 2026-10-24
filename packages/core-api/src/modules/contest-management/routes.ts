@@ -22,10 +22,11 @@ export function contestManagementModule(
 
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
-  const contestManagementService = createContestManagementService(prisma, fastify.log, createContestNotices(prisma, {
+  const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements, createContestNotices(prisma, {
     email: opts.email,
     appBaseUrl: readApplicationBaseUrl(process.env),
     logger: fastify.log,
+    planEntitlements: opts.planEntitlements,
   }));
   const handlers = createContestManagementHandlers(contestManagementService);
 

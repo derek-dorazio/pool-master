@@ -77,7 +77,7 @@ import type {
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
-import type { ContestEntry } from '@poolmaster/shared/domain';
+import type { Contest, ContestEntry } from '@poolmaster/shared/domain';
 
 /** Echoes a create input back with the fields a repository would have assigned. */
 function echoCreate(idPrefix: string) {
@@ -340,10 +340,12 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
+    findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
     findByStatuses: many(),
-    create: echoCreate('contest'),
+    create: createdContest(echoCreate('contest')),
     update: echoUpdate(),
+    moveToSeason: jest.fn().mockResolvedValue({ status: 'moved' }),
     replaceSportEvents: nothing(),
     transitionStatus: jest.fn().mockResolvedValue(true),
     setCupWeight: jest.fn().mockResolvedValue(true),
@@ -373,6 +375,12 @@ export function fakeContestEntryRepo(
  * The echo carries no event rows: the adapter derives them from the contest, which this fake
  * cannot see; a test that reads them passes its own `create`.
  */
+/** Wraps an echoed contest in the created result `create` answers with when the season has room. */
+function createdContest(create: jest.Mock): ContestRepository['create'] {
+  return jest.fn().mockImplementation(async (input: Record<string, unknown>) =>
+    ({ status: 'created', contest: (await create(input)) as Contest }));
+}
+
 function createdEntry(create: jest.Mock): ContestEntryRepository['create'] {
   return jest.fn().mockImplementation(async (input: Record<string, unknown>) =>
     ({ status: 'created', entry: { events: [], ...((await create(input)) as Partial<ContestEntry>) } }));

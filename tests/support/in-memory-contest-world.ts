@@ -22,6 +22,8 @@ import type {
   ContestEntryStandingResult,
   ContestEntryWithSquad,
   ContestRepository,
+  ContestSeasonFull,
+  ContestSeasonLimits,
   LeagueMembershipRepository,
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
@@ -63,6 +65,10 @@ import {
   fakeSportEventRepo,
   fakeUserRepo,
 } from './repo-fakes';
+import type { PlanConfig } from '@poolmaster/shared/dto';
+import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
+import { planEntitlementsOver } from './plan-entitlements';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -93,6 +99,8 @@ export class InMemoryContestWorld {
   readonly sportEvents = new Map<string, SportEvent>();
   /** The event's tiers, per sport event — what `listTiers` answers. */
   readonly eventTiers = new Map<string, SportEventTier[]>();
+  /** The PLAN_CONFIG its leagues' plans read (#947): the shipped defaults until a test sets one. */
+  planConfig: PlanConfig = PLAN_SETTINGS.defaults({});
 
   private sequence = 0;
 
@@ -295,11 +303,27 @@ export class InMemoryContestWorld {
       || left.createdAt.getTime() - right.createdAt.getTime();
   }
 
+  /** The adapter's season check (#947): the league's contests of the season, their sports leagues. */
+  private seasonFull(leagueId: string, seasonYear: number, limits: ContestSeasonLimits): ContestSeasonFull | null {
+    if (limits.sportLeaguesPerYear === null) return null;
+    const used = this.sportLeagueIdsBySeason(leagueId, seasonYear);
+    return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
+      ? null
+      : { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length };
+  }
+
+  private sportLeagueIdsBySeason(leagueId: string, seasonYear: number): string[] {
+    return [...new Set([...this.contests.values()]
+      .filter((contest) => contest.leagueId === leagueId && contest.seasonYear === seasonYear)
+      .flatMap((contest) => contest.sportEventIds.flatMap((id) => this.sportEvents.get(id)?.sportLeagueId ?? [])))];
+  }
+
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
       findByLeague: async (leagueId) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findSportLeagueIdsBySeason: async (leagueId, seasonYear) => this.sportLeagueIdsBySeason(leagueId, seasonYear),
       findBySportEvent: async (sportEventId, filter) =>
         [...this.contests.values()].filter((contest) =>
           contest.sportEventIds.includes(sportEventId)
@@ -307,7 +331,16 @@ export class InMemoryContestWorld {
           && (!filter?.excludeStatuses || !filter.excludeStatuses.includes(contest.status))),
       findByStatuses: async (statuses) =>
         [...this.contests.values()].filter((contest) => statuses.includes(contest.status)),
-      create: async (input) => this.addContest(input.leagueId, input),
+      create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
+        ?? { status: 'created', contest: this.addContest(input.leagueId, input) },
+      moveToSeason: async (id, seasonYear, limits) => {
+        const existing = this.contests.get(id);
+        if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        const full = this.seasonFull(existing.leagueId, seasonYear, limits);
+        if (full) return full;
+        this.contests.set(id, { ...existing, seasonYear, updatedAt: this.tick() });
+        return { status: 'moved' };
+      },
       update: async (id, updates) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
@@ -395,9 +428,13 @@ export class InMemoryContestWorld {
           .map((entry) => this.withSquad(entry)),
       findBySquad: async (squadId) =>
         [...this.entries.values()].filter((entry) => entry.squadId === squadId),
-      create: async (input) => {
-        // The adapter refuses an entry once the contest is drawn.
+      create: async (input, limits) => {
+        // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
+        if (limits.entriesPerContest !== null
+          && [...this.entries.values()].filter((entry) => entry.contestId === input.contestId).length >= limits.entriesPerContest) {
+          return { status: 'contestFull' };
+        }
         // @@unique([contestId, squadId, entryNumber]) on contest_entries.
         const clash = [...this.entries.values()].some((entry) =>
           entry.contestId === input.contestId
@@ -614,6 +651,11 @@ export class InMemoryContestWorld {
     };
   }
 
+  /** The real plan entitlements service over this world's leagues and `planConfig`. */
+  planEntitlements(): PlanEntitlementsService {
+    return planEntitlementsOver(this.leagueRepo(), () => this.planConfig);
+  }
+
   /**
    * Everything ContestService needs, wired to this world. The world keeps no games, so a test of
    * game picks passes `predictions` and `matches` from an `InMemoryGamePicks` over it.
@@ -641,6 +683,7 @@ export class InMemoryContestWorld {
         getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },
+      planEntitlements: this.planEntitlements(),
       ...overrides,
     };
   }

@@ -3,11 +3,13 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestRepository,
+  ContestSeasonLimits,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { CupService } from '../cups/service';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type {
   ContestManagementDetailDto,
   ContestManagementSportEventDto,
@@ -77,6 +79,7 @@ import {
   isContestFormatValidForTournamentFormat,
   isSquaresRound,
   UpsetBonusRule,
+  PlanCap,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { evaluateEventOperationalState, hasSportEventStarted } from '../events/operational-timing';
@@ -151,6 +154,8 @@ export interface ContestManagementServiceDeps {
   sportEventReader: ContestCreateSportEventReader;
   /** Makes the cup a new contest counts toward, when its league has none yet (#841). */
   cups: Pick<CupService, 'ensureCup'>;
+  /** The league's plan caps (#947): how many sports leagues a year its contests may use. */
+  planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
@@ -165,6 +170,7 @@ export class ContestManagementService {
   private readonly sportEventTierService: SportEventTierService;
   private readonly sportEventReader: ContestCreateSportEventReader;
   private readonly cups: Pick<CupService, 'ensureCup'>;
+  private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
   private readonly now: () => Date;
@@ -177,6 +183,7 @@ export class ContestManagementService {
     this.sportEventTierService = deps.tiers;
     this.sportEventReader = deps.sportEventReader;
     this.cups = deps.cups;
+    this.planEntitlements = deps.planEntitlements;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
     this.now = deps.now ?? (() => new Date());
@@ -254,7 +261,8 @@ export class ContestManagementService {
     // Its season is its first event's year (#841): a pick'em season's January playoff weeks keep
     // the season's year, because an edition's year is the one it is branded with.
     const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.eventYear ?? sportEvent.eventYear;
-    const contest = await this.contestRepo.create({
+    const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
+    const created = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventIds,
       seasonYear,
@@ -265,7 +273,12 @@ export class ContestManagementService {
       contestFormat: input.contestFormat,
       selectionType,
       squaresGameMatchId: input.sportEventMatchId,
-    });
+    }, limits);
+    if (created.status === 'sportsLeagueLimitReached') {
+      this.logger.warn({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId, used: created.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management create contest refused past the plan\'s sports leagues a year');
+      throw sportsLeagueLimitError(created.sportLeaguesPerYear, seasonYear, created.sportLeagueCount, 'New contests can only be in those.');
+    }
+    const { contest } = created;
 
     const configuration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
@@ -586,11 +599,20 @@ export class ContestManagementService {
     }
 
     const orderedIds = orderContestEvents(sportEvents);
-    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
-    // A contest's season is its first event's year, so new events can move it to another cup.
+    // A contest's season is its first event's year, so new events can move it to another cup, and
+    // into a season the plan has no room for its sports league in (#947): then nothing changes.
     const newFirst = sportEvents.find((sportEvent) => sportEvent.id === orderedIds[0]);
-    if (newFirst && newFirst.eventYear !== contest.seasonYear) {
-      await this.contestRepo.update(contestId, { seasonYear: newFirst.eventYear });
+    const movesSeason = newFirst !== undefined && newFirst.eventYear !== contest.seasonYear;
+    if (movesSeason) {
+      const limits = await this.seasonLimits(leagueId, newFirst.sportLeagueId);
+      const moved = await this.contestRepo.moveToSeason(contestId, newFirst.eventYear, limits);
+      if (moved.status === 'sportsLeagueLimitReached') {
+        this.logger.warn({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear, used: moved.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management set sport events refused a move past the plan\'s sports leagues a year');
+        throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.eventYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.eventYear}.`);
+      }
+    }
+    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    if (movesSeason) {
       await this.cups.ensureCup({ leagueId, seasonYear: newFirst.eventYear, sportLeagueId: newFirst.sportLeagueId });
       this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear }, 'contest management set sport events moved the contest to another season');
     }
@@ -753,6 +775,23 @@ export class ContestManagementService {
         CONTEST_SQUARES_GAME_INVALID,
       );
     }
+  }
+
+  /** The sports leagues the league's contests use in one season (#947), for Create contest's counter. */
+  async listSportLeaguesUsed(leagueId: string, seasonYear: number): Promise<string[]> {
+    this.logger.debug({ leagueId, seasonYear }, 'contest management list sports leagues used start');
+    return this.contestRepo.findSportLeagueIdsBySeason(leagueId, seasonYear);
+  }
+
+  /**
+   * A league's plan caps the different sports leagues its contests use in a season (#947), read
+   * live: the repository counts them under the league's row lock when a contest is made in a
+   * season or moved into one, and over the cap a season still takes the sports leagues it uses.
+   */
+  private async seasonLimits(leagueId: string, sportLeagueId: string): Promise<ContestSeasonLimits> {
+    const { caps } = await this.planEntitlements.forLeague(leagueId);
+    const sportLeaguesPerYear = caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
+    return sportLeaguesPerYear === null ? { sportLeaguesPerYear } : { sportLeaguesPerYear, sportLeagueId };
   }
 
   /**
@@ -1264,6 +1303,15 @@ export class ContestManagementService {
       countedScores: rules.countedScores,
     };
   }
+}
+
+/** A season without room for the contest's sports league (#947); `outcome` says what is refused. */
+function sportsLeagueLimitError(cap: number, seasonYear: number, used: number, outcome: string): ContestManagementError {
+  return new ContestManagementError(
+    `This league's plan allows ${cap} ${cap === 1 ? 'sports league' : 'sports leagues'} a year, and ${seasonYear} already has contests in ${used}. ${outcome}`,
+    'PLAN_SPORTS_LEAGUE_LIMIT_REACHED',
+    409,
+  );
 }
 
 function contestNotDraftError(): ContestManagementError {

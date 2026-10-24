@@ -5,6 +5,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   ContestEntryCreate,
+  ContestEntryCreateLimits,
   ContestEntryCreateResult,
   ContestEntryDeleteResult,
   ContestEntryRepository,
@@ -62,11 +63,16 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map(mapToEntry);
   }
 
-  /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
-  async create(entry: ContestEntryCreate): Promise<ContestEntryCreateResult> {
+  /** Refused once the contest is drawn or full; waits for a draw being recorded (#644). */
+  async create(entry: ContestEntryCreate, limits: ContestEntryCreateLimits): Promise<ContestEntryCreateResult> {
     return this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, entry.contestId);
       if (await isContestDrawn(tx, entry.contestId)) return { status: 'contestDrawn' };
+      // Counted under the lock: every entry, drafts included (#947).
+      if (limits.entriesPerContest !== null
+        && await tx.contestEntry.count({ where: { contestId: entry.contestId } }) >= limits.entriesPerContest) {
+        return { status: 'contestFull' };
+      }
       // Read under the lock, so an event added meanwhile is either here or given to the entry by
       // the event change that runs after (`replaceSportEvents`).
       const contestEvents = await tx.contestSportEvent.findMany({

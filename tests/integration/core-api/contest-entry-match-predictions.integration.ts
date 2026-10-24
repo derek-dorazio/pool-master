@@ -18,6 +18,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { createContestRow } from '../../support/contest-rows';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
 // one write (upsert, clear and the week's status, all or none), the database checks the migration
@@ -110,7 +111,7 @@ async function createPickEmEntry(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await repos().contests.create({
+  const contest = await createContestRow(repos().contests, {
     leagueId: league.id,
     seasonYear: 2026,
     sportEventIds,
@@ -119,7 +120,7 @@ async function createPickEmEntry(sportEventIds: string[]) {
     contestFormat: 'PREDICTION',
     selectionType: 'PICK_EM',
   });
-  const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null });
+  const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: null });
   if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
   return { contest, entry: result.entry };
 }
@@ -266,7 +267,7 @@ describe('PrismaContestEntryMatchPredictionRepository — several entries and th
     const prisma = getPrisma();
     const creator = await prisma.leagueMembership.findFirstOrThrow({ where: { leagueId: contest.leagueId } });
     const squad = await prisma.squad.create({ data: { leagueId: contest.leagueId, createdBy: creator.userId, name: `${name} ${randomUUID().slice(0, 6)}` } });
-    const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name, tiebreakerValue: null });
+    const result = await repos().entries.create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name, tiebreakerValue: null }, { entriesPerContest: null });
     if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
     return result.entry;
   }

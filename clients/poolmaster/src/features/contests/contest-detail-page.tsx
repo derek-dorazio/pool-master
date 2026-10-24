@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ContestEntryStatus,
   ContestStatus,
+  PlanCap,
   type Sport,
   formatParticipantStatusLabel,
   formatSelectionTypeName,
@@ -13,9 +14,11 @@ import { enterContest, getContest, updateContestEntry, type ContestDto, type Con
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
   buildContestEntryPath,
+  buildLeagueAdminPlanEditPath,
   buildLeagueContestEntryPath,
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
+import { formatPlanLimit } from '@/features/plans/plan-labels';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
@@ -180,7 +183,7 @@ export function ContestDetailPage() {
    * purpose of learning which squad is theirs. One request replaces it, and it is one this page
    * benefits from caching anyway.
    */
-  const { viewer } = useLeagueContextById(leagueId || undefined);
+  const { league, viewer } = useLeagueContextById(leagueId || undefined);
   const myTeamId = viewer.mySquadId;
 
   const enterContestMutation = useInvalidatingMutation({
@@ -293,7 +296,11 @@ export function ContestDetailPage() {
   const isDraft = contest.status === ContestStatus.DRAFT;
   // Each event takes its own submitted picks (#713): the board shows the current event's.
   const currentEventId = currentContestEvent(contest)?.sportEventId;
-  const canCreateEntry = entriesOpen && Boolean(myTeamId);
+  // The league's plan caps a contest's entries, every squad's drafts included (#947).
+  const entryCap = league?.planEntitlements.caps[PlanCap.ENTRIES_PER_CONTEST] ?? null;
+  const isFull = entryCap !== null && totalCount >= entryCap;
+  const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
+  const planLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
@@ -364,7 +371,9 @@ export function ContestDetailPage() {
             data-testid="contest-board-total-count"
             tone="info"
           >
-            Total Entries: <span className="font-semibold text-foreground">{totalCount}</span>
+            Total Entries: <span className="font-semibold text-foreground">
+              {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
+            </span>
           </Chip>
         </div>
       </ContestHeader>
@@ -407,6 +416,30 @@ export function ContestDetailPage() {
             ) : null}
           </div>
         </div>
+
+        {entriesOpen && isFull ? (
+          <Alert className="mt-3" data-testid="contest-board-full">
+            This contest is full.
+            {/* Members never see the league's plan; its commissioners can change it. */}
+            {viewer.isCommissioner ? (
+              <>
+                {' '}Your plan allows {formatPlanLimit(entryCap)} entries per contest.
+                {planLeagueCode ? (
+                  <>
+                    {' '}
+                    <Link
+                      className="font-medium text-primary underline"
+                      data-testid="contest-board-full-plan-link"
+                      to={buildLeagueAdminPlanEditPath(planLeagueCode)}
+                    >
+                      Change plan
+                    </Link>
+                  </>
+                ) : null}
+              </>
+            ) : null}
+          </Alert>
+        ) : null}
 
         {enterContestMutation.isError ? (
           <Alert className="mt-3" data-testid="contest-board-create-error" tone="danger">

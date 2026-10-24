@@ -36,7 +36,20 @@ export const UpdateLeaguePlanRequestSchema = z.object({
 }).describe('A league\'s new plan.');
 export type UpdateLeaguePlanRequest = z.infer<typeof UpdateLeaguePlanRequestSchema>;
 
+export const ListSportLeaguesUsedQuerySchema = z.object({
+  seasonYear: z.number().int().min(2000).max(9999).describe('The season to count, such as 2026: a contest counts in the season of its first event\'s year.'),
+}).describe('Which season\'s sports leagues to list.');
+export type ListSportLeaguesUsedQuery = z.infer<typeof ListSportLeaguesUsedQuerySchema>;
+
+export const SportLeaguesUsedResponseSchema = z.object({
+  seasonYear: z.number().int().describe('The season counted.'),
+  sportLeagueIds: z.array(z.string().uuid()).describe('The different sports leagues of the league\'s contests that season, drafts included. Against the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.'),
+}).describe('The sports leagues a league\'s contests use in one season (#947): what its plan\'s sports leagues a year counts.');
+export type SportLeaguesUsedResponse = z.infer<typeof SportLeaguesUsedResponseSchema>;
+
 registerSchema('PlanCapsDto', PlanCapsDtoSchema);
 registerSchema('PlanEntitlementsDto', PlanEntitlementsDtoSchema);
 registerSchema('LeaguePlanListResponse', LeaguePlanListResponseSchema);
 registerSchema('UpdateLeaguePlanRequest', UpdateLeaguePlanRequestSchema);
+registerSchema('ListSportLeaguesUsedQuery', ListSportLeaguesUsedQuerySchema);
+registerSchema('SportLeaguesUsedResponse', SportLeaguesUsedResponseSchema);

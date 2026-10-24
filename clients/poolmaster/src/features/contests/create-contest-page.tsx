@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
@@ -11,6 +11,7 @@ import {
   type ContestScoringSettings,
   ParticipantScoringDefinitionIdSchema,
   PickEmMode,
+  PlanCap,
   SUPPORTED_SPORTS,
   SelectionType,
   type Sport,
@@ -23,6 +24,7 @@ import {
   formatEntriesPerTeamSentence,
   formatSelectionTypeName,
   getSportDefinition,
+  pluralize,
   sportAllowsSelectionType,
   suggestContestName,
 } from '@poolmaster/shared/domain';
@@ -32,7 +34,9 @@ import { getLogger } from '@/lib/logger';
 import {
   buildLeagueAdminContestPath,
   buildLeagueAdminContestsPath,
+  buildLeagueAdminPlanEditPath,
 } from '@/features/leagues/league-routing';
+import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
 import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
 import { canEventStartRules, contestEventsFor, contestEventsForTemplate } from './contest-template-events';
@@ -251,7 +255,26 @@ export function CreateContestPage() {
     () => contestEventsFor(eventsQuery.data ?? [], selectionType),
     [eventsQuery.data, selectionType],
   );
-  const selectedEvent = contestEvents.find((event) => event.id === sportEventId) ?? null;
+  // The plan's sports leagues a year (#947): once a year's contests use them all, an event in
+  // another sports league that year is locked. A contest's year is its first event's.
+  const sportLeagueCap = league?.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR] ?? null;
+  const eventYears = useMemo(
+    () => [...new Set(contestEvents.map((event) => event.eventYear))].sort((left, right) => left - right),
+    [contestEvents],
+  );
+  const sportLeaguesUsed = useSportLeaguesUsed(league?.id, eventYears, sportLeagueCap !== null);
+  const lockedEventIds = useMemo(() => contestEvents.flatMap((event) => {
+    const used = sportLeaguesUsed.get(event.eventYear);
+    return sportLeagueCap !== null && used !== undefined
+      && used.length >= sportLeagueCap && !used.includes(event.sportLeagueId)
+      ? [event.id]
+      : [];
+  }), [contestEvents, sportLeagueCap, sportLeaguesUsed]);
+  const selectableEvents = useMemo(
+    () => contestEvents.filter((event) => !lockedEventIds.includes(event.id)),
+    [contestEvents, lockedEventIds],
+  );
+  const selectedEvent = selectableEvents.find((event) => event.id === sportEventId) ?? null;
   // The events that can start a requested template, whatever format the page is on.
   const requestedEvents = useMemo(
     () => (requestedTemplate ? contestEventsForTemplate(eventsQuery.data ?? [], requestedTemplate) : []),
@@ -403,16 +426,16 @@ export function CreateContestPage() {
   // requested template is settled, the soonest event that can start it, when it has one.
   useEffect(() => {
     const pendingEvents = requestedTemplateProgress.current === 'event' ? requestedEvents : [];
-    const current = contestEvents.find((event) => event.id === sportEventId);
+    const current = selectableEvents.find((event) => event.id === sportEventId);
     if (current && (!pendingEvents.length || pendingEvents.includes(current))) {
       return;
     }
-    const choices = pendingEvents.length ? pendingEvents : contestEvents;
+    const choices = pendingEvents.length ? pendingEvents.filter((event) => selectableEvents.includes(event)) : selectableEvents;
     const soonest = choices.find((event) => event.contestEligible) ?? choices.at(0);
     if (soonest) {
       chooseEvent(soonest);
     }
-  }, [chooseEvent, contestEvents, requestedEvents, sportEventId]);
+  }, [chooseEvent, requestedEvents, selectableEvents, sportEventId]);
 
   // A newly chosen sport, sport league or kind of event starts on its default preset; while all
   // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
@@ -518,7 +541,7 @@ export function CreateContestPage() {
       if (!league?.id) {
         throw new Error('League detail is still loading.');
       }
-      const event = contestEvents.find((candidate) => candidate.id === submitted.sportEventId);
+      const event = selectableEvents.find((candidate) => candidate.id === submitted.sportEventId);
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
@@ -570,6 +593,7 @@ export function CreateContestPage() {
       QueryKeys.contests.list({ leagueId: league?.id }),
       QueryKeys.contests.detail(savedContestId),
       QueryKeys.managedContests.all,
+      QueryKeys.plans.sportLeaguesUsedAll(league?.id),
     ],
     onError: (error) => {
       const payload = { action: 'contest.create.failed', data: { leagueCode, sportEventId }, err: error };
@@ -658,8 +682,9 @@ export function CreateContestPage() {
         ) : (
           <EventChoices
             events={contestEvents}
+            lockedEventIds={lockedEventIds}
             onSelect={(eventId) => {
-              const event = contestEvents.find((candidate) => candidate.id === eventId);
+              const event = selectableEvents.find((candidate) => candidate.id === eventId);
               if (event) {
                 chooseEvent(event);
               }
@@ -668,6 +693,25 @@ export function CreateContestPage() {
             sport={sportDefinition}
           />
         )}
+        {sportLeagueCap !== null && selectedEvent ? (
+          <p className="text-sm text-muted-foreground" data-testid="create-contest-sport-leagues-used">
+            {`Sports leagues in ${selectedEvent.eventYear}: ${sportLeaguesUsed.get(selectedEvent.eventYear)?.length ?? 0} of ${sportLeagueCap}.`}
+          </p>
+        ) : null}
+        {sportLeagueCap !== null && lockedEventIds.length ? (
+          <Alert data-testid="create-contest-sport-leagues-locked">
+            Your plan allows {pluralize(sportLeagueCap, 'sports league')} a year, so events in other sports
+            leagues are locked for a year whose contests already use {sportLeagueCap === 1 ? 'it' : 'them all'}.
+            {' '}
+            <Link
+              className="font-medium text-primary underline"
+              data-testid="create-contest-plan-link"
+              to={buildLeagueAdminPlanEditPath(league.leagueCode)}
+            >
+              Change plan
+            </Link>
+          </Alert>
+        ) : null}
         {selectionType === SelectionType.SQUARES && selectedEvent ? (
           <SquaresGamePicker
             choices={squaresGames}

@@ -7,6 +7,8 @@ import {
   CONTEST_CONFIGURATION_REQUIRED,
   CreateContestRequestSchema,
   UpdateContestEntryRequestSchema,
+  type ListSportLeaguesUsedQuery,
+  type SportLeaguesUsedResponse,
 } from '@poolmaster/shared/dto';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
@@ -318,7 +320,7 @@ export function createContestHandlers(contestService: ContestService) {
       }
       if (err instanceof ContestEntryOperationError) {
         logger.warn({ contestId: request.params.contestId, userId, code: err.code }, 'contest create entry route rejected');
-        const statusCode = err.code === 'CONTEST_ENTRY_LIMIT_REACHED' ? 409 : 400;
+        const statusCode = err.code === 'CONTEST_ENTRY_LIMIT_REACHED' || err.code === 'CONTEST_FULL' ? 409 : 400;
         return sendError(reply, statusCode, err.code, err.message);
       }
       logger.error({ contestId: request.params.contestId, userId, err }, 'contest create entry route failed');
@@ -506,5 +508,18 @@ export function createCreateContestHandler(
       logger.error({ leagueId: request.params.id, err: error }, 'contest create route failed');
       throw error;
     }
+  };
+}
+
+/** `listSportLeaguesUsed` (#947): the sports leagues a league's contests use in one season. */
+export function createListSportLeaguesUsedHandler(contestManagementService: ContestManagementService) {
+  return async function listSportLeaguesUsed(
+    request: FastifyRequest<{ Params: { id: string }; Querystring: ListSportLeaguesUsedQuery }>,
+  ): Promise<SportLeaguesUsedResponse> {
+    const logger = createRequestContextLogger(request);
+    const { seasonYear } = request.query;
+    const sportLeagueIds = await contestManagementService.listSportLeaguesUsed(request.params.id, seasonYear);
+    logger.debug({ leagueId: request.params.id, seasonYear, count: sportLeagueIds.length }, 'list sports leagues used route completed');
+    return { seasonYear, sportLeagueIds };
   };
 }

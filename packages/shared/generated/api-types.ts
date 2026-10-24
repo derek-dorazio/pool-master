@@ -1173,6 +1173,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contests/sports-leagues-used": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the sports leagues a league's contests use in a season
+         * @description The different sports leagues of the league's contests of one season, drafts included (#947): what the plan's sports leagues a year counts. Create contest shows the counter and, at the cap, locks the events of other sports leagues. Commissioners of the league only.
+         */
+        get: operations["listSportLeaguesUsed"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
         parameters: {
             query?: never;
@@ -1436,7 +1456,7 @@ export interface paths {
         put?: never;
         /**
          * Create the current user contest entry
-         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad.
+         * @description Creates a new contest entry for the authenticated user. This route never returns an existing entry; clients should use the GET entry endpoints to inspect current entry state before or after creation. Entries change only while the contest is OPEN and before its event's scheduled start: 400 CONTEST_ENTRY_LOCKED otherwise. Acting for a squad needs an ACTIVE league membership and an ACTIVE squad membership: 403 LEAGUE_MEMBERSHIP_REQUIRED, LEAGUE_MEMBERSHIP_INACTIVE, SQUAD_MEMBERSHIP_INACTIVE, or SQUAD_MEMBERSHIP_REQUIRED when the caller has no squad. 409 CONTEST_ENTRY_LIMIT_REACHED when the squad holds the contest's most entries per squad, and 409 CONTEST_FULL when the contest holds its league plan's entries per contest (#947), drafts included; entries already in stay and stay editable.
          */
         post: operations["enterContest"];
         /**
@@ -3730,6 +3750,18 @@ export interface components {
              * @enum {string}
              */
             plan: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+        };
+        /** @description Which season's sports leagues to list. */
+        ListSportLeaguesUsedQuery: {
+            /** @description The season to count, such as 2026: a contest counts in the season of its first event's year. */
+            seasonYear: number;
+        };
+        /** @description The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts. */
+        SportLeaguesUsedResponse: {
+            /** @description The season counted. */
+            seasonYear: number;
+            /** @description The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap. */
+            sportLeagueIds: string[];
         };
         /** @description Squad membership summary. */
         SquadMembershipDto: {
@@ -22554,7 +22586,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap. */
+            /** @description PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league's contests of the new contest's season already use its plan's sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -22565,6 +22597,58 @@ export interface operations {
             };
             /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportLeaguesUsed: {
+        parameters: {
+            query: {
+                /** @description The season to count, such as 2026: a contest counts in the season of its first event's year. */
+                seasonYear: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeaguesUsedResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
