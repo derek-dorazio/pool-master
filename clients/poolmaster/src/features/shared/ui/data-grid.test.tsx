@@ -1,5 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DataGrid } from "./data-grid";
 
@@ -207,5 +207,72 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
     expect(await screen.findByTestId("test-row-row-3")).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("3–3 of 3");
+  });
+  describe("jump to a row", () => {
+    const data = Array.from({ length: 5 }, (_, index) => ({
+      id: `row-${index + 1}`,
+      lifecycle: "Active",
+      name: `Name ${index + 1}`,
+    }));
+    const grid = (rowId: string) => (
+      <DataGrid
+        columns={columns}
+        data={data}
+        emptyMessage="No rows matched."
+        getRowId={(row) => row.id}
+        jumpToRow={{ rowId, label: "Jump to Name 5", testId: "test-jump" }}
+        pageSize={2}
+        rowTestId={(row) => `test-row-${row.id}`}
+        search={{ label: "Find a row", testId: "test-search" }}
+      />
+    );
+
+    it("clears the search, turns to the row's page and highlights it, and only it", async () => {
+      render(grid("row-5"));
+      fireEvent.change(screen.getByTestId("test-search"), { target: { value: "Name 1" } });
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+
+      const target = await screen.findByTestId("test-row-row-5");
+      expect(target).toHaveAttribute("aria-current", "true");
+      expect(screen.getByTestId("test-search")).toHaveValue("");
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("5–5 of 5");
+      expect(screen.queryByTestId("test-row-row-1")).not.toBeInTheDocument();
+    });
+
+    it("finds the row's page in the current sort", async () => {
+      render(grid("row-5"));
+      // Sorted by name descending, Name 5 leads the first page.
+      fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
+      fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
+      fireEvent.click(screen.getByRole("button", { name: "Next" }));
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+
+      expect(await screen.findByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
+      expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+    });
+
+    it("scrolls to the row on every jump, a repeat one included, and not on a later sort", async () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
+      scroll.mockClear();
+      render(grid("row-5"));
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+      await screen.findByTestId("test-row-row-5");
+      fireEvent.click(screen.getByTestId("test-jump"));
+      await waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
+
+      fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
+
+      expect(scroll).toHaveBeenCalledTimes(2);
+      scroll.mockRestore();
+    });
+
+    it("offers no jump for a row that is not in the data", () => {
+      render(grid("row-9"));
+
+      expect(screen.queryByTestId("test-jump")).not.toBeInTheDocument();
+    });
   });
 });
