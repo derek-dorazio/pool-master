@@ -7,6 +7,7 @@ import {
   createEvent,
   createParticipant,
   enterContest,
+  getLeaguePlanUsage,
   listContestConfigTemplates,
   listSportLeagues,
   listSportLeaguesUsed,
@@ -15,7 +16,7 @@ import {
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, LeaguePlan, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
-import { SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
+import { LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -148,5 +149,32 @@ describe('SDK Functional: plan caps (#947)', () => {
 
     await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.PRO } });
     expect((await enter()).response.status).toBe(201);
+  });
+
+  it('shows the commissioner each contest still taking entries with every entry it holds, drafts included, and refuses a member with 403', async () => {
+    const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Usage Reader', leagueName: `Usage Club ${RUN}` });
+    const { contestId } = await seedContestFixture(league.id, {
+      name: `Usage Picks ${RUN}`,
+      selectionType: SelectionType.TIERED,
+      configuration: { maxEntriesPerSquad: 3 },
+    });
+    await seedContestFixture(league.id, { name: `Usage Draft ${RUN}`, selectionType: SelectionType.TIERED, status: 'DRAFT' });
+    for (let entry = 1; entry <= 2; entry += 1) {
+      expect((await enterContest({ client: commissioner.client, path: { contestId } })).response.status).toBe(201);
+    }
+
+    const usage = LeaguePlanUsageResponseSchema.parse(expectDefined((await getLeaguePlanUsage({
+      client: commissioner.client,
+      path: { id: league.id },
+    })).data));
+    // Two draft entries, never submitted, count against the cap the same as submitted ones.
+    expect(usage).toEqual({
+      seasonYear: new Date().getUTCFullYear(),
+      sportLeagueIds: [],
+      openContests: [{ contestId, name: `Usage Picks ${RUN}`, entryCount: 2 }],
+    });
+
+    const member = await buildRegisteredUser({ displayName: 'Usage Bystander' });
+    expect((await getLeaguePlanUsage({ client: member.client, path: { id: league.id } })).response.status).toBe(403);
   });
 });

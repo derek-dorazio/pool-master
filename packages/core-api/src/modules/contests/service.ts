@@ -56,7 +56,7 @@ import {
   ScoringFamily,
   eventSportDefinition,
 } from '@poolmaster/shared/domain';
-import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode } from '@poolmaster/shared/dto';
+import { CONTEST_EVENT_NOT_IN_CONTEST, type ContestEntryDto, type ApiErrorCode, type OpenContestUsageDto } from '@poolmaster/shared/dto';
 import {
   toContestEntryDto,
   type ContestEntryEventResultRow,
@@ -256,6 +256,21 @@ export class ContestService {
       return contests;
     }
     return contests.filter((contest) => contest.status !== ContestStatus.DRAFT);
+  }
+
+  /**
+   * The league's contests still taking entries (#972), newest first, each with every entry it
+   * holds, drafts included, as the plan's entry cap counts them (#947): what the commissioner
+   * Plan page warns a lower plan would stop.
+   */
+  async listOpenContestUsage(leagueId: string): Promise<OpenContestUsageDto[]> {
+    this.logger.debug({ leagueId }, 'contest open usage list start');
+    const contests = (await this.deps.contests.findByLeague(leagueId))
+      .filter((contest) => contest.status === ContestStatus.OPEN);
+    const usage = await Promise.all(contests.map(async (contest) => (await this.areEntriesOpen(contest))
+      ? { contestId: contest.id, name: contest.name, entryCount: (await this.deps.entries.findByContest(contest.id)).length }
+      : null));
+    return usage.filter((contest) => contest !== null);
   }
 
   /** A draft contest is its commissioners' alone until they open it (#117); root admins see all. */
