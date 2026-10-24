@@ -152,10 +152,15 @@ now and annual plans later.
 - **Copy.** "Every plan is free for now" and the Plans page's Platinum wording change to
   match Platinum showing as "Coming soon".
 - **Code change 2: contest expansions** (§4) raise one contest's cap above its plan's.
-- **Day 1 in production** (Q4): payments built, but expansions not offered (`paymentsEnabled`
-  off), so nothing about money shows; with 100 entries on Premium few will notice. On QA the
-  switch is on in test mode, so the whole flow can be tried with test cards. Expansions must
-  be switched on in production before the first gifts end, when leagues drop to Free's 20.
+- **Built before Stripe** (Derek 2026-10-24, superseding Q4): everything except the Stripe
+  parts is built first, so expansions can be tried with no Stripe account. While
+  `paymentsEnabled` is off, **expanding a contest is free and says so**: the commissioner sees
+  "Expand to 200 entries: free while payments are off", the cap rises at once, and the
+  history records a $0 expansion "Free while payments are off" (the same $0 record as a root
+  admin grant). Nothing pretends a payment happened, which the no-fake-paths rule forbids
+  (`rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*). When Stripe is set up
+  and the switch turns on, the same button goes to checkout. Payments must be on in
+  production before the first gifts end, when leagues drop to Free's 20.
 
 ## 4. Contest expansions
 
@@ -372,7 +377,8 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
 
 ## 12. Slices
 
-All deferred until Derek's go (2026-10-24), filed under #931.
+Filed under #931. Derek (2026-10-24): build everything except Stripe now (#986, #980,
+#987); the Stripe slices (#979, #981, #985) and phase 2 stay deferred.
 
 **Phase 1**
 
@@ -386,14 +392,15 @@ All deferred until Derek's go (2026-10-24), filed under #931.
    Premium". Removes the `CappedLeaguePlan` split, fills a missing Platinum
    value in the saved settings, puts the day 1 numbers in the code defaults, and moves only
    Platinum leagues, after QA's settings are saved (§3). Can be built before any payments.
-3. **Model** (#980). Expansions, billing, events and payments tables; entitlements combine
-   plan and expansion. No behaviour change, because no expansion rows exist yet.
+3. **Model** (#980). Expansions and payments tables (the Stripe-only billing and events
+   tables can wait for #981); entitlements combine plan and expansion. No behaviour change,
+   because no expansion rows exist yet.
 4. **Checkout and webhook** (#981). The `billing` module, expansion checkout, the webhook,
    the daily check, prices route, "Finishing your payment". Switch stays off.
-5. **Commissioner screens and history** (#987). The full notice and Expand choice, payment history
-   on league settings and Account, the two emails, root admin payments and grants,
-   `docs/PAYMENTS.md` runbook (refunds, disputes, rotating keys). Switch on in QA here, once
-   there is an Expand button to click, and run the manual test-mode checklist.
+5. **Commissioner screens and history** (#987). The full notice and Expand choice (free while
+   payments are off), payment history on league settings and Account, the "contest expanded"
+   email, root admin payments and grants. Built before #981; #981 then adds checkout behind
+   the same button, the receipt links and the `docs/PAYMENTS.md` runbook.
 6. **Going live** (#985). With production (#917) and Terms (#921): live keys and Prices,
    webhook registered, Stripe Tax decision. Switch expansions on in production before the
    first gifts end (§3).
