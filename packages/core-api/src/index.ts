@@ -66,7 +66,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createCommissionerNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices } from './modules/notifications';
+import { createCommissionerNotices, createContestExpandedNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -227,6 +227,7 @@ export function buildApp() {
     prefix: '/api/v1/leagues/:id/billing',
     planEntitlements,
     readBillingConfig: () => appSettings.get(BILLING_SETTINGS),
+    contestExpanded: createContestExpandedNotices(prisma, { email, appBaseUrl, logger: app.log }),
   });
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });

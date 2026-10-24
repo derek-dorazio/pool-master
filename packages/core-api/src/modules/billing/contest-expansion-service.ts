@@ -12,6 +12,7 @@ import { ContestStatus, LeaguePaymentKind, type Contest } from '@poolmaster/shar
 import type { ApiErrorCode, BillingConfig, ContestExpansionResponse } from '@poolmaster/shared/dto';
 import { ContestNotFoundError, type ContestService } from '../contests/service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
+import type { ContestExpandedNotices } from '../notifications/contest-expanded-notices';
 import { contestExpansionOffers } from './contest-expansion-offers';
 
 export class ContestExpansionError extends Error {
@@ -29,6 +30,8 @@ export interface ContestExpansionServiceDeps {
   entryWindow: Pick<ContestService, 'areEntriesOpen'>;
   /** BILLING_CONFIG as it stands now. */
   readConfig: () => BillingConfig;
+  /** Tells the league's other commissioners of each expansion. */
+  expanded: Pick<ContestExpandedNotices, 'tellExpanded'>;
   logger: FastifyBaseLogger;
 }
 
@@ -119,6 +122,12 @@ export class ContestExpansionService {
     if (result.status === 'notAbove') {
       this.refuseNotAbove(contest.id, entriesPerContest, result.expandedTo);
     }
+    await this.deps.expanded.tellExpanded({
+      contest,
+      entriesPerContest,
+      expandedById: payerId,
+      granted: kind === LeaguePaymentKind.CONTEST_EXPANSION_GRANT,
+    });
   }
 
   private refuseNotAbove(contestId: string, entriesPerContest: number, cap: number | null): never {
