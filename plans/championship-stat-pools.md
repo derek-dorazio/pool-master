@@ -156,7 +156,11 @@ thrown away at launch.
 ## 5. Screens
 
 The contest type is **Clutch Card** on screen, its players **stars** in copy (Derek, 2026-10-24);
-the name lives in one place on the web (`stat-pool-copy.ts`) so #995 can rename it.
+the name lives in one place on the web (`stat-pool-copy.ts`) so #995 can rename it. Create
+contest names a new Clutch Card "<event> Stars" ("NBA Finals Stars") whichever format it uses. The
+setups keep `rules/ux-rules.md` §12's "<Format>: <how you pick>, <how it scores>" names with stars
+for players ("Tiered: 1 star per tier, best 4 count"), since the league already names the event
+wherever a setup is listed (#995).
 
 - **Create contest:** golf's format cards, with the composite's name and formula shown on the
   setup ("Each player scores Box Score: total bases + runs + RBI + walks + stolen bases, each
