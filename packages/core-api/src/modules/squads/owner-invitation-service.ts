@@ -38,6 +38,7 @@ import {
   formatUserName,
   type EmailService,
 } from '../email';
+import type { MemberJoinedNotices } from '../notifications/member-joined-notices';
 
 const DEFAULT_OWNER_INVITE_EXPIRY_DAYS = 7;
 
@@ -59,6 +60,8 @@ export interface SquadOwnerInvitationServiceDeps extends MembershipRepositories 
   membershipTransaction: MembershipTransaction;
   /** Sends the co-owner invitation (#845 B4) and "you were added as a co-owner" (B5). */
   email: Pick<EmailService, 'send'>;
+  /** Tells the league's commissioners someone joined the league as a co-owner. */
+  memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }

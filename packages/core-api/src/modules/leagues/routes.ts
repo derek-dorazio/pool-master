@@ -43,9 +43,9 @@ import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanModuleOptions } from '../plans/routes';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
-import { createMemberJoinedNotices } from '../notifications/wiring';
+import type { MemberJoinedModuleOptions } from '../notifications/member-joined-notices';
 
-export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
+export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions & MemberJoinedModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
   void fastify.register(schemaComponentsPlugin);
 
@@ -76,7 +76,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     squadMemberships: squadMembershipRepo,
     users: userRepo,
     contests: new PrismaContestRepository(prisma),
-    memberJoined: createMemberJoinedNotices(prisma, { email, appBaseUrl, logger: fastify.log }),
+    memberJoined: opts.memberJoined,
     prisma,
     logger: fastify.log,
     email,

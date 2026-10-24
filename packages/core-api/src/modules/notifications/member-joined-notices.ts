@@ -22,6 +22,7 @@ import {
   type EmailService,
   type JoinedMember,
 } from '../email';
+import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 
@@ -33,6 +34,11 @@ const DAY_TIME_ZONE = 'America/New_York';
 const LOOKBACK_MS = 72 * 60 * 60_000;
 const DAY_MS = 24 * 60 * 60_000;
 
+/** What the routes that add someone to a league are given: the one instance the scheduler sweeps too. */
+export interface MemberJoinedModuleOptions {
+  memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
+}
+
 export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
   memberships: Pick<LeagueMembershipRepository, 'findByLeague' | 'findActiveJoinedSince' | 'countActiveByLeagues'>;
   leagues: Pick<LeagueRepository, 'findById'>;
@@ -40,6 +46,8 @@ export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
   squadMemberships: Pick<SquadMembershipRepository, 'findByLeagueAndUser'>;
   squads: Pick<SquadRepository, 'findById'>;
   email: Pick<EmailService, 'send' | 'leaguesRecorded'>;
+  /** The next day's email goes at the overnight hour every scheduled league email uses. */
+  readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
 }
@@ -68,8 +76,10 @@ export class MemberJoinedNotices implements DueNotifications {
    * Tells the league's commissioners of `membership`'s join at once, if it is one of the day's
    * first three. The member has already joined, so a failure is logged rather than thrown.
    */
-  async tellJoined(league: League, membership: LeagueMembership): Promise<void> {
+  async tellJoined(membership: LeagueMembership): Promise<void> {
     try {
+      const league = await this.deps.leagues.findById(membership.leagueId);
+      if (!league?.isActive) return;
       const today = joinsOn(await this.deps.memberships.findByLeague(league.id), easternDateOf(membership.joinedAt));
       const position = today.findIndex((join) => join.id === membership.id);
       if (position < 0 || position >= AT_ONCE_PER_DAY) return;
@@ -77,7 +87,7 @@ export class MemberJoinedNotices implements DueNotifications {
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.memberJoined.failed',
-        data: { leagueId: league.id, membershipId: membership.id, error: error instanceof Error ? error.message : String(error) },
+        data: { leagueId: membership.leagueId, membershipId: membership.id, error: error instanceof Error ? error.message : String(error) },
       }, 'Failed to queue the new member joined email');
     }
   }

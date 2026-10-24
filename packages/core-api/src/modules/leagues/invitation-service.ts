@@ -559,7 +559,7 @@ export class InvitationService {
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       userId,
     });
-    await this.deps.memberJoined.tellJoined(league, membership);
+    await this.deps.memberJoined.tellJoined(membership);
     this.logger?.info({
       action: 'leagueInvitation.accept.success',
       data: {

@@ -165,6 +165,7 @@ export function createLiveStandings(prisma: PrismaClient, options: {
 
 export function createMemberJoinedNotices(prisma: PrismaClient, options: {
   email: EmailService;
+  readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
 }): MemberJoinedNotices {

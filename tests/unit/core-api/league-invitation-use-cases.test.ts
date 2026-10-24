@@ -19,6 +19,7 @@ import type {
   MailDeliveryMessage,
   MailDeliveryProvider,
 } from '../../../packages/core-api/src/modules/email/mail-delivery';
+import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { MemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications/member-joined-notices';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
@@ -92,6 +93,7 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
         squads: world.squads,
         users: world.users,
         email,
+        readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
         appBaseUrl,
       })
       : { tellJoined: async () => undefined },
