@@ -33,6 +33,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { integrationPlanEntitlements } from '../plan-entitlements';
+import { createContestRow } from '../../support/contest-rows';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -140,7 +141,7 @@ async function createPickEmContest(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await new PrismaContestRepository(prisma).create({
+  const contest = await createContestRow(new PrismaContestRepository(prisma), {
     leagueId: league.id,
     seasonYear: 2026,
     sportEventIds,

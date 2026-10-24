@@ -249,8 +249,9 @@ which writes the league and its `league_plan_changes` row in one transaction.
 A cap is checked live where the new thing is made, from `forLeague` at that moment, never
 stored with the contest or entry, so a plan change applies to the next create at once. A count
 that two requests can race for is taken inside the create's transaction under the row lock the
-create already holds (the entries-per-contest cap counts under the contest's lock), never as a
-read before the write. The plan entitlements service is a required dependency of every service
+create already holds or takes for it (the entries-per-contest cap counts under the contest's lock,
+the sports-leagues-a-year cap under the league's, when a contest is made in a season or moved into
+one), never as a read before the write. The plan entitlements service is a required dependency of every service
 that checks one, passed from the one instance in `index.ts`; there is no default for a test to
 fall back on.
 

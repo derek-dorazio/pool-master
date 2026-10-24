@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { ContestStatus, ContestTemplateEventType, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, ContestTemplateEventType, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
+import type { ContestCreate } from '@poolmaster/shared/db';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -30,6 +31,7 @@ import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { createContestNotices, createEntryReminders } from '../../../packages/core-api/src/modules/notifications';
 import { fakeLogger } from '../../support/fake-logger';
 import { integrationPlanEntitlements } from '../plan-entitlements';
+import { createContestRow } from '../../support/contest-rows';
 
 // The contest-cluster ports (#247) against real Postgres: what each read returns and in what
 // order, what each write leaves behind, and that deleting a contest takes everything under it.
@@ -132,7 +134,7 @@ async function createContest(
   name: string,
   status: ContestStatus = ContestStatus.ACTIVE,
 ) {
-  return repos().contests.create({
+  return createContestRow(repos().contests, {
     leagueId,
     seasonYear: 2026,
     sportEventIds: typeof sportEventId === 'string' ? [sportEventId] : [...sportEventId],
@@ -374,45 +376,122 @@ describe('ContestRepository', () => {
   });
 });
 
+/**
+ * A 2026 event in a second sports league: a real one from the reference data, with a series of
+ * this test's own. `remove` deletes it with every contest on it.
+ */
+async function createSecondTourEvent(fixtureEventSeriesId: string, suffix: string) {
+  const prisma = getPrisma();
+  const fixtureTourId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: fixtureEventSeriesId } })).sportLeagueId;
+  const secondTour = await prisma.sportLeague.findFirstOrThrow({ where: { id: { not: fixtureTourId } } });
+  const series = await prisma.eventSeries.create({ data: { sportLeagueId: secondTour.id, name: `Plan Cap Series ${suffix}` } });
+  const event = await prisma.sportEvent.create({
+    data: {
+      eventSeriesId: series.id,
+      eventYear: 2026,
+      externalId: `plan-cap-${suffix}`,
+      providerId: 'integration-test',
+      sport: Sport.GOLF,
+      name: `Plan Cap Classic ${suffix}`,
+      startDate: new Date('2026-08-04T12:00:00.000Z'),
+      status: 'SCHEDULED',
+    },
+  });
+  const remove = async () => {
+    await prisma.contest.deleteMany({ where: { sportEvents: { some: { sportEventId: event.id } } } });
+    await prisma.sportEvent.delete({ where: { id: event.id } });
+    await prisma.eventSeries.delete({ where: { id: series.id } });
+  };
+  return { fixtureTourId, secondTourId: secondTour.id, event, remove };
+}
+
+/** A new 2026 draft contest on `sportEventId`, as Create contest asks the port for one. */
+function draftOn(leagueId: string, sportEventId: string, name: string, seasonYear = 2026): ContestCreate {
+  return {
+    leagueId, seasonYear, sportEventIds: [sportEventId], name,
+    status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED,
+  };
+}
+
 describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
   it('lists the different sports leagues of the league\'s contests of one season, drafts included, and nothing from other seasons or leagues', async () => {
-    const prisma = getPrisma();
     const { league, event, suffix } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
-    const fixtureTourId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId;
-    // A second sports league: a real one from the reference data, with a series of this test's own.
-    const secondTour = await prisma.sportLeague.findFirstOrThrow({ where: { id: { not: fixtureTourId } } });
-    const series = await prisma.eventSeries.create({ data: { sportLeagueId: secondTour.id, name: `Plan Cap Series ${suffix}` } });
-    const secondEvent = await prisma.sportEvent.create({
-      data: {
-        eventSeriesId: series.id,
-        eventYear: 2026,
-        externalId: `plan-cap-${suffix}`,
-        providerId: 'integration-test',
-        sport: Sport.GOLF,
-        name: `Plan Cap Classic ${suffix}`,
-        startDate: new Date('2026-08-04T12:00:00.000Z'),
-        status: 'SCHEDULED',
-      },
-    });
+    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
     try {
       await createContest(league.id, event.id, 'Fixture One');
       await createContest(league.id, event.id, 'Fixture Draft', ContestStatus.DRAFT);
-      await createContest(league.id, secondEvent.id, 'Second Tour');
-      await repos().contests.create({
+      await createContest(league.id, second.event.id, 'Second Tour');
+      await createContestRow(repos().contests, {
         leagueId: league.id, seasonYear: 2025, sportEventIds: [event.id], name: 'Last Year',
         status: ContestStatus.COMPLETED, contestFormat: 'ROSTER', selectionType: 'TIERED',
       });
-      await createContest(other.league.id, secondEvent.id, 'Another League');
+      await createContest(other.league.id, second.event.id, 'Another League');
 
       expect((await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).sort())
-        .toEqual([fixtureTourId, secondTour.id].sort());
-      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2025)).toEqual([fixtureTourId]);
+        .toEqual([second.fixtureTourId, second.secondTourId].sort());
+      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2025)).toEqual([second.fixtureTourId]);
       expect(await repos().contests.findSportLeagueIdsBySeason(other.league.id, 2025)).toEqual([]);
     } finally {
-      await prisma.contest.deleteMany({ where: { sportEvents: { some: { sportEventId: secondEvent.id } } } });
-      await prisma.sportEvent.delete({ where: { id: secondEvent.id } });
-      await prisma.eventSeries.delete({ where: { id: series.id } });
+      await second.remove();
+    }
+  });
+});
+
+describe('ContestRepository sports leagues a year (#947)', () => {
+  it('creates a season\'s contests in its one allowed sports league, and refuses one in another with sportsLeagueLimitReached, storing nothing', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    const fixtureLimit = { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId };
+    try {
+      const first = await repos().contests.create(draftOn(league.id, event.id, 'First'), fixtureLimit);
+      expect(first.status).toBe('created');
+
+      const refused = await repos().contests.create(
+        draftOn(league.id, second.event.id, 'Over the cap'),
+        { sportLeaguesPerYear: 1, sportLeagueId: second.secondTourId },
+      );
+      expect(refused).toEqual({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+      expect(await getPrisma().contest.count({ where: { leagueId: league.id, name: 'Over the cap' } })).toBe(0);
+
+      // The sports league the season already uses still takes contests.
+      expect((await repos().contests.create(draftOn(league.id, event.id, 'Second'), fixtureLimit)).status).toBe('created');
+    } finally {
+      await second.remove();
+    }
+  });
+
+  it('lets only one of two contests racing for a season\'s last sports league in, the other refused sportsLeagueLimitReached', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    try {
+      const results = await Promise.all([
+        repos().contests.create(draftOn(league.id, event.id, 'Racer One'), { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId }),
+        repos().contests.create(draftOn(league.id, second.event.id, 'Racer Two'), { sportLeaguesPerYear: 1, sportLeagueId: second.secondTourId }),
+      ]);
+
+      expect(results.map((result) => result.status).sort()).toEqual(['created', 'sportsLeagueLimitReached']);
+      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).toHaveLength(1);
+    } finally {
+      await second.remove();
+    }
+  });
+
+  it('refuses moving a contest into a season whose contests use the plan\'s sports leagues, keeping its season, and moves it with no limit', async () => {
+    const { league, event, suffix } = await createLeagueAndEvent();
+    const second = await createSecondTourEvent(event.eventSeriesId, suffix);
+    try {
+      await createContestRow(repos().contests, draftOn(league.id, second.event.id, 'Second Tour 2026'));
+      const nextYear = await createContestRow(repos().contests, draftOn(league.id, event.id, 'Fixture 2027', 2027));
+
+      const refused = await repos().contests.moveToSeason(nextYear.id, 2026, { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId });
+      expect(refused).toEqual({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+      expect((await repos().contests.findById(nextYear.id))?.seasonYear).toBe(2027);
+
+      expect(await repos().contests.moveToSeason(nextYear.id, 2026, { sportLeaguesPerYear: null })).toEqual({ status: 'moved' });
+      expect((await repos().contests.findById(nextYear.id))?.seasonYear).toBe(2026);
+    } finally {
+      await second.remove();
     }
   });
 });

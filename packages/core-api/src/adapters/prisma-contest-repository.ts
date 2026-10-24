@@ -2,10 +2,14 @@
  * Prisma adapter for the one ContestRepository port.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   ContestCreate,
+  ContestCreateResult,
   ContestRepository,
+  ContestSeasonFull,
+  ContestSeasonLimits,
+  ContestSeasonMoveResult,
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
@@ -48,20 +52,42 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]> {
-    const rows = await this.prisma.eventSeries.findMany({
-      where: {
-        sportEvents: {
-          some: {
-            contests: {
-              some: { contest: { leagueId, seasonYear } },
-            },
+    return sportLeagueIdsBySeason(this.prisma, leagueId, seasonYear);
+  }
+
+  async create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const full = await seasonWithoutRoom(tx, contest.leagueId, contest.seasonYear, limits);
+      if (full) return full;
+      const row = await tx.contest.create({
+        data: {
+          leagueId: contest.leagueId,
+          name: contest.name,
+          status: contest.status,
+          contestFormat: contest.contestFormat,
+          selectionType: contest.selectionType,
+          seasonYear: contest.seasonYear,
+          sportEvents: {
+            create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
           },
+          ...(contest.squaresGameMatchId !== undefined && {
+            squaresGame: { create: { sportEventMatchId: contest.squaresGameMatchId } },
+          }),
         },
-      },
-      select: { sportLeagueId: true },
-      distinct: ['sportLeagueId'],
+        include: CONTEST_INCLUDE,
+      });
+      return { status: 'created', contest: mapToContest(row) };
     });
-    return rows.map((row) => row.sportLeagueId);
+  }
+
+  async moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult> {
+    return this.prisma.$transaction(async (tx) => {
+      const { leagueId } = await tx.contest.findUniqueOrThrow({ where: { id }, select: { leagueId: true } });
+      const full = await seasonWithoutRoom(tx, leagueId, seasonYear, limits);
+      if (full) return full;
+      await tx.contest.update({ where: { id }, data: { seasonYear } });
+      return { status: 'moved' };
+    });
   }
 
   async findBySportEvent(
@@ -93,27 +119,6 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async create(contest: ContestCreate): Promise<Contest> {
-    const row = await this.prisma.contest.create({
-      data: {
-        leagueId: contest.leagueId,
-        name: contest.name,
-        status: contest.status,
-        contestFormat: contest.contestFormat,
-        selectionType: contest.selectionType,
-        seasonYear: contest.seasonYear,
-        sportEvents: {
-          create: contest.sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })),
-        },
-        ...(contest.squaresGameMatchId !== undefined && {
-          squaresGame: { create: { sportEventMatchId: contest.squaresGameMatchId } },
-        }),
-      },
-      include: CONTEST_INCLUDE,
-    });
-    return mapToContest(row);
-  }
-
   async transitionStatus(id: string, transition: ContestStatusTransition): Promise<boolean> {
     const result = await this.prisma.contest.updateMany({
       where: { id, status: { in: [...transition.from] } },
@@ -143,7 +148,6 @@ export class PrismaContestRepository implements ContestRepository {
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.startsAt !== undefined && { startsAt: updates.startsAt }),
         ...(updates.endsAt !== undefined && { endsAt: updates.endsAt }),
-        ...(updates.seasonYear !== undefined && { seasonYear: updates.seasonYear }),
       },
       include: CONTEST_INCLUDE,
     });
@@ -240,4 +244,45 @@ function mapToContest(row: {
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
+}
+
+/** The different sports leagues of the league's contests in one season (#947), drafts included. */
+async function sportLeagueIdsBySeason(
+  db: PrismaClient | Prisma.TransactionClient,
+  leagueId: string,
+  seasonYear: number,
+): Promise<string[]> {
+  const rows = await db.eventSeries.findMany({
+    where: {
+      sportEvents: {
+        some: {
+          contests: {
+            some: { contest: { leagueId, seasonYear } },
+          },
+        },
+      },
+    },
+    select: { sportLeagueId: true },
+    distinct: ['sportLeagueId'],
+  });
+  return rows.map((row) => row.sportLeagueId);
+}
+
+/**
+ * Null when the season has room for a contest in `limits.sportLeagueId`, else the cap and how
+ * many sports leagues it already uses. Takes the league's row lock first, so contests made or moved into the
+ * season meanwhile are counted, and two racing for its last sports league cannot both get it.
+ */
+async function seasonWithoutRoom(
+  tx: Prisma.TransactionClient,
+  leagueId: string,
+  seasonYear: number,
+  limits: ContestSeasonLimits,
+): Promise<ContestSeasonFull | null> {
+  if (limits.sportLeaguesPerYear === null) return null;
+  await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
+  const used = await sportLeagueIdsBySeason(tx, leagueId, seasonYear);
+  return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
+    ? null
+    : { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length };
 }

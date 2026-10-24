@@ -3,6 +3,7 @@ import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
   ContestRepository,
+  ContestSeasonLimits,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -260,8 +261,8 @@ export class ContestManagementService {
     // Its season is its first event's year (#841): a pick'em season's January playoff weeks keep
     // the season's year, because an edition's year is the one it is branded with.
     const seasonYear = sportEvents.find((event) => event.id === sportEventIds[0])?.eventYear ?? sportEvent.eventYear;
-    await this.assertSportsLeagueWithinPlan(context.leagueId, seasonYear, sportEvent.sportLeagueId);
-    const contest = await this.contestRepo.create({
+    const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
+    const created = await this.contestRepo.create({
       leagueId: context.leagueId,
       sportEventIds,
       seasonYear,
@@ -272,7 +273,12 @@ export class ContestManagementService {
       contestFormat: input.contestFormat,
       selectionType,
       squaresGameMatchId: input.sportEventMatchId,
-    });
+    }, limits);
+    if (created.status === 'sportsLeagueLimitReached') {
+      this.logger.warn({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId, used: created.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management create contest refused past the plan\'s sports leagues a year');
+      throw sportsLeagueLimitError(created.sportLeaguesPerYear, seasonYear, created.sportLeagueCount, 'New contests can only be in those.');
+    }
+    const { contest } = created;
 
     const configuration = await this.contestConfigurationRepo.create({
       contestId: contest.id,
@@ -593,11 +599,20 @@ export class ContestManagementService {
     }
 
     const orderedIds = orderContestEvents(sportEvents);
-    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
-    // A contest's season is its first event's year, so new events can move it to another cup.
+    // A contest's season is its first event's year, so new events can move it to another cup, and
+    // into a season the plan has no room for its sports league in (#947): then nothing changes.
     const newFirst = sportEvents.find((sportEvent) => sportEvent.id === orderedIds[0]);
-    if (newFirst && newFirst.eventYear !== contest.seasonYear) {
-      await this.contestRepo.update(contestId, { seasonYear: newFirst.eventYear });
+    const movesSeason = newFirst !== undefined && newFirst.eventYear !== contest.seasonYear;
+    if (movesSeason) {
+      const limits = await this.seasonLimits(leagueId, newFirst.sportLeagueId);
+      const moved = await this.contestRepo.moveToSeason(contestId, newFirst.eventYear, limits);
+      if (moved.status === 'sportsLeagueLimitReached') {
+        this.logger.warn({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear, used: moved.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management set sport events refused a move past the plan\'s sports leagues a year');
+        throw sportsLeagueLimitError(moved.sportLeaguesPerYear, newFirst.eventYear, moved.sportLeagueCount, `This contest can't move into ${newFirst.eventYear}.`);
+      }
+    }
+    await this.contestRepo.replaceSportEvents(contestId, orderedIds);
+    if (movesSeason) {
       await this.cups.ensureCup({ leagueId, seasonYear: newFirst.eventYear, sportLeagueId: newFirst.sportLeagueId });
       this.logger.info({ contestId, fromSeasonYear: contest.seasonYear, seasonYear: newFirst.eventYear }, 'contest management set sport events moved the contest to another season');
     }
@@ -762,10 +777,6 @@ export class ContestManagementService {
     }
   }
 
-  /**
-   * A squares contest takes one entry per squad (#711, design Q3.3): the box limit is per entry, so
-   * a second entry would double a squad's boxes. Any other entry limit, or none, is refused.
-   */
   /** The sports leagues the league's contests use in one season (#947), for Create contest's counter. */
   async listSportLeaguesUsed(leagueId: string, seasonYear: number): Promise<string[]> {
     this.logger.debug({ leagueId, seasonYear }, 'contest management list sports leagues used start');
@@ -773,23 +784,20 @@ export class ContestManagementService {
   }
 
   /**
-   * A league's plan caps the different sports leagues its contests use in a season (#947). Checked
-   * live: over the cap, new contests can still be made in the sports leagues already used.
+   * A league's plan caps the different sports leagues its contests use in a season (#947), read
+   * live: the repository counts them under the league's row lock when a contest is made in a
+   * season or moved into one, and over the cap a season still takes the sports leagues it uses.
    */
-  private async assertSportsLeagueWithinPlan(leagueId: string, seasonYear: number, sportLeagueId: string): Promise<void> {
+  private async seasonLimits(leagueId: string, sportLeagueId: string): Promise<ContestSeasonLimits> {
     const { caps } = await this.planEntitlements.forLeague(leagueId);
-    const cap = caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
-    if (cap === null) return;
-    const used = await this.contestRepo.findSportLeagueIdsBySeason(leagueId, seasonYear);
-    if (used.includes(sportLeagueId) || used.length < cap) return;
-    this.logger.warn({ leagueId, seasonYear, sportLeagueId, used: used.length, cap }, 'contest management create contest refused past the plan\'s sports leagues a year');
-    throw new ContestManagementError(
-      `This league's plan allows ${cap} ${cap === 1 ? 'sports league' : 'sports leagues'} a year, and ${seasonYear} already has contests in ${used.length}. New contests can only be in those.`,
-      'PLAN_SPORTS_LEAGUE_LIMIT_REACHED',
-      409,
-    );
+    const sportLeaguesPerYear = caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
+    return sportLeaguesPerYear === null ? { sportLeaguesPerYear } : { sportLeaguesPerYear, sportLeagueId };
   }
 
+  /**
+   * A squares contest takes one entry per squad (#711, design Q3.3): the box limit is per entry, so
+   * a second entry would double a squad's boxes. Any other entry limit, or none, is refused.
+   */
   private assertOneEntryPerSquadForSquares(selectionType: SelectionType, maxEntriesPerSquad: number | null | undefined): void {
     if (selectionType !== SelectionType.SQUARES || maxEntriesPerSquad === 1) return;
     this.logger.warn({ selectionType, maxEntriesPerSquad }, 'contest management refused a squares contest that allows more than one entry per squad');
@@ -1295,6 +1303,15 @@ export class ContestManagementService {
       countedScores: rules.countedScores,
     };
   }
+}
+
+/** A season without room for the contest's sports league (#947); `outcome` says what is refused. */
+function sportsLeagueLimitError(cap: number, seasonYear: number, used: number, outcome: string): ContestManagementError {
+  return new ContestManagementError(
+    `This league's plan allows ${cap} ${cap === 1 ? 'sports league' : 'sports leagues'} a year, and ${seasonYear} already has contests in ${used}. ${outcome}`,
+    'PLAN_SPORTS_LEAGUE_LIMIT_REACHED',
+    409,
+  );
 }
 
 function contestNotDraftError(): ContestManagementError {

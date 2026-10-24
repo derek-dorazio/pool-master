@@ -326,8 +326,18 @@ export interface ContestRepository {
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
-  create(contest: ContestCreate): Promise<Contest>;
+  /**
+   * Creates the contest unless the league's plan has no room for its sports league in its season
+   * (#947): under the league's row lock, the season's sports leagues are counted as
+   * `findSportLeagueIdsBySeason` does, so two contests racing for the last one cannot both get it.
+   */
+  create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
+  /**
+   * Moves the contest to `seasonYear` (#841: a new first event of another year), under the same
+   * league row lock and count as `create`, unless that season has no room for its sports league.
+   */
+  moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult>;
   /**
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
@@ -369,8 +379,34 @@ export type ContestCreate = Pick<
   'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'seasonYear'
 >;
 
-/** What can change on a contest row itself; its events change through `replaceSportEvents`. */
-export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt' | 'seasonYear'>>;
+/**
+ * What can change on a contest row itself; its events change through `replaceSportEvents` and
+ * its season through `moveToSeason`.
+ */
+export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt'>>;
+
+/**
+ * The plan's sports leagues a year (#947) for a contest's season, with the contest's own sports
+ * league, which the season may already use; null is no limit.
+ */
+export type ContestSeasonLimits =
+  | { sportLeaguesPerYear: null }
+  | { sportLeaguesPerYear: number; sportLeagueId: string };
+
+/** A season without room: its cap, and how many sports leagues its contests already use. */
+export interface ContestSeasonFull {
+  status: 'sportsLeagueLimitReached';
+  sportLeaguesPerYear: number;
+  sportLeagueCount: number;
+}
+
+export type ContestCreateResult =
+  | { status: 'created'; contest: Contest }
+  | ContestSeasonFull;
+
+export type ContestSeasonMoveResult =
+  | { status: 'moved' }
+  | ContestSeasonFull;
 
 /** A new entry; it is born a DRAFT in every event of its contest. */
 export type ContestEntryCreate = Pick<ContestEntry, 'contestId' | 'squadId' | 'entryNumber' | 'name' | 'tiebreakerValue'>;
