@@ -691,6 +691,49 @@ export type SportLeaguesUsedResponse = {
 };
 
 /**
+ * One contest still taking entries, with its entries as the entry cap counts them.
+ */
+export type OpenContestUsageDto = {
+    contestId: string;
+    /**
+     * The contest's name.
+     */
+    name: string;
+    /**
+     * Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts.
+     */
+    entryCount: number;
+};
+
+/**
+ * What a league uses of its plan's caps now (#972), for the commissioner Plan page.
+ */
+export type LeaguePlanUsageResponse = {
+    /**
+     * This year, in UTC: the season whose sports leagues are listed.
+     */
+    seasonYear: number;
+    /**
+     * The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
+     */
+    sportLeagueIds: Array<string>;
+    /**
+     * Every contest still taking entries, newest first.
+     */
+    openContests: Array<{
+        contestId: string;
+        /**
+         * The contest's name.
+         */
+        name: string;
+        /**
+         * Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts.
+         */
+        entryCount: number;
+    }>;
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -24587,6 +24630,37 @@ export type ListSportLeaguesUsedResponses = {
 };
 
 export type ListSportLeaguesUsedResponse = ListSportLeaguesUsedResponses[keyof ListSportLeaguesUsedResponses];
+
+export type GetLeaguePlanUsageData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contests/plan-usage';
+};
+
+export type GetLeaguePlanUsageErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type GetLeaguePlanUsageError = GetLeaguePlanUsageErrors[keyof GetLeaguePlanUsageErrors];
+
+export type GetLeaguePlanUsageResponses = {
+    /**
+     * What a league uses of its plan's caps now (#972), for the commissioner Plan page.
+     */
+    200: LeaguePlanUsageResponse;
+};
+
+export type GetLeaguePlanUsageResponse = GetLeaguePlanUsageResponses[keyof GetLeaguePlanUsageResponses];
 
 export type GetContestConfigurationData = {
     body?: never;

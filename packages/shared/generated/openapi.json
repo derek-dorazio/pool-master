@@ -1211,6 +1211,84 @@
         "additionalProperties": false,
         "description": "The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts."
       },
+      "OpenContestUsageDto": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The contest's name."
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts."
+          }
+        },
+        "required": [
+          "contestId",
+          "name",
+          "entryCount"
+        ],
+        "additionalProperties": false,
+        "description": "One contest still taking entries, with its entries as the entry cap counts them."
+      },
+      "LeaguePlanUsageResponse": {
+        "type": "object",
+        "properties": {
+          "seasonYear": {
+            "type": "integer",
+            "description": "This year, in UTC: the season whose sports leagues are listed."
+          },
+          "sportLeagueIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts."
+          },
+          "openContests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contestId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The contest's name."
+                },
+                "entryCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts."
+                }
+              },
+              "required": [
+                "contestId",
+                "name",
+                "entryCount"
+              ],
+              "additionalProperties": false,
+              "description": "One contest still taking entries, with its entries as the entry cap counts them."
+            },
+            "description": "Every contest still taking entries, newest first."
+          }
+        },
+        "required": [
+          "seasonYear",
+          "sportLeagueIds",
+          "openContests"
+        ],
+        "additionalProperties": false,
+        "description": "What a league uses of its plan's caps now (#972), for the commissioner Plan page."
+      },
       "SquadMembershipDto": {
         "type": "object",
         "properties": {
@@ -57486,6 +57564,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/contests/plan-usage": {
+      "get": {
+        "operationId": "getLeaguePlanUsage",
+        "summary": "Show what a league uses of its plan's caps",
+        "tags": [
+          "Contests"
+        ],
+        "description": "What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What a league uses of its plan's caps now (#972), for the commissioner Plan page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaguePlanUsageResponse"
                 }
               }
             }

@@ -47,6 +47,18 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
   }
 
+  async countByContests(contestIds: readonly string[]): Promise<Map<string, number>> {
+    const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
+    if (!contestIds.length) return counts;
+    const rows = await this.prisma.contestEntry.groupBy({
+      by: ['contestId'],
+      where: { contestId: { in: [...contestIds] } },
+      _count: { _all: true },
+    });
+    for (const row of rows) counts.set(row.contestId, row._count._all);
+    return counts;
+  }
+
   async findByContest(contestId: string): Promise<ContestEntry[]> {
     // Creation order, then id — the order a selection room lists entries in (#324). Previously
     // unordered, so no caller could have depended on anything else.
@@ -68,10 +80,17 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, entry.contestId);
       if (await isContestDrawn(tx, entry.contestId)) return { status: 'contestDrawn' };
+      // The cap from the contest's expansion, both read under the lock (#980); an expansion
+      // takes the same lock, so it is either here or lands after this entry.
+      const expansion = await tx.contestExpansion.aggregate({
+        where: { contestId: entry.contestId },
+        _max: { entriesPerContest: true },
+      });
+      const entriesPerContest = limits.entriesPerContest(expansion._max.entriesPerContest);
       // Counted under the lock: every entry, drafts included (#947).
-      if (limits.entriesPerContest !== null
-        && await tx.contestEntry.count({ where: { contestId: entry.contestId } }) >= limits.entriesPerContest) {
-        return { status: 'contestFull' };
+      if (entriesPerContest !== null
+        && await tx.contestEntry.count({ where: { contestId: entry.contestId } }) >= entriesPerContest) {
+        return { status: 'contestFull', entriesPerContest };
       }
       // Read under the lock, so an event added meanwhile is either here or given to the entry by
       // the event change that runs after (`replaceSportEvents`).

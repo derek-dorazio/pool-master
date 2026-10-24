@@ -21,6 +21,8 @@ export interface PlanComparisonRow {
   label: string;
   /** One line on what the row is (#971). */
   description: string;
+  /** The cap a limits row shows; null for a feature or an "In every plan" row. */
+  cap: PlanCap | null;
   /** One cell per plan, in the plans' order: a limit's text, or whether the plan has the feature. */
   cells: ReadonlyArray<string | boolean>;
 }
@@ -45,6 +47,7 @@ export function buildPlanComparison(plans: readonly ComparedPlan[]): PlanCompari
     group: null,
     rows: Object.values(PlanCap).map((cap) => ({
       key: cap,
+      cap,
       label: PLAN_CAP_LABEL[cap],
       description: PLAN_CAP_DESCRIPTION[cap],
       cells: plans.map((plan) => formatPlanLimit(plan.caps[cap])),
@@ -56,6 +59,7 @@ export function buildPlanComparison(plans: readonly ComparedPlan[]): PlanCompari
     group: null,
     rows: EVERY_PLAN_INCLUDES.map((row) => ({
       key: row.key,
+      cap: null,
       label: row.label,
       description: row.description,
       cells: plans.map(() => row.value),
@@ -69,6 +73,7 @@ export function buildPlanComparison(plans: readonly ComparedPlan[]): PlanCompari
       .filter((feature) => PLAN_FEATURE_GROUP[feature] === group)
       .map((feature) => ({
         key: feature,
+        cap: null,
         label: PLAN_FEATURE_LABEL[feature],
         description: PLAN_FEATURE_DESCRIPTION[feature],
         cells: plans.map((plan) => plan.features.includes(feature)),

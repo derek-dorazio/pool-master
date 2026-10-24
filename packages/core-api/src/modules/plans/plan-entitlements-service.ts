@@ -10,7 +10,7 @@
  */
 
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import { LEAGUE_PLANS, LeaguePlan, PlanFeature, type PlanCap } from '@poolmaster/shared/domain';
+import { LEAGUE_PLANS, LeaguePlan, PlanCap, PlanFeature } from '@poolmaster/shared/domain';
 import type { PlanConfig } from '@poolmaster/shared/dto';
 import { LeagueNotFoundError } from '../leagues/service';
 
@@ -61,4 +61,14 @@ export function resolvePlanEntitlements(plan: LeaguePlan, config: PlanConfig): P
     Object.values(PlanFeature).filter((feature) => LEAGUE_PLANS.indexOf(config.features[feature]) <= rank),
   );
   return { plan, caps, features };
+}
+
+/**
+ * The most entries a contest may hold (#980): the higher of its league plan's entries per contest
+ * and the expansion the contest bought or was given, or null for no limit. An expansion only ever
+ * raises the cap, and a plan with a higher cap always wins (plans/payments.md §4).
+ */
+export function contestEntriesCap(entitlements: PlanEntitlements, expandedTo: number | null): number | null {
+  const planCap = entitlements.caps[PlanCap.ENTRIES_PER_CONTEST];
+  return planCap === null || expandedTo === null ? planCap : Math.max(planCap, expandedTo);
 }

@@ -364,6 +364,7 @@ export function fakeContestEntryRepo(
     findByContest: many(),
     findByContestWithSquad: many(),
     findBySquad: many(),
+    countByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
     setEventStatus: echoEventStatus(),

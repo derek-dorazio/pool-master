@@ -99,6 +99,8 @@ export class InMemoryContestWorld {
   readonly sportEvents = new Map<string, SportEvent>();
   /** The event's tiers, per sport event — what `listTiers` answers. */
   readonly eventTiers = new Map<string, SportEventTier[]>();
+  /** Each contest's expansion bands, in the order they were added (#980); the highest applies. */
+  readonly contestExpansions = new Map<string, number[]>();
   /** The PLAN_CONFIG its leagues' plans read (#947): the shipped defaults until a test sets one. */
   planConfig: PlanConfig = PLAN_SETTINGS.defaults({});
 
@@ -183,6 +185,11 @@ export class InMemoryContestWorld {
     };
     this.squadMemberships.set(membership.id, membership);
     return membership;
+  }
+
+  /** Raises the contest's cap to `entriesPerContest`, as a contest_expansions row does (#980). */
+  addContestExpansion(contestId: string, entriesPerContest: number): void {
+    this.contestExpansions.set(contestId, [...(this.contestExpansions.get(contestId) ?? []), entriesPerContest]);
   }
 
   addContest(leagueId: string, overrides: Partial<Contest> = {}): Contest {
@@ -432,12 +439,17 @@ export class InMemoryContestWorld {
           .map((entry) => this.withSquad(entry)),
       findBySquad: async (squadId) =>
         [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
-        if (limits.entriesPerContest !== null
-          && [...this.entries.values()].filter((entry) => entry.contestId === input.contestId).length >= limits.entriesPerContest) {
-          return { status: 'contestFull' };
+        // The cap comes from the contest's highest expansion, read under the contest's lock (#980).
+        const bands = this.contestExpansions.get(input.contestId) ?? [];
+        const entriesPerContest = limits.entriesPerContest(bands.length > 0 ? Math.max(...bands) : null);
+        if (entriesPerContest !== null
+          && [...this.entries.values()].filter((entry) => entry.contestId === input.contestId).length >= entriesPerContest) {
+          return { status: 'contestFull', entriesPerContest };
         }
         // @@unique([contestId, squadId, entryNumber]) on contest_entries.
         const clash = [...this.entries.values()].some((entry) =>

@@ -12,7 +12,11 @@ export interface PlanHighlights {
   lines: string[];
 }
 
-function featureLines(features: readonly PlanFeature[], isAddition: boolean): string[] {
+/**
+ * Features as lines to read, in `PlanFeature` order: each by name, or one counted line ("7 emails")
+ * for a group with three or more of them. Plan cards and the move confirm (#972) both list this way.
+ */
+export function buildFeatureLines(features: readonly PlanFeature[], isAddition: boolean): string[] {
   return Object.values(PlanFeatureGroup).flatMap((group) => {
     const inGroup = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === group && features.includes(feature));
     return inGroup.length >= GROUP_COUNT_THRESHOLD
@@ -37,10 +41,10 @@ export function buildPlanHighlights(plans: readonly ComparedPlan[]): PlanHighlig
       return {
         plan: plan.plan,
         adds: null,
-        lines: [...caps, EVERY_CONTEST_TYPE_LABEL, ...featureLines(plan.features, false)],
+        lines: [...caps, EVERY_CONTEST_TYPE_LABEL, ...buildFeatureLines(plan.features, false)],
       };
     }
     const added = plan.features.filter((feature) => !below.features.includes(feature));
-    return { plan: plan.plan, adds: below.plan, lines: [...caps, ...featureLines(added, true)] };
+    return { plan: plan.plan, adds: below.plan, lines: [...caps, ...buildFeatureLines(added, true)] };
   });
 }

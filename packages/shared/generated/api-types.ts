@@ -1213,6 +1213,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contests/plan-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show what a league uses of its plan's caps
+         * @description What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
+         */
+        get: operations["getLeaguePlanUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
         parameters: {
             query?: never;
@@ -3787,6 +3807,31 @@ export interface components {
             seasonYear: number;
             /** @description The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap. */
             sportLeagueIds: string[];
+        };
+        /** @description One contest still taking entries, with its entries as the entry cap counts them. */
+        OpenContestUsageDto: {
+            /** Format: uuid */
+            contestId: string;
+            /** @description The contest's name. */
+            name: string;
+            /** @description Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts. */
+            entryCount: number;
+        };
+        /** @description What a league uses of its plan's caps now (#972), for the commissioner Plan page. */
+        LeaguePlanUsageResponse: {
+            /** @description This year, in UTC: the season whose sports leagues are listed. */
+            seasonYear: number;
+            /** @description The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
+            sportLeagueIds: string[];
+            /** @description Every contest still taking entries, newest first. */
+            openContests: {
+                /** Format: uuid */
+                contestId: string;
+                /** @description The contest's name. */
+                name: string;
+                /** @description Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts. */
+                entryCount: number;
+            }[];
         };
         /** @description Squad membership summary. */
         SquadMembershipDto: {
@@ -23012,6 +23057,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getLeaguePlanUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What a league uses of its plan's caps now (#972), for the commissioner Plan page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaguePlanUsageResponse"];
                 };
             };
             /** @description Standard API error envelope. */

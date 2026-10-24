@@ -17,6 +17,7 @@ import {
   withoutJsonBodyHeaders,
 } from '../helpers';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
+import { LeaguePaymentKind } from '@poolmaster/shared/domain';
 import type {
   LeagueContextResponse,
   SquadListResponse,
@@ -30,7 +31,7 @@ afterAll(async () => {
 });
 
 describe('Deleting an inactive league', () => {
-  it('deletes a league with its contests, invitations, memberships and teams, and keeps its members\' accounts', async () => {
+  it('deletes a league with its contests, their expansions, its payment history, invitations, memberships and teams, and keeps its members\' accounts', async () => {
     const commissioner = await createTestUser({ displayName: 'Delete Commissioner' });
     const leagueRes = await getApp().inject({
       method: 'POST',
@@ -59,9 +60,21 @@ describe('Deleting an inactive league', () => {
     expect(inviteRes.json<TeamOwnerInvitationResponse>().invitation.status).toBe('PENDING');
 
     // A contest and a league invitation, so every league-owned table the delete clears has a row.
-    await getPrisma().contest.create({
+    const contest = await getPrisma().contest.create({
       data: { leagueId: league.id, seasonYear: 2026, name: 'Doomed Contest', selectionType: 'TIERED' },
     });
+    // An expansion and its payment history line (#980), which go with the league.
+    const payment = await getPrisma().leaguePayment.create({
+      data: {
+        leagueId: league.id,
+        contestId: contest.id,
+        payerId: commissioner.user.id,
+        kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF,
+        amountCents: 0,
+        description: 'Doomed Contest: up to 200 entries, free while payments are off',
+      },
+    });
+    await getPrisma().contestExpansion.create({ data: { contestId: contest.id, entriesPerContest: 200, paymentId: payment.id } });
     await getPrisma().leagueInvitation.create({
       data: { leagueId: league.id, inviteCode: `delete-${league.id.slice(0, 8)}`, invitedBy: commissioner.user.id },
     });
@@ -86,6 +99,8 @@ describe('Deleting an inactive league', () => {
     await expect(prisma.squadOwnerInvitation.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     await expect(prisma.squad.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     await expect(prisma.contest.count({ where: { leagueId: league.id } })).resolves.toBe(0);
+    await expect(prisma.contestExpansion.count({ where: { contestId: contest.id } })).resolves.toBe(0);
+    await expect(prisma.leaguePayment.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     await expect(prisma.leagueInvitation.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     await expect(prisma.leagueMembership.count({ where: { leagueId: league.id } })).resolves.toBe(0);
     // The league goes; its members' accounts do not.
