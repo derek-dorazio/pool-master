@@ -771,6 +771,7 @@ function toSportLeague(row: Prisma.SportLeagueGetPayload<object>): SportLeague {
     squaresFromRound: row.squaresFromRound,
     noun: row.noun,
     displayName: row.displayName,
+    displayOrder: row.displayOrder,
     participantType: row.participantType,
     scoringFamily: row.scoringFamily,
     createdAt: row.createdAt,

@@ -5,6 +5,7 @@ import {
   DigestEventState,
   EntryReceiptKind,
   EntryReminderKind,
+  MemberJoinedTiming,
   StandingsMomentKind,
   type SystemEmailTemplateDataByKey,
   type SystemEmailTemplateKey,
@@ -227,5 +228,13 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
       { name: '2026 PGA Tour Cup', place: 'T5', squadCount: 12, points: '180', trophy: null },
     ],
     squadYearUrl: 'http://localhost:5173/league/OFFICE24/team?year=2026',
+  },
+  LEAGUE_MEMBER_JOINED: {
+    userName: 'Casey Commissioner',
+    leagueName: 'Office League',
+    timing: MemberJoinedTiming.AT_ONCE,
+    joined: [{ name: 'Morgan Member', squadName: 'Morgan\'s Squad' }],
+    memberCount: 9,
+    membersUrl: 'http://localhost:5173/league/OFFICE24/admin/teams',
   },
 };

@@ -233,7 +233,7 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: system emails', () => {
-  it('sends one league invite to the invited address from the league\'s own address, linking to that invitation, and one welcome linking to the league once they join', async () => {
+  it('sends one league invite to the invited address from the league\'s own address, linking to that invitation, one welcome linking to the league once they join, and one email telling the commissioner who joined', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({
       displayName: 'Inviting Commissioner',
       leagueName: `Email Invite League ${randomUUID().slice(0, 6)}`,
@@ -268,7 +268,11 @@ describe('SDK Functional: system emails', () => {
     expect(welcomes[0].to).toEqual([invitee.email]);
     expect(linksIn(welcomes[0])).toEqual([`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}`]);
     expect(await sentMailTo(invitee.email)).toHaveLength(2);
-    expect(await sentMailTo(commissioner.email)).toHaveLength(0);
+
+    const joined = await awaitSentMailTo(commissioner.email, 1);
+    expect(joined).toHaveLength(1);
+    expect(joined[0].subject).toBe(`Invited Member joined ${league.name}`);
+    expect(linksIn(joined[0])).toContain(`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/admin/teams`);
   });
 
   it('resends a league invite to the same address with a new link, and only the new link joins the league', async () => {

@@ -108,7 +108,8 @@ export const EmailConfigSchema = z.object({
   ),
   weeklyDigestHour: z.number().int().min(0).max(23).describe(
     'The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for '
-    + 'every league, so it is waiting in the morning.',
+    + 'every league, so it is waiting in the morning. The next day\'s "New member joined" email for '
+    + 'a busy day goes at the same hour every day (#903).',
   ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
@@ -125,6 +126,7 @@ export const EmailConfigSchema = z.object({
     EVENT_COMING_UP: templateSwitch,
     EVENT_READY_FOR_CONTESTS: templateSwitch,
     EVENT_WEEKLY_DIGEST: templateSwitch,
+    LEAGUE_MEMBER_JOINED: templateSwitch,
     CONTEST_NOT_OPEN: templateSwitch,
     EVENT_STILL_DRAFT: templateSwitch,
     YEAR_IN_REVIEW: templateSwitch,
@@ -190,6 +192,7 @@ export const PlanConfigSchema = z.object({
     EMAIL_EVENT_READY_FOR_CONTESTS: featureStartsAt,
     EMAIL_CONTEST_NOT_OPEN: featureStartsAt,
     EMAIL_YEAR_IN_REVIEW: featureStartsAt,
+    EMAIL_LEAGUE_MEMBER_JOINED: featureStartsAt,
     CUP_STANDINGS: featureStartsAt,
     CUP_CROWNING: featureStartsAt,
     CHAMPIONSHIP: featureStartsAt,

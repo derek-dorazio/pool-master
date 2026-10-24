@@ -880,7 +880,7 @@ export interface paths {
         };
         /**
          * List what each league plan allows
-         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.
+         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listLeaguePlans"];
         put?: never;
@@ -3761,7 +3761,7 @@ export interface components {
                 SPORTS_LEAGUES_PER_YEAR: number | null;
             };
             /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-            features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+            features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
             /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
             commissionerSelectable: boolean;
         };
@@ -3782,7 +3782,7 @@ export interface components {
                     SPORTS_LEAGUES_PER_YEAR: number | null;
                 };
                 /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-                features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+                features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                 /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                 commissionerSelectable: boolean;
             }[];
@@ -4480,7 +4480,7 @@ export interface components {
                     SPORTS_LEAGUES_PER_YEAR: number | null;
                 };
                 /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-                features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+                features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                 /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                 commissionerSelectable: boolean;
             };
@@ -4717,7 +4717,7 @@ export interface components {
                         SPORTS_LEAGUES_PER_YEAR: number | null;
                     };
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                     /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                     commissionerSelectable: boolean;
                 };
@@ -4789,7 +4789,7 @@ export interface components {
                         SPORTS_LEAGUES_PER_YEAR: number | null;
                     };
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                     /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                     commissionerSelectable: boolean;
                 };
@@ -5007,7 +5007,7 @@ export interface components {
                         SPORTS_LEAGUES_PER_YEAR: number | null;
                     };
                     /** @description Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted. */
-                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
+                    features: ("EMAIL_CONTEST_OPENED" | "EMAIL_CONTEST_ENTRY_COMPLETED" | "EMAIL_CONTEST_RESULTS" | "EMAIL_CONTEST_EVENT_CHANGED" | "EMAIL_CONTEST_STARTED_SUMMARY" | "EMAIL_CONTEST_ENTRY_REMINDER" | "EMAIL_CONTEST_STANDINGS" | "EMAIL_EVENT_COMING_UP" | "EMAIL_EVENT_READY_FOR_CONTESTS" | "EMAIL_CONTEST_NOT_OPEN" | "EMAIL_YEAR_IN_REVIEW" | "EMAIL_LEAGUE_MEMBER_JOINED" | "CUP_STANDINGS" | "CUP_CROWNING" | "CHAMPIONSHIP" | "TROPHY_SHELF" | "CUP_SETTINGS" | "PAST_YEARS" | "ALL_TIME_SUMMARY" | "RECORD_BOOK")[];
                     /** @description Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set. */
                     commissionerSelectable: boolean;
                 };
@@ -8425,6 +8425,8 @@ export interface components {
             noun: "LEAGUE" | null;
             /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
             displayName: string | null;
+            /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
+            displayOrder: number | null;
             /** @description Participants currently affiliated with the sport league. */
             affiliationCount: number;
             /** @description Events on record for the sport league, across every series and year. */
@@ -8498,6 +8500,8 @@ export interface components {
                 noun: "LEAGUE" | null;
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
+                /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
+                displayOrder: number | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -8562,6 +8566,8 @@ export interface components {
                 noun: "LEAGUE" | null;
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
+                /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
+                displayOrder: number | null;
                 /** @description Participants currently affiliated with the sport league. */
                 affiliationCount: number;
                 /** @description Events on record for the sport league, across every series and year. */
@@ -12448,7 +12454,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -12461,7 +12467,7 @@ export interface components {
             entryReminderHours: number[];
             /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
             standingsBufferMinutes: number;
-            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
             weeklyDigestHour: number;
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
             templates: {
@@ -12493,6 +12499,8 @@ export interface components {
                 EVENT_READY_FOR_CONTESTS: boolean;
                 /** @description Whether this email is sent. */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /** @description Whether this email is sent. */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /** @description Whether this email is sent. */
                 CONTEST_NOT_OPEN: boolean;
                 /** @description Whether this email is sent. */
@@ -12629,6 +12637,11 @@ export interface components {
                  * @enum {string}
                  */
                 EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                /**
+                 * @description The first plan that has the feature; every plan above it has it too.
+                 * @enum {string}
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                 /**
                  * @description The first plan that has the feature; every plan above it has it too.
                  * @enum {string}
@@ -13181,7 +13194,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -13213,6 +13226,8 @@ export interface components {
                     EVENT_READY_FOR_CONTESTS: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_WEEKLY_DIGEST: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -13233,7 +13248,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -13265,6 +13280,8 @@ export interface components {
                     EVENT_READY_FOR_CONTESTS: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_WEEKLY_DIGEST: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -13451,6 +13468,11 @@ export interface components {
                      * @description The first plan that has the feature; every plan above it has it too.
                      * @enum {string}
                      */
+                    EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
                     CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                     /**
                      * @description The first plan that has the feature; every plan above it has it too.
@@ -13573,6 +13595,11 @@ export interface components {
                      * @enum {string}
                      */
                     EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                     /**
                      * @description The first plan that has the feature; every plan above it has it too.
                      * @enum {string}
@@ -13869,7 +13896,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -13901,6 +13928,8 @@ export interface components {
                         EVENT_READY_FOR_CONTESTS: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_WEEKLY_DIGEST: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -13921,7 +13950,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -13953,6 +13982,8 @@ export interface components {
                         EVENT_READY_FOR_CONTESTS: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_WEEKLY_DIGEST: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -14139,6 +14170,11 @@ export interface components {
                          * @description The first plan that has the feature; every plan above it has it too.
                          * @enum {string}
                          */
+                        EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
                         CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                         /**
                          * @description The first plan that has the feature; every plan above it has it too.
@@ -14261,6 +14297,11 @@ export interface components {
                          * @enum {string}
                          */
                         EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                         /**
                          * @description The first plan that has the feature; every plan above it has it too.
                          * @enum {string}
@@ -14406,7 +14447,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -14438,6 +14479,8 @@ export interface components {
                     EVENT_READY_FOR_CONTESTS: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_WEEKLY_DIGEST: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -14564,6 +14607,11 @@ export interface components {
                      * @enum {string}
                      */
                     EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                     /**
                      * @description The first plan that has the feature; every plan above it has it too.
                      * @enum {string}
@@ -14849,7 +14897,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -14881,6 +14929,8 @@ export interface components {
                     EVENT_READY_FOR_CONTESTS: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_WEEKLY_DIGEST: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -14901,7 +14951,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -14933,6 +14983,8 @@ export interface components {
                     EVENT_READY_FOR_CONTESTS: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_WEEKLY_DIGEST: boolean;
+                    /** @description Whether this email is sent. */
+                    LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -15105,6 +15157,11 @@ export interface components {
                      * @description The first plan that has the feature; every plan above it has it too.
                      * @enum {string}
                      */
+                    EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
                     CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                     /**
                      * @description The first plan that has the feature; every plan above it has it too.
@@ -15227,6 +15284,11 @@ export interface components {
                      * @enum {string}
                      */
                     EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                    /**
+                     * @description The first plan that has the feature; every plan above it has it too.
+                     * @enum {string}
+                     */
+                    EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                     /**
                      * @description The first plan that has the feature; every plan above it has it too.
                      * @enum {string}
@@ -15509,7 +15571,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -15541,6 +15603,8 @@ export interface components {
                         EVENT_READY_FOR_CONTESTS: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_WEEKLY_DIGEST: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -15561,7 +15625,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -15593,6 +15657,8 @@ export interface components {
                         EVENT_READY_FOR_CONTESTS: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_WEEKLY_DIGEST: boolean;
+                        /** @description Whether this email is sent. */
+                        LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -15765,6 +15831,11 @@ export interface components {
                          * @description The first plan that has the feature; every plan above it has it too.
                          * @enum {string}
                          */
+                        EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
                         CUP_STANDINGS: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                         /**
                          * @description The first plan that has the feature; every plan above it has it too.
@@ -15887,6 +15958,11 @@ export interface components {
                          * @enum {string}
                          */
                         EMAIL_YEAR_IN_REVIEW: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
+                        /**
+                         * @description The first plan that has the feature; every plan above it has it too.
+                         * @enum {string}
+                         */
+                        EMAIL_LEAGUE_MEMBER_JOINED: "FREE" | "PRO" | "PREMIUM" | "PLATINUM";
                         /**
                          * @description The first plan that has the feature; every plan above it has it too.
                          * @enum {string}
@@ -21997,15 +22073,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaguePlanListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

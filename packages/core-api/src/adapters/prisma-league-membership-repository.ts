@@ -49,6 +49,14 @@ export class PrismaLeagueMembershipRepository implements LeagueMembershipReposit
     return row ? mapToMembership(row) : null;
   }
 
+  async findActiveJoinedSince(since: Date): Promise<LeagueMembership[]> {
+    const rows = await this.prisma.leagueMembership.findMany({
+      where: { status: MembershipStatus.ACTIVE, joinedAt: { gte: since } },
+      orderBy: [{ joinedAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapToMembership);
+  }
+
   async create(
     membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<LeagueMembership> {

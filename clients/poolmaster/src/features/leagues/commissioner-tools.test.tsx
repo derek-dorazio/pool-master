@@ -759,7 +759,7 @@ describe('League plan', () => {
     await waitFor(() => expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ body: { plan: 'PLATINUM' } })));
   });
 
-  it('compares every plan side by side, its limits and which features it includes', async () => {
+  it('compares every plan side by side: its limits, what every plan includes, and which features it has', async () => {
     primeMocks();
     primePlanList();
 
@@ -768,7 +768,7 @@ describe('League plan', () => {
     const table = within(await screen.findByTestId('plan-comparison-table'));
     const [head, ...sections] = table.getAllByRole('rowgroup');
     expect(within(head).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['What the plan includes', 'Free', 'Pro', 'Premium', 'Platinum']);
-    expect(sections.map((section) => within(section).getAllByRole('columnheader')[0]?.textContent)).toEqual(['Limits', 'Emails', 'Championships', 'History']);
+    expect(sections.map((section) => within(section).getAllByRole('columnheader')[0]?.textContent)).toEqual(['Limits', 'In every plan', 'Emails', 'Championships', 'History']);
     const entries = within(table.getByTestId('plan-comparison-row-ENTRIES_PER_CONTEST'));
     expect(entries.getAllByRole('cell').map((cell) => cell.textContent)).toEqual(['20', '50', '100', 'Unlimited']);
     const championship = within(table.getByTestId('plan-comparison-row-CHAMPIONSHIP'));

@@ -7,6 +7,8 @@ first among tournaments of individual players (tennis and others), then among to
 teams (soccer, March Madness). Open questions sit under the section they belong to; nothing
 here blocks on an answer.
 
+**Status 2026-10-24:** most of this has been built. For what is left, read §6 first.
+
 ## TL;DR: ranked recommendation
 
 | Rank | Sport / event | Group | Why | Next date it could run |
@@ -565,6 +567,36 @@ Question:
 - **Q5.1** Should this go to a planning thread now, with ticket 1 sized against the January
   Australian Open? Recommendation: yes; budget selection (#93) merged 2026-10-11, so nothing
   blocks it, and the deadline that matters is mid-March 2027.
+
+---
+
+## 6. What is left, and Derek's calls (2026-10-24)
+
+Built since this was written: golf, March Madness, NBA/WNBA, NFL and CFP, hockey, baseball (MLB),
+soccer, tennis, horse racing, auto racing, cycling and marathons, with tiered, budget, quick pick,
+bracket, pick'em, survivor, ATS and squares pools. Each remaining sport has its own ticket under
+#599 listing its leagues and slices. The one-page matrix of what could be added per sport, with
+effort, is the artifact https://claude.ai/artifact/UYtNyhBK8LjCkWroWDN29k.
+
+Recommended order:
+
+1. Leagues that are data only, timed to their seasons: Indian Wells and Miami tennis (#820), LIV
+   and DP World golf (#640), Liga MX and the Gold Cup (#818), the College World Series from the
+   super regionals on (#793 comment on #789).
+2. Rugby (#794): Six Nations pick'em, then the Men's Rugby World Cup in October 2027.
+3. UFC fight-card pick'em (#798).
+4. NCAA women's volleyball (#799), December 2027.
+5. #793, playoffs where a loser can still advance (full NCAA baseball and softball, NRL finals).
+6. Olympics (#821) before LA28.
+7. On request: other soccer leagues, lacrosse (#801), esports (#800), baseball squares.
+
+Decided by Derek 2026-10-24:
+
+- **UK and Australian sports are skipped for now**, since US office pools are the core users:
+  darts (#796), snooker (#797), cricket (#795), AFL (#710), and the UK and Australian horse races
+  (§2.4). The ideas stay here and in their tickets for later.
+- **Rugby is one sport**, `RUGBY`, with union and league competitions as separate leagues (#794).
+- **Props (#712) are parked**, deferred with no target date.
 
 ---
 

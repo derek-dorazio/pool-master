@@ -59,6 +59,7 @@ export function buildSportLeague(overrides: Partial<SportLeague> = {}): SportLea
     sportId: 'sport-golf',
     name: `Sport League ${id}`,
     displayName: null,
+    displayOrder: null,
     matchKeyword: null,
     currentEventYear: null,
     isActive: true,

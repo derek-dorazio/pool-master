@@ -198,6 +198,7 @@ enum PrismaEmailTemplateKey {
   SQUAD_OWNER_ADDED
   EMAIL_TEST
   YEAR_IN_REVIEW
+  LEAGUE_MEMBER_JOINED
 }
 
 enum PrismaEmailMessageStatus {
@@ -959,6 +960,11 @@ model SportLeague {
   /// does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null:
   /// the name. Reference data, set by the migration that seeds the league.
   displayName        String?                  @map("display_name") @db.VarChar(255)
+  /// Where the sport league sits among its sport's leagues wherever they are listed together
+  /// (How to Play's chips): the major professional leagues first, then the NCAA's. Lower comes
+  /// first; null comes after every ordered league, by name. Reference data, set by the migration
+  /// that seeds the league.
+  displayOrder       Int?                     @map("display_order")
   /// Who competes in its events, when not its sport's (#934: the World Series stat pool's field is
   /// players, not teams). Null: the sport's. Reference data, set by the migration that seeds the
   /// league.

@@ -19,6 +19,7 @@ import { createSquadOwnerInvitationHandlers } from './owner-invitation-handler';
 import { SquadOwnerInvitationService } from './owner-invitation-service';
 import { SquadService } from './service';
 import { getAppPrisma } from '../../core/prisma-context';
+import type { MemberJoinedModuleOptions } from '../notifications/member-joined-notices';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { requireRootAdmin } from '../../core/root-admin-guard';
 import {
@@ -28,7 +29,7 @@ import {
   requireMemberOfSquad,
 } from '../leagues/permissions';
 
-export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions & MemberJoinedModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
   void fastify.register(schemaComponentsPlugin);
 
@@ -58,6 +59,7 @@ export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions):
     prisma,
     membershipTransaction,
     email: opts.email,
+    memberJoined: opts.memberJoined,
     appBaseUrl: readApplicationBaseUrl(process.env),
     logger: fastify.log,
   });

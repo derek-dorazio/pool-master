@@ -485,6 +485,19 @@ contests yet" while a draft. A league with nothing coming up gets no digest that
 on the plan of `EMAIL_EVENT_COMING_UP`, which it replaces, so the Event emails page offers it
 only on that plan. The idempotency key (Monday's date, league, person) sends one a week.
 
+**New member joined** (`LEAGUE_MEMBER_JOINED`, #903 B6, category Commissioner updates, plan
+feature `EMAIL_LEAGUE_MEMBER_JOINED`) tells a league's commissioners when someone joins: by
+accepting a league invitation, or as a squad's co-owner (added straight away, or accepting a
+co-owner invitation). It says who joined, their squad, how many members the league has now, and
+links to Members and owners. The first three joins of a league's day (US Eastern) are each told
+at once, after the join commits; a failure is logged rather than failing the join. The rest of a
+busy day go together in one email the next day once `weeklyDigestHour` (3am Eastern by default)
+has come, listing in the order they joined every join of the day with no at-once email in the
+outbox, so someone leaving later that day or two joins committing out of order never drops or
+repeats anyone. A join is an active MEMBER membership by its `joinedAt`, so the league's creator
+never counts. The idempotency key is the membership and its join time at once, and the day and
+league the next day, each per person.
+
 Event still in draft emails (`EVENT_STILL_DRAFT`, #845 G1, category Root admin, which can't be
 turned off) are the step's fourth kind. While an event starts within 7 days and is still a draft,
 every active root admin is told once a day, from the app rather than a league: when it starts,

@@ -216,6 +216,11 @@ export interface LeagueMembershipRepository {
    */
   countActiveByLeagues(leagueIds: string[]): Promise<Map<string, number>>;
   findByLeagueAndUser(leagueId: string, userId: string): Promise<LeagueMembership | null>;
+  /**
+   * Every league's active memberships that joined at or after `since`, in the order they joined:
+   * the next day's "New member joined" email lists a busy day's joins (#903).
+   */
+  findActiveJoinedSince(since: Date): Promise<LeagueMembership[]>;
   create(membership: Omit<LeagueMembership, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueMembership>;
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }

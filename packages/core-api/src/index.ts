@@ -64,7 +64,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createCommissionerNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings } from './modules/notifications';
+import { createCommissionerNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -125,6 +125,7 @@ export function buildApp() {
     contestSettlement,
     releasedEditionContests: createContestManagementService(prisma, app.log, planEntitlements),
   });
+  const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   const ingestionPersistence = new IngestionPersistence(prisma, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -135,6 +136,7 @@ export function buildApp() {
       createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
       createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
       createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
+      memberJoined,
     ],
     logger: app.log,
   });
@@ -213,11 +215,11 @@ export function buildApp() {
   // =========================================================================
   // Domain modules (protected by auth-guard)
   // =========================================================================
-  app.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements });
+  app.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
   app.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
-  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
-  app.register(invitationsModule, { prefix: '/api/v1/invitations', email });
-  app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });
+  app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
+  app.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
+  app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });
   app.register(contestsModule, { prefix: '/api/v1/leagues/:id/contests', email, planEntitlements });
   app.register(contestManagementModule, {
     prefix: '/api/v1/leagues/:id/contest-management',

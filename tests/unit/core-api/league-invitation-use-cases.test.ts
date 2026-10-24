@@ -19,6 +19,8 @@ import type {
   MailDeliveryMessage,
   MailDeliveryProvider,
 } from '../../../packages/core-api/src/modules/email/mail-delivery';
+import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
+import { MemberJoinedNotices } from '../../../packages/core-api/src/modules/notifications/member-joined-notices';
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
@@ -66,6 +68,8 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
   const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
   const league = world.addLeague({ name: 'Office Pool', leagueCode: 'OFFICE' });
   world.addMember({ league, user: commissioner, role: LeagueRole.COMMISSIONER });
+  const email = options.mail ? emailServiceOver(options.mail) : undefined;
+  const appBaseUrl = options.appBaseUrl ?? 'http://localhost:5173';
   const service = new InvitationService({
     invitations: world.leagueInvitations,
     memberships: world.memberships,
@@ -81,7 +85,19 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
           .map(({ id, name }) => ({ id, name }));
       },
     },
-    ...(options.mail ? { email: emailServiceOver(options.mail) } : {}),
+    memberJoined: email
+      ? new MemberJoinedNotices({
+        memberships: world.memberships,
+        leagues: world.leagues,
+        squadMemberships: world.squadMemberships,
+        squads: world.squads,
+        users: world.users,
+        email,
+        readConfig: () => EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }),
+        appBaseUrl,
+      })
+      : { tellJoined: async () => undefined },
+    ...(email ? { email } : {}),
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
   });
@@ -446,10 +462,11 @@ describe('InvitationService — accepting', () => {
     await service.acceptInvitation(invitation.inviteCode, newcomer.id);
 
     await deliverQueuedEmail();
-    expect(mail.sent).toHaveLength(1);
-    expect(mail.sent[0]).toMatchObject({ to: 'nia@example.com', metadata: { templateKey: 'LEAGUE_JOIN_SUCCESS' } });
-    expect(mail.sent[0].text).toContain('Nia New');
-    expect(mail.sent[0].text).toContain('/league/OFFICE');
+    const welcomes = mail.sent.filter((message) => message.to === 'nia@example.com');
+    expect(welcomes).toHaveLength(1);
+    expect(welcomes[0]).toMatchObject({ metadata: { templateKey: 'LEAGUE_JOIN_SUCCESS' } });
+    expect(welcomes[0].text).toContain('Nia New');
+    expect(welcomes[0].text).toContain('/league/OFFICE');
   });
 
   it("lists the league's open contests in the welcome, each linking to its page, leaving out drafts, closed contests and other leagues'", async () => {
@@ -470,7 +487,7 @@ describe('InvitationService — accepting', () => {
     await service.acceptInvitation(invitation.inviteCode, newcomer.id);
 
     await deliverQueuedEmail();
-    const text = expectDefined(mail.sent[0]).text;
+    const text = expectDefined(mail.sent.find((message) => message.to === 'nia@example.com')).text;
     expect(text).toContain([
       'Open for entries:',
       'Masters Pick 6: https://app.example.test/league/OFFICE/contests/masters',
@@ -490,7 +507,7 @@ describe('InvitationService — accepting', () => {
     await service.acceptInvitation(invitation.inviteCode, newcomer.id);
 
     await deliverQueuedEmail();
-    expect(expectDefined(mail.sent[0]).text).not.toContain('Open for entries');
+    expect(expectDefined(mail.sent.find((message) => message.to === 'nia@example.com')).text).not.toContain('Open for entries');
   });
 
   it('still completes the join when the welcome email fails to send', async () => {
@@ -516,8 +533,45 @@ describe('InvitationService — accepting', () => {
     });
 
     await deliverQueuedEmail();
-    expect(mail.sent).toHaveLength(1);
-    expect(expectDefined(mail.sent[0]).text).not.toContain('Open for entries');
+    const welcomes = mail.sent.filter((message) => message.to === 'nia@example.com');
+    expect(welcomes).toHaveLength(1);
+    expect(expectDefined(welcomes[0]).text).not.toContain('Open for entries');
+  });
+
+  it("tells the league's commissioners at once who joined, as which squad, how many members the league has now, and links Members and owners", async () => {
+    const mail = recordingMail();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider, appBaseUrl: 'https://app.example.test' });
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
+    const newcomer = world.addUser({ firstName: 'Nia', lastName: 'New', email: 'nia@example.com' });
+
+    await service.acceptInvitation(invitation.inviteCode, newcomer.id);
+
+    await deliverQueuedEmail();
+    const told = mail.sent.filter((message) => message.metadata.templateKey === 'LEAGUE_MEMBER_JOINED');
+    expect(told.map((message) => message.to)).toEqual([commissioner.email]);
+    const squadName = expectDefined(world.tables.squads.get(expectDefined(world.squadMembershipOf(league.id, newcomer.id)).squadId)).name;
+    expect(told[0]).toMatchObject({ subject: 'Nia New joined Office Pool' });
+    expect(told[0].text).toContain(`Nia New joined Office Pool as ${squadName}.`);
+    expect(told[0].text).toContain('The league has 2 members now.');
+    expect(told[0].text).toContain('Members and owners: https://app.example.test/league/OFFICE/admin/teams');
+  });
+
+  it('tells the commissioners at once of only the first three people to join on a day, leaving the fourth for the next day', async () => {
+    const mail = recordingMail();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider });
+    const link = seedInvitation(world, league, commissioner, { inviteType: InviteType.LINK, email: undefined, maxUses: 0 });
+    const joiners = ['Ann', 'Ben', 'Cal', 'Dee'].map((firstName) => world.addUser({ firstName, lastName: 'Joiner' }));
+
+    for (const joiner of joiners) await service.acceptInvitation(link.inviteCode, joiner.id);
+
+    await deliverQueuedEmail();
+    expect(mail.sent
+      .filter((message) => message.metadata.templateKey === 'LEAGUE_MEMBER_JOINED')
+      .map((message) => message.subject)).toEqual([
+      'Ann Joiner joined Office Pool',
+      'Ben Joiner joined Office Pool',
+      'Cal Joiner joined Office Pool',
+    ]);
   });
 });
 

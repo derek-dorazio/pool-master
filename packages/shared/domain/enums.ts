@@ -820,6 +820,7 @@ export const PlanFeature = {
   EMAIL_EVENT_READY_FOR_CONTESTS: 'EMAIL_EVENT_READY_FOR_CONTESTS',
   EMAIL_CONTEST_NOT_OPEN: 'EMAIL_CONTEST_NOT_OPEN',
   EMAIL_YEAR_IN_REVIEW: 'EMAIL_YEAR_IN_REVIEW',
+  EMAIL_LEAGUE_MEMBER_JOINED: 'EMAIL_LEAGUE_MEMBER_JOINED',
   CUP_STANDINGS: 'CUP_STANDINGS',
   CUP_CROWNING: 'CUP_CROWNING',
   CHAMPIONSHIP: 'CHAMPIONSHIP',
@@ -851,6 +852,7 @@ export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>>
   EMAIL_EVENT_READY_FOR_CONTESTS: PlanFeatureGroup.EMAILS,
   EMAIL_CONTEST_NOT_OPEN: PlanFeatureGroup.EMAILS,
   EMAIL_YEAR_IN_REVIEW: PlanFeatureGroup.EMAILS,
+  EMAIL_LEAGUE_MEMBER_JOINED: PlanFeatureGroup.EMAILS,
   CUP_STANDINGS: PlanFeatureGroup.CHAMPIONSHIPS,
   CUP_CROWNING: PlanFeatureGroup.CHAMPIONSHIPS,
   CHAMPIONSHIP: PlanFeatureGroup.CHAMPIONSHIPS,
@@ -893,6 +895,8 @@ export const EmailTemplateKey = {
   YEAR_IN_REVIEW: 'YEAR_IN_REVIEW',
   /** A league's Monday list of the next two weeks' events, for its commissioners (#851). */
   EVENT_WEEKLY_DIGEST: 'EVENT_WEEKLY_DIGEST',
+  /** A member joined the league, for its commissioners: at once, or a busy day's rest the next day (#903). */
+  LEAGUE_MEMBER_JOINED: 'LEAGUE_MEMBER_JOINED',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 

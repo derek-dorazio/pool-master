@@ -4,13 +4,23 @@ import { buildPlanComparison } from './plan-comparison';
 import { buildPlanEntitlements } from './test/fixtures';
 
 describe('buildPlanComparison', () => {
-  it('lists the limits first, then emails, championships and history, each feature once', () => {
+  it('lists the limits first, then what every plan includes, then emails, championships and history, each feature once with its description', () => {
     const sections = buildPlanComparison([buildPlanEntitlements()]);
 
-    expect(sections.map((section) => section.title)).toEqual(['Limits', 'Emails', 'Championships', 'History']);
+    expect(sections.map((section) => section.title)).toEqual(['Limits', 'In every plan', 'Emails', 'Championships', 'History']);
     expect(sections[0]?.rows.map((row) => row.label)).toEqual(['Entries per contest', 'Sports leagues a year']);
-    expect(sections.slice(1).flatMap((section) => section.rows.map((row) => row.key)).sort())
+    expect(sections.slice(2).flatMap((section) => section.rows.map((row) => row.key)).sort())
       .toEqual(Object.values(PlanFeature).sort());
+    expect(sections.flatMap((section) => section.rows).every((row) => row.description.length > 0)).toBe(true);
+  });
+
+  it('shows what every plan includes the same on every plan, whatever the plan settings say', () => {
+    const sections = buildPlanComparison([buildPlanEntitlements({ plan: 'FREE', features: [] }), buildPlanEntitlements()]);
+    const included = sections.find((section) => section.key === 'included');
+
+    expect(included?.group).toBeNull();
+    expect(included?.rows.find((row) => row.key === 'members')?.cells).toEqual(['Unlimited', 'Unlimited']);
+    expect(included?.rows.find((row) => row.key === 'contest-types')?.cells).toEqual([true, true]);
   });
 
   it('marks a feature only under the plans that include it, and shows a limit as a number or Unlimited', () => {

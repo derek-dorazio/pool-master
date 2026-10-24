@@ -5,6 +5,7 @@ import {
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
   type League,
+  type LeagueMembership,
   type Squad,
   type User,
 } from '@poolmaster/shared/domain';
@@ -41,6 +42,8 @@ interface League3 {
   /** Every email the service queued: co-owner invitations (B4) and "you were added" (B5). */
   outbox: InMemoryEmailMessages;
   email: EmailService;
+  /** Each membership the service told the commissioners had joined the league (#903 B6). */
+  toldJoined: LeagueMembership[];
   logger: jest.Mocked<FastifyBaseLogger>;
 }
 
@@ -60,6 +63,7 @@ function leagueWithTwoTeams(): League3 {
   const outbox = inMemoryEmailMessages();
   const email = emailServiceInto(outbox);
   const logger = fakeLogger();
+  const toldJoined: LeagueMembership[] = [];
   const service = new SquadOwnerInvitationService({
     squadOwnerInvitations: world.ownerInvitations,
     leagueMemberships: world.memberships,
@@ -69,10 +73,11 @@ function leagueWithTwoTeams(): League3 {
     users: world.users,
     prisma,
     email,
+    memberJoined: { tellJoined: async (membership) => { toldJoined.push(membership); } },
     appBaseUrl: 'https://app.example.test/',
     logger,
   });
-  return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service, outbox, email, logger };
+  return { world, league, commissioner, commissionerSquad, owner, ownerSquad, service, outbox, email, toldJoined, logger };
 }
 
 function seedOwnerInvitation(
@@ -141,6 +146,33 @@ describe('SquadOwnerInvitationService — inviting a co-owner', () => {
       status: LeagueMembershipStatus.ACTIVE,
     });
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, pat.id].sort());
+  });
+
+  it("tells the league's commissioners an existing account joined the league when it is added as a co-owner", async () => {
+    const setup = leagueWithTwoTeams();
+    const pat = setup.world.addUser({ email: 'pat@example.com' });
+
+    await setup.service.inviteOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      email: 'pat@example.com',
+    });
+
+    expect(setup.toldJoined).toEqual([setup.world.membershipOf(setup.league.id, pat.id)]);
+  });
+
+  it('tells nobody anyone joined when inviting an address with no account, as no one has joined yet', async () => {
+    const setup = leagueWithTwoTeams();
+
+    await setup.service.inviteOwner({
+      leagueId: setup.league.id,
+      squadId: setup.ownerSquad.id,
+      actorUserId: setup.owner.id,
+      email: 'nobody-yet@example.com',
+    });
+
+    expect(setup.toldJoined).toEqual([]);
   });
 
   it('leaves an existing account out of the league and records no invitation when seating them on the team fails part way', async () => {
@@ -436,6 +468,7 @@ describe('SquadOwnerInvitationService — co-owner emails', () => {
     })).rejects.toThrow('database unavailable');
 
     expect(sent(setup)).toEqual([]);
+    expect(setup.toldJoined).toEqual([]);
   });
 });
 
@@ -503,6 +536,7 @@ describe('SquadOwnerInvitationService — replacing an owner', () => {
 
     expect(invitation).toMatchObject({ status: SquadOwnerInvitationStatus.ACCEPTED, acceptedBy: pat.id });
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, pat.id].sort());
+    expect(setup.toldJoined).toEqual([setup.world.membershipOf(setup.league.id, pat.id)]);
   });
 
   it('keeps a sole owner on an active team, records no invitation, and leaves them in the league when reactivating the team fails part way', async () => {
@@ -743,6 +777,7 @@ describe('SquadOwnerInvitationService — preview, registration and acceptance',
       status: LeagueMembershipStatus.ACTIVE,
     });
     expect(ownersOf(setup.world, setup.ownerSquad.id)).toEqual([setup.owner.id, newcomer.id].sort());
+    expect(setup.toldJoined).toEqual([setup.world.membershipOf(setup.league.id, newcomer.id)]);
   });
 
   it('leaves the accepting user out of the league and off the team, with the invitation still pending, when marking it accepted fails', async () => {

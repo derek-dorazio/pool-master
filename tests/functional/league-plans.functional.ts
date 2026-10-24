@@ -8,7 +8,7 @@ import {
 import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
 import { LeagueContextResponseSchema, LeaguePlanListResponseSchema, LeagueResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
-import { cleanupFunctionalData, disconnectFunctionalPrisma } from './setup';
+import { cleanupFunctionalData, disconnectFunctionalPrisma, getSdkClient } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
 // Choosing a plan end to end (#945): a commissioner reads the comparison table, moves the league
@@ -55,5 +55,17 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     const restored = await updateLeaguePlan({ client: admin.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
     expect(LeagueResponseSchema.parse(expectDefined(restored.data)).league.planEntitlements.caps)
       .toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
+  });
+
+  it('lets a visitor who is not signed in read every plan, lowest first, with its caps and features from the plan settings', async () => {
+    const response = await listLeaguePlans({ client: getSdkClient() });
+
+    expect(response.response.status).toBe(200);
+    const plans = LeaguePlanListResponseSchema.parse(expectDefined(response.data)).plans;
+    expect(plans.map((plan) => plan.plan)).toEqual([LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM, LeaguePlan.PLATINUM]);
+    expect(plans[0]?.caps).toEqual({ ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 5 });
+    expect(plans[2]?.features).toContain(PlanFeature.ALL_TIME_SUMMARY);
+    expect(plans[2]?.features).toContain(PlanFeature.RECORD_BOOK);
+    expect(plans[3]?.caps).toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
   });
 });

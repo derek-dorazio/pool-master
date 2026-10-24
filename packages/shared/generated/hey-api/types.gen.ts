@@ -611,7 +611,7 @@ export type PlanEntitlementsDto = {
     /**
      * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
      */
-    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     /**
      * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
      */
@@ -646,7 +646,7 @@ export type LeaguePlanListResponse = {
         /**
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
-        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         /**
          * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
          */
@@ -1550,7 +1550,7 @@ export type LeagueDto = {
         /**
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
-        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         /**
          * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
          */
@@ -1865,7 +1865,7 @@ export type LeagueResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
             /**
              * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
              */
@@ -1970,7 +1970,7 @@ export type LeagueContextResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
             /**
              * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
              */
@@ -2248,7 +2248,7 @@ export type LeagueListResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
             /**
              * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
              */
@@ -6852,6 +6852,10 @@ export type SportLeagueDto = {
      */
     displayName: string | null;
     /**
+     * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+     */
+    displayOrder: number | null;
+    /**
      * Participants currently affiliated with the sport league.
      */
     affiliationCount: number;
@@ -6944,6 +6948,10 @@ export type SportLeagueListResponse = {
          */
         displayName: string | null;
         /**
+         * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+         */
+        displayOrder: number | null;
+        /**
          * Participants currently affiliated with the sport league.
          */
         affiliationCount: number;
@@ -7022,6 +7030,10 @@ export type SportLeagueResponse = {
          * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
          */
         displayName: string | null;
+        /**
+         * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
+         */
+        displayOrder: number | null;
         /**
          * Participants currently affiliated with the sport league.
          */
@@ -12189,7 +12201,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED';
 
 /**
  * Whether and how system email is sent.
@@ -12216,7 +12228,7 @@ export type EmailConfig = {
      */
     standingsBufferMinutes: number;
     /**
-     * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+     * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
      */
     weeklyDigestHour: number;
     /**
@@ -12279,6 +12291,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         EVENT_WEEKLY_DIGEST: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        LEAGUE_MEMBER_JOINED: boolean;
         /**
          * Whether this email is sent.
          */
@@ -12480,6 +12496,10 @@ export type PlanConfig = {
          * The first plan that has the feature; every plan above it has it too.
          */
         EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
         /**
          * The first plan that has the feature; every plan above it has it too.
          */
@@ -13283,7 +13303,7 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -13346,6 +13366,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -13385,7 +13409,7 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -13448,6 +13472,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -13694,6 +13722,10 @@ export type SettingsGroup = {
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
             CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
@@ -13824,6 +13856,10 @@ export type SettingsGroup = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -14240,7 +14276,7 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -14303,6 +14339,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -14342,7 +14382,7 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -14405,6 +14445,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -14651,6 +14695,10 @@ export type SettingsGroupList = {
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
                 CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
@@ -14781,6 +14829,10 @@ export type SettingsGroupList = {
                  * The first plan that has the feature; every plan above it has it too.
                  */
                 EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
@@ -14997,7 +15049,7 @@ export type SettingsGroupUpdateRequest = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -15060,6 +15112,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -15219,6 +15275,10 @@ export type SettingsGroupUpdateRequest = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -15613,7 +15673,7 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -15676,6 +15736,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -15715,7 +15779,7 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -15778,6 +15842,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -16002,6 +16070,10 @@ export type SettingsChange = {
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
             CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
@@ -16132,6 +16204,10 @@ export type SettingsChange = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -16526,7 +16602,7 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -16589,6 +16665,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -16628,7 +16708,7 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -16691,6 +16771,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -16915,6 +16999,10 @@ export type SettingsChangeList = {
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
                 CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
@@ -17045,6 +17133,10 @@ export type SettingsChangeList = {
                  * The first plan that has the feature; every plan above it has it too.
                  */
                 EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
@@ -23909,15 +24001,6 @@ export type ListLeaguePlansData = {
     query?: never;
     url: '/api/v1/plans/';
 };
-
-export type ListLeaguePlansErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-};
-
-export type ListLeaguePlansError = ListLeaguePlansErrors[keyof ListLeaguePlansErrors];
 
 export type ListLeaguePlansResponses = {
     /**

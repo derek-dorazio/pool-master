@@ -4,6 +4,7 @@ import {
   EMAIL_TEMPLATES,
   EntryReceiptKind,
   EntryReminderKind,
+  MemberJoinedTiming,
   StandingsMomentKind,
   renderSystemEmailTemplate,
   type SystemEmailTemplateKey,
@@ -610,6 +611,47 @@ describe('the year in review', () => {
   });
 });
 
+describe('new member joined', () => {
+  it('names who joined at once, as which squad, with the member count and a Members and owners button', () => {
+    const message = renderSystemEmailTemplate('LEAGUE_MEMBER_JOINED', EMAIL_TEMPLATE_FIXTURES.LEAGUE_MEMBER_JOINED, UTC);
+
+    expect(message.subject).toBe('Morgan Member joined Office League');
+    expect(message.text).toContain("Morgan Member joined Office League as Morgan's Squad.");
+    expect(message.text).toContain('The league has 9 members now.');
+    expect(message.text).toContain('Members and owners: http://localhost:5173/league/OFFICE24/admin/teams');
+    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/teams"');
+  });
+
+  it('lists a busy day\'s later joins the next day, each with their squad when they have one, and escapes their names', () => {
+    const message = renderSystemEmailTemplate('LEAGUE_MEMBER_JOINED', {
+      ...EMAIL_TEMPLATE_FIXTURES.LEAGUE_MEMBER_JOINED,
+      timing: MemberJoinedTiming.NEXT_DAY,
+      joined: [{ name: 'Dee <b>Bold</b>', squadName: 'Dee Squad' }, { name: 'Eve Early', squadName: null }],
+    }, UTC);
+
+    expect(message.subject).toBe('2 more joined Office League');
+    expect(message.text).toContain('After the first three, 2 more people joined Office League yesterday:\nDee <b>Bold</b> (Dee Squad)\nEve Early');
+    expect(message.html).toContain('Dee &lt;b&gt;Bold&lt;/b&gt; (Dee Squad)<br>Eve Early');
+    expect(message.html).not.toContain('<b>Bold</b>');
+  });
+
+  it('says "one more person" when a busy day had just one join after the third, and leaves the squad out of a member without one', () => {
+    const nextDay = renderSystemEmailTemplate('LEAGUE_MEMBER_JOINED', {
+      ...EMAIL_TEMPLATE_FIXTURES.LEAGUE_MEMBER_JOINED,
+      timing: MemberJoinedTiming.NEXT_DAY,
+    }, UTC);
+    const noSquad = renderSystemEmailTemplate('LEAGUE_MEMBER_JOINED', {
+      ...EMAIL_TEMPLATE_FIXTURES.LEAGUE_MEMBER_JOINED,
+      joined: [{ name: 'Morgan Member', squadName: null }],
+      memberCount: 1,
+    }, UTC);
+
+    expect(nextDay.text).toContain('After the first three, one more person joined Office League yesterday:');
+    expect(noSquad.text).toContain('Morgan Member joined Office League.');
+    expect(noSquad.text).toContain('The league has 1 member now.');
+  });
+});
+
 describe('the email template registry', () => {
   it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails and the root admin\'s test email ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(Object.values(EmailTemplateKey).sort());
@@ -634,6 +676,7 @@ describe('the email template registry', () => {
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
       EMAIL_TEST: EmailCategory.ROOT_ADMIN,
       YEAR_IN_REVIEW: EmailCategory.RESULTS,
+      LEAGUE_MEMBER_JOINED: EmailCategory.COMMISSIONER_UPDATES,
     });
   });
 
@@ -659,6 +702,7 @@ describe('the email template registry', () => {
       PASSWORD_CHANGED: null,
       EMAIL_TEST: null,
       YEAR_IN_REVIEW: PlanFeature.EMAIL_YEAR_IN_REVIEW,
+      LEAGUE_MEMBER_JOINED: PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED,
     });
   });
 

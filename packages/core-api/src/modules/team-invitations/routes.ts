@@ -16,12 +16,13 @@ import {
   PrismaUserRepository,
 } from '../../adapters';
 import { getAppPrisma } from '../../core/prisma-context';
+import type { MemberJoinedModuleOptions } from '../notifications/member-joined-notices';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { createSquadOwnerInvitationHandlers } from '../squads/owner-invitation-handler';
 import { SquadOwnerInvitationService } from '../squads/owner-invitation-service';
 import { AuthService } from '../auth/auth-service';
 
-export function teamInvitationsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function teamInvitationsModule(fastify: FastifyInstance, opts: MailModuleOptions & MemberJoinedModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -39,6 +40,7 @@ export function teamInvitationsModule(fastify: FastifyInstance, opts: MailModule
     prisma,
     membershipTransaction: new PrismaMembershipTransaction(prisma),
     email: opts.email,
+    memberJoined: opts.memberJoined,
     appBaseUrl: readApplicationBaseUrl(process.env),
     logger: fastify.log,
   });
