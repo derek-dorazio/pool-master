@@ -523,8 +523,9 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('contest-board')).toBeVisible();
       await expect(page.getByTestId('contest-detail-heading')).toHaveText(run.contestName);
       // The contest is this run's own and seconds old: zero entries is a fact about it, not
-      // about anything else in the database.
-      await expect(page.getByTestId('contest-board-total-count')).toHaveText(/\b0$/);
+      // about anything else in the database. The new league is on its Premium gift, whose cap of
+      // 100 entries per contest the board shows beside the count.
+      await expect(page.getByTestId('contest-board-total-count')).toHaveText(/\b0 of 100$/);
       await page.goto(`/league/${run.leagueCode}/contests`);
       await expect(page.getByTestId('league-contests-page')).toBeVisible();
       await expect(page.getByTestId(`league-contest-${state.contestId}`)).toContainText(run.contestName);
