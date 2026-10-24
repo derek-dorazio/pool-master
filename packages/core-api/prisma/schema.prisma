@@ -456,6 +456,14 @@ enum PrismaCupPointsScale {
   CUSTOM
 }
 
+/// A league's plan (#943), lowest first. Mirrors the domain `LeaguePlan`.
+enum PrismaLeaguePlan {
+  FREE
+  PRO
+  PREMIUM
+  PLATINUM
+}
+
 /// A cup's state (#841). Mirrors the domain `CupStatus`.
 enum PrismaCupStatus {
   OPEN
@@ -550,6 +558,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   emailMessages       EmailMessage[]
   emailOptOuts        EmailOptOut[]
+  leaguePlanChanges   LeaguePlanChange[]   @relation("LeaguePlanChangedBy")
 
   @@map("users")
 }
@@ -607,6 +616,8 @@ model League {
   cupName           String               @map("cup_name")
   /// Whether the record book shows its Hall of Lame rows (#873): most 2nds, 4ths and last places, the longest drought.
   hallOfLameVisible Boolean              @default(true) @map("hall_of_lame_visible")
+  /// What the league may do (#943): its caps and features come from PLAN_CONFIG. Platinum, which has everything, until a commissioner picks another.
+  plan              PrismaLeaguePlan     @default(PLATINUM)
   createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -620,8 +631,26 @@ model League {
   invitations           LeagueInvitation[]
   squadOwnerInvitations SquadOwnerInvitation[]
   emailMessages         EmailMessage[]
+  planChanges           LeaguePlanChange[]
 
   @@map("leagues")
+}
+
+/// One change to a league's plan (#944): who moved it from which plan to which, and when. Append-only.
+/// Deleting the user who made it keeps the row with nobody named, like platform_runtime_config_history.
+model LeaguePlanChange {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId    String           @map("league_id") @db.Uuid
+  fromPlan    PrismaLeaguePlan @map("from_plan")
+  toPlan      PrismaLeaguePlan @map("to_plan")
+  changedById String?          @map("changed_by_id") @db.Uuid
+  changedAt   DateTime         @default(now()) @map("changed_at") @db.Timestamptz
+
+  league    League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  changedBy User?  @relation("LeaguePlanChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([leagueId, changedAt(sort: Desc)])
+  @@map("league_plan_changes")
 }
 
 model LeagueMembership {

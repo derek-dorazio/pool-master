@@ -212,7 +212,7 @@ describe('settings routes (contract verification)', () => {
     expect(list.statusCode).toBe(200);
     expect(SettingsGroupListSchema.safeParse(list.json()).success).toBe(true);
     expect(list.json<{ groups: SettingsGroup[] }>().groups.map((group) => group.key))
-      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG', 'BUDGET_PRICING_CONFIG']);
+      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG', 'BUDGET_PRICING_CONFIG', 'PLAN_CONFIG']);
     expect(refused.statusCode).toBe(403);
   });
 
@@ -277,6 +277,36 @@ describe('settings routes (contract verification)', () => {
     expect(unknown.statusCode).toBe(404);
     expect(unknown.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_GROUP_NOT_FOUND');
     expect(await getPrisma().platformRuntimeConfig.count()).toBe(0);
+  });
+
+  it('saves the plans settings when no cap falls as the plan rises, and refuses with 400 a cap that falls or a cap of zero, storing nothing', async () => {
+    const rootAdmin = await createTestUser({ displayName: 'Plan Settings Admin', isRootAdmin: true });
+    const before = (await getApp().inject({
+      method: 'GET', url: '/api/v1/platform/settings/PLAN_CONFIG', headers: rootAdmin.headers,
+    })).json<SettingsGroup>();
+    if (before.key !== 'PLAN_CONFIG') throw new Error('Expected the PLAN_CONFIG group.');
+    const save = (caps: object) => getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/platform/settings/PLAN_CONFIG',
+      headers: rootAdmin.headers,
+      payload: { key: 'PLAN_CONFIG', value: { ...before.value, caps: { ...before.value.caps, ...caps } }, expectedUpdatedAt: null },
+    });
+
+    const falling = await save({ ENTRIES_PER_CONTEST: { FREE: 20, PRO: 10, PREMIUM: 100 } });
+    const zero = await save({ SPORTS_LEAGUES_PER_YEAR: { FREE: 0, PRO: 3, PREMIUM: 10 } });
+    const storedAfterRefusals = await getPrisma().platformRuntimeConfig.count();
+    const saved = await save({ ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null } });
+
+    expect(falling.statusCode).toBe(400);
+    expect(falling.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_INVALID');
+    expect(zero.statusCode).toBe(400);
+    expect(storedAfterRefusals).toBe(0);
+    expect(saved.statusCode).toBe(200);
+    expect(SettingsGroupSchema.safeParse(saved.json()).success).toBe(true);
+    expect(saved.json<SettingsGroup>().value).toEqual({
+      ...before.value,
+      caps: { ...before.value.caps, ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null } },
+    });
   });
 
   it('resets a group to its defaults, stored and recorded like any other save', async () => {

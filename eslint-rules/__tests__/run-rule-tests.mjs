@@ -22,6 +22,7 @@ import noInlineThemeStyles from '../no-inline-theme-styles.mjs';
 import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
+import noPlanBranching from '../no-plan-branching.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 
@@ -570,5 +571,30 @@ ruleTester.run('no-sport-branching', noSportBranching, {
     { code: "const isGolf = 'GOLF' == sport;", errors: [{ messageId: 'sportBranch' }] },
     { code: 'switch (event.sport) { default: break; }', errors: [{ messageId: 'sportBranch' }] },
     { code: 'switch (kind) { case Sport.GOLF: break; }', errors: [{ messageId: 'sportBranch' }] },
+  ],
+});
+
+ruleTester.run('no-plan-branching', noPlanBranching, {
+  valid: [
+    // Comparing two plan values is "did the plan change", not a branch on one plan.
+    'const changed = league.plan !== previous.plan;',
+    // Naming a plan as an argument is not a comparison.
+    'const free = entitlements.forPlan(LeaguePlan.FREE);',
+    // Other fields compared to literals are other rules' business.
+    "const open = contest.status === 'OPEN';",
+    'switch (contest.status) { case Status.OPEN: break; }',
+    // Listing every plan is iteration, not a comparison.
+    'const rows = CAPPED_LEAGUE_PLANS.map((plan) => limits[plan]);',
+    'const known = OTHER_LIST.includes(plan);',
+  ],
+  invalid: [
+    { code: 'const paid = LEAGUE_PLANS.indexOf(league.plan) >= 1;', errors: [{ messageId: 'planBranch' }] },
+    { code: 'if (CAPPED_LEAGUE_PLANS.includes(plan)) {}', errors: [{ messageId: 'planBranch' }] },
+    { code: 'if (league.plan === LeaguePlan.FREE) {}', errors: [{ messageId: 'planBranch' }] },
+    { code: 'if (LeaguePlan.PLATINUM !== plan) {}', errors: [{ messageId: 'planBranch' }] },
+    { code: "if (league.plan !== 'PRO') {}", errors: [{ messageId: 'planBranch' }] },
+    { code: 'const paid = rank(plan) >= LeaguePlan.PRO;', errors: [{ messageId: 'planBranch' }] },
+    { code: 'switch (league.plan) { default: break; }', errors: [{ messageId: 'planBranch' }] },
+    { code: 'switch (kind) { case LeaguePlan.FREE: break; }', errors: [{ messageId: 'planBranch' }] },
   ],
 });
