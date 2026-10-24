@@ -2372,7 +2372,7 @@ export interface paths {
         get?: never;
         /**
          * Apply a game's stat lines
-         * @description Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts or is given twice. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.
+         * @description Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts, is given twice, or is below 0 when it is not yards. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.
          */
         put: operations["applyEventGameStatLines"];
         post?: never;

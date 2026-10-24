@@ -17,7 +17,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-24",
-    "gatheredBy": "load-sport-data, the 2026 Stanley Cup Final as played (the Carolina Hurricanes beat the Vegas Golden Knights in six): the field is every skater who dressed in the Final, named and placed by birth country from the NHL's rosters and player pages; ranking is the skater's 2025-26 regular-season Power Play total with the club (2 per goal + assists + shots on goal). Each game's box score (goals, assists, shots on goal) is from the NHL's gamecenter boxscores, cross-checked skater by skater against ESPN's box scores, which agree on every line. A skater with no goal, assist or shot in a game has an empty line.",
+    "gatheredBy": "load-sport-data, the 2026 Stanley Cup Final as played (the Carolina Hurricanes beat the Vegas Golden Knights in six): the field is every skater who dressed in the Final, named and placed by birth country from the NHL's rosters and player pages; ranking is the skater's 2025-26 regular-season Power Play total with the club (2 per goal + assists + shots on goal). Each game's box score (goals, assists, shots on goal) is from the NHL's gamecenter boxscores, cross-checked skater by skater against ESPN's box scores, which agree on every line. A skater with no goal, assist or shot in a game has an empty line, which stores nothing when loaded, so it reads like a skater who did not dress (the score is the same).",
     "sources": [
       {
         "name": "NHL, Stanley Cup Final Game 1 boxscore",

@@ -17,7 +17,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-24",
-    "gatheredBy": "load-sport-data, the 2025 World Series as played (Los Angeles Dodgers beat the Toronto Blue Jays in seven): the field is both clubs' World Series position players, from the MLB Stats API rosters; each game's box score (total bases, runs, RBI, walks, stolen bases) from the MLB Stats API, cross-checked player by player against ESPN's box scores on runs, hits, RBI, home runs and walks, and on each side's total bases and stolen bases, which agree in every game. A player with no plate appearance in a game has no line. Ranking is the player's 2025 regular-season Box Score total.",
+    "gatheredBy": "load-sport-data, the 2025 World Series as played (Los Angeles Dodgers beat the Toronto Blue Jays in seven): the field is both clubs' World Series position players, from the MLB Stats API rosters; each game's box score (total bases, runs, RBI, walks, stolen bases) from the MLB Stats API, cross-checked player by player against ESPN's box scores on runs, hits, RBI, home runs and walks, and on each side's total bases and stolen bases, which agree in every game. A player with no plate appearance in a game has no line; one who batted but counted nothing has an empty line, which stores nothing when loaded, so the two read alike (the score is the same). Ranking is the player's 2025 regular-season Box Score total.",
     "sources": [
       {
         "name": "MLB Stats API, World Series Game 1 box score",

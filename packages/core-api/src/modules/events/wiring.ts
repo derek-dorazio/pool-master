@@ -68,7 +68,7 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
   });
 }
 
-/** The admin finishing order for a finish-position event (#622). */
+/** Each game's box score lines for a stat pool event (#935). */
 export function createStatLineService(prisma: PrismaClient, logger?: FastifyBaseLogger): StatLineService {
   return new StatLineService({
     events: new PrismaSportEventRepository(prisma),
@@ -79,6 +79,7 @@ export function createStatLineService(prisma: PrismaClient, logger?: FastifyBase
   });
 }
 
+/** The admin finishing order for a finish-position event (#622). */
 export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): RaceResultService {
   return new RaceResultService({
     events: new PrismaSportEventRepository(prisma),
