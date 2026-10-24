@@ -115,6 +115,32 @@ Before the apply, list the zone's records to confirm nothing already sits on the
 `www`, `_dmarc` or `bounce` (`aws route53 list-resource-record-sets --hosted-zone-id
 Z020704038X1AEGE6QNM9`). The registrar must point at Route 53's name servers, which QA proves.
 
+### Domains owned and candidates (checked 2026-10-24)
+
+Derek's Route 53 account holds two registered domains, both with a hosted zone and auto-renew on:
+
+| Domain | Expires | Use today |
+|---|---|---|
+| `ultimateofficepoolmanager.com` | 2027-03-28 | QA, and prod per this plan |
+| `primetimecommissioner.com` | 2027-05-02 | nothing yet (registered 2026-05-02) |
+
+Primetime Commissioner is now the marketing brand. Whether prod serves from
+`primetimecommissioner.com` (with the old domain redirecting to it) is an open question for Derek
+before the prod apply. If it does, the hostnames, certificate and SES identity above move to that
+zone.
+
+Availability from whois/RDAP on 2026-10-24 (nothing bought). Worth buying, cheapest first:
+
+- **Protect the brand:** `primetimecommissioner.net`, `.co`, `.app` (`.app` is HTTPS-only).
+- **Short redirect:** `primetimecommish.com` (also `.app`), and `ptcommish.com`.
+- **Old-name redirect:** `ultimateofficepool.com`.
+
+Also free: `theprimetimecommissioner.com`, `primetimecommissioner.club`, `ptcommissioner.com`,
+`ultimateofficepool.net`/`.app`, `ultimatepoolmanager.com`, `theofficepoolmanager.com`,
+`officepoolmanager.app`, `primetimepools.app`, `poolcommish.app`, `clutchcards.app`. Taken:
+`primetimepools.com`, `primetimepool.com`, `officepoolmanager.com`, `poolcommish.com`,
+`commishhq.com`, `clutchcard.com`, `clutchcard.app`, and most short pool/commissioner `.com`s.
+
 ## 4. Email (SES)
 
 - **Identity:** the bare domain, `noreply@ultimateofficepoolmanager.com`, with Easy DKIM, MAIL FROM
