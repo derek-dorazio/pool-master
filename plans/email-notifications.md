@@ -45,7 +45,7 @@ writing the first slice's tickets.
 | Template key | Fires when | Sent to | Notes |
 |---|---|---|---|
 | `LEAGUE_MEMBER_INVITE` | A commissioner invites by email, and again on Resend Invite | The invited address | Inviter, league, league code, optional message, expiry, Join league button |
-| `LEAGUE_JOIN_SUCCESS` | An invitation is accepted | The person who joined | League, their squad's name, League Home button |
+| `LEAGUE_JOIN_SUCCESS` | An invitation is accepted | The person who joined | League, their squad's name, the league's open contests (#903), League Home button |
 | `CONTEST_ENTRY_COMPLETED` | An entry's lineup is submitted for an event in the selection room | The person who submitted (not co-owners) | Lineup by tier and the tiebreaker. Roster contests only: pick'em and survivor submits send nothing, and the tiebreaker is always formatted as golf to-par (since #867: every owner, every entry type, see D3) |
 | `CONTEST_STARTED_SUMMARY` | An `OPEN` contest becomes `ACTIVE` at its cutoff | Active commissioners plus owners of squads with a submitted entry, each once | Event, start time, entry count and **every** entry (no cap), contest link. No "good luck", no leaderboard link, and members with no entry are not told |
 
@@ -145,7 +145,7 @@ decision to the password recovery design.
 |---|---|---|---|---|---|---|---|---|
 | B1 | League invitation | Commissioner invites an address by email; refused for current members | The invited address | At once | Inviter, league, message, expiry, Join league | ✅ `LEAGUE_MEMBER_INVITE` | – | Essential |
 | B2 | League invitation (resent) | Commissioner presses Resend Invite on a pending email invite | The invited address | At once | Same as B1, new expiry | ✅ same template | – | Essential |
-| B3 | Welcome to the league | An invitation is accepted (new squad or a restored one) | The person who joined | At once | League, their squad's name, League Home, the league's open contests if any | 🟡 `LEAGUE_JOIN_SUCCESS` (add open contests) | P2 | Essential |
+| B3 | Welcome to the league | An invitation is accepted (new squad or a restored one) | The person who joined | At once | League, their squad's name, League Home, the league's open contests if any | ✅ `LEAGUE_JOIN_SUCCESS` (open contests added in #903) | P2 | Essential |
 | B4 | Co-owner invitation | Commissioner or squad owner invites an address to co-own a squad; a new address joins on sign-up | The invited address | At once | Who invited them, the squad's name, league, Accept button | ✅ `SQUAD_OWNER_INVITE`, also when an owner is replaced | P1 | Essential |
 | B5 | You were added as a co-owner | Co-owner invite to an address that already has an account (added straight away) | That person | At once | Squad's name, league, League Home | ✅ `SQUAD_OWNER_ADDED`, names who added them | P2 | Essential |
 | B6 | New member joined | An invitation is accepted | The league's commissioners, not the joiner | At once, or daily if more than three in a day | Who joined, their squad's name, member count, Teams and Owners link | | P2 | B |

@@ -20,6 +20,7 @@ import type {
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
+  ContestStatus,
   InvitationStatus,
   InviteType,
   LeagueMembershipStatus,
@@ -29,6 +30,7 @@ import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { LeagueNotFoundError } from './service';
 import {
+  buildContestUrl,
   buildLeagueHomeUrl,
   buildLeagueInviteUrl,
   type EmailLeague,
@@ -581,9 +583,10 @@ export class InvitationService {
       }, 'Skipped league join success email because dependencies are unavailable');
       return;
     }
-    const [recipient, teamName] = await Promise.all([
+    const [recipient, teamName, contests] = await Promise.all([
       this.resolveRecipientUser(input.userId),
       this.resolveUserTeamName(input.league.id, input.userId),
+      this.deps.contests?.findByLeague(input.league.id) ?? [],
     ]);
     if (!recipient) {
       this.logger?.warn({
@@ -609,6 +612,9 @@ export class InvitationService {
           leagueCode: input.league.leagueCode,
           teamName,
           leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.league.leagueCode),
+          openContests: contests
+            .filter((contest) => contest.status === ContestStatus.OPEN)
+            .map((contest) => ({ name: contest.name, url: buildContestUrl(this.appBaseUrl, input.league.leagueCode, contest.id) })),
         },
       });
       this.logger?.info({
