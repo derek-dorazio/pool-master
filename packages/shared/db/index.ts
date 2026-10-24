@@ -140,4 +140,8 @@ export type {
   ContestExpansionState,
   ContestExpansionWrite,
   ContestExpansionWriteResult,
+  LeaguePaymentRecord,
+  LeaguePaymentRepository,
+  PayerPaymentRecord,
+  PaymentPayer,
 } from './billing-ports';

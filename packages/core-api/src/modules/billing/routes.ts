@@ -9,6 +9,7 @@ import type {
   ContestExpansionResponse,
   ExpandContestRequest,
   GrantContestExpansionRequest,
+  LeaguePaymentListResponse,
 } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
@@ -18,6 +19,7 @@ import {
   PrismaContestExpansionRepository,
   PrismaContestRepository,
   PrismaLeagueMembershipRepository,
+  PrismaLeaguePaymentRepository,
   PrismaLeagueRepository,
 } from '../../adapters';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -26,7 +28,9 @@ import { requireAuthUser } from '../../plugins/auth-guard';
 import { requireCommissioner } from '../leagues/permissions';
 import { createContestService } from '../contests/wiring';
 import type { PlanModuleOptions } from '../plans/routes';
+import { toLeaguePaymentListResponse } from '../../mappers/billing.mapper';
 import { ContestExpansionService } from './contest-expansion-service';
+import { PaymentHistoryService } from './payment-history-service';
 
 export interface BillingModuleOptions extends PlanModuleOptions {
   /** BILLING_CONFIG as it stands now. */
@@ -53,6 +57,27 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
     entryWindow: createContestService(prisma, fastify.log, { planEntitlements: opts.planEntitlements }),
     readConfig: opts.readBillingConfig,
     logger: fastify.log,
+  });
+
+  const history = new PaymentHistoryService({ payments: new PrismaLeaguePaymentRepository(prisma), logger: fastify.log });
+
+  fastify.get('/payments', {
+    schema: {
+      tags: ['Billing'],
+      summary: 'List a league\'s payment history',
+      description:
+        'Every payment made in the league, newest first (#987): date, amount in US cents, what it was for, its contest and who paid. While payments are off, each expansion is a $0 line that says it was free; a root admin\'s gift is a $0 line with its reason. No card data is kept. Commissioners and root admins only.',
+      operationId: 'listLeaguePayments',
+      response: {
+        200: schemaRef('LeaguePaymentListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: notFound,
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: async (request: FastifyRequest<{ Params: { id: string } }>, _reply: FastifyReply): Promise<LeaguePaymentListResponse> =>
+      toLeaguePaymentListResponse(await history.listForLeague(request.params.id)),
   });
 
   fastify.get('/contests/:contestId/expansion', {

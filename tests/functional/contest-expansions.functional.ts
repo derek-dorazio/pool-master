@@ -1,13 +1,17 @@
 import {
+  acceptInvitation,
   enterContest,
   expandContest,
+  generateInviteLink,
   getContest,
   getContestExpansion,
   grantContestExpansion,
+  listLeaguePayments,
+  listUserPayments,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
 import { LeaguePaymentKind, LeaguePlan, SelectionType } from '@poolmaster/shared/domain';
-import { ContestExpansionResponseSchema } from '@poolmaster/shared/dto';
+import { ContestExpansionResponseSchema, LeaguePaymentListResponseSchema, UserPaymentListResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -165,5 +169,55 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect(await paymentLines(league.id)).toEqual([
       { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
     ]);
+  });
+
+  it('lists the league\'s payment history newest first to its commissioners and root admins only, naming no payer on a Poolmaster grant', async () => {
+    const { commissioner, league, contestId } = await freeContest('Ledger House');
+    const admin = await buildRegisteredUser({ firstName: 'Ledger', lastName: 'Admin' });
+    await promoteToRootAdmin(admin);
+    const outsider = await buildRegisteredUser({ displayName: 'Ledger Peeker' });
+    const member = await buildRegisteredUser({ displayName: 'Ledger Member' });
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    const path = { id: league.id, contestId };
+    await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
+    await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 300, reason: 'Office party' } });
+
+    const byCommissioner = LeaguePaymentListResponseSchema.parse(expectDefined((await listLeaguePayments({ client: commissioner.client, path: { id: league.id } })).data));
+    const byAdmin = await listLeaguePayments({ client: admin.client, path: { id: league.id } });
+    const byOutsider = await listLeaguePayments({ client: outsider.client, path: { id: league.id } });
+    const byMember = await listLeaguePayments({ client: member.client, path: { id: league.id } });
+
+    expect(byCommissioner.payments.map(({ amountCents, description, contestId: lineContestId, payer }) => ({ amountCents, description, contestId: lineContestId, payer }))).toEqual([
+      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Poolmaster: Office party', contestId, payer: null },
+      { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contestId, payer: { id: commissioner.userId, name: commissioner.displayName } },
+    ]);
+    expect(byAdmin.data?.payments).toHaveLength(2);
+    expect(byOutsider.response.status).toBe(403);
+    // Members never see money (plans/payments.md §7).
+    expect(byMember.response.status).toBe(403);
+  });
+
+  it('lists a user\'s own payments on their account, and nobody else\'s, leaving a root admin\'s grants off the admin\'s list', async () => {
+    const first = await freeContest('Purse One');
+    const other = await buildRegisteredUser({ displayName: 'Purse Snoop' });
+    const admin = await buildRegisteredUser({ displayName: 'Purse Giver' });
+    await promoteToRootAdmin(admin);
+    await expandContest({ client: first.commissioner.client, path: { id: first.league.id, contestId: first.contestId }, body: { entriesPerContest: 100 } });
+    await grantContestExpansion({ client: admin.client, path: { id: first.league.id, contestId: first.contestId }, body: { entriesPerContest: 400, reason: 'Big office' } });
+
+    const mine = UserPaymentListResponseSchema.parse(expectDefined((await listUserPayments({ client: first.commissioner.client, path: { userId: 'me' } })).data));
+    const snooped = await listUserPayments({ client: other.client, path: { userId: first.commissioner.userId } });
+    const theirOwn = await listUserPayments({ client: other.client, path: { userId: 'me' } });
+
+    expect(mine.payments).toEqual([expect.objectContaining({
+      amountCents: 0,
+      description: 'Purse One Picks: up to 100 entries, free while payments are off',
+      league: { id: first.league.id, name: first.league.name, leagueCode: first.league.leagueCode },
+    })]);
+    expect(snooped.response.status).toBe(403);
+    expect(theirOwn.data?.payments).toEqual([]);
+    // A grant is Poolmaster's gift, not a payment the admin made.
+    expect((await listUserPayments({ client: admin.client, path: { userId: 'me' } })).data?.payments).toEqual([]);
   });
 });
