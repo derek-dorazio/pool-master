@@ -202,6 +202,9 @@ taken from it, and what a league moves to at renewal if its commissioner does no
 
 ### Billing periods and what sells first (Derek, 2026-10-24)
 
+*Superseded by* At launch: everyone on Premium, capped, with per-contest expansions *above:
+phase 1 sells expansions on Premium (100 entries on day 1), plans come in phase 2.*
+
 - **Plans are sold annual or monthly**, monthly at a premium: $99 a year or $9.99 a month
   as the example. Payments are designed in `plans/payments.md` (#931); clicking a plan on the
   commissioner comparison page leads into payment.

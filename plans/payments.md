@@ -24,7 +24,8 @@ Design only; nothing here is built, and the build is deferred until Derek's go. 
   ($99 a year or $9.99 a month as the example). Designed in Part B, built when Derek wants
   them, on the same Stripe customer, webhook and payment history.
 - **Long-term caps** (Derek 2026-10-24): Platinum is capped at 1000 entries per contest
-  rather than unlimited; Premium returns to 100 once subscriptions are sold.
+  rather than unlimited; if Premium's cap is ever lowered (for example to 20), it goes back
+  to 100 once subscriptions are sold.
 - **Stripe tells us what happened by webhook.** One endpoint, signature checked, each event
   stored once by its id so a repeat does nothing.
 - **Our own payment history** for commissioners: date, amount, a description ("Masters
@@ -103,10 +104,28 @@ Plans page. Almost all of it is plan settings that already exist; only two thing
   Free 20 / 1, Pro 50 / 3, Premium 100 / unlimited, Platinum 1000 / unlimited.
   These are the original long-term numbers, with Premium given every sports league so every
   league can try every sport. Caps must not fall as the plan rises, which these satisfy.
-- **Code change 1: Platinum gets a cap.** Today Platinum is hard-wired to unlimited
-  (`CAPPED_LEAGUE_PLANS` leaves it out, and the Plans page shows it fixed). Platinum joins the
-  capped plans, starting at 1000 entries per contest; the "never falls as the plan rises"
-  check still guards it.
+- **Code change 1: Platinum gets a cap.** Today "Platinum is unlimited" lives in several
+  places: `CappedLeaguePlan` and `CAPPED_LEAGUE_PLANS` in the shared enums, `PlanCapLimits`
+  and `findFallingPlanLimit`, the Platinum branch in `resolvePlanEntitlements`,
+  `PlanConfigSchema` (no Platinum key under either cap), and the Plans page, which shows
+  Platinum fixed with "Platinum has no limits and every feature". Every plan becomes capped:
+  caps are `Record<LeaguePlan, number | null>` over `LEAGUE_PLANS`, and the
+  `CappedLeaguePlan` split is deleted as dead code. The "never falls as the plan rises" check
+  covers Platinum too.
+- **The saved settings row.** QA's stored `PLAN_CONFIG` has no Platinum values, so it would
+  stop validating. The schema fills a missing Platinum value from the default when it loads,
+  with a test proving an old row still loads; the next save writes it.
+- **The day 1 numbers are the code defaults.** `PLAN_SETTINGS.defaults()` becomes the day 1
+  caps above, with every feature at Premium or lower (today Premium has 10 sports leagues,
+  and the all-years summary and record book start at Platinum). Production then starts right
+  with no manual save. QA keeps its saved row, so QA needs one save on the Plans page.
+- **Order of the move.** On QA, change the plan settings first, then move the leagues; the
+  other way round, every league would lose the all-years summary and record book in between.
+  The migration moves **only leagues on Platinum**; a league whose commissioner picked Free or
+  Pro stays there. Its log row has no `changedById` (the change log has no `source` column
+  until phase 2, so it can't say "root admin" yet).
+- **Copy.** "Every plan is free for now" and the Plans page's Platinum wording change to
+  match Platinum showing as "Coming soon".
 - **Code change 2: contest expansions** (§4) raise one contest's cap above its plan's.
 - **Day 1 in production** (Q4): payments built, but expansions not offered (`paymentsEnabled`
   off), so nothing about money shows. On QA the switch is on in test mode, so the whole flow
@@ -124,9 +143,13 @@ An **expansion** is a one-time purchase that raises one contest's entry cap.
 
 - **Bands** (Q5), above whatever the plan allows: up to 50 entries for $10, up to 100 for
   $20, up to 200 for $30, up to 500 for $40 (Derek 2026-10-24), offered only where higher
-  than the contest's cap. A contest
-  can step up a band later by paying the difference. The bands and their Stripe Prices live
-  in the billing settings (§9); the amounts shown on screen are read from Stripe.
+  than the contest's cap. A contest can step up a band later by paying the difference
+  against the band it **bought**, not its plan cap: a Premium contest at 100 that buys 200
+  pays the full $30; one that bought 200 and moves to 500 pays $10. Stripe has no Price for a
+  difference, so a step up is charged as an inline `price_data` amount worked out from the two
+  band Prices (the restricted key must allow it). The bands and their Stripe Prices live in
+  the billing settings (§9); amounts shown on screen are read from Stripe and cached for a few
+  minutes.
 - **The cap that applies** is the higher of the league's plan cap and the contest's
   expansion. `PlanEntitlementsService` works it out, so it stays the only place that decides
   caps; the existing counted insert (409 `CONTEST_FULL`) checks it unchanged.
@@ -164,8 +187,21 @@ An **expansion** is a one-time purchase that raises one contest's entry cap.
    and refreshes the contest until the new cap shows, usually a second or two. It never
    trusts the query string to grant anything.
 
-**Backstop**: two different commissioners can still pay for the same contest in a race. The
-webhook keeps the higher band and refunds the other in full, and emails its payer.
+**When the payment lands, the contest may have changed.** The checks in step 2 run when
+checkout starts; the webhook can arrive later.
+
+- **A paid session is always recorded.** The money is taken, so the webhook never rejects
+  it. If the contest has stopped taking entries meanwhile, the expansion is recorded anyway;
+  it is harmless.
+- **The contest no longer exists** (deleted): the payment is recorded with no contest and
+  flagged "Needs refund" on the root admin page, so it is never just a log line.
+- **Two payments for one contest** (a race between commissioners): the higher band is kept;
+  for the same band, the one Stripe created first is kept. The other is refunded in full and
+  its payer emailed.
+- **The cap is read inside the entry lock.** The contest's entry counter already reads the
+  cap inside its lock; it gets the expansion there too, from `PlanEntitlementsService`, never
+  passed in from outside. An expansion only ever raises the cap, so an expansion landing
+  mid-entry can only let one more in, never wrongly refuse.
 
 ## 6. Webhooks and idempotency
 
@@ -188,15 +224,17 @@ authority, like the SES events endpoint. It serves both phases.
   the row and answers 200 without doing anything twice. If anything fails, the event row
   rolls back with the effect and the handler answers 500 so Stripe retries. The id is never
   stored first and processed later, which would lose the effect on a crash.
-- **Unknown leagues, contests and customers.** An event for something this database doesn't
-  know is stored, logged and answered 200, so Stripe doesn't retry for three days. On QA this
+- **Unknown leagues and customers.** An event for something this database doesn't know is
+  stored, logged and answered 200 (a paid session for a deleted contest is the exception
+  above), so Stripe doesn't retry for three days. On QA this
   is normal after "Reset QA database", because Stripe's test data survives the reset.
 - **Fast answer.** The handler does its database work and returns; emails go through the
   outbox as always, never sent inside the webhook.
 - **Events in phase 1**: `checkout.session.completed` (and
   `checkout.session.async_payment_succeeded` if a slower payment method is ever enabled),
-  `charge.refunded` (records the refund in the history; the expansion stays). Anything else is stored and
-  ignored. Phase 2 adds the subscription events and a locked re-read (§17).
+  `charge.refunded` (records the refund in the history; the expansion stays),
+  `charge.dispute.created` and `charge.dispute.closed` (records the dispute and its outcome in
+  the history; the expansion stays). Anything else is stored and ignored. Phase 2 adds the subscription events and a locked re-read (§17).
 - **Daily check.** A daily job lists the last few days of paid Checkout Sessions from Stripe
   and applies any the webhook missed, through the same code. This covers a webhook lost for
   longer than Stripe retries (an outage on our side).
@@ -236,7 +274,8 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
   design (Q10). Stripe Tax can be switched on later in the dashboard (about 0.5% per
   payment) and then calculates, collects and reports it; checkout just shows a tax line.
 - **Disputes (chargebacks).** A payer's bank can reverse a payment; Stripe charges a fee
-  (about $15) and emails you. The webhook treats it like a refund. Rare at these amounts.
+  (about $15) and emails you. You answer it in the Stripe dashboard; the webhook only records
+  it in the history (§6). Rare at these amounts.
 - **Before live payments**: Terms of Service with the refund rules, and a Privacy Policy
   naming Stripe (#921, which is waiting); a Stripe account verified with your business
   details and bank account; the PCI self-assessment (SAQ A, the short one for hosted
@@ -324,15 +363,17 @@ All deferred until Derek's go (2026-10-24), filed under #931.
    QA and the `BILLING_CONFIG` group, switch off. No behaviour change.
 2. **Launch plan setup** (#986). Platinum gets a cap (1000), the default plan becomes Premium,
    existing leagues move to Premium with a renewal date six months out, and Platinum shows as
-   "Coming soon" in the picker. The day 1 caps and the features' "starts at" are then set on
-   the Plans page by the root admin. Can be built before any payments.
+   "Coming soon" in the picker. Removes the `CappedLeaguePlan` split, fills a missing Platinum
+   value in the saved settings, puts the day 1 numbers in the code defaults, and moves only
+   Platinum leagues, after QA's settings are saved (§3). Can be built before any payments.
 3. **Model** (#980). Expansions, billing, events and payments tables; entitlements combine
-   plan and expansion. No behaviour change.
+   plan and expansion. No behaviour change, because no expansion rows exist yet.
 4. **Checkout and webhook** (#981). The `billing` module, expansion checkout, the webhook,
-   the daily check, prices route, "Finishing your payment". Switch on in QA.
+   the daily check, prices route, "Finishing your payment". Switch stays off.
 5. **Commissioner screens and history** (#987). The full notice and Expand choice, payment history
    on league settings and Account, the two emails, root admin payments and grants,
-   `docs/PAYMENTS.md` runbook (refunds, disputes, rotating keys).
+   `docs/PAYMENTS.md` runbook (refunds, disputes, rotating keys). Switch on in QA here, once
+   there is an Expand button to click, and run the manual test-mode checklist.
 6. **Going live** (#985). With production (#917) and Terms (#921): live keys and Prices,
    webhook registered, Stripe Tax decision. Expansions stay off in production until you
    decide to lower the cap (§3).
