@@ -74,9 +74,11 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
     squadMemberships: world.squadMemberships,
     users: world.users,
     contests: {
-      findByLeague: async (leagueId: string) => {
+      findOpenByLeague: async (leagueId: string) => {
         if (options.contestsFail) throw new Error('contest lookup timed out');
-        return (options.contests ?? []).filter((contest) => contest.leagueId === leagueId);
+        return (options.contests ?? [])
+          .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
+          .map(({ id, name }) => ({ id, name }));
       },
     },
     ...(options.mail ? { email: emailServiceOver(options.mail) } : {}),

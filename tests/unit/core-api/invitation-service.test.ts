@@ -34,6 +34,9 @@ import { asPrismaClient } from '../../support/prisma-double';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
 import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
+/** A league with no open contests, for the welcome email's list. */
+const NO_CONTESTS = { findOpenByLeague: async () => [] };
+
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
 ): LeagueInvitationRepository {
@@ -154,6 +157,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       const result = await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -184,6 +188,7 @@ describe('InvitationService', () => {
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com/',
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       const result = await service.sendEmailInvitations({
@@ -229,6 +234,7 @@ describe('InvitationService', () => {
         email: emailServiceOver(mailDelivery, outbox),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       const result = await service.sendEmailInvitations({
@@ -255,6 +261,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
 
       await expect(service.sendEmailInvitations({
@@ -277,6 +284,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       const result = await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -294,6 +302,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -312,6 +321,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await service.generateInviteLink({
         leagueId: 'league-1',
@@ -329,6 +339,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await service.generateInviteLink({
         leagueId: 'league-1',
@@ -357,6 +368,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
 
       const listed = await service.listOutstandingInvitations('league-1');
@@ -388,6 +400,7 @@ describe('InvitationService', () => {
           })),
         }),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
         email: mailDelivery ? emailServiceOver(mailDelivery) : undefined,
         appBaseUrl: 'https://app.example.com',
       });
@@ -492,6 +505,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await service.revokeInviteLink('league-1', 'abc123');
       expect(invitationRepo.update).toHaveBeenCalledWith(invitation.id, {
@@ -511,6 +525,7 @@ describe('InvitationService', () => {
           memberships: createMockMembershipRepo(),
           leagues: createMockLeagueRepo(),
           users: fakeUserRepo(),
+          contests: NO_CONTESTS,
         });
         await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toMatchObject({
           code: 'LEAGUE_INVITATION_NOT_CANCELLABLE',
@@ -525,6 +540,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.revokeInviteLink('league-1', 'nope')).rejects.toThrow(
         InvitationNotFoundError,
@@ -541,6 +557,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toThrow(
         InvitationNotFoundError,
@@ -570,6 +587,7 @@ describe('InvitationService', () => {
         squadMemberships: squadMembershipRepo,
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
       await service.acceptInvitation('valid-code', 'new-user');
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
@@ -611,6 +629,7 @@ describe('InvitationService', () => {
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       await service.acceptInvitation('valid-code', 'new-user');
@@ -658,6 +677,7 @@ describe('InvitationService', () => {
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         email: emailServiceOver(mailDelivery),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       await expect(service.acceptInvitation('valid-code', 'existing-user')).rejects.toThrow(
@@ -690,6 +710,7 @@ describe('InvitationService', () => {
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       await expect(service.acceptInvitation('valid-code', 'new-user')).resolves.toEqual(
@@ -752,6 +773,7 @@ describe('InvitationService', () => {
         squadMemberships: squadMembershipRepo,
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       await service.acceptInvitation('valid-code', 'returning-user');
@@ -778,6 +800,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.acceptInvitation('unknown', 'user-1')).rejects.toThrow(
         InvitationNotFoundError,
@@ -794,6 +817,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -813,6 +837,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -838,6 +863,7 @@ describe('InvitationService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -859,6 +885,7 @@ describe('InvitationService', () => {
         memberships: createMockMembershipRepo(),
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
+        contests: NO_CONTESTS,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -888,6 +915,7 @@ describe('InvitationService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
+        contests: NO_CONTESTS,
       });
 
       await service.acceptInvitation('code', 'user-1');

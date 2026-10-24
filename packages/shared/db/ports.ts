@@ -317,6 +317,8 @@ export interface ParticipantProviderMappingRepository {
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
+  findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
    * The different sports leagues of the league's contests of one season (#947), drafts included
    * (a deleted contest is gone, so it no longer counts): what the plan's sports leagues a year counts.

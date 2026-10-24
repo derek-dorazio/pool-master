@@ -20,7 +20,6 @@ import type {
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
-  ContestStatus,
   InvitationStatus,
   InviteType,
   LeagueMembershipStatus,
@@ -89,7 +88,7 @@ export interface InvitationServiceDeps {
   squadMemberships?: SquadMembershipRepository;
   users: UserRepository;
   /** The league's open contests, listed in the welcome email. */
-  contests?: Pick<ContestRepository, 'findByLeague'>;
+  contests: Pick<ContestRepository, 'findOpenByLeague'>;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
   email?: EmailService;
@@ -583,10 +582,10 @@ export class InvitationService {
       }, 'Skipped league join success email because dependencies are unavailable');
       return;
     }
-    const [recipient, teamName, contests] = await Promise.all([
+    const [recipient, teamName, openContests] = await Promise.all([
       this.resolveRecipientUser(input.userId),
       this.resolveUserTeamName(input.league.id, input.userId),
-      this.deps.contests?.findByLeague(input.league.id) ?? [],
+      this.resolveOpenContests(input.invitationId, input.league),
     ]);
     if (!recipient) {
       this.logger?.warn({
@@ -612,9 +611,7 @@ export class InvitationService {
           leagueCode: input.league.leagueCode,
           teamName,
           leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.league.leagueCode),
-          openContests: contests
-            .filter((contest) => contest.status === ContestStatus.OPEN)
-            .map((contest) => ({ name: contest.name, url: buildContestUrl(this.appBaseUrl, input.league.leagueCode, contest.id) })),
+          openContests,
         },
       });
       this.logger?.info({
@@ -635,6 +632,23 @@ export class InvitationService {
           error: err instanceof Error ? err.message : String(err),
         },
       }, 'Failed to queue league join success email');
+    }
+  }
+
+  /**
+   * The league's open contests for the welcome email, linked. The member has already joined, so a
+   * failed lookup is logged and the welcome goes without them rather than failing the join.
+   */
+  private async resolveOpenContests(invitationId: string, league: EmailLeague): Promise<Array<{ name: string; url: string }>> {
+    try {
+      return (await this.deps.contests.findOpenByLeague(league.id))
+        .map((contest) => ({ name: contest.name, url: buildContestUrl(this.appBaseUrl, league.leagueCode, contest.id) }));
+    } catch (err) {
+      this.logger?.error({
+        action: 'leagueInvitation.joinSuccessEmail.openContestsFailed',
+        data: { invitationId, leagueId: league.id, error: err instanceof Error ? err.message : String(err) },
+      }, 'Failed to look up open contests for the league join success email; sending it without them');
+      return [];
     }
   }
 
