@@ -14,6 +14,7 @@ import '@poolmaster/shared/dto/leagues.dto';
 // Registers ErrorEnvelope, which this module's error responses $ref (#192).
 import '@poolmaster/shared/dto/errors.dto';
 import {
+  PrismaContestRepository,
   PrismaLeagueRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueInvitationRepository,
@@ -46,6 +47,7 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
     squads: squadRepo,
     squadMemberships: squadMembershipRepo,
     users: userRepo,
+    contests: new PrismaContestRepository(prisma),
     prisma,
     logger: fastify.log,
     email,
