@@ -473,6 +473,36 @@ export interface EventReadyForContestsEmailData {
   createContestUrl: string;
 }
 
+/**
+ * When a "New member joined" email goes (#903 B6): at once for each of the first three people to
+ * join on a day (US Eastern), and the rest of a busy day together the next day.
+ */
+export const MemberJoinedTiming = {
+  AT_ONCE: 'AT_ONCE',
+  NEXT_DAY: 'NEXT_DAY',
+} as const;
+export type MemberJoinedTiming = (typeof MemberJoinedTiming)[keyof typeof MemberJoinedTiming];
+
+/** One person in a "New member joined" email. */
+export interface JoinedMember {
+  name: string;
+  /** Their squad's name; null when they have none yet. */
+  squadName: string | null;
+}
+
+/** B6: people joined the league, for its commissioners. */
+export interface LeagueMemberJoinedEmailData {
+  userName: string;
+  leagueName: string;
+  timing: MemberJoinedTiming;
+  /** Who joined, in the order they joined: one at once, or every one after the third the next day. */
+  joined: JoinedMember[];
+  /** The league's active members now, commissioners included. */
+  memberCount: number;
+  /** The league's Members and owners page. */
+  membersUrl: string;
+}
+
 /** Where the league stands on an event in its weekly digest. */
 export const DigestEventState = {
   /** The league already has a contest on it. */
@@ -601,6 +631,7 @@ export interface SystemEmailTemplateDataByKey {
   EMAIL_TEST: EmailTestEmailData;
   YEAR_IN_REVIEW: YearInReviewEmailData;
   EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
+  LEAGUE_MEMBER_JOINED: LeagueMemberJoinedEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -680,6 +711,7 @@ export interface EmailTemplateScopeByKey {
   EMAIL_TEST: typeof EmailTemplateScope.PLATFORM;
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
   EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
+  LEAGUE_MEMBER_JOINED: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -890,6 +922,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     sendWithinMs: null,
     render: renderEventWeeklyDigestEmail,
   },
+  LEAGUE_MEMBER_JOINED: {
+    category: EmailCategory.COMMISSIONER_UPDATES,
+    planFeature: PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderLeagueMemberJoinedEmail,
+  },
 };
 
 function renderLeagueMemberInviteEmail(
@@ -970,6 +1010,50 @@ function renderLeagueJoinSuccessEmail(
     title: 'You are in',
     bodyBlocks,
     textLines,
+  });
+}
+
+function joinedMemberLine(member: JoinedMember): string {
+  return member.squadName === null ? member.name : `${member.name} (${member.squadName})`;
+}
+
+function renderLeagueMemberJoinedEmail(
+  data: LeagueMemberJoinedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const members = data.memberCount === 1 ? '1 member' : `${data.memberCount} members`;
+  // An email sent at once is about the one join that sent it.
+  const single = data.timing === MemberJoinedTiming.AT_ONCE;
+  const first = data.joined[0];
+  const subject = single
+    ? `${first.name} joined ${data.leagueName}`
+    : `${data.joined.length} more joined ${data.leagueName}`;
+  const intro = single
+    ? `${first.name} joined ${data.leagueName}${first.squadName === null ? '' : ` as ${first.squadName}`}.`
+    : `After the first three, ${data.joined.length === 1 ? 'one more person' : `${data.joined.length} more people`} joined ${data.leagueName} yesterday:`;
+  const total = `The league has ${members} now.`;
+  return buildMessage(context, {
+    templateKey: 'LEAGUE_MEMBER_JOINED',
+    subject,
+    preheader: `${intro} ${total}`,
+    title: 'New member',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(escapeHtml(intro)),
+      ...(single ? [] : [paragraph(data.joined.map((member) => escapeHtml(joinedMemberLine(member))).join('<br>'))]),
+      paragraph(escapeHtml(total)),
+      button('Members and owners', data.membersUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      intro,
+      ...(single ? [] : data.joined.map(joinedMemberLine)),
+      '',
+      total,
+      '',
+      `Members and owners: ${data.membersUrl}`,
+    ],
   });
 }
 

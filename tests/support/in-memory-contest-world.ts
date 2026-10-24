@@ -527,6 +527,9 @@ export class InMemoryContestWorld {
       findByUser: async (userId) =>
         [...this.memberships.values()].filter((row) => row.userId === userId),
       countActiveByLeagues: async () => new Map(),
+      findActiveJoinedSince: async (since) => [...this.memberships.values()]
+        .filter((row) => row.status === LeagueMembershipStatus.ACTIVE && row.joinedAt >= since)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime() || left.id.localeCompare(right.id)),
       findByLeagueAndUser: async (leagueId, userId) =>
         [...this.memberships.values()].find((row) =>
           row.leagueId === leagueId && row.userId === userId) ?? null,

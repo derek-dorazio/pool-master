@@ -1024,6 +1024,7 @@
                 "EMAIL_EVENT_READY_FOR_CONTESTS",
                 "EMAIL_CONTEST_NOT_OPEN",
                 "EMAIL_YEAR_IN_REVIEW",
+                "EMAIL_LEAGUE_MEMBER_JOINED",
                 "CUP_STANDINGS",
                 "CUP_CROWNING",
                 "CHAMPIONSHIP",
@@ -1104,6 +1105,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -3162,6 +3164,7 @@
                     "EMAIL_EVENT_READY_FOR_CONTESTS",
                     "EMAIL_CONTEST_NOT_OPEN",
                     "EMAIL_YEAR_IN_REVIEW",
+                    "EMAIL_LEAGUE_MEMBER_JOINED",
                     "CUP_STANDINGS",
                     "CUP_CROWNING",
                     "CHAMPIONSHIP",
@@ -3733,6 +3736,7 @@
                         "EMAIL_EVENT_READY_FOR_CONTESTS",
                         "EMAIL_CONTEST_NOT_OPEN",
                         "EMAIL_YEAR_IN_REVIEW",
+                        "EMAIL_LEAGUE_MEMBER_JOINED",
                         "CUP_STANDINGS",
                         "CUP_CROWNING",
                         "CHAMPIONSHIP",
@@ -3944,6 +3948,7 @@
                         "EMAIL_EVENT_READY_FOR_CONTESTS",
                         "EMAIL_CONTEST_NOT_OPEN",
                         "EMAIL_YEAR_IN_REVIEW",
+                        "EMAIL_LEAGUE_MEMBER_JOINED",
                         "CUP_STANDINGS",
                         "CUP_CROWNING",
                         "CHAMPIONSHIP",
@@ -4449,6 +4454,7 @@
                           "EMAIL_EVENT_READY_FOR_CONTESTS",
                           "EMAIL_CONTEST_NOT_OPEN",
                           "EMAIL_YEAR_IN_REVIEW",
+                          "EMAIL_LEAGUE_MEMBER_JOINED",
                           "CUP_STANDINGS",
                           "CUP_CROWNING",
                           "CHAMPIONSHIP",
@@ -28261,7 +28267,8 @@
           "PASSWORD_CHANGED",
           "EMAIL_TEST",
           "YEAR_IN_REVIEW",
-          "EVENT_WEEKLY_DIGEST"
+          "EVENT_WEEKLY_DIGEST",
+          "LEAGUE_MEMBER_JOINED"
         ],
         "description": "A system email template."
       },
@@ -28314,7 +28321,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 23,
-            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
           },
           "templates": {
             "type": "object",
@@ -28375,6 +28382,10 @@
                 "type": "boolean",
                 "description": "Whether this email is sent."
               },
+              "LEAGUE_MEMBER_JOINED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
               "CONTEST_NOT_OPEN": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
@@ -28403,6 +28414,7 @@
               "EVENT_COMING_UP",
               "EVENT_READY_FOR_CONTESTS",
               "EVENT_WEEKLY_DIGEST",
+              "LEAGUE_MEMBER_JOINED",
               "CONTEST_NOT_OPEN",
               "EVENT_STILL_DRAFT",
               "YEAR_IN_REVIEW"
@@ -28791,6 +28803,16 @@
                 ],
                 "description": "The first plan that has the feature; every plan above it has it too."
               },
+              "EMAIL_LEAGUE_MEMBER_JOINED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
               "CUP_STANDINGS": {
                 "type": "string",
                 "enum": [
@@ -28884,6 +28906,7 @@
               "EMAIL_EVENT_READY_FOR_CONTESTS",
               "EMAIL_CONTEST_NOT_OPEN",
               "EMAIL_YEAR_IN_REVIEW",
+              "EMAIL_LEAGUE_MEMBER_JOINED",
               "CUP_STANDINGS",
               "CUP_CROWNING",
               "CHAMPIONSHIP",
@@ -30248,7 +30271,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -30309,6 +30332,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "LEAGUE_MEMBER_JOINED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -30337,6 +30364,7 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
+                      "LEAGUE_MEMBER_JOINED",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -30406,7 +30434,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -30467,6 +30495,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "LEAGUE_MEMBER_JOINED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -30495,6 +30527,7 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
+                      "LEAGUE_MEMBER_JOINED",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -30998,6 +31031,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_LEAGUE_MEMBER_JOINED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -31091,6 +31134,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -31316,6 +31360,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_LEAGUE_MEMBER_JOINED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -31409,6 +31463,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -32112,7 +32167,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -32173,6 +32228,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "LEAGUE_MEMBER_JOINED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -32201,6 +32260,7 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
+                            "LEAGUE_MEMBER_JOINED",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -32270,7 +32330,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -32331,6 +32391,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "LEAGUE_MEMBER_JOINED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -32359,6 +32423,7 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
+                            "LEAGUE_MEMBER_JOINED",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -32862,6 +32927,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_LEAGUE_MEMBER_JOINED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -32955,6 +33030,7 @@
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
                             "EMAIL_YEAR_IN_REVIEW",
+                            "EMAIL_LEAGUE_MEMBER_JOINED",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -33180,6 +33256,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_LEAGUE_MEMBER_JOINED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -33273,6 +33359,7 @@
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
                             "EMAIL_YEAR_IN_REVIEW",
+                            "EMAIL_LEAGUE_MEMBER_JOINED",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -33634,7 +33721,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -33695,6 +33782,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "LEAGUE_MEMBER_JOINED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -33723,6 +33814,7 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
+                      "LEAGUE_MEMBER_JOINED",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -34068,6 +34160,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_LEAGUE_MEMBER_JOINED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -34161,6 +34263,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -34836,7 +34939,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -34897,6 +35000,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "LEAGUE_MEMBER_JOINED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -34925,6 +35032,7 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
+                      "LEAGUE_MEMBER_JOINED",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -34994,7 +35102,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -35055,6 +35163,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "LEAGUE_MEMBER_JOINED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -35083,6 +35195,7 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
+                      "LEAGUE_MEMBER_JOINED",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -35558,6 +35671,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_LEAGUE_MEMBER_JOINED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -35651,6 +35774,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -35876,6 +36000,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_LEAGUE_MEMBER_JOINED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -35969,6 +36103,7 @@
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
                       "EMAIL_YEAR_IN_REVIEW",
+                      "EMAIL_LEAGUE_MEMBER_JOINED",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -36644,7 +36779,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -36705,6 +36840,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "LEAGUE_MEMBER_JOINED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -36733,6 +36872,7 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
+                            "LEAGUE_MEMBER_JOINED",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -36802,7 +36942,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -36863,6 +37003,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "LEAGUE_MEMBER_JOINED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -36891,6 +37035,7 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
+                            "LEAGUE_MEMBER_JOINED",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -37366,6 +37511,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_LEAGUE_MEMBER_JOINED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -37459,6 +37614,7 @@
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
                             "EMAIL_YEAR_IN_REVIEW",
+                            "EMAIL_LEAGUE_MEMBER_JOINED",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -37684,6 +37840,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_LEAGUE_MEMBER_JOINED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -37777,6 +37943,7 @@
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
                             "EMAIL_YEAR_IN_REVIEW",
+                            "EMAIL_LEAGUE_MEMBER_JOINED",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",

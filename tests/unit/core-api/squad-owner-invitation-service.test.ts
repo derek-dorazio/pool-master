@@ -28,6 +28,7 @@ import { mockFn } from '../../support/mock-fn';
 import { emailServiceInto } from '../../support/email-service';
 
 const APP_BASE_URL = 'https://app.example.test';
+const NOBODY_TOLD = { tellJoined: async () => undefined };
 
 function createMembershipRepo(
   overrides: Partial<LeagueMembershipRepository> = {},
@@ -194,6 +195,7 @@ describe('SquadOwnerInvitationService', () => {
       users,
       prisma: asPrismaClient(prisma),
       email: emailServiceInto(),
+      memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
     }));
 
@@ -238,6 +240,7 @@ describe('SquadOwnerInvitationService', () => {
       users,
       prisma: asPrismaClient(prisma),
       email: emailServiceInto(),
+      memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
     }));
 
@@ -312,6 +315,7 @@ describe('SquadOwnerInvitationService', () => {
           users: fakeUserRepo({ findByEmail: jest.fn().mockResolvedValue(options.existingUser ?? null) }),
           prisma: asPrismaClient(createPrisma()),
           email: emailServiceInto(),
+          memberJoined: NOBODY_TOLD,
           appBaseUrl: APP_BASE_URL,
         })),
       };
@@ -414,6 +418,7 @@ describe('SquadOwnerInvitationService', () => {
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       prisma: asPrismaClient(createPrisma()),
       email: emailServiceInto(),
+      memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
     }));
 
@@ -478,6 +483,7 @@ describe('SquadOwnerInvitationService', () => {
       users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(buildUser()) }),
       prisma: asPrismaClient(createPrisma()),
       email: emailServiceInto(),
+      memberJoined: NOBODY_TOLD,
       appBaseUrl: APP_BASE_URL,
     }));
 

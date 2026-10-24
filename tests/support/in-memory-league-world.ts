@@ -220,6 +220,9 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     findByLeagueAndUser: async (leagueId, userId) =>
       one(memberships.where((row) => row.leagueId === leagueId && row.userId === userId)),
+    findActiveJoinedSince: async (since) => memberships
+      .where((row) => isActiveMembership(row) && row.joinedAt >= since)
+      .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime() || left.id.localeCompare(right.id)),
     create: async (row) => {
       if (memberships.where((item) => item.leagueId === row.leagueId && item.userId === row.userId).length) {
         throw new Error(`Unique constraint: membership for ${row.userId} in ${row.leagueId} exists`);

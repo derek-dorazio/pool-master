@@ -189,7 +189,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
       </FormField>
       <FormField
         error={form.formState.errors.weeklyDigestHour?.message}
-        helperText="The hour on Monday, from 0 to 23 in US Eastern time, every league's weekly event digest goes."
+        helperText="The hour, from 0 to 23 in US Eastern time, every league's weekly event digest goes on Monday, and a busy day's new members are told the next day."
         label="Weekly event digest hour"
       >
         <Input

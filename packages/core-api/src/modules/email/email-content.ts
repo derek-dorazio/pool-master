@@ -49,6 +49,11 @@ export function buildLeagueAdminContestsUrl(appBaseUrl: string, leagueCode: stri
   return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/contests`;
 }
 
+/** The league's Members and owners page for its commissioners. */
+export function buildLeagueMembersAdminUrl(appBaseUrl: string, leagueCode: string): string {
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/teams`;
+}
+
 /** Create contest, started on one contest template when given. */
 export function buildCreateContestUrl(appBaseUrl: string, leagueCode: string, templateId?: string): string {
   const url = `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/new`;
