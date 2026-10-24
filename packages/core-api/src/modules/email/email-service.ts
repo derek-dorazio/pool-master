@@ -20,8 +20,10 @@ import {
   EmailTemplateKey,
   isOptionalEmailCategory,
   type EmailMessage,
+  type LeaguePlan,
   type OptionalEmailCategory,
 } from '@poolmaster/shared/domain';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
 import {
   EMAIL_TEMPLATES,
@@ -44,11 +46,15 @@ export interface EmailRecipient {
   timeZone?: string | null;
 }
 
-/** The league a league email is about: it comes from this league's address, in its name. */
+/**
+ * The league a league email is about: it comes from this league's address, in its name, and is
+ * sent only when the plan the league is on has the email's plan feature.
+ */
 export interface EmailLeague {
   id: string;
   name: string;
   leagueCode: string;
+  plan: LeaguePlan;
 }
 
 /** What else the email is about, for the log and the outbox row. */
@@ -106,6 +112,7 @@ const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
   [EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT]: 'Recipient may not be emailed in this environment; skipped sending email',
   [EmailSkipReason.SUPPRESSED]: 'Recipient bounced or complained before; skipped sending email',
   [EmailSkipReason.OPTED_OUT]: 'Recipient turned this kind of email off; skipped sending email',
+  [EmailSkipReason.NOT_IN_PLAN]: 'League plan does not include this email; skipped sending email',
 };
 
 /** Where an email's "Stop these emails" page and one-click unsubscribe live (#844 slice 5). */
@@ -123,6 +130,8 @@ export interface EmailServiceOptions {
   /** Which transport sends: reserved domains are skipped only on SES. */
   providerName: MailDeliveryProviderName;
   readConfig: () => EmailConfig;
+  /** What each plan has (#948): a league email whose plan feature the league's plan lacks is skipped. */
+  planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
   /** The environment's `noreply@` address. League addresses share its domain. */
   senderAddress: string;
   /** Called once an email is queued, to wake the sender. */
@@ -168,6 +177,7 @@ export class EmailService {
       fromAddress: from.address,
     };
     const skipped = switchedOffReason(config, templateKey)
+      ?? (this.inPlan(templateKey, league) ? undefined : EmailSkipReason.NOT_IN_PLAN)
       ?? (this.mayReceive(address, config) ? undefined : EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT)
       ?? (await this.options.suppressions.findByEmail(address) ? EmailSkipReason.SUPPRESSED : undefined)
       ?? (await this.optedOut(templateKey, input.to.userId) ? EmailSkipReason.OPTED_OUT : undefined);
@@ -226,6 +236,16 @@ export class EmailService {
    */
   async leaguesRecorded(templateKey: SystemEmailTemplateKey, about: string): Promise<Set<string>> {
     return this.options.messages.findLeagueIdsRecorded({ templateKey, keyPrefix: idempotencyKeyPrefix(templateKey, about) });
+  }
+
+  /**
+   * Whether the league's plan has the email's plan feature, checked as the email is recorded, so
+   * a plan change applies to the next email. An email with no feature is always sent.
+   */
+  private inPlan(templateKey: SystemEmailTemplateKey, league: EmailLeague | undefined): boolean {
+    const feature = EMAIL_TEMPLATES[templateKey].planFeature;
+    if (feature === null || league === undefined) return true;
+    return this.options.planEntitlements.forPlan(league.plan).features.has(feature);
   }
 
   /** Whether the recipient turned off the category this email sits in; only users can. */

@@ -5,6 +5,7 @@ import {
   LeagueIconKey,
   LeagueMembershipStatus,
   LeagueRole,
+  PlanFeature,
   SquadMembershipStatus,
 } from '@poolmaster/shared/domain';
 import {
@@ -16,6 +17,9 @@ import {
 import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-memory-league-world';
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
+
+/** Every plan feature: a league on Platinum. */
+const ALL_FEATURES: ReadonlySet<PlanFeature> = new Set(Object.values(PlanFeature));
 
 /**
  * LeagueService use cases against the in-memory league world: what each operation leaves
@@ -231,7 +235,7 @@ describe('LeagueService — lifecycle', () => {
     ['activateLeague', (service: LeagueService) => service.activateLeague('missing')],
     ['updateLeagueDetails', (service: LeagueService) => service.updateLeagueDetails('missing', { name: 'x', iconKey: LeagueIconKey.TROPHY })],
     ['deleteInactiveLeague', (service: LeagueService) => service.deleteInactiveLeague('missing', 'X')],
-    ['updateCupSettings', (service: LeagueService) => service.updateCupSettings('missing', { cupName: 'Cup', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true })],
+    ['updateCupSettings', (service: LeagueService) => service.updateCupSettings('missing', { cupName: 'Cup', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true }, ALL_FEATURES)],
   ])('%s on an unknown league throws LeagueNotFoundError naming the league', async (_name, act) => {
     const attempt = act(serviceFor(inMemoryLeagueWorld()));
     await expect(attempt).rejects.toBeInstanceOf(LeagueNotFoundError);
@@ -306,7 +310,7 @@ describe('LeagueService — championship settings', () => {
       cupPointsScale: CupPointsScale.CUSTOM,
       cupCustomPoints: [10, 6, 3],
       hallOfLameVisible: false,
-    });
+    }, ALL_FEATURES);
 
     expect(world.tables.leagues.get(league.id)).toMatchObject({
       cupName: 'Big Dawgs Cup',
@@ -325,7 +329,7 @@ describe('LeagueService — championship settings', () => {
       cupPointsScale: CupPointsScale.TOP_TEN,
       cupCustomPoints: [],
       hallOfLameVisible: true,
-    });
+    }, ALL_FEATURES);
 
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupPointsScale: CupPointsScale.TOP_TEN, cupCustomPoints: [] });
   });
@@ -337,9 +341,37 @@ describe('LeagueService — championship settings', () => {
     const world = inMemoryLeagueWorld();
     const league = world.addLeague({ cupName: 'Old Cup' });
 
-    await expect(serviceFor(world).updateCupSettings(league.id, { cupName: 'New Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true }))
+    await expect(serviceFor(world).updateCupSettings(league.id, { cupName: 'New Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true }, ALL_FEATURES))
       .rejects.toMatchObject({ code: 'CUP_CUSTOM_POINTS_INVALID', statusCode: 400 });
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Old Cup', cupPointsScale: CupPointsScale.STANDARD });
+  });
+
+  it('refuses a Hall of Lame switch with PLAN_FEATURE_NOT_INCLUDED naming RECORD_BOOK when the plan lacks the record book, leaving the settings unchanged', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague({ cupName: 'Old Cup', hallOfLameVisible: true });
+    const withoutRecordBook = new Set([PlanFeature.CUP_SETTINGS]);
+
+    await expect(serviceFor(world).updateCupSettings(league.id, {
+      cupName: 'New Cup',
+      cupPointsScale: CupPointsScale.STANDARD,
+      cupCustomPoints: [],
+      hallOfLameVisible: false,
+    }, withoutRecordBook)).rejects.toMatchObject({ code: 'PLAN_FEATURE_NOT_INCLUDED', feature: PlanFeature.RECORD_BOOK });
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Old Cup', hallOfLameVisible: true });
+  });
+
+  it('saves the other championship settings without the record book while the Hall of Lame stays as it is', async () => {
+    const world = inMemoryLeagueWorld();
+    const league = world.addLeague({ hallOfLameVisible: true });
+
+    await serviceFor(world).updateCupSettings(league.id, {
+      cupName: 'New Cup',
+      cupPointsScale: CupPointsScale.TOP_TEN,
+      cupCustomPoints: [],
+      hallOfLameVisible: true,
+    }, new Set([PlanFeature.CUP_SETTINGS]));
+
+    expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'New Cup', cupPointsScale: CupPointsScale.TOP_TEN });
   });
 
   it('refuses championship settings on an inactive league with LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', async () => {
@@ -351,7 +383,7 @@ describe('LeagueService — championship settings', () => {
       cupPointsScale: CupPointsScale.STANDARD,
       cupCustomPoints: [],
       hallOfLameVisible: true,
-    })).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
+    }, ALL_FEATURES)).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
     expect(world.tables.leagues.get(league.id)).toMatchObject({ cupName: 'Frozen Cup' });
   });
 });

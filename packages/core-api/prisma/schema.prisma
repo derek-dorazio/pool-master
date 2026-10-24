@@ -216,6 +216,7 @@ enum PrismaEmailSkipReason {
   NOT_ALLOWED_IN_ENVIRONMENT
   SUPPRESSED
   OPTED_OUT
+  NOT_IN_PLAN
 }
 
 /// The email categories a member can turn off (#844 slice 5).

@@ -1,20 +1,23 @@
-import { YearReviewStatus } from '@poolmaster/shared/domain';
+import { PlanFeature, YearReviewStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { sendYearReview } from '@/lib/api';
+import { sendYearReview, type LeagueDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { hasPlanFeature } from '@/features/plans/plan-features';
 import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
 import { useYearReviewQuery } from './use-championship-query';
 
 /**
  * "Your 2026 year in review is ready to send" for the commissioner (#872, plan Q6), on league home
  * and Championships from 1 January until it is sent. Sending emails every squad's owners, once,
- * so it asks first. Nothing shows for a member, a year with nothing counted, or once it is sent.
+ * so it asks first. Nothing shows for a member, a year with nothing counted, once it is sent, or
+ * on a plan without the year in review email (#948).
  */
-export function YearReviewBanner({ isCommissioner, leagueId }: { isCommissioner: boolean; leagueId: string }) {
+export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: boolean; league: Pick<LeagueDto, 'id' | 'planEntitlements'> }) {
+  const leagueId = league.id;
   const [isConfirming, setIsConfirming] = useState(false);
-  const reviewQuery = useYearReviewQuery(leagueId, isCommissioner);
+  const reviewQuery = useYearReviewQuery(leagueId, isCommissioner && hasPlanFeature(league, PlanFeature.EMAIL_YEAR_IN_REVIEW));
   const sendMutation = useInvalidatingMutation({
     mutationFn: async (year: number) => {
       const response = await sendYearReview({ path: { id: leagueId, year } });

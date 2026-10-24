@@ -588,6 +588,40 @@ describe('Championship settings', () => {
     );
   });
 
+  it('says on League settings that the plan lacks championship settings, linking to the plan instead of Edit', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+
+    renderCommissionerTools();
+
+    const championships = within(await screen.findByTestId('league-settings-championships'));
+    expect(championships.getByText('Your league\'s plan doesn\'t include championship settings.')).toBeInTheDocument();
+    expect(championships.getByRole('link', { name: 'Change plan' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(championships.queryByRole('link', { name: 'Edit' })).not.toBeInTheDocument();
+    expect(championships.queryByTestId('league-settings-points-table')).not.toBeInTheDocument();
+  });
+
+  it('shows the locked note on Edit championships on a plan without championship settings', async () => {
+    primeMocks({ league: { planEntitlements: buildPlanEntitlements({ features: ['EMAIL_CONTEST_OPENED'] }) } });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    expect(await screen.findByTestId('plan-locked-CUP_SETTINGS')).toHaveTextContent('Championship settings');
+    expect(screen.queryByTestId('edit-championships-page')).not.toBeInTheDocument();
+  });
+
+  it('offers no Hall of Lame switch without the record book, and saves the setting as it stands', async () => {
+    primeMocks({ league: { hallOfLameVisible: false, planEntitlements: buildPlanEntitlements({ features: ['CUP_SETTINGS'] }) } });
+    updateLeagueCupSettingsMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague({ hallOfLameVisible: false }))));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/championships/edit');
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save settings' }));
+    expect(screen.queryByTestId('edit-championships-hall-of-lame')).not.toBeInTheDocument();
+    await waitFor(() => expect(updateLeagueCupSettingsMock).toHaveBeenCalledWith(expect.objectContaining({
+      body: { cupName: 'Big Dawgs Cup', cupPointsScale: 'STANDARD', cupCustomPoints: [], hallOfLameVisible: false },
+    })));
+  });
+
   it('sends a commissioner who opens Edit championships on an inactive league back to the read-only settings', async () => {
     primeMocks({ isActive: false });
 

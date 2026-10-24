@@ -233,7 +233,8 @@ export const EmailMessageStatusSchema = z.nativeEnum(EmailMessageStatus).describ
 export const EmailSkipReasonSchema = z.nativeEnum(EmailSkipReason).describe(
   'Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of '
   + 'email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED '
-  + 'the address bounced for good or marked an earlier email as spam.',
+  + 'the address bounced for good or marked an earlier email as spam, OPTED_OUT the recipient turned '
+  + 'this kind of email off, NOT_IN_PLAN the league\'s plan does not include this email.',
 );
 
 export const LeagueInvitationDtoSchema = z.object({

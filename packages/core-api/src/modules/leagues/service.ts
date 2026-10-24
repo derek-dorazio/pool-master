@@ -16,7 +16,8 @@ import type {
   League,
   LeagueMembership,
 } from '@poolmaster/shared/domain';
-import { ContestStatus, CupPointsScale, LeagueIconKey, LeagueMembershipStatus, LeagueRole } from '@poolmaster/shared/domain';
+import { ContestStatus, CupPointsScale, LeagueIconKey, LeagueMembershipStatus, LeagueRole, PlanFeature } from '@poolmaster/shared/domain';
+import { PlanFeatureNotIncludedError } from '../plans/plan-feature-error';
 import { lockContestRows } from '../../adapters';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
@@ -398,7 +399,15 @@ export class LeagueService {
    * the record book shows its Hall of Lame, replaced together. CUSTOM needs its list, and no other scale takes one. Cups score on read, so they
    * follow the new table at once; the championship keeps what each contest earned at settlement.
    */
-  async updateCupSettings(leagueId: string, updates: UpdateLeagueCupSettingsInput): Promise<League> {
+  /**
+   * Saves the championship settings. `features` are the league's plan features: switching the
+   * Hall of Lame belongs to the record book, so without RECORD_BOOK it must stay as it is.
+   */
+  async updateCupSettings(
+    leagueId: string,
+    updates: UpdateLeagueCupSettingsInput,
+    features: ReadonlySet<PlanFeature>,
+  ): Promise<League> {
     this.logger?.debug({
       action: 'league.updateCupSettings.enter',
       data: { leagueId, cupPointsScale: updates.cupPointsScale, customPlaces: updates.cupCustomPoints.length },
@@ -414,6 +423,10 @@ export class LeagueService {
         'Inactive leagues are read-only outside lifecycle actions',
         'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
       );
+    }
+    if (updates.hallOfLameVisible !== league.hallOfLameVisible && !features.has(PlanFeature.RECORD_BOOK)) {
+      this.logger?.warn({ action: 'league.updateCupSettings.hallOfLameNotInPlan', data: { leagueId } }, 'Rejected a Hall of Lame switch the league\'s plan lacks');
+      throw new PlanFeatureNotIncludedError(PlanFeature.RECORD_BOOK);
     }
     const isCustom = updates.cupPointsScale === CupPointsScale.CUSTOM;
     if (isCustom !== updates.cupCustomPoints.length > 0) {
