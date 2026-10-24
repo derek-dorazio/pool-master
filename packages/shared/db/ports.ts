@@ -179,9 +179,10 @@ export interface LeagueRepository {
 
   /**
    * Moves the league to `change.toPlan` and logs who moved it from which plan (#945), in one
-   * transaction, so the plan never changes without its log row.
+   * transaction, so the plan never changes without its log row. Returns null, changing and
+   * logging nothing, when the league is no longer on `change.fromPlan`.
    */
-  changePlan(leagueId: string, change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }): Promise<League>;
+  changePlan(leagueId: string, change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }): Promise<League | null>;
 }
 
 export interface LeagueMembershipRepository {

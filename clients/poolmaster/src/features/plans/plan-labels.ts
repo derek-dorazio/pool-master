@@ -38,7 +38,7 @@ export const PLAN_FEATURE_LABEL: Readonly<Record<PlanFeature, string>> = {
   [PlanFeature.TROPHY_SHELF]: 'Trophy shelf',
   [PlanFeature.CUP_SETTINGS]: 'Championship settings',
   [PlanFeature.PAST_YEARS]: 'Past years',
-  [PlanFeature.ALL_TIME_SUMMARY]: 'All-time summary',
+  [PlanFeature.ALL_TIME_SUMMARY]: 'All years',
   [PlanFeature.RECORD_BOOK]: 'Record book',
 };
 

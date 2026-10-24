@@ -69,14 +69,21 @@ export class PrismaLeagueRepository implements LeagueRepository {
   async changePlan(
     leagueId: string,
     change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string },
-  ): Promise<League> {
-    const [row] = await this.prisma.$transaction([
-      this.prisma.league.update({ where: { id: leagueId }, data: { plan: change.toPlan } }),
-      this.prisma.leaguePlanChange.create({
+  ): Promise<League | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // Only a league still on the from-plan moves, so the log never records a stale from-plan.
+      const moved = await tx.league.updateMany({
+        where: { id: leagueId, plan: change.fromPlan },
+        data: { plan: change.toPlan },
+      });
+      if (moved.count === 0) {
+        return null;
+      }
+      await tx.leaguePlanChange.create({
         data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changedById: change.changedById },
-      }),
-    ]);
-    return mapToLeague(row);
+      });
+      return mapToLeague(await tx.league.findUniqueOrThrow({ where: { id: leagueId } }));
+    });
   }
 
   async update(id: string, updates: Partial<League>): Promise<League> {

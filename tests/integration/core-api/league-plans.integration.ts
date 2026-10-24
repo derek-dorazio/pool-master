@@ -12,6 +12,7 @@ import {
   type ErrorEnvelope,
   type LeagueContextResponse,
 } from '@poolmaster/shared/dto';
+import { PrismaLeagueRepository } from '../../../packages/core-api/src/adapters/prisma-league-repository';
 import {
   buildCreateLeaguePayload,
   cleanupTestData,
@@ -136,6 +137,21 @@ describe('League plans', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res.json<ErrorEnvelope>().error.code).toBe('LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE');
+  });
+
+  it('changes nothing and logs nothing when the league has left the plan the change started from, so the log never records a stale from-plan', async () => {
+    const { commissioner, league } = await createLeague();
+    const repository = new PrismaLeagueRepository(getPrisma());
+    await repository.changePlan(league.id, { fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: commissioner.user.id });
+
+    // A second commissioner's change read the league while it was still on Platinum.
+    const stale = await repository.changePlan(league.id, { fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.PRO, changedById: commissioner.user.id });
+
+    expect(stale).toBeNull();
+    const stored = await getPrisma().league.findUniqueOrThrow({ where: { id: league.id } });
+    expect(stored.plan).toBe('FREE');
+    const changes = await getPrisma().leaguePlanChange.findMany({ where: { leagueId: league.id } });
+    expect(changes.map((change) => [change.fromPlan, change.toPlan])).toEqual([['PLATINUM', 'FREE']]);
   });
 
   it('lists all four plans in order, lowest first, with Platinum unlimited, for the comparison table', async () => {

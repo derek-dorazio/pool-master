@@ -37,6 +37,14 @@ export class LeaguePlanService {
       return league;
     }
     const updated = await leagues.changePlan(leagueId, { fromPlan: league.plan, toPlan: plan, changedById });
+    if (!updated) {
+      logger?.warn({ action: 'leaguePlan.change.conflict', data: { leagueId, fromPlan: league.plan, toPlan: plan } }, 'League plan changed during the change');
+      throw new LeagueOperationError(
+        'The plan was just changed by someone else. Reload to see it, then try again.',
+        'LEAGUE_PLAN_CHANGED',
+        409,
+      );
+    }
     logger?.info({
       action: 'leaguePlan.change.success',
       data: { leagueId, fromPlan: league.plan, toPlan: plan, changedById },

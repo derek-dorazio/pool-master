@@ -207,7 +207,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'Change the league\'s plan',
       description:
-        'Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.',
+        'Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.',
       operationId: 'updateLeaguePlan',
       body: schemaRef('UpdateLeaguePlanRequest'),
       response: {
@@ -216,6 +216,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
         404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
       },
     },
     preHandler: requireCommissioner(membershipRepo),

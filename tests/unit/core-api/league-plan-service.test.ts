@@ -50,6 +50,27 @@ describe('LeaguePlanService', () => {
     expect(world.planChanges).toEqual([]);
   });
 
+  it('refuses with 409 LEAGUE_PLAN_CHANGED, changing and logging nothing, when someone else changed the plan during the change', async () => {
+    const { world, commissioner } = setup();
+    const league = world.addLeague();
+    // Someone else moves the league to Pro between this change's read and its write.
+    const service = new LeaguePlanService({
+      leagues: {
+        findById: world.leagues.findById,
+        changePlan: async (leagueId, change) => {
+          await world.leagues.changePlan(leagueId, { fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.PRO, changedById: 'other' });
+          return world.leagues.changePlan(leagueId, change);
+        },
+      },
+    });
+
+    const attempt = service.changePlan(league.id, LeaguePlan.FREE, commissioner.id);
+
+    await expect(attempt).rejects.toMatchObject({ code: 'LEAGUE_PLAN_CHANGED', statusCode: 409 });
+    expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.PRO);
+    expect(world.planChanges.map((change) => change.toPlan)).toEqual([LeaguePlan.PRO]);
+  });
+
   it('rejects a plan change for a league that does not exist', async () => {
     const { service, commissioner } = setup();
 

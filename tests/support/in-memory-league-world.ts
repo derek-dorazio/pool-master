@@ -197,6 +197,9 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, plan: LeaguePlan.PLATINUM, ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
     changePlan: async (leagueId, change) => {
+      if (leagues.get(leagueId)?.plan !== change.fromPlan) {
+        return null;
+      }
       planChanges.push({ leagueId, ...change });
       return leagues.patch(leagueId, { plan: change.toPlan });
     },

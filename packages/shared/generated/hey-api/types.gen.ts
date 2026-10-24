@@ -22875,6 +22875,10 @@ export type UpdateLeaguePlanErrors = {
      * Standard API error envelope.
      */
     404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
 };
 
 export type UpdateLeaguePlanError = UpdateLeaguePlanErrors[keyof UpdateLeaguePlanErrors];
