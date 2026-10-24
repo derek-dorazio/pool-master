@@ -22,6 +22,7 @@ import { createSelectionHandlers } from './handler';
 import { createPredictionService, createSelectionService, createSquaresService } from './wiring';
 import { createSquaresHandlers } from './squares-handler';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import type { PlanModuleOptions } from '../plans/routes';
 
 const contestIdParams = {
   type: 'object',
@@ -78,13 +79,13 @@ const squaresBoxParams = {
 /** What every squares route answers for a contest it can't serve (#711). */
 const SQUARES_REFUSALS = '404 CONTEST_NOT_FOUND (a draft is shown only to its commissioners); 409 CONTEST_FORMAT_MISMATCH for a contest that is not squares.';
 
-export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
   const mail = { email: opts.email, appBaseUrl: readApplicationBaseUrl(process.env) };
   const handlers = createSelectionHandlers(
-    createSelectionService(prisma, fastify.log, mail),
+    createSelectionService(prisma, fastify.log, { ...mail, planEntitlements: opts.planEntitlements }),
     createPredictionService(prisma, fastify.log, mail),
   );
   // #291 — the selection room shows every entry's picks, so reading it needs membership of the

@@ -32,6 +32,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { integrationPlanEntitlements } from '../plan-entitlements';
+import { createContestRow } from '../../support/contest-rows';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -139,7 +141,7 @@ async function createPickEmContest(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await new PrismaContestRepository(prisma).create({
+  const contest = await createContestRow(new PrismaContestRepository(prisma), {
     leagueId: league.id,
     seasonYear: 2026,
     sportEventIds,
@@ -153,7 +155,7 @@ async function createPickEmContest(sportEventIds: string[]) {
     selectionType: SelectionType.PICK_EM,
     configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
-  const result = await new PrismaContestEntryRepository(prisma).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null });
+  const result = await new PrismaContestEntryRepository(prisma).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: null });
   if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
   return { contest, entry: result.entry, viewerId: owner.user.id };
 }
@@ -199,7 +201,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const season = await midSeason();
     const { prisma, count } = countingPrisma();
 
-    const leaderboard = await createContestService(prisma, getApp().log).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     // One query for every week's games; the live week is scored from those, not read again.
     expect(count('SportEventMatch.findMany')).toBe(1);
@@ -214,7 +216,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('reports each settled week\'s game count and tiebreaker total from the batched games, and the live week\'s too', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     expect(leaderboard.weeks.map((week) => [week.gameCount, week.tiebreakerTotalPoints])).toEqual([
       [3, 37], [3, 37], [3, 37], [3, 37],
@@ -226,7 +228,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('scores the week under way live and leaves the weeks the entry did not submit, and the week to come, empty', async () => {
     const season = await midSeason();
 
-    const leaderboard = await createContestService(getPrisma(), getApp().log).getPickEmLeaderboard(season.contest.id, season.viewerId);
+    const leaderboard = await createContestService(getPrisma(), getApp().log, { planEntitlements: integrationPlanEntitlements() }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.weeks.map((week) => [week.submitted, week.points])).toEqual([
@@ -244,7 +246,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
     const { prisma, count } = countingPrisma();
 
-    const leaderboard = await createContestService(prisma, getApp().log).getPickEmLeaderboard(contest.id, viewerId);
+    const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(contest.id, viewerId);
 
     expect(leaderboard.weeks.map((week) => [week.settled, week.gameCount, week.tiebreakerTotalPoints])).toEqual([[true, 0, null]]);
     expect(count('SportEventMatch.findMany')).toBe(1);

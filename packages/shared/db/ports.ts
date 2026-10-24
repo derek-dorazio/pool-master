@@ -317,12 +317,27 @@ export interface ParticipantProviderMappingRepository {
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
+  /**
+   * The different sports leagues of the league's contests of one season (#947), drafts included
+   * (a deleted contest is gone, so it no longer counts): what the plan's sports leagues a year counts.
+   */
+  findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
   /** Every contest in one of `statuses`, oldest first, across leagues: the entry reminders' sweep reads it (#845). */
   findByStatuses(statuses: readonly Contest['status'][]): Promise<Contest[]>;
-  create(contest: ContestCreate): Promise<Contest>;
+  /**
+   * Creates the contest unless the league's plan has no room for its sports league in its season
+   * (#947): under the league's row lock, the season's sports leagues are counted as
+   * `findSportLeagueIdsBySeason` does, so two contests racing for the last one cannot both get it.
+   */
+  create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
+  /**
+   * Moves the contest to `seasonYear` (#841: a new first event of another year), under the same
+   * league row lock and count as `create`, unless that season has no room for its sports league.
+   */
+  moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult>;
   /**
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
@@ -364,8 +379,34 @@ export type ContestCreate = Pick<
   'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'seasonYear'
 >;
 
-/** What can change on a contest row itself; its events change through `replaceSportEvents`. */
-export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt' | 'seasonYear'>>;
+/**
+ * What can change on a contest row itself; its events change through `replaceSportEvents` and
+ * its season through `moveToSeason`.
+ */
+export type ContestUpdate = Partial<Pick<Contest, 'name' | 'status' | 'startsAt' | 'endsAt'>>;
+
+/**
+ * The plan's sports leagues a year (#947) for a contest's season, with the contest's own sports
+ * league, which the season may already use; null is no limit.
+ */
+export type ContestSeasonLimits =
+  | { sportLeaguesPerYear: null }
+  | { sportLeaguesPerYear: number; sportLeagueId: string };
+
+/** A season without room: its cap, and how many sports leagues its contests already use. */
+export interface ContestSeasonFull {
+  status: 'sportsLeagueLimitReached';
+  sportLeaguesPerYear: number;
+  sportLeagueCount: number;
+}
+
+export type ContestCreateResult =
+  | { status: 'created'; contest: Contest }
+  | ContestSeasonFull;
+
+export type ContestSeasonMoveResult =
+  | { status: 'moved' }
+  | ContestSeasonFull;
 
 /** A new entry; it is born a DRAFT in every event of its contest. */
 export type ContestEntryCreate = Pick<ContestEntry, 'contestId' | 'squadId' | 'entryNumber' | 'name' | 'tiebreakerValue'>;
@@ -382,7 +423,17 @@ export interface ContestEntryWithSquad extends ContestEntry {
  * the contest row lock, as recording a draw does, so a write and a draw never interleave: the
  * one that runs second sees the other.
  */
-export type ContestEntryCreateResult = { status: 'created'; entry: ContestEntry } | { status: 'contestDrawn' };
+export type ContestEntryCreateResult =
+  | { status: 'created'; entry: ContestEntry }
+  | { status: 'contestDrawn' }
+  /** The contest already holds its plan's entries per contest (#947), drafts included. */
+  | { status: 'contestFull' };
+
+/** What an entry write is checked against besides the draw: the league's plan cap (#947). */
+export interface ContestEntryCreateLimits {
+  /** The most entries the contest may hold, drafts included; null for no limit. */
+  entriesPerContest: number | null;
+}
 export type ContestEntryDeleteResult = { status: 'deleted' } | { status: 'contestDrawn' };
 
 export interface ContestEntryRepository {
@@ -394,8 +445,12 @@ export interface ContestEntryRepository {
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
-  /** Creates the entry with a DRAFT status row for each of its contest's events (#713). */
-  create(entry: ContestEntryCreate): Promise<ContestEntryCreateResult>;
+  /**
+   * Creates the entry with a DRAFT status row for each of its contest's events (#713). The
+   * contest's entries are counted under its row lock (#947), so two entries taking the last place
+   * at once cannot both get in.
+   */
+  create(entry: ContestEntryCreate, limits: ContestEntryCreateLimits): Promise<ContestEntryCreateResult>;
   update(id: string, updates: Partial<Pick<ContestEntry, 'name' | 'tiebreakerValue'>>): Promise<ContestEntry>;
   /**
    * Sets the entry's status for one event of its contest (#713), stamping `submittedAt` when it

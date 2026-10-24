@@ -26,7 +26,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const membersOnly = requireMemberOfLeague(membershipRepo, leagueFromPath);
   const withStandings = requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS]);
-  const handlers = createCupHandlers(createCupService(prisma, fastify.log));
+  const handlers = createCupHandlers(createCupService(prisma, fastify.log, opts.planEntitlements));
 
   fastify.get('/', {
     schema: {

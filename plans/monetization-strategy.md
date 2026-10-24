@@ -173,6 +173,16 @@ Kept for later refinement and tickets, none scheduled:
   counts, pick popularity, projected finish, contests per event, organisation accounts,
   member subscriptions, ads.
 
+### At launch: Platinum free, pricing at renewal (Derek, 2026-10-24)
+
+Derek's launch plan: the plans exist and are defined, but every league gets **Platinum free**
+when it signs up. Leagues try every contest type and sport, and use history and notifications,
+so the site gets sticky before anyone pays. Pricing starts at the league's **renewal, 6 or 12
+months after its signup date** (Derek leans to 6). Nothing changes in the first build for
+this: new leagues already default to Platinum, and the screens keep "Every plan is free for
+now". When paying is built (#931), it needs each league's signup date and a renewal point
+taken from it, and what a league moves to at renewal if its commissioner does not pay.
+
 ### Conflicts with the older sections
 
 1. **Default plan.** Older sections make Free the default, with root-admin grants and a free

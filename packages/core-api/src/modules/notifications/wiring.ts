@@ -34,6 +34,7 @@ import { DraftEventNotices } from './draft-event-notices';
 import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
 import { LiveStandings } from './live-standings';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
   email: EmailService;
@@ -63,6 +64,7 @@ export function createContestNotices(prisma: PrismaClient, options: {
   email: EmailService;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
+  planEntitlements: PlanEntitlementsService;
 }): ContestNotices {
   return new ContestNotices({
     contests: new PrismaContestRepository(prisma),
@@ -76,7 +78,7 @@ export function createContestNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
-    finalStandings: createContestService(prisma, options.logger),
+    finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     ...options,
   });
 }
@@ -86,6 +88,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
   readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
+  planEntitlements: PlanEntitlementsService;
 }): CommissionerNotices {
   return new CommissionerNotices({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -97,7 +100,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
-    finalStandings: createContestService(prisma, options.logger),
+    finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     ...options,
   });
 }
@@ -138,13 +141,14 @@ export function createLiveStandings(prisma: PrismaClient, options: {
   readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
+  planEntitlements: PlanEntitlementsService;
 }): LiveStandings {
   return new LiveStandings({
     contests: new PrismaContestRepository(prisma),
     sportEvents: new PrismaSportEventRepository(prisma),
     eventParticipants: createSportEventParticipantService(prisma, options.logger),
     eventStandings: new PrismaContestEntryEventStandingRepository(prisma),
-    leaderboards: createContestService(prisma, options.logger),
+    leaderboards: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     matches: new PrismaSportEventMatchRepository(prisma),
     configurations: new PrismaContestConfigurationRepository(prisma),
     sportLeagues: new PrismaSportLeagueRepository(prisma),

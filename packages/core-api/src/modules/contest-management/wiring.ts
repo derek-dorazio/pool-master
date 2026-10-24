@@ -27,6 +27,7 @@ import {
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
 import { createCupService } from '../cups/wiring';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -35,6 +36,7 @@ import { ContestManagementService, type ContestCreateSportEventReader } from './
 export function createContestManagementService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
+  planEntitlements: PlanEntitlementsService,
   /** Who is told a contest has opened (#845); without it, nobody is. */
   contestOpened?: ContestOpenedNotice,
 ): ContestManagementService {
@@ -53,7 +55,8 @@ export function createContestManagementService(
       valuations: new PrismaSportEventParticipantValuationRepository(prisma),
       matches: new PrismaSportEventMatchRepository(prisma),
     }),
-    cups: createCupService(prisma, logger),
+    cups: createCupService(prisma, logger, planEntitlements),
+    planEntitlements,
     contestOpened,
   });
 }

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { CreateContestPage } from './create-contest-page';
 
 const {
@@ -13,6 +14,7 @@ const {
   listContestConfigTemplatesMock,
   listEventParticipantsMock,
   listEventsMock,
+  listSportLeaguesUsedMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -34,6 +36,7 @@ const {
     listContestConfigTemplatesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventsMock: vi.fn(),
+    listSportLeaguesUsedMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -46,6 +49,7 @@ bindApiMocks({
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEventParticipants: listEventParticipantsMock,
   listEvents: listEventsMock,
+  listSportLeaguesUsed: listSportLeaguesUsedMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -99,7 +103,8 @@ function renderCreateContestPage(path = '/league/BIGDAWGS/admin/contests/new') {
   );
 }
 
-function primeCommonMocks() {
+/** The golf reads, for a league on a plan with no limit unless `sportLeaguesPerYear` is given. */
+function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?: number | null } = {}) {
   getLeagueByCodeMock.mockResolvedValue({
     data: {
       league: {
@@ -112,6 +117,9 @@ function primeCommonMocks() {
         memberCount: 2,
         activeContestCount: 0,
         createdAt: '2026-04-15T00:00:00.000Z',
+        planEntitlements: buildPlanEntitlements({
+          caps: { ENTRIES_PER_CONTEST: null, SPORTS_LEAGUES_PER_YEAR: sportLeaguesPerYear },
+        }),
       },
       // #202 (A8) — the viewer's own membership, delivered once with the league context. It was
       // `memberType` and a `leagueRelationship` block on the league itself.
@@ -1749,5 +1757,69 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     fireEvent.click(screen.getByTestId('contest-format-SURVIVOR'));
 
     await waitFor(() => expect(screen.getByTestId('contest-template-nfl-survivor')).toBeChecked());
+  });
+});
+
+// #947 — a plan's sports leagues a year: once a year's contests use them all, events in other
+// sports leagues that year are locked.
+describe('Commissioner tools › Contests › Create contest › the plan\'s sports leagues a year', () => {
+  const PGA = '94700000-0000-4000-8000-000000000001';
+  const LPGA = '94700000-0000-4000-8000-000000000002';
+
+  /** The Masters (PGA) first and the RBC Heritage (LPGA here) a week later, both in 2099. */
+  function primeCapMocks(sportLeagueIds: string[]) {
+    primeCommonMocks({ sportLeaguesPerYear: 1 });
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          { ...singleEvent().data.events[0], sportLeagueId: PGA, eventYear: 2099 },
+          { ...singleEvent({ id: 'event-2', name: 'RBC Heritage', startDate: '2099-04-16T12:00:00.000Z' }).data.events[0], sportLeagueId: LPGA, eventYear: 2099 },
+        ],
+      },
+    });
+    listSportLeaguesUsedMock.mockResolvedValue({ data: { seasonYear: 2099, sportLeagueIds } });
+  }
+
+  afterEach(() => {
+    getLeagueByCodeMock.mockReset();
+    listContestConfigTemplatesMock.mockReset();
+    listEventsMock.mockReset();
+    listSportLeaguesUsedMock.mockReset();
+  });
+
+  it('locks the events of another sports league once the year\'s contests use the plan\'s one, and starts on the soonest event still open', async () => {
+    primeCapMocks([LPGA]);
+
+    renderCreateContestPage();
+
+    await waitFor(() => expect(screen.getByTestId('contest-event-event-1')).toBeDisabled());
+    expect(screen.getByTestId('contest-event-event-1')).toHaveTextContent('Not in your plan');
+    await waitFor(() => expect(screen.getByTestId('contest-event-event-2')).toBeChecked());
+    expect(screen.getByTestId('contest-event-event-1')).not.toBeChecked();
+    expect(screen.getByTestId('create-contest-sport-leagues-used')).toHaveTextContent('Sports leagues in 2099: 1 of 1.');
+    expect(screen.getByTestId('create-contest-sport-leagues-locked')).toHaveTextContent('Your plan allows 1 sports league a year');
+    expect(screen.getByTestId('create-contest-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(listSportLeaguesUsedMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { seasonYear: 2099 } }));
+  });
+
+  it('locks nothing while the year still has room, and counts what it uses', async () => {
+    primeCapMocks([]);
+
+    renderCreateContestPage();
+
+    await waitFor(() => expect(screen.getByTestId('create-contest-sport-leagues-used')).toHaveTextContent('Sports leagues in 2099: 0 of 1.'));
+    expect(screen.getByTestId('contest-event-event-1')).toBeChecked();
+    expect(screen.getByTestId('contest-event-event-2')).toBeEnabled();
+    expect(screen.queryByTestId('create-contest-sport-leagues-locked')).not.toBeInTheDocument();
+  });
+
+  it('neither reads nor shows the count on a plan with no limit', async () => {
+    primeCommonMocks();
+
+    renderCreateContestPage();
+
+    await waitForStartingChoices();
+    expect(screen.queryByTestId('create-contest-sport-leagues-used')).not.toBeInTheDocument();
+    expect(listSportLeaguesUsedMock).not.toHaveBeenCalled();
   });
 });

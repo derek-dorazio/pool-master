@@ -126,7 +126,7 @@ describe('EntryReceipts', () => {
     const closed = world.addUser({ firstName: 'Cal', lastName: 'Closed', isActive: false });
     world.addMember(league.id, closed.id);
     world.addSquadMember(squad.id, closed.id);
-    const created = await world.entryRepo().create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null });
+    const created = await world.entryRepo().create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Entry 1', tiebreakerValue: null }, { entriesPerContest: null });
     if (created.status !== 'created') throw new Error('entry not created');
     return { contest, event, entry: created.entry, owners };
   }
@@ -320,7 +320,7 @@ describe('EntryReceipts', () => {
 
     it('sends every active owner of each entry with a box its boxes\' numbers by team, once, and nothing to an entry without one', async () => {
       const { contest, entry, owners } = await entryIn(SelectionType.SQUARES, { name: 'Super Bowl', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
-      const empty = await world.entryRepo().create({ contestId: contest.id, squadId: entry.squadId, entryNumber: 2, name: 'Entry 2', tiebreakerValue: null });
+      const empty = await world.entryRepo().create({ contestId: contest.id, squadId: entry.squadId, entryNumber: 2, name: 'Entry 2', tiebreakerValue: null }, { entriesPerContest: null });
       if (empty.status !== 'created') throw new Error('entry not created');
       const board = drawnBoard(contest.id, [
         { rowIndex: 0, columnIndex: 0, contestEntryId: entry.id },

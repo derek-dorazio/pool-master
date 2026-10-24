@@ -28,12 +28,13 @@ import { createSportEventTierService } from '../events/wiring';
 import { createEntryReceipts } from '../notifications/wiring';
 import { PredictionService } from './prediction-service';
 import { SelectionService } from './service';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { SquaresService } from './squares-service';
 
 export function createSelectionService(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
-  options?: { email?: EmailService; appBaseUrl?: string },
+  options: { planEntitlements: PlanEntitlementsService; email?: EmailService; appBaseUrl?: string },
 ): SelectionService {
   return new SelectionService({
     contests: new PrismaContestRepository(prisma),

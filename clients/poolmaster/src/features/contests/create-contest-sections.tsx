@@ -96,38 +96,45 @@ export function NoEligibleEventsAlert({ sport }: { sport: SportDefinition }) {
  */
 export function EventChoices({
   events,
+  lockedEventIds,
   onSelect,
   selectedEventId,
   sport,
 }: {
   events: readonly SportEventDto[];
+  /** Events the league's plan does not let it start a contest on (#947), shown but not chosen. */
+  lockedEventIds: readonly string[];
   onSelect: (eventId: string) => void;
   selectedEventId: string;
   sport: SportDefinition;
 }) {
   return (
     <div aria-label="Event" className="grid gap-2" role="radiogroup">
-      {events.map((event) => (
-        <ChoiceCard
-          isSelected={event.id === selectedEventId}
-          key={event.id}
-          onSelect={() => onSelect(event.id)}
-          testId={`contest-event-${event.id}`}
-        >
-          <span className="min-w-0 flex-1">
-            <span className="font-semibold">{event.name}</span>
-            {event.venue ? <span className="text-xs text-muted-foreground"> · {event.venue}</span> : null}
-            <span className="block text-xs text-muted-foreground">
-              {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate)}
-              {' · '}
-              {countParticipants(event.participantCount ?? 0, sport.vocabulary.participant)}
-              {' · '}
-              {pluralize(event.tierCount, 'tier')}
+      {events.map((event) => {
+        const isLocked = lockedEventIds.includes(event.id);
+        return (
+          <ChoiceCard
+            isDisabled={isLocked}
+            isSelected={event.id === selectedEventId}
+            key={event.id}
+            onSelect={() => onSelect(event.id)}
+            testId={`contest-event-${event.id}`}
+          >
+            <span className="min-w-0 flex-1">
+              <span className="font-semibold">{event.name}</span>
+              {event.venue ? <span className="text-xs text-muted-foreground"> · {event.venue}</span> : null}
+              <span className="block text-xs text-muted-foreground">
+                {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate)}
+                {' · '}
+                {countParticipants(event.participantCount ?? 0, sport.vocabulary.participant)}
+                {' · '}
+                {pluralize(event.tierCount, 'tier')}
+              </span>
             </span>
-          </span>
-          <Chip>{event.contestEligible ? formatStartsIn(event.startDate) : 'Under way'}</Chip>
-        </ChoiceCard>
-      ))}
+            <Chip>{isLocked ? 'Not in your plan' : event.contestEligible ? formatStartsIn(event.startDate) : 'Under way'}</Chip>
+          </ChoiceCard>
+        );
+      })}
     </div>
   );
 }

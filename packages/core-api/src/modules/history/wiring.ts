@@ -16,15 +16,20 @@ import { createChampionshipService } from '../championship/wiring';
 import { createCupService } from '../cups/wiring';
 import { readApplicationBaseUrl, type EmailService } from '../email';
 import { HistoryService } from './service';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { YearReviewService } from './year-review-service';
 
-export function createHistoryService(prisma: PrismaClient, logger: FastifyBaseLogger): HistoryService {
+export function createHistoryService(
+  prisma: PrismaClient,
+  logger: FastifyBaseLogger,
+  planEntitlements: PlanEntitlementsService,
+): HistoryService {
   return new HistoryService({
     finishes: new PrismaChampionshipRepository(prisma),
     squads: new PrismaSquadRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     championship: createChampionshipService(prisma, logger),
-    cups: createCupService(prisma, logger),
+    cups: createCupService(prisma, logger, planEntitlements),
     logger,
   });
 }

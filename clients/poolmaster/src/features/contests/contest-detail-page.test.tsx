@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { ContestDetailPage } from './contest-detail-page';
 
 const {
@@ -164,6 +165,8 @@ function primeMocks(opts?: {
   /** The contest event's scheduled start; far in the future unless given. */
   eventStartDate?: string;
   endsAt?: string;
+  /** The league plan's entries per contest; no limit unless given. */
+  entriesPerContest?: number;
 }) {
   const contestStatus = opts?.contestStatus ?? 'OPEN';
   const picksRevealed = opts?.picksRevealed ?? (contestStatus !== 'OPEN' && contestStatus !== 'DRAFT');
@@ -219,6 +222,9 @@ function primeMocks(opts?: {
         memberCount: 3,
         activeContestCount: 1,
         createdAt: '2026-04-15T00:00:00.000Z',
+        planEntitlements: buildPlanEntitlements({
+          caps: { ENTRIES_PER_CONTEST: opts?.entriesPerContest ?? null, SPORTS_LEAGUES_PER_YEAR: null },
+        }),
       },
       membership: {
         id: 'league-membership-1',
@@ -739,6 +745,57 @@ describe('ContestDetailPage (Contest Board)', () => {
     await screen.findByRole('heading', { name: 'Masters Pick 6' });
     await waitFor(() => expect(getLeagueMock).toHaveBeenCalled());
     expect(screen.queryByTestId('contest-open-to-league')).not.toBeInTheDocument();
+  });
+
+  // #947 — the league's plan caps how many entries a contest takes, every squad's drafts included.
+  describe('a contest at its plan\'s entry limit', () => {
+    const fullEntries = () => [
+      buildEntry({ id: 'entry-1', squadId: 'squad-other', squadName: 'Other Team', name: 'Other Team Entry 1' }),
+      buildEntry({ id: 'entry-2', squadId: 'squad-other', squadName: 'Other Team', entryNumber: 2, name: 'Other Team Entry 2', status: 'DRAFT' }),
+    ];
+
+    it('counts entries against the limit and offers Create entry while there is room', async () => {
+      primeMocks({ contestStatus: 'OPEN', entries: fullEntries().slice(0, 1), entriesPerContest: 2 });
+
+      renderContestBoard();
+
+      expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 1 of 2'));
+      expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
+    });
+
+    it('tells a member the contest is full, without Create entry or the league\'s plan', async () => {
+      primeMocks({ contestStatus: 'OPEN', entries: fullEntries(), entriesPerContest: 2 });
+
+      renderContestBoard();
+
+      expect(await screen.findByTestId('contest-board-full')).toHaveTextContent(/^This contest is full\.$/);
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent('Total Entries: 2 of 2');
+      expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('contest-board-full-plan-link')).not.toBeInTheDocument();
+    });
+
+    it('tells a commissioner the plan\'s limit and links to changing the plan', async () => {
+      primeMocks({ contestStatus: 'OPEN', entries: fullEntries(), entriesPerContest: 2, role: 'COMMISSIONER' });
+
+      renderContestBoard();
+
+      await waitFor(() => expect(screen.getByTestId('contest-board-full')).toHaveTextContent(
+        'This contest is full. Your plan allows 2 entries per contest. Change plan',
+      ));
+      expect(screen.getByTestId('contest-board-full-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+      expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
+    });
+
+    it('shows no limit or full note on an unlimited plan', async () => {
+      primeMocks({ contestStatus: 'OPEN', entries: fullEntries() });
+
+      renderContestBoard();
+
+      expect(await screen.findByTestId('contest-board-create-entry')).toBeInTheDocument();
+      expect(screen.getByTestId('contest-board-total-count')).toHaveTextContent(/^Total Entries: 2$/);
+      expect(screen.queryByTestId('contest-board-full')).not.toBeInTheDocument();
+    });
   });
 
   it('shows why a new entry was refused and stays on the board', async () => {
