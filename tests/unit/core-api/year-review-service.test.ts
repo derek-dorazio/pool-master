@@ -200,7 +200,7 @@ describe('YearReviewService', () => {
 
     expect(view).toMatchObject({ year: 2025, status: YearReviewStatus.SENT, sentAt: NOW, sentBy: { id: commissioner.id } });
     const email = sentTo(eagles.userId);
-    expect(email?.subject).toBe('Eagles: your 2025 in Office League');
+    expect(email?.subject).toBe('Eagles\' 2025 in Office League');
     expect(email?.text).toContain('2025 Office League Cup: 2nd of 12, 612.5 points · Runner-up');
     expect(email?.text).toContain('1sts: 4\n2nds: 2\n3rds: 1\nContests played: 18');
     expect(email?.text).toContain('2025 NFL Cup: 1st of 12, 240 points · Champion');

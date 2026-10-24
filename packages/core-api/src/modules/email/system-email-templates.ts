@@ -1785,6 +1785,11 @@ function renderEmailTestEmail(
   });
 }
 
+/** A name's possessive: "Casey Crushers'" for a name ending in s, "Birdie Brigade's" otherwise. */
+function possessive(name: string): string {
+  return name.endsWith('s') ? `${name}'` : `${name}'s`;
+}
+
 /** A trophy as the year in review names it. */
 const YEAR_IN_REVIEW_TROPHIES: Record<CupTrophy, string> = {
   [CupTrophy.CHAMPION]: 'Champion',
@@ -1817,7 +1822,7 @@ function renderYearInReviewEmail(
   const buttonLabel = `See your ${year}`;
   return buildMessage(context, {
     templateKey: 'YEAR_IN_REVIEW',
-    subject: `${data.squadName}: your ${year} in ${data.leagueName}`,
+    subject: `${possessive(data.squadName)} ${year} in ${data.leagueName}`,
     preheader: lead,
     title: `Your ${year} year in review`,
     bodyBlocks: [
