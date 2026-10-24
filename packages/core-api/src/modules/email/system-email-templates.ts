@@ -27,6 +27,8 @@ export interface LeagueJoinSuccessEmailData {
   leagueCode: string;
   leagueHomeUrl: string;
   teamName?: string;
+  /** The league's contests open for entries (#903 B3), oldest first; empty for none. */
+  openContests: Array<{ name: string; url: string }>;
 }
 
 /** B4: someone with no account yet is invited to co-own a squad; accepting signs them up. */
@@ -471,6 +473,39 @@ export interface EventReadyForContestsEmailData {
   createContestUrl: string;
 }
 
+/** Where the league stands on an event in its weekly digest. */
+export const DigestEventState = {
+  /** The league already has a contest on it. */
+  CONTEST_SET_UP: 'CONTEST_SET_UP',
+  /** Released, with no contest yet: the digest links to Create contest. */
+  READY: 'READY',
+  /** Still a draft, so no contest can be set up on it yet. */
+  NOT_READY: 'NOT_READY',
+} as const;
+export type DigestEventState = (typeof DigestEventState)[keyof typeof DigestEventState];
+
+/** One event in a weekly digest; only a READY one has a Create contest link. */
+export type WeeklyDigestEvent = {
+  eventName: string;
+  sportLeagueName: string;
+  startsAt: Date;
+} & (
+  | { state: typeof DigestEventState.READY; createContestUrl: string }
+  | { state: typeof DigestEventState.CONTEST_SET_UP | typeof DigestEventState.NOT_READY }
+);
+
+/** The league's Monday list of its chosen sport leagues' events in the next two weeks (#851). */
+export interface EventWeeklyDigestEmailData {
+  userName: string;
+  leagueName: string;
+  /** Events starting in the 7 days from the digest, soonest first. */
+  thisWeek: WeeklyDigestEvent[];
+  /** Events starting 7 to 14 days from the digest, soonest first. */
+  nextWeek: WeeklyDigestEvent[];
+  /** The league's contests page for its commissioners. */
+  contestsUrl: string;
+}
+
 /** C4: a contest is still a draft 48 hours before its picks close. */
 export interface ContestNotOpenEmailData {
   userName: string;
@@ -565,6 +600,7 @@ export interface SystemEmailTemplateDataByKey {
   PASSWORD_CHANGED: PasswordChangedEmailData;
   EMAIL_TEST: EmailTestEmailData;
   YEAR_IN_REVIEW: YearInReviewEmailData;
+  EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -643,6 +679,7 @@ export interface EmailTemplateScopeByKey {
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
   EMAIL_TEST: typeof EmailTemplateScope.PLATFORM;
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
+  EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -844,6 +881,15 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     sendWithinMs: null,
     render: renderYearInReviewEmail,
   },
+  EVENT_WEEKLY_DIGEST: {
+    category: EmailCategory.COMMISSIONER_UPDATES,
+    // It replaces "Coming up soon" for a league that chose it, so it starts on the same plan.
+    planFeature: PlanFeature.EMAIL_EVENT_COMING_UP,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderEventWeeklyDigestEmail,
+  },
 };
 
 function renderLeagueMemberInviteEmail(
@@ -897,12 +943,23 @@ function renderLeagueJoinSuccessEmail(
       ['League code', data.leagueCode],
       ...(data.teamName ? ([['Playing as', data.teamName]] as Array<[string, string]>) : []),
     ]),
+    ...(data.openContests.length > 0
+      ? [
+        sectionTitle('Open for entries'),
+        paragraph(data.openContests
+          .map((contest) => `<a href="${escapeAttribute(contest.url)}" style="color:${EMAIL_THEME.navy};">${escapeHtml(contest.name)}</a>`)
+          .join('<br>')),
+      ]
+      : []),
     button('Open league', data.leagueHomeUrl),
   ].join('');
   const textLines = [
     `${data.userName}, your account is registered and you joined ${data.leagueName}.`,
     `League code: ${data.leagueCode}`,
     ...(data.teamName ? [`Playing as: ${data.teamName}`] : []),
+    ...(data.openContests.length > 0
+      ? ['', 'Open for entries:', ...data.openContests.map((contest) => `${contest.name}: ${contest.url}`), '']
+      : []),
     `Open league: ${data.leagueHomeUrl}`,
   ];
 
@@ -1647,6 +1704,63 @@ function renderEventReadyForContestsEmail(
       ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map((setup) => `${setup.name}: ${setup.url}`)] : []),
       '',
       `Create contest: ${data.createContestUrl}`,
+    ],
+  });
+}
+
+const DIGEST_EVENT_STATE_LINE: Record<DigestEventState, string> = {
+  CONTEST_SET_UP: 'Contest set up',
+  READY: 'Ready for contests',
+  NOT_READY: 'Not ready for contests yet',
+};
+
+/** "Masters Tournament (PGA Tour), Apr 9, 2026, 8:00 AM EDT" */
+function digestEventHeading(event: WeeklyDigestEvent, timeZone: string): string {
+  return `${event.eventName} (${event.sportLeagueName}), ${formatInstant(event.startsAt, timeZone)}`;
+}
+
+function digestEventBlock(event: WeeklyDigestEvent, timeZone: string): string {
+  const state = event.state === DigestEventState.READY
+    ? `${escapeHtml(DIGEST_EVENT_STATE_LINE.READY)}: <a href="${escapeAttribute(event.createContestUrl)}" style="color:${EMAIL_THEME.navy};">Create contest</a>`
+    : escapeHtml(DIGEST_EVENT_STATE_LINE[event.state]);
+  return paragraph(`${strong(digestEventHeading(event, timeZone))}<br>${state}`);
+}
+
+function digestEventLines(event: WeeklyDigestEvent, timeZone: string): string[] {
+  const state = event.state === DigestEventState.READY
+    ? `${DIGEST_EVENT_STATE_LINE.READY}. Create contest: ${event.createContestUrl}`
+    : DIGEST_EVENT_STATE_LINE[event.state];
+  return [digestEventHeading(event, timeZone), state];
+}
+
+function renderEventWeeklyDigestEmail(
+  data: EventWeeklyDigestEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const count = data.thisWeek.length + data.nextWeek.length;
+  const intro = `${count === 1 ? 'One event starts' : `${count} events start`} in the next two weeks in the sport leagues you get event emails for.`;
+  const weeks = [
+    { title: 'This week', events: data.thisWeek },
+    { title: 'Next week', events: data.nextWeek },
+  ].filter((week) => week.events.length > 0);
+  return buildMessage(context, {
+    templateKey: 'EVENT_WEEKLY_DIGEST',
+    subject: `Coming up for ${data.leagueName}: ${count === 1 ? '1 event' : `${count} events`}`,
+    preheader: intro,
+    title: 'Coming up',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(escapeHtml(intro)),
+      ...weeks.flatMap((week) => [sectionTitle(week.title), ...week.events.map((event) => digestEventBlock(event, context.timeZone))]),
+      button('Your league\'s contests', data.contestsUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      intro,
+      ...weeks.flatMap((week) => ['', `${week.title}:`, ...week.events.flatMap((event) => ['', ...digestEventLines(event, context.timeZone)])]),
+      '',
+      `Your league's contests: ${data.contestsUrl}`,
     ],
   });
 }

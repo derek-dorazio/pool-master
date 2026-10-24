@@ -221,6 +221,21 @@ describe('ContestRepository', () => {
     ]);
   });
 
+  it("finds only the league's own contests open for entries, oldest first, by id and name", async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const other = await createLeagueAndEvent();
+    const first = await createContest(league.id, event.id, 'First Open', ContestStatus.OPEN);
+    await createContest(league.id, event.id, 'Draft', ContestStatus.DRAFT);
+    await createContest(league.id, event.id, 'Live', ContestStatus.ACTIVE);
+    const second = await createContest(league.id, event.id, 'Second Open', ContestStatus.OPEN);
+    await createContest(other.league.id, other.event.id, 'Elsewhere', ContestStatus.OPEN);
+
+    await expect(repos().contests.findOpenByLeague(league.id)).resolves.toEqual([
+      { id: first.id, name: 'First Open' },
+      { id: second.id, name: 'Second Open' },
+    ]);
+  });
+
   it('transitions a contest only from the given statuses: the second run changes nothing and says so', async () => {
     const { league, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'To Start', ContestStatus.OPEN);

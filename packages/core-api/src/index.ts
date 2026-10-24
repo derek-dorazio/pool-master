@@ -70,7 +70,7 @@ import { registerConfiguredProviders } from './modules/ingestion/core/provider-b
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
 import { createContestManagementService } from './modules/contest-management/wiring';
-import { scoringFamilyForSport } from './modules/scoring-families';
+import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
   createEmailOutbox,
@@ -133,7 +133,7 @@ export function buildApp() {
     notificationsDue: [
       createEntryReminders(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log }),
       createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
-      createCommissionerNotices(prisma, { email, appBaseUrl, logger: app.log, planEntitlements }),
+      createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
       createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
     ],
     logger: app.log,
@@ -187,7 +187,7 @@ export function buildApp() {
         prisma,
         providerId,
         logger: app.log,
-        scoringFamilyForSport,
+        scoringFamilyForEvent,
       });
     },
   };

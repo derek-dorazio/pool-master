@@ -7,15 +7,17 @@
  * Kept apart from the family modules on purpose: the golf score service reads it, and the
  * stroke-play module builds that service, so reading it off the module would import in a circle.
  */
-import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { ScoringFamily, eventSportDefinition } from '@poolmaster/shared/domain';
+import type { ScoringFamilyEvent } from './scoring-family-module';
 
 const STORES_GOLF_ROUND_SCORES: Readonly<Record<ScoringFamily, boolean>> = {
   [ScoringFamily.STROKE_PLAY]: true,
   [ScoringFamily.FINISH_POSITION]: false,
   [ScoringFamily.HEAD_TO_HEAD]: false,
+  [ScoringFamily.COMPOSITE]: false,
 };
 
-/** Whether an event of this sport stores golf round scores, by its sport's scoring family. */
-export function sportStoresGolfRoundScores(sport: Sport): boolean {
-  return STORES_GOLF_ROUND_SCORES[getSportDefinition(sport).scoringFamily];
+/** Whether the event stores golf round scores, by its sport league's scoring family. */
+export function eventStoresGolfRoundScores(event: ScoringFamilyEvent): boolean {
+  return STORES_GOLF_ROUND_SCORES[eventSportDefinition(event).scoringFamily];
 }

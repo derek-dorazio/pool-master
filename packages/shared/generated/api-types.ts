@@ -4289,10 +4289,15 @@ export interface components {
             /** @description Whether the record book shows its Hall of Lame rows, for the whole league. */
             hallOfLameVisible: boolean;
         };
-        /** @description Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced. */
+        /** @description Commissioner request payload for how the league's commissioners hear about upcoming events (#851): which sport leagues, and one email per event or a weekly digest, replaced together. */
         UpdateLeagueEventEmailSettingsRequest: {
             /** @description The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league. */
             mutedSportLeagueIds: string[];
+            /**
+             * @description PER_EVENT for a "Coming up soon" and a "Ready for contests" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks' events instead.
+             * @enum {string}
+             */
+            eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
         };
         /** @description Commissioner request payload for sending direct email invites. */
         SendLeagueInvitationsRequest: {
@@ -4420,6 +4425,11 @@ export interface components {
             };
             /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
             mutedSportLeagueIds: string[];
+            /**
+             * @description How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+             * @enum {string}
+             */
+            eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
         };
         /** @description A membership of a user in a league, with the member embedded. */
         LeagueMembershipDto: {
@@ -4645,6 +4655,11 @@ export interface components {
                 };
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
+                /**
+                 * @description How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+                 * @enum {string}
+                 */
+                eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
             };
         };
         /** @description A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context. */
@@ -4705,6 +4720,11 @@ export interface components {
                 };
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
+                /**
+                 * @description How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+                 * @enum {string}
+                 */
+                eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
             };
             /** @description The viewer's membership in this league, or null when they have none. */
             membership: {
@@ -4911,6 +4931,11 @@ export interface components {
                 };
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
+                /**
+                 * @description How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+                 * @enum {string}
+                 */
+                eventEmailDelivery: "PER_EVENT" | "WEEKLY_DIGEST";
             }[];
             /** @description The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to. */
             memberships: {
@@ -5662,6 +5687,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5705,6 +5734,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5748,6 +5781,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5794,6 +5831,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5835,6 +5876,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5876,6 +5921,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         } | {
             /** @enum {string} */
@@ -5917,6 +5966,10 @@ export interface components {
                         rule: "NONE";
                     };
                 };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                config: Record<string, never>;
             };
         };
         /** @description One inherited event tier and its participant assignments. */
@@ -6207,6 +6260,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6250,6 +6307,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6293,6 +6354,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6339,6 +6404,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6380,6 +6449,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6421,6 +6494,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -6462,6 +6539,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
         };
@@ -6732,6 +6813,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6775,6 +6860,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6818,6 +6907,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6864,6 +6957,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6905,6 +7002,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6946,6 +7047,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -6987,6 +7092,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 };
             }[];
@@ -7048,6 +7157,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7091,6 +7204,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7134,6 +7251,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7180,6 +7301,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7221,6 +7346,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7262,6 +7391,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -7303,6 +7436,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
         };
@@ -7399,6 +7536,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7442,6 +7583,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7485,6 +7630,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7531,6 +7680,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7572,6 +7725,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7613,6 +7770,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 } | {
                     /** @enum {string} */
@@ -7654,6 +7815,10 @@ export interface components {
                                 rule: "NONE";
                             };
                         };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
                     };
                 };
             };
@@ -10352,6 +10517,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10395,6 +10564,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10438,6 +10611,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10484,6 +10661,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10525,6 +10706,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10566,6 +10751,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             } | {
                 /** @enum {string} */
@@ -10607,6 +10796,10 @@ export interface components {
                             rule: "NONE";
                         };
                     };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                    config: Record<string, never>;
                 };
             };
             /**
@@ -10855,7 +11048,7 @@ export interface components {
             pickedAt: string;
         };
         /** @enum {string} */
-        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
+        ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
             /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
@@ -11004,7 +11197,7 @@ export interface components {
              * @description The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
              * @enum {string}
              */
-            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
+            scoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS" | "COMPOSITE_TOTAL";
             /** @description How an entry's picks combine into its total. */
             countingRule: {
                 /**
@@ -12168,7 +12361,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -12181,6 +12374,8 @@ export interface components {
             entryReminderHours: number[];
             /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
             standingsBufferMinutes: number;
+            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+            weeklyDigestHour: number;
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
             templates: {
                 /** @description Whether this email is sent. */
@@ -12209,6 +12404,8 @@ export interface components {
                 EVENT_COMING_UP: boolean;
                 /** @description Whether this email is sent. */
                 EVENT_READY_FOR_CONTESTS: boolean;
+                /** @description Whether this email is sent. */
+                EVENT_WEEKLY_DIGEST: boolean;
                 /** @description Whether this email is sent. */
                 CONTEST_NOT_OPEN: boolean;
                 /** @description Whether this email is sent. */
@@ -12891,6 +13088,8 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12919,6 +13118,8 @@ export interface components {
                     EVENT_COMING_UP: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -12939,6 +13140,8 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -12967,6 +13170,8 @@ export interface components {
                     EVENT_COMING_UP: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -13563,6 +13768,8 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -13591,6 +13798,8 @@ export interface components {
                         EVENT_COMING_UP: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -13611,6 +13820,8 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -13639,6 +13850,8 @@ export interface components {
                         EVENT_COMING_UP: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -14084,6 +14297,8 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -14112,6 +14327,8 @@ export interface components {
                     EVENT_COMING_UP: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -14519,6 +14736,8 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -14547,6 +14766,8 @@ export interface components {
                     EVENT_COMING_UP: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -14567,6 +14788,8 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
                     /** @description Whether this email is sent. */
@@ -14595,6 +14818,8 @@ export interface components {
                     EVENT_COMING_UP: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_READY_FOR_CONTESTS: boolean;
+                    /** @description Whether this email is sent. */
+                    EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
@@ -15163,6 +15388,8 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -15191,6 +15418,8 @@ export interface components {
                         EVENT_COMING_UP: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
@@ -15211,6 +15440,8 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
                         /** @description Whether this email is sent. */
@@ -15239,6 +15470,8 @@ export interface components {
                         EVENT_COMING_UP: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_READY_FOR_CONTESTS: boolean;
+                        /** @description Whether this email is sent. */
+                        EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */

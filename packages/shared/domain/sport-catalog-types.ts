@@ -5,8 +5,10 @@
  * particulars live in sport extension rows and are not part of these types.
  */
 
+import type { ScoringFamily } from './sports/scoring-family';
+import type { SportStat } from './sports/sport-stats';
 import type { DomainEntity, Participant } from './types';
-import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
+import type { BracketAdvancement, MatchEnding, MatchPeriodLayout, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SportLeagueNoun, ValuationSource } from './enums';
 
 /** A real-world league, tour or conference within a sport — the PGA Tour, the NBA. Never the product's League. */
 export interface SportLeague extends DomainEntity {
@@ -57,6 +59,13 @@ export interface SportLeague extends DomainEntity {
    * Reference data, set where the league is seeded.
    */
   displayName: string | null;
+  /**
+   * Who competes and how its events are scored, when not as its sport (#934: the World Series
+   * stat pool's players, scored by the composite family); null takes the sport's. Read through
+   * `sportLeagueDefinitionOf`. Reference data, set where the league is seeded.
+   */
+  participantType: ParticipantType | null;
+  scoringFamily: ScoringFamily | null;
 }
 
 /**
@@ -144,6 +153,16 @@ export interface SportEventParticipantGolfRound extends DomainEntity {
   strokes: number;
   scoreToPar: number;
   thru: number | null;
+}
+
+/**
+ * One component stat of a player's game, in a stat pool (#934): the composite family's extension
+ * of a SportEventParticipantRound. A round's lines make its composite; a stat with no line is 0.
+ */
+export interface SportEventParticipantStatLine extends DomainEntity {
+  participantRoundId: string;
+  stat: SportStat;
+  value: number;
 }
 
 /** The running event totals one golfer's standing was ranked from. Extends a SportEventParticipantStanding. */

@@ -1,9 +1,26 @@
 import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
+import { SportStat, statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a playoff bracket are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['Super Bowl', 'Conference Championship', 'Divisional', 'Wild Card'] as const;
+
+/** The stats Redzone counts. */
+const AMERICAN_FOOTBALL_STATS = [SportStat.PASSING_TOUCHDOWNS, SportStat.RUSHING_TOUCHDOWNS, SportStat.RECEIVING_TOUCHDOWNS, SportStat.RECEPTIONS, SportStat.PASSING_YARDS, SportStat.RUSHING_YARDS, SportStat.RECEIVING_YARDS] as const;
+/** One of Redzone's stats: american football's typed slice of `SportStat`. */
+type AmericanFootballStat = (typeof AMERICAN_FOOTBALL_STATS)[number];
+
+/** Redzone (#932): 6 x touchdowns (passing, rushing and receiving) + receptions + passing and
+ * scrimmage yards / 10, rounded down, a game's. Each NFL stat pool event is one week's games, so one round. */
+const americanFootballComposite: SportComposite<AmericanFootballStat> = {
+  name: 'Redzone',
+  stats: AMERICAN_FOOTBALL_STATS,
+  defaultGames: 1,
+  score: (line) => 6 * (statValue(line, SportStat.PASSING_TOUCHDOWNS) + statValue(line, SportStat.RUSHING_TOUCHDOWNS) + statValue(line, SportStat.RECEIVING_TOUCHDOWNS))
+    + statValue(line, SportStat.RECEPTIONS)
+    + Math.floor((statValue(line, SportStat.PASSING_YARDS) + statValue(line, SportStat.RUSHING_YARDS) + statValue(line, SportStat.RECEIVING_YARDS)) / 10),
+};
 
 /**
  * American football (#702, plans/knockout-and-pickem-design.md §3.5): teams playing a knockout
@@ -32,6 +49,7 @@ export const americanFootballSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   shootout: null,
+  composite: americanFootballComposite,
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   pickEm: { tiePicks: false, againstTheSpread: true },
   vocabulary: {

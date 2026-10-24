@@ -200,6 +200,7 @@ describe('LiveStandings.queueDue', () => {
             contestId: contest.id,
             sportEventId: sportEventId ?? '',
             sport: 'GOLF',
+            scoringFamily: 'STROKE_PLAY',
             scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
             countingRule: { type: 'BEST_N', count: 4 },
             participants: fields.get(sportEventId ?? '') ?? [],

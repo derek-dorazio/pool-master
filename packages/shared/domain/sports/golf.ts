@@ -13,6 +13,7 @@ export const golfSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['GOLF_RELATIVE_TO_PAR_TOTAL'],
   shootout: null,
+  composite: null,
   vocabulary: {
     participant: { one: 'golfer', many: 'golfers' },
     event: { one: 'tournament', many: 'tournaments' },

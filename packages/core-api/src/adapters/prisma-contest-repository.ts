@@ -14,7 +14,7 @@ import type {
   ContestStatusTransition,
   ContestUpdate,
 } from '@poolmaster/shared/db';
-import type { Contest, ContestFormat, ContestStatus, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestStatus, type Contest, type ContestFormat, type CupWeight, type SelectionType, type Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -49,6 +49,14 @@ export class PrismaContestRepository implements ContestRepository {
       include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);
+  }
+
+  async findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>> {
+    return this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.OPEN },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, name: true },
+    });
   }
 
   async findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]> {

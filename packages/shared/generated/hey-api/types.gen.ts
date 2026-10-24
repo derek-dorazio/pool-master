@@ -1310,13 +1310,17 @@ export type UpdateLeagueCupSettingsRequest = {
 };
 
 /**
- * Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced.
+ * Commissioner request payload for how the league's commissioners hear about upcoming events (#851): which sport leagues, and one email per event or a weekly digest, replaced together.
  */
 export type UpdateLeagueEventEmailSettingsRequest = {
     /**
      * The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.
      */
     mutedSportLeagueIds: Array<string>;
+    /**
+     * PER_EVENT for a "Coming up soon" and a "Ready for contests" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks' events instead.
+     */
+    eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
 };
 
 /**
@@ -1520,6 +1524,10 @@ export type LeagueDto = {
      * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
      */
     mutedSportLeagueIds: Array<string>;
+    /**
+     * How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+     */
+    eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
 };
 
 /**
@@ -1823,6 +1831,10 @@ export type LeagueResponse = {
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
         mutedSportLeagueIds: Array<string>;
+        /**
+         * How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+         */
+        eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
     };
 };
 
@@ -1916,6 +1928,10 @@ export type LeagueContextResponse = {
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
         mutedSportLeagueIds: Array<string>;
+        /**
+         * How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+         */
+        eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -2182,6 +2198,10 @@ export type LeagueListResponse = {
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
         mutedSportLeagueIds: Array<string>;
+        /**
+         * How the league's commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead.
+         */
+        eventEmailDelivery: 'PER_EVENT' | 'WEEKLY_DIGEST';
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -3077,6 +3097,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'BUDGET_PICK';
@@ -3137,6 +3162,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 } | {
@@ -3199,6 +3229,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'PICK_EM';
@@ -3260,6 +3295,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'BRACKET';
@@ -3316,6 +3356,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 } | {
@@ -3374,6 +3419,11 @@ export type ContestConfigurationRequest = {
                 rule: 'NONE';
             };
         };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
+        };
     };
 } | {
     selectionType: 'SURVIVOR';
@@ -3430,6 +3480,11 @@ export type ContestConfigurationRequest = {
             } | {
                 rule: 'NONE';
             };
+        };
+    } | {
+        participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+        config: {
+            [key: string]: never;
         };
     };
 };
@@ -3884,6 +3939,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -3944,6 +4004,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -4006,6 +4071,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -4067,6 +4137,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -4123,6 +4198,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -4181,6 +4261,11 @@ export type ContestConfigTemplateDto = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -4237,6 +4322,11 @@ export type ContestConfigTemplateDto = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -4633,6 +4723,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -4693,6 +4788,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -4755,6 +4855,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -4816,6 +4921,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -4872,6 +4982,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -4930,6 +5045,11 @@ export type ContestConfigTemplateListResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'SURVIVOR';
@@ -4986,6 +5106,11 @@ export type ContestConfigTemplateListResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         };
@@ -5083,6 +5208,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -5143,6 +5273,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -5205,6 +5340,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -5266,6 +5406,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -5322,6 +5467,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -5380,6 +5530,11 @@ export type UpdateContestConfigTemplateRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -5436,6 +5591,11 @@ export type UpdateContestConfigTemplateRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -5568,6 +5728,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BUDGET_PICK';
@@ -5628,6 +5793,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -5690,6 +5860,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'PICK_EM';
@@ -5751,6 +5926,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'BRACKET';
@@ -5807,6 +5987,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         } | {
@@ -5865,6 +6050,11 @@ export type ContestConfigTemplateResponse = {
                         rule: 'NONE';
                     };
                 };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
+                };
             };
         } | {
             selectionType: 'SURVIVOR';
@@ -5921,6 +6111,11 @@ export type ContestConfigTemplateResponse = {
                     } | {
                         rule: 'NONE';
                     };
+                };
+            } | {
+                participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+                config: {
+                    [key: string]: never;
                 };
             };
         };
@@ -9431,6 +9626,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BUDGET_PICK';
@@ -9491,6 +9691,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -9553,6 +9758,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'PICK_EM';
@@ -9614,6 +9824,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'BRACKET';
@@ -9670,6 +9885,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     } | {
@@ -9728,6 +9948,11 @@ export type CreateContestRequest = {
                     rule: 'NONE';
                 };
             };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
+            };
         };
     } | {
         selectionType: 'SURVIVOR';
@@ -9784,6 +10009,11 @@ export type CreateContestRequest = {
                 } | {
                     rule: 'NONE';
                 };
+            };
+        } | {
+            participantScoringDefinitionId: 'COMPOSITE_TOTAL';
+            config: {
+                [key: string]: never;
             };
         };
     };
@@ -10107,7 +10337,7 @@ export type ContestEntryParticipantDetailDto = {
     pickedAt: string;
 };
 
-export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
+export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
 
 /**
  * Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes.
@@ -10368,7 +10598,7 @@ export type ContestLeaderboardResponse = {
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
-    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS';
+    scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FINISH_POSITION_POINTS' | 'KNOCKOUT_ROUND_POINTS' | 'COMPOSITE_TOTAL';
     /**
      * How an entry's picks combine into its total.
      */
@@ -11895,7 +12125,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST';
 
 /**
  * Whether and how system email is sent.
@@ -11921,6 +12151,10 @@ export type EmailConfig = {
      * How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first.
      */
     standingsBufferMinutes: number;
+    /**
+     * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+     */
+    weeklyDigestHour: number;
     /**
      * Per-template switches. A template that is off is skipped even while email is on.
      */
@@ -11977,6 +12211,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         EVENT_READY_FOR_CONTESTS: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        EVENT_WEEKLY_DIGEST: boolean;
         /**
          * Whether this email is sent.
          */
@@ -12969,6 +13207,10 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         */
+        weeklyDigestHour: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13024,6 +13266,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_READY_FOR_CONTESTS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            EVENT_WEEKLY_DIGEST: boolean;
             /**
              * Whether this email is sent.
              */
@@ -13063,6 +13309,10 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         */
+        weeklyDigestHour: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -13118,6 +13368,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_READY_FOR_CONTESTS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            EVENT_WEEKLY_DIGEST: boolean;
             /**
              * Whether this email is sent.
              */
@@ -13894,6 +14148,10 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             */
+            weeklyDigestHour: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -13949,6 +14207,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_READY_FOR_CONTESTS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                EVENT_WEEKLY_DIGEST: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -13988,6 +14250,10 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             */
+            weeklyDigestHour: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -14043,6 +14309,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_READY_FOR_CONTESTS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                EVENT_WEEKLY_DIGEST: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -14619,6 +14889,10 @@ export type SettingsGroupUpdateRequest = {
          */
         standingsBufferMinutes: number;
         /**
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         */
+        weeklyDigestHour: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -14674,6 +14948,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             EVENT_READY_FOR_CONTESTS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            EVENT_WEEKLY_DIGEST: boolean;
             /**
              * Whether this email is sent.
              */
@@ -15219,6 +15497,10 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         */
+        weeklyDigestHour: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -15274,6 +15556,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_READY_FOR_CONTESTS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            EVENT_WEEKLY_DIGEST: boolean;
             /**
              * Whether this email is sent.
              */
@@ -15313,6 +15599,10 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         */
+        weeklyDigestHour: number;
+        /**
          * Per-template switches. A template that is off is skipped even while email is on.
          */
         templates: {
@@ -15368,6 +15658,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_READY_FOR_CONTESTS: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            EVENT_WEEKLY_DIGEST: boolean;
             /**
              * Whether this email is sent.
              */
@@ -16100,6 +16394,10 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             */
+            weeklyDigestHour: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -16155,6 +16453,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_READY_FOR_CONTESTS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                EVENT_WEEKLY_DIGEST: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -16194,6 +16496,10 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             */
+            weeklyDigestHour: number;
+            /**
              * Per-template switches. A template that is off is skipped even while email is on.
              */
             templates: {
@@ -16249,6 +16555,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_READY_FOR_CONTESTS: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                EVENT_WEEKLY_DIGEST: boolean;
                 /**
                  * Whether this email is sent.
                  */

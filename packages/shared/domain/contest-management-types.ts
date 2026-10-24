@@ -3,6 +3,7 @@ import type {
   ContestTemplateEventType,
   MatchPeriodLayout,
   ParticipantInactiveReason,
+  ParticipantType,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -11,6 +12,7 @@ import type {
 import type { EventPricingConfig } from './budget-pricing';
 import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
+import type { ScoringFamily } from './sports/scoring-family';
 import type { DomainEntity } from './types';
 
 export type SportEventReadinessStatus =
@@ -58,6 +60,13 @@ export interface SportEvent extends DomainEntity {
    * through `isSquaresRound`.
    */
   squaresFromRound?: number;
+  /**
+   * The series' sport league's participant type and scoring family when not its sport's (#934: a
+   * championship stat pool's players, scored by the composite family), read through the series
+   * like `sportLeagueId`; absent plays the sport's. Read through `eventSportDefinition`.
+   */
+  participantType?: ParticipantType;
+  scoringFamily?: ScoringFamily;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;

@@ -51,6 +51,7 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
   ['CONTEST_EVENT_CHANGED', 'Event postponed or cancelled'],
   ['EVENT_COMING_UP', 'Event coming up (commissioners)'],
   ['EVENT_READY_FOR_CONTESTS', 'Event ready for contests (commissioners)'],
+  ['EVENT_WEEKLY_DIGEST', 'Weekly event digest (commissioners)'],
   ['CONTEST_NOT_OPEN', 'Contest not open yet (commissioners)'],
   ['EVENT_STILL_DRAFT', 'Event still in draft (root admins)'],
   ['YEAR_IN_REVIEW', 'Year in review'],
@@ -59,6 +60,11 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
 /** The entry reminder offsets as a reader sees them, e.g. "48, 24, 3 hours before picks close". */
 function formatReminderHours(hours: readonly number[]): string {
   return `${hours.join(', ')} hours before picks close`;
+}
+
+/** An hour of the day as a reader sees it, e.g. "3:00 AM". */
+function formatHour(hour: number): string {
+  return `${String(hour % 12 === 0 ? 12 : hour % 12)}:00 ${hour < 12 ? 'AM' : 'PM'}`;
 }
 
 export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
@@ -74,6 +80,7 @@ export function summarizeEmail(config: EmailConfig): SettingsSummaryItem[] {
     { id: 'sendRatePerSecond', label: 'Emails a second', value: String(config.sendRatePerSecond) },
     { id: 'entryReminderHours', label: 'Entry reminders', value: formatReminderHours(config.entryReminderHours) },
     { id: 'standingsBufferMinutes', label: 'Standings email delay', value: `${String(config.standingsBufferMinutes)} minutes` },
+    { id: 'weeklyDigestHour', label: 'Weekly event digest', value: `Mondays at ${formatHour(config.weeklyDigestHour)} Eastern` },
   ];
 }
 

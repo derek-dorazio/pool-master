@@ -253,7 +253,7 @@ describe('email service: EMAIL_CONFIG switches', () => {
       to: { email: 'member@gmail.com', userId: 'user-1' },
       about: 'invite-1',
       league: LEAGUE,
-      data: { userName: 'Morgan', leagueName: LEAGUE.name, leagueCode: LEAGUE.leagueCode, leagueHomeUrl: 'https://qa.example.com/league/OFFICE24' },
+      data: { userName: 'Morgan', leagueName: LEAGUE.name, leagueCode: LEAGUE.leagueCode, leagueHomeUrl: 'https://qa.example.com/league/OFFICE24', openContests: [] },
     });
 
     expect(skipped.skipReason).toBe('TEMPLATE_DISABLED');

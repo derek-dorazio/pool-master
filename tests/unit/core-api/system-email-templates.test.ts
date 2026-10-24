@@ -40,6 +40,7 @@ describe('pool-master-98i system email templates', () => {
       leagueName: 'Mathworks',
       leagueCode: 'MATHWORKS',
       leagueHomeUrl: 'https://app.primetimecommissioner.com/leagues/league-1',
+      openContests: [],
     }, UTC);
 
     expect(message.templateKey).toBe('LEAGUE_JOIN_SUCCESS');
@@ -563,9 +564,12 @@ describe('pool-master-98i system email templates', () => {
       leagueName: '<League & Co>',
       leagueCode: 'LEAGUE',
       leagueHomeUrl: 'https://app.primetimecommissioner.com/leagues/league-1?x=<bad>',
+      openContests: [{ name: '<Pool & Co>', url: 'https://app.primetimecommissioner.com/contests/c?x="bad"' }],
     }, UTC);
 
     expect(message.html).toContain('&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;');
+    expect(message.html).toContain('&lt;Pool &amp; Co&gt;</a>');
+    expect(message.html).not.toContain('x="bad"');
     expect(message.html).toContain('&lt;League &amp; Co&gt;');
     expect(message.html).not.toContain('<script>alert');
     expect(message.html).not.toContain('href="https://app.primetimecommissioner.com/leagues/league-1?x=<bad>"');
@@ -621,6 +625,7 @@ describe('the email template registry', () => {
       CONTEST_EVENT_CHANGED: EmailCategory.CONTEST_UPDATES,
       EVENT_COMING_UP: EmailCategory.COMMISSIONER_UPDATES,
       EVENT_READY_FOR_CONTESTS: EmailCategory.COMMISSIONER_UPDATES,
+      EVENT_WEEKLY_DIGEST: EmailCategory.COMMISSIONER_UPDATES,
       CONTEST_NOT_OPEN: EmailCategory.COMMISSIONER_UPDATES,
       EVENT_STILL_DRAFT: EmailCategory.ROOT_ADMIN,
       SQUAD_OWNER_INVITE: EmailCategory.MEMBERSHIP,
@@ -645,6 +650,7 @@ describe('the email template registry', () => {
       CONTEST_EVENT_CHANGED: PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
       EVENT_COMING_UP: PlanFeature.EMAIL_EVENT_COMING_UP,
       EVENT_READY_FOR_CONTESTS: PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS,
+      EVENT_WEEKLY_DIGEST: PlanFeature.EMAIL_EVENT_COMING_UP,
       CONTEST_NOT_OPEN: PlanFeature.EMAIL_CONTEST_NOT_OPEN,
       EVENT_STILL_DRAFT: null,
       SQUAD_OWNER_INVITE: null,
@@ -656,9 +662,12 @@ describe('the email template registry', () => {
     });
   });
 
-  it('sends every email plan feature from exactly one template, so no email feature on the Plans page switches nothing', () => {
+  it('sends every email plan feature from one template, the weekly digest sharing "Coming up soon"\'s, so no email feature on the Plans page switches nothing', () => {
     const emailFeatures = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === PlanFeatureGroup.EMAILS);
-    const sentBy = Object.values(EMAIL_TEMPLATES).map((template) => template.planFeature).filter((feature) => feature !== null);
+    const sentBy = Object.entries(EMAIL_TEMPLATES)
+      .filter(([key]) => key !== 'EVENT_WEEKLY_DIGEST')
+      .map(([, template]) => template.planFeature)
+      .filter((feature) => feature !== null);
 
     expect([...sentBy].sort()).toEqual([...emailFeatures].sort());
   });

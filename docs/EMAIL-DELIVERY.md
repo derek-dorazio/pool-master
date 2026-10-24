@@ -198,6 +198,9 @@ holds:
 - `standingsBufferMinutes` ("Standings email delay"): how many minutes after a round, event or
   week finishes its live standings email goes, 30 by default, from 0 to 240, so a late score
   correction lands first.
+- `weeklyDigestHour` ("Weekly event digest hour"): the hour on Monday, in US Eastern time, every
+  league's weekly event digest goes, 3 by default (3:00 AM, so it is waiting in the morning),
+  from 0 to 23.
 
 Through SES, an address at a domain reserved by RFC 2606 and RFC 6761 (`.invalid`, `.test`,
 `.example`, `.localhost`, `example.com`, `example.net`, `example.org`) is always skipped: no mail
@@ -470,6 +473,17 @@ league added later is heard about until muted. A sport league whose events are w
 week its own event) is told of its season's first week only. The idempotency key (event, league,
 person; for C4, contest, person) sends each once, and a league or contest already told is skipped
 before its email is built.
+
+The same settings choose the delivery (`eventEmailDelivery`): `PER_EVENT`, C1 and C2 as above
+(the default), or `WEEKLY_DIGEST`, which gets neither. A digest league's commissioners get
+**Coming up** (`EVENT_WEEKLY_DIGEST`, category Commissioner updates) on Monday from
+`weeklyDigestHour` US Eastern, every league at the same moment. It lists the events of the
+league's heard sport leagues starting in the next 14 days, under This week (the first 7 days)
+and Next week, with the same first-week rule for weeks: "Contest set up" when the league has a
+contest on it, "Ready for contests" with a Create contest link when released, "Not ready for
+contests yet" while a draft. A league with nothing coming up gets no digest that week. It starts
+on the plan of `EMAIL_EVENT_COMING_UP`, which it replaces, so the Event emails page offers it
+only on that plan. The idempotency key (Monday's date, league, person) sends one a week.
 
 Event still in draft emails (`EVENT_STILL_DRAFT`, #845 G1, category Root admin, which can't be
 turned off) are the step's fourth kind. While an event starts within 7 days and is still a draft,

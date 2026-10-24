@@ -22,10 +22,10 @@ import {
   LiveScoreResultSchema,
   type LiveScoreResult,
 } from '@poolmaster/shared/dto';
-import { SportEventStatus, type Sport } from '@poolmaster/shared/domain';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
-import type { ScoringFamilyModule } from '../../scoring-families';
+import type { ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
 
 export class LiveScoreValidationError extends Error {
@@ -39,8 +39,8 @@ export interface LiveScorePublisherDeps {
   prisma: PrismaClient;
   providerId: string;
   logger?: FastifyBaseLogger;
-  /** Which scoring family scores an event's sport: the composition root passes the sport registry's. */
-  scoringFamilyForSport: (sport: Sport) => ScoringFamilyModule;
+  /** Which scoring family scores an event, by its sport league's definition: the composition root passes the registry's. */
+  scoringFamilyForEvent: (event: ScoringFamilyEvent) => ScoringFamilyModule;
 }
 
 export interface LiveScorePersistenceResult {
@@ -78,7 +78,7 @@ export async function publishLiveScoreUpdate(
   // to one event, then dispatch to the per-category persistence path.
   const sportEvent = await deps.prisma.sportEvent.findUnique({
     where: { providerId_externalId: { providerId: deps.providerId, externalId: validated.externalEventId } },
-    select: { id: true, sport: true, rounds: true, status: true },
+    select: { id: true, sport: true, rounds: true, status: true, eventSeries: { select: { sportLeague: { select: { scoringFamily: true } } } } },
   });
   if (!sportEvent) {
     deps.logger?.warn(
@@ -117,7 +117,10 @@ export async function publishLiveScoreUpdate(
 
   // The event's scoring family writes the batch into its own result rows (#606), and only a
   // batch of the one category it accepts: a family entered by an admin accepts none.
-  const writer = deps.scoringFamilyForSport(sportEvent.sport).liveScores;
+  const writer = deps.scoringFamilyForEvent({
+    sport: sportEvent.sport,
+    scoringFamily: sportEvent.eventSeries.sportLeague.scoringFamily ?? undefined,
+  }).liveScores;
   const acceptedCategory = writer?.category ?? null;
   if (writer?.category !== validated.category) {
     deps.logger?.warn(

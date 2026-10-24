@@ -15,7 +15,6 @@ import type {
 } from '@poolmaster/shared/dto';
 import {
   ScoringFamily,
-  getSportDefinition,
   type Sport,
   type Contest,
   type ContestEntry,
@@ -122,6 +121,8 @@ export interface ContestLeaderboardModel {
   /** The event whose field and picks are shown. */
   sportEventId: string;
   sport: Sport;
+  /** The shown event's scoring family, by its sport league's definition (#934): which pick detail its picks carry. */
+  scoringFamily: ScoringFamily;
   scoringDefinitionId: ParticipantScoringDefinitionId;
   countingRule: ContestCountingRule;
   /** The shown event's field rows, published as the event's own canonical DTO. */
@@ -294,12 +295,15 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
       knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive },
     };
   },
+  // A stat pool's per-game block arrives with its leaderboard columns (#936); the entry's total
+  // is already on the row.
+  [ScoringFamily.COMPOSITE]: () => ({ golf: null, race: null, knockout: null }),
 };
 
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {
-  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[getSportDefinition(leaderboard.sport).scoringFamily];
+  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[leaderboard.scoringFamily];
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,

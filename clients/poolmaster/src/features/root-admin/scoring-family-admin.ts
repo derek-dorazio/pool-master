@@ -4,6 +4,7 @@ import type { SportEventDto } from '@/lib/api';
 import { BracketPanel } from './bracket-panel';
 import { GolfRoundScoresPanel } from './golf-round-scores-panel';
 import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
+import { StatLinesPanel } from './stat-lines-panel';
 
 /**
  * What a scoring family contributes to an event's Manage pages (plans/racing-sports.md Q9.6).
@@ -41,6 +42,11 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   [ScoringFamily.HEAD_TO_HEAD]: {
     resultsLabel: 'Bracket',
     ResultsPanel: BracketPanel,
+    scoresUnplayedRoundsAgainstPar: false,
+  },
+  [ScoringFamily.COMPOSITE]: {
+    resultsLabel: 'Stats',
+    ResultsPanel: StatLinesPanel,
     scoresUnplayedRoundsAgainstPar: false,
   },
 };

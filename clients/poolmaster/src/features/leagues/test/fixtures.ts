@@ -28,6 +28,7 @@ type LeagueFixture = Pick<
   | 'hallOfLameVisible'
   | 'planEntitlements'
   | 'mutedSportLeagueIds'
+  | 'eventEmailDelivery'
 >;
 
 type CurrentUserFixture = Pick<
@@ -130,6 +131,7 @@ const baseLeague: LeagueFixture = {
   hallOfLameVisible: true,
   planEntitlements: buildPlanEntitlements(),
   mutedSportLeagueIds: [],
+  eventEmailDelivery: 'PER_EVENT',
 };
 
 const baseSquadMember: LeagueSquadMemberFixture = {

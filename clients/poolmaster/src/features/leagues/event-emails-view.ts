@@ -1,4 +1,4 @@
-import { PlanFeature, SUPPORTED_SPORTS, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { EventEmailDelivery, PlanFeature, SUPPORTED_SPORTS, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { LeagueDto, SportLeagueDto } from '@/lib/api';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 
@@ -9,6 +9,22 @@ export const EVENT_EMAIL_FEATURES = [PlanFeature.EMAIL_EVENT_COMING_UP, PlanFeat
 export function hasEventEmails(league: Pick<LeagueDto, 'planEntitlements'>): boolean {
   return EVENT_EMAIL_FEATURES.some((feature) => hasPlanFeature(league, feature));
 }
+
+/** Whether the plan offers the weekly digest: it replaces "Coming up soon", so it starts on that email's plan. */
+export function hasWeeklyDigest(league: Pick<LeagueDto, 'planEntitlements'>): boolean {
+  return hasPlanFeature(league, PlanFeature.EMAIL_EVENT_COMING_UP);
+}
+
+/** The two ways commissioners can get the event emails, in the order the edit page offers them. */
+export const EVENT_EMAIL_DELIVERIES = [EventEmailDelivery.PER_EVENT, EventEmailDelivery.WEEKLY_DIGEST] as const;
+
+export const EVENT_EMAIL_DELIVERY_COPY: Record<EventEmailDelivery, { label: string; description: string }> = {
+  PER_EVENT: { label: 'An email for each event', description: 'Sent as each event comes up.' },
+  WEEKLY_DIGEST: {
+    label: 'Weekly digest',
+    description: 'One email early each Monday listing the next two weeks\' events, instead of an email for each.',
+  },
+};
 
 /** Which of the two upcoming-event emails the league's plan sends; each starts on its own plan. */
 function eventEmailsInPlan(league: Pick<LeagueDto, 'planEntitlements'>) {

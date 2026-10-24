@@ -1,6 +1,7 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
 import type { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import type { ScoringFamily } from './scoring-family';
+import type { SportComposite } from './sport-stats';
 
 /** A noun in its singular and plural, as the audience says it. */
 export interface SportNoun {
@@ -164,4 +165,10 @@ export interface SportDefinition {
   shootout: SportShootout | null;
   /** How one round is labelled: "Round 2" for golf, "Quarterfinal" for tennis. */
   roundLabel: (roundNumber: number, roundCount: number) => string;
+  /**
+   * The sport's one composite score, for a sport whose championship has a stat pool (#932): Box
+   * Score for baseball. A sport league whose scoring family is `COMPOSITE` plays it, read through
+   * `sportLeagueDefinitionOf`. Null for a sport with no stat pool.
+   */
+  composite: SportComposite | null;
 }

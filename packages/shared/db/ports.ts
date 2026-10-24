@@ -173,8 +173,8 @@ export interface LeagueRepository {
    */
   findByUser(userId: string): Promise<League[]>;
 
-  /** The points table starts STANDARD, the plan PLATINUM and no sport league muted, from the database defaults. */
-  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds'>): Promise<League>;
+  /** The points table starts STANDARD, the plan PLATINUM, no sport league muted and event emails per event, from the database defaults. */
+  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
 
   /**
@@ -317,6 +317,8 @@ export interface ParticipantProviderMappingRepository {
 export interface ContestRepository {
   findById(id: string): Promise<Contest | null>;
   findByLeague(leagueId: string): Promise<Contest[]>;
+  /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
+  findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
    * The different sports leagues of the league's contests of one season (#947), drafts included
    * (a deleted contest is gone, so it no longer counts): what the plan's sports leagues a year counts.

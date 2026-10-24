@@ -3,7 +3,7 @@ import {
   RaceResultService,
   type RaceResultRowInput,
 } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
-import { sportStoresRaceResults } from '../../../packages/core-api/src/modules/scoring-families/race-results';
+import { eventStoresRaceResults } from '../../../packages/core-api/src/modules/scoring-families/race-results';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 
 // The admin's finishing order against an in-memory store (#622): what a preview reports, that an
@@ -27,7 +27,7 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     raceResults: store.raceResultRepo(),
-    storesRaceResults: sportStoresRaceResults,
+    storesRaceResults: eventStoresRaceResults,
     now: () => NOW,
   });
   return { store, service, event, arrow, bolt, comet, scratched };
