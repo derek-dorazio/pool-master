@@ -262,6 +262,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       hallOfLameVisible: true,
       planEntitlements: buildPlanEntitlements(),
       mutedSportLeagueIds: [],
+      eventEmailDelivery: 'PER_EVENT',
     },
     membership: {
       id: 'league-membership-1',

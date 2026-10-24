@@ -107,6 +107,10 @@ export const EmailConfigSchema = z.object({
     'How many minutes after a round, week or event finishes its live standings email goes (#877), '
     + 'so a late score correction lands first.',
   ),
+  weeklyDigestHour: z.number().int().min(0).max(23).describe(
+    'The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for '
+    + 'every league, so it is waiting in the morning.',
+  ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,
     LEAGUE_JOIN_SUCCESS: templateSwitch,
@@ -121,6 +125,7 @@ export const EmailConfigSchema = z.object({
     CONTEST_EVENT_CHANGED: templateSwitch,
     EVENT_COMING_UP: templateSwitch,
     EVENT_READY_FOR_CONTESTS: templateSwitch,
+    EVENT_WEEKLY_DIGEST: templateSwitch,
     CONTEST_NOT_OPEN: templateSwitch,
     EVENT_STILL_DRAFT: templateSwitch,
     YEAR_IN_REVIEW: templateSwitch,

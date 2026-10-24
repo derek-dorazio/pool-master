@@ -2,6 +2,7 @@ import { CupTrophy } from '@poolmaster/shared/domain';
 import {
   ContestEventChangeKind,
   ContestResultsKind,
+  DigestEventState,
   EntryReceiptKind,
   EntryReminderKind,
   StandingsMomentKind,
@@ -168,6 +169,18 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     field: '89 golfers',
     setups: [{ name: 'Pick 6 Tiers', url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-1' }],
     createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new',
+  },
+  EVENT_WEEKLY_DIGEST: {
+    userName: 'Casey Commissioner',
+    leagueName: 'Office League',
+    thisWeek: [
+      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new' },
+      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), state: DigestEventState.CONTEST_SET_UP },
+    ],
+    nextWeek: [
+      { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), state: DigestEventState.NOT_READY },
+    ],
+    contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },
   CONTEST_NOT_OPEN: {
     userName: 'Casey Commissioner',

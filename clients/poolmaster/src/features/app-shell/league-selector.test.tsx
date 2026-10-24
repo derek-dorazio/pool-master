@@ -56,6 +56,7 @@ describe('LeagueSelector', () => {
               hallOfLameVisible: true,
               planEntitlements: buildPlanEntitlements(),
               mutedSportLeagueIds: [],
+              eventEmailDelivery: 'PER_EVENT',
             },
             {
               id: 'league-2',
@@ -71,6 +72,7 @@ describe('LeagueSelector', () => {
               hallOfLameVisible: true,
               planEntitlements: buildPlanEntitlements(),
               mutedSportLeagueIds: [],
+              eventEmailDelivery: 'PER_EVENT',
             },
           ]}
           onCreateLeague={() => undefined}

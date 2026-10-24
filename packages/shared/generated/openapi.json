@@ -2818,13 +2818,22 @@
             },
             "maxItems": 200,
             "description": "The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league."
+          },
+          "eventEmailDelivery": {
+            "type": "string",
+            "enum": [
+              "PER_EVENT",
+              "WEEKLY_DIGEST"
+            ],
+            "description": "PER_EVENT for a \"Coming up soon\" and a \"Ready for contests\" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks' events instead."
           }
         },
         "required": [
-          "mutedSportLeagueIds"
+          "mutedSportLeagueIds",
+          "eventEmailDelivery"
         ],
         "additionalProperties": false,
-        "description": "Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced."
+        "description": "Commissioner request payload for how the league's commissioners hear about upcoming events (#851): which sport leagues, and one email per event or a weekly digest, replaced together."
       },
       "SendLeagueInvitationsRequest": {
         "type": "object",
@@ -3181,6 +3190,14 @@
               "format": "uuid"
             },
             "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
+          },
+          "eventEmailDelivery": {
+            "type": "string",
+            "enum": [
+              "PER_EVENT",
+              "WEEKLY_DIGEST"
+            ],
+            "description": "How the league's commissioners hear about upcoming events: PER_EVENT, a \"Coming up soon\" and a \"Ready for contests\" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead."
           }
         },
         "required": [
@@ -3196,7 +3213,8 @@
           "cupCustomPoints",
           "hallOfLameVisible",
           "planEntitlements",
-          "mutedSportLeagueIds"
+          "mutedSportLeagueIds",
+          "eventEmailDelivery"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3743,6 +3761,14 @@
                   "format": "uuid"
                 },
                 "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
+              },
+              "eventEmailDelivery": {
+                "type": "string",
+                "enum": [
+                  "PER_EVENT",
+                  "WEEKLY_DIGEST"
+                ],
+                "description": "How the league's commissioners hear about upcoming events: PER_EVENT, a \"Coming up soon\" and a \"Ready for contests\" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead."
               }
             },
             "required": [
@@ -3758,7 +3784,8 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
-              "mutedSportLeagueIds"
+              "mutedSportLeagueIds",
+              "eventEmailDelivery"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3945,6 +3972,14 @@
                   "format": "uuid"
                 },
                 "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
+              },
+              "eventEmailDelivery": {
+                "type": "string",
+                "enum": [
+                  "PER_EVENT",
+                  "WEEKLY_DIGEST"
+                ],
+                "description": "How the league's commissioners hear about upcoming events: PER_EVENT, a \"Coming up soon\" and a \"Ready for contests\" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead."
               }
             },
             "required": [
@@ -3960,7 +3995,8 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
-              "mutedSportLeagueIds"
+              "mutedSportLeagueIds",
+              "eventEmailDelivery"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -4441,6 +4477,14 @@
                     "format": "uuid"
                   },
                   "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
+                },
+                "eventEmailDelivery": {
+                  "type": "string",
+                  "enum": [
+                    "PER_EVENT",
+                    "WEEKLY_DIGEST"
+                  ],
+                  "description": "How the league's commissioners hear about upcoming events: PER_EVENT, a \"Coming up soon\" and a \"Ready for contests\" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks' events instead."
                 }
               },
               "required": [
@@ -4456,7 +4500,8 @@
                 "cupCustomPoints",
                 "hallOfLameVisible",
                 "planEntitlements",
-                "mutedSportLeagueIds"
+                "mutedSportLeagueIds",
+                "eventEmailDelivery"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -27307,7 +27352,8 @@
           "PASSWORD_RESET",
           "PASSWORD_CHANGED",
           "EMAIL_TEST",
-          "YEAR_IN_REVIEW"
+          "YEAR_IN_REVIEW",
+          "EVENT_WEEKLY_DIGEST"
         ],
         "description": "A system email template."
       },
@@ -27355,6 +27401,12 @@
             "minimum": 0,
             "maximum": 240,
             "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+          },
+          "weeklyDigestHour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
           },
           "templates": {
             "type": "object",
@@ -27411,6 +27463,10 @@
                 "type": "boolean",
                 "description": "Whether this email is sent."
               },
+              "EVENT_WEEKLY_DIGEST": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
               "CONTEST_NOT_OPEN": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
@@ -27438,6 +27494,7 @@
               "CONTEST_EVENT_CHANGED",
               "EVENT_COMING_UP",
               "EVENT_READY_FOR_CONTESTS",
+              "EVENT_WEEKLY_DIGEST",
               "CONTEST_NOT_OPEN",
               "EVENT_STILL_DRAFT",
               "YEAR_IN_REVIEW"
@@ -27452,6 +27509,7 @@
           "sendRatePerSecond",
           "entryReminderHours",
           "standingsBufferMinutes",
+          "weeklyDigestHour",
           "templates"
         ],
         "additionalProperties": false,
@@ -29278,6 +29336,12 @@
                     "maximum": 240,
                     "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                   },
+                  "weeklyDigestHour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29333,6 +29397,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "EVENT_WEEKLY_DIGEST": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -29360,6 +29428,7 @@
                       "CONTEST_EVENT_CHANGED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
+                      "EVENT_WEEKLY_DIGEST",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -29374,6 +29443,7 @@
                   "sendRatePerSecond",
                   "entryReminderHours",
                   "standingsBufferMinutes",
+                  "weeklyDigestHour",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -29424,6 +29494,12 @@
                     "maximum": 240,
                     "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                   },
+                  "weeklyDigestHour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -29479,6 +29555,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "EVENT_WEEKLY_DIGEST": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -29506,6 +29586,7 @@
                       "CONTEST_EVENT_CHANGED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
+                      "EVENT_WEEKLY_DIGEST",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -29520,6 +29601,7 @@
                   "sendRatePerSecond",
                   "entryReminderHours",
                   "standingsBufferMinutes",
+                  "weeklyDigestHour",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -31118,6 +31200,12 @@
                           "maximum": 240,
                           "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                         },
+                        "weeklyDigestHour": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 23,
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -31173,6 +31261,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "EVENT_WEEKLY_DIGEST": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -31200,6 +31292,7 @@
                             "CONTEST_EVENT_CHANGED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
+                            "EVENT_WEEKLY_DIGEST",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -31214,6 +31307,7 @@
                         "sendRatePerSecond",
                         "entryReminderHours",
                         "standingsBufferMinutes",
+                        "weeklyDigestHour",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -31264,6 +31358,12 @@
                           "maximum": 240,
                           "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                         },
+                        "weeklyDigestHour": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 23,
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -31319,6 +31419,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "EVENT_WEEKLY_DIGEST": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -31346,6 +31450,7 @@
                             "CONTEST_EVENT_CHANGED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
+                            "EVENT_WEEKLY_DIGEST",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -31360,6 +31465,7 @@
                         "sendRatePerSecond",
                         "entryReminderHours",
                         "standingsBufferMinutes",
+                        "weeklyDigestHour",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -32616,6 +32722,12 @@
                     "maximum": 240,
                     "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                   },
+                  "weeklyDigestHour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -32671,6 +32783,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "EVENT_WEEKLY_DIGEST": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -32698,6 +32814,7 @@
                       "CONTEST_EVENT_CHANGED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
+                      "EVENT_WEEKLY_DIGEST",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -32712,6 +32829,7 @@
                   "sendRatePerSecond",
                   "entryReminderHours",
                   "standingsBufferMinutes",
+                  "weeklyDigestHour",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -33806,6 +33924,12 @@
                     "maximum": 240,
                     "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                   },
+                  "weeklyDigestHour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -33861,6 +33985,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "EVENT_WEEKLY_DIGEST": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -33888,6 +34016,7 @@
                       "CONTEST_EVENT_CHANGED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
+                      "EVENT_WEEKLY_DIGEST",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -33902,6 +34031,7 @@
                   "sendRatePerSecond",
                   "entryReminderHours",
                   "standingsBufferMinutes",
+                  "weeklyDigestHour",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -33952,6 +34082,12 @@
                     "maximum": 240,
                     "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                   },
+                  "weeklyDigestHour": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 23,
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                  },
                   "templates": {
                     "type": "object",
                     "properties": {
@@ -34007,6 +34143,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "EVENT_WEEKLY_DIGEST": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "CONTEST_NOT_OPEN": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -34034,6 +34174,7 @@
                       "CONTEST_EVENT_CHANGED",
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
+                      "EVENT_WEEKLY_DIGEST",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
                       "YEAR_IN_REVIEW"
@@ -34048,6 +34189,7 @@
                   "sendRatePerSecond",
                   "entryReminderHours",
                   "standingsBufferMinutes",
+                  "weeklyDigestHour",
                   "templates"
                 ],
                 "additionalProperties": false,
@@ -35590,6 +35732,12 @@
                           "maximum": 240,
                           "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                         },
+                        "weeklyDigestHour": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 23,
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -35645,6 +35793,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "EVENT_WEEKLY_DIGEST": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -35672,6 +35824,7 @@
                             "CONTEST_EVENT_CHANGED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
+                            "EVENT_WEEKLY_DIGEST",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -35686,6 +35839,7 @@
                         "sendRatePerSecond",
                         "entryReminderHours",
                         "standingsBufferMinutes",
+                        "weeklyDigestHour",
                         "templates"
                       ],
                       "additionalProperties": false,
@@ -35736,6 +35890,12 @@
                           "maximum": 240,
                           "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
                         },
+                        "weeklyDigestHour": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 23,
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                        },
                         "templates": {
                           "type": "object",
                           "properties": {
@@ -35791,6 +35951,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "EVENT_WEEKLY_DIGEST": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "CONTEST_NOT_OPEN": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -35818,6 +35982,7 @@
                             "CONTEST_EVENT_CHANGED",
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
+                            "EVENT_WEEKLY_DIGEST",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
                             "YEAR_IN_REVIEW"
@@ -35832,6 +35997,7 @@
                         "sendRatePerSecond",
                         "entryReminderHours",
                         "standingsBufferMinutes",
+                        "weeklyDigestHour",
                         "templates"
                       ],
                       "additionalProperties": false,

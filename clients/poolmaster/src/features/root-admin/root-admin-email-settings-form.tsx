@@ -187,6 +187,20 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
           {...form.register('standingsBufferMinutes', { valueAsNumber: true })}
         />
       </FormField>
+      <FormField
+        error={form.formState.errors.weeklyDigestHour?.message}
+        helperText="The hour on Monday, from 0 to 23 in US Eastern time, every league's weekly event digest goes."
+        label="Weekly event digest hour"
+      >
+        <Input
+          data-testid="root-admin-email-settings-digest-hour"
+          inputMode="numeric"
+          max={23}
+          min={0}
+          type="number"
+          {...form.register('weeklyDigestHour', { valueAsNumber: true })}
+        />
+      </FormField>
       {saveMutation.isError ? (
         <Alert
           action={conflicted ? (

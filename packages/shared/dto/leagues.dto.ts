@@ -7,6 +7,7 @@ import {
   CupPointsScale,
   EmailMessageStatus,
   EmailSkipReason,
+  EventEmailDelivery,
   InvitationStatus,
   InviteType,
   LeagueIconKey,
@@ -106,7 +107,8 @@ export const UpdateLeagueEventEmailSettingsRequestSchema = z.object({
     .array(z.string().uuid())
     .max(200)
     .describe('The sport leagues whose upcoming events the league\'s commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.'),
-}).describe('Commissioner request payload for which sport leagues\' upcoming events the league\'s commissioners hear about (#851): the whole list, replaced.');
+  eventEmailDelivery: z.nativeEnum(EventEmailDelivery).describe('PER_EVENT for a "Coming up soon" and a "Ready for contests" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks\' events instead.'),
+}).describe('Commissioner request payload for how the league\'s commissioners hear about upcoming events (#851): which sport leagues, and one email per event or a weekly digest, replaced together.');
 export type UpdateLeagueEventEmailSettingsRequest = z.infer<typeof UpdateLeagueEventEmailSettingsRequestSchema>;
 
 export const SendLeagueInvitationsRequestSchema = z.object({
@@ -190,6 +192,7 @@ export const LeagueDtoSchema = z.object({
     'The league\'s plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
   ),
   mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
+  eventEmailDelivery: z.nativeEnum(EventEmailDelivery).describe('How the league\'s commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks\' events instead.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
