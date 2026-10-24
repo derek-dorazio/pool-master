@@ -85,6 +85,7 @@ export function createContestNotices(prisma: PrismaClient, options: {
 
 export function createCommissionerNotices(prisma: PrismaClient, options: {
   email: EmailService;
+  readConfig: () => EmailConfig;
   appBaseUrl: string;
   logger: FastifyBaseLogger;
   planEntitlements: PlanEntitlementsService;
@@ -96,6 +97,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     matches: new PrismaSportEventMatchRepository(prisma),
     templates: new PrismaContestConfigTemplateRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),

@@ -1,7 +1,8 @@
 /**
- * Which sport leagues' upcoming events a league's commissioners are emailed about (#851): "Coming
- * up soon" (C1) and "Ready for contests" (C2). A league setting, set by its commissioners; a new
- * league hears about every sport league.
+ * How a league's commissioners hear about upcoming events (#851): which sport leagues, and either
+ * "Coming up soon" (C1) and "Ready for contests" (C2) for each event or a weekly digest instead.
+ * A league setting, set by its commissioners; a new league hears about every sport league, one
+ * email per event.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -19,7 +20,7 @@ export interface LeagueEventEmailSettingsServiceDeps {
 export class LeagueEventEmailSettingsService {
   constructor(private readonly deps: LeagueEventEmailSettingsServiceDeps) {}
 
-  /** Replaces the league's muted sport leagues. Each id must be a sport league; repeats count once. */
+  /** Replaces the league's muted sport leagues and delivery. Each id must be a sport league; repeats count once. */
   async update(leagueId: string, updates: UpdateLeagueEventEmailSettingsRequest): Promise<League> {
     const league = await this.deps.leagues.findById(leagueId);
     if (!league) throw new LeagueNotFoundError(leagueId);
@@ -39,10 +40,13 @@ export class LeagueEventEmailSettingsService {
       }, 'Rejected event email settings naming an unknown sport league');
       throw new LeagueOperationError(`Not a sport league: ${unknown.join(', ')}`, 'SPORT_LEAGUE_NOT_FOUND');
     }
-    const updated = await this.deps.leagues.update(leagueId, { mutedSportLeagueIds: muted });
+    const updated = await this.deps.leagues.update(leagueId, {
+      mutedSportLeagueIds: muted,
+      eventEmailDelivery: updates.eventEmailDelivery,
+    });
     this.deps.logger?.info({
       action: 'league.updateEventEmailSettings.success',
-      data: { leagueId, mutedCount: muted.length },
+      data: { leagueId, mutedCount: muted.length, eventEmailDelivery: updates.eventEmailDelivery },
     }, 'Updated league event email settings');
     return updated;
   }

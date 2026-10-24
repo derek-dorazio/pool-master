@@ -23,6 +23,7 @@ import type {
   EmailSkipReason,
   EmailSuppressionReason,
   EmailTemplateKey,
+  EventEmailDelivery,
   InjuryStatusCode,
   InvitationStatus,
   InviteType,
@@ -95,6 +96,8 @@ export interface League extends DomainEntity {
    * "Coming up soon" and "Ready for contests". Empty at creation: every sport league.
    */
   mutedSportLeagueIds: string[];
+  /** How the commissioners hear about upcoming events (#851): one email per event, or a weekly digest. PER_EVENT at creation. */
+  eventEmailDelivery: EventEmailDelivery;
 }
 
 /** User membership within a league. */

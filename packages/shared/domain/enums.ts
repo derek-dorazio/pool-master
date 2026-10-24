@@ -895,6 +895,8 @@ export const EmailTemplateKey = {
   EMAIL_TEST: 'EMAIL_TEST',
   /** A squad's year in the league, sent by the commissioner after the year ends (#872). */
   YEAR_IN_REVIEW: 'YEAR_IN_REVIEW',
+  /** A league's Monday list of the next two weeks' events, for its commissioners (#851). */
+  EVENT_WEEKLY_DIGEST: 'EVENT_WEEKLY_DIGEST',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 
@@ -972,6 +974,17 @@ export const CupWeight = {
   NOT_COUNTED: 'NOT_COUNTED',
 } as const;
 export type CupWeight = (typeof CupWeight)[keyof typeof CupWeight];
+
+/**
+ * How a league's commissioners hear about upcoming events (#851): PER_EVENT, "Coming up soon"
+ * and "Ready for contests" for each event; WEEKLY_DIGEST, one Monday email listing the next two
+ * weeks' events instead of both.
+ */
+export const EventEmailDelivery = {
+  PER_EVENT: 'PER_EVENT',
+  WEEKLY_DIGEST: 'WEEKLY_DIGEST',
+} as const;
+export type EventEmailDelivery = (typeof EventEmailDelivery)[keyof typeof EventEmailDelivery];
 
 /**
  * The league's points table for cups and the championship (#841): what each finishing place in a
