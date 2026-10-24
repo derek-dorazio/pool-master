@@ -1,6 +1,11 @@
 Source: https://www.pro-football-reference.com/boxscores/202602080nwe.htm
 Final URL: https://www.pro-football-reference.com/boxscores/202602080nwe.htm
 HTTP 403
-Fetched: 2026-10-24T14:38:56.526Z
+Fetched: 2026-10-24T14:41:51.029Z
 
-Just a moment...
+Just a moment... www.pro-football-reference.com
+Performing security verification
+This website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.
+Verification successful. Waiting for www.pro-football-reference.com to respond
+Ray ID: a4f9be47ea622db2
+Performance and Security by Cloudflare Privacy
