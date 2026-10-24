@@ -26,7 +26,7 @@ function quietNotifier(): PasswordChangedNotifier {
 
 /** Tells nobody of an email change: the email and its undo link are tested on their own. */
 function quietEmailChanged() {
-  return { tellOldAddress: jest.fn<() => Promise<void>>().mockResolvedValue(undefined) };
+  return { tellOldAddress: jest.fn(() => Promise.resolve()) };
 }
 
 function buildUser(id: string, overrides: Partial<User> = {}): User {

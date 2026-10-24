@@ -21,6 +21,7 @@ import { asPrismaClient } from '../../support/prisma-double';
 import { DateFormat, TimeFormat, type User } from '../../../packages/shared/domain';
 import { stubInstance } from '../../support/stub-instance';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
+import type { EmailChange } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import { EmailChangedBy } from '../../../packages/core-api/src/modules/email';
 
 /** A notifier that sends nothing: these tests are about the password write, not its email. */
@@ -30,7 +31,7 @@ function quietNotifier(): PasswordChangedNotifier {
 
 /** Tells nobody of an email change: the email and its undo link are tested on their own. */
 function quietEmailChanged() {
-  return { tellOldAddress: jest.fn<() => Promise<void>>().mockResolvedValue(undefined) };
+  return { tellOldAddress: jest.fn((_change: EmailChange) => Promise.resolve()) };
 }
 
 function buildUser(overrides: Partial<User> = {}): User {

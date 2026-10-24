@@ -60,7 +60,7 @@ describe('EMAIL_CHANGED email', () => {
 
 describe('undo link rate limit', () => {
   function undoService() {
-    const undo = jest.fn<() => Promise<void>>().mockResolvedValue(undefined);
+    const undo = jest.fn(() => Promise.resolve());
     const service = new EmailChangeUndoService({
       prisma: asPrismaClient({}),
       email: emailServiceOver({ providerName: 'smtp', send: () => Promise.resolve({ provider: 'smtp' }) }),
