@@ -1,15 +1,17 @@
 /**
  * "New member joined" (#903 B6): a league's commissioners hear when someone accepts an invitation.
  *
- * The first three people to join a league on a day (US Eastern) are each told at once. A busy day's
- * rest are told together the next day, in one email listing everyone after the third, so a league
- * filling up from a shared invite link doesn't flood its commissioners. The lifecycle scheduler's
- * "notifications due" step calls `queueDue` on every sweep; the next day's email goes on the first
- * sweep after midnight Eastern, once per league, its outbox idempotency key being the day and the
- * league and the person.
+ * Someone joins by accepting a league invitation or by being added as a squad's co-owner. The first
+ * three people to join a league on a day (US Eastern) are each told at once. A busy day's rest are
+ * told together the next day, in one email listing everyone not told at once, so a league filling
+ * up from a shared invite link doesn't flood its commissioners. The lifecycle scheduler's
+ * "notifications due" step calls `queueDue` on every sweep; the next day's email goes once the
+ * overnight hour (EMAIL_CONFIG.weeklyDigestHour, 3am Eastern by default) has come, once per league,
+ * its outbox idempotency key being the day and the league and the person.
  *
  * Joins are the league's active MEMBER memberships by when they joined: a commissioner (the league's
- * creator) is not a join, and someone who left again the same day no longer counts.
+ * creator) is not a join, and someone who left again the same day no longer counts toward the
+ * three. The outbox records who was told at once, and the next day's email lists the rest.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -57,6 +59,17 @@ function easternDateOf(instant: Date): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: DAY_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(instant);
 }
 
+/** Today's date in US Eastern time, as YYYY-MM-DD, once `hour` has come there; otherwise null. */
+function easternDayOf(now: Date, hour: number): string | null {
+  const easternHour = Number(new Intl.DateTimeFormat('en-US', { timeZone: DAY_TIME_ZONE, hour: '2-digit', hourCycle: 'h23' }).format(now));
+  return easternHour < hour ? null : easternDateOf(now);
+}
+
+/** The at-once email's outbox subject for one join: the membership and when it joined, as a rejoin is a new join. */
+function atOnceAbout(membership: LeagueMembership): string {
+  return `${membership.id}:${String(membership.joinedAt.getTime())}`;
+}
+
 /** The day before `date` (YYYY-MM-DD), as YYYY-MM-DD. */
 function dayBefore(date: string): string {
   return new Date(Date.parse(`${date}T00:00:00.000Z`) - DAY_MS).toISOString().slice(0, 10);
@@ -83,7 +96,7 @@ export class MemberJoinedNotices implements DueNotifications {
       const today = joinsOn(await this.deps.memberships.findByLeague(league.id), easternDateOf(membership.joinedAt));
       const position = today.findIndex((join) => join.id === membership.id);
       if (position < 0 || position >= AT_ONCE_PER_DAY) return;
-      await this.send(league, MemberJoinedTiming.AT_ONCE, [membership], `${membership.id}:${String(membership.joinedAt.getTime())}`);
+      await this.send(league, MemberJoinedTiming.AT_ONCE, [membership], atOnceAbout(membership));
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.memberJoined.failed',
@@ -92,25 +105,36 @@ export class MemberJoinedNotices implements DueNotifications {
     }
   }
 
-  /** Yesterday's joins after the third, for each league that had them and hasn't been told. */
+  /**
+   * Yesterday's joins that weren't told at once, for each league that had them and hasn't been
+   * told, once the overnight hour has come in US Eastern time. The outbox is the record of who was
+   * told at once, so someone leaving later that day, or a join committing after a later one, never
+   * drops or repeats anyone.
+   */
   async queueDue(now: Date): Promise<void> {
-    const yesterday = dayBefore(easternDateOf(now));
+    const today = easternDayOf(now, this.deps.readConfig().weeklyDigestHour);
+    if (today === null) return;
+    const yesterday = dayBefore(today);
     const byLeague = new Map<string, LeagueMembership[]>();
     for (const membership of await this.deps.memberships.findActiveJoinedSince(new Date(now.getTime() - LOOKBACK_MS))) {
       byLeague.set(membership.leagueId, [...(byLeague.get(membership.leagueId) ?? []), membership]);
     }
-    const late = [...byLeague].flatMap(([leagueId, memberships]) => {
-      const rest = joinsOn(memberships, yesterday).slice(AT_ONCE_PER_DAY);
-      return rest.length > 0 ? [{ leagueId, rest }] : [];
-    });
-    if (late.length === 0) return;
+    const busy = [...byLeague]
+      .map(([leagueId, memberships]) => ({ leagueId, joins: joinsOn(memberships, yesterday) }))
+      .filter(({ joins }) => joins.length > 0);
+    if (busy.length === 0) return;
     const told = await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', yesterday);
-    for (const { leagueId, rest } of late) {
+    for (const { leagueId, joins } of busy) {
       if (told.has(leagueId)) continue;
       try {
+        const untold: LeagueMembership[] = [];
+        for (const join of joins) {
+          if (!(await this.deps.email.leaguesRecorded('LEAGUE_MEMBER_JOINED', atOnceAbout(join))).has(leagueId)) untold.push(join);
+        }
+        if (untold.length === 0) continue;
         const league = await this.deps.leagues.findById(leagueId);
         if (!league?.isActive) continue;
-        await this.send(league, MemberJoinedTiming.NEXT_DAY, rest, `${yesterday}:${leagueId}`);
+        await this.send(league, MemberJoinedTiming.NEXT_DAY, untold, `${yesterday}:${leagueId}`);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.memberJoined.nextDayFailed',

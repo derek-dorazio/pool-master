@@ -11,6 +11,7 @@ import type {
   UserRepository,
 } from '@poolmaster/shared/db';
 import type {
+  LeagueMembership,
   Squad,
   SquadOwnerInvitation,
   SquadOwnerInvitationStatus,
@@ -75,6 +76,7 @@ export class SquadOwnerInvitationService {
   private readonly prisma: PrismaClient;
   private readonly membershipTransaction: MembershipTransaction;
   private readonly email: Pick<EmailService, 'send'>;
+  private readonly memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
   private readonly appBaseUrl: string;
   private readonly logger?: FastifyBaseLogger;
 
@@ -87,6 +89,7 @@ export class SquadOwnerInvitationService {
     this.prisma = deps.prisma;
     this.membershipTransaction = deps.membershipTransaction;
     this.email = deps.email;
+    this.memberJoined = deps.memberJoined;
     this.appBaseUrl = deps.appBaseUrl;
     this.logger = deps.logger;
   }
@@ -135,7 +138,7 @@ export class SquadOwnerInvitationService {
 
     // One transaction, so a failure part way never leaves an existing account back in the league
     // with no team, or seated on the team while the invitation is still pending.
-    const invitation = await this.membershipTransaction.run(async (repos) => {
+    const { invitation, joined } = await this.membershipTransaction.run(async (repos) => {
       const created = await repos.squadOwnerInvitations.create({
         leagueId: input.leagueId,
         squadId: input.squadId,
@@ -147,17 +150,21 @@ export class SquadOwnerInvitationService {
       });
 
       if (!existingUser) {
-        return created;
+        return { invitation: created, joined: null };
       }
-      await this.provisionOwnerOnSquad(repos, input.leagueId, input.squadId, existingUser.id);
-      return repos.squadOwnerInvitations.update(created.id, {
-        status: SharedSquadOwnerInvitationStatus.ACCEPTED,
-        acceptedAt: new Date(),
-        acceptedBy: existingUser.id,
-      });
+      const joined = await this.provisionOwnerOnSquad(repos, input.leagueId, input.squadId, existingUser.id);
+      return {
+        invitation: await repos.squadOwnerInvitations.update(created.id, {
+          status: SharedSquadOwnerInvitationStatus.ACCEPTED,
+          acceptedAt: new Date(),
+          acceptedBy: existingUser.id,
+        }),
+        joined,
+      };
     });
 
     await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
+    if (joined) await this.memberJoined.tellJoined(joined);
     return this.mapInvitationDto(invitation);
   }
 
@@ -224,7 +231,7 @@ export class SquadOwnerInvitationService {
 
     // One transaction, so a failure part way never leaves the outgoing owner removed with no
     // invitation for their replacement, or the team inactive while it is being handed on.
-    const invitation = await this.membershipTransaction.run(async (repos) => {
+    const { invitation, joined } = await this.membershipTransaction.run(async (repos) => {
       const created = await repos.squadOwnerInvitations.create({
         leagueId: input.leagueId,
         squadId: input.squadId,
@@ -253,17 +260,21 @@ export class SquadOwnerInvitationService {
       }
 
       if (!existingUser) {
-        return created;
+        return { invitation: created, joined: null };
       }
-      await this.provisionOwnerOnSquad(repos, input.leagueId, input.squadId, existingUser.id);
-      return repos.squadOwnerInvitations.update(created.id, {
-        status: SharedSquadOwnerInvitationStatus.ACCEPTED,
-        acceptedAt: new Date(),
-        acceptedBy: existingUser.id,
-      });
+      const joined = await this.provisionOwnerOnSquad(repos, input.leagueId, input.squadId, existingUser.id);
+      return {
+        invitation: await repos.squadOwnerInvitations.update(created.id, {
+          status: SharedSquadOwnerInvitationStatus.ACCEPTED,
+          acceptedAt: new Date(),
+          acceptedBy: existingUser.id,
+        }),
+        joined,
+      };
     });
 
     await this.emailInvitee(invitation, squad, input.actorUserId, existingUser);
+    if (joined) await this.memberJoined.tellJoined(joined);
     return this.mapInvitationDto(invitation);
   }
 
@@ -474,14 +485,15 @@ export class SquadOwnerInvitationService {
       );
     }
     // One transaction, so the user is seated on the team exactly when the invitation is accepted.
-    const accepted = await this.membershipTransaction.run(async (repos) => {
-      await this.provisionOwnerOnSquad(repos, invitation.leagueId, invitation.squadId, userId);
-      return repos.squadOwnerInvitations.update(invitation.id, {
+    const { accepted, joined } = await this.membershipTransaction.run(async (repos) => ({
+      joined: await this.provisionOwnerOnSquad(repos, invitation.leagueId, invitation.squadId, userId),
+      accepted: await repos.squadOwnerInvitations.update(invitation.id, {
         status: SharedSquadOwnerInvitationStatus.ACCEPTED,
         acceptedAt: new Date(),
         acceptedBy: userId,
-      });
-    });
+      }),
+    }));
+    await this.memberJoined.tellJoined(joined);
     return this.mapInvitationDto(accepted);
   }
 
@@ -612,34 +624,33 @@ export class SquadOwnerInvitationService {
     }
   }
 
+  /** Seats `userId` on the squad, bringing them into the league; returns their league membership. */
   private async provisionOwnerOnSquad(
     repos: MembershipRepositories,
     leagueId: string,
     squadId: string,
     userId: string,
-  ) {
+  ): Promise<LeagueMembership> {
     const existingMembership = await repos.leagueMemberships.findByLeagueAndUser(leagueId, userId);
-    if (existingMembership) {
-      if (existingMembership.status === LeagueMembershipStatus.ACTIVE) {
-        throw new SquadOwnerInvitationOperationError(
-          'That user already belongs to this league',
-          'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT',
-        );
-      }
-      await repos.leagueMemberships.update(existingMembership.id, {
+    if (existingMembership?.status === LeagueMembershipStatus.ACTIVE) {
+      throw new SquadOwnerInvitationOperationError(
+        'That user already belongs to this league',
+        'SQUAD_OWNER_INVITATION_LEAGUE_MEMBER_CONFLICT',
+      );
+    }
+    const membership = existingMembership
+      ? await repos.leagueMemberships.update(existingMembership.id, {
         role: LeagueRole.MEMBER,
         status: LeagueMembershipStatus.ACTIVE,
         joinedAt: new Date(),
-      });
-    } else {
-      await repos.leagueMemberships.create({
+      })
+      : await repos.leagueMemberships.create({
         leagueId,
         userId,
         role: LeagueRole.MEMBER,
         status: LeagueMembershipStatus.ACTIVE,
         joinedAt: new Date(),
       });
-    }
 
     const squadMembership = await repos.squadMemberships.findByLeagueAndUser(leagueId, userId);
     if (squadMembership) {
@@ -650,7 +661,7 @@ export class SquadOwnerInvitationService {
         );
       }
       if (squadMembership.status === SquadMembershipStatus.ACTIVE) {
-        return;
+        return membership;
       }
       await repos.squadMemberships.update(squadMembership.id, {
         squadId,
@@ -666,6 +677,7 @@ export class SquadOwnerInvitationService {
         joinedAt: new Date(),
       });
     }
+    return membership;
   }
 
   private async mapInvitationDtos(

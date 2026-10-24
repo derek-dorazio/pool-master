@@ -109,7 +109,8 @@ export const EmailConfigSchema = z.object({
   ),
   weeklyDigestHour: z.number().int().min(0).max(23).describe(
     'The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for '
-    + 'every league, so it is waiting in the morning.',
+    + 'every league, so it is waiting in the morning. The next day\'s "New member joined" email for '
+    + 'a busy day goes at the same hour every day (#903).',
   ),
   templates: z.object({
     LEAGUE_MEMBER_INVITE: templateSwitch,

@@ -28297,7 +28297,7 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 23,
-            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
           },
           "templates": {
             "type": "object",
@@ -30247,7 +30247,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -30410,7 +30410,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -32143,7 +32143,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -32306,7 +32306,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -33697,7 +33697,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -34915,7 +34915,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -35078,7 +35078,7 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 23,
-                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                    "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                   },
                   "templates": {
                     "type": "object",
@@ -36755,7 +36755,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",
@@ -36918,7 +36918,7 @@
                           "type": "integer",
                           "minimum": 0,
                           "maximum": 23,
-                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning."
+                          "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
                         },
                         "templates": {
                           "type": "object",

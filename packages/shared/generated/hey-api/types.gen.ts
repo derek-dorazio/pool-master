@@ -12152,7 +12152,7 @@ export type EmailConfig = {
      */
     standingsBufferMinutes: number;
     /**
-     * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+     * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
      */
     weeklyDigestHour: number;
     /**
@@ -13215,7 +13215,7 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -13321,7 +13321,7 @@ export type SettingsGroup = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -14172,7 +14172,7 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -14278,7 +14278,7 @@ export type SettingsGroupList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -14929,7 +14929,7 @@ export type SettingsGroupUpdateRequest = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -15545,7 +15545,7 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -15651,7 +15651,7 @@ export type SettingsChange = {
          */
         standingsBufferMinutes: number;
         /**
-         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+         * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
          */
         weeklyDigestHour: number;
         /**
@@ -16458,7 +16458,7 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**
@@ -16564,7 +16564,7 @@ export type SettingsChangeList = {
              */
             standingsBufferMinutes: number;
             /**
-             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning.
+             * The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903).
              */
             weeklyDigestHour: number;
             /**

@@ -12374,7 +12374,7 @@ export interface components {
             entryReminderHours: number[];
             /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
             standingsBufferMinutes: number;
-            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+            /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
             weeklyDigestHour: number;
             /** @description Per-template switches. A template that is off is skipped even while email is on. */
             templates: {
@@ -13095,7 +13095,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -13149,7 +13149,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -13789,7 +13789,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -13843,7 +13843,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -14332,7 +14332,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -14778,7 +14778,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -14832,7 +14832,7 @@ export interface components {
                 entryReminderHours: number[];
                 /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                 standingsBufferMinutes: number;
-                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                 weeklyDigestHour: number;
                 /** @description Per-template switches. A template that is off is skipped even while email is on. */
                 templates: {
@@ -15444,7 +15444,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
@@ -15498,7 +15498,7 @@ export interface components {
                     entryReminderHours: number[];
                     /** @description How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first. */
                     standingsBufferMinutes: number;
-                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. */
+                    /** @description The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's "New member joined" email for a busy day goes at the same hour every day (#903). */
                     weeklyDigestHour: number;
                     /** @description Per-template switches. A template that is off is skipped even while email is on. */
                     templates: {
