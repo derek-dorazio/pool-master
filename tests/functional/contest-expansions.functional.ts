@@ -1,5 +1,6 @@
 import {
   acceptInvitation,
+  changeMemberRole,
   enterContest,
   expandContest,
   generateInviteLink,
@@ -13,7 +14,9 @@ import {
 import { LeaguePaymentKind, LeaguePlan, SelectionType } from '@poolmaster/shared/domain';
 import { ContestExpansionResponseSchema, LeaguePaymentListResponseSchema, UserPaymentListResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
+import { awaitSentMailTo, linksIn, sentMailWithSubject } from './mail';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
+import { FUNCTIONAL_APP_BASE_URL } from './state';
 import { expectDefined } from '../support/expect-defined';
 
 // Contest expansions end to end (#987): a Free contest is offered Free's bands above its 20
@@ -169,6 +172,33 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect(await paymentLines(league.id)).toEqual([
       { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
     ]);
+  });
+
+  it('emails the league\'s other commissioners who expanded the contest, and every commissioner a Poolmaster grant, never naming the admin', async () => {
+    const { commissioner, league, contestId } = await freeContest('Herald House');
+    const coCommissioner = await buildRegisteredUser({ displayName: 'Herald Partner' });
+    const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
+    await acceptInvitation({ client: coCommissioner.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
+    await changeMemberRole({ client: commissioner.client, path: { id: league.id, uid: coCommissioner.userId }, body: { role: 'COMMISSIONER' } });
+    const admin = await buildRegisteredUser({ firstName: 'Herald', lastName: 'Admin' });
+    await promoteToRootAdmin(admin);
+    const path = { id: league.id, contestId };
+
+    await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
+    await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 300, reason: 'Office party' } });
+
+    const toPartner = await awaitSentMailTo(coCommissioner.email, 1, 'Herald House Picks now takes 50 entries');
+    expect(toPartner).toHaveLength(1);
+    expect(toPartner[0].text).toContain(`Herald House Picks was expanded to 50 entries by ${commissioner.displayName}.`);
+    expect(linksIn(toPartner[0])).toContain(`${FUNCTIONAL_APP_BASE_URL}/league/${league.leagueCode}/admin/contests/${contestId}`);
+    const grantSubject = 'Herald House Picks now takes 300 entries';
+    const grantToKeeper = await awaitSentMailTo(commissioner.email, 1, grantSubject);
+    const grantToPartner = await awaitSentMailTo(coCommissioner.email, 1, grantSubject);
+    expect([grantToKeeper.length, grantToPartner.length]).toEqual([1, 1]);
+    expect(grantToKeeper[0].text).toContain('Herald House Picks was expanded to 300 entries by Poolmaster.');
+    expect(grantToKeeper[0].text).not.toContain('Herald Admin');
+    // Whoever expanded it is not told of their own expansion.
+    expect(await sentMailWithSubject(commissioner.email, 'Herald House Picks now takes 50 entries')).toEqual([]);
   });
 
   it('lists the league\'s payment history newest first to its commissioners and root admins only, naming no payer on a Poolmaster grant', async () => {

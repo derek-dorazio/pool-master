@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { LeaguePlan, PlanFeature, type PlanCap } from '../domain/enums';
+import { BillingConfigSchema } from './config.dto';
 
 const PlanLimitSchema = z.number().int().nullable().describe('The most the plan allows, or null for unlimited.');
 
@@ -31,7 +32,12 @@ export type PlanEntitlementsDto = z.infer<typeof PlanEntitlementsDtoSchema>;
 
 export const LeaguePlanListResponseSchema = z.object({
   plans: z.array(PlanEntitlementsDtoSchema).describe('Every plan, lowest first, for comparing them.'),
-}).describe('What each league plan allows.');
+  previewPeriodMonths: z.number().int().min(1).describe(
+    'How many months of Premium every new league is gifted from signup (#986), before it moves to Free.',
+  ),
+  paymentsEnabled: z.boolean().describe('Whether expanding a contest is charged. While false, expanding is free.'),
+  expansionPrices: BillingConfigSchema.shape.expansionPrices,
+}).describe('What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan.');
 export type LeaguePlanListResponse = z.infer<typeof LeaguePlanListResponseSchema>;
 
 export const ExtendPlanRenewalRequestSchema = z.object({

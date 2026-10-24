@@ -7,10 +7,10 @@ export function formatPriceCents(cents: number): string {
   return PRICE.format(cents / 100);
 }
 
-/** One plan's expansion price list in a line: "50 entries $10 · 100 entries $20", or "None". */
+/** One plan's expansion price list in a line: "50 entries $10 · 1,000 entries $30", or "None". */
 export function describeExpansionPrices(prices: readonly ExpansionPrice[]): string {
   return prices.length > 0
-    ? prices.map((band) => `${band.entriesPerContest} entries ${formatPriceCents(band.priceCents)}`).join(' · ')
+    ? prices.map((band) => `${band.entriesPerContest.toLocaleString('en-US')} entries ${formatPriceCents(band.priceCents)}`).join(' · ')
     : 'None';
 }
 

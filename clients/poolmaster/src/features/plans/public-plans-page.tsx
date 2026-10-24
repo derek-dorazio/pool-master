@@ -39,7 +39,8 @@ function useChoosePlanPath(isAuthenticated: boolean): string {
 /**
  * Plans (#973): open to every visitor. Each plan's card and the full comparison, built from the
  * plan settings through the public plan list, so a change on the root admin Plans page shows
- * here at once. There are no prices yet, so every plan is free and every button starts free.
+ * here at once. There are no plan prices yet, so every plan is free and every button starts free;
+ * each card lists its contest expansion prices, and a plan not offered yet says Coming soon.
  */
 export function PublicPlansPage() {
   const logger = useMemo(() => getLogger().child({ feature: 'public-plans-page' }), []);
@@ -67,7 +68,11 @@ export function PublicPlansPage() {
         title="Plans"
       />
 
-      <Chip data-testid="public-plans-free-note" tone="active">Every plan is free for now</Chip>
+      {plansQuery.data ? (
+        <Chip data-testid="public-plans-free-note" tone="active">
+          {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
+        </Chip>
+      ) : null}
 
       {plansQuery.isLoading ? (
         <LoadingState body="Loading the plans..." />
@@ -75,10 +80,16 @@ export function PublicPlansPage() {
         <ErrorState body="We couldn't load the plans. Try again in a moment." title="Plans unavailable" />
       ) : (
         <>
-          <PlanCards plans={plansQuery.data} renderAction={(plan) => action(`public-plans-card-${plan}-start`)} />
+          <PlanCards
+            expansion={plansQuery.data}
+            plans={plansQuery.data.plans}
+            renderAction={(plan) => plansQuery.data.plans.find((each) => each.plan === plan)?.commissionerSelectable === false ? (
+              <Chip className="self-start" data-testid={`public-plans-card-${plan}-coming-soon`}>Coming soon</Chip>
+            ) : action(`public-plans-card-${plan}-start`)}
+          />
           <section className="space-y-4" data-testid="public-plans-compare">
             <SectionHeader description="Each row lines up across the plans. Open a group to see every item in it." title="Compare every plan" />
-            <PlanComparisonTable initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data} />
+            <PlanComparisonTable initiallyFolded={[PlanFeatureGroup.EMAILS]} plans={plansQuery.data.plans} />
           </section>
         </>
       )}
