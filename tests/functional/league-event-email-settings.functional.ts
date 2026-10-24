@@ -32,13 +32,15 @@ describe('SDK Functional: league event email settings (#851)', () => {
     const muteFirst = expectDefined(first).id;
     const muteSecond = expectDefined(second).id;
 
+    const created = await getFunctionalPrisma().league.findUniqueOrThrow({ where: { id: league.id }, select: { eventEmailDelivery: true } });
+    expect(created.eventEmailDelivery).toBe(EventEmailDelivery.PER_EVENT);
+
     const saved = await updateLeagueEventEmailSettings({
       client: commissioner.client,
       path: { id: league.id },
       body: { mutedSportLeagueIds: [muteFirst, muteSecond, muteFirst], eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST },
     });
     expect(saved.response.status).toBe(200);
-    expect(league.eventEmailDelivery).toBe(EventEmailDelivery.PER_EVENT);
     const savedLeague = LeagueResponseSchema.parse(expectDefined(saved.data)).league;
     expect(savedLeague.mutedSportLeagueIds).toEqual([muteFirst, muteSecond]);
     expect(savedLeague.eventEmailDelivery).toBe(EventEmailDelivery.WEEKLY_DIGEST);
