@@ -885,6 +885,18 @@ which is $0 while payments are off or when a root admin gives it. The entry repo
 contest's band under the same row lock it counts under. Deleting a contest drops its expansions
 and keeps its payment lines with no contest named.
 
+**Expanding a contest** (#987). Each plan has its own expansion price list in the `BILLING_CONFIG`
+settings group (Root admin › Settings › Payments; bands and prices must rise down each list). A
+contest is offered the bands above its current cap, from its creation until it stops taking
+entries, and a step up costs the band's price less the dearest band at or below the contest's
+current expansion. Commissioners see this under Commissioner tools › the contest › Entries
+(`GET`/`POST /api/v1/leagues/:id/billing/contests/:contestId/expansion`); a contest's
+`entriesPerContest` on `ContestDto` is its cap with the expansion applied. While
+`paymentsEnabled` is off, Expand applies at once and records a $0 line described "free while
+payments are off"; while it is on, Expand answers 409 `PAYMENTS_CHECKOUT_UNAVAILABLE` until
+checkout exists (#981), never a pretend charge. A root admin can give any band above the cap
+free with a reason (`POST …/expansion/grant`), recorded as a $0 line naming the reason.
+
 **An entry counts only once submitted** (#481). It is created `DRAFT`, and its owner submits it
 when the lineup is complete. The leaderboard, settlement, the contest-started email and a
 contest's `entryCount` read `SUBMITTED` entries alone. A draft is kept, never deleted, so its

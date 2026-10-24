@@ -33,6 +33,8 @@ import { squadsModule } from '../../packages/core-api/src/modules/squads/routes'
 import { teamInvitationsModule } from '../../packages/core-api/src/modules/team-invitations/routes';
 import { invitationsModule } from '../../packages/core-api/src/modules/invitations/routes';
 import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/modules/contests/routes';
+import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
+import { BILLING_SETTINGS } from '../../packages/core-api/src/modules/billing/billing-settings';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
@@ -199,6 +201,11 @@ async function buildTestApp(): Promise<FastifyInstance> {
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
   testApp.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
+  testApp.register(billingModule, {
+    prefix: '/api/v1/leagues/:id/billing',
+    planEntitlements,
+    readBillingConfig: () => settings.get(BILLING_SETTINGS),
+  });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email, memberJoined });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email, memberJoined });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email, memberJoined });

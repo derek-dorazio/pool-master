@@ -1,5 +1,6 @@
 import { LEAGUE_PLANS, PlanCap } from '@poolmaster/shared/domain';
-import type { BudgetPricingConfig, EmailConfig, IngestionScheduleConfig, PlanConfig, SettingsChange } from '@/lib/api';
+import type { BillingConfig, BudgetPricingConfig, EmailConfig, IngestionScheduleConfig, PlanConfig, SettingsChange } from '@/lib/api';
+import { describeExpansionPrices, describePayments } from '@/features/billing/billing-format';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
 import { describeBudgetPricing } from './budget-pricing-format';
 
@@ -101,6 +102,18 @@ export function summarizePlans(config: PlanConfig): SettingsSummaryItem[] {
     label: PLAN_CAP_LABEL[cap],
     value: LEAGUE_PLANS.map((plan) => `${LEAGUE_PLAN_LABEL[plan]} ${formatPlanLimit(config.caps[cap][plan])}`).join(' · '),
   }));
+}
+
+/** Whether payments are on, then each plan's expansion price list, Free to Platinum (#987). */
+export function summarizeBilling(config: BillingConfig): SettingsSummaryItem[] {
+  return [
+    { id: 'paymentsEnabled', label: 'Payments', value: describePayments(config) },
+    ...LEAGUE_PLANS.map((plan) => ({
+      id: `expansionPrices-${plan}`,
+      label: `${LEAGUE_PLAN_LABEL[plan]} expansions`,
+      value: describeExpansionPrices(config.expansionPrices[plan]),
+    })),
+  ];
 }
 
 /** The top-level fields a change touched, in the order the new value lists them. */

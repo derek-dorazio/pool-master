@@ -687,6 +687,12 @@ export class InMemoryContestWorld {
       entries: this.entryRepo(),
       picks: this.pickRepo(),
       predictions: { findByEntriesAndEvent: async () => [], findByEntriesAndEvents: async () => [] },
+      expansions: {
+        findHighestBands: async (contestIds) => new Map(contestIds.flatMap((contestId) => {
+          const bands = this.contestExpansions.get(contestId) ?? [];
+          return bands.length > 0 ? [[contestId, Math.max(...bands)] as const] : [];
+        })),
+      },
       participants: { findByIds: async () => [] },
       matches: { findBySportEvent: async () => [], findBySportEvents: async () => [] },
       standings: this.standingRepo(),
