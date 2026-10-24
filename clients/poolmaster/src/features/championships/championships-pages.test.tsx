@@ -1078,7 +1078,7 @@ describe('Championships › on a plan without them', () => {
     renderChampionships('/league/BIGDAWGS/championships/2026');
 
     expect(await screen.findByTestId('plan-locked-CHAMPIONSHIP')).toHaveTextContent('Your league\'s plan doesn\'t include this.');
-    expect(screen.getByTestId('plan-locked-CHAMPIONSHIP-change')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+    expect(screen.getByTestId('plan-locked-CHAMPIONSHIP-change')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
     expect(getYearReviewMock).not.toHaveBeenCalled();
   });
 

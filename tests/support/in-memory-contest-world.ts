@@ -439,6 +439,8 @@ export class InMemoryContestWorld {
           .map((entry) => this.withSquad(entry)),
       findBySquad: async (squadId) =>
         [...this.entries.values()].filter((entry) => entry.squadId === squadId),
+      countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };

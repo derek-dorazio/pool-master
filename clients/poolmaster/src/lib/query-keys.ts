@@ -146,6 +146,8 @@ export const QueryKeys = {
     list: ['poolmaster', 'plans'] as const,
     sportLeaguesUsedAll: (leagueId: QueryKeyId) => ['poolmaster', 'plans', 'sport-leagues-used', leagueId] as const,
     sportLeaguesUsed: (leagueId: QueryKeyId, seasonYear: number) => ['poolmaster', 'plans', 'sport-leagues-used', leagueId, seasonYear] as const,
+    /** What a league uses of its plan's caps now (#972): the commissioner Plan page. */
+    usage: (leagueId: QueryKeyId) => ['poolmaster', 'plans', 'usage', leagueId] as const,
   },
   championship: {
     all: ['poolmaster', 'championship'] as const,

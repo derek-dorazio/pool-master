@@ -252,7 +252,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     const roundNumbers = [...new Set(picked.map((game) => game.match.roundNumber))].sort((left, right) => right - left);
     const roundCount = Math.max(sportEvent.rounds ?? 0, roundNumbers.at(0) ?? 0);
     return roundNumbers.slice(0, BRACKET_RECEIPT_ROUNDS).map((roundNumber) => ({
-      name: eventRoundLabel(sportEvent.sport, roundNames, roundNumber, roundCount),
+      name: eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount),
       picks: picked
         .filter((game) => game.match.roundNumber === roundNumber)
         .sort((left, right) => left.match.matchNumber - right.match.matchNumber)

@@ -62,6 +62,21 @@ write.
   match's time and site are changed. A field that differs is listed as a conflict. A play-in
   place an admin has filled with its winner is found by its bracket place and left alone.
 
+**Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
+sport league of players scored by the composite family (the World Series, NBA Finals, Stanley
+Cup Final, NFL Championship Weekend and Super Bowl leagues the migrations create). Its players
+may give their `team` and `position`, and each event may give its `games`: each game's number
+and its box score, one `lines` row per field player who played, with that player's count of each
+stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
+`STOLEN_BASES` for baseball's Box Score; `POINTS`, `REBOUNDS`, `ASSISTS` for basketball's Triple
+Threat; `GOALS`, `ASSISTS`, `SHOTS_ON_GOAL` for hockey's Power Play; touchdowns, receptions and
+yards for football's Redzone). A stat left out counts 0. The run refuses a game beyond the
+event's games, a player off the field, a stat the composite does not count, and a `STATS` file
+for a league that is not a stat pool on the site. Box scores are results, so unlike the rest of a
+real file they are written whenever they differ, before or after release: each player's line
+for a game replaces the stored one, and a stored line for a player the game leaves out is cleared. An
+admin corrects one player's line on the event's Results page.
+
 Running the same file again lists everything as a skip. A real data file never releases an
 event or writes odds, tiers, prices or scores; those stay admin actions
 ([`EVENT-SETUP-PROCEDURES.md`](EVENT-SETUP-PROCEDURES.md)).
@@ -73,12 +88,13 @@ without it an event starts at noon UTC on its start date. An event of a sport wh
 order an admin enters (every racing sport) is created with automatic lifecycle off, and one
 already on the site has it turned off, so it never completes, and settles, before its result
 is in. A test seed carries the results its sport is scored on: golf's made-up stroke rounds, a
-bracket's match results, or a race's real finishing order (each runner's `raceResult`, entered
-just before release as the official result; *Seeded 2026 races* below). Any sport may also have a test slate.
+bracket's match results, a race's real finishing order (each runner's `raceResult`, entered
+just before release as the official result; *Seeded 2026 races* below), or a stat pool's real
+box scores (*Seeded championship stat pools* below). Any sport may also have a test slate.
 
 **The file says what it is.** Each file starts with an envelope: `schemaVersion`, a `scope`
 (sport from the sport registry, season, sport leagues, and `contents` from `SCHEDULE`,
-`PLAYERS`, `FIELDS`, `BRACKET`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
+`PLAYERS`, `FIELDS`, `BRACKET`, `STATS`, `RESULTS`), a `testData` flag and its `provenance`. A run refuses the
 whole file before writing if anything strays outside the scope: an event outside the
 season, a league the scope does not name, made-up odds or scores in a real file, or test
 data on a target that does not take it. The filename is for people and is never read.
@@ -292,6 +308,19 @@ the top two on byes into the Division Series, every round a series scored in gam
 Angeles Dodgers beat the Toronto Blue Jays 4-3 in the World Series. Seeds, pairings, series
 scores and each series' Game 1 first pitch are real, and the odds are made up. It loads as the
 hockey seeds do.
+
+## Seeded championship stat pools
+
+Each championship stat pool league the migrations create has a test file of its last
+championship as played, with every game's real box score: `baseball-2025-world-series-test.json`
+(the Dodgers over the Blue Jays in seven), `basketball-2026-nba-finals-test.json` (the Knicks
+over the Spurs in five), `hockey-2026-stanley-cup-final-test.json` (Carolina over Vegas in six)
+and `american-football-2026-nfl-championships-test.json` (the 2025 season's Conference
+Championship weekend and Super Bowl LX, one game each). The field is both teams' players who
+can score the sport's composite, ranked by their regular-season composite total; tiers come
+from that ranking and prices are the default curve, so no odds are made up. Each box score was
+checked player by player against a second source, named in the file's provenance. A test load
+creates each event with its field, writes every game's lines and releases it.
 
 ## Seeded soccer knockouts
 

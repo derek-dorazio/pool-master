@@ -72,6 +72,8 @@ export function mapSportEventToDto({
     eventSeriesId: event.eventSeriesId,
     eventYear: event.eventYear,
     sportLeagueId: event.sportLeagueId,
+    participantType: event.participantType ?? null,
+    scoringFamily: event.scoringFamily ?? null,
     syncScope: event.syncScope,
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,

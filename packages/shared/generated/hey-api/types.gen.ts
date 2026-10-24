@@ -681,6 +681,49 @@ export type SportLeaguesUsedResponse = {
 };
 
 /**
+ * One contest still taking entries, with its entries as the entry cap counts them.
+ */
+export type OpenContestUsageDto = {
+    contestId: string;
+    /**
+     * The contest's name.
+     */
+    name: string;
+    /**
+     * Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts.
+     */
+    entryCount: number;
+};
+
+/**
+ * What a league uses of its plan's caps now (#972), for the commissioner Plan page.
+ */
+export type LeaguePlanUsageResponse = {
+    /**
+     * This year, in UTC: the season whose sports leagues are listed.
+     */
+    seasonYear: number;
+    /**
+     * The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
+     */
+    sportLeagueIds: Array<string>;
+    /**
+     * Every contest still taking entries, newest first.
+     */
+    openContests: Array<{
+        contestId: string;
+        /**
+         * The contest's name.
+         */
+        name: string;
+        /**
+         * Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts.
+         */
+        entryCount: number;
+    }>;
+};
+
+/**
  * One band a contest can be expanded to.
  */
 export type ContestExpansionOffer = {
@@ -6865,6 +6908,14 @@ export type SportLeagueDto = {
      */
     displayName: string | null;
     /**
+     * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    /**
+     * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+     */
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+    /**
      * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
      */
     displayOrder: number | null;
@@ -6961,6 +7012,14 @@ export type SportLeagueListResponse = {
          */
         displayName: string | null;
         /**
+         * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
         displayOrder: number | null;
@@ -7043,6 +7102,14 @@ export type SportLeagueResponse = {
          * What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request.
          */
         displayName: string | null;
+        /**
+         * Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
          * Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request.
          */
@@ -7690,6 +7757,14 @@ export type SportEventDto = {
      */
     sportLeagueId: string;
     /**
+     * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    /**
+     * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+     */
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+    /**
      * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
      */
     syncScope: 'NONE' | 'SCORES_ONLY';
@@ -7875,6 +7950,14 @@ export type SportEventListResponse = {
          */
         sportLeagueId: string;
         /**
+         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
+        /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
         syncScope: 'NONE' | 'SCORES_ONLY';
@@ -8034,6 +8117,14 @@ export type SportEventResponse = {
          * The sport league the event's series belongs to. Read through the series, not stored on the event.
          */
         sportLeagueId: string;
+        /**
+         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -8285,6 +8376,14 @@ export type ImportSportEventYearFromProviderResponse = {
          * The sport league the event's series belongs to. Read through the series, not stored on the event.
          */
         sportLeagueId: string;
+        /**
+         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         /**
          * How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
          */
@@ -8698,6 +8797,19 @@ export type SportEventParticipantRoundDto = {
         scoreToPar: number;
         thru: number | null;
     } | null;
+    /**
+     * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
+     */
+    statLines: Array<{
+        /**
+         * One of the stats the sport's composite counts.
+         */
+        stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+        /**
+         * The player's count of it in the game; below 0 only for yards.
+         */
+        value: number;
+    }>;
 };
 
 /**
@@ -8905,6 +9017,19 @@ export type SportEventParticipantDto = {
             scoreToPar: number;
             thru: number | null;
         } | null;
+        /**
+         * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
+         */
+        statLines: Array<{
+            /**
+             * One of the stats the sport's composite counts.
+             */
+            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+            /**
+             * The player's count of it in the game; below 0 only for yards.
+             */
+            value: number;
+        }>;
     }>;
     /**
      * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -9154,6 +9279,19 @@ export type SportEventParticipantListResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
+            /**
+             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
+             */
+            statLines: Array<{
+                /**
+                 * One of the stats the sport's composite counts.
+                 */
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                /**
+                 * The player's count of it in the game; below 0 only for yards.
+                 */
+                value: number;
+            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -9468,6 +9606,19 @@ export type SportEventParticipantResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
+            /**
+             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
+             */
+            statLines: Array<{
+                /**
+                 * One of the stats the sport's composite counts.
+                 */
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                /**
+                 * The player's count of it in the game; below 0 only for yards.
+                 */
+                value: number;
+            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -10910,6 +11061,19 @@ export type ContestLeaderboardResponse = {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
+            /**
+             * A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in.
+             */
+            statLines: Array<{
+                /**
+                 * One of the stats the sport's composite counts.
+                 */
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                /**
+                 * The player's count of it in the game; below 0 only for yards.
+                 */
+                value: number;
+            }>;
         }>;
         /**
          * Present once a race result is entered for a finish-position event (a horse race); null otherwise.
@@ -18125,6 +18289,31 @@ export type RaceResultPreviewResponse = {
          */
         invalid: number;
     };
+};
+
+/**
+ * One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored.
+ */
+export type GameStatLineUploadRequest = {
+    rows: Array<{
+        /**
+         * The player, by participant id; must be in the event's field.
+         */
+        participantId: string;
+        /**
+         * The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game.
+         */
+        stats: Array<{
+            /**
+             * One of the stats the sport's composite counts.
+             */
+            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+            /**
+             * The player's count of it in the game; below 0 only for yards.
+             */
+            value: number;
+        }>;
+    }>;
 };
 
 /**
@@ -25541,6 +25730,37 @@ export type ListSportLeaguesUsedResponses = {
 
 export type ListSportLeaguesUsedResponse = ListSportLeaguesUsedResponses[keyof ListSportLeaguesUsedResponses];
 
+export type GetLeaguePlanUsageData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contests/plan-usage';
+};
+
+export type GetLeaguePlanUsageErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type GetLeaguePlanUsageError = GetLeaguePlanUsageErrors[keyof GetLeaguePlanUsageErrors];
+
+export type GetLeaguePlanUsageResponses = {
+    /**
+     * What a league uses of its plan's caps now (#972), for the commissioner Plan page.
+     */
+    200: LeaguePlanUsageResponse;
+};
+
+export type GetLeaguePlanUsageResponse = GetLeaguePlanUsageResponses[keyof GetLeaguePlanUsageResponses];
+
 export type GetContestConfigurationData = {
     body?: never;
     path: {
@@ -28280,6 +28500,50 @@ export type ApplyEventRaceResultsResponses = {
 };
 
 export type ApplyEventRaceResultsResponse = ApplyEventRaceResultsResponses[keyof ApplyEventRaceResultsResponses];
+
+export type ApplyEventGameStatLinesData = {
+    body: GameStatLineUploadRequest;
+    path: {
+        eventId: string;
+        roundNumber: number;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines';
+};
+
+export type ApplyEventGameStatLinesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ApplyEventGameStatLinesError = ApplyEventGameStatLinesErrors[keyof ApplyEventGameStatLinesErrors];
+
+export type ApplyEventGameStatLinesResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type ApplyEventGameStatLinesResponse = ApplyEventGameStatLinesResponses[keyof ApplyEventGameStatLinesResponses];
 
 export type GetEventBracketData = {
     body?: never;

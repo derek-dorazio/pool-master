@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
-import { buildLeagueAdminPlanEditPath } from '@/features/leagues/league-routing';
+import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { Chip, ErrorState, LinkButton, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
@@ -33,7 +33,7 @@ const QUESTIONS: readonly { question: string; answer: string }[] = [
 function useChoosePlanPath(isAuthenticated: boolean): string {
   const { leagues, commissionerLeagueIds } = useLeaguesQuery({ enabled: isAuthenticated });
   const commissioned = (leagues ?? []).filter((league) => commissionerLeagueIds.has(league.id));
-  return commissioned.length === 1 ? buildLeagueAdminPlanEditPath(commissioned[0].leagueCode) : '/my-leagues';
+  return commissioned.length === 1 ? buildLeagueAdminPlanPath(commissioned[0].leagueCode) : '/my-leagues';
 }
 
 /**

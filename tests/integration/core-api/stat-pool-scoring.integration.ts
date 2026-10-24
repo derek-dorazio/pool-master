@@ -1,7 +1,13 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ScoringFamily, Sport, SportStat, TournamentFormat } from '@poolmaster/shared/domain';
-import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
+import {
+  ContestLeaderboardResponseSchema,
+  SportEventParticipantListResponseSchema,
+  SportEventResponseSchema,
+  SportLeagueListResponseSchema,
+} from '@poolmaster/shared/dto';
+import { ErrorEnvelopeSchema, type ErrorEnvelope } from '@poolmaster/shared/dto/errors.dto';
 import {
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
@@ -257,5 +263,108 @@ describe('World Series stat pool contest — scored from its players\' stat line
       [speedsters.id, 1, 6],
       [sluggers.id, 2, 5],
     ]);
+  });
+});
+
+describe('applyEventGameStatLines (#935)', () => {
+  /** A game's lines sent as the root admin, or as `headers`. */
+  async function sendGame(eventId: string, game: number, rows: object[], headers: Record<string, string>) {
+    return getApp().inject({ method: 'PUT', url: `/api/v1/events/${eventId}/rounds/${game}/stat-lines`, headers, payload: { rows } });
+  }
+  async function expectRefusal(response: Awaited<ReturnType<typeof sendGame>>, statusCode: number, code?: string) {
+    expect(response.statusCode).toBe(statusCode);
+    expect(ErrorEnvelopeSchema.safeParse(response.json()).success).toBe(true);
+    if (code) expect(response.json<ErrorEnvelope>().error.code).toBe(code);
+  }
+
+  it('stores each player\'s line for the game as sent and returns the field with it, which the event\'s contests then score', async () => {
+    const { event, ace, cruz } = await seedSeries();
+    const admin = await createTestUser({ displayName: 'Stat Line Admin', isRootAdmin: true });
+
+    const response = await sendGame(event.id, 1, [
+      { participantId: ace.participantId, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }, { stat: SportStat.RUNS, value: 1 }] },
+      { participantId: cruz.participantId, stats: [{ stat: SportStat.WALKS, value: 2 }] },
+    ], admin.headers);
+
+    expect(response.statusCode).toBe(200);
+    const field = SportEventParticipantListResponseSchema.parse(response.json());
+    const linesOf = (entryId: string) => field.participants.find((row) => row.id === entryId)?.rounds.map((round) => [round.roundNumber, round.status, round.statLines]);
+    expect(linesOf(ace.id)).toEqual([[1, 'COMPLETED', [{ stat: SportStat.TOTAL_BASES, value: 4 }, { stat: SportStat.RUNS, value: 1 }]]]);
+    expect(linesOf(cruz.id)).toEqual([[1, 'COMPLETED', [{ stat: SportStat.WALKS, value: 2 }]]]);
+  });
+
+  it('replaces a corrected player\'s whole line, clears an emptied one, and leaves players not named as they were', async () => {
+    const { event, ace, blaze, cruz } = await seedSeries();
+    const admin = await createTestUser({ displayName: 'Stat Line Corrector', isRootAdmin: true });
+    await sendGame(event.id, 1, [
+      { participantId: ace.participantId, stats: [{ stat: SportStat.TOTAL_BASES, value: 2 }, { stat: SportStat.RUNS, value: 1 }] },
+      { participantId: blaze.participantId, stats: [{ stat: SportStat.STOLEN_BASES, value: 1 }] },
+      { participantId: cruz.participantId, stats: [{ stat: SportStat.WALKS, value: 1 }] },
+    ], admin.headers);
+
+    const response = await sendGame(event.id, 1, [
+      { participantId: ace.participantId, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }] },
+      { participantId: blaze.participantId, stats: [] },
+    ], admin.headers);
+
+    const field = SportEventParticipantListResponseSchema.parse(response.json());
+    const roundsOf = (entryId: string) => field.participants.find((row) => row.id === entryId)?.rounds.map((round) => round.statLines);
+    expect(roundsOf(ace.id)).toEqual([[{ stat: SportStat.TOTAL_BASES, value: 4 }]]);
+    expect(roundsOf(blaze.id)).toEqual([]);
+    expect(roundsOf(cruz.id)).toEqual([[{ stat: SportStat.WALKS, value: 1 }]]);
+  });
+
+  it('refuses, writing nothing, a player off the field or named twice, a stat the Box Score does not count or given twice, an unscheduled game, an event not scored from stat lines, a bad value, and a member', async () => {
+    const { prisma, event, ace } = await seedSeries();
+    const admin = await createTestUser({ displayName: 'Stat Line Refusals', isRootAdmin: true });
+    const member = await createTestUser({ displayName: 'Stat Line Member' });
+    const runs = (value: number) => ({ stat: SportStat.RUNS, value });
+    const golf = await prisma.sport.upsert({
+      where: { sport: Sport.GOLF },
+      create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+      update: {},
+    });
+    const tour = await prisma.sportLeague.create({ data: { sportId: golf.id, name: `Tour ${randomUUID().slice(0, 8)}` } });
+    const golfEvent = await prisma.sportEvent.create({
+      data: {
+        eventSeriesId: (await prisma.eventSeries.create({ data: { sportLeagueId: tour.id, name: `Open ${randomUUID().slice(0, 8)}` } })).id,
+        eventYear: 2025,
+        externalId: `stat-line-golf-${randomUUID().slice(0, 8)}`,
+        providerId: 'manual-admin',
+        sport: Sport.GOLF,
+        name: 'Stat Line Open',
+        startDate: new Date('2025-07-17T12:00:00.000Z'),
+        status: 'IN_PROGRESS',
+        rounds: 4,
+      },
+    });
+    await prisma.sportEventRound.create({ data: { sportEventId: golfEvent.id, roundNumber: 1, scheduledDate: new Date('2025-07-17T12:00:00.000Z') } });
+
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: randomUUID(), stats: [runs(1)] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(1)] }, { participantId: ace.participantId, stats: [] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [{ stat: SportStat.POINTS, value: 30 }] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(1), runs(2)] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
+    await expectRefusal(await sendGame(event.id, 3, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 422, 'ROUND_BEYOND_SCHEDULE');
+    await expectRefusal(await sendGame(golfEvent.id, 1, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 422, 'EVENT_SCORING_FAMILY_MISMATCH');
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(-1)] }], admin.headers), 422, 'STAT_LINE_ROWS_INVALID');
+    await expectRefusal(await sendGame(randomUUID(), 1, [{ participantId: ace.participantId, stats: [runs(1)] }], admin.headers), 404);
+    await expectRefusal(await sendGame(event.id, 1, [{ participantId: ace.participantId, stats: [runs(1)] }], member.headers), 403);
+    expect(await prisma.sportEventParticipantStatLine.count({ where: { participantRound: { sportEventParticipant: { sportEventId: event.id } } } })).toBe(0);
+  });
+
+  it('shows a stat pool league\'s overrides on its sport league and on its event, and none on its sport\'s own leagues', async () => {
+    const { prisma, event } = await seedSeries();
+    const admin = await createTestUser({ displayName: 'Stat Pool Reader', isRootAdmin: true });
+    const baseball = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.BASEBALL } });
+    const mlb = await prisma.sportLeague.create({ data: { sportId: baseball.id, name: `MLB ${randomUUID().slice(0, 8)}` } });
+    const worldSeriesId = (await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } })).sportLeagueId;
+
+    const leagues = SportLeagueListResponseSchema.parse((await getApp().inject({ method: 'GET', url: '/api/v1/sport-leagues?sport=BASEBALL', headers: admin.headers })).json());
+    const read = SportEventResponseSchema.parse((await getApp().inject({ method: 'GET', url: `/api/v1/events/${event.id}`, headers: admin.headers })).json());
+
+    const overridesOf = (id: string) => leagues.sportLeagues.filter((league) => league.id === id).map((league) => [league.participantType, league.scoringFamily]);
+    expect(overridesOf(worldSeriesId)).toEqual([['INDIVIDUAL', ScoringFamily.COMPOSITE]]);
+    expect(overridesOf(mlb.id)).toEqual([[null, null]]);
+    expect([read.event.participantType, read.event.scoringFamily]).toEqual(['INDIVIDUAL', ScoringFamily.COMPOSITE]);
   });
 });

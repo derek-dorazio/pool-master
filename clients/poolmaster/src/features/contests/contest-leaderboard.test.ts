@@ -44,6 +44,7 @@ function roundFixture(
     status: 'IN_PROGRESS',
     completedAt: null,
     golf: null,
+    statLines: [],
     ...overrides,
   };
 }

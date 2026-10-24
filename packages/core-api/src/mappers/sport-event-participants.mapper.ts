@@ -56,13 +56,14 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
             : null,
         }
       : null,
-    rounds: view.rounds.map(({ round, golf }) => ({
+    rounds: view.rounds.map(({ round, golf, statLines }) => ({
       id: round.id,
       sportEventRoundId: round.sportEventRoundId,
       roundNumber: round.roundNumber,
       status: round.status,
       completedAt: round.completedAt?.toISOString() ?? null,
       golf: golf ? { strokes: golf.strokes, scoreToPar: golf.scoreToPar, thru: golf.thru } : null,
+      statLines: statLines.map(({ stat, value }) => ({ stat, value })),
     })),
     race: view.raceResult
       ? {

@@ -91,6 +91,7 @@ function roundResult(roundNumber: number, strokes: number) {
     status: 'COMPLETED' as const,
     completedAt: '2026-07-16T18:00:00.000Z',
     golf: { strokes, scoreToPar: strokes - 71, thru: 18 },
+    statLines: [],
   };
 }
 
