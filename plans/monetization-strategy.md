@@ -200,7 +200,7 @@ Kept for later refinement and tickets, none scheduled:
 
 ### Open questions: first build
 
-Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5 agreed;
+Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5 and 7 agreed;
 6 changed to no league size cap.
 
 1. **Decided (Derek 2026-10-24): yes.** **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
@@ -219,7 +219,7 @@ Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 t
 6. ~~League size counts active squads~~ **Decided (Derek 2026-10-24): no league size cap.**
    Only entries are capped, so invites and joins always go through, and the members who join
    and want to enter are the upsell.
-7. **Hide, never delete, on a lower plan, and keep writing the hidden data?** Recommended:
+7. **Decided (Derek 2026-10-24): yes**, so the data is there if they move back up. **Hide, never delete, on a lower plan, and keep writing the hidden data?** Recommended:
    yes, so moving back up loses nothing, which is also what makes a later upgrade worth it.
 8. **Edit the plan per feature on the admin page, and retire the class letters?**
    Recommended: yes. The letters were a stand-in until plans existed; per feature is what you
