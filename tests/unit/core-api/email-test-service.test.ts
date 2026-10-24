@@ -9,7 +9,7 @@ import {
   type MailDeliveryProvider,
 } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import {
   inMemoryEmailMessages,
   inMemoryEmailOptOuts,
@@ -48,6 +48,7 @@ function testService(
     unsubscribe: TEST_UNSUBSCRIBE,
     providerName: 'ses',
     readConfig,
+    planEntitlements: TEST_PLAN_ENTITLEMENTS,
     senderAddress: 'noreply@qa.example.com',
     now,
   });

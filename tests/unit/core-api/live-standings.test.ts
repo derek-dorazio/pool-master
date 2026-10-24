@@ -35,7 +35,7 @@ import { lastFinishedMatchRound } from '../../../packages/core-api/src/modules/s
 import { lastFinishedRound } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/finished-rounds';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const MINUTE = 60_000;
@@ -181,6 +181,7 @@ describe('LiveStandings.queueDue', () => {
       messages: outbox,
       providerName: 'smtp',
       readConfig: () => config,
+      planEntitlements: TEST_PLAN_ENTITLEMENTS,
       senderAddress: 'noreply@poolmaster.test',
       suppressions: inMemoryEmailSuppressions(),
       optOuts: inMemoryEmailOptOuts(),

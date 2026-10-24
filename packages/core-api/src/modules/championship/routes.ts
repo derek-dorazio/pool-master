@@ -3,6 +3,7 @@
  * /api/v1/leagues/:id/championship. Members of the league read it (root admins bypass).
  */
 import type { FastifyInstance } from 'fastify';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto';
@@ -10,6 +11,8 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
+import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
+import type { PlanModuleOptions } from '../plans/routes';
 import { createChampionshipHandlers } from './handler';
 import { createChampionshipService } from './wiring';
 
@@ -24,7 +27,7 @@ const YEAR_PARAMS = {
   },
 } as const;
 
-export function championshipModule(fastify: FastifyInstance): void {
+export function championshipModule(fastify: FastifyInstance, opts: PlanModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -35,7 +38,7 @@ export function championshipModule(fastify: FastifyInstance): void {
     schema: {
       tags: ['Championship'],
       summary: 'List championship years',
-      description: `Every year the league has a counted contest in, newest first, with the squads in 1st: the champions of a year that is over, the leaders of the current one. Years with no counted contest are left out. ${MEMBERS_ONLY}`,
+      description: `Every year the league has a counted contest in, newest first, with the squads in 1st: the champions of a year that is over, the leaders of the current one. Years with no counted contest are left out. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CHAMPIONSHIP, PlanFeature.PAST_YEARS])}`,
       operationId: 'listChampionshipYears',
       response: {
         200: schemaRef('ChampionshipYearListResponse'),
@@ -43,7 +46,7 @@ export function championshipModule(fastify: FastifyInstance): void {
         403: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CHAMPIONSHIP, PlanFeature.PAST_YEARS])],
     handler: handlers.listChampionshipYears,
   });
 
@@ -51,7 +54,7 @@ export function championshipModule(fastify: FastifyInstance): void {
     schema: {
       tags: ['Championship'],
       summary: 'Get a championship year',
-      description: `One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. ${MEMBERS_ONLY}`,
+      description: `One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CHAMPIONSHIP], true)}`,
       operationId: 'getChampionship',
       params: YEAR_PARAMS,
       response: {
@@ -62,7 +65,9 @@ export function championshipModule(fastify: FastifyInstance): void {
         404: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CHAMPIONSHIP], {
+      yearOf: (request) => (request.params as { year: number }).year,
+    })],
     handler: handlers.getChampionship,
   });
 }

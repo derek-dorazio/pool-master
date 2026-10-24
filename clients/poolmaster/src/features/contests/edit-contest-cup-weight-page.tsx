@@ -1,4 +1,4 @@
-import { ContestStatus, type CupWeight } from '@poolmaster/shared/domain';
+import { ContestStatus, PlanFeature, type CupWeight } from '@poolmaster/shared/domain';
 import { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { setContestCupWeight, type ContestManagementDetailDto } from '@/lib/api';
@@ -8,6 +8,8 @@ import { QueryKeys } from '@/lib/query-keys';
 import { CUP_WEIGHTS, CUP_WEIGHT_COPY } from '@/features/championships/cup-settings-view';
 import { buildLeagueAdminContestPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { ChoiceCard, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
@@ -18,12 +20,16 @@ import { useManagedContestQuery } from './use-managed-contest-query';
 export function EditContestCupWeightPage() {
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
-  const { league } = useLeagueContext(leagueCode);
-  const managedContestQuery = useManagedContestQuery(league?.id, contestId);
+  const { league, viewer } = useLeagueContext(leagueCode);
+  const hasCupSettings = hasPlanFeature(league, PlanFeature.CUP_SETTINGS);
+  const managedContestQuery = useManagedContestQuery(hasCupSettings ? league?.id : undefined, contestId);
   const contestPath = buildLeagueAdminContestPath(leagueCode, contestId);
 
   if (!league) {
     return null;
+  }
+  if (!hasCupSettings) {
+    return <PlanLockedNotice feature={PlanFeature.CUP_SETTINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
   }
   if (managedContestQuery.isLoading) {
     return <LoadingState body="Loading contest..." />;

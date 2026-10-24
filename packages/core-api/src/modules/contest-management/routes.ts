@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { PlanFeature } from '@poolmaster/shared/domain';
 // Registers the named components this module's routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
@@ -10,10 +11,12 @@ import { createContestManagementService } from './wiring';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { createContestNotices } from '../notifications/wiring';
+import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
+import type { PlanModuleOptions } from '../plans/routes';
 
 export function contestManagementModule(
   fastify: FastifyInstance,
-  opts: MailModuleOptions,
+  opts: MailModuleOptions & PlanModuleOptions,
 ): void {
   void fastify.register(schemaComponentsPlugin);
 
@@ -108,7 +111,7 @@ export function contestManagementModule(
       tags: ['Contest Management'],
       summary: 'Set how much a contest counts toward its cup',
       description:
-        'Sets how much the contest counts toward its sports league cup and the league championship (#841) and returns it as getContestConfiguration does. Commissioner only. Allowed while the contest is DRAFT, OPEN or ACTIVE; once it is COMPLETED its weight is fixed, because the championship keeps the points it earned at settlement.',
+        `Sets how much the contest counts toward its sports league cup and the league championship (#841) and returns it as getContestConfiguration does. Commissioner only. Allowed while the contest is DRAFT, OPEN or ACTIVE; once it is COMPLETED its weight is fixed, because the championship keeps the points it earned at settlement. ${describePlanFeatureGate([PlanFeature.CUP_SETTINGS])}`,
       operationId: 'setContestCupWeight',
       body: schemaRef('SetContestCupWeightRequest'),
       response: {
@@ -126,7 +129,7 @@ export function contestManagementModule(
         },
       },
     },
-    preHandler: requireCommissioner(membershipRepo),
+    preHandler: [requireCommissioner(membershipRepo), requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_SETTINGS])],
     handler: handlers.setContestCupWeight,
   });
 

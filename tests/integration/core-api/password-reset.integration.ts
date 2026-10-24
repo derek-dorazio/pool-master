@@ -16,7 +16,7 @@ import {
   createTestUser,
 } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
-import { deliverQueuedEmail, emailServiceOver, TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { deliverQueuedEmail, emailServiceOver, TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
 import {
   PasswordResetService,
@@ -107,6 +107,7 @@ function buildService(options: { now?: () => Date } = {}) {
       unsubscribe: TEST_UNSUBSCRIBE,
       providerName: mail.providerName,
       readConfig,
+      planEntitlements: TEST_PLAN_ENTITLEMENTS,
       senderAddress: 'noreply@integration.test',
     }),
     appBaseUrl: APP_BASE_URL,

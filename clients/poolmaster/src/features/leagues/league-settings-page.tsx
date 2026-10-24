@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { LeagueRole, LeagueMembershipStatus, PlanCap, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
   Alert,
@@ -9,8 +9,10 @@ import {
   LinkButton,
   SettingsRow,
   SettingsSection,
+  SettingsSectionHeader,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
+import { hasPlanFeature } from '@/features/plans/plan-features';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
@@ -120,38 +122,54 @@ export function LeagueSettingsPage() {
         />
       </SettingsSection>
 
-      <SettingsSection
-        action={(
-          <LinkButton
-            data-testid="league-settings-championships-edit"
-            isDisabled={isInactive}
-            size="sm"
-            to={buildLeagueAdminChampionshipsEditPath(league.leagueCode)}
-            variant="secondary"
-          >
-            Edit
-          </LinkButton>
-        )}
-        description="What each finishing place earns toward the championship and every sports league cup."
-        testId="league-settings-championships"
-        title="Championships"
-      >
-        <SettingsRow
-          label="Championship name"
-          testId="league-settings-cup-name"
-          value={<span className="font-semibold">{league.cupName}</span>}
-        />
-        <SettingsRow
-          label="Points table"
-          testId="league-settings-points-table"
-          value={describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}
-        />
-        <SettingsRow
-          label="Hall of Lame"
-          testId="league-settings-hall-of-lame"
-          value={league.hallOfLameVisible ? 'Shown' : 'Hidden'}
-        />
-      </SettingsSection>
+      {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
+        <SettingsSection
+          action={(
+            <LinkButton
+              data-testid="league-settings-championships-edit"
+              isDisabled={isInactive}
+              size="sm"
+              to={buildLeagueAdminChampionshipsEditPath(league.leagueCode)}
+              variant="secondary"
+            >
+              Edit
+            </LinkButton>
+          )}
+          description="What each finishing place earns toward the championship and every sports league cup."
+          testId="league-settings-championships"
+          title="Championships"
+        >
+          <SettingsRow
+            label="Championship name"
+            testId="league-settings-cup-name"
+            value={<span className="font-semibold">{league.cupName}</span>}
+          />
+          <SettingsRow
+            label="Points table"
+            testId="league-settings-points-table"
+            value={describePointsTable({ scale: league.cupPointsScale, customPoints: league.cupCustomPoints })}
+          />
+          {hasPlanFeature(league, PlanFeature.RECORD_BOOK) ? (
+            <SettingsRow
+              label="Hall of Lame"
+              testId="league-settings-hall-of-lame"
+              value={league.hallOfLameVisible ? 'Shown' : 'Hidden'}
+            />
+          ) : null}
+        </SettingsSection>
+      ) : (
+        <section className="space-y-3" data-testid="league-settings-championships">
+          <SettingsSectionHeader
+            action={(
+              <LinkButton data-testid="league-settings-championships-plan" size="sm" to={buildLeagueAdminPlanEditPath(league.leagueCode)} variant="secondary">
+                Change plan
+              </LinkButton>
+            )}
+            description="Your league's plan doesn't include championship settings."
+            title="Championships"
+          />
+        </section>
+      )}
 
       <SettingsSection
         action={(

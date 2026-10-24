@@ -286,8 +286,9 @@ plan entitlements service.
 | `RECORD_BOOK` | Record book and Hall of Lame (#873) | Platinum |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
-and leader with a short note, and only the commissioner sees how to upgrade. Routes ask the
-plan entitlements service about the feature, never about a plan. Gating lands with #948.
+with a short note, and only the commissioner sees how to upgrade. Routes ask the
+plan entitlements service about the feature, never about a plan. Gated with #948
+(`docs/DOMAIN-OPERATIONS.md`, *Hidden by plan*).
 
 ## 8. Slices
 
@@ -306,7 +307,7 @@ journey row once a page exists.
    movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
    a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
    slice 2 adds the Championship tab. Each view's feature is now a `PlanFeature` (#944, §7);
-   the views are gated on it with #948.
+   the views are gated on it (#948).
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy

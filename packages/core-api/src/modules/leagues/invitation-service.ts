@@ -161,6 +161,7 @@ export class InvitationService {
           id: input.leagueId,
           name: league.name,
           leagueCode: league.leagueCode,
+          plan: league.plan,
         },
         inviteCode: invitation.inviteCode,
         expiresAt,
@@ -391,6 +392,7 @@ export class InvitationService {
         id: leagueId,
         name: league.name,
         leagueCode: league.leagueCode,
+        plan: league.plan,
       },
       inviteCode: renewed.inviteCode,
       expiresAt,
@@ -547,9 +549,7 @@ export class InvitationService {
     });
     await this.deliverLeagueJoinSuccessEmail({
       invitationId: invitation.id,
-      leagueId: league.id,
-      leagueName: league.name,
-      leagueCode: league.leagueCode,
+      league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       userId,
     });
     this.logger?.info({
@@ -568,28 +568,26 @@ export class InvitationService {
 
   private async deliverLeagueJoinSuccessEmail(input: {
     invitationId: string;
-    leagueId: string;
-    leagueName: string;
-    leagueCode: string;
+    league: EmailLeague;
     userId: string;
   }): Promise<void> {
     if (!this.deps.email || !this.deps.prisma) {
       this.logger?.debug({
         action: 'leagueInvitation.joinSuccessEmail.skipped',
-        data: { invitationId: input.invitationId, leagueId: input.leagueId },
+        data: { invitationId: input.invitationId, leagueId: input.league.id },
       }, 'Skipped league join success email because dependencies are unavailable');
       return;
     }
     const [recipient, teamName] = await Promise.all([
       this.resolveRecipientUser(input.userId),
-      this.resolveUserTeamName(input.leagueId, input.userId),
+      this.resolveUserTeamName(input.league.id, input.userId),
     ]);
     if (!recipient) {
       this.logger?.warn({
         action: 'leagueInvitation.joinSuccessEmail.recipientMissing',
         data: {
           invitationId: input.invitationId,
-          leagueId: input.leagueId,
+          leagueId: input.league.id,
           userId: input.userId,
         },
       }, 'Skipped league join success email because recipient user was not found');
@@ -600,21 +598,21 @@ export class InvitationService {
       await this.deps.email.send(templateKey, {
         to: { email: recipient.email, userId: input.userId, timeZone: recipient.timeZone },
         about: input.invitationId,
-        league: { id: input.leagueId, name: input.leagueName, leagueCode: input.leagueCode },
+        league: input.league,
         refs: { invitationId: input.invitationId },
         data: {
           userName: recipient.name,
-          leagueName: input.leagueName,
-          leagueCode: input.leagueCode,
+          leagueName: input.league.name,
+          leagueCode: input.league.leagueCode,
           teamName,
-          leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.leagueCode),
+          leagueHomeUrl: buildLeagueHomeUrl(this.appBaseUrl, input.league.leagueCode),
         },
       });
       this.logger?.info({
         action: 'leagueInvitation.joinSuccessEmail.success',
         data: {
           invitationId: input.invitationId,
-          leagueId: input.leagueId,
+          leagueId: input.league.id,
           templateKey,
         },
       }, 'Queued league join success email');
@@ -623,7 +621,7 @@ export class InvitationService {
         action: 'leagueInvitation.joinSuccessEmail.failure',
         data: {
           invitationId: input.invitationId,
-          leagueId: input.leagueId,
+          leagueId: input.league.id,
           templateKey,
           error: err instanceof Error ? err.message : String(err),
         },
