@@ -13,7 +13,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
+import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -91,12 +91,18 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         sport: event.sport,
         sportLeagueId: event.sportLeagueId,
         eventYear: event.eventYear,
-        tournamentFormat: sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
+        // A sport league scored by its own family plays its own format (#934: a stat pool plays
+        // golf's, not its team sport's matches); any other plays its sport's.
+        tournamentFormat: event.scoringFamily === undefined
+          ? sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport)
+          : eventSportDefinition(event).tournamentFormat,
         participantCount: event.participantCount ?? null,
         loadedParticipantCount: loaded.get(sportEventId) ?? 0,
         rounds: event.rounds ?? null,
         salaryCap: event.pricingConfig?.salaryCap ?? null,
         squaresFromRound: event.squaresFromRound ?? null,
+        ...(event.participantType !== undefined && { participantType: event.participantType }),
+        ...(event.scoringFamily !== undefined && { scoringFamily: event.scoringFamily }),
       };
     },
     findActiveFieldPrices: async (sportEventId) => {

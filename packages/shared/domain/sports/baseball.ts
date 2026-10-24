@@ -1,9 +1,24 @@
 import { ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
+import { SportStat, statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of an MLB postseason are called, counted back from the World Series. */
 const ROUND_NAMES_FROM_FINAL = ['World Series', 'League Championship Series', 'Division Series', 'Wild Card Series'] as const;
+
+/** The stats Box Score counts. */
+const BASEBALL_STATS = [SportStat.TOTAL_BASES, SportStat.RUNS, SportStat.RUNS_BATTED_IN, SportStat.WALKS, SportStat.STOLEN_BASES] as const;
+/** One of Box Score's stats: baseball's typed slice of `SportStat`. */
+type BaseballStat = (typeof BASEBALL_STATS)[number];
+
+/** Box Score (#932): total bases + runs + RBI + walks + stolen bases, a position player's game. */
+const baseballComposite: SportComposite<BaseballStat> = {
+  name: 'Box Score',
+  stats: BASEBALL_STATS,
+  defaultGames: 7,
+  score: (line) => statValue(line, SportStat.TOTAL_BASES) + statValue(line, SportStat.RUNS) + statValue(line, SportStat.RUNS_BATTED_IN)
+    + statValue(line, SportStat.WALKS) + statValue(line, SportStat.STOLEN_BASES),
+};
 
 /**
  * Baseball (#789): teams playing a knockout bracket, scored by the head-to-head family from the
@@ -26,6 +41,7 @@ export const baseballSportDefinition: SportDefinition = {
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   shootout: null,
+  composite: baseballComposite,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },
     event: { one: 'postseason', many: 'postseasons' },

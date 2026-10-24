@@ -13,5 +13,11 @@ export const ScoringFamily = {
    * Its knockout scoring definition (points per round won plus an upset bonus) is #699.
    */
   HEAD_TO_HEAD: 'HEAD_TO_HEAD',
+  /**
+   * A championship stat pool's (#932): each game is a round, and a player's round scores the
+   * sport's composite of their stats (`SportComposite`), more is better. Results are stat lines.
+   * No sport scores by it on its own; a sport league names it (`SportLeague.scoringFamily`).
+   */
+  COMPOSITE: 'COMPOSITE',
 } as const;
 export type ScoringFamily = (typeof ScoringFamily)[keyof typeof ScoringFamily];

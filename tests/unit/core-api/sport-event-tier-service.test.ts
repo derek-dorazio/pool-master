@@ -1,4 +1,4 @@
-import { Sport, SportEventStatus, TierSource } from '@poolmaster/shared/domain';
+import { Sport, SportEventStatus, TierSource, getSportDefinition } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
@@ -41,8 +41,8 @@ describe('SportEventTierService — tiers', () => {
   it('creates the sport\'s default tiers once (six for golf), and leaves an event that has tiers alone', async () => {
     const { store, event, service } = setup();
 
-    await service.ensureDefaultTiers(event.id, Sport.GOLF, null);
-    const again = await service.ensureDefaultTiers(event.id, Sport.GOLF, null);
+    await service.ensureDefaultTiers(event.id, getSportDefinition(Sport.GOLF), null);
+    const again = await service.ensureDefaultTiers(event.id, getSportDefinition(Sport.GOLF), null);
 
     expect(again.map((tier) => tier.tierKey)).toEqual(['tier-1', 'tier-2', 'tier-3', 'tier-4', 'tier-5', 'tier-6']);
     expect(store.tierRows).toHaveLength(6);
@@ -52,7 +52,7 @@ describe('SportEventTierService — tiers', () => {
     const { store, service } = setup();
     const playoff = store.addEvent({ status: SportEventStatus.DRAFT, sport: Sport.AMERICAN_FOOTBALL });
 
-    await service.ensureDefaultTiers(playoff.id, Sport.AMERICAN_FOOTBALL, 6);
+    await service.ensureDefaultTiers(playoff.id, getSportDefinition(Sport.AMERICAN_FOOTBALL), 6);
     addFieldByOdds(store, playoff.id, 12);
     const groups = await service.autoAssignTiers({ sportEventId: playoff.id, source: TierSource.ODDS });
 
@@ -142,7 +142,7 @@ describe('SportEventTierService — assignment', () => {
   ])('auto-assigns a $sport event\'s default tiers when no size is sent: $what', async ({ sport, fieldSize, expected }) => {
     const { store, service } = setup();
     const event = store.addEvent({ status: SportEventStatus.DRAFT, sport });
-    await service.ensureDefaultTiers(event.id, sport, null);
+    await service.ensureDefaultTiers(event.id, getSportDefinition(sport), null);
     addFieldByOdds(store, event.id, fieldSize);
 
     const groups = await service.autoAssignTiers({ sportEventId: event.id, source: TierSource.ODDS });

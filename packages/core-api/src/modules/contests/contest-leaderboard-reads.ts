@@ -20,7 +20,7 @@ import type {
   ContestScoringConfigurationRow,
   ParticipantScore,
 } from './contest-leaderboard-calculator';
-import { scoringFamilyForSport, type FieldScoringEvent } from '../scoring-families';
+import { scoringFamilyForEvent, type FieldScoringEvent } from '../scoring-families';
 
 export interface ContestLeaderboardReadDeps {
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
@@ -48,7 +48,7 @@ export function toParticipantScores(
   event: FieldScoringEvent,
   scoring: ContestScoringSettings,
 ): ParticipantScore[] {
-  return scoringFamilyForSport(event.sport).scoreField(field, event, scoring);
+  return scoringFamilyForEvent(event).scoreField(field, event, scoring);
 }
 
 /** What a lineup scores in an event its entry missed (#714), by the event's scoring family. */
@@ -58,7 +58,7 @@ export function scoreMissedLineup(
   scoring: ContestScoringSettings,
   countingPickLimit: number,
 ): number | null {
-  return scoringFamilyForSport(event.sport).scoreMissedLineup(field, event, scoring, countingPickLimit);
+  return scoringFamilyForEvent(event).scoreMissedLineup(field, event, scoring, countingPickLimit);
 }
 
 /**

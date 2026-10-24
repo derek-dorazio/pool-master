@@ -1,6 +1,7 @@
 /**
  * What a scoring family does that differs between families (#606). A sport's definition names
- * its family; everything here is reached through the event's sport, never by comparing sports
+ * its family, and a sport league may name another (#934); everything here is reached through the
+ * event's sport league definition, never by comparing sports
  * (`rules/architecture-rules.md` §4 *Sport extension*).
  *
  * The shape was checked against the three families planned; all three are registered:
@@ -10,6 +11,8 @@
  * - **Head to head** (basketball's bracket, #698): points per match won, by the round's value
  *   plus a seed upset bonus (#699). It reads the event's matches (who beat whom) as its own field
  *   read; the methods below take what it needs from the field.
+ * - **Composite** (championship stat pools, #934): each game a player's sport composite of their
+ *   stat lines, summed; a game not played scores 0. A sport league names it, not a sport.
  *
  * Each method is here because golf already does it and a second family does it differently.
  */
@@ -21,8 +24,11 @@ import type { ParticipantScore } from '../contests/contest-leaderboard-calculato
 import type { SportEventParticipantView } from '../events/sport-event-participant-service';
 import type { LiveScorePersistenceResult } from '../ingestion/core/score-publisher';
 
+/** What picks an event's scoring family off it: its sport, and its sport league's family when not the sport's (#934). */
+export type ScoringFamilyEvent = Pick<SportEvent, 'sport' | 'scoringFamily'>;
+
 /** What scoring a field reads off its event. */
-export type FieldScoringEvent = Pick<SportEvent, 'sport' | 'rounds' | 'roundsPar' | 'status'>;
+export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'rounds' | 'roundsPar' | 'status'>;
 
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;

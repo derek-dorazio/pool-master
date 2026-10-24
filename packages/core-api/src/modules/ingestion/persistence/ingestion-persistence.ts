@@ -10,8 +10,8 @@ import type { FastifyBaseLogger } from 'fastify';
 import {
   getDefaultTournamentFormatForSport,
   type Sport,
-  sportPlaysMatches,
   SportEventStatus,
+  eventPlaysMatches,
 } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
@@ -227,6 +227,7 @@ export class IngestionPersistence {
           externalId: detail.externalId,
         },
       },
+      include: { eventSeries: { select: { sportLeague: { select: { participantType: true, scoringFamily: true } } } } },
     });
     if (!persistedEvent) {
       // No event is linked to this provider event, so there is no field to write
@@ -240,7 +241,8 @@ export class IngestionPersistence {
 
     let sportEventParticipantsPersisted = 0;
     // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
-    const seedsLocked = sportPlaysMatches(persistedEvent.sport) && persistedEvent.status !== SportEventStatus.DRAFT;
+    const { sportLeague } = persistedEvent.eventSeries;
+    const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType ?? undefined, scoringFamily: sportLeague.scoringFamily ?? undefined }) && persistedEvent.status !== SportEventStatus.DRAFT;
 
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({

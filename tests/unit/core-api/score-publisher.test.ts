@@ -19,14 +19,14 @@ import {
 } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { expect } from '@jest/globals';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import { scoringFamilyForSport, type ScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
+import { scoringFamilyForEvent, type ScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
 import { strokePlayScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/stroke-play';
 import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
 
 function buildSportEventStub(internalId = 'evt-1') {
   return {
-    findUnique: jest.fn().mockResolvedValue({ id: internalId, sport: 'GOLF', status: 'IN_PROGRESS' }),
+    findUnique: jest.fn().mockResolvedValue({ id: internalId, sport: 'GOLF', status: 'IN_PROGRESS', eventSeries: { sportLeague: { scoringFamily: null } } }),
   };
 }
 
@@ -50,7 +50,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       };
 
       await expect(
-        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock', scoringFamilyForSport }),
+        publishLiveScoreUpdate(malformed, { prisma: asPrismaClient(prisma), providerId: 'mock', scoringFamilyForEvent }),
       ).rejects.toBeInstanceOf(LiveScoreValidationError);
     });
   });
@@ -90,7 +90,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const persisted = await publishLiveScoreUpdate(result, {
         prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
-        scoringFamilyForSport,
+        scoringFamilyForEvent,
       });
 
       expect(persisted).toMatchObject({
@@ -131,7 +131,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         prisma: asPrismaClient(prisma),
         providerId: 'mock-contest-feed',
         logger,
-        scoringFamilyForSport,
+        scoringFamilyForEvent,
       });
 
       expect(persisted).toMatchObject({
@@ -165,7 +165,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
           rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
         };
 
-        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger, scoringFamilyForSport });
+        const persisted = await publishLiveScoreUpdate(result, { prisma: asPrismaClient(prisma), providerId: 'mock', logger, scoringFamilyForEvent });
 
         expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
         expect(logger.warn).toHaveBeenCalledWith(
@@ -183,7 +183,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
     it('warns and writes nothing when the event\'s scoring family accepts no live-score category', async () => {
       const prisma = {
-        sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', rounds: 4, status: 'IN_PROGRESS' }) },
+        sportEvent: { findUnique: jest.fn().mockResolvedValue({ id: 'evt-1', sport: 'GOLF', rounds: 4, status: 'IN_PROGRESS', eventSeries: { sportLeague: { scoringFamily: null } } }) },
         sportEventRound: { findMany: jest.fn() },
         participantProviderMapping: { findMany: jest.fn() },
         sportEventParticipant: { findMany: jest.fn() },
@@ -201,7 +201,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         prisma: asPrismaClient(prisma),
         providerId: 'mock',
         logger,
-        scoringFamilyForSport: () => adminEnteredFamily,
+        scoringFamilyForEvent: () => adminEnteredFamily,
       });
 
       expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });

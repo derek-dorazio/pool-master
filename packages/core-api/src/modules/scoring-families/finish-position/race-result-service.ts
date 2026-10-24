@@ -27,7 +27,6 @@ import {
   RaceResultRowError,
   RaceResultStatus,
   type RaceResultStatus as RaceResultStatusValue,
-  type Sport,
   type SportEvent,
   type SportEventParticipantRaceResult,
 } from '@poolmaster/shared/domain';
@@ -39,6 +38,7 @@ import {
   type ParticipantRowResolution,
 } from '../../sport-catalog/participant-row-resolver';
 import { displayPlace, placesFormFinishingOrder, standingStatusForResult } from './race-order';
+import type { ScoringFamilyEvent } from '../scoring-family-module';
 
 export class RaceResultError extends Error {
   constructor(
@@ -98,7 +98,7 @@ export interface RaceResultServiceDeps {
    * Whether an event of this sport keeps race results, by its sport's scoring family. Any other
    * event is refused rather than given rows its leaderboard never reads.
    */
-  storesRaceResults: (sport: Sport) => boolean;
+  storesRaceResults: (event: ScoringFamilyEvent) => boolean;
   now?: () => Date;
   logger?: FastifyBaseLogger;
 }
@@ -254,7 +254,7 @@ export class RaceResultService {
    */
   private async requireRaceScoredEvent(sportEventId: string): Promise<SportEvent | null> {
     const event = await this.deps.events.findById(sportEventId);
-    if (event && !this.deps.storesRaceResults(event.sport)) {
+    if (event && !this.deps.storesRaceResults(event)) {
       this.deps.logger?.warn({ sportEventId, sport: event.sport }, 'Refused a race result for an event whose scoring family does not keep them');
       throw new RaceResultError(
         `Sport event ${sportEventId} is a ${event.sport} event, whose scoring family does not keep race results.`,

@@ -13,12 +13,12 @@
 import {
   deriveLegacyParticipantStatus,
   getTiersInPlay,
-  sportPlaysMatches,
+  eventPlaysMatches,
   SelectionStatus,
   type Contest,
   type ContestEntry,
   type Participant,
-  type Sport,
+  type SportLeagueEvent,
   type SportEventParticipant,
   type SquadMembership,
 } from '@poolmaster/shared/domain';
@@ -128,13 +128,13 @@ export function buildSelectionParticipants(input: {
   participantsById: ReadonlyMap<string, Participant>;
   valuationBySportEventParticipantId: ReadonlyMap<string, ParticipantValuation>;
   /**
-   * The event's sport, whose bracket seeds the room shows (#701). A golf or race field carries a
-   * seed number too (its tour ranking order), which is no bracket seed, so only a sport that plays
-   * a bracket sends one. Null for a contest on no event.
+   * The event, whose bracket seeds the room shows (#701). A golf or race field carries a seed
+   * number too (its tour ranking order), which is no bracket seed, so only an event played as
+   * matches sends one: not a team sport's stat pool (#934). Null for a contest on no event.
    */
-  sport: Sport | null;
+  event: SportLeagueEvent | null;
 }): SelectionParticipant[] {
-  const showsSeeds = input.sport !== null && sportPlaysMatches(input.sport);
+  const showsSeeds = input.event !== null && eventPlaysMatches(input.event);
   return input.field
     .map((entry) => {
       const participant = input.participantsById.get(entry.participantId);

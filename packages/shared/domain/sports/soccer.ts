@@ -33,6 +33,7 @@ export const soccerSportDefinition: SportDefinition = {
   // A pick'em pick may be a draw (#792); soccer has no spread to pick against.
   pickEm: { tiePicks: true, againstTheSpread: false },
   shootout: { label: 'pens' },
+  composite: null,
   matchPeriodLayout: MatchPeriodLayout.HALVES,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },

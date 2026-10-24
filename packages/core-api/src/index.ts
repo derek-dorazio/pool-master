@@ -70,7 +70,7 @@ import { registerConfiguredProviders } from './modules/ingestion/core/provider-b
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestSettlementService } from './modules/contests/wiring';
 import { createContestManagementService } from './modules/contest-management/wiring';
-import { scoringFamilyForSport } from './modules/scoring-families';
+import { scoringFamilyForEvent } from './modules/scoring-families';
 import {
   EMAIL_SETTINGS,
   createEmailOutbox,
@@ -187,7 +187,7 @@ export function buildApp() {
         prisma,
         providerId,
         logger: app.log,
-        scoringFamilyForSport,
+        scoringFamilyForEvent,
       });
     },
   };

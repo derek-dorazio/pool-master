@@ -170,11 +170,13 @@ thrown away at launch.
 ## 6. Slices
 
 1. **Model and scoring.** The `COMPOSITE` family and definition, the composites and stat enums
-   in the sport definitions, `SportEventParticipantStatLine`, the sport league overrides, the
-   five new sport leagues, and templates. Unit tests for every composite formula, and
-   integration tests for rescoring.
-2. **Loader and admin.** `STATS` content in the data file and loader, the admin stat grid, and
-   the five test data files with real box scores.
+   in the sport definitions, `SportEventParticipantStatLine`, the sport league overrides and
+   the stat pool definition every event is read through. Unit tests for every composite
+   formula, and integration tests for scoring and rescoring.
+2. **Leagues, loader and admin.** The five new sport leagues and their templates, which land
+   with their test data files (every seeded league has one, `rules/architecture-rules.md` §6),
+   `STATS` content in the data file and loader, the admin stat grid, and the five test data
+   files with real box scores.
 3. **Contest screens.** The formula on Create contest, the entry page's composite column,
    leaderboard game columns with the component breakdown, and copy (How to Play, blurbs).
 4. **First real load.** The 2027 NFL Conference Championship weekend and Super Bowl LXI fields

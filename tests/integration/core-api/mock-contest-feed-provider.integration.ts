@@ -7,7 +7,7 @@ import { createEventLifecycleService } from '../../../packages/core-api/src/modu
 import { MockContestFeedAdapter } from '../../../packages/core-api/src/modules/ingestion/adapters/mock-contest-feed-adapter';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
-import { scoringFamilyForSport } from '../../../packages/core-api/src/modules/scoring-families';
+import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
 import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
@@ -878,7 +878,7 @@ describe('mock contest feed provider event-first verification', () => {
     const scheduler = new IngestionScheduler(registry, {
       onEventDetail: async (detail) => (await persistence.persistEventDetailWithDiagnostics(detail)).writeDiagnostics,
       onLiveScores: async (result, providerIdForResult) =>
-        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, scoringFamilyForSport }),
+        publishLiveScoreUpdate(result, { prisma, providerId: providerIdForResult, scoringFamilyForEvent }),
     }, undefined, {
       eventReader,
       syncRunLedger,

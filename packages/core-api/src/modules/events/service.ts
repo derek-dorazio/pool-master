@@ -27,7 +27,8 @@ import type {
   SportRepository,
 } from '@poolmaster/shared/db';
 import {
-  getSportDefinition,
+  eventSportDefinition,
+  sportLeagueDefinitionOf,
   MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
   SportEventStatus,
@@ -143,7 +144,7 @@ export class SportEventService {
   /** An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data. */
   async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
-    const rounds = input.rounds ?? getSportDefinition(sport).defaultRounds;
+    const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
     const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, input.name);
 
     const event = await this.createEdition({
@@ -164,7 +165,7 @@ export class SportEventService {
       autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
     });
     await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
-    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport, sportLeague.tierCount);
+    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
@@ -221,7 +222,7 @@ export class SportEventService {
     } else {
       await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: providerEvent.startDate });
     }
-    await this.deps.tiers.ensureDefaultTiers(event.id, event.sport, sportLeague.tierCount);
+    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
 
     this.deps.logger?.info(
       { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },
@@ -534,7 +535,7 @@ function describeReleaseBlockers(summary: SportEventSummary): string[] {
   if (summary.untieredParticipantCount > 0) {
     blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
   }
-  const { participant } = getSportDefinition(summary.event.sport).vocabulary;
+  const { participant } = eventSportDefinition(summary.event).vocabulary;
   for (const label of summary.emptyTierLabels) {
     blockers.push(`${label} has no ${participant.many}`);
   }

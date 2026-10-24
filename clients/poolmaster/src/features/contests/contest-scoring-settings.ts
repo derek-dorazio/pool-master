@@ -170,7 +170,7 @@ const knockoutRoundPointsUi: ScoringSettingsUi = {
   },
 };
 
-/** Golf's total against par takes no settings: nothing to show, nothing to send. */
+/** Golf's total against par and a stat pool's composite total take no settings: nothing to show, nothing to send. */
 const noSettingsUi: ScoringSettingsUi = {
   Fields: null,
   toValues: (_scoring, current) => current,
@@ -188,6 +188,7 @@ export const SCORING_SETTINGS_UI: Readonly<Record<ParticipantScoringDefinitionId
   GOLF_RELATIVE_TO_PAR_TOTAL: noSettingsUi,
   FINISH_POSITION_POINTS: finishPositionPointsUi,
   KNOCKOUT_ROUND_POINTS: knockoutRoundPointsUi,
+  COMPOSITE_TOTAL: noSettingsUi,
 };
 
 /**
