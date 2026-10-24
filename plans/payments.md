@@ -99,7 +99,7 @@ Plans page. Almost all of it is plan settings that already exist; only two thing
 - **Every feature on Premium.** On the Plans page, each feature's "starts at" is set to
   Premium or lower. Platinum then differs from Premium only by its caps until subscriptions
   are sold.
-- **Caps on day 1** (Q3, Derek: Premium 100), entries per contest / sports leagues per year:
+- **Caps on day 1** (decided, Derek 2026-10-24), entries per contest / sports leagues per year:
   Free 20 / 1, Pro 50 / 3, Premium 100 / unlimited, Platinum 1000 / unlimited.
   These are the original long-term numbers, with Premium given every sports league so every
   league can try every sport. Caps must not fall as the plan rises, which these satisfy.
@@ -350,9 +350,8 @@ subscriptions later, annual or monthly with monthly at a premium.
    gets a renewal date six months out (§3).
 2. **Decided (Derek 2026-10-24): Platinum shown as "Coming soon" and not selectable**; the
    other plans stay in the picker (§3).
-3. **Day 1 caps: Free 20, Pro 50, Premium 100, Platinum 1000 entries; Premium and Platinum
-   unlimited sports leagues?** Recommended: yes. Premium 100 is your call; the rest just
-   keep the order, and every league can try every sport.
+3. **Decided (Derek 2026-10-24): yes.** Day 1 caps: Free 20, Pro 50, Premium 100, Platinum
+   1000 entries per contest; Premium and Platinum unlimited sports leagues (§3).
 4. **Day 1 in production: payments built but switched off, so no prices show; on in QA
    test mode?** Recommended: yes. Nothing about money can slow adoption, and everything is
    tested and ready. Lowering the cap later gets an announced date and an email two weeks
