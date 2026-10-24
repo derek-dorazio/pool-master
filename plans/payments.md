@@ -6,7 +6,8 @@ Per-contest purchases: #968 (designed here, as phase 1).
 Written 2026-10-24 for Derek's review; revised the same day after review on PR #967 and
 Derek's direction: start with per-contest purchases on a capped Premium (100 on day 1, no
 payment required), subscriptions later.
-Design only; nothing here is built, and the build is deferred until Derek's go. Phase 1 questions
+Design only; nothing here is built, and the build is deferred until Derek's go. Revised again
+the same day: the six-month Premium gift with a drop to Free, and one plan matrix (§3). Phase 1 questions
 (§13) were all decided by Derek on 2026-10-24; phase 2 questions wait for phase 2.
 
 ## TL;DR
@@ -14,18 +15,18 @@ Design only; nothing here is built, and the build is deferred until Derek's go. 
 - **Never touch a card.** Use **Stripe** (decided). Commissioners pay on Stripe's own
   checkout page. Poolmaster stores only Stripe's ids and what was bought. Card numbers never
   reach our servers, so the card-security rules (PCI) shrink to one self-assessment form.
-- **Phase 1, per-contest purchases first** (Derek 2026-10-24). Every league is on **Premium**,
-  with every feature switched on for Premium in the plan settings, and a cap of **100
-  entries per contest** on day 1, so nobody has to pay. A commissioner can pay once to
-  **expand one contest**. Payments are built and tested but not required on day 1; lowering
-  the cap (for example to 20) later is one save on the Plans page. No subscriptions, renewals
-  or recurring charges.
-- **Phase 2, subscriptions later**: annual or monthly plans per league, monthly at a premium
-  ($99 a year or $9.99 a month as the example). Designed in Part B, built when Derek wants
-  them, on the same Stripe customer, webhook and payment history.
-- **Long-term caps** (Derek 2026-10-24): Platinum is capped at 1000 entries per contest
-  rather than unlimited; if Premium's cap is ever lowered (for example to 20), it goes back
-  to 100 once subscriptions are sold.
+- **Every league is gifted Premium for six months** (Derek 2026-10-24). Each league gets a
+  renewal date, `planRenewsAt`: signup + 6 months (existing leagues: the move + 6 months).
+  Until then it is on **Premium** (every feature, 100 entries per contest); after it, the
+  league drops to **Free** (20 entries) and everything else just follows from the plan.
+  Extending the gift is moving the dates out.
+- **Phase 1, per-contest purchases** (Derek 2026-10-24). A commissioner pays once to
+  **expand one contest**. Each plan has its own expansion price list, cheaper on higher
+  plans. Payments are built and tested but not required on day 1.
+- **Phase 2, annual plans later** (no monthly at first). Each plan's annual fee unlocks its
+  features, a higher free cap and cheaper expansions (§15); paying for a year moves the
+  league's renewal date out a year. Same Stripe customer, webhook and payment history.
+- **Every plan has caps**, none unlimited: Platinum 500 entries free, expandable to 2000.
 - **Stripe tells us what happened by webhook.** One endpoint, signature checked, each event
   stored once by its id so a repeat does nothing.
 - **Our own payment history** for commissioners: date, amount, a description ("Masters
@@ -79,31 +80,55 @@ Everything below assumes Stripe. The code keeps Stripe behind one module and one
 
 # Part A. Phase 1: per-contest purchases
 
-## 3. The launch setup: everyone on Premium, capped at 100, payments built but not required
+## 3. The launch setup: six months of free Premium, then Free
 
-Derek's plan (2026-10-24): try everything, with entries limited, and paying per contest lifts
-the limit. On day 1 the limit is generous, **100 entries per contest**, so nobody has to pay
-and adoption is not blocked. Payments are built and tested (on QA in Stripe's test mode) so
-they are ready; lowering the cap to make them matter is a later decision, one save on the
-Plans page. Almost all of it is plan settings that already exist; only two things need code.
+Derek's model (2026-10-24): every league is **gifted Premium for six months**, then drops to
+**Free**. Plans, caps and features already do the rest; payments add per-contest expansions
+now and annual plans later.
 
-- **Every league on Premium** (Derek 2026-10-24). The default plan for new leagues moves from
-  Platinum to Premium, and existing leagues move from Platinum to Premium, logged in the plan
-  change log as a root admin change.
-- **Renewal date: six months out** (Derek 2026-10-24). Each league gets `League.planRenewsAt`:
-  signup + 6 months for a new league, the day of the move + 6 months for an existing one.
-  Phase 1 only stores and shows it (to commissioners, on the plan page); nothing happens on
-  the date until phase 2 says what renewal means.
+- **Every league on Premium.** The default plan for new leagues moves from Platinum to
+  Premium, and existing leagues move from Platinum to Premium.
+- **Renewal date.** Each league gets `League.planRenewsAt`: signup + 6 months for a new
+  league, the day of the move + 6 months for an existing one. Commissioners see it on the
+  plan page ("Your free Premium runs until 2027-04-24").
+- **On the date, the league drops to Free.** A daily job moves every league whose date has
+  passed (and that has no paid plan, phase 2) to Free, logged in the plan change log, after
+  "Your free Premium ends in 30 / 7 / 1 days" emails to its commissioners. Nothing is
+  deleted: contests over Free's cap keep their entries and take no new ones until expanded,
+  and Premium features are hidden, not removed (*Moving to a lower plan* in
+  `plans/monetization-strategy.md`). This job is the only new code the gift needs; the job
+  can run twice safely.
+- **Extending the gift** is moving the dates out: a root admin action "Extend free Premium"
+  that sets every gifted league's date (or one league's) to today + an interval, logged,
+  rather than a database script.
 - **Platinum is "Coming soon"** (Derek 2026-10-24). The commissioner plan picker shows
-  Platinum but it can't be selected, labelled "Coming soon"; Free, Pro and Premium stay
-  selectable, which only ever lowers a league's caps. The root admin can still set any plan.
-- **Every feature on Premium.** On the Plans page, each feature's "starts at" is set to
-  Premium or lower. Platinum then differs from Premium only by its caps until subscriptions
-  are sold.
-- **Caps on day 1** (decided, Derek 2026-10-24), entries per contest / sports leagues per year:
-  Free 20 / 1, Pro 50 / 3, Premium 100 / unlimited, Platinum 1000 / unlimited.
-  These are the original long-term numbers, with Premium given every sports league so every
-  league can try every sport. Caps must not fall as the plan rises, which these satisfy.
+  Platinum but it can't be selected; Free, Pro and Premium stay selectable, which only ever
+  lowers a league's caps. The root admin can still set any plan.
+
+### The plan matrix (Derek 2026-10-24; prices tentative)
+
+| | Free | Pro | Premium | Platinum |
+|---|---|---|---|---|
+| Annual fee (phase 2) | $0 | $49 | $99 | $199 |
+| Features | Basics | + cups, championship, reminders, past years | + all-years summary, record book | Everything |
+| Sports leagues per year | 5 | 15 | 30 | 50 |
+| Free entries per contest | 20 | 50 | 100 | 500 |
+| Expand to 50 entries | $10 | included | included | included |
+| Expand to 100 | $20 | $15 | included | included |
+| Expand to 200 | $30 | $20 | $15 | included |
+| Expand to 500 | $40 | $30 | $20 | included |
+| Expand to 1000 | — | — | $30 | $30 |
+| Expand to 2000 | — | — | — | $40 |
+
+- **Sports leagues** stay capped, but high enough to be practically unlimited (Derek: the
+  per-contest fee is the real lever; the cap is protection against abuse).
+- **Expansion prices are per plan**, a small price list each (round numbers, not a
+  percentage), in the billing settings (§9). A gifted league is on Premium, so it pays
+  Premium's prices with no special case; after the drop, Free's.
+- **Features**: on the Plans page, the "starts at" of each feature matches the Features row
+  (the all-years summary and record book move from Platinum to Premium). Free keeps the basics.
+- Caps never fall as the plan rises; these numbers satisfy that.
+
 - **Code change 1: Platinum gets a cap.** Today "Platinum is unlimited" lives in several
   places: `CappedLeaguePlan` and `CAPPED_LEAGUE_PLANS` in the shared enums, `PlanCapLimits`
   and `findFallingPlanLimit`, the Platinum branch in `resolvePlanEntitlements`,
@@ -115,9 +140,9 @@ Plans page. Almost all of it is plan settings that already exist; only two thing
 - **The saved settings row.** QA's stored `PLAN_CONFIG` has no Platinum values, so it would
   stop validating. The schema fills a missing Platinum value from the default when it loads,
   with a test proving an old row still loads; the next save writes it.
-- **The day 1 numbers are the code defaults.** `PLAN_SETTINGS.defaults()` becomes the day 1
-  caps above, with every feature at Premium or lower (today Premium has 10 sports leagues,
-  and the all-years summary and record book start at Platinum). Production then starts right
+- **The matrix is the code defaults.** `PLAN_SETTINGS.defaults()` becomes the caps and
+  features above (today Premium has 10 sports leagues, and the all-years summary and record
+  book start at Platinum). Production then starts right
   with no manual save. QA keeps its saved row, so QA needs one save on the Plans page.
 - **Order of the move.** On QA, change the plan settings first, then move the leagues; the
   other way round, every league would lose the all-years summary and record book in between.
@@ -128,28 +153,21 @@ Plans page. Almost all of it is plan settings that already exist; only two thing
   match Platinum showing as "Coming soon".
 - **Code change 2: contest expansions** (§4) raise one contest's cap above its plan's.
 - **Day 1 in production** (Q4): payments built, but expansions not offered (`paymentsEnabled`
-  off), so nothing about money shows. On QA the switch is on in test mode, so the whole flow
-  can be tried with test cards, including on test leagues whose cap the root admin lowers.
-- **Later, when payments should matter**: you lower Premium's cap (Derek's example: 20) on a
-  date you announce, and switch expansions on. One save hits every league the same day;
-  commissioners get an email about two weeks before, and contests already over the new cap
-  keep every entry and take no new ones until expanded (the existing *Moving to a lower plan*
-  rule in `plans/monetization-strategy.md`). Free and Pro must then be at or below Premium's
-  new cap; nobody can buy them yet, so that is harmless.
+  off), so nothing about money shows; with 100 entries on Premium few will notice. On QA the
+  switch is on in test mode, so the whole flow can be tried with test cards. Expansions must
+  be switched on in production before the first gifts end, when leagues drop to Free's 20.
 
 ## 4. Contest expansions
 
 An **expansion** is a one-time purchase that raises one contest's entry cap.
 
-- **Bands** (Q5), above whatever the plan allows: up to 50 entries for $10, up to 100 for
-  $20, up to 200 for $30, up to 500 for $40 (Derek 2026-10-24), offered only where higher
-  than the contest's cap. A contest can step up a band later by paying the difference
-  against the band it **bought**, not its plan cap: a Premium contest at 100 that buys 200
-  pays the full $30; one that bought 200 and moves to 500 pays $10. Stripe has no Price for a
-  difference, so a step up is charged as an inline `price_data` amount worked out from the two
-  band Prices (the restricted key must allow it). The bands and their Stripe Prices live in
-  the billing settings (§9); amounts shown on screen are read from Stripe and cached for a few
-  minutes.
+- **Bands**: the sizes and prices in the matrix (§3), from the price list of the league's
+  current plan, offered only where higher than the contest's cap. A contest can step up later
+  by paying the difference against the band it **bought**, at its plan's current prices:
+  a Free contest that bought 100 ($20) and moves to 200 ($30) pays $10. Every expansion is
+  charged as an inline `price_data` amount worked out from the price list (the restricted key
+  must allow it), so Stripe holds no Price per band; only the annual plans have Stripe Prices
+  (phase 2).
 - **The cap that applies** is the higher of the league's plan cap and the contest's
   expansion. `PlanEntitlementsService` works it out, so it stays the only place that decides
   caps; the existing counted insert (409 `CONTEST_FULL`) checks it unchanged.
@@ -169,14 +187,14 @@ An **expansion** is a one-time purchase that raises one contest's entry cap.
 ## 5. Buying an expansion, step by step
 
 1. A contest fills up. Its commissioners see "This contest is full at 100 entries" (or
-   whatever its cap is), with the bands above its cap: "Expand: 200 entries for $30, 500
-   for $40". Create contest and the contest's
+   whatever its cap is), with the bands above its cap from its plan's price list: "Expand:
+   200 entries for $15, 500 for $20". Create contest and the contest's
    settings show the same choice before it fills.
 2. The app calls `POST /contests/:id/expansions/checkout { band }`. The server checks the
    caller is a commissioner of the contest's league, the contest still takes entries, and the
    band is higher than what it has. Under the league's row lock it creates the league's Stripe
    customer if there is none yet (idempotency key from the league id), then a Checkout
-   Session with `mode: payment`, the band's Price (or the difference for a step up), and
+   Session with `mode: payment`, the band's amount (or the difference for a step up), and
    `metadata` holding the league, contest and band, with success and cancel URLs back to the
    contest. The session id is stored; an earlier open session for the same contest is
    expired, so only one can be paid.
@@ -260,7 +278,7 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
   every refund. They are correct by construction and legally formatted; we would only be
   copying them. Branding (name, logo, colour) is set in the Stripe dashboard.
 - **Ours, through the email outbox** (`plans/email-notifications.md`), to commissioners only:
-  "Entry caps change on <date>" (once, about two weeks before the cap is lowered), and
+  "Your free Premium ends in 30 / 7 / 1 days" and "Your league is now on Free" (§3), and
   "<contest> was expanded to 50 entries by Sam" to the league's other commissioners. Account
   category, always sent; each with its own idempotency key.
 
@@ -359,11 +377,13 @@ All deferred until Derek's go (2026-10-24), filed under #931.
 **Phase 1**
 
 1. **Stripe account and secrets** (#979). You create the Stripe account (test mode is
-   enough) and one Price per expansion band; a thread adds the two secrets to Terraform for
+   enough); a thread adds the two secrets to Terraform for
    QA and the `BILLING_CONFIG` group, switch off. No behaviour change.
-2. **Launch plan setup** (#986). Platinum gets a cap (1000), the default plan becomes Premium,
-   existing leagues move to Premium with a renewal date six months out, and Platinum shows as
-   "Coming soon" in the picker. Removes the `CappedLeaguePlan` split, fills a missing Platinum
+2. **Launch plan setup** (#986). Platinum gets a cap, the matrix becomes the defaults, the
+   default plan becomes Premium, existing leagues move to Premium with a renewal date six
+   months out, Platinum shows as "Coming soon" in the picker, and the daily job drops leagues
+   to Free on their date after the 30 / 7 / 1 day emails, with the root admin's "Extend free
+   Premium". Removes the `CappedLeaguePlan` split, fills a missing Platinum
    value in the saved settings, puts the day 1 numbers in the code defaults, and moves only
    Platinum leagues, after QA's settings are saved (§3). Can be built before any payments.
 3. **Model** (#980). Expansions, billing, events and payments tables; entitlements combine
@@ -375,8 +395,8 @@ All deferred until Derek's go (2026-10-24), filed under #931.
    `docs/PAYMENTS.md` runbook (refunds, disputes, rotating keys). Switch on in QA here, once
    there is an Expand button to click, and run the manual test-mode checklist.
 6. **Going live** (#985). With production (#917) and Terms (#921): live keys and Prices,
-   webhook registered, Stripe Tax decision. Expansions stay off in production until you
-   decide to lower the cap (§3).
+   webhook registered, Stripe Tax decision. Switch expansions on in production before the
+   first gifts end (§3).
 
 **Phase 2** (subscriptions, Part B): #982, #983, #984, revised when Derek wants them.
 
@@ -384,22 +404,21 @@ All deferred until Derek's go (2026-10-24), filed under #931.
 
 Each has a recommendation; answer only where you disagree.
 
-**Decided (Derek 2026-10-24):** Stripe; per-contest purchases first on a capped Premium, the
-cap 100 on day 1 with payments built and tested but not required;
-Platinum capped at 1000 long term; our own payment history with a link to Stripe's receipt;
-subscriptions later, annual or monthly with monthly at a premium.
+**Decided (Derek 2026-10-24):** Stripe; every league gifted Premium for six months, then Free;
+per-contest expansions with a price list per plan; the plan matrix in §3; payments built and
+tested but not required on day 1; our own payment history with a link to Stripe's receipt;
+annual plans later, no monthly at first. Later answers win over earlier ones below.
 
 1. **Decided (Derek 2026-10-24): yes**, existing leagues move to Premium too, and every league
    gets a renewal date six months out (§3).
 2. **Decided (Derek 2026-10-24): Platinum shown as "Coming soon" and not selectable**; the
    other plans stay in the picker (§3).
-3. **Decided (Derek 2026-10-24): yes.** Day 1 caps: Free 20, Pro 50, Premium 100, Platinum
-   1000 entries per contest; Premium and Platinum unlimited sports leagues (§3).
+3. **Decided (Derek 2026-10-24):** caps as in the matrix (§3), replacing the first answer
+   (Platinum 1000, unlimited sports leagues).
 4. **Decided (Derek 2026-10-24): yes.** Day 1 in production: payments built but switched off,
-   so no prices show; on in QA test mode. Lowering the cap later gets an announced date and
-   an email two weeks before.
-5. **Decided (Derek 2026-10-24):** bands of 50 entries for $10, 100 for $20, 200 for $30 and
-   500 for $40, stepping up for the difference. Amounts can change in Stripe without code.
+   so no prices show; on in QA test mode. They go on in production before the first gifts end.
+5. **Decided (Derek 2026-10-24):** bands and prices per plan as in the matrix (§3), stepping
+   up for the difference; prices are settings, changed without code.
 6. **Decided (Derek 2026-10-24): yes.** Buy any time until the contest stops taking entries.
 7. **Decided (Derek 2026-10-24): yes.** The root admin can grant an expansion free, with a
    reason; it shows in the history as $0.
@@ -410,64 +429,48 @@ subscriptions later, annual or monthly with monthly at a premium.
    history. The expansion stays (Derek: whichever is simpler). A cancelled contest is not
    refunded automatically. Stripe keeps its fee on a refunded payment (about 59¢ on $10).
    Written into the Terms (#921).
-9. **Decided (Derek 2026-10-24): yes.** Stripe sends receipts; we send only the cap-date
-   notice and "contest expanded".
+9. **Decided (Derek 2026-10-24): yes.** Stripe sends receipts; we send only the gift-ending
+   reminders and "contest expanded".
 10. **Decided (Derek 2026-10-24):** no sales tax at launch; ask an accountant, turn on
     Stripe Tax when needed.
 11. **Decided (Derek 2026-10-24): nothing needed now.** Test mode uses the bands above; the
-    live amounts are typed into Stripe when phase 1 goes live (#985).
+    live amounts are set in the billing settings when phase 1 goes live (#985).
 
 ## 14. Monetization order (Derek 2026-10-24)
 
 Derek expects the first money to come from per-contest fees, not plans: few will pay around
 $200 a year for a plan until they have paid per-contest fees and see they would pay more than
-that over a year. So phase 1 sells only expansions, on a capped Premium with every feature,
-and phase 2 sells plans. `plans/monetization-strategy.md` carries the same order.
+that over a year. So phase 1 sells only expansions, with every league gifted Premium
+for six months and then on Free, and phase 2 sells annual plans. `plans/monetization-strategy.md` carries the same order.
 
 # Part B. Phase 2: subscriptions (later)
 
-Designed and reviewed on PR #967 before the switch to per-contest first; kept here so phase 2
-starts from it. Questions on it are parked until phase 2 is picked up: when free Premium
-ends for leagues that don't subscribe, what they drop to, grace length, and proration.
+Designed and reviewed on PR #967; kept here so phase 2 starts from it. Questions on it
+(grace length, proration, comps) are parked until phase 2 is picked up.
 
 ## 15. What a league subscribes to
 
-- **One subscription per league, annual or monthly** (Derek 2026-10-24), monthly at a
-  premium ($99 a year or $9.99 a month as the example). One Stripe Product per paid plan with
-  an annual and a monthly Price; Price ids in `BILLING_CONFIG`.
+- **One annual subscription per league** (Derek 2026-10-24: no monthly at first). The plan's
+  fee is in the matrix (§3); one Stripe Product per paid plan with an annual Price, Price ids
+  in `BILLING_CONFIG`.
+- **Paying moves the renewal date.** A paid year sets `planRenewsAt` to the end of the paid
+  period, so the same daily job that ends a gift ends an unpaid plan, and a gifted league
+  that subscribes early keeps its gift until its date.
 - **Paid by one commissioner**, the payer, on the league's Stripe customer; every
-  commissioner sees the plan, period, payer and next charge; another commissioner can take
-  over billing.
-- **Long-term caps**: Premium back to 100 entries, Platinum 1000, set on the Plans page.
-- **Expansions keep working** on any plan: a contest's cap is the higher of the two.
-- **Where it starts**: the plan comparison pages (designed on PR #974), whose
-  Yearly / Monthly toggle hands a plan and period to checkout.
-
-### Tentative plan prices (2026-10-24, to revisit)
-
-| Plan | Long-term entries per contest | Annual | Monthly |
-|---|---|---|---|
-| Free | 20 | $0 | $0 |
-| Pro | 50 | $49 | $4.99 |
-| Premium | 100 | $99 | $9.99 |
-| Platinum | 1000 | $199 | $19.99 |
-
-- **Anchored on expansions.** Each annual price is about five expansions of its cap
-  ($10, $20, $40), so a league running five or more sizeable contests a year saves by
-  subscribing. That is the "I'm paying more than a plan" moment Derek expects.
-- **Against the market** (`plans/monetization-strategy.md` *What other sites charge*):
-  per-entry pool sites charge about $100 for one 50-entry pool and $175 for 100; fantasy
-  commissioner upgrades run $130 to $180 a season (Fantrax, CBS). Premium at $99 a year for
-  every contest, sport and feature is well under both; Platinum at $199 sits at CBS's level
-  for far larger pools.
-- **Monthly** follows Derek's example, about 20% over annual. Watch one risk: a month of
-  Premium ($9.99) is cheaper than one 100-entry expansion ($20), so a commissioner could
-  subscribe for the month of one big pool and cancel. If that shows up, raise monthly or let
-  monthly start at Pro only.
+  commissioner sees the plan, payer and next charge; another commissioner can take over.
+- **Expansions keep working** on any plan, at that plan's prices.
+- **Where it starts**: the plan comparison pages (`plans/plan-comparison-pages.md`); without
+  monthly, their Yearly / Monthly toggle goes.
+- **Why these prices.** Each annual fee is about five expansions at that plan's size, so a
+  league running five or more sizeable contests a year saves by subscribing. Against the
+  market (`plans/monetization-strategy.md` *What other sites charge*): per-entry pool sites
+  charge about $100 for one 50-entry pool and $175 for 100; fantasy commissioner upgrades run
+  $130 to $180 a season. Premium at $99 is well under both; Platinum at $199 sits at CBS's
+  level for far larger pools.
 
 ## 16. Checkout, changes and hand-over
 
-- **Checkout**: `POST /leagues/:id/billing/checkout { plan, interval }`, `mode: subscription`,
+- **Checkout**: `POST /leagues/:id/billing/checkout { plan }`, `mode: subscription`,
   under the league row lock with one customer per league and earlier open sessions expired,
   as in §5.
 - **Who is in charge of the plan**: with a subscription, billing is; the free picker is
@@ -475,8 +478,8 @@ ends for leagues that don't subscribe, what they drop to, grace length, and pror
   the subscription. Without one, a lower plan is free and a higher one needs checkout. The
   root admin can comp a league; how a comp survives billing (a marker, or a free period
   date that billing respects) is settled with the phase 2 launch rule.
-- **Moving up** applies at once with a prorated charge; **moving down** and annual to monthly
-  take effect at period end, as a subscription schedule we create and read back.
+- **Moving up** applies at once with a prorated charge; **moving down** takes effect at
+  period end, as a subscription schedule we create and read back.
 - **Customer portal** for card updates and cancelling only; plan switching and invoice
   history off, so plan changes go through our rules and no payer sees invoices addressed to
   another.

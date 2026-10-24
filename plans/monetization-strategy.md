@@ -173,20 +173,19 @@ Kept for later refinement and tickets, none scheduled:
   counts, pick popularity, projected finish, contests per event, organisation accounts,
   member subscriptions, ads.
 
-### At launch: everyone on Premium, capped, with per-contest expansions (Derek, 2026-10-24, later the same day)
+### At launch: six months of free Premium, then Free (Derek, 2026-10-24, later the same day)
 
 This replaces *At launch: Platinum free, pricing at renewal* below. Design in
-`plans/payments.md` (#931, PR #967); the build is deferred.
+`plans/payments.md` (#931, PR #967), which holds the plan matrix; the build is deferred.
 
-- Every league, new and existing, is on **Premium**, with every feature set to start at
-  Premium on the Plans page, and a cap of **100 entries per contest** on day 1, so nobody has
-  to pay and adoption is not blocked. Payments are built and tested but not required; later
-  Derek may lower the cap (for example to 20) on an announced date.
-- Commissioners pay once to **expand one contest** (for example $10 for up to 50 entries).
-  Subscriptions come later, annual or monthly.
-- **Platinum is capped at 1000 entries per contest** long term, not unlimited, so Q9 below
-  ("Platinum fixed at unlimited") no longer holds; Platinum joins the capped plans, still
-  checked so caps never fall as the plan rises. 
+- Every league, new and existing, is **gifted Premium for six months** from its signup (or
+  from the move, for existing leagues), recorded as a renewal date. On that date it drops to
+  **Free**; extending the gift is moving the dates out.
+- Commissioners pay once to **expand one contest**, at their plan's price list (cheaper on
+  higher plans). Annual plans come later; no monthly at first.
+- **Every plan is capped**: entries per contest Free 20, Pro 50, Premium 100, Platinum 500
+  (expandable to 2000), and sports leagues per year 5 / 15 / 30 / 50. So Q9 below
+  ("Platinum fixed at unlimited") no longer holds.
 
 ### At launch: Platinum free, pricing at renewal (Derek, 2026-10-24)
 
@@ -202,8 +201,8 @@ taken from it, and what a league moves to at renewal if its commissioner does no
 
 ### Billing periods and what sells first (Derek, 2026-10-24)
 
-*Superseded by* At launch: everyone on Premium, capped, with per-contest expansions *above:
-phase 1 sells expansions on Premium (100 entries on day 1), plans come in phase 2.*
+*Superseded by* At launch: six months of free Premium, then Free *above:
+phase 1 sells per-contest expansions, annual plans come in phase 2.*
 
 - **Plans are sold annual or monthly**, monthly at a premium: $99 a year or $9.99 a month
   as the example. Payments are designed in `plans/payments.md` (#931); clicking a plan on the
