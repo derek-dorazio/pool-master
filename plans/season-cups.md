@@ -286,7 +286,7 @@ plan entitlements service.
 | `RECORD_BOOK` | Record book and Hall of Lame (#873) | Platinum |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
-and leader with a short note, and only the commissioner sees how to upgrade. Routes ask the
+with a short note, and only the commissioner sees how to upgrade. Routes ask the
 plan entitlements service about the feature, never about a plan. Gated with #948
 (`docs/DOMAIN-OPERATIONS.md`, *Hidden by plan*).
 
