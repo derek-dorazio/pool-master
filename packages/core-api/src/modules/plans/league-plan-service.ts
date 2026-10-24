@@ -7,6 +7,10 @@
  * It also extends gifted plans (#986): a root admin moves one league's renewal date, or that of
  * every league whose gift still runs, out to some months from now. A date never moves earlier,
  * and every move is logged with who made it and to when.
+ *
+ * Once a league's date has passed, it moves to Free (#986, plans/payments.md §3): the lifecycle
+ * scheduler's sweep calls `moveEndedToFree`, after the reminders. There is no grace period, and
+ * each move is logged as a plan change made by no one.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -22,7 +26,7 @@ import type { PlanEntitlementsService } from './plan-entitlements-service';
 export const PREMIUM_PREVIEW_PERIOD_MONTHS = 6;
 
 export interface LeaguePlanServiceDeps {
-  leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals'>;
+  leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals' | 'moveEndedPlansToFree'>;
   planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
@@ -105,6 +109,15 @@ export class LeaguePlanService {
       data: { extendedCount, renewsAt: renewsAt.toISOString(), changedById },
     }, 'Extended every running plan renewal');
     return { extendedCount, renewsAt };
+  }
+
+  /** Moves every league whose renewal date has passed by `now` to Free. Returns how many moved. */
+  async moveEndedToFree(now: Date): Promise<number> {
+    const moved = await this.deps.leagues.moveEndedPlansToFree(now);
+    for (const { leagueId, fromPlan } of moved) {
+      this.deps.logger?.info({ action: 'leaguePlan.ended.movedToFree', data: { leagueId, fromPlan } }, 'Moved a league to Free at its renewal date');
+    }
+    return moved.length;
   }
 
   private now(): Date {

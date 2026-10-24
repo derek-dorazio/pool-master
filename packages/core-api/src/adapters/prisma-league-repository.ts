@@ -138,6 +138,34 @@ export class PrismaLeagueRepository implements LeagueRepository {
     });
   }
 
+  async findPlansEndingBetween(after: Date, through: Date): Promise<League[]> {
+    const rows = await this.prisma.league.findMany({
+      where: { isActive: true, plan: { not: 'FREE' }, planRenewsAt: { gt: after, lte: through } },
+      orderBy: [{ planRenewsAt: 'asc' }, { id: 'asc' }],
+    });
+    return rows.map(mapToLeague);
+  }
+
+  async moveEndedPlansToFree(now: Date): Promise<Array<{ leagueId: string; fromPlan: LeaguePlan }>> {
+    // The ended leagues' rows are locked first, in id order, so a concurrent plan change or
+    // extension waits; the lock re-checks each row, so one extended meanwhile is left alone.
+    return this.prisma.$transaction(async (tx) => {
+      const ended = await tx.$queryRaw<Array<{ id: string; plan: LeaguePlan }>>`
+        SELECT id, plan FROM "leagues"
+        WHERE "plan_renews_at" <= ${now} AND plan <> 'FREE'
+        ORDER BY id
+        FOR UPDATE`;
+      if (ended.length === 0) {
+        return [];
+      }
+      await tx.league.updateMany({ where: { id: { in: ended.map((league) => league.id) } }, data: { plan: 'FREE' } });
+      await tx.leaguePlanChange.createMany({
+        data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changedById: null })),
+      });
+      return ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan }));
+    });
+  }
+
   async update(id: string, updates: Partial<League>): Promise<League> {
     const row = await this.prisma.league.update({
       where: { id },

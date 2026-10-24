@@ -52,6 +52,8 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
   const sportLeaguesQuery = useSportLeaguesQuery();
   const { isRootAdmin } = useAuth();
   const [choice, setChoice] = useState<LeaguePlan | null>(null);
+  // Once the date passes the league moves to Free (#986); the page says the gift has ended.
+  const [previewEnded] = useState(() => new Date(league.planRenewsAt).getTime() <= Date.now());
   const current = league.planEntitlements;
 
   const saveMutation = useInvalidatingMutation({
@@ -88,7 +90,9 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
       />
 
       <p className="text-sm text-muted-foreground" data-testid="league-plan-renews">
-        Premium gifted for your preview period, until {formatDateDisplay(league.planRenewsAt)}.
+        {previewEnded
+          ? `Your Premium preview period ended on ${formatDateDisplay(league.planRenewsAt)}.`
+          : `Premium gifted for your preview period, until ${formatDateDisplay(league.planRenewsAt)}.`}
       </p>
 
       <YourLeagueNow

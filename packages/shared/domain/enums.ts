@@ -907,6 +907,8 @@ export const EmailTemplateKey = {
   EVENT_WEEKLY_DIGEST: 'EVENT_WEEKLY_DIGEST',
   /** A member joined the league, for its commissioners: at once, or a busy day's rest the next day (#903). */
   LEAGUE_MEMBER_JOINED: 'LEAGUE_MEMBER_JOINED',
+  /** A league's Premium preview period ends in 30, 7 or 1 days, for its commissioners (#986). */
+  LEAGUE_PLAN_PREVIEW_ENDING: 'LEAGUE_PLAN_PREVIEW_ENDING',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 

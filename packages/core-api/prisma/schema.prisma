@@ -199,6 +199,7 @@ enum PrismaEmailTemplateKey {
   EMAIL_TEST
   YEAR_IN_REVIEW
   LEAGUE_MEMBER_JOINED
+  LEAGUE_PLAN_PREVIEW_ENDING
 }
 
 enum PrismaEmailMessageStatus {

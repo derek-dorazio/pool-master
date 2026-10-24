@@ -503,6 +503,25 @@ export interface LeagueMemberJoinedEmailData {
   membersUrl: string;
 }
 
+/** How many days before a league's Premium preview period ends its commissioners are reminded (#986). */
+export const PLAN_PREVIEW_REMINDER_DAYS = [30, 7, 1] as const;
+export type PlanPreviewReminderDays = (typeof PLAN_PREVIEW_REMINDER_DAYS)[number];
+
+/** #986: the league's Premium preview period ends soon, for its commissioners. */
+export interface LeaguePlanPreviewEndingEmailData {
+  userName: string;
+  leagueName: string;
+  /** Which reminder this is: the days left until the preview period ends. */
+  daysLeft: PlanPreviewReminderDays;
+  /** When the preview period ends and the league moves to Free: its renewal date. */
+  endsAt: Date;
+  /** Free's limits; null for one Free doesn't limit. */
+  freeEntriesPerContest: number | null;
+  freeSportsLeaguesPerYear: number | null;
+  /** The league's Plan page. */
+  planUrl: string;
+}
+
 /** Where the league stands on an event in its weekly digest. */
 export const DigestEventState = {
   /** The league already has a contest on it. */
@@ -632,6 +651,7 @@ export interface SystemEmailTemplateDataByKey {
   YEAR_IN_REVIEW: YearInReviewEmailData;
   EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
   LEAGUE_MEMBER_JOINED: LeagueMemberJoinedEmailData;
+  LEAGUE_PLAN_PREVIEW_ENDING: LeaguePlanPreviewEndingEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -712,6 +732,7 @@ export interface EmailTemplateScopeByKey {
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
   EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_MEMBER_JOINED: typeof EmailTemplateScope.LEAGUE;
+  LEAGUE_PLAN_PREVIEW_ENDING: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -930,6 +951,15 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     sendWithinMs: null,
     render: renderLeagueMemberJoinedEmail,
   },
+  LEAGUE_PLAN_PREVIEW_ENDING: {
+    // The only warning before the league moves to Free (no grace period), so it can't be turned off.
+    category: EmailCategory.ACCOUNT,
+    planFeature: null,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderLeaguePlanPreviewEndingEmail,
+  },
 };
 
 function renderLeagueMemberInviteEmail(
@@ -1053,6 +1083,48 @@ function renderLeagueMemberJoinedEmail(
       total,
       '',
       `Members and owners: ${data.membersUrl}`,
+    ],
+  });
+}
+
+function renderLeaguePlanPreviewEndingEmail(
+  data: LeaguePlanPreviewEndingEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const when = data.daysLeft === 1 ? 'tomorrow' : `in ${String(data.daysLeft)} days`;
+  const lead = `${data.leagueName} was gifted Premium for its preview period. The preview period ends ${when}, on ${formatInstant(data.endsAt, context.timeZone)}.`;
+  const limits = [
+    ...(data.freeEntriesPerContest === null ? [] : [`up to ${data.freeEntriesPerContest.toLocaleString('en-US')} entries per contest`]),
+    ...(data.freeSportsLeaguesPerYear === null ? [] : [`${data.freeSportsLeaguesPerYear.toLocaleString('en-US')} sports leagues a year`]),
+  ];
+  const after = `After that, ${data.leagueName} moves to the Free plan${limits.length === 0 ? '' : `: ${limits.join(' and ')}`}.`;
+  const kept = 'Nothing is deleted: contests keep the entries they have, and Premium features are hidden, not removed.';
+  const enjoy = 'Enjoy the rest of your preview period.';
+  return buildMessage(context, {
+    templateKey: 'LEAGUE_PLAN_PREVIEW_ENDING',
+    subject: `${possessive(data.leagueName)} Premium preview period ends ${when}`,
+    preheader: lead,
+    title: 'Premium preview period',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(escapeHtml(lead)),
+      paragraph(escapeHtml(after)),
+      paragraph(escapeHtml(kept)),
+      paragraph(escapeHtml(enjoy)),
+      button('See your plan', data.planUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      lead,
+      '',
+      after,
+      '',
+      kept,
+      '',
+      enjoy,
+      '',
+      `See your plan: ${data.planUrl}`,
     ],
   });
 }

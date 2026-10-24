@@ -767,6 +767,17 @@ describe('League plan', () => {
       .toHaveTextContent(`Premium gifted for your preview period, until ${new Date('2027-04-24T12:00:00.000Z').toLocaleDateString()}.`);
   });
 
+  it('says the Premium preview period ended, not that it is gifted, once its date has passed', async () => {
+    primeMocks({ league: { planEntitlements: FREE_PLAN, planRenewsAt: '2026-04-24T12:00:00.000Z' } });
+    primePlanList();
+    primeUsage({ openContests: [] });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    expect(await screen.findByTestId('league-plan-renews'))
+      .toHaveTextContent(`Your Premium preview period ended on ${new Date('2026-04-24T12:00:00.000Z').toLocaleDateString()}.`);
+  });
+
   it('lets a root admin move a league to Platinum, which commissioners see as coming soon', async () => {
     primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER', league: { planEntitlements: FREE_PLAN } });
     primePlanList();

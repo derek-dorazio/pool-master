@@ -36,6 +36,8 @@ import { EntryReceipts } from './entry-receipts';
 import { EntryReminders } from './entry-reminders';
 import { LiveStandings } from './live-standings';
 import { MemberJoinedNotices } from './member-joined-notices';
+import { PlanPreviewNotices } from './plan-preview-notices';
+import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 
 export function createEntryReminders(prisma: PrismaClient, options: {
@@ -174,6 +176,23 @@ export function createMemberJoinedNotices(prisma: PrismaClient, options: {
     leagues: new PrismaLeagueRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),
     squads: new PrismaSquadRepository(prisma),
+    users: new PrismaUserRepository(prisma),
+    ...options,
+  });
+}
+
+export function createPlanPreviewNotices(prisma: PrismaClient, options: {
+  email: EmailService;
+  readConfig: () => EmailConfig;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+  planEntitlements: PlanEntitlementsService;
+}): PlanPreviewNotices {
+  const leagues = new PrismaLeagueRepository(prisma);
+  return new PlanPreviewNotices({
+    leagues,
+    plans: new LeaguePlanService({ leagues, planEntitlements: options.planEntitlements, logger: options.logger }),
+    memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     ...options,
   });

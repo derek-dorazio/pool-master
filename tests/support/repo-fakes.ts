@@ -132,6 +132,8 @@ export function fakeLeagueRepo(overrides: Partial<LeagueRepository> = {}): Leagu
     changePlan: jest.fn().mockImplementation(async (id: string, change: { toPlan: string }) => ({ id, plan: change.toPlan })),
     extendPlanRenewal: jest.fn().mockImplementation(async (id: string, change: { renewsAt: Date }) => ({ id, planRenewsAt: change.renewsAt })),
     extendRunningPlanRenewals: jest.fn().mockResolvedValue(0),
+    findPlansEndingBetween: many(),
+    moveEndedPlansToFree: jest.fn().mockResolvedValue([]),
     ...overrides,
   };
 }
