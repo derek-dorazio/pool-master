@@ -25,7 +25,7 @@ import { expectDefined } from '../support/expect-defined';
 // Hiding features by plan end to end (#948): on Free, every championship, cup and history route
 // answers 403 PLAN_FEATURE_NOT_INCLUDED naming the feature it lacks, while contest results stay
 // open. Pro opens the championship, cups, trophies and past years but not All years or the
-// record book. A root admin is held to the league's plan too. Back on Platinum, everything opens
+// record book. A root admin is held to the league's plan too. Up on Premium, everything opens
 // again: nothing was deleted.
 
 afterAll(async () => {
@@ -50,7 +50,7 @@ function locked(feature: PlanFeature) {
 }
 
 describe('SDK Functional: features hidden by plan (#948)', () => {
-  it('refuses each championship, cup and history view the league\'s plan lacks, keeps contest results open, and opens everything again on Platinum', async () => {
+  it('refuses each championship, cup and history view the league\'s plan lacks, keeps contest results open, and opens everything again on Premium', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Plan Gatekeeper', leagueName: 'Plan Gates' });
     const client = commissioner.client;
     const path = { id: league.id };
@@ -130,10 +130,10 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
     expect(outcome(await cupSettings(true))).toEqual({ status: 200 });
     expect(outcome(await cupSettings(false))).toEqual(locked(PlanFeature.RECORD_BOOK));
 
-    // --- Platinum: everything again ------------------------------------------------------------
-    await moveTo(LeaguePlan.PLATINUM);
-    const platinum = await views();
-    expect(Object.values(platinum).filter((view) => view.status === 403)).toEqual([]);
+    // --- Premium: everything again, the all-years summary and record book included -------------
+    await moveTo(LeaguePlan.PREMIUM);
+    const premium = await views();
+    expect(Object.values(premium).filter((view) => view.status === 403)).toEqual([]);
     expect(outcome(await cupSettings(false))).toEqual({ status: 200 });
   });
 });

@@ -262,6 +262,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       cupCustomPoints: [],
       hallOfLameVisible: true,
       planEntitlements: buildPlanEntitlements(),
+      planRenewsAt: '2027-04-24T00:00:00.000Z',
       mutedSportLeagueIds: [],
       eventEmailDelivery: 'PER_EVENT',
     },

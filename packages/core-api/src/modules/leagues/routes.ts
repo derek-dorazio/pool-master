@@ -39,6 +39,7 @@ import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
+import { requireRootAdmin } from '../../core/root-admin-guard';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanModuleOptions } from '../plans/routes';
@@ -94,7 +95,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     invitationRepo,
   );
 
-  const leaguePlanService = new LeaguePlanService({ leagues: leagueRepo, logger: fastify.log });
+  const leaguePlanService = new LeaguePlanService({ leagues: leagueRepo, planEntitlements: opts.planEntitlements, logger: fastify.log });
   const league = createLeagueHandlers(
     leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
   );
@@ -221,7 +222,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
       tags: ['Leagues'],
       summary: 'Change the league\'s plan',
       description:
-        'Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.',
+        'Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick a plan at any time, free, and it applies at once. A plan whose `commissionerSelectable` is false only a root admin may pick. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 400 LEAGUE_PLAN_NOT_AVAILABLE when a commissioner picks a plan not offered yet; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.',
       operationId: 'updateLeaguePlan',
       body: schemaRef('UpdateLeaguePlanRequest'),
       response: {
@@ -235,6 +236,45 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: league.updateLeaguePlan,
+  });
+
+  fastify.post('/plan-renewals/extend', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Extend every running gifted plan',
+      description:
+        'Root admin only (#986). Moves the renewal date of every league whose gifted plan still runs out to `months` from now; a league whose date is already later keeps it. Each move is logged with who made it, from which date and to which. Returns how many leagues moved and the date they moved to.',
+      operationId: 'extendRunningPlanRenewals',
+      body: schemaRef('ExtendPlanRenewalRequest'),
+      response: {
+        200: schemaRef('ExtendRunningPlanRenewalsResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    onRequest: requireRootAdmin,
+    handler: league.extendRunningPlanRenewals,
+  });
+
+  fastify.post('/:id/plan-renewal/extend', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Extend the league\'s gifted plan',
+      description:
+        'Root admin only (#986). Moves the league\'s renewal date out to `months` from now, logged with who made it, from which date and to which; a date already later is kept and nothing is logged. The plan itself does not change. Returns the league with its new `planRenewsAt`. 404 LEAGUE_NOT_FOUND for a missing league.',
+      operationId: 'extendLeaguePlanRenewal',
+      body: schemaRef('ExtendPlanRenewalRequest'),
+      response: {
+        200: schemaRef('LeagueResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    onRequest: requireRootAdmin,
+    handler: league.extendLeaguePlanRenewal,
   });
 
   fastify.put('/:id/event-email-settings', {

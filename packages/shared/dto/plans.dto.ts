@@ -23,6 +23,9 @@ export const PlanEntitlementsDtoSchema = z.object({
   features: z.array(z.nativeEnum(PlanFeature)).describe(
     'Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.',
   ),
+  commissionerSelectable: z.boolean().describe(
+    'Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.',
+  ),
 }).describe('What a league on one plan may do, from the current plan settings.');
 export type PlanEntitlementsDto = z.infer<typeof PlanEntitlementsDtoSchema>;
 
@@ -30,6 +33,17 @@ export const LeaguePlanListResponseSchema = z.object({
   plans: z.array(PlanEntitlementsDtoSchema).describe('Every plan, lowest first, for comparing them.'),
 }).describe('What each league plan allows.');
 export type LeaguePlanListResponse = z.infer<typeof LeaguePlanListResponseSchema>;
+
+export const ExtendPlanRenewalRequestSchema = z.object({
+  months: z.number().int().min(1).max(24).describe('How many months from now the gifted plan runs to.'),
+}).describe('How far to extend a gifted plan: its renewal date moves to this many months from now, and never earlier than it is.');
+export type ExtendPlanRenewalRequest = z.infer<typeof ExtendPlanRenewalRequestSchema>;
+
+export const ExtendRunningPlanRenewalsResponseSchema = z.object({
+  extendedCount: z.number().int().describe('How many leagues\' renewal dates moved: every league whose gift still runs and ended sooner.'),
+  renewsAt: z.string().datetime().describe('The renewal date they moved to.'),
+}).describe('What extending every running gifted plan did.');
+export type ExtendRunningPlanRenewalsResponse = z.infer<typeof ExtendRunningPlanRenewalsResponseSchema>;
 
 export const UpdateLeaguePlanRequestSchema = z.object({
   plan: z.nativeEnum(LeaguePlan).describe('The plan to move the league to. It applies at once and costs nothing.'),
@@ -65,6 +79,8 @@ registerSchema('PlanCapsDto', PlanCapsDtoSchema);
 registerSchema('PlanEntitlementsDto', PlanEntitlementsDtoSchema);
 registerSchema('LeaguePlanListResponse', LeaguePlanListResponseSchema);
 registerSchema('UpdateLeaguePlanRequest', UpdateLeaguePlanRequestSchema);
+registerSchema('ExtendPlanRenewalRequest', ExtendPlanRenewalRequestSchema);
+registerSchema('ExtendRunningPlanRenewalsResponse', ExtendRunningPlanRenewalsResponseSchema);
 registerSchema('ListSportLeaguesUsedQuery', ListSportLeaguesUsedQuerySchema);
 registerSchema('SportLeaguesUsedResponse', SportLeaguesUsedResponseSchema);
 registerSchema('OpenContestUsageDto', OpenContestUsageDtoSchema);

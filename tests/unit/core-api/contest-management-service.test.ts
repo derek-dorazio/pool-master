@@ -72,8 +72,8 @@ import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-e
 import { buildLeague } from '../../factories';
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
-/** What a Platinum league's contests are made and moved under: no sports-leagues limit (#947). */
-const NO_SEASON_LIMIT = { sportLeaguesPerYear: null } as const;
+/** What a Platinum league's contests are made and moved under: its 50 sports leagues a year (#947, #986). */
+const PLATINUM_SEASON_LIMIT = expect.objectContaining({ sportLeaguesPerYear: 50 });
 
 function createContestRepo(): ContestRepository {
   return fakeContestRepo({
@@ -362,7 +362,7 @@ describe('ContestManagementService', () => {
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.DRAFT,
       seasonYear: 2026,
-    }, NO_SEASON_LIMIT);
+    }, PLATINUM_SEASON_LIMIT);
     expect(result).toBe('contest-1');
     // Its season is its event's year, and its league gets that season's PGA Tour cup (#841).
     expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2026, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
@@ -2039,7 +2039,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.createContest({ leagueId: 'league-1' }, tiered([US_OPEN, MASTERS, PGA]));
 
-    expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sportEventIds: [MASTERS, PGA, US_OPEN] }), NO_SEASON_LIMIT);
+    expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sportEventIds: [MASTERS, PGA, US_OPEN] }), PLATINUM_SEASON_LIMIT);
   });
 
   it('refuses a contest mixing two sport leagues\' events with CONTEST_EVENTS_LEAGUE_MISMATCH, creating nothing', async () => {
@@ -2118,7 +2118,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]);
 
-    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, NO_SEASON_LIMIT);
+    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, PLATINUM_SEASON_LIMIT);
     expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2027, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
   });
 
@@ -2129,11 +2129,11 @@ describe('ContestManagementService — a contest of several events', () => {
       contest: { status: ContestStatus.DRAFT },
       planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
     });
-    jest.mocked(contestRepo.moveToSeason).mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+    jest.mocked(contestRepo.moveToSeason).mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 5, sportLeagueCount: 5 });
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]))
       .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', statusCode: 409 });
-    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, { sportLeaguesPerYear: 1, sportLeagueId: PGA_TOUR_LEAGUE_ID });
+    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, { sportLeaguesPerYear: 5, sportLeagueId: PGA_TOUR_LEAGUE_ID });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
   });
@@ -2357,7 +2357,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.PICK_EM,
-    }), NO_SEASON_LIMIT);
+    }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.PICK_EM,
       configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false },
@@ -2466,7 +2466,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.SURVIVOR,
-    }), NO_SEASON_LIMIT);
+    }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.SURVIVOR,
       configJson: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true },
@@ -2555,7 +2555,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.BRACKET,
       sportEventIds: [EVENT_ID],
-    }), NO_SEASON_LIMIT);
+    }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BRACKET,
       configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
@@ -2798,7 +2798,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       contestFormat: ContestFormat.SQUARES,
       selectionType: SelectionType.SQUARES,
       squaresGameMatchId: GAME_ID,
-    }), NO_SEASON_LIMIT);
+    }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
       maxEntriesPerSquad: 1,
@@ -2865,7 +2865,7 @@ describe('ContestManagementService squares rules (#711)', () => {
 
     await service.createContest({ leagueId: 'league-1' }, squaresRequest());
 
-    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ squaresGameMatchId: GAME_ID }), NO_SEASON_LIMIT);
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ squaresGameMatchId: GAME_ID }), PLATINUM_SEASON_LIMIT);
   });
 
   it('refuses a game sent for a contest that is not squares with CONTEST_SQUARES_GAME_INVALID', async () => {
@@ -2915,7 +2915,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     const contests = createContestRepo();
     const configurations = createContestConfigurationRepo();
     const cupsAsked: CupKey[] = [];
-    contests.create = jest.fn().mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
+    contests.create = jest.fn().mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 5, sportLeagueCount: 5 });
     const service = new ContestManagementService({
       contests,
       configTemplates: createContestConfigTemplateRepo(),
@@ -2937,14 +2937,14 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
   };
 
-  it('asks the repository to create the contest within the plan\'s one sports league for its event\'s season, and refuses with 409 PLAN_SPORTS_LEAGUE_LIMIT_REACHED when it has no room, writing no rules or cup', async () => {
+  it('asks the repository to create the contest within the plan\'s five sports leagues for its event\'s season, and refuses with 409 PLAN_SPORTS_LEAGUE_LIMIT_REACHED when it has no room, writing no rules or cup', async () => {
     const { service, contests, configurations, cupsAsked } = serviceForFullFreeLeague();
 
     await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
       .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', statusCode: 409 });
     expect(contests.create).toHaveBeenCalledWith(
       expect.objectContaining({ leagueId: 'league-1', seasonYear: 2026 }),
-      { sportLeaguesPerYear: 1, sportLeagueId: PGA_TOUR_LEAGUE_ID },
+      { sportLeaguesPerYear: 5, sportLeagueId: PGA_TOUR_LEAGUE_ID },
     );
     expect(configurations.create).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);

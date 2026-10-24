@@ -612,6 +612,10 @@ export type PlanEntitlementsDto = {
      * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
      */
     features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+    /**
+     * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+     */
+    commissionerSelectable: boolean;
 };
 
 /**
@@ -643,6 +647,10 @@ export type LeaguePlanListResponse = {
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
         features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        /**
+         * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+         */
+        commissionerSelectable: boolean;
     }>;
 };
 
@@ -654,6 +662,30 @@ export type UpdateLeaguePlanRequest = {
      * The plan to move the league to. It applies at once and costs nothing.
      */
     plan: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+};
+
+/**
+ * How far to extend a gifted plan: its renewal date moves to this many months from now, and never earlier than it is.
+ */
+export type ExtendPlanRenewalRequest = {
+    /**
+     * How many months from now the gifted plan runs to.
+     */
+    months: number;
+};
+
+/**
+ * What extending every running gifted plan did.
+ */
+export type ExtendRunningPlanRenewalsResponse = {
+    /**
+     * How many leagues' renewal dates moved: every league whose gift still runs and ended sooner.
+     */
+    extendedCount: number;
+    /**
+     * The renewal date they moved to.
+     */
+    renewsAt: string;
 };
 
 /**
@@ -1745,7 +1777,7 @@ export type LeagueDto = {
      */
     hallOfLameVisible: boolean;
     /**
-     * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+     * The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects.
      */
     planEntitlements: {
         /**
@@ -1769,7 +1801,15 @@ export type LeagueDto = {
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
         features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        /**
+         * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+         */
+        commissionerSelectable: boolean;
     };
+    /**
+     * When the league's gifted plan ends: six months after signup, unless a root admin extended it.
+     */
+    planRenewsAt: string;
     /**
      * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
      */
@@ -2052,7 +2092,7 @@ export type LeagueResponse = {
          */
         hallOfLameVisible: boolean;
         /**
-         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         * The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects.
          */
         planEntitlements: {
             /**
@@ -2076,7 +2116,15 @@ export type LeagueResponse = {
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            /**
+             * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+             */
+            commissionerSelectable: boolean;
         };
+        /**
+         * When the league's gifted plan ends: six months after signup, unless a root admin extended it.
+         */
+        planRenewsAt: string;
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
@@ -2149,7 +2197,7 @@ export type LeagueContextResponse = {
          */
         hallOfLameVisible: boolean;
         /**
-         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         * The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects.
          */
         planEntitlements: {
             /**
@@ -2173,7 +2221,15 @@ export type LeagueContextResponse = {
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            /**
+             * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+             */
+            commissionerSelectable: boolean;
         };
+        /**
+         * When the league's gifted plan ends: six months after signup, unless a root admin extended it.
+         */
+        planRenewsAt: string;
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
@@ -2419,7 +2475,7 @@ export type LeagueListResponse = {
          */
         hallOfLameVisible: boolean;
         /**
-         * The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects.
+         * The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects.
          */
         planEntitlements: {
             /**
@@ -2443,7 +2499,15 @@ export type LeagueListResponse = {
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            /**
+             * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
+             */
+            commissionerSelectable: boolean;
         };
+        /**
+         * When the league's gifted plan ends: six months after signup, unless a root admin extended it.
+         */
+        planRenewsAt: string;
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
          */
@@ -12695,7 +12759,7 @@ export type BudgetPricingConfig = {
 };
 
 /**
- * One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises.
+ * One cap's limit on each plan. A limit never falls as the plan rises.
  */
 export type PlanCapRow = {
     /**
@@ -12710,6 +12774,10 @@ export type PlanCapRow = {
      * The most this plan allows, or null for unlimited.
      */
     PREMIUM: number | null;
+    /**
+     * The most this plan allows, or null for unlimited.
+     */
+    PLATINUM: number | null;
 };
 
 /**
@@ -12736,6 +12804,10 @@ export type PlanConfig = {
              * The most this plan allows, or null for unlimited.
              */
             PREMIUM: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PLATINUM: number | null;
         };
         /**
          * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -12753,6 +12825,10 @@ export type PlanConfig = {
              * The most this plan allows, or null for unlimited.
              */
             PREMIUM: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PLATINUM: number | null;
         };
     };
     /**
@@ -14032,6 +14108,10 @@ export type SettingsGroup = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
             /**
              * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -14049,6 +14129,10 @@ export type SettingsGroup = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
         };
         /**
@@ -14161,6 +14245,10 @@ export type SettingsGroup = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
             /**
              * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -14178,6 +14266,10 @@ export type SettingsGroup = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
         };
         /**
@@ -15152,6 +15244,10 @@ export type SettingsGroupList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
                 /**
                  * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -15169,6 +15265,10 @@ export type SettingsGroupList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
             };
             /**
@@ -15281,6 +15381,10 @@ export type SettingsGroupList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
                 /**
                  * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -15298,6 +15402,10 @@ export type SettingsGroupList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
             };
             /**
@@ -15882,6 +15990,10 @@ export type SettingsGroupUpdateRequest = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
             /**
              * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -15899,6 +16011,10 @@ export type SettingsGroupUpdateRequest = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
         };
         /**
@@ -16738,6 +16854,10 @@ export type SettingsChange = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
             /**
              * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -16755,6 +16875,10 @@ export type SettingsChange = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
         };
         /**
@@ -16867,6 +16991,10 @@ export type SettingsChange = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
             /**
              * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -16884,6 +17012,10 @@ export type SettingsChange = {
                  * The most this plan allows, or null for unlimited.
                  */
                 PREMIUM: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PLATINUM: number | null;
             };
         };
         /**
@@ -17803,6 +17935,10 @@ export type SettingsChangeList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
                 /**
                  * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -17820,6 +17956,10 @@ export type SettingsChangeList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
             };
             /**
@@ -17932,6 +18072,10 @@ export type SettingsChangeList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
                 /**
                  * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
@@ -17949,6 +18093,10 @@ export type SettingsChangeList = {
                      * The most this plan allows, or null for unlimited.
                      */
                     PREMIUM: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PLATINUM: number | null;
                 };
             };
             /**
@@ -24576,6 +24724,78 @@ export type UpdateLeaguePlanResponses = {
 };
 
 export type UpdateLeaguePlanResponse = UpdateLeaguePlanResponses[keyof UpdateLeaguePlanResponses];
+
+export type ExtendRunningPlanRenewalsData = {
+    body: ExtendPlanRenewalRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/leagues/plan-renewals/extend';
+};
+
+export type ExtendRunningPlanRenewalsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type ExtendRunningPlanRenewalsError = ExtendRunningPlanRenewalsErrors[keyof ExtendRunningPlanRenewalsErrors];
+
+export type ExtendRunningPlanRenewalsResponses = {
+    /**
+     * What extending every running gifted plan did.
+     */
+    200: ExtendRunningPlanRenewalsResponse;
+};
+
+export type ExtendRunningPlanRenewalsResponse2 = ExtendRunningPlanRenewalsResponses[keyof ExtendRunningPlanRenewalsResponses];
+
+export type ExtendLeaguePlanRenewalData = {
+    body: ExtendPlanRenewalRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/plan-renewal/extend';
+};
+
+export type ExtendLeaguePlanRenewalErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ExtendLeaguePlanRenewalError = ExtendLeaguePlanRenewalErrors[keyof ExtendLeaguePlanRenewalErrors];
+
+export type ExtendLeaguePlanRenewalResponses = {
+    /**
+     * Single-league response.
+     */
+    200: LeagueResponse;
+};
+
+export type ExtendLeaguePlanRenewalResponse = ExtendLeaguePlanRenewalResponses[keyof ExtendLeaguePlanRenewalResponses];
 
 export type UpdateLeagueEventEmailSettingsData = {
     body: UpdateLeagueEventEmailSettingsRequest;
