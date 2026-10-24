@@ -13,6 +13,7 @@ import type {
   PredictedChoice,
   PredictedResult,
   League,
+  LeaguePlan,
   LeagueInvitation,
   LeagueMembership,
   Participant,
@@ -175,6 +176,13 @@ export interface LeagueRepository {
   /** The points table starts STANDARD, the plan PLATINUM and no sport league muted, from the database defaults. */
   create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
+
+  /**
+   * Moves the league to `change.toPlan` and logs who moved it from which plan (#945), in one
+   * transaction, so the plan never changes without its log row. Returns null, changing and
+   * logging nothing, when the league is no longer on `change.fromPlan`.
+   */
+  changePlan(leagueId: string, change: { fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }): Promise<League | null>;
 }
 
 export interface LeagueMembershipRepository {

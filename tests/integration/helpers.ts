@@ -45,6 +45,9 @@ import { platformModule } from '../../packages/core-api/src/modules/platform/rou
 import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
+import { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
+import { plansModule } from '../../packages/core-api/src/modules/plans/routes';
 import { PlatformSettingsService } from '../../packages/core-api/src/modules/platform/platform-settings-service';
 import {
   EMAIL_SETTINGS,
@@ -60,6 +63,7 @@ import { ingestionModule } from '../../packages/core-api/src/modules/ingestion/r
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import {
+  PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
@@ -179,7 +183,12 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
-  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email });
+  const planEntitlements = new PlanEntitlementsService({
+    leagues: new PrismaLeagueRepository(prisma),
+    readConfig: () => settings.get(PLAN_SETTINGS),
+  });
+  testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements });
+  testApp.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
   testApp.register(invitationsModule, { prefix: '/api/v1/invitations', email });
   testApp.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });

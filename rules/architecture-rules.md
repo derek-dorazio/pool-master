@@ -241,7 +241,10 @@ features is the plan entitlements service in `packages/core-api/src/modules/plan
 asks it about a cap or a `PlanFeature`, never about a plan. `league.plan === LeaguePlan.FREE`,
 an order comparison against a plan, or a `switch` on a plan anywhere else is a rule a root admin
 cannot change, and `poolmaster/no-plan-branching` rejects it. A lower plan only stops new things;
-it never removes what a league has.
+it never removes what a league has. Every league read carries its `planEntitlements` (plan,
+caps, features) from the same service, so the app gates on a cap or feature it was sent, and
+shows the plan's name to commissioners only. A plan change goes through `LeaguePlanService`,
+which writes the league and its `league_plan_changes` row in one transaction.
 
 ### Sport extension
 

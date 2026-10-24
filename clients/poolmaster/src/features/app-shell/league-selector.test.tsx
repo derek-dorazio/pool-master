@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LeagueSelector } from './league-selector';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 const { mockLogger } = vi.hoisted(() => {
   const mockLogger = {
@@ -53,6 +54,7 @@ describe('LeagueSelector', () => {
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
               hallOfLameVisible: true,
+              planEntitlements: buildPlanEntitlements(),
               mutedSportLeagueIds: [],
             },
             {
@@ -67,6 +69,7 @@ describe('LeagueSelector', () => {
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
               hallOfLameVisible: true,
+              planEntitlements: buildPlanEntitlements(),
               mutedSportLeagueIds: [],
             },
           ]}

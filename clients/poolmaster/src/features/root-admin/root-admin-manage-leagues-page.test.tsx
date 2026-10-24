@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { RootAdminManageLeaguesPage } from './root-admin-manage-leagues-page';
 
 const {
@@ -49,6 +50,7 @@ function seedLeagues() {
           memberCount: 12,
           activeContestCount: 3,
           createdAt: '2026-04-10T12:00:00.000Z',
+          planEntitlements: buildPlanEntitlements(),
         },
         {
           id: 'league-inactive-1',
@@ -60,6 +62,7 @@ function seedLeagues() {
           memberCount: 8,
           activeContestCount: 0,
           createdAt: '2026-03-01T12:00:00.000Z',
+          planEntitlements: buildPlanEntitlements({ plan: 'FREE' }),
         },
       ],
       // #202 (A8) — the viewer's own memberships among the returned leagues. Legitimately
@@ -120,6 +123,16 @@ describe('RootAdminManageLeaguesPage', () => {
       'href',
       '/league/INACT001',
     );
+  });
+
+  it('shows each league\'s plan in its own column', async () => {
+    seedLeagues();
+
+    renderPage();
+
+    expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-leagues-link-league-active-1')).toHaveTextContent('Platinum');
+    expect(screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1')).toHaveTextContent('Free');
   });
 
   it('does not render any lifecycle action controls on the admin list', async () => {

@@ -61,6 +61,7 @@ export const API_ROUTES = {
     details: (id: string) => `/api/v1/leagues/${id}/details`,
     inactivate: (id: string) => `/api/v1/leagues/${id}/inactivate`,
     activate: (id: string) => `/api/v1/leagues/${id}/activate`,
+    plan: (id: string) => `/api/v1/leagues/${id}/plan`,
     byCode: (leagueCode: string) => `/api/v1/leagues/code/${leagueCode}`,
     members: (id: string) => `/api/v1/leagues/${id}/members`,
     leave: (id: string) => `/api/v1/leagues/${id}/members/me`,
@@ -69,6 +70,10 @@ export const API_ROUTES = {
     inviteLink: (id: string) => `/api/v1/leagues/${id}/invite-link`,
     contests: (id: string) => `/api/v1/leagues/${id}/contests/`,
     squads: (id: string) => `/api/v1/leagues/${id}/squads/`,
+  },
+
+  plans: {
+    list: '/api/v1/plans/',
   },
 
   squads: {

@@ -119,6 +119,8 @@ export interface InMemoryLeagueWorld {
   ownerInvitations: SquadOwnerInvitationRepository;
   /** One all-or-nothing unit over the tables above: a throw inside `run` rolls every table back. */
   transaction: MembershipTransaction;
+  /** Every plan change `leagues.changePlan` logged, oldest first. */
+  planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }>;
   tables: {
     users: Table<User>;
     leagues: Table<League>;
@@ -145,6 +147,8 @@ export interface InMemoryLeagueWorld {
 export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   const users = new Table<User>('user');
   const leagues = new Table<League>('league');
+  /** Every plan change, in the order made, as league_plan_changes keeps them. */
+  const planChanges: InMemoryLeagueWorld['planChanges'] = [];
   const memberships = new Table<LeagueMembership>('membership');
   const squads = new Table<Squad>('squad');
   const squadMemberships = new Table<SquadMembership>('squad-membership');
@@ -192,6 +196,13 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     // The points table starts STANDARD, the Hall of Lame shown, the plan PLATINUM and no sport league muted, as the database defaults have them.
     create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, plan: LeaguePlan.PLATINUM, mutedSportLeagueIds: [], ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
+    changePlan: async (leagueId, change) => {
+      if (leagues.get(leagueId)?.plan !== change.fromPlan) {
+        return null;
+      }
+      planChanges.push({ leagueId, ...change });
+      return leagues.patch(leagueId, { plan: change.toPlan });
+    },
   };
 
   const membershipRepo: LeagueMembershipRepository = {
@@ -346,6 +357,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     leagueInvitations: leagueInvitationRepo,
     ownerInvitations: ownerInvitationRepo,
     transaction,
+    planChanges,
     tables: { users, leagues, memberships, squads, squadMemberships, leagueInvitations, ownerInvitations },
     addUser(overrides = {}) {
       userSequence += 1;

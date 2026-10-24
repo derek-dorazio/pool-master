@@ -10,6 +10,7 @@ import type { League } from '@poolmaster/shared/domain';
 import type { UpdateLeagueEventEmailSettingsRequest } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
 import { toLeagueDto } from '../../mappers/leagues.mapper';
+import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 
 export interface LeagueEventEmailSettingsDeps {
@@ -50,7 +51,10 @@ export class LeagueEventEmailSettings {
   }
 }
 
-export function createLeagueEventEmailSettingsHandler(settings: LeagueEventEmailSettings) {
+export function createLeagueEventEmailSettingsHandler(
+  settings: LeagueEventEmailSettings,
+  planEntitlements: PlanEntitlementsService,
+) {
   return async function updateLeagueEventEmailSettings(
     request: FastifyRequest<{
       Params: { id: string };
@@ -61,7 +65,7 @@ export function createLeagueEventEmailSettingsHandler(settings: LeagueEventEmail
     const logger = request.contextLogger ?? request.log;
     try {
       const league = await settings.update(request.params.id, request.body);
-      return reply.send({ league: toLeagueDto(league) });
+      return reply.send({ league: toLeagueDto(league, planEntitlements.forPlan(league.plan)) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({

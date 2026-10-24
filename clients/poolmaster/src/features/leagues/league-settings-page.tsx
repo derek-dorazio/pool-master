@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { LeagueRole, LeagueMembershipStatus, SquadMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueRole, LeagueMembershipStatus, PlanCap, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {
   Alert,
@@ -14,13 +14,20 @@ import { describePointsTable } from '@/features/championships/cup-settings-view'
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
-import { buildLeagueAdminChampionshipsEditPath, buildLeagueAdminEditPath, buildLeagueAdminTeamsPath } from './league-routing';
+import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
+import {
+  buildLeagueAdminChampionshipsEditPath,
+  buildLeagueAdminEditPath,
+  buildLeagueAdminPlanEditPath,
+  buildLeagueAdminTeamsPath,
+} from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { useLeagueMembersQuery } from './use-league-members-query';
 
 /**
  * League settings, the first page of Commissioner tools: the league's properties with one Edit
- * for all of them, the championship settings with their own Edit, then the danger zone.
+ * for all of them, the championship settings with their own Edit, the league's plan (#945) with
+ * its Change, then the danger zone.
  */
 export function LeagueSettingsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -144,6 +151,37 @@ export function LeagueSettingsPage() {
           testId="league-settings-hall-of-lame"
           value={league.hallOfLameVisible ? 'Shown' : 'Hidden'}
         />
+      </SettingsSection>
+
+      <SettingsSection
+        action={(
+          <LinkButton
+            data-testid="league-settings-plan-edit"
+            isDisabled={isInactive}
+            size="sm"
+            to={buildLeagueAdminPlanEditPath(league.leagueCode)}
+            variant="secondary"
+          >
+            Change
+          </LinkButton>
+        )}
+        description="What the league can do. Every plan is free for now, and members never see which plan it is."
+        testId="league-settings-plan"
+        title="Plan"
+      >
+        <SettingsRow
+          label="Plan"
+          testId="league-settings-plan-name"
+          value={<span className="font-semibold">{LEAGUE_PLAN_LABEL[league.planEntitlements.plan]}</span>}
+        />
+        {Object.values(PlanCap).map((cap) => (
+          <SettingsRow
+            key={cap}
+            label={PLAN_CAP_LABEL[cap]}
+            testId={`league-settings-plan-cap-${cap}`}
+            value={formatPlanLimit(league.planEntitlements.caps[cap])}
+          />
+        ))}
       </SettingsSection>
 
       <LeagueDangerZone league={league} />

@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listLeagues, type LeagueDto } from "@/lib/api";
 import { buildLeaguePath } from "@/features/leagues/league-routing";
+import { LEAGUE_PLAN_LABEL } from "@/features/plans/plan-labels";
 import {
   ManagementListPage,
   StatusBadge,
@@ -70,6 +71,13 @@ export function RootAdminManageLeaguesPage() {
           },
         },
       ),
+      columnHelper.accessor((league) => LEAGUE_PLAN_LABEL[league.planEntitlements.plan], {
+        id: "plan",
+        header: "Plan",
+        cell: ({ getValue }) => (
+          <span className="font-medium text-foreground">{getValue()}</span>
+        ),
+      }),
       columnHelper.accessor((league) => String(league.memberCount), {
         id: "memberCount",
         header: "Members",

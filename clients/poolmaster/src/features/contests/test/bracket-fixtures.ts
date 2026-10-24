@@ -5,6 +5,7 @@ import type {
   GamePicksResponse,
   LeagueContextResponse,
 } from '@/lib/api';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
 /**
  * Bracket contest fixtures (#721) in the generated contract's shapes: an eight-team basketball
@@ -259,6 +260,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       cupPointsScale: 'STANDARD',
       cupCustomPoints: [],
       hallOfLameVisible: true,
+      planEntitlements: buildPlanEntitlements(),
       mutedSportLeagueIds: [],
     },
     membership: {

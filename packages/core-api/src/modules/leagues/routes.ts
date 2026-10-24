@@ -37,8 +37,10 @@ import { createMemberHandlers } from './member-handler';
 import { createBulkHandlers } from './bulk-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import { LeaguePlanService } from '../plans/league-plan-service';
+import type { PlanModuleOptions } from '../plans/routes';
 
-export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
+export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
   void fastify.register(schemaComponentsPlugin);
 
@@ -85,12 +87,15 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     invitationRepo,
   );
 
-  const league = createLeagueHandlers(leagueService, membershipRepo, squadMembershipRepo, userRepo);
+  const leaguePlanService = new LeaguePlanService({ leagues: leagueRepo, logger: fastify.log });
+  const league = createLeagueHandlers(
+    leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
+  );
   const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettings({
     leagues: leagueRepo,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     logger: fastify.log,
-  }));
+  }), opts.planEntitlements);
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const bulk = createBulkHandlers(bulkService);
@@ -202,6 +207,27 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions)
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: league.updateLeagueCupSettings,
+  });
+
+  fastify.put('/:id/plan', {
+    schema: {
+      tags: ['Leagues'],
+      summary: 'Change the league\'s plan',
+      description:
+        'Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.',
+      operationId: 'updateLeaguePlan',
+      body: schemaRef('UpdateLeaguePlanRequest'),
+      response: {
+        200: schemaRef('LeagueResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: league.updateLeaguePlan,
   });
 
   fastify.put('/:id/event-email-settings', {

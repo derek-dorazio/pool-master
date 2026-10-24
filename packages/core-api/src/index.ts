@@ -39,7 +39,11 @@ import { SETTINGS_GROUPS } from './modules/platform/settings-groups';
 import { PlatformSettingsService } from './modules/platform/platform-settings-service';
 import { ingestionModule } from './modules/ingestion/routes';
 import { IngestionService } from './modules/ingestion/ingestion-service';
+import { plansModule } from './modules/plans/routes';
+import { PlanEntitlementsService } from './modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from './modules/plans/plan-settings';
 import {
+  PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
@@ -104,6 +108,11 @@ export function buildApp() {
     readConfig: () => appSettings.get(EMAIL_SETTINGS),
     env: process.env,
     logger: app.log,
+  });
+  // The one reader of PLAN_CONFIG: what each league's plan allows (#944).
+  const planEntitlements = new PlanEntitlementsService({
+    leagues: new PrismaLeagueRepository(prisma),
+    readConfig: () => appSettings.get(PLAN_SETTINGS),
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log });
@@ -203,7 +212,8 @@ export function buildApp() {
   // =========================================================================
   // Domain modules (protected by auth-guard)
   // =========================================================================
-  app.register(leaguesModule, { prefix: '/api/v1/leagues', email });
+  app.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements });
+  app.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
   app.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });
   app.register(invitationsModule, { prefix: '/api/v1/invitations', email });
   app.register(teamInvitationsModule, { prefix: '/api/v1/team-invitations', email });
