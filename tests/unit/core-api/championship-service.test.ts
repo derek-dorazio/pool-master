@@ -6,7 +6,6 @@ import {
   ChampionshipTile,
   CupPointsScale,
   CupWeight,
-  SelectionType,
   TeamIconKey,
   type Squad,
 } from '@poolmaster/shared/domain';
@@ -16,7 +15,6 @@ import { InMemoryCups } from '../../support/in-memory-cups';
 import { fakeSquadRepo } from '../../support/repo-fakes';
 
 const LEAGUE = 'league-1';
-const MASTERS_SERIES = 'series-masters';
 const NOW = new Date('2026-08-01T12:00:00.000Z');
 
 function squad(id: string, name: string, overrides: Partial<Squad> = {}): Squad {
@@ -53,13 +51,12 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     id: string,
     places: Array<[squadId: string, position: number]>,
     settledAt: Date,
-    overrides: { cupWeight?: CupWeight; selectionType?: SelectionType } = {},
+    overrides: { cupWeight?: CupWeight } = {},
   ) => {
     cups.rankedEntries.push(...places.map(([squadId, position]) => ({ contestId: id, squadId, position })));
     return service.recordContest({
       id,
       leagueId: LEAGUE,
-      selectionType: overrides.selectionType ?? SelectionType.TIERED,
       cupWeight: overrides.cupWeight ?? CupWeight.NORMAL,
     }, settledAt);
   };
@@ -67,17 +64,16 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
 }
 
 describe('ChampionshipService (#863)', () => {
-  it('writes each squad once from its best entry, with its place, the tie, the field, the single event\'s series and its points at settlement', async () => {
+  it('writes each squad once from its best entry, with its place, the tie, the field and its points at settlement', async () => {
     const { finishes, settle } = build();
-    finishes.singleEventSeries.set('masters', MASTERS_SERIES);
 
     const written = await settle('masters', [['eagles', 1], ['birdies', 2], ['bogeys', 2], ['eagles', 4]], new Date('2026-04-13T22:00:00.000Z'), { cupWeight: CupWeight.BONUS });
 
     expect(written).toBe(3);
-    expect(finishes.finishes.map((row) => [row.squadId, row.year, row.place, row.tiedCount, row.rankedEntryCount, row.eventSeriesId, row.weight, row.points])).toEqual([
-      ['eagles', 2026, 1, 1, 4, MASTERS_SERIES, CupWeight.BONUS, 1500],
-      ['birdies', 2026, 2, 2, 4, MASTERS_SERIES, CupWeight.BONUS, 1088],
-      ['bogeys', 2026, 2, 2, 4, MASTERS_SERIES, CupWeight.BONUS, 1088],
+    expect(finishes.finishes.map((row) => [row.squadId, row.year, row.place, row.tiedCount, row.rankedEntryCount, row.weight, row.points])).toEqual([
+      ['eagles', 2026, 1, 1, 4, CupWeight.BONUS, 1500],
+      ['birdies', 2026, 2, 2, 4, CupWeight.BONUS, 1088],
+      ['bogeys', 2026, 2, 2, 4, CupWeight.BONUS, 1088],
     ]);
   });
 

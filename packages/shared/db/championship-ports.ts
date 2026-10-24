@@ -35,8 +35,6 @@ export interface SeriesContest {
 export interface ChampionshipRepository {
   /** Writes a settled contest's finishes; one already written for its contest and squad is kept. Answers how many it wrote. */
   recordFinishes(finishes: readonly LeagueYearFinish[]): Promise<number>;
-  /** The series of a contest of one event (the Masters); null for a contest of several events. */
-  findSingleEventSeries(contestId: string): Promise<string | null>;
   /** Every finish of the league, of every year. */
   findByLeague(leagueId: string): Promise<LeagueYearFinish[]>;
   /** The league's finishes of one year. */
