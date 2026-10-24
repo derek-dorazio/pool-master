@@ -1,5 +1,4 @@
 import {
-  NO_SPORT_LEAGUE_OVERRIDES,
   ParticipantType,
   ScoringFamily,
   SelectionType,
@@ -17,7 +16,7 @@ import {
 
 describe('sportLeagueDefinitionOf', () => {
   it('gives a sport league with no overrides its sport\'s definition, unchanged', () => {
-    expect(sportLeagueDefinitionOf(Sport.BASEBALL, NO_SPORT_LEAGUE_OVERRIDES)).toBe(getSportDefinition(Sport.BASEBALL));
+    expect(sportLeagueDefinitionOf(Sport.BASEBALL, { participantType: null, scoringFamily: null })).toBe(getSportDefinition(Sport.BASEBALL));
   });
 
   it('keeps the sport\'s scoring for a league that sets only its participant type', () => {

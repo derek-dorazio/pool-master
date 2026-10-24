@@ -207,7 +207,7 @@ describe('IngestionPersistence', () => {
             fieldLocked: true,
             metadata: detail.metadata,
           })
-          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED' }),
+          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } }),
       },
       contest: {
         findMany: jest.fn().mockResolvedValue([]),
@@ -267,10 +267,13 @@ describe('IngestionPersistence', () => {
 
   // #698 — a released bracket's seeds are fixed: the field sync keeps the stored seed, while a
   // draft still takes the provider's.
+  // #934 — a stat pool event (the NBA Finals' players) plays no bracket, so a released one has no
+  // seeds to lock either.
   it.each([
-    ['keeps the stored seed 3 on a released', 'SCHEDULED', 3],
-    ['takes the provider\'s seed 1 on a draft', 'DRAFT', 1],
-  ])('%s basketball event', async (_label, status, expectedSeed) => {
+    ['keeps the stored seed 3 on a released basketball event', 'SCHEDULED', null, 3],
+    ['takes the provider\'s seed 1 on a draft basketball event', 'DRAFT', null, 1],
+    ['takes the provider\'s seed 1 on a released basketball stat pool event', 'SCHEDULED', 'COMPOSITE', 1],
+  ])('%s', async (_label, status, scoringFamily, expectedSeed) => {
     const detail: SportEventDetail = {
       ...buildInProgressEvent(),
       sport: Sport.BASKETBALL,
@@ -290,7 +293,12 @@ describe('IngestionPersistence', () => {
         update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
         findUnique: jest.fn()
           .mockResolvedValueOnce(linkedRow({ sport: Sport.BASKETBALL, status, rounds: 6 }))
-          .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.BASKETBALL, status }),
+          .mockResolvedValueOnce({
+            id: 'sport-event-1',
+            sport: Sport.BASKETBALL,
+            status,
+            eventSeries: { sportLeague: { participantType: scoringFamily === null ? null : 'INDIVIDUAL', scoringFamily } },
+          }),
       },
       contest: { findMany: jest.fn().mockResolvedValue([]) },
       participantProviderMapping: { findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }) },

@@ -29,7 +29,6 @@ import type {
 import {
   eventSportDefinition,
   sportLeagueDefinitionOf,
-  getSportDefinition,
   MANUAL_ADMIN_PROVIDER_ID,
   type Sport,
   SportEventStatus,
@@ -536,7 +535,7 @@ function describeReleaseBlockers(summary: SportEventSummary): string[] {
   if (summary.untieredParticipantCount > 0) {
     blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
   }
-  const { participant } = getSportDefinition(summary.event.sport).vocabulary;
+  const { participant } = eventSportDefinition(summary.event).vocabulary;
   for (const label of summary.emptyTierLabels) {
     blockers.push(`${label} has no ${participant.many}`);
   }

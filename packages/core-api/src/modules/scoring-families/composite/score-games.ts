@@ -8,7 +8,7 @@ import type { ParticipantRoundView, SportEventParticipantView } from '../../even
 import type { FieldScoringEvent } from '../scoring-family-module';
 
 /** One game's composite, by the event's round number. */
-export interface CompositeGameScore {
+interface CompositeGameScore {
   roundNumber: number;
   score: number;
 }
@@ -27,7 +27,7 @@ export function compositeOf(event: FieldScoringEvent): SportComposite {
 }
 
 /** A round's stat lines as one line, by stat. */
-export function toStatLine(round: Pick<ParticipantRoundView, 'statLines'>): StatLine {
+function toStatLine(round: Pick<ParticipantRoundView, 'statLines'>): StatLine {
   const line: Partial<Record<SportStat, number>> = {};
   for (const statLine of round.statLines) {
     line[statLine.stat] = statLine.value;

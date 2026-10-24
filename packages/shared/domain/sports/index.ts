@@ -6,4 +6,4 @@ export { eventRoundLabel } from './round-label';
 export { MATCH_PERIOD_LAYOUTS, matchPeriodLayoutOf, matchPeriodsOf } from './match-periods';
 export { SPORT_LEAGUE_NOUNS, sportLeagueNounOf } from './league-nouns';
 export { SportStat, statValue, type SportComposite, type StatLine } from './sport-stats';
-export { NO_SPORT_LEAGUE_OVERRIDES, eventSportDefinition, sportLeagueDefinitionOf, type SportLeagueEvent, type SportLeagueOverrides } from './sport-league-definition';
+export { eventSportDefinition, sportLeagueDefinitionOf, type SportLeagueEvent, type SportLeagueOverrides } from './sport-league-definition';

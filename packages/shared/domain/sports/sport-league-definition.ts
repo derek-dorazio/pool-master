@@ -14,9 +14,6 @@ export interface SportLeagueOverrides {
   scoringFamily: ScoringFamily | null;
 }
 
-/** Overrides that keep everything the sport's. */
-export const NO_SPORT_LEAGUE_OVERRIDES: SportLeagueOverrides = { participantType: null, scoringFamily: null };
-
 /**
  * A sport league's definition: its sport's, with what the league overrides (#934). Every reader
  * of an event's selection types, scoring definitions, tiers or rounds reads it through here, so a
