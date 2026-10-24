@@ -124,22 +124,47 @@ Derek's Route 53 account holds two registered domains, both with a hosted zone a
 | `ultimateofficepoolmanager.com` | 2027-03-28 | QA, and prod per this plan |
 | `primetimecommissioner.com` | 2027-05-02 | nothing yet (registered 2026-05-02) |
 
-Primetime Commissioner is now the marketing brand. Whether prod serves from
-`primetimecommissioner.com` (with the old domain redirecting to it) is an open question for Derek
-before the prod apply. If it does, the hostnames, certificate and SES identity above move to that
-zone.
+Primetime Commissioner is the marketing brand. Which domain is primary (`primetimecommissioner.com`
+or `ultimateofficepool.com`) is Derek's call in #1016, under the brand-domain epic #1015. The
+primary domain serves the site and every other domain redirects to it with a 301. Every `.net` and
+`.app` is bought only to protect the name and redirects (Derek, 2026-10-24). When prod launches it
+uses the primary domain, so the hostnames, certificate and SES identity above move to that zone.
 
-Availability from whois/RDAP on 2026-10-24 (nothing bought). Worth buying, cheapest first:
+Availability from whois/RDAP on 2026-10-24. Nothing has been bought; re-check before buying.
 
-- **Protect the brand:** `primetimecommissioner.net`, `.co`, `.app` (`.app` is HTTPS-only).
-- **Short redirect:** `primetimecommish.com` (also `.app`), and `ptcommish.com`.
-- **Old-name redirect:** `ultimateofficepool.com`.
+Worth buying:
 
-Also free: `theprimetimecommissioner.com`, `primetimecommissioner.club`, `ptcommissioner.com`,
-`ultimateofficepool.net`/`.app`, `ultimatepoolmanager.com`, `theofficepoolmanager.com`,
-`officepoolmanager.app`, `primetimepools.app`, `poolcommish.app`, `clutchcards.app`. Taken:
-`primetimepools.com`, `primetimepool.com`, `officepoolmanager.com`, `poolcommish.com`,
-`commishhq.com`, `clutchcard.com`, `clutchcard.app`, and most short pool/commissioner `.com`s.
+- **Protect the brand:** `primetimecommissioner.net`, `.co`, `.app`.
+- **Short redirects:** `primetimecommish.com`, `primecommish.com`, `ptcommish.com`.
+- **Old name:** `ultimateofficepool.com` (primary or redirect).
+
+Free on 2026-10-24:
+
+- **primetimecommissioner:** `.net`, `.co`, `.app`, `.club`; `theprimetimecommissioner.com`;
+  `ptcommissioner.com`.
+- **Short Primetime forms:** `primetimecommish.com`/`.net`/`.app`, `primecommish.com`/`.app`,
+  `ptcommish.com`/`.app`, `primetimecomish.com`, `primetimecomm.app`, `primetimecom.app`,
+  `ptcomm.app`, `ptpool.app`, `primetimepick.com`, `primetimepicks.app`, `primetimepool.app`,
+  `primetimepools.app`, `primetimecontests.com`, `primetimeboard.com`, `primetimehq.app`,
+  `primetimeleague.app`, `primetimeplay.app`, `playprimetime.app`, `goprimetime.app`,
+  `getprimetime.app`, `joinprimetime.app`, `primetimers.app`, `primetimegroup.app`,
+  `primetime.club`, `primetime.pics`.
+- **Office pool names:** `ultimateofficepool.com`/`.net`/`.app`, `ultimatepoolmanager.com`,
+  `theofficepoolmanager.com`, `officepoolmanager.app`, `officepoolclub.com`, `uopm.app`.
+- **Pool and commissioner names:** `poolcommish.app`, `thecommissioner.club`, `poolboss.club`,
+  `thepoolhouse.app`, `thepoolroom.app`, `thepoolmanager.app`, `thepoolmaster.app`,
+  `poolmasterhq.com`, `getpoolmaster.com`, `clutchcards.app`.
+
+Taken on 2026-10-24: `primetimecommissioner.com` (Derek's), `primetime.app`, `primetimepool.com`,
+`primetimepools.com`, `primetimepicks.com`, `primetimeplay.com`, `primetimeleagues.com`,
+`primetimecomm.com`, `primetimecrew.com`, `playprimetime.com`, `joinprimetime.com`, `ptcomm.com`,
+`ptpools.com`, `ptpicks.com`, `officepoolmanager.com`/`.net`, `officepool.app`,
+`officepools.app`, `officepoolhq.com`, `officepoolpro.com`, `myofficepool.com`, `uopm.com`,
+`uop.app`, `poolcommish.com`, `thecommish.com`/`.app`, `commish.app`, `mycommish.com`/`.app`,
+`commishapp.com`, `commishhq.com`/`.app`, `leaguecommish.com`, `commissionerhq.com`,
+`thecommissioner.app`, `runthepool.com`, `runyourpool.com`, `picksandpools.com`, `pickspool.com`,
+`pickpool.app`, `poolboss.app`, `poolday.app`, `poolnight.com`, `pooltime.app`, `poolhq.app`,
+`mypoolhq.com`, `poolmaster.app`, `poolmanager.app`, `clutchcard.com`/`.app`.
 
 ## 4. Email (SES)
 
