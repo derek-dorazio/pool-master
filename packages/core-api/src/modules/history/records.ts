@@ -1,11 +1,12 @@
 /**
  * The league's record book (#873, plan §11): pure functions over its counted contest finishes and
- * its championship years, so the records are worked out on read and never stored. Each record is
+ * its championship years and perpetual trophies, so the records are worked out on read and never stored. Each record is
  * ranked from candidates (one per squad, or one per squad and year, or one per win) to its holders,
  * every one on a tie, and the next best value's holders.
  */
 
 import { CupWeight, RecordType, isHallOfLameRecord, type LeagueYearFinish } from '@poolmaster/shared/domain';
+import type { PerpetualTrophy } from './perpetual-trophies';
 
 /** One way a squad could hold a record: its value, and the year or contest it was set in. */
 export interface RecordCandidate {
@@ -44,6 +45,7 @@ export const LAST_PLACE_MIN_SQUADS = 3;
 export function rankRecords(
   finishes: readonly LeagueYearFinish[],
   championships: readonly ChampionshipYearChampions[],
+  trophies: readonly PerpetualTrophy[],
   { hallOfLame }: { hallOfLame: boolean },
 ): RankedRecord[] {
   const counted = finishes
@@ -57,6 +59,7 @@ export function rankRecords(
     [RecordType.MOST_WINS_ALL_TIME]: countBySquad(wins.map((finish) => finish.squadId)),
     [RecordType.LONGEST_PODIUM_RUN]: podiumRuns(counted),
     [RecordType.BIGGEST_FIELD_WON]: wins.map((finish) => ({ squadId: finish.squadId, value: finish.rankedEntryCount, year: finish.year, contestId: finish.contestId })),
+    [RecordType.REPEAT_WINNER]: trophies.flatMap(repeatWins).filter((candidate) => candidate.value >= 2),
     [RecordType.MOST_RUNNER_UPS]: countBySquad(counted.filter((finish) => finish.place === 2).map((finish) => finish.squadId)),
     [RecordType.MOST_FOURTHS]: countBySquad(counted.filter((finish) => finish.place === 4).map((finish) => finish.squadId)),
     [RecordType.MOST_LAST_PLACES]: countBySquad(lastPlaces(counted).map((finish) => finish.squadId)),
@@ -106,6 +109,27 @@ function championshipRuns(championships: readonly ChampionshipYearChampions[]): 
     year,
     continues: index > 0 && sorted[index - 1] === year - 1,
   }))));
+}
+
+/**
+ * Each squad's longest run of a perpetual trophy won in consecutive event years, one per trophy it
+ * won, ending in its year (the latest on a tie) and naming that year's contest. A year the league
+ * didn't run the contest breaks the run, as it does a championship run.
+ */
+function repeatWins(trophy: PerpetualTrophy): RecordCandidate[] {
+  const wonBySquad = new Map<string, Map<number, string>>();
+  for (const plate of trophy.plates) {
+    for (const squadId of plate.winnerSquadIds) {
+      const years = wonBySquad.get(squadId) ?? new Map<number, string>();
+      // Plates run newest first, so the first contest seen in a year is its latest.
+      if (!years.has(plate.year)) years.set(plate.year, plate.contestId);
+      wonBySquad.set(squadId, years);
+    }
+  }
+  return [...wonBySquad].map(([squadId, years]) => {
+    const run = longestRun(squadId, [...years.keys()].sort((left, right) => left - right).map((year) => ({ year, continues: years.has(year - 1) })));
+    return { ...run, contestId: run.year === null ? null : years.get(run.year) ?? null };
+  });
 }
 
 /** Each squad's longest run of contests on the podium, of those it placed in, ending in its year. */

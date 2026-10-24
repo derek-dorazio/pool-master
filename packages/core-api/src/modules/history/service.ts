@@ -241,17 +241,18 @@ export class HistoryService {
    * the league hides them. A squad that has since gone inactive still holds its records.
    */
   async getRecords(leagueId: string): Promise<RecordView[]> {
-    const [finishes, championshipYears, squads, league] = await Promise.all([
+    const [finishes, championshipYears, squads, league, seriesContests] = await Promise.all([
       this.deps.finishes.findByLeague(leagueId),
       this.deps.championship.listYears(leagueId),
       this.deps.squads.findByLeague(leagueId, true),
       this.deps.leagues.findById(leagueId),
+      this.deps.finishes.findSeriesContests(leagueId),
     ]);
     // The route has checked membership, so the league is there; were it gone, the Hall of Lame stays hidden.
     const hallOfLame = league?.hallOfLameVisible ?? false;
     const ranked = rankRecords(finishes, championshipYears
       .filter((row) => row.isOver)
-      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), { hallOfLame });
+      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), buildPerpetualTrophies(seriesContests, finishes), { hallOfLame });
     const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
       .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
     const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);

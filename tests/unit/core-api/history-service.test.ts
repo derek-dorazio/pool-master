@@ -140,6 +140,32 @@ describe('HistoryService (#837)', () => {
     ]);
   });
 
+  it('ranks the repeat winner from the perpetual trophies, naming the last year\'s contest of the run', async () => {
+    const { contest, finish, finishes, service } = build();
+    for (const year of [2024, 2025]) {
+      contest(`masters-${year}`, `${year}-04-14T00:00:00.000Z`, { name: `Masters Pick 6 ${year}` });
+      finishes.seriesContests.push({ leagueId: LEAGUE, contest: {
+        id: `masters-${year}`,
+        selectionType: SelectionType.TIERED,
+        cupWeight: CupWeight.NORMAL,
+        eventSeriesId: 'masters',
+        seriesName: 'Masters Tournament',
+        sportLeagueName: 'PGA Tour',
+        eventYear: year,
+        completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
+        games: [],
+      } });
+      finish(`masters-${year}`, year, [['eagles', 1, 1], ['birdies', 2, 1]]);
+    }
+
+    const records = await service.getRecords(LEAGUE);
+
+    const repeat = records.find((row) => row.type === RecordType.REPEAT_WINNER);
+    expect([repeat?.best.value, repeat?.best.holders.map((holder) => [holder.squad.name, holder.year, holder.contest?.name])]).toEqual([
+      2, [['Eagles', 2025, 'Masters Pick 6 2025']],
+    ]);
+  });
+
   it('leaves the Hall of Lame out of the record book of a league that hides it', async () => {
     const { contest, finish, service } = build({ hallOfLameVisible: false });
     contest('masters', '2025-04-13T22:00:00.000Z');
