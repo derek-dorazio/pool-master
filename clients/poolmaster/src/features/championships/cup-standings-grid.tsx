@@ -18,7 +18,7 @@ const MOVEMENT_CLASS = {
  * contests counted, with search and paging (rules/ux-rules.md §12 rule 7). A season that is over
  * shows no movement. A squad opens its
  * points contest by contest. `focusSquadId` marks one squad: the viewer's, or the squad whose page
- * shows it. With a projection, a greyed "If it ended now" column shows each squad's place and
+ * shows it, with a jump to its row. With a projection, a greyed "If it ended now" column shows each squad's place and
  * points if the live contests ended now.
  */
 export function CupStandingsGrid({
@@ -111,12 +111,15 @@ export function CupStandingsGrid({
     [focusSquadId, projection, showMovement, squadPath],
   );
 
+  const focusRow = rows.find((row) => row.squadId === focusSquadId);
+
   return (
     <DataGrid
       columns={columns}
       data={rows}
       emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}
       getRowId={(row) => row.squadId}
+      jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: 'cup-standings-jump' } : undefined}
       pageSize={STANDINGS_PER_PAGE}
       rowTestId={(row) => `cup-standing-${row.squadId}`}
       search={{ label: 'Find a squad', testId: 'cup-standings-search' }}

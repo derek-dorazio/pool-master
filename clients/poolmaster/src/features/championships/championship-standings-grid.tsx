@@ -11,7 +11,7 @@ const STANDINGS_PER_PAGE = 25;
 /**
  * The finish matrix: each squad's place and points, then how many counted contests it finished
  * 1st, 2nd ... 10th in, with search and paging (rules/ux-rules.md §12 rule 7). `focusSquadId`
- * marks one squad: the viewer's, or the squad whose page shows it. A count opens the contests
+ * marks one squad: the viewer's, or the squad whose page shows it, with a jump to its row. A count opens the contests
  * behind it (#837): a cell those the squad finished in that place, Played all it placed in. A
  * squad page shows its one row without the search (#872).
  */
@@ -99,12 +99,15 @@ export function ChampionshipStandingsGrid({
     [filter, focusSquadId, onFilter],
   );
 
+  const focusRow = searchable ? rows.find((row) => row.squadId === focusSquadId) : undefined;
+
   return (
     <DataGrid
       columns={columns}
       data={rows}
       emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}
       getRowId={(row) => row.squadId}
+      jumpToRow={focusRow ? { rowId: focusRow.squadId, label: `Jump to ${focusRow.squadName}`, testId: 'championship-standings-jump' } : undefined}
       pageSize={STANDINGS_PER_PAGE}
       rowTestId={(row) => `championship-standing-${row.squadId}`}
       search={searchable ? { label: 'Find a squad', testId: 'championship-standings-search' } : undefined}
