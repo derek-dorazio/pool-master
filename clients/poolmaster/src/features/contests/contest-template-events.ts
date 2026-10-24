@@ -11,11 +11,12 @@ import { isKnockoutUnderWay } from './contest-readiness';
  */
 export function contestEventsFor(events: readonly SportEventDto[], selectionType: SelectionType) {
   // An event offers only its own definition's formats: no bracket on a World Series stat pool (#936).
-  return events.filter((event) => sportAllowsSelectionType(eventSportDefinition(event), selectionType)).filter((event) => event.contestEligible
-    || (selectionType === SelectionType.BRACKET
-      && isKnockoutUnderWay(event)
-      && hasSecondChanceRound(bracketRoundCount(event)))
-    || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event)));
+  return events.filter((event) => sportAllowsSelectionType(eventSportDefinition(event), selectionType)
+    && (event.contestEligible
+      || (selectionType === SelectionType.BRACKET
+        && isKnockoutUnderWay(event)
+        && hasSecondChanceRound(bracketRoundCount(event)))
+      || (selectionType === SelectionType.SQUARES && isKnockoutUnderWay(event))));
 }
 
 /**

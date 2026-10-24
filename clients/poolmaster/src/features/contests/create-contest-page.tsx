@@ -48,7 +48,7 @@ import { useEventRoundName } from './use-bracket-round-label';
 import { hasWebEntryScreen, type WebEnterableSelectionType } from './contest-entry-screens';
 import { SquaresGamePicker } from './squares-game-picker';
 import { useSquaresGameChoices } from './use-squares-game-choices';
-import { statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
+import { STAT_POOL_STARS, statPoolScoringLine } from './scoring-family-ui/stat-pool-copy';
 import {
   Alert,
   ChoiceCard,
@@ -802,7 +802,7 @@ export function CreateContestPage() {
       <SetupSection step={3} testId="create-contest-rules" title="Rules">
         {statPoolScoring !== null ? (
           <p className="text-sm text-muted-foreground" data-testid="create-contest-stat-pool-scoring">
-            {`Each ${participant.one} scores ${statPoolScoring}`}
+            {`Each ${STAT_POOL_STARS.one} scores ${statPoolScoring}`}
           </p>
         ) : null}
         <ContestRulesFields

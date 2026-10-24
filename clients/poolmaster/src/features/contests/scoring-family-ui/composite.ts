@@ -28,7 +28,7 @@ export const compositeUi: ScoringFamilyUi = {
   // A composite total breaks no ties with a prediction: entries submit without one.
   entryTiebreaker: null,
   leaderboard(response, sport) {
-    const definition = PARTICIPANT_SCORING_DEFINITIONS.COMPOSITE_TOTAL;
+    const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
     const stats = sport.composite?.stats ?? [];
     // A game has a column once any player in the field has a line in it.
     const gameNumbers = resolveRoundNumbers(response.participants);
@@ -44,7 +44,8 @@ export const compositeUi: ScoringFamilyUi = {
       footnote: null,
       pickDetail(entryId, pick, participant) {
         const scores = new Map((pick.composite?.games ?? []).map((game) => [game.roundNumber, game.score]));
-        const breakdown: LeaderboardPickBreakdown = {
+        // Before any game has a line there is nothing to open, so the name stays plain text.
+        const breakdown: LeaderboardPickBreakdown | undefined = gameNumbers.length === 0 ? undefined : {
           testId: `contest-leaderboard-pick-breakdown-${entryId}-${pick.pickId}`,
           lines: gameNumbers.map((roundNumber) => {
             const summary = statSummary(participant, roundNumber, stats);

@@ -604,7 +604,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
 
     expect(await screen.findByTestId('create-contest-stat-pool-scoring'))
-      .toHaveTextContent('Each player scores Triple Threat: points + rebounds + assists, each game.');
+      .toHaveTextContent('Each star scores Triple Threat: points + rebounds + assists, each game.');
     expect(screen.getByTestId('contest-format-TIERED')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-format-BRACKET')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-format-PICK_EM')).not.toBeInTheDocument();

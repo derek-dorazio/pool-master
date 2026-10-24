@@ -134,10 +134,12 @@ describe('composite leaderboard', () => {
     expect(view.pickDetail('entry-1', rojasPick, rojas).breakdown?.lines.map((line) => line.text)).toEqual(['Did not play', '4 (4 TB)']);
   });
 
-  it('shows no total before the event\'s first game has lines', () => {
+  it('shows no total and nothing to open on a player before the event\'s first game has lines', () => {
     const unscored = pick('pick-1', 'sep-1', { points: null, games: [] });
+    const detail = compositeUi.leaderboard({ ...board, participants: [player('sep-1', 'Shohei Ohtani', [])] }, worldSeries)
+      .pickDetail('entry-1', unscored, player('sep-1', 'Shohei Ohtani', []));
 
-    expect(compositeUi.leaderboard({ ...board, participants: [player('sep-1', 'Shohei Ohtani', [])] }, worldSeries)
-      .pickDetail('entry-1', unscored, player('sep-1', 'Shohei Ohtani', [])).total).toBeNull();
+    expect(detail.total).toBeNull();
+    expect(detail.breakdown).toBeUndefined();
   });
 });
