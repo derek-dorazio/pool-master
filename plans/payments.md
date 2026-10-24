@@ -396,7 +396,8 @@ authority, like the SES events endpoint.
 
 ## 14. Slices
 
-Each slice is its own ticket under #931, in order; 3 and 5 can run in parallel after 2.
+Ticketed under #931 as #979 to #985, all deferred until Derek's go (2026-10-24); in order,
+3 and 5 can run in parallel after 2.
 
 1. **Stripe account and secrets.** You create the Stripe account (test mode is enough) and
    the three Products with an annual and a monthly Price each; a thread adds the two secrets
@@ -425,7 +426,7 @@ slices 4 to 6.
 
 Numbered as first sent to Derek; each has a recommendation; answer only where you disagree.
 
-1. **Provider: Stripe?** Recommended: yes. Cheapest at our sizes, best test mode and tools,
+1. **Decided (Derek 2026-10-24): Stripe.** **Provider: Stripe?** Recommended: yes. Cheapest at our sizes, best test mode and tools,
    and the same checkout handles one-time per-event payments. Paddle instead only if you
    would rather pay about 2 points more per payment to never think about sales tax.
 2. **Free period: 6 months from signup, with existing leagues counted from the day payments
