@@ -70,6 +70,7 @@ export function capitalize(word: string) {
 const MANAGE_SECTION_DEFINITIONS: ManageSectionDefinition[] = [
   { key: 'leagues', group: 'platform', title: 'Leagues', to: '/manage/leagues' },
   { key: 'users', group: 'platform', title: 'Users', to: '/manage/users' },
+  { key: 'plans', group: 'platform', title: 'Plans', to: '/manage/plans' },
   // One entry per supported sport, in enum order, named by its definition.
   ...SUPPORTED_SPORTS.map((sport): ManageSectionDefinition => ({
     key: sportPathSegment(sport),
@@ -99,6 +100,8 @@ export function buildManageUserPath(userId: string) {
 }
 
 export const SETTINGS_PATH = '/manage/settings';
+
+export const PLANS_PATH = '/manage/plans';
 
 export const SYNC_PATH = '/manage/sync';
 
