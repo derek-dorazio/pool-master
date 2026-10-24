@@ -61,7 +61,7 @@ function teamNamePrisma(world: InMemoryLeagueWorld) {
   });
 }
 
-function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; appBaseUrl?: string; contests?: Contest[] } = {}) {
+function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; appBaseUrl?: string; contests?: Contest[]; contestsFail?: boolean } = {}) {
   const world = inMemoryLeagueWorld();
   const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
   const league = world.addLeague({ name: 'Office Pool', leagueCode: 'OFFICE' });
@@ -73,7 +73,12 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
     squads: world.squads,
     squadMemberships: world.squadMemberships,
     users: world.users,
-    contests: { findByLeague: async (leagueId: string) => (options.contests ?? []).filter((contest) => contest.leagueId === leagueId) },
+    contests: {
+      findByLeague: async (leagueId: string) => {
+        if (options.contestsFail) throw new Error('contest lookup timed out');
+        return (options.contests ?? []).filter((contest) => contest.leagueId === leagueId);
+      },
+    },
     ...(options.mail ? { email: emailServiceOver(options.mail) } : {}),
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
@@ -496,6 +501,21 @@ describe('InvitationService — accepting', () => {
       status: LeagueMembershipStatus.ACTIVE,
     });
     expect(world.tables.leagueInvitations.get(invitation.id)?.status).toBe(InvitationStatus.ACCEPTED);
+  });
+
+  it('still completes the join, and sends the welcome without open contests, when looking up the contests fails', async () => {
+    const mail = recordingMail();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider, withPrisma: true, contestsFail: true });
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
+    const newcomer = world.addUser({ email: 'nia@example.com' });
+
+    await expect(service.acceptInvitation(invitation.inviteCode, newcomer.id)).resolves.toMatchObject({
+      status: LeagueMembershipStatus.ACTIVE,
+    });
+
+    await deliverQueuedEmail();
+    expect(mail.sent).toHaveLength(1);
+    expect(expectDefined(mail.sent[0]).text).not.toContain('Open for entries');
   });
 });
 
