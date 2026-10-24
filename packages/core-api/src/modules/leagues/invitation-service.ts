@@ -3,6 +3,7 @@
  */
 
 import type {
+  ContestRepository,
   EmailMessageState,
   LeagueInvitationRepository,
   LeagueMembershipRepository,
@@ -85,6 +86,8 @@ export interface InvitationServiceDeps {
   squads?: SquadRepository;
   squadMemberships?: SquadMembershipRepository;
   users: UserRepository;
+  /** The league's open contests, listed in the welcome email. */
+  contests?: Pick<ContestRepository, 'findByLeague'>;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
   email?: EmailService;

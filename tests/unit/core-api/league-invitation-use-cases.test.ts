@@ -1,10 +1,12 @@
 import { expect } from '@jest/globals';
 import {
+  ContestStatus,
   InvitationStatus,
   InviteType,
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
+  type Contest,
   type League,
   type User,
 } from '@poolmaster/shared/domain';
@@ -21,6 +23,7 @@ import { inMemoryLeagueWorld, type InMemoryLeagueWorld } from '../../support/in-
 import { asPrismaClient } from '../../support/prisma-double';
 import { expectDefined } from '../../support/expect-defined';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { buildContest } from '../../factories';
 
 /**
  * League invitation use cases — invite by email, invite link, revoke, preview, accept — against
@@ -58,7 +61,7 @@ function teamNamePrisma(world: InMemoryLeagueWorld) {
   });
 }
 
-function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; appBaseUrl?: string } = {}) {
+function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; appBaseUrl?: string; contests?: Contest[] } = {}) {
   const world = inMemoryLeagueWorld();
   const commissioner = world.addUser({ firstName: 'Casey', lastName: 'Commish' });
   const league = world.addLeague({ name: 'Office Pool', leagueCode: 'OFFICE' });
@@ -70,6 +73,7 @@ function setup(options: { mail?: MailDeliveryProvider; withPrisma?: boolean; app
     squads: world.squads,
     squadMemberships: world.squadMemberships,
     users: world.users,
+    contests: { findByLeague: async (leagueId: string) => (options.contests ?? []).filter((contest) => contest.leagueId === leagueId) },
     ...(options.mail ? { email: emailServiceOver(options.mail) } : {}),
     ...(options.withPrisma ? { prisma: teamNamePrisma(world) } : {}),
     ...(options.appBaseUrl ? { appBaseUrl: options.appBaseUrl } : {}),
@@ -439,6 +443,47 @@ describe('InvitationService — accepting', () => {
     expect(mail.sent[0]).toMatchObject({ to: 'nia@example.com', metadata: { templateKey: 'LEAGUE_JOIN_SUCCESS' } });
     expect(mail.sent[0].text).toContain('Nia New');
     expect(mail.sent[0].text).toContain('/league/OFFICE');
+  });
+
+  it("lists the league's open contests in the welcome, each linking to its page, leaving out drafts, closed contests and other leagues'", async () => {
+    const mail = recordingMail();
+    const contests: Contest[] = [];
+    const { world, commissioner, league, service } = setup({ mail: mail.provider, withPrisma: true, appBaseUrl: 'https://app.example.test', contests });
+    const other = world.addLeague();
+    contests.push(
+      buildContest({ id: 'masters', leagueId: league.id, name: 'Masters Pick 6', status: ContestStatus.OPEN }),
+      buildContest({ id: 'draft', leagueId: league.id, name: 'Draft Pool', status: ContestStatus.DRAFT }),
+      buildContest({ id: 'live', leagueId: league.id, name: 'Live Pool', status: ContestStatus.ACTIVE }),
+      buildContest({ id: 'derby', leagueId: league.id, name: 'Derby Squares', status: ContestStatus.OPEN }),
+      buildContest({ id: 'elsewhere', leagueId: other.id, name: 'Elsewhere Pool', status: ContestStatus.OPEN }),
+    );
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
+    const newcomer = world.addUser({ firstName: 'Nia', lastName: 'New', email: 'nia@example.com' });
+
+    await service.acceptInvitation(invitation.inviteCode, newcomer.id);
+
+    await deliverQueuedEmail();
+    const text = expectDefined(mail.sent[0]).text;
+    expect(text).toContain([
+      'Open for entries:',
+      'Masters Pick 6: https://app.example.test/league/OFFICE/contests/masters',
+      'Derby Squares: https://app.example.test/league/OFFICE/contests/derby',
+    ].join('\n'));
+    expect(text).not.toContain('Draft Pool');
+    expect(text).not.toContain('Live Pool');
+    expect(text).not.toContain('Elsewhere Pool');
+  });
+
+  it('leaves the open contests out of the welcome when the league has none', async () => {
+    const mail = recordingMail();
+    const { world, commissioner, league, service } = setup({ mail: mail.provider, withPrisma: true });
+    const invitation = seedInvitation(world, league, commissioner, { email: 'nia@example.com' });
+    const newcomer = world.addUser({ email: 'nia@example.com' });
+
+    await service.acceptInvitation(invitation.inviteCode, newcomer.id);
+
+    await deliverQueuedEmail();
+    expect(expectDefined(mail.sent[0]).text).not.toContain('Open for entries');
   });
 
   it('still completes the join when the welcome email fails to send', async () => {
