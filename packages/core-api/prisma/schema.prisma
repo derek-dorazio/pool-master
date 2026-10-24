@@ -922,8 +922,8 @@ model EventSeries {
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague  SportLeague        @relation(fields: [sportLeagueId], references: [id])
-  sportEvents  SportEvent[]
+  sportLeague SportLeague  @relation(fields: [sportLeagueId], references: [id])
+  sportEvents SportEvent[]
 
   @@unique([sportLeagueId, name])
   @@map("event_series")
@@ -1097,27 +1097,27 @@ model CupStanding {
 /// at that moment, so a later table or weight change never shifts a past year. A contest counts in
 /// the calendar year it went final, in US Eastern.
 model LeagueYearFinish {
-  id               String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId         String              @map("league_id") @db.Uuid
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId         String          @map("league_id") @db.Uuid
   year             Int
-  squadId          String              @map("squad_id") @db.Uuid
-  contestId        String              @map("contest_id") @db.Uuid
+  squadId          String          @map("squad_id") @db.Uuid
+  contestId        String          @map("contest_id") @db.Uuid
   /// The squad's best entry's place, 1 best.
   place            Int
   /// Entries sharing the place, the squad's own included, for the point split.
-  tiedCount        Int                 @map("tied_count")
+  tiedCount        Int             @map("tied_count")
   /// Entries ranked in the contest.
-  rankedEntryCount Int                 @map("ranked_entry_count")
+  rankedEntryCount Int             @map("ranked_entry_count")
   weight           PrismaCupWeight
   /// Tenths of a point, from the points table and weight at settlement.
   points           Int
-  settledAt        DateTime            @map("settled_at") @db.Timestamptz
-  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  settledAt        DateTime        @map("settled_at") @db.Timestamptz
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz
 
   // The squad delete guard keeps a squad with results; the cascades let a league go whole.
-  league      League       @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  squad       Squad        @relation(fields: [squadId], references: [id], onDelete: Cascade)
-  contest     Contest      @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  league  League  @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  squad   Squad   @relation(fields: [squadId], references: [id], onDelete: Cascade)
+  contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
 
   @@unique([contestId, squadId])
   @@index([leagueId, year])
