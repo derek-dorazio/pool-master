@@ -3,16 +3,17 @@
  * (#851), against the in-memory league world.
  */
 import { buildSportLeague } from '../../factories';
-import { LeagueEventEmailSettings } from '../../../packages/core-api/src/modules/leagues/event-email-settings';
+import { LeagueEventEmailSettingsService } from '../../../packages/core-api/src/modules/leagues/event-email-settings-service';
+import { LeagueNotFoundError } from '../../../packages/core-api/src/modules/leagues/service';
 import { inMemoryLeagueWorld } from '../../support/in-memory-league-world';
 
-describe('LeagueEventEmailSettings', () => {
+describe('LeagueEventEmailSettingsService', () => {
   const pgaTour = buildSportLeague({ id: '00000000-0000-4000-8000-000000000001', name: 'PGA Tour' });
   const nascar = buildSportLeague({ id: '00000000-0000-4000-8000-000000000002', name: 'NASCAR Cup Series' });
 
   function setup() {
     const world = inMemoryLeagueWorld();
-    const settings = new LeagueEventEmailSettings({
+    const settings = new LeagueEventEmailSettingsService({
       leagues: world.leagues,
       sportLeagues: { findAll: async () => [pgaTour, nascar] },
     });
@@ -47,6 +48,6 @@ describe('LeagueEventEmailSettings', () => {
     await expect(settings.update(closed.id, { mutedSportLeagueIds: [pgaTour.id] }))
       .rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE' });
     await expect(settings.update('no-such-league', { mutedSportLeagueIds: [] }))
-      .rejects.toThrow('no-such-league');
+      .rejects.toBeInstanceOf(LeagueNotFoundError);
   });
 });

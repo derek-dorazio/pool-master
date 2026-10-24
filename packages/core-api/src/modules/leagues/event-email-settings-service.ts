@@ -4,23 +4,20 @@
  * league hears about every sport league.
  */
 
-import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository, SportLeagueRepository } from '@poolmaster/shared/db';
 import type { League } from '@poolmaster/shared/domain';
 import type { UpdateLeagueEventEmailSettingsRequest } from '@poolmaster/shared/dto';
-import { sendError } from '../../core/error-handler';
-import { toLeagueDto } from '../../mappers/leagues.mapper';
-import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 
-export interface LeagueEventEmailSettingsDeps {
+export interface LeagueEventEmailSettingsServiceDeps {
   leagues: Pick<LeagueRepository, 'findById' | 'update'>;
   sportLeagues: Pick<SportLeagueRepository, 'findAll'>;
   logger?: FastifyBaseLogger;
 }
 
-export class LeagueEventEmailSettings {
-  constructor(private readonly deps: LeagueEventEmailSettingsDeps) {}
+export class LeagueEventEmailSettingsService {
+  constructor(private readonly deps: LeagueEventEmailSettingsServiceDeps) {}
 
   /** Replaces the league's muted sport leagues. Each id must be a sport league; repeats count once. */
   async update(leagueId: string, updates: UpdateLeagueEventEmailSettingsRequest): Promise<League> {
@@ -49,39 +46,4 @@ export class LeagueEventEmailSettings {
     }, 'Updated league event email settings');
     return updated;
   }
-}
-
-export function createLeagueEventEmailSettingsHandler(
-  settings: LeagueEventEmailSettings,
-  planEntitlements: PlanEntitlementsService,
-) {
-  return async function updateLeagueEventEmailSettings(
-    request: FastifyRequest<{
-      Params: { id: string };
-      Body: UpdateLeagueEventEmailSettingsRequest;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = request.contextLogger ?? request.log;
-    try {
-      const league = await settings.update(request.params.id, request.body);
-      return reply.send({ league: toLeagueDto(league, planEntitlements.forPlan(league.plan)) });
-    } catch (err) {
-      if (err instanceof LeagueNotFoundError) {
-        logger.warn({
-          action: 'leagueRoute.updateEventEmailSettings.notFound',
-          data: { leagueId: request.params.id },
-        }, 'Cannot update event email settings for missing league');
-        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
-      }
-      if (err instanceof LeagueOperationError) {
-        logger.warn({
-          action: 'leagueRoute.updateEventEmailSettings.invalid',
-          data: { leagueId: request.params.id, errorCode: err.code },
-        }, 'Rejected league event email settings update');
-        return sendError(reply, err.statusCode, err.code, err.message);
-      }
-      throw err;
-    }
-  };
 }

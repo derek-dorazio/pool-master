@@ -31,7 +31,8 @@ import {
   requireMemberOfLeague,
 } from './permissions';
 import { createLeagueHandlers } from './handler';
-import { LeagueEventEmailSettings, createLeagueEventEmailSettingsHandler } from './event-email-settings';
+import { createLeagueEventEmailSettingsHandler } from './event-email-settings-handler';
+import { LeagueEventEmailSettingsService } from './event-email-settings-service';
 import { createInvitationHandlers } from './invitation-handler';
 import { createMemberHandlers } from './member-handler';
 import { createBulkHandlers } from './bulk-handler';
@@ -91,7 +92,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
   const league = createLeagueHandlers(
     leagueService, membershipRepo, squadMembershipRepo, userRepo, opts.planEntitlements, leaguePlanService,
   );
-  const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettings({
+  const updateLeagueEventEmailSettings = createLeagueEventEmailSettingsHandler(new LeagueEventEmailSettingsService({
     leagues: leagueRepo,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     logger: fastify.log,
