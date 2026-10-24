@@ -7,7 +7,7 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ContestExpansionRepository, ContestRepository } from '@poolmaster/shared/db';
+import type { ContestExpansionRepository, ContestRepository, LeagueRepository } from '@poolmaster/shared/db';
 import { ContestStatus, LeaguePaymentKind, type Contest } from '@poolmaster/shared/domain';
 import type { ApiErrorCode, BillingConfig, ContestExpansionResponse } from '@poolmaster/shared/dto';
 import { ContestNotFoundError, type ContestService } from '../contests/service';
@@ -23,6 +23,7 @@ export class ContestExpansionError extends Error {
 
 export interface ContestExpansionServiceDeps {
   contests: Pick<ContestRepository, 'findById'>;
+  leagues: Pick<LeagueRepository, 'findById'>;
   expansions: ContestExpansionRepository;
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   entryWindow: Pick<ContestService, 'areEntriesOpen'>;
@@ -48,6 +49,15 @@ export class ContestExpansionService {
     const { logger } = this.deps;
     logger.debug({ action: 'contestExpansion.expand.enter', data: { leagueId, contestId, entriesPerContest } }, 'Expanding contest');
     const contest = await this.requireContest(leagueId, contestId);
+    const league = await this.deps.leagues.findById(contest.leagueId);
+    if (!league?.isActive) {
+      logger.warn({ action: 'contestExpansion.expand.readOnlyInactive', data: { leagueId, contestId } }, 'Refused expansion in an inactive league');
+      throw new ContestExpansionError(
+        'Inactive leagues are read-only outside lifecycle actions',
+        'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE',
+        400,
+      );
+    }
     const state = await this.describe(contest);
     if (state.paymentsEnabled) {
       logger.warn({ action: 'contestExpansion.expand.checkoutUnavailable', data: { contestId } }, 'Refused expansion: payments are on but checkout is not built');

@@ -6,7 +6,7 @@ import {
   grantContestExpansion,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
-import { LeaguePlan, SelectionType } from '@poolmaster/shared/domain';
+import { LeaguePaymentKind, LeaguePlan, SelectionType } from '@poolmaster/shared/domain';
 import { ContestExpansionResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -88,8 +88,8 @@ describe('SDK Functional: contest expansions (#987)', () => {
 
     await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 100 } });
     expect(await paymentLines(league.id)).toEqual([
-      { kind: 'CONTEST_EXPANSION_PAYMENTS_OFF', amountCents: 0, description: 'Expand House Picks: up to 50 entries, free while payments are off', payerId: commissioner.userId },
-      { kind: 'CONTEST_EXPANSION_PAYMENTS_OFF', amountCents: 0, description: 'Expand House Picks: 50 to 100 entries, free while payments are off', payerId: commissioner.userId },
+      { kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF, amountCents: 0, description: 'Expand House Picks: up to 50 entries, free while payments are off', payerId: commissioner.userId },
+      { kind: LeaguePaymentKind.CONTEST_EXPANSION_PAYMENTS_OFF, amountCents: 0, description: 'Expand House Picks: 50 to 100 entries, free while payments are off', payerId: commissioner.userId },
     ]);
   });
 
@@ -123,6 +123,23 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect([read.response.status, read.error?.error.code]).toEqual([404, 'CONTEST_NOT_FOUND']);
   });
 
+  it('refuses a commissioner\'s expansion in an inactive league with 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE, but lets a root admin give one', async () => {
+    const { commissioner, league, contestId } = await freeContest('Closed Doors');
+    const admin = await buildRegisteredUser({ displayName: 'Door Opener' });
+    await promoteToRootAdmin(admin);
+    await getFunctionalPrisma().league.update({ where: { id: league.id }, data: { isActive: false } });
+    const path = { id: league.id, contestId };
+
+    const refused = await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
+    const granted = await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 50, reason: 'Reactivating soon' } });
+
+    expect([refused.response.status, refused.error?.error.code]).toEqual([400, 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE']);
+    expect(granted.data?.entriesPerContest).toBe(50);
+    expect(await paymentLines(league.id)).toEqual([
+      expect.objectContaining({ kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT }),
+    ]);
+  });
+
   it('keeps prices and expanding to the league\'s commissioners: anyone else gets 403', async () => {
     const { league, contestId } = await freeContest('Members Only');
     const outsider = await buildRegisteredUser({ displayName: 'Price Peeker' });
@@ -146,7 +163,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect([tooSmall.response.status, tooSmall.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_NOT_ABOVE_CAP']);
     expect(granted.data).toMatchObject({ entriesPerContest: 300, expandedTo: 300 });
     expect(await paymentLines(league.id)).toEqual([
-      { kind: 'CONTEST_EXPANSION_GRANT', amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
+      { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
     ]);
   });
 });

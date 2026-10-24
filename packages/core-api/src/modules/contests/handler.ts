@@ -427,10 +427,10 @@ export function createContestHandlers(contestService: ContestService) {
       );
       logger.info({ contestId: request.params.contestId }, 'contest update route completed');
       const [eventsById, entryCaps] = await Promise.all([
-      contestService.findEventsForContests([contest]),
-      contestService.findEntryCaps([contest]),
-    ]);
-    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
+        contestService.findEventsForContests([contest]),
+        contestService.findEntryCaps([contest]),
+      ]);
+      return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');

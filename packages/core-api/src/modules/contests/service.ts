@@ -308,10 +308,6 @@ export class ContestService {
   }
 
   /**
-   * Entries that submitted at least one event: a draft is not an entry until its owner submits
-   * it (#481), and in a contest of several events one submitted event is enough (#713).
-   */
-  /**
    * Each contest's entry cap (#987): its league plan's, raised by its expansion. Read for showing;
    * an entry is checked against the cap under the contest's lock (`createEntry`).
    */
@@ -328,6 +324,10 @@ export class ContestService {
     }));
   }
 
+  /**
+   * Entries that submitted at least one event: a draft is not an entry until its owner submits
+   * it (#481), and in a contest of several events one submitted event is enough (#713).
+   */
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
     if (!contestIds.length) {

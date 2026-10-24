@@ -10,13 +10,14 @@ import { fakeLogger } from '../../support/fake-logger';
 // Contest expansions (#987): what a commissioner is offered and may expand to, what a root admin
 // may give, and what each writes, against fakes of the contest, expansion and entry-window reads.
 
-function setup(options: { status?: ContestStatus; entriesOpen?: boolean; config?: BillingConfig; expandedTo?: number | null; raceTo?: number } = {}) {
-  const league = buildLeague({ plan: LeaguePlan.FREE });
+function setup(options: { status?: ContestStatus; entriesOpen?: boolean; config?: BillingConfig; expandedTo?: number | null; raceTo?: number; leagueActive?: boolean } = {}) {
+  const league = buildLeague({ plan: LeaguePlan.FREE, isActive: options.leagueActive ?? true });
   const contest = buildContest({ leagueId: league.id, name: 'Masters Pool', status: options.status ?? ContestStatus.OPEN });
   let expandedTo = options.expandedTo ?? null;
   const writes: ContestExpansionWrite[] = [];
   const service = new ContestExpansionService({
     contests: { findById: async (id) => (id === contest.id ? contest : null) },
+    leagues: { findById: async (id) => (id === league.id ? league : null) },
     expansions: {
       findState: async () => ({ expandedTo, entryCount: 20 }),
       findHighestBands: async () => new Map(),
@@ -74,6 +75,20 @@ describe('ContestExpansionService', () => {
     await expect(service.getExpansion(league.id, contest.id)).resolves.toMatchObject({ expandable: false, offers: [] });
     await expect(service.expand(league.id, contest.id, 50, 'commissioner-1')).rejects.toMatchObject({ code: 'CONTEST_EXPANSION_CLOSED' });
     expect(writes).toEqual([]);
+  });
+
+  it('refuses to expand a contest of an inactive league, which is read-only, and writes nothing', async () => {
+    const { service, league, contest, writes } = setup({ leagueActive: false });
+
+    await expect(service.expand(league.id, contest.id, 50, 'commissioner-1')).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE', statusCode: 400 });
+    expect(writes).toEqual([]);
+  });
+
+  it('lets a root admin give an expansion to a contest of an inactive league', async () => {
+    const { service, league, contest, writes } = setup({ leagueActive: false });
+
+    await expect(service.grant(league.id, contest.id, 75, 'Charity pool', 'admin-1')).resolves.toMatchObject({ entriesPerContest: 75 });
+    expect(writes).toHaveLength(1);
   });
 
   it('lets a draft contest be expanded although it takes no entries yet', async () => {

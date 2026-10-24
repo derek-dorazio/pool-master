@@ -14,9 +14,15 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
-import { PrismaContestExpansionRepository, PrismaContestRepository, PrismaLeagueMembershipRepository } from '../../adapters';
+import {
+  PrismaContestExpansionRepository,
+  PrismaContestRepository,
+  PrismaLeagueMembershipRepository,
+  PrismaLeagueRepository,
+} from '../../adapters';
 import { getAppPrisma } from '../../core/prisma-context';
 import { requireRootAdmin } from '../../core/root-admin-guard';
+import { requireAuthUser } from '../../plugins/auth-guard';
 import { requireCommissioner } from '../leagues/permissions';
 import { createContestService } from '../contests/wiring';
 import type { PlanModuleOptions } from '../plans/routes';
@@ -41,17 +47,13 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const expansions = new ContestExpansionService({
     contests: new PrismaContestRepository(prisma),
+    leagues: new PrismaLeagueRepository(prisma),
     expansions: new PrismaContestExpansionRepository(prisma),
     planEntitlements: opts.planEntitlements,
     entryWindow: createContestService(prisma, fastify.log, { planEntitlements: opts.planEntitlements }),
     readConfig: opts.readBillingConfig,
     logger: fastify.log,
   });
-
-  function actorId(request: FastifyRequest): string {
-    // The auth guard has run, so a signed-in user is there.
-    return request.authUser?.userId ?? '';
-  }
 
   fastify.get('/contests/:contestId/expansion', {
     schema: {
@@ -77,7 +79,7 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
       tags: ['Billing'],
       summary: 'Expand a contest',
       description:
-        'Raises the contest\'s entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league\'s payment history records a $0 line, "free while payments are off". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet.',
+        'Raises the contest\'s entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league\'s payment history records a $0 line, "free while payments are off". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; a root admin can still give an expansion.',
       operationId: 'expandContest',
       body: schemaRef('ExpandContestRequest'),
       response: {
@@ -91,7 +93,7 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: async (request: FastifyRequest<ContestParams & { Body: ExpandContestRequest }>, _reply: FastifyReply): Promise<ContestExpansionResponse> =>
-      expansions.expand(request.params.id, request.params.contestId, request.body.entriesPerContest, actorId(request)),
+      expansions.expand(request.params.id, request.params.contestId, request.body.entriesPerContest, requireAuthUser(request).userId),
   });
 
   fastify.post('/contests/:contestId/expansion/grant', {
@@ -118,7 +120,7 @@ export function billingModule(fastify: FastifyInstance, opts: BillingModuleOptio
         request.params.contestId,
         request.body.entriesPerContest,
         request.body.reason,
-        actorId(request),
+        requireAuthUser(request).userId,
       ),
   });
 }

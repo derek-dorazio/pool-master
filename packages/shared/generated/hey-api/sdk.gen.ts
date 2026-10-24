@@ -620,7 +620,7 @@ export const getContestExpansion = <ThrowOnError extends boolean = false>(option
 /**
  * Expand a contest
  *
- * Raises the contest's entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league's payment history records a $0 line, "free while payments are off". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet.
+ * Raises the contest's entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league's payment history records a $0 line, "free while payments are off". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; a root admin can still give an expansion.
  */
 export const expandContest = <ThrowOnError extends boolean = false>(options: Options<ExpandContestData, ThrowOnError>) => (options.client ?? client).post<ExpandContestResponses, ExpandContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
