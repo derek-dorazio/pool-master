@@ -471,6 +471,39 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
+  describe('LeagueMembershipRepository.findActiveJoinedSince (#903)', () => {
+    it("finds every league's active memberships joined at or after the time, in the order they joined, leaving out earlier and inactive ones", async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaLeagueMembershipRepository(prisma);
+      const first = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}J1`, 'Joins One');
+      const second = await createLeague(prisma, `${LEAGUE_CODE_PREFIX}J2`, 'Joins Two');
+      const [early, late, left, before] = await Promise.all([
+        createTestUser({ lastName: 'JoinEarly' }),
+        createTestUser({ lastName: 'JoinLate' }),
+        createTestUser({ lastName: 'JoinLeft' }),
+        createTestUser({ lastName: 'JoinBefore' }),
+      ]);
+      // Far in the future, so no other test's memberships fall in the window.
+      const since = new Date('2099-03-01T00:00:00.000Z');
+      const rows = [
+        { leagueId: second.id, userId: late.user.id, joinedAt: new Date('2099-03-01T12:00:00.000Z'), status: LeagueMembershipStatus.ACTIVE },
+        { leagueId: first.id, userId: early.user.id, joinedAt: since, status: LeagueMembershipStatus.ACTIVE },
+        { leagueId: first.id, userId: left.user.id, joinedAt: new Date('2099-03-01T06:00:00.000Z'), status: LeagueMembershipStatus.INACTIVE },
+        { leagueId: first.id, userId: before.user.id, joinedAt: new Date('2099-02-28T23:59:59.000Z'), status: LeagueMembershipStatus.ACTIVE },
+      ];
+      for (const row of rows) {
+        await prisma.leagueMembership.create({ data: { ...row, role: LeagueRole.MEMBER } });
+      }
+
+      const found = await repo.findActiveJoinedSince(since);
+
+      expect(found.map((membership) => [membership.leagueId, membership.userId])).toEqual([
+        [first.id, early.user.id],
+        [second.id, late.user.id],
+      ]);
+    });
+  });
+
   describe('LeagueRepository.findAll — the unscoped read (A1)', () => {
     it('filters by name search and isActive, and returns everything when unfiltered', async () => {
       const prisma = getPrisma();

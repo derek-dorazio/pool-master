@@ -611,7 +611,7 @@ export type PlanEntitlementsDto = {
     /**
      * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
      */
-    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
 };
 
 /**
@@ -642,7 +642,7 @@ export type LeaguePlanListResponse = {
         /**
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
-        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     }>;
 };
 
@@ -1518,7 +1518,7 @@ export type LeagueDto = {
         /**
          * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
          */
-        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     };
     /**
      * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
@@ -1825,7 +1825,7 @@ export type LeagueResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
@@ -1922,7 +1922,7 @@ export type LeagueContextResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
@@ -2192,7 +2192,7 @@ export type LeagueListResponse = {
             /**
              * Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.
              */
-            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+            features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
         /**
          * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
@@ -12125,7 +12125,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED';
 
 /**
  * Whether and how system email is sent.
@@ -12215,6 +12215,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         EVENT_WEEKLY_DIGEST: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        LEAGUE_MEMBER_JOINED: boolean;
         /**
          * Whether this email is sent.
          */
@@ -12404,6 +12408,10 @@ export type PlanConfig = {
          * The first plan that has the feature; every plan above it has it too.
          */
         EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
         /**
          * The first plan that has the feature; every plan above it has it too.
          */
@@ -13273,6 +13281,10 @@ export type SettingsGroup = {
             /**
              * Whether this email is sent.
              */
+            LEAGUE_MEMBER_JOINED: boolean;
+            /**
+             * Whether this email is sent.
+             */
             CONTEST_NOT_OPEN: boolean;
             /**
              * Whether this email is sent.
@@ -13372,6 +13384,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -13610,6 +13626,10 @@ export type SettingsGroup = {
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
             CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
@@ -13732,6 +13752,10 @@ export type SettingsGroup = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -14214,6 +14238,10 @@ export type SettingsGroupList = {
                 /**
                  * Whether this email is sent.
                  */
+                LEAGUE_MEMBER_JOINED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
                 CONTEST_NOT_OPEN: boolean;
                 /**
                  * Whether this email is sent.
@@ -14313,6 +14341,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -14551,6 +14583,10 @@ export type SettingsGroupList = {
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
                 CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
@@ -14673,6 +14709,10 @@ export type SettingsGroupList = {
                  * The first plan that has the feature; every plan above it has it too.
                  */
                 EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
@@ -14955,6 +14995,10 @@ export type SettingsGroupUpdateRequest = {
             /**
              * Whether this email is sent.
              */
+            LEAGUE_MEMBER_JOINED: boolean;
+            /**
+             * Whether this email is sent.
+             */
             CONTEST_NOT_OPEN: boolean;
             /**
              * Whether this email is sent.
@@ -15103,6 +15147,10 @@ export type SettingsGroupUpdateRequest = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -15563,6 +15611,10 @@ export type SettingsChange = {
             /**
              * Whether this email is sent.
              */
+            LEAGUE_MEMBER_JOINED: boolean;
+            /**
+             * Whether this email is sent.
+             */
             CONTEST_NOT_OPEN: boolean;
             /**
              * Whether this email is sent.
@@ -15662,6 +15714,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_WEEKLY_DIGEST: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            LEAGUE_MEMBER_JOINED: boolean;
             /**
              * Whether this email is sent.
              */
@@ -15878,6 +15934,10 @@ export type SettingsChange = {
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
             CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
@@ -16000,6 +16060,10 @@ export type SettingsChange = {
              * The first plan that has the feature; every plan above it has it too.
              */
             EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             /**
              * The first plan that has the feature; every plan above it has it too.
              */
@@ -16460,6 +16524,10 @@ export type SettingsChangeList = {
                 /**
                  * Whether this email is sent.
                  */
+                LEAGUE_MEMBER_JOINED: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
                 CONTEST_NOT_OPEN: boolean;
                 /**
                  * Whether this email is sent.
@@ -16559,6 +16627,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_WEEKLY_DIGEST: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                LEAGUE_MEMBER_JOINED: boolean;
                 /**
                  * Whether this email is sent.
                  */
@@ -16775,6 +16847,10 @@ export type SettingsChangeList = {
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
                 CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
@@ -16897,6 +16973,10 @@ export type SettingsChangeList = {
                  * The first plan that has the feature; every plan above it has it too.
                  */
                 EMAIL_YEAR_IN_REVIEW: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_LEAGUE_MEMBER_JOINED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
                 /**
                  * The first plan that has the feature; every plan above it has it too.
                  */

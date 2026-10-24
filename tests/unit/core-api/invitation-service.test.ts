@@ -36,6 +36,7 @@ import { inMemoryEmailMessages } from '../../support/in-memory-email-messages';
 
 /** A league with no open contests, for the welcome email's list. */
 const NO_CONTESTS = { findOpenByLeague: async () => [] };
+const NOBODY_TOLD = { tellJoined: async () => undefined };
 
 function createMockInvitationRepo(
   overrides: Partial<LeagueInvitationRepository> = {},
@@ -158,6 +159,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       const result = await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -189,6 +191,7 @@ describe('InvitationService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com/',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       const result = await service.sendEmailInvitations({
@@ -235,6 +238,7 @@ describe('InvitationService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       const result = await service.sendEmailInvitations({
@@ -262,6 +266,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo({ findById: jest.fn().mockResolvedValue(null) }),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await expect(service.sendEmailInvitations({
@@ -285,6 +290,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       const result = await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -303,6 +309,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await service.sendEmailInvitations({
         leagueId: 'league-1',
@@ -322,6 +329,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await service.generateInviteLink({
         leagueId: 'league-1',
@@ -340,6 +348,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await service.generateInviteLink({
         leagueId: 'league-1',
@@ -369,6 +378,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       const listed = await service.listOutstandingInvitations('league-1');
@@ -401,6 +411,7 @@ describe('InvitationService', () => {
         }),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
         email: mailDelivery ? emailServiceOver(mailDelivery) : undefined,
         appBaseUrl: 'https://app.example.com',
       });
@@ -506,6 +517,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await service.revokeInviteLink('league-1', 'abc123');
       expect(invitationRepo.update).toHaveBeenCalledWith(invitation.id, {
@@ -526,6 +538,7 @@ describe('InvitationService', () => {
           leagues: createMockLeagueRepo(),
           users: fakeUserRepo(),
           contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
         });
         await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toMatchObject({
           code: 'LEAGUE_INVITATION_NOT_CANCELLABLE',
@@ -541,6 +554,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.revokeInviteLink('league-1', 'nope')).rejects.toThrow(
         InvitationNotFoundError,
@@ -558,6 +572,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.revokeInviteLink('league-1', 'abc123')).rejects.toThrow(
         InvitationNotFoundError,
@@ -588,6 +603,7 @@ describe('InvitationService', () => {
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await service.acceptInvitation('valid-code', 'new-user');
       expect(membershipRepo.create).toHaveBeenCalledTimes(1);
@@ -630,6 +646,7 @@ describe('InvitationService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await service.acceptInvitation('valid-code', 'new-user');
@@ -678,6 +695,7 @@ describe('InvitationService', () => {
         email: emailServiceOver(mailDelivery),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await expect(service.acceptInvitation('valid-code', 'existing-user')).rejects.toThrow(
@@ -711,6 +729,7 @@ describe('InvitationService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await expect(service.acceptInvitation('valid-code', 'new-user')).resolves.toEqual(
@@ -774,6 +793,7 @@ describe('InvitationService', () => {
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await service.acceptInvitation('valid-code', 'returning-user');
@@ -801,6 +821,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.acceptInvitation('unknown', 'user-1')).rejects.toThrow(
         InvitationNotFoundError,
@@ -818,6 +839,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -838,6 +860,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -864,6 +887,7 @@ describe('InvitationService', () => {
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -886,6 +910,7 @@ describe('InvitationService', () => {
         leagues: createMockLeagueRepo(),
         users: fakeUserRepo(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
       await expect(service.acceptInvitation('code', 'user-1')).rejects.toThrow(
         InvitationInvalidError,
@@ -916,6 +941,7 @@ describe('InvitationService', () => {
         prisma: asPrismaClient(createMockProvisioningPrisma()),
         users: createProvisioningUsers(),
         contests: NO_CONTESTS,
+        memberJoined: NOBODY_TOLD,
       });
 
       await service.acceptInvitation('code', 'user-1');

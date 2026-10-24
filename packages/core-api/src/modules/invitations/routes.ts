@@ -26,6 +26,7 @@ import { InvitationService } from '../leagues/invitation-service';
 import { createInvitationHandlers } from '../leagues/invitation-handler';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
+import { createMemberJoinedNotices } from '../notifications/wiring';
 
 export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
@@ -48,6 +49,7 @@ export function invitationsModule(fastify: FastifyInstance, opts: MailModuleOpti
     squadMemberships: squadMembershipRepo,
     users: userRepo,
     contests: new PrismaContestRepository(prisma),
+    memberJoined: createMemberJoinedNotices(prisma, { email, appBaseUrl, logger: fastify.log }),
     prisma,
     logger: fastify.log,
     email,

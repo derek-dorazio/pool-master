@@ -64,7 +64,7 @@ import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from './modules/events/wiring';
 import { EventLifecycleScheduler } from './modules/events/event-lifecycle-scheduler';
-import { createCommissionerNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings } from './modules/notifications';
+import { createCommissionerNotices, createContestNotices, createDraftEventNotices, createEntryReminders, createLiveStandings, createMemberJoinedNotices } from './modules/notifications';
 import { ProviderSyncRunLedger } from './modules/ingestion/persistence/provider-sync-run-ledger';
 import { registerConfiguredProviders } from './modules/ingestion/core/provider-bindings';
 import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
@@ -135,6 +135,7 @@ export function buildApp() {
       createLiveStandings(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
       createCommissionerNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log, planEntitlements }),
       createDraftEventNotices(prisma, { email, appBaseUrl, logger: app.log }),
+      createMemberJoinedNotices(prisma, { email, appBaseUrl, logger: app.log }),
     ],
     logger: app.log,
   });

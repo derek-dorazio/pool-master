@@ -43,6 +43,7 @@ import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { LeaguePlanService } from '../plans/league-plan-service';
 import type { PlanModuleOptions } from '../plans/routes';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
+import { createMemberJoinedNotices } from '../notifications/wiring';
 
 export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
   // Routes below $ref named components, so they must be registered on this instance.
@@ -75,6 +76,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     squadMemberships: squadMembershipRepo,
     users: userRepo,
     contests: new PrismaContestRepository(prisma),
+    memberJoined: createMemberJoinedNotices(prisma, { email, appBaseUrl, logger: fastify.log }),
     prisma,
     logger: fastify.log,
     email,

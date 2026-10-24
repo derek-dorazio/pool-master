@@ -36,6 +36,7 @@ import {
   type EmailService,
 } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import type { MemberJoinedNotices } from '../notifications/member-joined-notices';
 
 export interface SendInvitationsInput {
   leagueId: string;
@@ -89,6 +90,8 @@ export interface InvitationServiceDeps {
   users: UserRepository;
   /** The league's open contests, listed in the welcome email. */
   contests: Pick<ContestRepository, 'findOpenByLeague'>;
+  /** Tells the league's commissioners someone joined. */
+  memberJoined: Pick<MemberJoinedNotices, 'tellJoined'>;
   prisma?: PrismaClient;
   logger?: FastifyBaseLogger;
   email?: EmailService;
@@ -556,6 +559,7 @@ export class InvitationService {
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       userId,
     });
+    await this.deps.memberJoined.tellJoined(league, membership);
     this.logger?.info({
       action: 'leagueInvitation.accept.success',
       data: {

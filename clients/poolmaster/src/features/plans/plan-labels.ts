@@ -32,6 +32,7 @@ export const PLAN_FEATURE_LABEL: Readonly<Record<PlanFeature, string>> = {
   [PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS]: 'Ready for contests email',
   [PlanFeature.EMAIL_CONTEST_NOT_OPEN]: 'Contest not open email',
   [PlanFeature.EMAIL_YEAR_IN_REVIEW]: 'Year in review email',
+  [PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED]: 'New member email',
   [PlanFeature.CUP_STANDINGS]: 'Sports league cups',
   [PlanFeature.CUP_CROWNING]: 'Crowning cups',
   [PlanFeature.CHAMPIONSHIP]: 'League championship',
