@@ -300,7 +300,7 @@ export class LiveStandings implements DueNotifications {
     const roundNames = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
     // Its games tell its round count where the event stores none, as entry receipts read it.
     const roundCount = Math.max(sportEvent.rounds ?? 0, lastRound);
-    const roundName = (round: number): string => eventRoundLabel(sportEvent.sport, roundNames, round, roundCount);
+    const roundName = (round: number): string => eventRoundLabel(sportEvent, roundNames, round, roundCount);
     const nextStart = matches
       .flatMap((match) => (match.roundNumber === roundNumber + 1 && match.scheduledDate !== null ? [match.scheduledDate.getTime()] : []))
       .sort((left, right) => left - right)

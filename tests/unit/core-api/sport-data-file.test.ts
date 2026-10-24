@@ -543,6 +543,109 @@ describe('sport data bracket', () => {
   });
 });
 
+describe('sport data stat pool box scores (#935)', () => {
+  interface StatPoolFile {
+    testData: boolean;
+    scope: { sport: string; contents: string[] };
+    sportLeagues: Array<{
+      players: Array<Record<string, unknown>>;
+      events: Array<{ rounds: number; field: Array<Record<string, unknown>>; games?: Array<{ gameNumber: number; lines: Array<{ player: string; stats: Record<string, number> }> }> }>;
+    }>;
+  }
+
+  /** The World Series as a stat pool: two hitters, their lines for the first two games. */
+  function worldSeries(): StatPoolFile {
+    const file = {
+      schemaVersion: 1,
+      scope: { sport: 'BASEBALL', season: 2025, sportLeagues: ['World Series'], contents: ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS'] },
+      testData: false,
+      provenance: { gatheredAt: '2026-10-24', gatheredBy: 'load-sport-data skill', sources: [{ name: 'MLB Stats API', url: 'https://statsapi.mlb.com' }] },
+      sportLeagues: [{
+        name: 'World Series',
+        players: [
+          { key: 'mlb-shohei-ohtani', name: 'Shohei Ohtani', countryCode: 'JP', ranking: 1, team: 'Los Angeles Dodgers', position: 'DH' },
+          { key: 'mlb-bo-bichette', name: 'Bo Bichette', countryCode: 'US', ranking: 2, team: 'Toronto Blue Jays', position: 'SS' },
+        ],
+        events: [{
+          key: 'world-series-2025',
+          name: 'World Series',
+          startDate: '2025-10-24',
+          endDate: '2025-11-01',
+          venue: null,
+          location: null,
+          rounds: 7,
+          roundsPar: null,
+          field: [{ player: 'mlb-shohei-ohtani', ranking: 1 }, { player: 'mlb-bo-bichette', ranking: 2 }],
+          games: [
+            { gameNumber: 1, lines: [{ player: 'mlb-shohei-ohtani', stats: { TOTAL_BASES: 4, RUNS: 1, RUNS_BATTED_IN: 2, WALKS: 1 } }] },
+            { gameNumber: 2, lines: [{ player: 'mlb-bo-bichette', stats: { TOTAL_BASES: 1 } }, { player: 'mlb-shohei-ohtani', stats: {} }] },
+          ],
+        }],
+      }],
+    };
+    return file as StatPoolFile;
+  }
+
+  it('reads a real stat pool file: players with their team and position, and each game\'s box score', () => {
+    const file = parseSportDataFile(worldSeries(), { allowTestData: false });
+
+    expect(file.sportLeagues[0].players[0]).toMatchObject({ team: 'Los Angeles Dodgers', position: 'DH' });
+    expect(file.sportLeagues[0].events[0].games?.map((game) => [game.gameNumber, game.lines.length])).toEqual([[1, 1], [2, 2]]);
+  });
+
+  it('reads a stat pool test seed tiered by its ranking, with no made-up odds and no bracket', () => {
+    const seed = worldSeries();
+    seed.testData = true;
+    seed.scope.contents.push('RESULTS');
+
+    expect(problemsOf(seed, true)).toEqual([]);
+  });
+
+  it('refuses a stat pool test seed entry with no ranking to tier it by', () => {
+    const seed = worldSeries();
+    seed.testData = true;
+    seed.scope.contents.push('RESULTS');
+    delete seed.sportLeagues[0].events[0].field[1].ranking;
+
+    expect(problemsOf(seed, true)).toEqual(['World Series, World Series: mlb-bo-bichette needs a ranking in test data, to tier the field by.']);
+  });
+
+  it('refuses a game beyond the series or given twice, a line off the field or twice in a game, and a stat the Box Score does not count', () => {
+    const file = worldSeries();
+    const event = file.sportLeagues[0].events[0];
+    event.games?.push(
+      { gameNumber: 8, lines: [] },
+      { gameNumber: 2, lines: [] },
+      { gameNumber: 3, lines: [
+        { player: 'mlb-nobody', stats: {} },
+        { player: 'mlb-bo-bichette', stats: { POINTS: 3 } },
+        { player: 'mlb-bo-bichette', stats: {} },
+      ] },
+    );
+
+    expect(problemsOf(file)).toEqual([
+      'World Series, World Series: game 2 appears more than once.',
+      'World Series, World Series: game 8 is beyond its 7 games.',
+      'World Series, World Series: game 3: mlb-bo-bichette has more than one line.',
+      'World Series, World Series: game 3: mlb-nobody is not in the field.',
+      'World Series, World Series: game 3: mlb-bo-bichette\'s POINTS is not a stat the Box Score counts.',
+    ]);
+  });
+
+  it('refuses box scores the scope\'s contents leave out, STATS without FIELDS, and STATS for a sport with no stat pool', () => {
+    const unscoped = worldSeries();
+    unscoped.scope.contents = ['SCHEDULE', 'PLAYERS', 'FIELDS'];
+    expect(problemsOf(unscoped)).toEqual(['World Series, World Series: has box scores, but the scope\'s contents leave out STATS.']);
+
+    const fieldless = worldSeries();
+    fieldless.scope.contents = ['SCHEDULE', 'STATS'];
+    expect(problemsOf(fieldless)).toContain('scope.contents has STATS without FIELDS: a box score names field players, so the file carries the field.');
+
+    const golf = edited((file) => file.scope.contents.push('STATS'));
+    expect(problemsOf(golf)).toContain('scope.contents has STATS, but golf has no stat pool.');
+  });
+});
+
 describe('sport data test slate', () => {
   function slate(): Record<string, unknown> {
     return {

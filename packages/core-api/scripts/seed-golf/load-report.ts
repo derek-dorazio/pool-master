@@ -1,6 +1,6 @@
 /**
  * What a sport data load did, or in a dry run would do: one row per sport league, player,
- * event, event field and bracket (and, with test participants, per test player, league,
+ * event, event field, bracket and box scores (and, with test participants, per test player, league,
  * membership, contest and entry), and the markdown the workflow summary shows. No I/O.
  */
 
@@ -21,6 +21,8 @@ export const LoadSubject = {
   FIELD: 'FIELD',
   /** One row per event: its bracket as a whole. */
   BRACKET: 'BRACKET',
+  /** One row per stat pool event: its games' box scores as a whole. */
+  STATS: 'STATS',
   /** A test player's sign-up (test participants only, as are the rows below). */
   TEST_PLAYER: 'TEST_PLAYER',
   /** A sport league's test pool: the league the test players play in. */
@@ -58,6 +60,7 @@ const SUBJECT_LABEL: Record<LoadSubject, string> = {
   EVENT: 'Event',
   FIELD: 'Field',
   BRACKET: 'Bracket',
+  STATS: 'Box scores',
   TEST_PLAYER: 'Test player',
   TEST_LEAGUE: 'Test league',
   TEST_MEMBER: 'League member',
