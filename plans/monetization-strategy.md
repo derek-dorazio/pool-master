@@ -200,7 +200,7 @@ Kept for later refinement and tickets, none scheduled:
 
 ### Open questions: first build
 
-Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5 and 7 agreed;
+Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 to 5, 7 and 10 agreed;
 6 changed to no league size cap.
 
 1. **Decided (Derek 2026-10-24): yes.** **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
@@ -227,7 +227,7 @@ Each has a recommendation; answer only where you disagree. Derek 2026-10-24: 1 t
    results stay "Always" and can't be changed.
 9. **Platinum fixed at unlimited and every feature, and caps must not fall as the plan
    rises?** Recommended: yes, so the default plan can never lose anything through a typo.
-10. **First build caps are only entries per contest and sports leagues per year**, with selection types, pool styles and the others in *Not in the first build*?
+10. **Decided (Derek 2026-10-24): yes, without league size.** **First build caps are only entries per contest and sports leagues per year**, with selection types, pool styles and the others in *Not in the first build*?
     Recommended: yes; they are what you named, and selection types can join the same
     settings later in one small slice.
 11. **A dedicated Plans page in the root admin, saved as one `PLAN_CONFIG` settings group?**
