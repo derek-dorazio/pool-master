@@ -1,5 +1,5 @@
 import { createColumnHelper } from "@tanstack/react-table";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { DataGrid } from "./data-grid";
 
@@ -251,6 +251,22 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
 
       expect(await screen.findByTestId("test-row-row-5")).toHaveAttribute("aria-current", "true");
       expect(screen.getByRole("navigation", { name: "Pages" })).toHaveTextContent("1–2 of 5");
+    });
+
+    it("scrolls to the row on every jump, a repeat one included, and not on a later sort", async () => {
+      const scroll = vi.spyOn(Element.prototype, "scrollIntoView");
+      scroll.mockClear();
+      render(grid("row-5"));
+
+      fireEvent.click(screen.getByTestId("test-jump"));
+      await screen.findByTestId("test-row-row-5");
+      fireEvent.click(screen.getByTestId("test-jump"));
+      await waitFor(() => expect(scroll).toHaveBeenCalledTimes(2));
+
+      fireEvent.click(screen.getByRole("button", { name: /^Name/ }));
+
+      expect(scroll).toHaveBeenCalledTimes(2);
+      scroll.mockRestore();
     });
 
     it("offers no jump for a row that is not in the data", () => {

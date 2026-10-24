@@ -31,7 +31,7 @@ export type DataGridSearch = {
  */
 export type DataGridJumpToRow = {
   rowId: string;
-  /** The button's text, e.g. "Jump to my squad". */
+  /** The button's text, e.g. "Jump to Casey Crushers". */
   label: string;
   testId?: string;
 };
@@ -106,8 +106,10 @@ export function DataGrid<TData>({
 
   // Set by the jump action until the unfiltered rows render; then its page is turned to.
   const [pendingJumpRowId, setPendingJumpRowId] = useState<string | null>(null);
-  // The row the last jump landed on, highlighted until the next jump.
-  const [jumpedRowId, setJumpedRowId] = useState<string | null>(null);
+  // The last jump that landed: its row stays highlighted until the next jump. A new object per
+  // jump, so a repeat jump to the same row scrolls again and nothing else (a sort, a page) does.
+  const [landedJump, setLandedJump] = useState<{ rowId: string } | null>(null);
+  const jumpedRowId = landedJump?.rowId ?? null;
   const tableRef = useRef<HTMLTableElement>(null);
 
   const resetPageIndex = () =>
@@ -166,17 +168,18 @@ export function DataGrid<TData>({
       return;
     }
     setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
-    setJumpedRowId(pendingJumpRowId);
+    setLandedJump({ rowId: pendingJumpRowId });
   }, [isUnfiltered, pendingJumpRowId, sortedRows]);
 
+  // Runs after the render that turned to the row's page, so the row is there to scroll to.
   useEffect(() => {
-    if (jumpedRowId === null) {
+    if (landedJump === null) {
       return;
     }
     tableRef.current
-      ?.querySelector(`[data-row-id="${CSS.escape(jumpedRowId)}"]`)
+      ?.querySelector(`[data-row-id="${CSS.escape(landedJump.rowId)}"]`)
       ?.scrollIntoView({ block: "center", behavior: "smooth" });
-  }, [jumpedRowId, pagination.pageIndex]);
+  }, [landedJump]);
 
   const jump = (rowId: string) => {
     setGlobalFilter("");
