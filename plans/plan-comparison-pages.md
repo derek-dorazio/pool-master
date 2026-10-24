@@ -71,9 +71,9 @@ moves its tick on both pages and its line in the highlights with no deploy
 Route `/plans`, outside the sign-in guard, like How to Play. Sections, top to bottom:
 
 1. Header with How to Play, **Plans**, Sign in and Start free.
-2. Heading, one line on what every plan includes, and the gift pill: every new league gets
-   Premium free for its first months, length read from config, never a plan "trial" or a
-   countdown (wording is with Derek; the old "Every plan is free for now" pill goes).
+2. Heading, one line on what every plan includes, and the gift pill (Derek 2026-10-24):
+   "Every new league gets Premium free for a 6-month preview period", the length read from
+   config, never a "trial" or a countdown. It replaces "Every plan is free for now".
 3. The four plan cards.
 4. **Compare every plan**: the table, each row with its one-line description (Q6).
 5. A few questions: who chooses the plan, what happens on a lower plan, no member limit, what a
@@ -126,7 +126,8 @@ Members never reach this page and never see a plan name, as now.
 
 ### Gift copy
 
-The current plan card on a gifted league reads "Premium gifted until 24 Apr 2027" from
+The current plan card on a gifted league reads "Premium gifted for your preview period, until
+24 Apr 2027" (Derek 2026-10-24: present the gift as a preview period) from
 `League.planRenewsAt`, with one line on what happens then: the league moves to Free, keeps
 everything it has, and can expand any contest. Never punitive: no countdown, no "you will
 lose", no red. The 30 / 7 / 1 day emails are payments' (§3), not this page's.
