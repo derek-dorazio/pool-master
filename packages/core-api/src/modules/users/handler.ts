@@ -193,7 +193,7 @@ export function createUserHandlers(
   ) {
     return run(request, reply, 'user.listPayments', async (actor) => {
       // Payments are the account's own: the subject themselves, or a root admin (A6).
-      const user = await userService.writableUser(actor, subjectOf(actor, request.params.userId));
+      const user = await userService.readUser(actor, subjectOf(actor, request.params.userId));
       return reply.send(toUserPaymentListResponse(await payments.listForPayer(user.id)));
     });
   }

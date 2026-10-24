@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import type { LeaguePaymentRecord, LeaguePaymentRepository, PayerPaymentRecord } from '@poolmaster/shared/db';
+import type { LeaguePaymentKind } from '@poolmaster/shared/domain';
 
 /** A league's payment history, and a user's payments across leagues (#987). */
 export class PrismaLeaguePaymentRepository implements LeaguePaymentRepository {
@@ -11,6 +12,7 @@ export class PrismaLeaguePaymentRepository implements LeaguePaymentRepository {
       orderBy: [{ paidAt: 'desc' }, { id: 'asc' }],
       select: {
         id: true,
+        kind: true,
         contestId: true,
         amountCents: true,
         description: true,
@@ -20,9 +22,9 @@ export class PrismaLeaguePaymentRepository implements LeaguePaymentRepository {
     });
   }
 
-  async listForPayer(userId: string): Promise<PayerPaymentRecord[]> {
+  async listForPayer(userId: string, kinds: readonly LeaguePaymentKind[]): Promise<PayerPaymentRecord[]> {
     return this.prisma.leaguePayment.findMany({
-      where: { payerId: userId },
+      where: { payerId: userId, kind: { in: [...kinds] } },
       orderBy: [{ paidAt: 'desc' }, { id: 'asc' }],
       select: {
         id: true,

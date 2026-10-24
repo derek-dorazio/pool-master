@@ -899,7 +899,8 @@ free with a reason (`POST …/expansion/grant`), recorded as a $0 line naming th
 line under League settings › Payments (`GET /api/v1/leagues/:id/billing/payments`), newest
 first, with its contest and payer; a user sees the payments they made in any league on My
 profile (`GET /api/v1/users/:userId/payments`, the user themselves or a root admin). Lines keep
-their description when the contest or payer is later deleted.
+their description when the contest or payer is later deleted. A root admin's grant names no payer
+to the league (it reads "given free by Poolmaster") and is not on the admin's own list.
 
 **An entry counts only once submitted** (#481). It is created `DRAFT`, and its owner submits it
 when the lineup is complete. The leaderboard, settlement, the contest-started email and a

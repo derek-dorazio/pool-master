@@ -53,6 +53,7 @@ export interface PaymentPayer {
 /** One line of a league's payment history (#987), with its payer when they still exist. */
 export interface LeaguePaymentRecord {
   id: string;
+  kind: LeaguePaymentKind;
   contestId: string | null;
   payer: PaymentPayer | null;
   amountCents: number;
@@ -72,6 +73,6 @@ export interface PayerPaymentRecord {
 export interface LeaguePaymentRepository {
   /** The league's payment history, newest first. */
   listForLeague(leagueId: string): Promise<LeaguePaymentRecord[]>;
-  /** Every payment the user made, in any league, newest first. */
-  listForPayer(userId: string): Promise<PayerPaymentRecord[]>;
+  /** The user's payments of the listed kinds, in any league, newest first. */
+  listForPayer(userId: string, kinds: readonly LeaguePaymentKind[]): Promise<PayerPaymentRecord[]>;
 }
