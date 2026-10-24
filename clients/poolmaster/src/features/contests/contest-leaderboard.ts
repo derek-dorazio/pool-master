@@ -7,12 +7,12 @@
  * component so each branch is unit-testable on its own.
  *
  * What is deliberately NOT here: anything a scoring family decides — its columns and its cells.
- * The response's sport names its definition, the definition names its scoring family, and
+ * The response's sport and its sport league's overrides name its definition, the definition names its scoring family, and
  * `SCORING_FAMILY_UI` answers for that family (#606). An entry's total is one number in every
  * family (#695), read through the response's scoring definition.
  */
 
-import { getSportDefinition, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
+import { eventSportDefinition, PARTICIPANT_SCORING_DEFINITIONS } from '@poolmaster/shared/domain';
 import type { ContestLeaderboardResponse } from '@/lib/api';
 import type { ErrorCodeMessages } from '@/lib/errors';
 import {
@@ -23,6 +23,7 @@ import {
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type {
   LeaderboardDetailCell,
+  LeaderboardPickBreakdown,
   LeaderboardDetailColumn,
   LeaderboardFootnote,
 } from './scoring-family-ui/types';
@@ -39,6 +40,8 @@ export interface LeaderboardPickRow {
   total: string | null;
   /** One cell per entry of the view's `detailColumns`, in that order. */
   detailCells: LeaderboardDetailCell[];
+  /** What the row opens to: a stat pool player's stats in each game. Absent where the family has none. */
+  breakdown?: LeaderboardPickBreakdown;
 }
 
 /** One event's result for an entry in a contest of several events (#713). */
@@ -80,7 +83,8 @@ export interface LeaderboardView {
  * server-side against the scoring definition's direction.
  */
 export function buildLeaderboardView(response: ContestLeaderboardResponse): LeaderboardView {
-  const sport = getSportDefinition(response.sport);
+  // The shown event's definition: a stat pool plays its sport's composite, not its bracket.
+  const sport = eventSportDefinition(response);
   const family = getScoringFamilyUi(sport).leaderboard(response, sport);
   const scoringDefinition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
   const participantsById = new Map(

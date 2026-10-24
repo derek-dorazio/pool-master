@@ -15,6 +15,8 @@ import type {
 } from '@poolmaster/shared/dto';
 import {
   ScoringFamily,
+  eventSportDefinition,
+  type ParticipantType,
   type Sport,
   type Contest,
   type ContestEntry,
@@ -121,8 +123,12 @@ export interface ContestLeaderboardModel {
   /** The event whose field and picks are shown. */
   sportEventId: string;
   sport: Sport;
-  /** The shown event's scoring family, by its sport league's definition (#934): which pick detail its picks carry. */
-  scoringFamily: ScoringFamily;
+  /**
+   * The shown event's sport league overrides (#934), null where it plays as its sport. Its
+   * definition, read through them, names the scoring family whose pick detail its picks carry.
+   */
+  participantType: ParticipantType | null;
+  scoringFamily: ScoringFamily | null;
   scoringDefinitionId: ParticipantScoringDefinitionId;
   countingRule: ContestCountingRule;
   /** The shown event's field rows, published as the event's own canonical DTO. */
@@ -137,6 +143,9 @@ export interface ContestSportEventRow {
   name: string;
   startDate: Date;
   status: SportEventStatus;
+  /** Its sport league's overrides (#934), absent where it plays as its sport. */
+  participantType?: ParticipantType | null;
+  scoringFamily?: ScoringFamily | null;
 }
 
 function toContestSportEventDto(event: ContestSportEventRow, sequence: number): ContestSportEventDto {
@@ -146,6 +155,8 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
     name: event.name,
     startDate: event.startDate.toISOString(),
     status: event.status,
+    participantType: event.participantType ?? null,
+    scoringFamily: event.scoringFamily ?? null,
   };
 }
 
@@ -277,7 +288,7 @@ type LeaderboardEntryDto = ContestLeaderboardResponse['entries'][number];
 type LeaderboardPickDto = LeaderboardEntryDto['picks'][number];
 
 /** How a scoring family's detail block appears on a leaderboard pick (#606). */
-type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race' | 'knockout'>;
+type LeaderboardFamilyPickDetailMapper = (pick: ScoredContestEntryPickRow) => Pick<LeaderboardPickDto, 'golf' | 'race' | 'knockout' | 'composite'>;
 
 const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, LeaderboardFamilyPickDetailMapper>> = {
   [ScoringFamily.STROKE_PLAY]: (pick) => ({
@@ -288,8 +299,9 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
     },
     race: null,
     knockout: null,
+    composite: null,
   }),
-  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null }),
+  [ScoringFamily.FINISH_POSITION]: (pick) => ({ golf: null, race: { points: pick.participant.score }, knockout: null, composite: null }),
   [ScoringFamily.HEAD_TO_HEAD]: (pick) => {
     const { wins, upsetBonusPoints, isAlive } = participantScoreDetailFor(
       ScoringFamily.HEAD_TO_HEAD,
@@ -299,21 +311,30 @@ const LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY: Readonly<Record<ScoringFamily, 
       golf: null,
       race: null,
       knockout: { points: pick.participant.score, wins, upsetBonusPoints, isAlive },
+      composite: null,
     };
   },
-  // A stat pool's per-game block arrives with its leaderboard columns (#936); the entry's total
-  // is already on the row.
-  [ScoringFamily.COMPOSITE]: () => ({ golf: null, race: null, knockout: null }),
+  [ScoringFamily.COMPOSITE]: (pick) => ({
+    golf: null,
+    race: null,
+    knockout: null,
+    composite: {
+      points: pick.participant.score,
+      games: participantScoreDetailFor(ScoringFamily.COMPOSITE, pick.participant.detail).gameScores,
+    },
+  }),
 };
 
 export function toContestLeaderboardResponse(
   leaderboard: ContestLeaderboardModel,
 ): ContestLeaderboardResponse {
-  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[leaderboard.scoringFamily];
+  const pickDetail = LEADERBOARD_PICK_DETAIL_BY_SCORING_FAMILY[eventSportDefinition(leaderboard).scoringFamily];
   return {
     contestId: leaderboard.contestId,
     sportEventId: leaderboard.sportEventId,
     sport: leaderboard.sport,
+    participantType: leaderboard.participantType,
+    scoringFamily: leaderboard.scoringFamily,
     scoringDefinitionId: leaderboard.scoringDefinitionId,
     countingRule: leaderboard.countingRule,
     participants: leaderboard.participants.map(mapSportEventParticipantToDto),

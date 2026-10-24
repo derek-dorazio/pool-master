@@ -1,7 +1,7 @@
 import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
 import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
-import { selectionParticipantLabel } from './contest-sport';
+import { participantAffiliation, selectionParticipantLabel } from './contest-sport';
 import type { SelectionGroup } from './contest-entry-selection';
 
 /**
@@ -78,7 +78,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
           {dealtGolfers.map((golfer) => (
             <li className="px-4 py-3 text-sm" key={golfer.sportEventParticipantId}>
               <div className="font-medium text-foreground">{selectionParticipantLabel(golfer)}</div>
-              {golfer.team ? <div className="mt-1 text-xs text-muted-foreground">{golfer.team}</div> : null}
+              {golfer.team ? <div className="mt-1 text-xs text-muted-foreground">{participantAffiliation(golfer)}</div> : null}
             </li>
           ))}
         </ul>

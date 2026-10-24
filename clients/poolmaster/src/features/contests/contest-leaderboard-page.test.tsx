@@ -358,6 +358,44 @@ function primeMocks(opts?: {
 }
 
 describe('ContestLeaderboardPage', () => {
+  it('shows a stat pool\'s players with one column per game, and a player\'s name opens their stats in each game', async () => {
+    const base = leaderboardResponse().data;
+    const ohtani = {
+      ...participant({ id: 'sep-1', name: 'Shohei Ohtani' }),
+      standing: null,
+      rounds: [{
+        id: 'round-sep-1-1', sportEventRoundId: 'event-round-1', roundNumber: 1, status: 'COMPLETED', completedAt: null, golf: null,
+        statLines: [{ stat: 'TOTAL_BASES', value: 4 }, { stat: 'RUNS', value: 1 }],
+      }],
+    };
+    primeMocks({
+      leaderboard: {
+        ...base,
+        sport: 'BASEBALL',
+        participantType: 'INDIVIDUAL',
+        scoringFamily: 'COMPOSITE',
+        scoringDefinitionId: 'COMPOSITE_TOTAL',
+        participants: [ohtani],
+        entries: [{
+          ...base.entries[0],
+          totalScore: 5,
+          picks: [{ ...base.entries[0].picks[0], golf: null, composite: { points: 5, games: [{ roundNumber: 1, score: 5 }] } }],
+        }],
+      },
+    });
+
+    renderLeaderboard();
+
+    const row = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
+    expect(screen.getByText('G1')).toBeInTheDocument();
+    expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-1')).toHaveTextContent('5');
+    expect(screen.queryByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1')).not.toBeInTheDocument();
+
+    fireEvent.click(within(row).getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1-toggle'));
+
+    expect(screen.getByTestId('contest-leaderboard-pick-breakdown-entry-1-pick-1')).toHaveTextContent('Game 15 (4 TB, 1 R)');
+  });
+
   it('renders each entry\'s standing with a row per golfer, a total and one cell per round', async () => {
     primeMocks();
 

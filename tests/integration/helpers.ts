@@ -200,7 +200,11 @@ async function buildTestApp(): Promise<FastifyInstance> {
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
-  testApp.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
+  testApp.register(plansModule, {
+    prefix: '/api/v1/plans',
+    planEntitlements,
+    readBillingConfig: () => settings.get(BILLING_SETTINGS),
+  });
   testApp.register(billingModule, {
     prefix: '/api/v1/leagues/:id/billing',
     planEntitlements,

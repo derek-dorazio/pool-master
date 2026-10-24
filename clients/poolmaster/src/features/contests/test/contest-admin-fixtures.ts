@@ -61,6 +61,8 @@ export function buildContestSportEvent(
     name: 'The Masters',
     startDate: FUTURE_START,
     status: 'SCHEDULED',
+    participantType: null,
+    scoringFamily: null,
     ...overrides,
   };
 }

@@ -14,7 +14,7 @@ import {
   StatusBadge,
   Tile,
 } from '@/features/shared/ui';
-import { selectionParticipantLabel, unavailableParticipantLabel } from './contest-sport';
+import { participantAffiliation, selectionParticipantLabel, unavailableParticipantLabel } from './contest-sport';
 import type { SelectionGroup, SelectionParticipant } from './contest-entry-selection';
 
 type BudgetLineupSummary = NonNullable<SelectionStateResponse['lineupSummary']>;
@@ -96,6 +96,7 @@ function BudgetParticipantRow({
 }) {
   const isSelected = Boolean(participant.isSelected);
   const hasPrice = participant.price !== undefined && participant.price !== null;
+  const affiliation = participantAffiliation(participant);
   // A held participant stays tappable even after withdrawing: tapping again removes them.
   const isDisabled = isBusy
     || !canSelect
@@ -126,6 +127,7 @@ function BudgetParticipantRow({
       <Checkbox aria-label={actionLabel} checked={isSelected} readOnly tabIndex={-1} />
       <span className="min-w-0 flex-1">
         <span className="block font-medium text-foreground">{selectionParticipantLabel(participant)}</span>
+        {affiliation ? <span className="block text-xs text-muted-foreground">{affiliation}</span> : null}
         <span className="block text-xs text-muted-foreground">{actionLabel}</span>
       </span>
       <span className="font-semibold tabular-nums text-foreground">
