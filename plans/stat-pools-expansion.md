@@ -110,13 +110,31 @@ stat pool screens (#936) are done by mid-November. Skip it unless they are.
 
 ## 5. Questions for Derek
 
-- **Q1. Soccer composite.** *Recommend* **Hat Trick** = 3 × Goals + 2 × Assists + Shots on
-  target, outfield players only. Simple, every box score has it, and the name is soccer's
-  best-known feat.
-- **Q2. College events.** The stat pools plan left college championships out. *Recommend*
-  reopening for the CFP and the Final Fours: cheap (existing composites), big US audiences, and
-  they fill January and April.
-- **Q3. Full playoffs.** *Recommend* adding them only after the live provider, as their own
-  epic.
-- **Q4. WNBA Finals.** Q8 said no WNBA. *Recommend* leaving it for fall 2027 and asking again
-  then; it is the cheapest of all to add.
+Answered by Derek on 2026-10-24.
+
+- **Q1. Soccer composite. Decided:** yes to the Hat Trick formula. The name is open: Derek
+  asked for other term ideas (section 6).
+- **Q2. College events. Decided:** yes to the College Football Playoff and the Final Four, men's
+  only for now. Derek wants their names to match the NFL's and the NBA's (section 6).
+- **Q3. Full playoffs. Decided:** scope stays big tournaments and playoffs; full playoffs follow
+  the live provider.
+- **Q4. WNBA Finals. Decided:** yes, added in parallel with the NBA Finals, scored on Triple
+  Threat.
+
+---
+
+## 6. Names (open)
+
+Each sport has one composite, so college football and college basketball reuse their sport's
+composite and formula. The CFP scores **Redzone** and the Final Four scores **Triple Threat**,
+which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
+Q7 of the stat pools plan did: **College Football Playoff** and **Final Four**.
+
+Soccer composite name options:
+
+- **Hat Trick** (recommended): soccer's best-known feat, says "goals" at once, and sits with
+  Triple Threat and Power Play as a phrase fans already use.
+- **Golden Boot**: the scoring award, strong for marketing, but it names a prize, not a game.
+- **Top Bin**: the top corner of the goal; vivid but British slang, less known in the US.
+- **Final Third**: the attacking third of the pitch; accurate but flat.
+- **Brace**: two goals in a game; too obscure for US players.
