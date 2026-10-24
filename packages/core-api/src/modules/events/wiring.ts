@@ -31,6 +31,7 @@ import {
 } from '../../adapters';
 import { GolfScoreService } from '../golf/golf-score-service';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
+import { StatLineService } from '../scoring-families/composite/stat-line-service';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
 import { eventStoresRaceResults } from '../scoring-families/race-results';
@@ -68,6 +69,16 @@ export function createGolfScoreService(prisma: PrismaClient, logger?: FastifyBas
 }
 
 /** The admin finishing order for a finish-position event (#622). */
+export function createStatLineService(prisma: PrismaClient, logger?: FastifyBaseLogger): StatLineService {
+  return new StatLineService({
+    events: new PrismaSportEventRepository(prisma),
+    rounds: new PrismaSportEventRoundRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    statLines: new PrismaSportEventParticipantStatLineRepository(prisma),
+    logger,
+  });
+}
+
 export function createRaceResultService(prisma: PrismaClient, logger?: FastifyBaseLogger): RaceResultService {
   return new RaceResultService({
     events: new PrismaSportEventRepository(prisma),
@@ -104,6 +115,7 @@ export interface SportEventServices {
   field: SportEventParticipantService;
   golfScores: GolfScoreService;
   raceResults: RaceResultService;
+  statLines: StatLineService;
   matchResults: MatchResultService;
   sportLeagues: SportLeagueService;
 }
@@ -177,6 +189,7 @@ export function createSportEventServices(
     field: createSportEventParticipantService(prisma, logger),
     golfScores: createGolfScoreService(prisma, logger),
     raceResults: createRaceResultService(prisma, logger),
+    statLines: createStatLineService(prisma, logger),
     matchResults: createMatchResultService(prisma, logger, lifecycle),
     sportLeagues: new SportLeagueService({ sports, sportLeagues, sportEvents: events, affiliations, participants, logger }),
   };

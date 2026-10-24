@@ -4,11 +4,14 @@ import {
   EventPricingConfigSchema,
   ParticipantInactiveReason,
   ParticipantRoundStatus,
+  ParticipantType,
   ParticipantStandingStatus,
   RaceResultStatus,
+  ScoringFamily,
   Sport,
   SportEventStatus,
   SportEventSyncScope,
+  SportStat,
   TierSource,
   ValuationSource,
 } from '@poolmaster/shared/domain';
@@ -72,6 +75,8 @@ export const SportEventDtoSchema = z.object({
   eventSeriesId: z.string().uuid().describe('The recurring tournament (event series) this is one edition of — the event\'s only parent.'),
   eventYear: z.number().int().describe('The year this edition is branded with ("the 2026 Masters"), which is not always the year startDate falls in. One edition of a series per year.'),
   sportLeagueId: z.string().uuid().describe('The sport league the event\'s series belongs to. Read through the series, not stored on the event.'),
+  participantType: z.nativeEnum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series\' sport league.'),
+  scoringFamily: z.nativeEnum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf\'s shape with each game a round. Null scores as the sport does. Read through the series\' sport league.'),
   syncScope: z.nativeEnum(SportEventSyncScope).describe(`How much provider data this event accepts on sync. ${ADMIN_ONLY}`),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
@@ -316,6 +321,12 @@ export const SportEventParticipantGolfRoundDtoSchema = z.object({
   thru: z.number().int().nullable(),
 }).describe('Golf extension of a round: what was scored.');
 
+export const SportEventParticipantStatLineDtoSchema = z.object({
+  stat: z.nativeEnum(SportStat).describe('One of the stats the sport\'s composite counts.'),
+  value: z.number().int().min(0).describe('The player\'s count of it in the game.'),
+}).describe('Composite extension of a participant round: one stat of a stat pool player\'s game.');
+export type SportEventParticipantStatLineDto = z.infer<typeof SportEventParticipantStatLineDtoSchema>;
+
 export const SportEventParticipantRoundDtoSchema = z.object({
   id: z.string().uuid(),
   sportEventRoundId: z.string().uuid(),
@@ -323,6 +334,7 @@ export const SportEventParticipantRoundDtoSchema = z.object({
   status: z.nativeEnum(ParticipantRoundStatus).describe('Progress through the round.'),
   completedAt: DateTimeSchema.nullable(),
   golf: SportEventParticipantGolfRoundDtoSchema.nullable().describe('Present once a golf round is scored.'),
+  statLines: z.array(SportEventParticipantStatLineDtoSchema).describe('A stat pool player\'s stats in the game, by stat; empty for every other event, and for a game the player has no line in.'),
 }).describe('A field row\'s part in one round.');
 export type SportEventParticipantRoundDto = z.infer<typeof SportEventParticipantRoundDtoSchema>;
 

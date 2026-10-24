@@ -37,6 +37,7 @@ import type {
   RaceResultPreviewResponse,
   RaceResultUploadRequest,
 } from '@poolmaster/shared/dto/race-results.dto';
+import type { GameStatLineUploadRequest } from '@poolmaster/shared/dto/stat-lines.dto';
 import type {
   FillPlayInSlotRequest,
   LoadSportEventBracketRequest,
@@ -90,7 +91,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, scoreSource, ingestion }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket } = services;
+  const { sportEvents, rounds, field, tiers, golfScores, raceResults, statLines, matchResults, bracket } = services;
 
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
     return { event: mapSportEventToDto(await sportEvents.requireSummary(eventId)) };
@@ -367,6 +368,14 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     ): Promise<SportEventParticipantListResponse> => {
       await requireEvent(request.params.eventId);
       await raceResults.applyResults(request.params.eventId, request.body);
+      return fieldResponse(request.params.eventId);
+    },
+
+    applyGameStatLines: async (
+      request: FastifyRequest<RoundParams & { Body: GameStatLineUploadRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      await requireEvent(request.params.eventId);
+      await statLines.applyGameLines(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
 

@@ -16372,6 +16372,32 @@
             ],
             "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
           },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+          },
           "affiliationCount": {
             "type": "integer",
             "description": "Participants currently affiliated with the sport league."
@@ -16405,6 +16431,8 @@
           "squaresFromRound",
           "noun",
           "displayName",
+          "participantType",
+          "scoringFamily",
           "affiliationCount",
           "sportEventCount",
           "createdAt",
@@ -16552,6 +16580,32 @@
                   ],
                   "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+                },
                 "affiliationCount": {
                   "type": "integer",
                   "description": "Participants currently affiliated with the sport league."
@@ -16585,6 +16639,8 @@
                 "squaresFromRound",
                 "noun",
                 "displayName",
+                "participantType",
+                "scoringFamily",
                 "affiliationCount",
                 "sportEventCount",
                 "createdAt",
@@ -16711,6 +16767,32 @@
                 ],
                 "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
               },
+              "participantType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "INDIVIDUAL",
+                  "TEAM",
+                  null
+                ],
+                "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+              },
+              "scoringFamily": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "STROKE_PLAY",
+                  "FINISH_POSITION",
+                  "HEAD_TO_HEAD",
+                  "COMPOSITE",
+                  null
+                ],
+                "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+              },
               "affiliationCount": {
                 "type": "integer",
                 "description": "Participants currently affiliated with the sport league."
@@ -16744,6 +16826,8 @@
               "squaresFromRound",
               "noun",
               "displayName",
+              "participantType",
+              "scoringFamily",
               "affiliationCount",
               "sportEventCount",
               "createdAt",
@@ -17855,6 +17939,32 @@
             "format": "uuid",
             "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+          },
           "syncScope": {
             "type": "string",
             "enum": [
@@ -17932,6 +18042,8 @@
           "eventSeriesId",
           "eventYear",
           "sportLeagueId",
+          "participantType",
+          "scoringFamily",
           "syncScope",
           "autoLifecycleEnabled",
           "tierCount",
@@ -18204,6 +18316,32 @@
                   "format": "uuid",
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -18281,6 +18419,8 @@
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
+                "participantType",
+                "scoringFamily",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -18511,6 +18651,32 @@
                 "format": "uuid",
                 "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
+              "participantType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "INDIVIDUAL",
+                  "TEAM",
+                  null
+                ],
+                "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+              },
+              "scoringFamily": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "STROKE_PLAY",
+                  "FINISH_POSITION",
+                  "HEAD_TO_HEAD",
+                  "COMPOSITE",
+                  null
+                ],
+                "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+              },
               "syncScope": {
                 "type": "string",
                 "enum": [
@@ -18588,6 +18754,8 @@
               "eventSeriesId",
               "eventYear",
               "sportLeagueId",
+              "participantType",
+              "scoringFamily",
               "syncScope",
               "autoLifecycleEnabled",
               "tierCount",
@@ -18963,6 +19131,32 @@
                   "format": "uuid",
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -19040,6 +19234,8 @@
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
+                "participantType",
+                "scoringFamily",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -19881,6 +20077,49 @@
             ],
             "additionalProperties": false,
             "description": "Present once a golf round is scored."
+          },
+          "statLines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stat": {
+                  "type": "string",
+                  "enum": [
+                    "TOTAL_BASES",
+                    "RUNS",
+                    "RUNS_BATTED_IN",
+                    "WALKS",
+                    "STOLEN_BASES",
+                    "POINTS",
+                    "REBOUNDS",
+                    "ASSISTS",
+                    "GOALS",
+                    "SHOTS_ON_GOAL",
+                    "PASSING_TOUCHDOWNS",
+                    "RUSHING_TOUCHDOWNS",
+                    "RECEIVING_TOUCHDOWNS",
+                    "RECEPTIONS",
+                    "PASSING_YARDS",
+                    "RUSHING_YARDS",
+                    "RECEIVING_YARDS"
+                  ],
+                  "description": "One of the stats the sport's composite counts."
+                },
+                "value": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The player's count of it in the game."
+                }
+              },
+              "required": [
+                "stat",
+                "value"
+              ],
+              "additionalProperties": false,
+              "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+            },
+            "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
           }
         },
         "required": [
@@ -19889,7 +20128,8 @@
           "roundNumber",
           "status",
           "completedAt",
-          "golf"
+          "golf",
+          "statLines"
         ],
         "additionalProperties": false,
         "description": "A field row's part in one round."
@@ -20320,6 +20560,49 @@
                   ],
                   "additionalProperties": false,
                   "description": "Present once a golf round is scored."
+                },
+                "statLines": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "stat": {
+                        "type": "string",
+                        "enum": [
+                          "TOTAL_BASES",
+                          "RUNS",
+                          "RUNS_BATTED_IN",
+                          "WALKS",
+                          "STOLEN_BASES",
+                          "POINTS",
+                          "REBOUNDS",
+                          "ASSISTS",
+                          "GOALS",
+                          "SHOTS_ON_GOAL",
+                          "PASSING_TOUCHDOWNS",
+                          "RUSHING_TOUCHDOWNS",
+                          "RECEIVING_TOUCHDOWNS",
+                          "RECEPTIONS",
+                          "PASSING_YARDS",
+                          "RUSHING_YARDS",
+                          "RECEIVING_YARDS"
+                        ],
+                        "description": "One of the stats the sport's composite counts."
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "description": "The player's count of it in the game."
+                      }
+                    },
+                    "required": [
+                      "stat",
+                      "value"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                  },
+                  "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                 }
               },
               "required": [
@@ -20328,7 +20611,8 @@
                 "roundNumber",
                 "status",
                 "completedAt",
-                "golf"
+                "golf",
+                "statLines"
               ],
               "additionalProperties": false,
               "description": "A field row's part in one round."
@@ -20857,6 +21141,49 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present once a golf round is scored."
+                      },
+                      "statLines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "stat": {
+                              "type": "string",
+                              "enum": [
+                                "TOTAL_BASES",
+                                "RUNS",
+                                "RUNS_BATTED_IN",
+                                "WALKS",
+                                "STOLEN_BASES",
+                                "POINTS",
+                                "REBOUNDS",
+                                "ASSISTS",
+                                "GOALS",
+                                "SHOTS_ON_GOAL",
+                                "PASSING_TOUCHDOWNS",
+                                "RUSHING_TOUCHDOWNS",
+                                "RECEIVING_TOUCHDOWNS",
+                                "RECEPTIONS",
+                                "PASSING_YARDS",
+                                "RUSHING_YARDS",
+                                "RECEIVING_YARDS"
+                              ],
+                              "description": "One of the stats the sport's composite counts."
+                            },
+                            "value": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "The player's count of it in the game."
+                            }
+                          },
+                          "required": [
+                            "stat",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                        },
+                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -20865,7 +21192,8 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf"
+                      "golf",
+                      "statLines"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -21548,6 +21876,49 @@
                       ],
                       "additionalProperties": false,
                       "description": "Present once a golf round is scored."
+                    },
+                    "statLines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "stat": {
+                            "type": "string",
+                            "enum": [
+                              "TOTAL_BASES",
+                              "RUNS",
+                              "RUNS_BATTED_IN",
+                              "WALKS",
+                              "STOLEN_BASES",
+                              "POINTS",
+                              "REBOUNDS",
+                              "ASSISTS",
+                              "GOALS",
+                              "SHOTS_ON_GOAL",
+                              "PASSING_TOUCHDOWNS",
+                              "RUSHING_TOUCHDOWNS",
+                              "RECEIVING_TOUCHDOWNS",
+                              "RECEPTIONS",
+                              "PASSING_YARDS",
+                              "RUSHING_YARDS",
+                              "RECEIVING_YARDS"
+                            ],
+                            "description": "One of the stats the sport's composite counts."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "The player's count of it in the game."
+                          }
+                        },
+                        "required": [
+                          "stat",
+                          "value"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                      },
+                      "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                     }
                   },
                   "required": [
@@ -21556,7 +21927,8 @@
                     "roundNumber",
                     "status",
                     "completedAt",
-                    "golf"
+                    "golf",
+                    "statLines"
                   ],
                   "additionalProperties": false,
                   "description": "A field row's part in one round."
@@ -25099,6 +25471,49 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present once a golf round is scored."
+                      },
+                      "statLines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "stat": {
+                              "type": "string",
+                              "enum": [
+                                "TOTAL_BASES",
+                                "RUNS",
+                                "RUNS_BATTED_IN",
+                                "WALKS",
+                                "STOLEN_BASES",
+                                "POINTS",
+                                "REBOUNDS",
+                                "ASSISTS",
+                                "GOALS",
+                                "SHOTS_ON_GOAL",
+                                "PASSING_TOUCHDOWNS",
+                                "RUSHING_TOUCHDOWNS",
+                                "RECEIVING_TOUCHDOWNS",
+                                "RECEPTIONS",
+                                "PASSING_YARDS",
+                                "RUSHING_YARDS",
+                                "RECEIVING_YARDS"
+                              ],
+                              "description": "One of the stats the sport's composite counts."
+                            },
+                            "value": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "description": "The player's count of it in the game."
+                            }
+                          },
+                          "required": [
+                            "stat",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                        },
+                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -25107,7 +25522,8 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf"
+                      "golf",
+                      "statLines"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -38484,6 +38900,82 @@
         ],
         "additionalProperties": false,
         "description": "A dry run of a race result. Nothing is written."
+      },
+      "GameStatLineUploadRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "participantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The player, by participant id; must be in the event's field."
+                },
+                "stats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "stat": {
+                        "type": "string",
+                        "enum": [
+                          "TOTAL_BASES",
+                          "RUNS",
+                          "RUNS_BATTED_IN",
+                          "WALKS",
+                          "STOLEN_BASES",
+                          "POINTS",
+                          "REBOUNDS",
+                          "ASSISTS",
+                          "GOALS",
+                          "SHOTS_ON_GOAL",
+                          "PASSING_TOUCHDOWNS",
+                          "RUSHING_TOUCHDOWNS",
+                          "RECEIVING_TOUCHDOWNS",
+                          "RECEPTIONS",
+                          "PASSING_YARDS",
+                          "RUSHING_YARDS",
+                          "RECEIVING_YARDS"
+                        ],
+                        "description": "One of the stats the sport's composite counts."
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9999,
+                        "description": "The player's count of it in the game."
+                      }
+                    },
+                    "required": [
+                      "stat",
+                      "value"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One stat of the line."
+                  },
+                  "maxItems": 17,
+                  "description": "The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game."
+                }
+              },
+              "required": [
+                "participantId",
+                "stats"
+              ],
+              "additionalProperties": false,
+              "description": "One player's line for the game. It replaces the line stored for the player in the game."
+            },
+            "minItems": 1,
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "additionalProperties": false,
+        "description": "One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored."
       },
       "MatchStatusDto": {
         "type": "string",
@@ -62650,6 +63142,108 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines": {
+      "put": {
+        "operationId": "applyEventGameStatLines",
+        "summary": "Apply a game's stat lines",
+        "tags": [
+          "Events"
+        ],
+        "description": "Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts or is given twice. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GameStatLineUploadRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           }
         ],

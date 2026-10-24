@@ -11,6 +11,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { BracketAdvancement, MatchPeriodLayout, ParticipantType, Sport, SportLeagueNoun, TournamentFormat } from '../domain/enums';
+import { ScoringFamily } from '../domain/sports/scoring-family';
 import { DateTimeSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 
@@ -47,6 +48,8 @@ export const SportLeagueDtoSchema = z.object({
   squaresFromRound: z.number().int().min(1).nullable().describe('The first round whose matches are single games a squares contest can be played on, when not every round\'s are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round\'s matches can take one. Set with the league\'s reference data, never by a request.'),
   noun: z.nativeEnum(SportLeagueNoun).nullable().describe('What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport\'s noun. Set with the league\'s reference data, never by a request.'),
   displayName: z.string().nullable().describe('What screens call the sport league away from its sport\'s own pages, when its name alone does not say the sport: "NCAA Men\'s Basketball" for basketball\'s NCAA Division I Men. Null shows the name. Set with the league\'s reference data, never by a request.'),
+  participantType: z.nativeEnum(ParticipantType).nullable().describe('Who competes in the sport league\'s events, when not its sport\'s: INDIVIDUAL for a championship stat pool (the World Series\' players, where baseball\'s are teams). Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
+  scoringFamily: z.nativeEnum(ScoringFamily).nullable().describe('How the sport league\'s events are scored, when not as its sport\'s: COMPOSITE for a championship stat pool, each game a player\'s sport composite. Null takes the sport\'s. Set with the league\'s reference data, never by a request.'),
   affiliationCount: z.number().int().describe('Participants currently affiliated with the sport league.'),
   sportEventCount: z.number().int().describe('Events on record for the sport league, across every series and year.'),
   createdAt: DateTimeSchema,

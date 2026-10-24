@@ -65,8 +65,8 @@ export interface SportEvent extends DomainEntity {
    * championship stat pool's players, scored by the composite family), read through the series
    * like `sportLeagueId`; absent plays the sport's. Read through `eventSportDefinition`.
    */
-  participantType?: ParticipantType;
-  scoringFamily?: ScoringFamily;
+  participantType?: ParticipantType | null;
+  scoringFamily?: ScoringFamily | null;
   syncScope: SportEventSyncScope;
   /** False stops the lifecycle scheduler moving this event's status. */
   autoLifecycleEnabled: boolean;
