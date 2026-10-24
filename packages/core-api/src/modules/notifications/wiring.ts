@@ -30,6 +30,7 @@ import { createContestService } from '../contests/wiring';
 import type { EmailService } from '../email';
 import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
+import { ContestExpandedNotices } from './contest-expanded-notices';
 import { ContestNotices } from './contest-notices';
 import { DraftEventNotices } from './draft-event-notices';
 import { EntryReceipts } from './entry-receipts';
@@ -105,6 +106,19 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
     finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
+    ...options,
+  });
+}
+
+export function createContestExpandedNotices(prisma: PrismaClient, options: {
+  email: EmailService;
+  appBaseUrl: string;
+  logger: FastifyBaseLogger;
+}): ContestExpandedNotices {
+  return new ContestExpandedNotices({
+    leagues: new PrismaLeagueRepository(prisma),
+    memberships: new PrismaLeagueMembershipRepository(prisma),
+    users: new PrismaUserRepository(prisma),
     ...options,
   });
 }

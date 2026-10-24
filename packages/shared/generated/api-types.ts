@@ -3867,7 +3867,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "LEAGUE_PLAN_PREVIEW_ENDING";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED" | "CONTEST_EXPANDED" | "LEAGUE_PLAN_PREVIEW_ENDING";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -3914,6 +3914,8 @@ export interface components {
                 EVENT_WEEKLY_DIGEST: boolean;
                 /** @description Whether this email is sent. */
                 LEAGUE_MEMBER_JOINED: boolean;
+                /** @description Whether this email is sent. */
+                CONTEST_EXPANDED: boolean;
                 /** @description Whether this email is sent. */
                 LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                 /** @description Whether this email is sent. */
@@ -13809,6 +13811,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
@@ -13864,6 +13868,8 @@ export interface components {
                     EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                     /** @description Whether this email is sent. */
@@ -14614,6 +14620,8 @@ export interface components {
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
+                        /** @description Whether this email is sent. */
                         LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
@@ -14669,6 +14677,8 @@ export interface components {
                         EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                         /** @description Whether this email is sent. */
@@ -15268,6 +15278,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
@@ -15764,6 +15776,8 @@ export interface components {
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
                     /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
+                    /** @description Whether this email is sent. */
                     LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                     /** @description Whether this email is sent. */
                     CONTEST_NOT_OPEN: boolean;
@@ -15819,6 +15833,8 @@ export interface components {
                     EVENT_WEEKLY_DIGEST: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_MEMBER_JOINED: boolean;
+                    /** @description Whether this email is sent. */
+                    CONTEST_EXPANDED: boolean;
                     /** @description Whether this email is sent. */
                     LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                     /** @description Whether this email is sent. */
@@ -16534,6 +16550,8 @@ export interface components {
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
                         /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
+                        /** @description Whether this email is sent. */
                         LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                         /** @description Whether this email is sent. */
                         CONTEST_NOT_OPEN: boolean;
@@ -16589,6 +16607,8 @@ export interface components {
                         EVENT_WEEKLY_DIGEST: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_MEMBER_JOINED: boolean;
+                        /** @description Whether this email is sent. */
+                        CONTEST_EXPANDED: boolean;
                         /** @description Whether this email is sent. */
                         LEAGUE_PLAN_PREVIEW_ENDING: boolean;
                         /** @description Whether this email is sent. */

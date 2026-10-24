@@ -896,7 +896,9 @@ current expansion. Commissioners see this under Commissioner tools › the conte
 `paymentsEnabled` is off, Expand applies at once and records a $0 line described "free while
 payments are off"; while it is on, Expand answers 409 `PAYMENTS_CHECKOUT_UNAVAILABLE` until
 checkout exists (#981), never a pretend charge. A root admin can give any band above the cap
-free with a reason (`POST …/expansion/grant`), recorded as a $0 line naming the reason.
+free with a reason (`POST …/expansion/grant`), recorded as a $0 line naming the reason. Each
+expansion emails the league's other commissioners ("Contest expanded", `CONTEST_EXPANDED`); a
+grant names Poolmaster and goes to every commissioner.
 
 **Payment history** (#987). A league's commissioners and root admins see every `league_payments`
 line under League settings › Payments (`GET /api/v1/leagues/:id/billing/payments`), newest

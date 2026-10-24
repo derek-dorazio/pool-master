@@ -278,8 +278,11 @@ administration area (root admin included), reusing the same shared components.
     `<Format>: <how you pick>, <how it scores>`, the format named as
     `formatSelectionTypeName` names it ("Tiered: 1 golfer per tier, best 4
     count", "Bracket: full bracket, doubling + upset bonus"), with digits, the
-    sport's own noun, under 60 characters and no full stop; a template covering
-    several events puts its scope after the format ("Tiered majors pool: …").
+    sport's own noun (a Clutch Card's setups call their players stars:
+    "Tiered: 1 star per tier, best 4 count"), under 60 characters and no full
+    stop; a template covering several events puts its scope after the format
+    ("Tiered majors pool: …"). A Clutch Card contest itself is named "<event>
+    Stars", which Create contest suggests whatever its format.
     The description is one or two plain sentences of at most 220 characters,
     how an entry picks and then how it scores, with no setup words (template,
     preset, config). Every sport league has exactly one default for each format

@@ -1,4 +1,5 @@
 export * from './commissioner-notices';
+export * from './contest-expanded-notices';
 export * from './contest-notices';
 export * from './draft-event-notices';
 export * from './contest-summary';

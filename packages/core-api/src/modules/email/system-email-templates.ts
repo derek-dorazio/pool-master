@@ -503,6 +503,19 @@ export interface LeagueMemberJoinedEmailData {
   membersUrl: string;
 }
 
+/** A contest was expanded (#987), for the league's commissioners other than whoever expanded it. */
+export interface ContestExpandedEmailData {
+  userName: string;
+  leagueName: string;
+  contestName: string;
+  /** The contest's entry cap now. */
+  entriesPerContest: number;
+  /** The commissioner who expanded it; null when Poolmaster (a root admin) gave the expansion. */
+  expandedBy: string | null;
+  /** The contest's Manage contest page. */
+  contestUrl: string;
+}
+
 /** How many days before a league's Premium preview period ends its commissioners are reminded (#986). */
 export const PLAN_PREVIEW_REMINDER_DAYS = [30, 7, 1] as const;
 export type PlanPreviewReminderDays = (typeof PLAN_PREVIEW_REMINDER_DAYS)[number];
@@ -651,6 +664,7 @@ export interface SystemEmailTemplateDataByKey {
   YEAR_IN_REVIEW: YearInReviewEmailData;
   EVENT_WEEKLY_DIGEST: EventWeeklyDigestEmailData;
   LEAGUE_MEMBER_JOINED: LeagueMemberJoinedEmailData;
+  CONTEST_EXPANDED: ContestExpandedEmailData;
   LEAGUE_PLAN_PREVIEW_ENDING: LeaguePlanPreviewEndingEmailData;
 }
 
@@ -732,6 +746,7 @@ export interface EmailTemplateScopeByKey {
   YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
   EVENT_WEEKLY_DIGEST: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_MEMBER_JOINED: typeof EmailTemplateScope.LEAGUE;
+  CONTEST_EXPANDED: typeof EmailTemplateScope.LEAGUE;
   LEAGUE_PLAN_PREVIEW_ENDING: typeof EmailTemplateScope.LEAGUE;
 }
 
@@ -951,6 +966,15 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     sendWithinMs: null,
     render: renderLeagueMemberJoinedEmail,
   },
+  CONTEST_EXPANDED: {
+    // About the league's account, so always sent (plans/payments.md §8).
+    category: EmailCategory.ACCOUNT,
+    planFeature: null,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderContestExpandedEmail,
+  },
   LEAGUE_PLAN_PREVIEW_ENDING: {
     // The only warning before the league moves to Free (no grace period), so it can't be turned off.
     category: EmailCategory.ACCOUNT,
@@ -1083,6 +1107,31 @@ function renderLeagueMemberJoinedEmail(
       total,
       '',
       `Members and owners: ${data.membersUrl}`,
+    ],
+  });
+}
+
+function renderContestExpandedEmail(
+  data: ContestExpandedEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? 'Poolmaster'}.`;
+  return buildMessage(context, {
+    templateKey: 'CONTEST_EXPANDED',
+    subject: `${data.contestName} now takes ${data.entriesPerContest} entries`,
+    preheader: intro,
+    title: 'Contest expanded',
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(`${escapeHtml(intro)} It's in ${escapeHtml(data.leagueName)}'s payment history.`),
+      button('Manage contest', data.contestUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      `${intro} It's in ${data.leagueName}'s payment history.`,
+      '',
+      `Manage contest: ${data.contestUrl}`,
     ],
   });
 }

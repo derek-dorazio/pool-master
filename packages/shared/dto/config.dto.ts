@@ -127,6 +127,7 @@ export const EmailConfigSchema = z.object({
     EVENT_READY_FOR_CONTESTS: templateSwitch,
     EVENT_WEEKLY_DIGEST: templateSwitch,
     LEAGUE_MEMBER_JOINED: templateSwitch,
+    CONTEST_EXPANDED: templateSwitch,
     LEAGUE_PLAN_PREVIEW_ENDING: templateSwitch,
     CONTEST_NOT_OPEN: templateSwitch,
     EVENT_STILL_DRAFT: templateSwitch,

@@ -1204,4 +1204,18 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     });
     expect(shapes).toEqual([[1, 4], [6, 4], [3, 3]]);
   });
+
+  it.each(STAT_POOL_LEAGUES)('names $league\'s setups and describes them with stars, never players, as the Clutch Card\'s copy calls them (#995)', async ({ league }) => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE' } },
+      orderBy: { sortOrder: 'asc' },
+    });
+
+    expect(templates.map((template) => template.name)).toEqual([
+      'Tiered: 1 star per tier, best 4 count',
+      'Budget: 6 stars under the cap, best 4 count',
+      'Quick pick: 3 stars each, all count',
+    ]);
+    expect(templates.filter((template) => /player/i.test(template.description)).map((template) => template.templateKey)).toEqual([]);
+  });
 });

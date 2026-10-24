@@ -237,6 +237,14 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     memberCount: 9,
     membersUrl: 'http://localhost:5173/league/OFFICE24/admin/teams',
   },
+  CONTEST_EXPANDED: {
+    userName: 'Casey Commissioner',
+    leagueName: 'Office League',
+    contestName: 'Masters Pool',
+    entriesPerContest: 50,
+    expandedBy: 'Sam Commissioner',
+    contestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/contest-1',
+  },
   LEAGUE_PLAN_PREVIEW_ENDING: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',

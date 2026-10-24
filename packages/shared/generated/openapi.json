@@ -969,6 +969,7 @@
           "YEAR_IN_REVIEW",
           "EVENT_WEEKLY_DIGEST",
           "LEAGUE_MEMBER_JOINED",
+          "CONTEST_EXPANDED",
           "LEAGUE_PLAN_PREVIEW_ENDING"
         ],
         "description": "A system email template."
@@ -1087,6 +1088,10 @@
                 "type": "boolean",
                 "description": "Whether this email is sent."
               },
+              "CONTEST_EXPANDED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
               "LEAGUE_PLAN_PREVIEW_ENDING": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
@@ -1120,6 +1125,7 @@
               "EVENT_READY_FOR_CONTESTS",
               "EVENT_WEEKLY_DIGEST",
               "LEAGUE_MEMBER_JOINED",
+              "CONTEST_EXPANDED",
               "LEAGUE_PLAN_PREVIEW_ENDING",
               "CONTEST_NOT_OPEN",
               "EVENT_STILL_DRAFT",
@@ -31955,6 +31961,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_EXPANDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "LEAGUE_PLAN_PREVIEW_ENDING": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -31988,6 +31998,7 @@
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
                       "LEAGUE_MEMBER_JOINED",
+                      "CONTEST_EXPANDED",
                       "LEAGUE_PLAN_PREVIEW_ENDING",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
@@ -32123,6 +32134,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_EXPANDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "LEAGUE_PLAN_PREVIEW_ENDING": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -32156,6 +32171,7 @@
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
                       "LEAGUE_MEMBER_JOINED",
+                      "CONTEST_EXPANDED",
                       "LEAGUE_PLAN_PREVIEW_ENDING",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
@@ -34250,6 +34266,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_EXPANDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "LEAGUE_PLAN_PREVIEW_ENDING": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -34283,6 +34303,7 @@
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
                             "LEAGUE_MEMBER_JOINED",
+                            "CONTEST_EXPANDED",
                             "LEAGUE_PLAN_PREVIEW_ENDING",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
@@ -34418,6 +34439,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_EXPANDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "LEAGUE_PLAN_PREVIEW_ENDING": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -34451,6 +34476,7 @@
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
                             "LEAGUE_MEMBER_JOINED",
+                            "CONTEST_EXPANDED",
                             "LEAGUE_PLAN_PREVIEW_ENDING",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
@@ -36203,6 +36229,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_EXPANDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "LEAGUE_PLAN_PREVIEW_ENDING": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -36236,6 +36266,7 @@
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
                       "LEAGUE_MEMBER_JOINED",
+                      "CONTEST_EXPANDED",
                       "LEAGUE_PLAN_PREVIEW_ENDING",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
@@ -37611,6 +37642,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_EXPANDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "LEAGUE_PLAN_PREVIEW_ENDING": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -37644,6 +37679,7 @@
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
                       "LEAGUE_MEMBER_JOINED",
+                      "CONTEST_EXPANDED",
                       "LEAGUE_PLAN_PREVIEW_ENDING",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
@@ -37779,6 +37815,10 @@
                         "type": "boolean",
                         "description": "Whether this email is sent."
                       },
+                      "CONTEST_EXPANDED": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
+                      },
                       "LEAGUE_PLAN_PREVIEW_ENDING": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
@@ -37812,6 +37852,7 @@
                       "EVENT_READY_FOR_CONTESTS",
                       "EVENT_WEEKLY_DIGEST",
                       "LEAGUE_MEMBER_JOINED",
+                      "CONTEST_EXPANDED",
                       "LEAGUE_PLAN_PREVIEW_ENDING",
                       "CONTEST_NOT_OPEN",
                       "EVENT_STILL_DRAFT",
@@ -39836,6 +39877,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_EXPANDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "LEAGUE_PLAN_PREVIEW_ENDING": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -39869,6 +39914,7 @@
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
                             "LEAGUE_MEMBER_JOINED",
+                            "CONTEST_EXPANDED",
                             "LEAGUE_PLAN_PREVIEW_ENDING",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",
@@ -40004,6 +40050,10 @@
                               "type": "boolean",
                               "description": "Whether this email is sent."
                             },
+                            "CONTEST_EXPANDED": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
+                            },
                             "LEAGUE_PLAN_PREVIEW_ENDING": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
@@ -40037,6 +40087,7 @@
                             "EVENT_READY_FOR_CONTESTS",
                             "EVENT_WEEKLY_DIGEST",
                             "LEAGUE_MEMBER_JOINED",
+                            "CONTEST_EXPANDED",
                             "LEAGUE_PLAN_PREVIEW_ENDING",
                             "CONTEST_NOT_OPEN",
                             "EVENT_STILL_DRAFT",

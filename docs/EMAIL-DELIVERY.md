@@ -498,6 +498,15 @@ repeats anyone. A join is an active MEMBER membership by its `joinedAt`, so the 
 never counts. The idempotency key is the membership and its join time at once, and the day and
 league the next day, each per person.
 
+**Contest expanded** (`CONTEST_EXPANDED`, #987, category Account, so always sent, on every plan)
+tells a league's commissioners when one of its contests is expanded (plans/payments.md §8): the
+contest, its new entry cap and who expanded it, that it is in the payment history, and a link to
+Manage contest. Whoever expanded it is not told; a root admin's free grant names Poolmaster
+rather than the admin and goes to every commissioner. It is queued after the expansion is
+written, and a failure is logged rather than failing the expansion; an inactive league sends
+none. An expansion only ever raises a contest's cap, so the idempotency key is the contest and
+its new cap, per person.
+
 Event still in draft emails (`EVENT_STILL_DRAFT`, #845 G1, category Root admin, which can't be
 turned off) are the step's fourth kind. While an event starts within 7 days and is still a draft,
 every active root admin is told once a day, from the app rather than a league: when it starts,
