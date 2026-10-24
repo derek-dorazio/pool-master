@@ -697,6 +697,26 @@ export class InMemorySportEvents {
         const roundIds = new Set(this.participantRoundRows.filter((row) => entryIds.has(row.sportEventParticipantId)).map((row) => row.id));
         return this.statLineRows.filter((row) => roundIds.has(row.participantRoundId)).map((row) => ({ ...row }));
       },
+      replaceGameLines: async (writes) => {
+        for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
+          let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
+          if (core) {
+            const roundId = core.id;
+            this.statLineRows = this.statLineRows.filter((row) => row.participantRoundId !== roundId);
+          }
+          if (stats.length === 0) {
+            this.participantRoundRows = this.participantRoundRows.filter((row) => row !== core);
+            continue;
+          }
+          if (!core) {
+            core = stamp({ id: this.id('participant-round'), sportEventParticipantId, sportEventRoundId, status: 'COMPLETED' as const, completedAt });
+            this.participantRoundRows.push(core);
+          }
+          Object.assign(core, { status: 'COMPLETED', completedAt });
+          const roundId = core.id;
+          this.statLineRows.push(...stats.map(({ stat, value }) => stamp({ id: this.id('stat-line'), participantRoundId: roundId, stat, value })));
+        }
+      },
     };
   }
 

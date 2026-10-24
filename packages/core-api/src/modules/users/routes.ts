@@ -18,12 +18,14 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto/users.dto';
 import '@poolmaster/shared/dto/email-preferences.dto';
+import '@poolmaster/shared/dto/billing.dto';
 // Registers ErrorEnvelope and SuccessResponse, which this module's routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { getAppPrisma } from '../../core/prisma-context';
-import { PrismaUserRepository } from '../../adapters';
+import { PrismaLeaguePaymentRepository, PrismaUserRepository } from '../../adapters';
 import { createUserHandlers } from './handler';
 import { UserService } from './user-service';
+import { PaymentHistoryService } from '../billing/payment-history-service';
 import { AuthService } from '../auth/auth-service';
 import { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import { EmailChangeUndoService } from '../auth/email-change-undo-service';
@@ -81,7 +83,8 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
     fastify.log,
   );
   const authService = new AuthService(users, prisma, fastify.log);
-  const handlers = createUserHandlers(service, authService, opts.emailPreferences);
+  const payments = new PaymentHistoryService({ payments: new PrismaLeaguePaymentRepository(prisma), logger: fastify.log });
+  const handlers = createUserHandlers(service, authService, opts.emailPreferences, payments);
 
   fastify.get('/', {
     schema: {
@@ -182,6 +185,19 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
       response: withUserErrorResponses({ 200: schemaRef('EmailPreferencesResponse') }),
     },
     handler: handlers.updateEmailPreference,
+  });
+
+  fastify.get('/:userId/payments', {
+    schema: {
+      tags: ['Users'],
+      summary: 'List the payments a user made',
+      description:
+        'Every payment the user made, in any of their leagues, newest first (#987): date, amount in US cents, what it was for and the league. While payments are off, each expansion is a $0 line that says it was free. No card data is kept. Access rule A6: the subject themselves, or a root admin.',
+      operationId: 'listUserPayments',
+      params: USER_ID_PARAMS,
+      response: withUserErrorResponses({ 200: schemaRef('UserPaymentListResponse') }),
+    },
+    handler: handlers.listPayments,
   });
 
   fastify.post('/:userId/password', {

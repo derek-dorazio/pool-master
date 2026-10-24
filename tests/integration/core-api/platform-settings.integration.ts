@@ -212,7 +212,7 @@ describe('settings routes (contract verification)', () => {
     expect(list.statusCode).toBe(200);
     expect(SettingsGroupListSchema.safeParse(list.json()).success).toBe(true);
     expect(list.json<{ groups: SettingsGroup[] }>().groups.map((group) => group.key))
-      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG', 'BUDGET_PRICING_CONFIG', 'PLAN_CONFIG']);
+      .toEqual(['INGESTION_SCHEDULE_CONFIG', 'EMAIL_CONFIG', 'BUDGET_PRICING_CONFIG', 'PLAN_CONFIG', 'BILLING_CONFIG']);
     expect(refused.statusCode).toBe(403);
   });
 
@@ -292,10 +292,10 @@ describe('settings routes (contract verification)', () => {
       payload: { key: 'PLAN_CONFIG', value: { ...before.value, caps: { ...before.value.caps, ...caps } }, expectedUpdatedAt: null },
     });
 
-    const falling = await save({ ENTRIES_PER_CONTEST: { FREE: 20, PRO: 10, PREMIUM: 100 } });
-    const zero = await save({ SPORTS_LEAGUES_PER_YEAR: { FREE: 0, PRO: 3, PREMIUM: 10 } });
+    const falling = await save({ ENTRIES_PER_CONTEST: { FREE: 20, PRO: 10, PREMIUM: 100, PLATINUM: 500 } });
+    const zero = await save({ SPORTS_LEAGUES_PER_YEAR: { FREE: 0, PRO: 3, PREMIUM: 10, PLATINUM: 50 } });
     const storedAfterRefusals = await getPrisma().platformRuntimeConfig.count();
-    const saved = await save({ ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null } });
+    const saved = await save({ ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null, PLATINUM: null } });
 
     expect(falling.statusCode).toBe(400);
     expect(falling.json<{ error: { code: string } }>().error.code).toBe('SETTINGS_INVALID');
@@ -305,7 +305,7 @@ describe('settings routes (contract verification)', () => {
     expect(SettingsGroupSchema.safeParse(saved.json()).success).toBe(true);
     expect(saved.json<SettingsGroup>().value).toEqual({
       ...before.value,
-      caps: { ...before.value.caps, ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null } },
+      caps: { ...before.value.caps, ENTRIES_PER_CONTEST: { FREE: 25, PRO: 25, PREMIUM: null, PLATINUM: null } },
     });
   });
 

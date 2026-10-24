@@ -242,7 +242,7 @@ export class IngestionPersistence {
     let sportEventParticipantsPersisted = 0;
     // A released bracket's seeds are locked (#698): the upset bonus reads them as they stood at release.
     const { sportLeague } = persistedEvent.eventSeries;
-    const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType ?? undefined, scoringFamily: sportLeague.scoringFamily ?? undefined }) && persistedEvent.status !== SportEventStatus.DRAFT;
+    const seedsLocked = eventPlaysMatches({ sport: persistedEvent.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && persistedEvent.status !== SportEventStatus.DRAFT;
 
     for (const participant of detail.participants) {
       const mapping = await this.prisma.participantProviderMapping.findUnique({

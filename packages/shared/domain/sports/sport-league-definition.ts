@@ -38,8 +38,8 @@ export function sportLeagueDefinitionOf(sport: Sport, overrides: SportLeagueOver
 /** An event as its sport league's definition is read off it: its sport, and the overrides it carries (`SportEvent`). */
 export interface SportLeagueEvent {
   sport: Sport;
-  participantType?: ParticipantType;
-  scoringFamily?: ScoringFamily;
+  participantType?: ParticipantType | null;
+  scoringFamily?: ScoringFamily | null;
 }
 
 /** An event's definition: its sport league's, from the overrides it carries. */

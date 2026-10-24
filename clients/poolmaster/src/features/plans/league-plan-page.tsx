@@ -7,10 +7,11 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
+import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatDateDisplay, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -49,6 +50,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
   const plansQuery = useLeaguePlansQuery();
   const usageQuery = useLeaguePlanUsageQuery(league.id);
   const sportLeaguesQuery = useSportLeaguesQuery();
+  const { isRootAdmin } = useAuth();
   const [choice, setChoice] = useState<LeaguePlan | null>(null);
   const current = league.planEntitlements;
 
@@ -84,6 +86,10 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
         description="What the league can do. Members never see which plan it is on."
         title="Plan"
       />
+
+      <p className="text-sm text-muted-foreground" data-testid="league-plan-renews">
+        Premium gifted for your preview period, until {formatDateDisplay(league.planRenewsAt)}.
+      </p>
 
       <YourLeagueNow
         current={current}
@@ -146,6 +152,10 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
             renderAction={(plan) => {
               if (plan === current.plan) {
                 return <Chip className="self-start" data-testid={`league-plan-card-${plan}-current`} tone="active">Your plan</Chip>;
+              }
+              // A plan not offered yet (Platinum) only a root admin may set.
+              if (!isRootAdmin && plans.find((each) => each.plan === plan)?.commissionerSelectable === false) {
+                return <Chip className="self-start" data-testid={`league-plan-card-${plan}-coming-soon`}>Coming soon</Chip>;
               }
               const isHigher = plans.findIndex((each) => each.plan === plan) > currentIndex;
               return (

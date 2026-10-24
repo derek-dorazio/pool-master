@@ -99,6 +99,7 @@ export const ContestDtoSchema = z.object({
   sportEvents: z.array(ContestSportEventDtoSchema).describe('The events the contest covers, in sequence order (#713). One for a golf or race contest.'),
   sport: z.nativeEnum(Sport).nullable().optional(),
   entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.'),
+  entriesPerContest: z.number().int().min(1).nullable().describe('The most entries the contest takes, every squad\'s drafts included: its league plan\'s cap or its expansion (#987), whichever is higher. Null for no limit.'),
   startsAt: z.string().datetime().nullable().optional(),
   endsAt: z.string().datetime().nullable().optional(),
   drawnAt: z.string().datetime().nullable().optional().describe('When a random-draw contest\'s draw dealt its picks (#601). From then on its entries are closed, though it stays OPEN until its event starts. Null until then, and for every other selection type.'),

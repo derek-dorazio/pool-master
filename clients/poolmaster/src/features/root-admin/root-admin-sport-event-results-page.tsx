@@ -17,7 +17,7 @@ export function RootAdminSportEventResultsPage() {
   const { definition } = useManagedSport();
   const eventQuery = useSportEventQuery(eventId);
   const event = eventQuery.data;
-  const familyUi = event ? getScoringFamilyAdminUi(event.sport) : null;
+  const familyUi = event ? getScoringFamilyAdminUi(event) : null;
 
   useManagePageOwnsHeading();
   useManageBreadcrumbOverride(eventId || undefined, event?.name);

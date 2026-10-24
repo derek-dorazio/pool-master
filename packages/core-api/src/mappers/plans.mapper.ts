@@ -10,5 +10,6 @@ export function toPlanEntitlementsDto(entitlements: PlanEntitlements): PlanEntit
     plan: entitlements.plan,
     caps: { ...entitlements.caps },
     features: Object.values(PlanFeature).filter((feature) => entitlements.features.has(feature)),
+    commissionerSelectable: entitlements.commissionerSelectable,
   };
 }

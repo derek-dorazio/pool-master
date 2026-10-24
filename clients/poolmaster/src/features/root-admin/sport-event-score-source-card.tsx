@@ -56,7 +56,7 @@ export function SportEventScoreSourceCard({
   const [catalogSearch, setCatalogSearch] = useState('');
   const definition = getSportDefinition(tournament.sport);
   const { event: eventNoun } = definition.vocabulary;
-  const resultsWord = getScoringFamilyAdminUi(tournament.sport).resultsLabel.toLowerCase();
+  const resultsWord = getScoringFamilyAdminUi(tournament).resultsLabel.toLowerCase();
 
   const catalog = useProviderCatalog({
     enabled: linkOpen,

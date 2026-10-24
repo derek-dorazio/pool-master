@@ -9,7 +9,7 @@
  */
 import { z } from 'zod';
 import { DateTimeSchema } from './common.dto';
-import { BudgetPricingConfigSchema, EmailConfigSchema, IngestionScheduleConfigSchema, PlanConfigSchema } from './config.dto';
+import { BillingConfigSchema, BudgetPricingConfigSchema, EmailConfigSchema, IngestionScheduleConfigSchema, PlanConfigSchema } from './config.dto';
 import { registerSchema } from './schema-registry';
 
 export const SettingsGroupKeySchema = z.enum([
@@ -17,6 +17,7 @@ export const SettingsGroupKeySchema = z.enum([
   'EMAIL_CONFIG',
   'BUDGET_PRICING_CONFIG',
   'PLAN_CONFIG',
+  'BILLING_CONFIG',
 ]).describe('The stored key of a settings group.');
 export type SettingsGroupKey = z.infer<typeof SettingsGroupKeySchema>;
 
@@ -63,6 +64,12 @@ export const SettingsGroupSchema = z.discriminatedUnion('key', [
     value: PlanConfigSchema.describe('The value in use.'),
     defaults: PlanConfigSchema.describe('The value a reset would store.'),
   }),
+  z.object({
+    key: z.literal('BILLING_CONFIG'),
+    ...groupFields,
+    value: BillingConfigSchema.describe('The value in use.'),
+    defaults: BillingConfigSchema.describe('The value a reset would store.'),
+  }),
 ]).describe('One settings group: its current value, its defaults, and who last changed it.');
 export type SettingsGroup = z.infer<typeof SettingsGroupSchema>;
 
@@ -107,6 +114,11 @@ export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
     value: PlanConfigSchema.describe('The whole new value.'),
     expectedUpdatedAt,
   }),
+  z.object({
+    key: z.literal('BILLING_CONFIG'),
+    value: BillingConfigSchema.describe('The whole new value.'),
+    expectedUpdatedAt,
+  }),
 ]).describe('A whole new value for one settings group. `key` must match the path.');
 export type SettingsGroupUpdateRequest = z.infer<typeof SettingsGroupUpdateRequestSchema>;
 
@@ -142,6 +154,12 @@ export const SettingsChangeSchema = z.discriminatedUnion('key', [
     ...changeFields,
     previousValue: PlanConfigSchema.nullable().describe(previousValueNote),
     newValue: PlanConfigSchema.describe(newValueNote),
+  }),
+  z.object({
+    key: z.literal('BILLING_CONFIG'),
+    ...changeFields,
+    previousValue: BillingConfigSchema.nullable().describe(previousValueNote),
+    newValue: BillingConfigSchema.describe(newValueNote),
   }),
 ]).describe('One saved change to a settings group, each value typed by the group\'s own schema.');
 export type SettingsChange = z.infer<typeof SettingsChangeSchema>;

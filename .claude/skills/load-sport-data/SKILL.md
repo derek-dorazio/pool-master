@@ -32,6 +32,7 @@ race week):
 | Field | When it is announced, then again on the Tuesday of event week for withdrawals and alternates | `PLAYERS`, `FIELDS` |
 | Bracket | With the field, for a sport played as a bracket (Selection Sunday for March Madness); again as game times are announced | `PLAYERS`, `FIELDS`, `BRACKET` |
 | Weeks | Once a season, when a league of weekly games publishes its schedule (the NFL's in May): each week is an event, its field every team and its games matches that link nowhere | `SCHEDULE`, `PLAYERS`, `FIELDS`, `BRACKET` |
+| Box scores | For a championship stat pool: the field once both teams are known, then each game's box score after it is played, from two sources that agree player by player | `PLAYERS`, `FIELDS`, `STATS` |
 
 A field file carries the players its entries name (`FIELDS` always comes with `PLAYERS`),
 so an alternate the site has never seen is added. It leaves out `SCHEDULE`, so it can never

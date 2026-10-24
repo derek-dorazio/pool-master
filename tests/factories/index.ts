@@ -88,6 +88,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     cupCustomPoints: [],
     hallOfLameVisible: true,
     plan: LeaguePlan.PLATINUM,
+    planRenewsAt: new Date('2027-04-24T12:00:00.000Z'),
     mutedSportLeagueIds: [],
     eventEmailDelivery: EventEmailDelivery.PER_EVENT,
     isActive: true,

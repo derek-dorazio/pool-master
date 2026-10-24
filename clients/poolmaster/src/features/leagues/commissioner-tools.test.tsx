@@ -32,11 +32,13 @@ import {
 
 const activateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
+const extendLeaguePlanRenewalMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const getLeaguePlanUsageMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
+const listLeaguePaymentsMock = vi.fn();
 const listLeaguePlansMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const listSportLeaguesMock = vi.fn();
@@ -49,11 +51,13 @@ const updateLeaguePlanMock = vi.fn();
 bindApiMocks({
   activateLeague: activateLeagueMock,
   deleteLeague: deleteLeagueMock,
+  extendLeaguePlanRenewal: extendLeaguePlanRenewalMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   getLeaguePlanUsage: getLeaguePlanUsageMock,
   inactivateLeague: inactivateLeagueMock,
   listLeagueMembers: listLeagueMembersMock,
+  listLeaguePayments: listLeaguePaymentsMock,
   listLeaguePlans: listLeaguePlansMock,
   listLeagueSquads: listLeagueSquadsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -120,6 +124,7 @@ function primeMocks({
     { membership: buildLeagueMembership({ role: leagueRole }) },
   )));
   listSportLeaguesMock.mockResolvedValue(apiSuccess({ sportLeagues: SPORT_LEAGUES }));
+  listLeaguePaymentsMock.mockResolvedValue(apiSuccess({ payments: [] }));
   listLeagueMembersMock.mockResolvedValue(apiSuccess({
     members: [
       buildLeagueMembership({ id: 'm-1', userId: 'user-1', role: 'COMMISSIONER' }),
@@ -143,8 +148,9 @@ function primeMocks({
 
 afterEach(() => {
   for (const mock of [
-    activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock, getLeaguePlanUsageMock,
-    inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, listSportLeaguesMock,
+    activateLeagueMock, deleteLeagueMock, extendLeaguePlanRenewalMock, getCurrentUserMock, getLeagueByCodeMock,
+    getLeaguePlanUsageMock, inactivateLeagueMock, listLeagueMembersMock, listLeaguePaymentsMock, listLeaguePlansMock,
+    listLeagueSquadsMock, listSportLeaguesMock,
     refreshTokenMock, updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeagueEventEmailSettingsMock,
     updateLeaguePlanMock,
   ]) {
@@ -656,12 +662,14 @@ const FREE_PLAN = buildPlanEntitlements({
   plan: 'FREE',
   caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 },
   features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS'],
+  commissionerSelectable: true,
 });
 
 const PRO_PLAN = buildPlanEntitlements({
   plan: 'PRO',
   caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 },
   features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'],
+  commissionerSelectable: true,
 });
 
 function primeUsage(overrides: { openContests?: Array<{ contestId: string; name: string; entryCount: number }> } = {}) {
@@ -680,7 +688,7 @@ function primePlanList() {
     plans: [
       FREE_PLAN,
       PRO_PLAN,
-      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 } }),
+      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 }, commissionerSelectable: true }),
       buildPlanEntitlements(),
     ],
   }));
@@ -699,13 +707,80 @@ describe('League plan', () => {
     expect(plan.getByRole('link', { name: 'Change' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
   });
 
-  it('shows Platinum, the plan every league starts on, as unlimited', async () => {
+  it('shows a plan with no limit set as unlimited', async () => {
     primeMocks();
 
     renderCommissionerTools();
 
     expect(await screen.findByTestId('league-settings-plan-name')).toHaveTextContent('Platinum');
     expect(screen.getByTestId('league-settings-plan-cap-ENTRIES_PER_CONTEST')).toHaveTextContent('Unlimited');
+  });
+
+  it('shows on League settings when the league\'s Premium preview period ends, and offers a commissioner no way to extend it', async () => {
+    primeMocks({ league: { planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-settings-plan-renews'))
+      .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+    expect(screen.queryByTestId('league-settings-plan-extend')).not.toBeInTheDocument();
+  });
+
+  it('lets a root admin extend the league\'s Premium preview period by the chosen months, showing the new date', async () => {
+    primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+    const extended = buildLeague({ planRenewsAt: '2027-10-24T12:00:00.000Z' });
+    extendLeaguePlanRenewalMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(extended)));
+    const { queryClient } = renderCommissionerTools();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    fireEvent.change(await screen.findByTestId('league-settings-plan-extend-months'), { target: { value: '12' } });
+    fireEvent.click(screen.getByTestId('league-settings-plan-extend-submit'));
+
+    expect(await screen.findByTestId('league-settings-plan-extend-result'))
+      .toHaveTextContent(`The Premium preview period now ends on ${new Date('2027-10-24T12:00:00.000Z').toLocaleDateString()}.`);
+    expect(extendLeaguePlanRenewalMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, body: { months: 12 } }));
+    expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-10-24T12:00:00.000Z').toLocaleDateString());
+    expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.rootAdmin.manageLeagues }));
+  });
+
+  it('shows the reason when extending the gift fails, keeping the date', async () => {
+    primeMocks({ isRootAdmin: true, league: { planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+    extendLeaguePlanRenewalMock.mockResolvedValue({ error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found' } } });
+
+    renderCommissionerTools();
+
+    fireEvent.click(await screen.findByTestId('league-settings-plan-extend-submit'));
+
+    expect(await screen.findByText('League not found')).toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+  });
+
+  it('shows a commissioner Platinum as coming soon with no way to move there, and says until when Premium is gifted for its preview period', async () => {
+    primeMocks({ league: { planEntitlements: FREE_PLAN, planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+    primePlanList();
+    primeUsage({ openContests: [] });
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    expect(await screen.findByTestId('league-plan-card-PLATINUM-coming-soon')).toHaveTextContent('Coming soon');
+    expect(screen.queryByTestId('league-plan-card-PLATINUM-move')).not.toBeInTheDocument();
+    expect(screen.getByTestId('league-plan-card-PREMIUM-move')).toBeEnabled();
+    expect(screen.getByTestId('league-plan-renews'))
+      .toHaveTextContent(`Premium gifted for your preview period, until ${new Date('2027-04-24T12:00:00.000Z').toLocaleDateString()}.`);
+  });
+
+  it('lets a root admin move a league to Platinum, which commissioners see as coming soon', async () => {
+    primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER', league: { planEntitlements: FREE_PLAN } });
+    primePlanList();
+    primeUsage({ openContests: [] });
+    updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague())));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan');
+
+    fireEvent.click(await screen.findByTestId('league-plan-card-PLATINUM-move'));
+    fireEvent.click(await screen.findByTestId('league-plan-confirm-save'));
+
+    await waitFor(() => expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ body: { plan: 'PLATINUM' } })));
   });
 
   it('compares every plan side by side: its limits, what every plan includes, and which features it has', async () => {
@@ -894,6 +969,53 @@ describe('League plan', () => {
 });
 
 // The leagues list is only touched by delete; it must drop the league.
+describe('League payments', () => {
+  it('lists the league\'s payments on League settings, newest first, each linking to its contest', async () => {
+    primeMocks();
+    listLeaguePaymentsMock.mockResolvedValue(apiSuccess({
+      payments: [
+        {
+          id: '0f6e3c1a-1111-4b4b-9c9c-000000000002',
+          paidAt: '2026-10-24T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Masters Pool: 50 to 100 entries, free while payments are off',
+          contestId: 'contest-1',
+          payer: { id: 'user-1', name: 'Casey Commissioner' },
+        },
+        {
+          id: '0f6e3c1a-1111-4b4b-9c9c-000000000001',
+          paidAt: '2026-10-23T15:00:00.000Z',
+          amountCents: 0,
+          description: 'Old Pool: up to 50 entries, free while payments are off',
+          contestId: null,
+          payer: null,
+        },
+      ],
+    }));
+
+    renderCommissionerTools();
+
+    const payments = within(await screen.findByTestId('league-payments'));
+    const lines = await payments.findAllByTestId(/^league-payment-/);
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveTextContent('Casey Commissioner');
+    expect(lines[0]).toHaveTextContent('$0');
+    expect(within(lines[0]).getByRole('link', { name: 'Masters Pool: 50 to 100 entries, free while payments are off' }))
+      .toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');
+    // A deleted contest's line keeps its description, with nothing to link to.
+    expect(within(lines[1]).queryByRole('link')).not.toBeInTheDocument();
+    expect(listLeaguePaymentsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' } }));
+  });
+
+  it('says there are no payments yet when the league has none', async () => {
+    primeMocks();
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-payments-empty')).toHaveTextContent('No payments yet.');
+  });
+});
+
 describe('League settings delete and the leagues list', () => {
   it('removes a deleted league from the cached leagues list', async () => {
     primeMocks({ isActive: false });

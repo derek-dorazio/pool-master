@@ -1,4 +1,4 @@
-import { ScoringFamily, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import { ScoringFamily, eventSportDefinition, type SportLeagueEvent } from '@poolmaster/shared/domain';
 import type { ComponentType } from 'react';
 import type { SportEventDto } from '@/lib/api';
 import { BracketPanel } from './bracket-panel';
@@ -25,8 +25,8 @@ export interface ScoringFamilyAdminUi {
 
 /**
  * Exhaustive over `ScoringFamily`, so a family added to the shared registry fails the web build
- * until its admin results have an entry here. Reached through the event's sport definition,
- * never by comparing sports.
+ * until its admin results have an entry here. Reached through the event's sport league's
+ * definition (a World Series stat pool's, not baseball's bracket), never by comparing sports.
  */
 export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFamilyAdminUi>> = {
   [ScoringFamily.STROKE_PLAY]: {
@@ -51,6 +51,6 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   },
 };
 
-export function getScoringFamilyAdminUi(sport: Sport): ScoringFamilyAdminUi {
-  return SCORING_FAMILY_ADMIN_UI[getSportDefinition(sport).scoringFamily];
+export function getScoringFamilyAdminUi(event: SportLeagueEvent): ScoringFamilyAdminUi {
+  return SCORING_FAMILY_ADMIN_UI[eventSportDefinition(event).scoringFamily];
 }

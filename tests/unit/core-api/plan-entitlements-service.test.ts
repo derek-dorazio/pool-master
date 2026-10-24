@@ -17,13 +17,21 @@ function buildService(options: { config?: PlanConfig; plan?: LeaguePlan } = {}) 
 }
 
 describe('PlanEntitlementsService', () => {
-  it('gives Platinum every feature and no limit, so a league that never picked a plan loses nothing', () => {
+  it('gives Platinum every feature and its own caps, 500 entries and 50 sports leagues, not offered to commissioners yet', () => {
     const { service } = buildService();
 
     const platinum = service.forPlan(LeaguePlan.PLATINUM);
 
-    expect(platinum.caps).toEqual({ ENTRIES_PER_CONTEST: null, SPORTS_LEAGUES_PER_YEAR: null });
+    expect(platinum.caps).toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
     expect([...platinum.features].sort()).toEqual(Object.values(PlanFeature).sort());
+    expect(platinum.commissionerSelectable).toBe(false);
+  });
+
+  it('offers commissioners every plan but Platinum', () => {
+    const { service } = buildService();
+
+    expect([LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM].map((plan) => service.forPlan(plan).commissionerSelectable))
+      .toEqual([true, true, true]);
   });
 
   it('gives Free its own caps and only the features that start at Free', () => {
@@ -31,7 +39,7 @@ describe('PlanEntitlementsService', () => {
 
     const free = service.forPlan(LeaguePlan.FREE);
 
-    expect(free.caps).toEqual({ ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 });
+    expect(free.caps).toEqual({ ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 5 });
     expect([...free.features].sort()).toEqual([
       PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED,
       PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
@@ -40,15 +48,18 @@ describe('PlanEntitlementsService', () => {
     ]);
   });
 
-  it('gives a plan every feature that starts at a lower plan as well as its own', () => {
+  it('gives a plan every feature that starts at a lower plan as well as its own: Premium has the all-years summary and record book, Pro does not', () => {
     const { service } = buildService();
 
     const premium = service.forPlan(LeaguePlan.PREMIUM);
+    const pro = service.forPlan(LeaguePlan.PRO);
 
     expect(premium.features.has(PlanFeature.EMAIL_CONTEST_OPENED)).toBe(true);
     expect(premium.features.has(PlanFeature.CUP_STANDINGS)).toBe(true);
-    expect(premium.features.has(PlanFeature.RECORD_BOOK)).toBe(false);
-    expect(premium.caps).toEqual({ ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 });
+    expect(premium.features.has(PlanFeature.ALL_TIME_SUMMARY)).toBe(true);
+    expect(premium.features.has(PlanFeature.RECORD_BOOK)).toBe(true);
+    expect(pro.features.has(PlanFeature.RECORD_BOOK)).toBe(false);
+    expect(premium.caps).toEqual({ ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 30 });
   });
 
   it('reads PLAN_CONFIG on every call, so a root admin\'s save applies without a restart', () => {
@@ -56,7 +67,7 @@ describe('PlanEntitlementsService', () => {
     const defaults = PLAN_SETTINGS.defaults({});
 
     setConfig({
-      caps: { ...defaults.caps, ENTRIES_PER_CONTEST: { FREE: 30, PRO: 50, PREMIUM: 100 } },
+      caps: { ...defaults.caps, ENTRIES_PER_CONTEST: { FREE: 30, PRO: 50, PREMIUM: 100, PLATINUM: 500 } },
       features: { ...defaults.features, CUP_STANDINGS: LeaguePlan.FREE },
     });
     const free = service.forPlan(LeaguePlan.FREE);
@@ -71,7 +82,7 @@ describe('PlanEntitlementsService', () => {
     const entitlements = await service.forLeague(league.id);
 
     expect(entitlements.plan).toBe(LeaguePlan.PRO);
-    expect(entitlements.caps).toEqual({ ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 });
+    expect(entitlements.caps).toEqual({ ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 15 });
   });
 
   it('refuses a league that does not exist with 404 LEAGUE_NOT_FOUND', async () => {
@@ -97,7 +108,12 @@ describe('contestEntriesCap (#980)', () => {
     expect(contestEntriesCap(service.forPlan(LeaguePlan.PREMIUM), 50)).toBe(100);
   });
 
-  it('stays unlimited on a plan with no cap whatever the expansion', () => {
-    expect(contestEntriesCap(service.forPlan(LeaguePlan.PLATINUM), 1000)).toBeNull();
+  it('stays unlimited on a plan the root admin set to no cap, whatever the expansion', () => {
+    const defaults = PLAN_SETTINGS.defaults({});
+    const { service: unlimited } = buildService({
+      config: { ...defaults, caps: { ...defaults.caps, ENTRIES_PER_CONTEST: { ...defaults.caps.ENTRIES_PER_CONTEST, PLATINUM: null } } },
+    });
+
+    expect(contestEntriesCap(unlimited.forPlan(LeaguePlan.PLATINUM), 1000)).toBeNull();
   });
 });

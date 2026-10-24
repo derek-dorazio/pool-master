@@ -66,7 +66,7 @@ export type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';
-export type { SportEventParticipantStatLineRepository } from './stat-line-ports';
+export type { GameStatLineWrite, SportEventParticipantStatLineRepository } from './stat-line-ports';
 export type {
   RaceResultApply,
   RaceResultWrite,
@@ -135,3 +135,13 @@ export type {
   CupRepository,
 } from './cup-ports';
 export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
+export type {
+  ContestExpansionRepository,
+  ContestExpansionState,
+  ContestExpansionWrite,
+  ContestExpansionWriteResult,
+  LeaguePaymentRecord,
+  LeaguePaymentRepository,
+  PayerPaymentRecord,
+  PaymentPayer,
+} from './billing-ports';

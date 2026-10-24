@@ -1052,12 +1052,17 @@
               ]
             },
             "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+          },
+          "commissionerSelectable": {
+            "type": "boolean",
+            "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
           }
         },
         "required": [
           "plan",
           "caps",
-          "features"
+          "features",
+          "commissionerSelectable"
         ],
         "additionalProperties": false,
         "description": "What a league on one plan may do, from the current plan settings."
@@ -1133,12 +1138,17 @@
                     ]
                   },
                   "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                },
+                "commissionerSelectable": {
+                  "type": "boolean",
+                  "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                 }
               },
               "required": [
                 "plan",
                 "caps",
-                "features"
+                "features",
+                "commissionerSelectable"
               ],
               "additionalProperties": false,
               "description": "What a league on one plan may do, from the current plan settings."
@@ -1171,6 +1181,42 @@
         ],
         "additionalProperties": false,
         "description": "A league's new plan."
+      },
+      "ExtendPlanRenewalRequest": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 24,
+            "description": "How many months from now the gifted plan runs to."
+          }
+        },
+        "required": [
+          "months"
+        ],
+        "additionalProperties": false,
+        "description": "How far to extend a gifted plan: its renewal date moves to this many months from now, and never earlier than it is."
+      },
+      "ExtendRunningPlanRenewalsResponse": {
+        "type": "object",
+        "properties": {
+          "extendedCount": {
+            "type": "integer",
+            "description": "How many leagues' renewal dates moved: every league whose gift still runs and ended sooner."
+          },
+          "renewsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The renewal date they moved to."
+          }
+        },
+        "required": [
+          "extendedCount",
+          "renewsAt"
+        ],
+        "additionalProperties": false,
+        "description": "What extending every running gifted plan did."
       },
       "ListSportLeaguesUsedQuery": {
         "type": "object",
@@ -1288,6 +1334,404 @@
         ],
         "additionalProperties": false,
         "description": "What a league uses of its plan's caps now (#972), for the commissioner Plan page."
+      },
+      "ContestExpansionOffer": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band: the most entries the contest takes once expanded to it."
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "priceCents"
+        ],
+        "additionalProperties": false,
+        "description": "One band a contest can be expanded to."
+      },
+      "ContestExpansionResponse": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most entries the contest takes now, drafts included: the higher of its plan's cap and its expansion. Null for no limit."
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Entries the contest holds now, drafts included: what the cap counts."
+          },
+          "expandedTo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band the contest was expanded to, or null when it never was."
+          },
+          "expandable": {
+            "type": "boolean",
+            "description": "Whether the contest can be expanded: from its creation, a draft included, until it stops taking entries."
+          },
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expansions are charged. While off, expanding is free."
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entriesPerContest": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100000,
+                  "description": "The band: the most entries the contest takes once expanded to it."
+                },
+                "priceCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on."
+                }
+              },
+              "required": [
+                "entriesPerContest",
+                "priceCents"
+              ],
+              "additionalProperties": false,
+              "description": "One band a contest can be expanded to."
+            },
+            "description": "The bands above the contest's cap on its league's plan, smallest first. Empty once it can no longer be expanded."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "entryCount",
+          "expandedTo",
+          "expandable",
+          "paymentsEnabled",
+          "offers"
+        ],
+        "additionalProperties": false,
+        "description": "A contest's entry cap, and the expansions its commissioners can choose."
+      },
+      "ExpandContestRequest": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "One of the offered bands."
+          }
+        },
+        "required": [
+          "entriesPerContest"
+        ],
+        "additionalProperties": false,
+        "description": "Expand a contest to one of its offered bands."
+      },
+      "GrantContestExpansionRequest": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Any number of entries above the contest's cap."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Why it is given free; shown in the league's payment history.",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "description": "A root admin gives a contest an expansion free, with a reason."
+      },
+      "LeaguePayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was paid, or given."
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "In US cents; 0 for an expansion that was free."
+          },
+          "description": {
+            "type": "string",
+            "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+          },
+          "contestId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "The contest it was for; null when that contest was deleted."
+          },
+          "payer": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string",
+                "description": "Their name, for display."
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false,
+            "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
+          }
+        },
+        "required": [
+          "id",
+          "paidAt",
+          "amountCents",
+          "description",
+          "contestId",
+          "payer"
+        ],
+        "additionalProperties": false,
+        "description": "One line of a league's payment history. No card data is ever kept."
+      },
+      "LeaguePaymentListResponse": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was paid, or given."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "In US cents; 0 for an expansion that was free."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+                },
+                "contestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid",
+                  "description": "The contest it was for; null when that contest was deleted."
+                },
+                "payer": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Their name, for display."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Who paid; null for a Poolmaster grant or when that account was deleted."
+                }
+              },
+              "required": [
+                "id",
+                "paidAt",
+                "amountCents",
+                "description",
+                "contestId",
+                "payer"
+              ],
+              "additionalProperties": false,
+              "description": "One line of a league's payment history. No card data is ever kept."
+            },
+            "description": "Newest first."
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "additionalProperties": false,
+        "description": "A league's payment history."
+      },
+      "UserPayment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "paidAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was paid, or given."
+          },
+          "amountCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "In US cents; 0 for an expansion that was free."
+          },
+          "description": {
+            "type": "string",
+            "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+          },
+          "league": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "name": {
+                "type": "string"
+              },
+              "leagueCode": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "leagueCode"
+            ],
+            "additionalProperties": false,
+            "description": "The league it was paid in."
+          }
+        },
+        "required": [
+          "id",
+          "paidAt",
+          "amountCents",
+          "description",
+          "league"
+        ],
+        "additionalProperties": false,
+        "description": "One payment a user made, in one of their leagues. No card data is ever kept."
+      },
+      "UserPaymentListResponse": {
+        "type": "object",
+        "properties": {
+          "payments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When it was paid, or given."
+                },
+                "amountCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "In US cents; 0 for an expansion that was free."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What it was for, as written when it was paid: \"Masters Pool: up to 200 entries, free while payments are off\"."
+                },
+                "league": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "leagueCode": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "leagueCode"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The league it was paid in."
+                }
+              },
+              "required": [
+                "id",
+                "paidAt",
+                "amountCents",
+                "description",
+                "league"
+              ],
+              "additionalProperties": false,
+              "description": "One payment a user made, in one of their leagues. No card data is ever kept."
+            },
+            "description": "Newest first."
+          }
+        },
+        "required": [
+          "payments"
+        ],
+        "additionalProperties": false,
+        "description": "Every payment a user made, in any league."
       },
       "SquadMembershipDto": {
         "type": "object",
@@ -3270,15 +3714,25 @@
                   ]
                 },
                 "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+              },
+              "commissionerSelectable": {
+                "type": "boolean",
+                "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
               }
             },
             "required": [
               "plan",
               "caps",
-              "features"
+              "features",
+              "commissionerSelectable"
             ],
             "additionalProperties": false,
-            "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+            "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+          },
+          "planRenewsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
           },
           "mutedSportLeagueIds": {
             "type": "array",
@@ -3310,6 +3764,7 @@
           "cupCustomPoints",
           "hallOfLameVisible",
           "planEntitlements",
+          "planRenewsAt",
           "mutedSportLeagueIds",
           "eventEmailDelivery"
         ],
@@ -3842,15 +4297,25 @@
                       ]
                     },
                     "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  },
+                  "commissionerSelectable": {
+                    "type": "boolean",
+                    "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                   }
                 },
                 "required": [
                   "plan",
                   "caps",
-                  "features"
+                  "features",
+                  "commissionerSelectable"
                 ],
                 "additionalProperties": false,
-                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "planRenewsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
               },
               "mutedSportLeagueIds": {
                 "type": "array",
@@ -3882,6 +4347,7 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
+              "planRenewsAt",
               "mutedSportLeagueIds",
               "eventEmailDelivery"
             ],
@@ -4054,15 +4520,25 @@
                       ]
                     },
                     "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  },
+                  "commissionerSelectable": {
+                    "type": "boolean",
+                    "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                   }
                 },
                 "required": [
                   "plan",
                   "caps",
-                  "features"
+                  "features",
+                  "commissionerSelectable"
                 ],
                 "additionalProperties": false,
-                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "planRenewsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
               },
               "mutedSportLeagueIds": {
                 "type": "array",
@@ -4094,6 +4570,7 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
+              "planRenewsAt",
               "mutedSportLeagueIds",
               "eventEmailDelivery"
             ],
@@ -4560,15 +5037,25 @@
                         ]
                       },
                       "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                    },
+                    "commissionerSelectable": {
+                      "type": "boolean",
+                      "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                     }
                   },
                   "required": [
                     "plan",
                     "caps",
-                    "features"
+                    "features",
+                    "commissionerSelectable"
                   ],
                   "additionalProperties": false,
-                  "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                  "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                },
+                "planRenewsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
                 },
                 "mutedSportLeagueIds": {
                   "type": "array",
@@ -4600,6 +5087,7 @@
                 "cupCustomPoints",
                 "hallOfLameVisible",
                 "planEntitlements",
+                "planRenewsAt",
                 "mutedSportLeagueIds",
                 "eventEmailDelivery"
               ],
@@ -16472,6 +16960,32 @@
             ],
             "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
           },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+          },
           "displayOrder": {
             "type": [
               "integer",
@@ -16512,6 +17026,8 @@
           "squaresFromRound",
           "noun",
           "displayName",
+          "participantType",
+          "scoringFamily",
           "displayOrder",
           "affiliationCount",
           "sportEventCount",
@@ -16660,6 +17176,32 @@
                   ],
                   "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+                },
                 "displayOrder": {
                   "type": [
                     "integer",
@@ -16700,6 +17242,8 @@
                 "squaresFromRound",
                 "noun",
                 "displayName",
+                "participantType",
+                "scoringFamily",
                 "displayOrder",
                 "affiliationCount",
                 "sportEventCount",
@@ -16827,6 +17371,32 @@
                 ],
                 "description": "What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: \"NCAA Men's Basketball\" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request."
               },
+              "participantType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "INDIVIDUAL",
+                  "TEAM",
+                  null
+                ],
+                "description": "Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request."
+              },
+              "scoringFamily": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "STROKE_PLAY",
+                  "FINISH_POSITION",
+                  "HEAD_TO_HEAD",
+                  "COMPOSITE",
+                  null
+                ],
+                "description": "How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request."
+              },
               "displayOrder": {
                 "type": [
                   "integer",
@@ -16867,6 +17437,8 @@
               "squaresFromRound",
               "noun",
               "displayName",
+              "participantType",
+              "scoringFamily",
               "displayOrder",
               "affiliationCount",
               "sportEventCount",
@@ -17979,6 +18551,32 @@
             "format": "uuid",
             "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
           },
+          "participantType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "INDIVIDUAL",
+              "TEAM",
+              null
+            ],
+            "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+          },
+          "scoringFamily": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "STROKE_PLAY",
+              "FINISH_POSITION",
+              "HEAD_TO_HEAD",
+              "COMPOSITE",
+              null
+            ],
+            "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+          },
           "syncScope": {
             "type": "string",
             "enum": [
@@ -18056,6 +18654,8 @@
           "eventSeriesId",
           "eventYear",
           "sportLeagueId",
+          "participantType",
+          "scoringFamily",
           "syncScope",
           "autoLifecycleEnabled",
           "tierCount",
@@ -18328,6 +18928,32 @@
                   "format": "uuid",
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -18405,6 +19031,8 @@
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
+                "participantType",
+                "scoringFamily",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -18635,6 +19263,32 @@
                 "format": "uuid",
                 "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
               },
+              "participantType": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "INDIVIDUAL",
+                  "TEAM",
+                  null
+                ],
+                "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+              },
+              "scoringFamily": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "STROKE_PLAY",
+                  "FINISH_POSITION",
+                  "HEAD_TO_HEAD",
+                  "COMPOSITE",
+                  null
+                ],
+                "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+              },
               "syncScope": {
                 "type": "string",
                 "enum": [
@@ -18712,6 +19366,8 @@
               "eventSeriesId",
               "eventYear",
               "sportLeagueId",
+              "participantType",
+              "scoringFamily",
               "syncScope",
               "autoLifecycleEnabled",
               "tierCount",
@@ -19087,6 +19743,32 @@
                   "format": "uuid",
                   "description": "The sport league the event's series belongs to. Read through the series, not stored on the event."
                 },
+                "participantType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "INDIVIDUAL",
+                    "TEAM",
+                    null
+                  ],
+                  "description": "Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league."
+                },
+                "scoringFamily": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "STROKE_PLAY",
+                    "FINISH_POSITION",
+                    "HEAD_TO_HEAD",
+                    "COMPOSITE",
+                    null
+                  ],
+                  "description": "How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league."
+                },
                 "syncScope": {
                   "type": "string",
                   "enum": [
@@ -19164,6 +19846,8 @@
                 "eventSeriesId",
                 "eventYear",
                 "sportLeagueId",
+                "participantType",
+                "scoringFamily",
                 "syncScope",
                 "autoLifecycleEnabled",
                 "tierCount",
@@ -20005,6 +20689,48 @@
             ],
             "additionalProperties": false,
             "description": "Present once a golf round is scored."
+          },
+          "statLines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stat": {
+                  "type": "string",
+                  "enum": [
+                    "TOTAL_BASES",
+                    "RUNS",
+                    "RUNS_BATTED_IN",
+                    "WALKS",
+                    "STOLEN_BASES",
+                    "POINTS",
+                    "REBOUNDS",
+                    "ASSISTS",
+                    "GOALS",
+                    "SHOTS_ON_GOAL",
+                    "PASSING_TOUCHDOWNS",
+                    "RUSHING_TOUCHDOWNS",
+                    "RECEIVING_TOUCHDOWNS",
+                    "RECEPTIONS",
+                    "PASSING_YARDS",
+                    "RUSHING_YARDS",
+                    "RECEIVING_YARDS"
+                  ],
+                  "description": "One of the stats the sport's composite counts."
+                },
+                "value": {
+                  "type": "integer",
+                  "description": "The player's count of it in the game; below 0 only for yards."
+                }
+              },
+              "required": [
+                "stat",
+                "value"
+              ],
+              "additionalProperties": false,
+              "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+            },
+            "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
           }
         },
         "required": [
@@ -20013,7 +20739,8 @@
           "roundNumber",
           "status",
           "completedAt",
-          "golf"
+          "golf",
+          "statLines"
         ],
         "additionalProperties": false,
         "description": "A field row's part in one round."
@@ -20444,6 +21171,48 @@
                   ],
                   "additionalProperties": false,
                   "description": "Present once a golf round is scored."
+                },
+                "statLines": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "stat": {
+                        "type": "string",
+                        "enum": [
+                          "TOTAL_BASES",
+                          "RUNS",
+                          "RUNS_BATTED_IN",
+                          "WALKS",
+                          "STOLEN_BASES",
+                          "POINTS",
+                          "REBOUNDS",
+                          "ASSISTS",
+                          "GOALS",
+                          "SHOTS_ON_GOAL",
+                          "PASSING_TOUCHDOWNS",
+                          "RUSHING_TOUCHDOWNS",
+                          "RECEIVING_TOUCHDOWNS",
+                          "RECEPTIONS",
+                          "PASSING_YARDS",
+                          "RUSHING_YARDS",
+                          "RECEIVING_YARDS"
+                        ],
+                        "description": "One of the stats the sport's composite counts."
+                      },
+                      "value": {
+                        "type": "integer",
+                        "description": "The player's count of it in the game; below 0 only for yards."
+                      }
+                    },
+                    "required": [
+                      "stat",
+                      "value"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                  },
+                  "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                 }
               },
               "required": [
@@ -20452,7 +21221,8 @@
                 "roundNumber",
                 "status",
                 "completedAt",
-                "golf"
+                "golf",
+                "statLines"
               ],
               "additionalProperties": false,
               "description": "A field row's part in one round."
@@ -20981,6 +21751,48 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present once a golf round is scored."
+                      },
+                      "statLines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "stat": {
+                              "type": "string",
+                              "enum": [
+                                "TOTAL_BASES",
+                                "RUNS",
+                                "RUNS_BATTED_IN",
+                                "WALKS",
+                                "STOLEN_BASES",
+                                "POINTS",
+                                "REBOUNDS",
+                                "ASSISTS",
+                                "GOALS",
+                                "SHOTS_ON_GOAL",
+                                "PASSING_TOUCHDOWNS",
+                                "RUSHING_TOUCHDOWNS",
+                                "RECEIVING_TOUCHDOWNS",
+                                "RECEPTIONS",
+                                "PASSING_YARDS",
+                                "RUSHING_YARDS",
+                                "RECEIVING_YARDS"
+                              ],
+                              "description": "One of the stats the sport's composite counts."
+                            },
+                            "value": {
+                              "type": "integer",
+                              "description": "The player's count of it in the game; below 0 only for yards."
+                            }
+                          },
+                          "required": [
+                            "stat",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                        },
+                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -20989,7 +21801,8 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf"
+                      "golf",
+                      "statLines"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -21672,6 +22485,48 @@
                       ],
                       "additionalProperties": false,
                       "description": "Present once a golf round is scored."
+                    },
+                    "statLines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "stat": {
+                            "type": "string",
+                            "enum": [
+                              "TOTAL_BASES",
+                              "RUNS",
+                              "RUNS_BATTED_IN",
+                              "WALKS",
+                              "STOLEN_BASES",
+                              "POINTS",
+                              "REBOUNDS",
+                              "ASSISTS",
+                              "GOALS",
+                              "SHOTS_ON_GOAL",
+                              "PASSING_TOUCHDOWNS",
+                              "RUSHING_TOUCHDOWNS",
+                              "RECEIVING_TOUCHDOWNS",
+                              "RECEPTIONS",
+                              "PASSING_YARDS",
+                              "RUSHING_YARDS",
+                              "RECEIVING_YARDS"
+                            ],
+                            "description": "One of the stats the sport's composite counts."
+                          },
+                          "value": {
+                            "type": "integer",
+                            "description": "The player's count of it in the game; below 0 only for yards."
+                          }
+                        },
+                        "required": [
+                          "stat",
+                          "value"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                      },
+                      "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                     }
                   },
                   "required": [
@@ -21680,7 +22535,8 @@
                     "roundNumber",
                     "status",
                     "completedAt",
-                    "golf"
+                    "golf",
+                    "statLines"
                   ],
                   "additionalProperties": false,
                   "description": "A field row's part in one round."
@@ -23938,6 +24794,14 @@
             "type": "number",
             "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
           },
+          "entriesPerContest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+          },
           "startsAt": {
             "type": [
               "string",
@@ -23976,7 +24840,8 @@
           "contestFormat",
           "selectionType",
           "leagueId",
-          "sportEvents"
+          "sportEvents",
+          "entriesPerContest"
         ],
         "additionalProperties": false,
         "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -25223,6 +26088,48 @@
                         ],
                         "additionalProperties": false,
                         "description": "Present once a golf round is scored."
+                      },
+                      "statLines": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "stat": {
+                              "type": "string",
+                              "enum": [
+                                "TOTAL_BASES",
+                                "RUNS",
+                                "RUNS_BATTED_IN",
+                                "WALKS",
+                                "STOLEN_BASES",
+                                "POINTS",
+                                "REBOUNDS",
+                                "ASSISTS",
+                                "GOALS",
+                                "SHOTS_ON_GOAL",
+                                "PASSING_TOUCHDOWNS",
+                                "RUSHING_TOUCHDOWNS",
+                                "RECEIVING_TOUCHDOWNS",
+                                "RECEPTIONS",
+                                "PASSING_YARDS",
+                                "RUSHING_YARDS",
+                                "RECEIVING_YARDS"
+                              ],
+                              "description": "One of the stats the sport's composite counts."
+                            },
+                            "value": {
+                              "type": "integer",
+                              "description": "The player's count of it in the game; below 0 only for yards."
+                            }
+                          },
+                          "required": [
+                            "stat",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Composite extension of a participant round: one stat of a stat pool player's game."
+                        },
+                        "description": "A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in."
                       }
                     },
                     "required": [
@@ -25231,7 +26138,8 @@
                       "roundNumber",
                       "status",
                       "completedAt",
-                      "golf"
+                      "golf",
+                      "statLines"
                     ],
                     "additionalProperties": false,
                     "description": "A field row's part in one round."
@@ -25724,6 +26632,14 @@
                 "type": "number",
                 "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
               },
+              "entriesPerContest": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+              },
               "startsAt": {
                 "type": [
                   "string",
@@ -25762,7 +26678,8 @@
               "contestFormat",
               "selectionType",
               "leagueId",
-              "sportEvents"
+              "sportEvents",
+              "entriesPerContest"
             ],
             "additionalProperties": false,
             "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -25892,6 +26809,14 @@
                   "type": "number",
                   "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
                 },
+                "entriesPerContest": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+                },
                 "startsAt": {
                   "type": [
                     "string",
@@ -25930,7 +26855,8 @@
                 "contestFormat",
                 "selectionType",
                 "leagueId",
-                "sportEvents"
+                "sportEvents",
+                "entriesPerContest"
               ],
               "additionalProperties": false,
               "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -28683,15 +29609,25 @@
             "minimum": 1,
             "maximum": 100000,
             "description": "The most this plan allows, or null for unlimited."
+          },
+          "PLATINUM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
           }
         },
         "required": [
           "FREE",
           "PRO",
-          "PREMIUM"
+          "PREMIUM",
+          "PLATINUM"
         ],
         "additionalProperties": false,
-        "description": "One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises."
+        "description": "One cap's limit on each plan. A limit never falls as the plan rises."
       },
       "PlanConfig": {
         "type": "object",
@@ -28728,12 +29664,22 @@
                     "minimum": 1,
                     "maximum": 100000,
                     "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
                   }
                 },
                 "required": [
                   "FREE",
                   "PRO",
-                  "PREMIUM"
+                  "PREMIUM",
+                  "PLATINUM"
                 ],
                 "additionalProperties": false,
                 "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -28767,12 +29713,22 @@
                     "minimum": 1,
                     "maximum": 100000,
                     "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
                   }
                 },
                 "required": [
                   "FREE",
                   "PRO",
-                  "PREMIUM"
+                  "PREMIUM",
+                  "PLATINUM"
                 ],
                 "additionalProperties": false,
                 "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -29021,6 +29977,169 @@
         ],
         "additionalProperties": false,
         "description": "What each league plan allows: its caps and the plan each feature starts at."
+      },
+      "ExpansionPrice": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band: the most entries an expanded contest takes."
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "What expanding a contest to this band costs, in US cents."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "priceCents"
+        ],
+        "additionalProperties": false,
+        "description": "One expansion band and its price."
+      },
+      "BillingConfig": {
+        "type": "object",
+        "properties": {
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+          },
+          "expansionPrices": {
+            "type": "object",
+            "properties": {
+              "FREE": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PRO": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PREMIUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PLATINUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              }
+            },
+            "required": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "additionalProperties": false,
+            "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+          }
+        },
+        "required": [
+          "paymentsEnabled",
+          "expansionPrices"
+        ],
+        "additionalProperties": false,
+        "description": "Payments: whether they are on, and what expanding a contest costs on each plan."
       },
       "IngestionScheduleConfigOverride": {
         "type": "object",
@@ -29680,7 +30799,8 @@
           "INGESTION_SCHEDULE_CONFIG",
           "EMAIL_CONFIG",
           "BUDGET_PRICING_CONFIG",
-          "PLAN_CONFIG"
+          "PLAN_CONFIG",
+          "BILLING_CONFIG"
         ],
         "description": "The stored key of a settings group."
       },
@@ -30956,12 +32076,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -30995,12 +32125,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -31285,12 +32425,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -31324,12 +32474,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -31575,6 +32735,355 @@
                 "required": [
                   "caps",
                   "features"
+                ],
+                "additionalProperties": false,
+                "description": "The value a reset would store."
+              }
+            },
+            "required": [
+              "key",
+              "title",
+              "description",
+              "source",
+              "updatedAt",
+              "updatedBy",
+              "value",
+              "defaults"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Short display name of the group."
+              },
+              "description": {
+                "type": "string",
+                "description": "What the group controls."
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "stored",
+                  "defaults"
+                ],
+                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+              },
+              "updatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+              },
+              "updatedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who last saved the stored value, when known."
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -32852,12 +34361,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -32891,12 +34410,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -33181,12 +34710,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -33220,12 +34759,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -33471,6 +35020,355 @@
                       "required": [
                         "caps",
                         "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value a reset would store."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "description",
+                    "source",
+                    "updatedAt",
+                    "updatedBy",
+                    "value",
+                    "defaults"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BILLING_CONFIG"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Short display name of the group."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What the group controls."
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "stored",
+                        "defaults"
+                      ],
+                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time",
+                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+                    },
+                    "updatedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who last saved the stored value, when known."
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
                       ],
                       "additionalProperties": false,
                       "description": "The value a reset would store."
@@ -34085,12 +35983,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -34124,12 +36032,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -34375,6 +36293,171 @@
                 "required": [
                   "caps",
                   "features"
+                ],
+                "additionalProperties": false,
+                "description": "The whole new value."
+              },
+              "expectedUpdatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "expectedUpdatedAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -35596,12 +37679,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -35635,12 +37728,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -35925,12 +38028,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -35964,12 +38077,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -36215,6 +38338,341 @@
                 "required": [
                   "caps",
                   "features"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
+              }
+            },
+            "required": [
+              "key",
+              "id",
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "changedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
                 ],
                 "additionalProperties": false,
                 "description": "The value the save stored."
@@ -37436,12 +39894,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -37475,12 +39943,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -37765,12 +40243,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -37804,12 +40292,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -38055,6 +40553,341 @@
                       "required": [
                         "caps",
                         "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "id",
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BILLING_CONFIG"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -38770,6 +41603,82 @@
         ],
         "additionalProperties": false,
         "description": "A dry run of a race result. Nothing is written."
+      },
+      "GameStatLineUploadRequest": {
+        "type": "object",
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "participantId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The player, by participant id; must be in the event's field."
+                },
+                "stats": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "stat": {
+                        "type": "string",
+                        "enum": [
+                          "TOTAL_BASES",
+                          "RUNS",
+                          "RUNS_BATTED_IN",
+                          "WALKS",
+                          "STOLEN_BASES",
+                          "POINTS",
+                          "REBOUNDS",
+                          "ASSISTS",
+                          "GOALS",
+                          "SHOTS_ON_GOAL",
+                          "PASSING_TOUCHDOWNS",
+                          "RUSHING_TOUCHDOWNS",
+                          "RECEIVING_TOUCHDOWNS",
+                          "RECEPTIONS",
+                          "PASSING_YARDS",
+                          "RUSHING_YARDS",
+                          "RECEIVING_YARDS"
+                        ],
+                        "description": "One of the stats the sport's composite counts."
+                      },
+                      "value": {
+                        "type": "integer",
+                        "minimum": -9999,
+                        "maximum": 9999,
+                        "description": "The player's count of it in the game; below 0 only for yards."
+                      }
+                    },
+                    "required": [
+                      "stat",
+                      "value"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One stat of the line."
+                  },
+                  "maxItems": 17,
+                  "description": "The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game."
+                }
+              },
+              "required": [
+                "participantId",
+                "stats"
+              ],
+              "additionalProperties": false,
+              "description": "One player's line for the game. It replaces the line stored for the player in the game."
+            },
+            "minItems": 1,
+            "maxItems": 200
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "additionalProperties": false,
+        "description": "One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored."
       },
       "MatchStatusDto": {
         "type": "string",
@@ -54177,6 +57086,80 @@
         }
       }
     },
+    "/api/v1/users/{userId}/payments": {
+      "get": {
+        "operationId": "listUserPayments",
+        "summary": "List the payments a user made",
+        "tags": [
+          "Users"
+        ],
+        "description": "Every payment the user made, in any of their leagues, newest first (#987): date, amount in US cents, what it was for and the league. While payments are off, each expansion is a $0 line that says it was free. No card data is kept. Access rule A6: the subject themselves, or a root admin.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(me|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+            },
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "description": "`me` for the authenticated caller, or a user id."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every payment a user made, in any league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPaymentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/users/{userId}/password": {
       "post": {
         "operationId": "changeUserPassword",
@@ -55167,7 +58150,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.",
+        "description": "Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick a plan at any time, free, and it applies at once. A plan whose `commissionerSelectable` is false only a root admin may pick. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 400 LEAGUE_PLAN_NOT_AVAILABLE when a commissioner picks a plan not offered yet; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.",
         "requestBody": {
           "required": true,
           "content": {
@@ -55240,6 +58223,150 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/plan-renewals/extend": {
+      "post": {
+        "operationId": "extendRunningPlanRenewals",
+        "summary": "Extend every running gifted plan",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Root admin only (#986). Moves the renewal date of every league whose gifted plan still runs out to `months` from now; a league whose date is already later keeps it. Each move is logged with who made it, from which date and to which. Returns how many leagues moved and the date they moved to.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendPlanRenewalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What extending every running gifted plan did.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendRunningPlanRenewalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/plan-renewal/extend": {
+      "post": {
+        "operationId": "extendLeaguePlanRenewal",
+        "summary": "Extend the league's gifted plan",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Root admin only (#986). Moves the league's renewal date out to `months` from now, logged with who made it, from which date and to which; a date already later is kept and nothing is logged. The plan itself does not change. Returns the league with its new `planRenewsAt`. 404 LEAGUE_NOT_FOUND for a missing league.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendPlanRenewalRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {
@@ -56083,6 +59210,336 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaguePlanListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/payments": {
+      "get": {
+        "operationId": "listLeaguePayments",
+        "summary": "List a league's payment history",
+        "tags": [
+          "Billing"
+        ],
+        "description": "Every payment made in the league, newest first (#987): date, amount in US cents, what it was for, its contest and who paid. While payments are off, each expansion is a $0 line that says it was free; a root admin's gift is a $0 line with its reason. No card data is kept. Commissioners and root admins only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A league's payment history.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaguePaymentListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/contests/{contestId}/expansion": {
+      "get": {
+        "operationId": "getContestExpansion",
+        "summary": "Get a contest's entry cap and expansions",
+        "tags": [
+          "Billing"
+        ],
+        "description": "The contest's entry cap (the higher of its league plan's and its expansion), its entries counted drafts included, and the bands above its cap on its plan's price list, with what each would cost (#987). Commissioners and root admins only: members never see prices.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "expandContest",
+        "summary": "Expand a contest",
+        "tags": [
+          "Billing"
+        ],
+        "description": "Raises the contest's entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league's payment history records a $0 line, \"free while payments are off\". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; a root admin can still give an expansion.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpandContestRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/contests/{contestId}/expansion/grant": {
+      "post": {
+        "operationId": "grantContestExpansion",
+        "summary": "Give a contest an expansion free",
+        "tags": [
+          "Billing"
+        ],
+        "description": "A root admin raises the contest's entry cap to any number above it, free, with a reason, at any time (#987). The league's payment history records a $0 line with the reason. Root admin only. 409 CONTEST_EXPANSION_NOT_ABOVE_CAP when the number is not above the contest's cap, or the contest has no limit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantContestExpansionRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -63040,6 +66497,108 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines": {
+      "put": {
+        "operationId": "applyEventGameStatLines",
+        "summary": "Apply a game's stat lines",
+        "tags": [
+          "Events"
+        ],
+        "description": "Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts, is given twice, or is below 0 when it is not yards. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GameStatLineUploadRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "in": "path",
+            "name": "roundNumber",
             "required": true
           }
         ],
