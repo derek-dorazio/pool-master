@@ -93,7 +93,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         eventYear: event.eventYear,
         // A sport league scored by its own family plays its own format (#934: a stat pool plays
         // golf's, not its team sport's matches); any other plays its sport's.
-        tournamentFormat: event.scoringFamily === undefined
+        tournamentFormat: (event.scoringFamily ?? null) === null
           ? sport?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport)
           : eventSportDefinition(event).tournamentFormat,
         participantCount: event.participantCount ?? null,
@@ -101,8 +101,8 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
         rounds: event.rounds ?? null,
         salaryCap: event.pricingConfig?.salaryCap ?? null,
         squaresFromRound: event.squaresFromRound ?? null,
-        ...(event.participantType !== undefined && { participantType: event.participantType }),
-        ...(event.scoringFamily !== undefined && { scoringFamily: event.scoringFamily }),
+        participantType: event.participantType ?? null,
+        scoringFamily: event.scoringFamily ?? null,
       };
     },
     findActiveFieldPrices: async (sportEventId) => {

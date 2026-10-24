@@ -24,7 +24,12 @@ import {
   requireOwnSquad,
 } from '../leagues/permissions';
 import { createContestService } from './wiring';
-import { createContestHandlers, createCreateContestHandler, createListSportLeaguesUsedHandler } from './handler';
+import {
+  createContestHandlers,
+  createCreateContestHandler,
+  createGetLeaguePlanUsageHandler,
+  createListSportLeaguesUsedHandler,
+} from './handler';
 import { createContestManagementService } from '../contest-management/wiring';
 import { getAppPrisma } from '../../core/prisma-context';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
@@ -44,6 +49,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
   const contestManagementService = createContestManagementService(prisma, fastify.log, opts.planEntitlements);
   const createContest = createCreateContestHandler(contestService, contestManagementService);
   const listSportLeaguesUsed = createListSportLeaguesUsedHandler(contestManagementService);
+  const getLeaguePlanUsage = createGetLeaguePlanUsageHandler(contestService, contestManagementService);
 
   // --- League-scoped contest routes (under /api/v1/leagues/:id/contests) ---
   // Note: These are registered under the leagues prefix, so :id = leagueId
@@ -112,6 +118,23 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
     },
     preHandler: requireCommissioner(membershipRepo),
     handler: listSportLeaguesUsed,
+  });
+
+  fastify.get('/plan-usage', {
+    schema: {
+      tags: ['Contests'],
+      summary: 'Show what a league uses of its plan\'s caps',
+      description:
+        'What the league uses of its plan\'s caps now (#972), for the commissioner Plan page: the different sports leagues of this year\'s contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.',
+      operationId: 'getLeaguePlanUsage',
+      response: {
+        200: schemaRef('LeaguePlanUsageResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: getLeaguePlanUsage,
   });
 }
 

@@ -320,7 +320,7 @@ export class SportEventBracketService {
     }
     if (reseeds) {
       const roundCount = event.rounds ?? Math.max(...bracket.map((match) => match.roundNumber));
-      const roundLabel = (roundNumber: number): string => eventRoundLabel(event.sport, sportLeague.roundNames, roundNumber, roundCount);
+      const roundLabel = (roundNumber: number): string => eventRoundLabel(event, sportLeague.roundNames, roundNumber, roundCount);
       for (const gap of findReseededPlaceGaps(bracket)) {
         const where = gap.regionLabel === null ? roundLabel(gap.roundNumber) : `${roundLabel(gap.roundNumber)} in ${gap.regionLabel}`;
         blockers.push(`${where} has ${gap.openPlaces} open place(s) for ${gap.winnersToCome} ${roundLabel(gap.roundNumber - 1)} winner(s) still to come`);

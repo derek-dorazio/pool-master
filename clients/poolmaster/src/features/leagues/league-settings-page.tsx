@@ -31,7 +31,7 @@ import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEditPath,
   buildLeagueAdminEventEmailsEditPath,
-  buildLeagueAdminPlanEditPath,
+  buildLeagueAdminPlanPath,
   buildLeagueAdminTeamsPath,
 } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -175,7 +175,7 @@ export function LeagueSettingsPage() {
         <section className="space-y-3" data-testid="league-settings-championships">
           <SettingsSectionHeader
             action={(
-              <LinkButton data-testid="league-settings-championships-plan" size="sm" to={buildLeagueAdminPlanEditPath(league.leagueCode)} variant="secondary">
+              <LinkButton data-testid="league-settings-championships-plan" size="sm" to={buildLeagueAdminPlanPath(league.leagueCode)} variant="secondary">
                 Change plan
               </LinkButton>
             )}
@@ -221,7 +221,7 @@ export function LeagueSettingsPage() {
         <section className="space-y-3" data-testid="league-settings-event-emails">
           <SettingsSectionHeader
             action={(
-              <LinkButton data-testid="league-settings-event-emails-plan" size="sm" to={buildLeagueAdminPlanEditPath(league.leagueCode)} variant="secondary">
+              <LinkButton data-testid="league-settings-event-emails-plan" size="sm" to={buildLeagueAdminPlanPath(league.leagueCode)} variant="secondary">
                 Change plan
               </LinkButton>
             )}
@@ -237,7 +237,7 @@ export function LeagueSettingsPage() {
             data-testid="league-settings-plan-edit"
             isDisabled={isInactive}
             size="sm"
-            to={buildLeagueAdminPlanEditPath(league.leagueCode)}
+            to={buildLeagueAdminPlanPath(league.leagueCode)}
             variant="secondary"
           >
             Change

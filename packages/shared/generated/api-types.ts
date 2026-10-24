@@ -1233,6 +1233,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contests/plan-usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show what a league uses of its plan's caps
+         * @description What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
+         */
+        get: operations["getLeaguePlanUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contest-management/contests/{contestId}": {
         parameters: {
             query?: never;
@@ -2395,6 +2415,26 @@ export interface paths {
          * @description Stores each runner's result exactly as sent, all or none; runners not named keep theirs. The official flag is set on every result of the race. Writes each runner's standing: its place (a dead heat sharing one, shown "T2"), COMPLETE once it started, WITHDRAWN when it did not start. 422 RACE_RESULT_ROWS_INVALID when a row does not resolve to one runner or carries a row error; 422 RACE_RESULT_POSITIONS_INVALID when the places do not run 1, 2, 3 ... (a dead heat repeats a place and skips the next); 422 RACE_RESULT_FIELD_INCOMPLETE when an official result leaves an active runner without a result or a finisher without a place; 422 EVENT_SCORING_FAMILY_MISMATCH when the event's sport is not scored by finishing place. Returns the field. Root admin only.
          */
         put: operations["applyEventRaceResults"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/rounds/{roundNumber}/stat-lines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Apply a game's stat lines
+         * @description Stores each player's line for the game (the round) exactly as sent, all or none; each row replaces the player's stored line, an empty one clears it, and players not named keep theirs. Contests on the event score the new lines at their next read. 422 ROUND_BEYOND_SCHEDULE when the event schedules no such game. 422 STAT_LINE_ROWS_INVALID, naming every problem, when a player is not in the field or is named twice, or a stat is not one the sport's composite counts, is given twice, or is below 0 when it is not yards. 422 EVENT_SCORING_FAMILY_MISMATCH when the event is not scored from stat lines (its scoring family is not composite). Returns the field. Root admin only.
+         */
+        put: operations["applyEventGameStatLines"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3821,6 +3861,31 @@ export interface components {
             seasonYear: number;
             /** @description The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap. */
             sportLeagueIds: string[];
+        };
+        /** @description One contest still taking entries, with its entries as the entry cap counts them. */
+        OpenContestUsageDto: {
+            /** Format: uuid */
+            contestId: string;
+            /** @description The contest's name. */
+            name: string;
+            /** @description Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts. */
+            entryCount: number;
+        };
+        /** @description What a league uses of its plan's caps now (#972), for the commissioner Plan page. */
+        LeaguePlanUsageResponse: {
+            /** @description This year, in UTC: the season whose sports leagues are listed. */
+            seasonYear: number;
+            /** @description The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
+            sportLeagueIds: string[];
+            /** @description Every contest still taking entries, newest first. */
+            openContests: {
+                /** Format: uuid */
+                contestId: string;
+                /** @description The contest's name. */
+                name: string;
+                /** @description Its entries, drafts included: what the plan's `ENTRIES_PER_CONTEST` cap counts. */
+                entryCount: number;
+            }[];
         };
         /** @description Squad membership summary. */
         SquadMembershipDto: {
@@ -8425,6 +8490,16 @@ export interface components {
             noun: "LEAGUE" | null;
             /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
             displayName: string | null;
+            /**
+             * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
             /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
             displayOrder: number | null;
             /** @description Participants currently affiliated with the sport league. */
@@ -8500,6 +8575,16 @@ export interface components {
                 noun: "LEAGUE" | null;
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
+                /**
+                 * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
                 /** @description Participants currently affiliated with the sport league. */
@@ -8566,6 +8651,16 @@ export interface components {
                 noun: "LEAGUE" | null;
                 /** @description What screens call the sport league away from its sport's own pages, when its name alone does not say the sport: "NCAA Men's Basketball" for basketball's NCAA Division I Men. Null shows the name. Set with the league's reference data, never by a request. */
                 displayName: string | null;
+                /**
+                 * @description Who competes in the sport league's events, when not its sport's: INDIVIDUAL for a championship stat pool (the World Series' players, where baseball's are teams). Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the sport league's events are scored, when not as its sport's: COMPOSITE for a championship stat pool, each game a player's sport composite. Null takes the sport's. Set with the league's reference data, never by a request.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /** @description Where the sport league sits among its sport's leagues wherever they are listed together, as on How to Play: the major professional leagues first, then the NCAA's. Lower comes first; null comes after every ordered league, by name. Set with the league's reference data, never by a request. */
                 displayOrder: number | null;
                 /** @description Participants currently affiliated with the sport league. */
@@ -9069,6 +9164,16 @@ export interface components {
              */
             sportLeagueId: string;
             /**
+             * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+             * @enum {string|null}
+             */
+            participantType: "INDIVIDUAL" | "TEAM" | null;
+            /**
+             * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+             * @enum {string|null}
+             */
+            scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+            /**
              * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
              * @enum {string}
              */
@@ -9204,6 +9309,16 @@ export interface components {
                  */
                 sportLeagueId: string;
                 /**
+                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
+                /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
                  */
@@ -9317,6 +9432,16 @@ export interface components {
                  * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
                  */
                 sportLeagueId: string;
+                /**
+                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -9500,6 +9625,16 @@ export interface components {
                  * @description The sport league the event's series belongs to. Read through the series, not stored on the event.
                  */
                 sportLeagueId: string;
+                /**
+                 * @description Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                participantType: "INDIVIDUAL" | "TEAM" | null;
+                /**
+                 * @description How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool, played as golf's shape with each game a round. Null scores as the sport does. Read through the series' sport league.
+                 * @enum {string|null}
+                 */
+                scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD" | "COMPOSITE" | null;
                 /**
                  * @description How much provider data this event accepts on sync. (Admin-only: operational detail no member surface reads.)
                  * @enum {string}
@@ -9809,6 +9944,16 @@ export interface components {
                 scoreToPar: number;
                 thru: number | null;
             } | null;
+            /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
+            statLines: {
+                /**
+                 * @description One of the stats the sport's composite counts.
+                 * @enum {string}
+                 */
+                stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                /** @description The player's count of it in the game; below 0 only for yards. */
+                value: number;
+            }[];
         };
         /** @description A participant on an event's field, with everything the event records about them. */
         SportEventParticipantDto: {
@@ -9978,6 +10123,16 @@ export interface components {
                     scoreToPar: number;
                     thru: number | null;
                 } | null;
+                /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
+                statLines: {
+                    /**
+                     * @description One of the stats the sport's composite counts.
+                     * @enum {string}
+                     */
+                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                    /** @description The player's count of it in the game; below 0 only for yards. */
+                    value: number;
+                }[];
             }[];
             /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
             race: {
@@ -10178,6 +10333,16 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
+                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
+                    statLines: {
+                        /**
+                         * @description One of the stats the sport's composite counts.
+                         * @enum {string}
+                         */
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        /** @description The player's count of it in the game; below 0 only for yards. */
+                        value: number;
+                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -10419,6 +10584,16 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
+                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
+                    statLines: {
+                        /**
+                         * @description One of the stats the sport's composite counts.
+                         * @enum {string}
+                         */
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        /** @description The player's count of it in the game; below 0 only for yards. */
+                        value: number;
+                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -11469,6 +11644,16 @@ export interface components {
                         scoreToPar: number;
                         thru: number | null;
                     } | null;
+                    /** @description A stat pool player's stats in the game, by stat; empty for every other event, and for a game the player has no line in. */
+                    statLines: {
+                        /**
+                         * @description One of the stats the sport's composite counts.
+                         * @enum {string}
+                         */
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        /** @description The player's count of it in the game; below 0 only for yards. */
+                        value: number;
+                    }[];
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
                 race: {
@@ -16191,6 +16376,26 @@ export interface components {
                 /** @description Resolved rows with a row error. */
                 invalid: number;
             };
+        };
+        /** @description One game's stat lines, or a correction to some of them: one row per player named. Players not named keep the line already stored. */
+        GameStatLineUploadRequest: {
+            rows: {
+                /**
+                 * Format: uuid
+                 * @description The player, by participant id; must be in the event's field.
+                 */
+                participantId: string;
+                /** @description The player's whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game. */
+                stats: {
+                    /**
+                     * @description One of the stats the sport's composite counts.
+                     * @enum {string}
+                     */
+                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                    /** @description The player's count of it in the game; below 0 only for yards. */
+                    value: number;
+                }[];
+            }[];
         };
         /**
          * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.
@@ -23200,6 +23405,46 @@ export interface operations {
             };
         };
     };
+    getLeaguePlanUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What a league uses of its plan's caps now (#972), for the commissioner Plan page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaguePlanUsageResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     getContestConfiguration: {
         parameters: {
             query?: never;
@@ -27226,6 +27471,78 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["RaceResultUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    applyEventGameStatLines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                roundNumber: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GameStatLineUploadRequest"];
             };
         };
         responses: {

@@ -80,7 +80,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const homePath = buildSportEventPath(tournament.sport, tournament.id);
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
-  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament.sport);
+  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
 
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editFormSchema),

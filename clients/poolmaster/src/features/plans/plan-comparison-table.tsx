@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, ChevronRight, Minus } from 'lucide-react';
-import type { PlanFeatureGroup } from '@poolmaster/shared/domain';
+import type { LeaguePlan, PlanCap, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { Button, cn } from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
@@ -9,6 +9,10 @@ interface PlanComparisonTableProps {
   plans: readonly ComparedPlan[];
   /** Feature groups that start folded to one row of counts ("4 of 11"); a reader can open them. */
   initiallyFolded?: readonly PlanFeatureGroup[];
+  /** The league's own plan, whose column is shaded (#972). */
+  currentPlan?: LeaguePlan;
+  /** What the league uses of each cap now; a plan whose cap is below it says "You use N" there. */
+  capUsage?: Readonly<Record<PlanCap, number>>;
 }
 
 /** How many of a folded group's rows each plan has, as its summary cells. */
@@ -22,9 +26,11 @@ function foldedCounts(section: PlanComparisonSection, planCount: number): string
 /**
  * Every plan side by side (#945, #971): its limits, what every plan includes, then which
  * features it has, each row lined up across the plans. On a phone the descriptions drop so all
- * four plans fit; the first column stays put if the table still has to scroll.
+ * four plans fit; the first column stays put if the table still has to scroll. On a league's
+ * Plan page (#972) its plan's column is shaded, and a cap below what the league uses says so.
  */
-export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanComparisonTableProps) {
+export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, capUsage }: PlanComparisonTableProps) {
+  const shade = (index: number) => (plans[index]?.plan === currentPlan ? 'bg-primary/10' : null);
   const sections = buildPlanComparison(plans);
   const [folded, setFolded] = useState<ReadonlySet<PlanFeatureGroup>>(() => new Set(initiallyFolded));
   const toggle = (group: PlanFeatureGroup) => setFolded((current) => {
@@ -45,8 +51,8 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
             <th className="sticky left-0 bg-card px-3 py-2 font-medium text-muted-foreground" scope="col">
               <span className="sr-only">What the plan includes</span>
             </th>
-            {plans.map((plan) => (
-              <th className="px-1 py-2 text-center font-display font-bold sm:px-2" key={plan.plan} scope="col">
+            {plans.map((plan, index) => (
+              <th className={cn('px-1 py-2 text-center font-display font-bold sm:px-2', shade(index))} key={plan.plan} scope="col">
                 {LEAGUE_PLAN_LABEL[plan.plan]}
               </th>
             ))}
@@ -74,7 +80,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
                   )}
                 </th>
                 {isFolded ? foldedCounts(section, plans.length).map((count, index) => (
-                  <td className="px-1 py-2 text-center text-xs font-semibold text-muted-foreground tabular-nums sm:px-2" key={plans[index]?.plan ?? index}>{count}</td>
+                  <td className={cn('px-1 py-2 text-center text-xs font-semibold text-muted-foreground tabular-nums sm:px-2', shade(index))} key={plans[index]?.plan ?? index}>{count}</td>
                 )) : null}
               </tr>
               {isFolded ? null : section.rows.map((row) => (
@@ -83,13 +89,22 @@ export function PlanComparisonTable({ plans, initiallyFolded = [] }: PlanCompari
                     {row.label}
                     <span className="hidden text-xs text-muted-foreground sm:block">{row.description}</span>
                   </th>
-                  {row.cells.map((cell, index) => (
-                    <td className="px-1 py-2 text-center tabular-nums sm:px-2" key={plans[index]?.plan ?? index}>
-                      {typeof cell === 'string' ? cell : cell
-                        ? <Check aria-label="Included" className="mx-auto text-primary" size={16} />
-                        : <Minus aria-label="Not included" className="mx-auto text-muted-foreground" size={16} />}
-                    </td>
-                  ))}
+                  {row.cells.map((cell, index) => {
+                    const used = row.cap === null ? undefined : capUsage?.[row.cap];
+                    const limit = row.cap === null ? null : plans[index]?.caps[row.cap] ?? null;
+                    return (
+                      <td className={cn('px-1 py-2 text-center tabular-nums sm:px-2', shade(index))} key={plans[index]?.plan ?? index}>
+                        {typeof cell === 'string' ? cell : cell
+                          ? <Check aria-label="Included" className="mx-auto text-primary" size={16} />
+                          : <Minus aria-label="Not included" className="mx-auto text-muted-foreground" size={16} />}
+                        {used !== undefined && limit !== null && used > limit ? (
+                          <span className="block text-xs font-semibold text-destructive" data-testid={`plan-comparison-over-${row.key}-${plans[index]?.plan ?? index}`}>
+                            You use {used.toLocaleString('en-US')}
+                          </span>
+                        ) : null}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

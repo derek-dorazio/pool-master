@@ -9,6 +9,7 @@ import {
   UpdateContestEntryRequestSchema,
   type ListSportLeaguesUsedQuery,
   type SportLeaguesUsedResponse,
+  type LeaguePlanUsageResponse,
 } from '@poolmaster/shared/dto';
 import type { z } from 'zod';
 import { z as zod } from 'zod';
@@ -521,5 +522,28 @@ export function createListSportLeaguesUsedHandler(contestManagementService: Cont
     const sportLeagueIds = await contestManagementService.listSportLeaguesUsed(request.params.id, seasonYear);
     logger.debug({ leagueId: request.params.id, seasonYear, count: sportLeagueIds.length }, 'list sports leagues used route completed');
     return { seasonYear, sportLeagueIds };
+  };
+}
+
+/**
+ * `getLeaguePlanUsage` (#972): what the league uses of its plan's caps now, for the commissioner
+ * Plan page: this year's sports leagues, and every contest still taking entries with its entries.
+ */
+export function createGetLeaguePlanUsageHandler(
+  contestService: ContestService,
+  contestManagementService: ContestManagementService,
+) {
+  return async function getLeaguePlanUsage(
+    request: FastifyRequest<{ Params: { id: string } }>,
+  ): Promise<LeaguePlanUsageResponse> {
+    const logger = createRequestContextLogger(request);
+    const leagueId = request.params.id;
+    const seasonYear = new Date().getUTCFullYear();
+    const [sportLeagueIds, openContests] = await Promise.all([
+      contestManagementService.listSportLeaguesUsed(leagueId, seasonYear),
+      contestService.listOpenContestUsage(leagueId),
+    ]);
+    logger.debug({ leagueId, seasonYear, sportLeagues: sportLeagueIds.length, openContests: openContests.length }, 'league plan usage route completed');
+    return { seasonYear, sportLeagueIds, openContests };
   };
 }

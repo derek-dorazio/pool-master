@@ -37,7 +37,7 @@ export function SportEventHeader({
     overview: 'Overview',
     field: 'Field',
     tiers: 'Tiers',
-    results: getScoringFamilyAdminUi(tournament.sport).resultsLabel,
+    results: getScoringFamilyAdminUi(tournament).resultsLabel,
   };
 
   return (

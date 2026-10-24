@@ -148,9 +148,9 @@ export function buildLeagueAdminEventEmailsEditPath(leagueCode: string) {
   return `/league/${leagueCode}/admin/event-emails/edit`;
 }
 
-/** The league's plan picker and comparison table (#945). */
-export function buildLeagueAdminPlanEditPath(leagueCode: string) {
-  return `/league/${leagueCode}/admin/plan/edit`;
+/** The league's Plan page (#972): its plan and usage, the plans to move to, and the comparison. */
+export function buildLeagueAdminPlanPath(leagueCode: string) {
+  return `/league/${leagueCode}/admin/plan`;
 }
 
 export function buildInvitePath(inviteCode: string) {

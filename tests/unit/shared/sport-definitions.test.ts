@@ -1,6 +1,7 @@
 import {
   MatchPeriodLayout,
   PARTICIPANT_SCORING_DEFINITIONS,
+  ParticipantType,
   SPORT_DEFINITIONS,
   ScoringFamily,
   SelectionType,
@@ -512,18 +513,23 @@ describe('round labels from a sport league\'s own round names', () => {
   const nba = ['First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
 
   it('names each round of an NBA bracket by the league\'s names, not March Madness\'s', () => {
-    expect([1, 2, 3, 4].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 4))).toEqual(nba);
+    expect([1, 2, 3, 4].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 4))).toEqual(nba);
   });
 
   it('lines the league\'s names up with the final, so a shorter bracket keeps the last ones and a longer one takes the sport\'s for its first rounds', () => {
-    expect([1, 2, 3].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 3))).toEqual(['Conference Semifinals', 'Conference Finals', 'NBA Finals']);
-    expect([1, 2, 3, 4, 5].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, nba, roundNumber, 5))).toEqual(['First Round', 'First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
+    expect([1, 2, 3].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 3))).toEqual(['Conference Semifinals', 'Conference Finals', 'NBA Finals']);
+    expect([1, 2, 3, 4, 5].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, nba, roundNumber, 5))).toEqual(['First Round', 'First Round', 'Conference Semifinals', 'Conference Finals', 'NBA Finals']);
   });
 
   it('uses the sport\'s names for a league that names none, and for a stored round past the count', () => {
-    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => eventRoundLabel(Sport.BASKETBALL, [], roundNumber, 6))).toEqual([
+    expect([1, 2, 3, 4, 5, 6].map((roundNumber) => eventRoundLabel({ sport: Sport.BASKETBALL }, [], roundNumber, 6))).toEqual([
       'First Round', 'Second Round', 'Sweet 16', 'Elite Eight', 'Final Four', 'National Championship',
     ]);
-    expect(eventRoundLabel(Sport.BASKETBALL, nba, 5, 4)).toBe(getSportDefinition(Sport.BASKETBALL).roundLabel(5, 4));
+    expect(eventRoundLabel({ sport: Sport.BASKETBALL }, nba, 5, 4)).toBe(getSportDefinition(Sport.BASKETBALL).roundLabel(5, 4));
+  });
+
+  it('names a stat pool event\'s rounds as games, not by its sport\'s postseason rounds', () => {
+    const worldSeries = { sport: Sport.BASEBALL, participantType: ParticipantType.INDIVIDUAL, scoringFamily: ScoringFamily.COMPOSITE };
+    expect([1, 7].map((roundNumber) => eventRoundLabel(worldSeries, [], roundNumber, 7))).toEqual(['Game 1', 'Game 7']);
   });
 });

@@ -783,7 +783,7 @@ describe('ContestDetailPage (Contest Board)', () => {
       await waitFor(() => expect(screen.getByTestId('contest-board-full')).toHaveTextContent(
         'This contest is full. Your plan allows 2 entries per contest. Change plan',
       ));
-      expect(screen.getByTestId('contest-board-full-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
+      expect(screen.getByTestId('contest-board-full-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
       expect(screen.queryByTestId('contest-board-create-entry')).not.toBeInTheDocument();
     });
 

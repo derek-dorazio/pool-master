@@ -139,14 +139,15 @@ thrown away at launch.
   for ranking. The file uses today's `PLAYERS` and `FIELDS` contents.
 - **Box scores** (interim, one load per game): a new `STATS` content, each game's player lines
   of component stats. Sources: MLB Stats API `game/<pk>/boxscore` against the ESPN game summary;
-  ESPN against NBA.com for basketball; NHL's `api-web.nhle.com` gamecenter boxscore against
-  ESPN; ESPN against the NFL's game book for football. A stat the two sources disagree on is
+  ESPN against Basketball-Reference for basketball (NBA.com refuses the fetch workflow); NHL's
+  `api-web.nhle.com` gamecenter boxscore against ESPN; ESPN against nflverse's weekly player
+  stats for football (Pro-Football-Reference refuses the fetch workflow). A stat the two sources disagree on is
   left out and listed, as always, and the admin enters it.
 - **Corrections:** an admin corrects a stat on the event's results page, and the contest
   rescores, as golf's score corrections do (an admin enters every value).
 - **Test data:** every new sport league needs its last-season test data file
-  (`rules/architecture-rules.md` §6). Those are the 2025 World Series, the 2025 NBA Finals, the
-  2025 Stanley Cup Final, and the 2026 NFL Conference Championship weekend and Super Bowl LX
+  (`rules/architecture-rules.md` §6). Those are the 2025 World Series, the 2026 NBA Finals, the
+  2026 Stanley Cup Final, and the 2026 NFL Conference Championship weekend and Super Bowl LX
   (two events), as played, with real box scores. They are also how the pools get tried before a
   real series.
 

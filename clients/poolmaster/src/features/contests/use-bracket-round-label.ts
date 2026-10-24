@@ -27,16 +27,18 @@ export function sportLeagueQueryOptions(sportLeagueId: string) {
 
 /**
  * How a sport league's bracket rounds are named (#706): by the league's own round names where it
- * has them (the NBA's "Conference Finals"), otherwise by the sport's. An empty `sportLeagueId`
+ * has them (the NBA's "Conference Finals"), otherwise by its definition's (a stat pool league's
+ * games). An empty `sportLeagueId`
  * reads nothing. Until the league loads, and if its read fails, the rounds take the sport's
  * names, which are still correct, only less specific.
  */
 export function useSportLeagueRoundLabel(sport: Sport | null | undefined, sportLeagueId: string): BracketRoundLabel {
   const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
-  const roundNames = sportLeagueQuery.data?.roundNames ?? [];
+  const league = sportLeagueQuery.data;
+  const roundNames = league?.roundNames ?? [];
   // A contest with no sport has no round names to read; its rounds are numbered.
   return (roundNumber, roundCount) => (sport
-    ? eventRoundLabel(sport, roundNames, roundNumber, roundCount)
+    ? eventRoundLabel({ sport, participantType: league?.participantType, scoringFamily: league?.scoringFamily }, roundNames, roundNumber, roundCount)
     : `Round ${roundNumber}`);
 }
 

@@ -24,7 +24,7 @@ export function SportEventDetailsSection({
 }) {
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
-  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament.sport);
+  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
   return (
     <SettingsSection
       action={(

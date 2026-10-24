@@ -95,7 +95,7 @@ export async function contestClosesAt(
 async function roundNameOf(deps: Pick<ContestSummaryDeps, 'sportLeagues'>, sportEvent: SportEvent): Promise<RoundName> {
   const roundNames = (await deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
   const roundCount = sportEvent.rounds ?? eventSportDefinition(sportEvent).defaultRounds;
-  return (roundNumber) => eventRoundLabel(sportEvent.sport, roundNames, roundNumber, roundCount);
+  return (roundNumber) => eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount);
 }
 
 /** How the event plays, as E1 lists it: "16 games" or "4 rounds"; null when neither is known. */
