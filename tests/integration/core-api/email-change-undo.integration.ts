@@ -7,6 +7,7 @@
  * cancels the links from later changes but not from earlier ones. So these run the real services
  * against the real tables. Email goes to a recording delivery, which is the one thing faked.
  */
+import bcrypt from 'bcryptjs';
 import { randomUUID } from 'node:crypto';
 import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
 import { expectDefined } from '../../support/expect-defined';
@@ -16,7 +17,7 @@ import { UserService } from '../../../packages/core-api/src/modules/users/user-s
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS } from '@poolmaster/shared/dto';
 import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
-import { hashResetToken } from '../../../packages/core-api/src/modules/auth/password-reset-service';
+import { hashResetToken, PasswordResetService } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import type {
   MailDeliveryMessage,
@@ -57,7 +58,8 @@ function build(options: { now?: () => Date } = {}) {
   const email = emailServiceOver(mail, outbox);
   const undo = new EmailChangeUndoService({ prisma, email, appBaseUrl: APP_BASE_URL, now: options.now });
   const userService = new UserService(users, prisma, new PasswordChangedNotifier(users, email, APP_BASE_URL), undo);
-  return { undo, userService, mail, outbox };
+  const resets = new PasswordResetService({ users, prisma, email, appBaseUrl: APP_BASE_URL });
+  return { undo, userService, resets, mail, outbox };
 }
 
 /** `userId` changes their own email to `email`, and the email to the old address is delivered. */
@@ -144,6 +146,21 @@ describe('undoing an email change (#903 A5)', () => {
     await expect(emailOf(user.id)).resolves.toBe(user.email);
     await expect(getPrisma().refreshToken.count({ where: { userId: user.id, revokedAt: null } })).resolves.toBe(0);
     await expect(undo.undo(token)).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_LINK_INVALID', statusCode: 400 });
+  });
+
+  it('replaces the password with one nobody knows, so the password used to change the address no longer works, and a reset to the old address still goes out', async () => {
+    const { userService, undo, resets, mail } = build();
+    const { user } = await createTestUser({ password: 'Known-Pass1' });
+    await changeEmail(userService, user.id, freshEmail('taker'));
+
+    await undo.undo(tokenFrom(mail.to(user.email)[0]));
+
+    const { passwordHash } = await getPrisma().user.findUniqueOrThrow({ where: { id: user.id }, select: { passwordHash: true } });
+    expect(passwordHash).not.toBeNull();
+    await expect(bcrypt.compare('Known-Pass1', expectDefined(passwordHash))).resolves.toBe(false);
+    await resets.requestReset(user.email);
+    await deliverQueuedEmail();
+    expect(mail.to(user.email).map((message) => message.subject)).toContain('Reset your Prime Time Commissioner password');
   });
 
   it('cancels the open reset links, which went to the address being replaced', async () => {

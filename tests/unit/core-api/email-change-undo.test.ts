@@ -3,6 +3,7 @@
  * where its link goes, and the per-address limit on using the link. What the link does is tested
  * against Postgres in `tests/integration/core-api/email-change-undo.integration.ts`.
  */
+import { Prisma } from '@prisma/client';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EmailChangedBy, renderSystemEmailTemplate, type EmailChangedEmailData } from '../../../packages/core-api/src/modules/email';
 import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
@@ -94,5 +95,32 @@ describe('undo link rate limit', () => {
     expect(third.send).toHaveBeenCalledWith({
       error: { code: 'EMAIL_CHANGE_UNDO_RATE_LIMITED', message: 'Too many tries. Wait a minute and try again.' },
     });
+  });
+});
+
+describe('undo race for the old address', () => {
+  it('answers EMAIL_CHANGE_UNDO_ADDRESS_TAKEN, not a server error, when another account takes the address between the check and the write', async () => {
+    const takenMeanwhile = new Prisma.PrismaClientKnownRequestError('Unique constraint failed on the fields: (`email`)', {
+      code: 'P2002',
+      clientVersion: Prisma.prismaVersion.client,
+    });
+    const tx = {
+      emailChangeUndoToken: {
+        updateMany: jest.fn(() => Promise.resolve({ count: 1 })),
+        findUniqueOrThrow: jest.fn(() => Promise.resolve({ createdAt: new Date('2026-10-24T12:00:00.000Z') })),
+      },
+      user: { update: jest.fn(() => Promise.reject(takenMeanwhile)) },
+    };
+    const service = new EmailChangeUndoService({
+      prisma: asPrismaClient({
+        emailChangeUndoToken: { findFirst: jest.fn(() => Promise.resolve({ userId: 'user-1', oldEmail: 'old@example.test' })) },
+        user: { count: jest.fn(() => Promise.resolve(0)) },
+        $transaction: jest.fn((run: (client: typeof tx) => Promise<unknown>) => run(tx)),
+      }),
+      email: emailServiceOver({ providerName: 'smtp', send: () => Promise.resolve({ provider: 'smtp' }) }),
+      appBaseUrl: 'https://app.example.test',
+    });
+
+    await expect(service.undo('abc')).rejects.toMatchObject({ code: 'EMAIL_CHANGE_UNDO_ADDRESS_TAKEN', statusCode: 409 });
   });
 });
