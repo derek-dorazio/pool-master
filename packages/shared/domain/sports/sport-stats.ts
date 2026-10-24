@@ -29,6 +29,20 @@ export const SportStat = {
 } as const;
 export type SportStat = (typeof SportStat)[keyof typeof SportStat];
 
+/** The largest count of one stat a stat line stores for one game, and, for yards, the most lost. */
+export const SPORT_STAT_VALUE_MAX = 9999;
+
+/**
+ * The stats a player can end a game below zero in: yards, which a run for a loss, a catch
+ * behind the line or a pass lost to sacks takes away. Every other stat is a count.
+ */
+const SIGNED_SPORT_STATS: ReadonlySet<SportStat> = new Set([SportStat.PASSING_YARDS, SportStat.RUSHING_YARDS, SportStat.RECEIVING_YARDS]);
+
+/** The lowest value a stat line stores for the stat in one game: 0 for a count. */
+export function sportStatValueMin(stat: SportStat): number {
+  return SIGNED_SPORT_STATS.has(stat) ? -SPORT_STAT_VALUE_MAX : 0;
+}
+
 /** One player's stats in one game, by stat. A stat with no value counts 0. */
 export type StatLine<Stat extends SportStat = SportStat> = Readonly<Partial<Record<Stat, number>>>;
 

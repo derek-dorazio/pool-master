@@ -546,10 +546,11 @@ describe('sport data bracket', () => {
 describe('sport data stat pool box scores (#935)', () => {
   interface StatPoolFile {
     testData: boolean;
-    scope: { sport: string; contents: string[] };
+    scope: { sport: string; season: number; sportLeagues: string[]; contents: string[] };
     sportLeagues: Array<{
+      name: string;
       players: Array<Record<string, unknown>>;
-      events: Array<{ rounds: number; field: Array<Record<string, unknown>>; games?: Array<{ gameNumber: number; lines: Array<{ player: string; stats: Record<string, number> }> }> }>;
+      events: Array<{ rounds: number; field: Array<Record<string, unknown>>; games?: Array<{ gameNumber: number; lines: Array<{ player: string; stats: Record<string, number> }> }> } & Record<string, unknown>>;
     }>;
   }
 
@@ -643,6 +644,20 @@ describe('sport data stat pool box scores (#935)', () => {
 
     const golf = edited((file) => file.scope.contents.push('STATS'));
     expect(problemsOf(golf)).toContain('scope.contents has STATS, but golf has no stat pool.');
+  });
+
+  it('reads a run for a loss as negative rushing yards, and refuses a negative count of anything else', () => {
+    const superBowl = worldSeries();
+    superBowl.scope = { ...superBowl.scope, sport: 'AMERICAN_FOOTBALL', season: 2026, sportLeagues: ['Super Bowl'] };
+    const league = superBowl.sportLeagues[0];
+    league.name = 'Super Bowl';
+    Object.assign(league.events[0], { key: 'super-bowl-lx', name: 'Super Bowl LX', startDate: '2026-02-08', endDate: '2026-02-08', rounds: 1 });
+    league.events[0].games = [{ gameNumber: 1, lines: [{ player: 'mlb-shohei-ohtani', stats: { RUSHING_YARDS: -3, RECEPTIONS: 2 } }] }];
+    expect(problemsOf(superBowl)).toEqual([]);
+
+    const file = worldSeries();
+    file.sportLeagues[0].events[0].games = [{ gameNumber: 1, lines: [{ player: 'mlb-shohei-ohtani', stats: { RUNS: -1 } }] }];
+    expect(problemsOf(file)).toEqual(['World Series, World Series: game 1: mlb-shohei-ohtani\'s RUNS is -1; only yards go below 0.']);
   });
 });
 

@@ -1,0 +1,1703 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AMERICAN_FOOTBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "Championship Weekend",
+      "Super Bowl"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-24",
+    "gatheredBy": "load-sport-data, the 2025 season's Conference Championship weekend (New England beat Denver 10-7, Seattle beat the Los Angeles Rams 31-27) and Super Bowl LX (Seattle beat New England 29-13) as played. Each event is one week's games, so one game. The field is every quarterback, running back, receiver and tight end of the teams who gained a yard in the regular season or played in the game, from nflverse's weekly player stats; ranking is the player's regular-season Redzone total. Each box score (passing, rushing and receiving yards and touchdowns, receptions) is from ESPN's box scores, cross-checked player by player against nflverse, which agree on every stat. A player with no catch, carry or pass has no line. Birth countries are from ESPN's rosters and player pages.",
+    "sources": [
+      {
+        "name": "ESPN NFL, AFC Championship box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401772986"
+      },
+      {
+        "name": "ESPN NFL, NFC Championship box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401772987"
+      },
+      {
+        "name": "ESPN NFL, Super Bowl LX box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=401772988"
+      },
+      {
+        "name": "nflverse player stats by week, 2025 season",
+        "url": "https://github.com/nflverse/nflverse-data/releases/download/stats_player/stats_player_week_2025.csv"
+      },
+      {
+        "name": "ESPN NFL team roster 7",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/7/roster"
+      },
+      {
+        "name": "ESPN NFL team roster 17",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/17/roster"
+      },
+      {
+        "name": "ESPN NFL team roster 14",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/14/roster"
+      },
+      {
+        "name": "ESPN NFL team roster 26",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/26/roster"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Championship Weekend",
+      "players": [
+        {
+          "key": "nfl-matthew-stafford",
+          "name": "Matthew Stafford",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Los Angeles Rams",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-drake-maye",
+          "name": "Drake Maye",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "New England Patriots",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-bo-nix",
+          "name": "Bo Nix",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Denver Broncos",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-sam-darnold",
+          "name": "Sam Darnold",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Seattle Seahawks",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-puka-nacua",
+          "name": "Puka Nacua",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-jaxon-smith-njigba",
+          "name": "Jaxon Smith-Njigba",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-kyren-williams",
+          "name": "Kyren Williams",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Los Angeles Rams",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-davante-adams",
+          "name": "Davante Adams",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-courtland-sutton",
+          "name": "Courtland Sutton",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-rj-harvey",
+          "name": "RJ Harvey",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Denver Broncos",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-stefon-diggs",
+          "name": "Stefon Diggs",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-treveyon-henderson",
+          "name": "TreVeyon Henderson",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-kenneth-walker-iii",
+          "name": "Kenneth Walker III",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-rhamondre-stevenson",
+          "name": "Rhamondre Stevenson",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-zach-charbonnet",
+          "name": "Zach Charbonnet",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-hunter-henry",
+          "name": "Hunter Henry",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-troy-franklin",
+          "name": "Troy Franklin",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-aj-barner",
+          "name": "AJ Barner",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-rashid-shaheed",
+          "name": "Rashid Shaheed",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-colby-parkinson",
+          "name": "Colby Parkinson",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Los Angeles Rams",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-kayshon-boutte",
+          "name": "Kayshon Boutte",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-blake-corum",
+          "name": "Blake Corum",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Los Angeles Rams",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-j-k-dobbins",
+          "name": "J.K. Dobbins",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Denver Broncos",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-cooper-kupp",
+          "name": "Cooper Kupp",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-mack-hollins",
+          "name": "Mack Hollins",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-evan-engram",
+          "name": "Evan Engram",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Denver Broncos",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-demario-douglas",
+          "name": "DeMario Douglas",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-marvin-mims-jr",
+          "name": "Marvin Mims Jr.",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-pat-bryant",
+          "name": "Pat Bryant",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-tyler-higbee",
+          "name": "Tyler Higbee",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Los Angeles Rams",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-tory-horton",
+          "name": "Tory Horton",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-davis-allen",
+          "name": "Davis Allen",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Los Angeles Rams",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-austin-hooper",
+          "name": "Austin Hooper",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-terrance-ferguson",
+          "name": "Terrance Ferguson",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Los Angeles Rams",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-kyle-williams",
+          "name": "Kyle Williams",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-xavier-smith",
+          "name": "Xavier Smith",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-adam-trautman",
+          "name": "Adam Trautman",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Denver Broncos",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-elijah-arroyo",
+          "name": "Elijah Arroyo",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-lil-jordan-humphrey",
+          "name": "Lil'Jordan Humphrey",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-jordan-whittington",
+          "name": "Jordan Whittington",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-tyler-badie",
+          "name": "Tyler Badie",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Denver Broncos",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-jaleel-mclaughlin",
+          "name": "Jaleel McLaughlin",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Denver Broncos",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-tutu-atwell",
+          "name": "Tutu Atwell",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-elijah-moore",
+          "name": "Elijah Moore",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-konata-mumpfield",
+          "name": "Konata Mumpfield",
+          "countryCode": "US",
+          "ranking": 45,
+          "team": "Los Angeles Rams",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-cody-white",
+          "name": "Cody White",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-antonio-gibson",
+          "name": "Antonio Gibson",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-efton-chism-iii",
+          "name": "Efton Chism III",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-nate-adkins",
+          "name": "Nate Adkins",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Denver Broncos",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-george-holani",
+          "name": "George Holani",
+          "countryCode": "US",
+          "ranking": 50,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-michael-bandy",
+          "name": "Michael Bandy",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Denver Broncos",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-terrell-jennings",
+          "name": "Terrell Jennings",
+          "countryCode": "US",
+          "ranking": 52,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-adam-prentice",
+          "name": "Adam Prentice",
+          "countryCode": "US",
+          "ranking": 53,
+          "team": "Denver Broncos",
+          "position": "FB"
+        },
+        {
+          "key": "nfl-cam-akers",
+          "name": "Cam Akers",
+          "countryCode": "US",
+          "ranking": 54,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-dareke-young",
+          "name": "Dareke Young",
+          "countryCode": "US",
+          "ranking": 55,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-eric-saubert",
+          "name": "Eric Saubert",
+          "countryCode": "US",
+          "ranking": 56,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-joshua-dobbs",
+          "name": "Joshua Dobbs",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "New England Patriots",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-ronnie-rivers",
+          "name": "Ronnie Rivers",
+          "countryCode": "US",
+          "ranking": 58,
+          "team": "Los Angeles Rams",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-jake-bobo",
+          "name": "Jake Bobo",
+          "countryCode": "US",
+          "ranking": 59,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-velus-jones-jr",
+          "name": "Velus Jones Jr.",
+          "countryCode": "US",
+          "ranking": 60,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-jacardia-wright",
+          "name": "Jacardia Wright",
+          "countryCode": "US",
+          "ranking": 61,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-lucas-krull",
+          "name": "Lucas Krull",
+          "countryCode": "US",
+          "ranking": 62,
+          "team": "Denver Broncos",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-d-ernest-johnson",
+          "name": "D'Ernest Johnson",
+          "countryCode": "US",
+          "ranking": 63,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-jack-westover",
+          "name": "Jack Westover",
+          "countryCode": "US",
+          "ranking": 64,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-brady-russell",
+          "name": "Brady Russell",
+          "countryCode": "US",
+          "ranking": 65,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-jarrett-stidham",
+          "name": "Jarrett Stidham",
+          "countryCode": "US",
+          "ranking": 66,
+          "team": "Denver Broncos",
+          "position": "QB"
+        }
+      ],
+      "events": [
+        {
+          "key": "championship-weekend-2026",
+          "name": "Conference Championships",
+          "startDate": "2026-01-25",
+          "endDate": "2026-01-25",
+          "venue": null,
+          "location": "Denver and Seattle",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-matthew-stafford",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-drake-maye",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-bo-nix",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-sam-darnold",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-puka-nacua",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-jaxon-smith-njigba",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-kyren-williams",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-davante-adams",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-courtland-sutton",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-rj-harvey",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-stefon-diggs",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-treveyon-henderson",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-kenneth-walker-iii",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-rhamondre-stevenson",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-zach-charbonnet",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-hunter-henry",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-troy-franklin",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-aj-barner",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-rashid-shaheed",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-colby-parkinson",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-kayshon-boutte",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-blake-corum",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-j-k-dobbins",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-cooper-kupp",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-mack-hollins",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-evan-engram",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-demario-douglas",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-marvin-mims-jr",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-pat-bryant",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-tyler-higbee",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-tory-horton",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-davis-allen",
+              "ranking": 32
+            },
+            {
+              "player": "nfl-austin-hooper",
+              "ranking": 33
+            },
+            {
+              "player": "nfl-terrance-ferguson",
+              "ranking": 34
+            },
+            {
+              "player": "nfl-kyle-williams",
+              "ranking": 35
+            },
+            {
+              "player": "nfl-xavier-smith",
+              "ranking": 36
+            },
+            {
+              "player": "nfl-adam-trautman",
+              "ranking": 37
+            },
+            {
+              "player": "nfl-elijah-arroyo",
+              "ranking": 38
+            },
+            {
+              "player": "nfl-lil-jordan-humphrey",
+              "ranking": 39
+            },
+            {
+              "player": "nfl-jordan-whittington",
+              "ranking": 40
+            },
+            {
+              "player": "nfl-tyler-badie",
+              "ranking": 41
+            },
+            {
+              "player": "nfl-jaleel-mclaughlin",
+              "ranking": 42
+            },
+            {
+              "player": "nfl-tutu-atwell",
+              "ranking": 43
+            },
+            {
+              "player": "nfl-elijah-moore",
+              "ranking": 44
+            },
+            {
+              "player": "nfl-konata-mumpfield",
+              "ranking": 45
+            },
+            {
+              "player": "nfl-cody-white",
+              "ranking": 46
+            },
+            {
+              "player": "nfl-antonio-gibson",
+              "ranking": 47
+            },
+            {
+              "player": "nfl-efton-chism-iii",
+              "ranking": 48
+            },
+            {
+              "player": "nfl-nate-adkins",
+              "ranking": 49
+            },
+            {
+              "player": "nfl-george-holani",
+              "ranking": 50
+            },
+            {
+              "player": "nfl-michael-bandy",
+              "ranking": 51
+            },
+            {
+              "player": "nfl-terrell-jennings",
+              "ranking": 52
+            },
+            {
+              "player": "nfl-adam-prentice",
+              "ranking": 53
+            },
+            {
+              "player": "nfl-cam-akers",
+              "ranking": 54
+            },
+            {
+              "player": "nfl-dareke-young",
+              "ranking": 55
+            },
+            {
+              "player": "nfl-eric-saubert",
+              "ranking": 56
+            },
+            {
+              "player": "nfl-joshua-dobbs",
+              "ranking": 57
+            },
+            {
+              "player": "nfl-ronnie-rivers",
+              "ranking": 58
+            },
+            {
+              "player": "nfl-jake-bobo",
+              "ranking": 59
+            },
+            {
+              "player": "nfl-velus-jones-jr",
+              "ranking": 60
+            },
+            {
+              "player": "nfl-jacardia-wright",
+              "ranking": 61
+            },
+            {
+              "player": "nfl-lucas-krull",
+              "ranking": 62
+            },
+            {
+              "player": "nfl-d-ernest-johnson",
+              "ranking": 63
+            },
+            {
+              "player": "nfl-jack-westover",
+              "ranking": 64
+            },
+            {
+              "player": "nfl-brady-russell",
+              "ranking": 65
+            },
+            {
+              "player": "nfl-jarrett-stidham",
+              "ranking": 66
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "nfl-adam-prentice",
+                  "stats": {
+                    "RUSHING_YARDS": 3
+                  }
+                },
+                {
+                  "player": "nfl-aj-barner",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 13
+                  }
+                },
+                {
+                  "player": "nfl-blake-corum",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RUSHING_YARDS": 55,
+                    "RECEIVING_YARDS": 24
+                  }
+                },
+                {
+                  "player": "nfl-colby-parkinson",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 62
+                  }
+                },
+                {
+                  "player": "nfl-cooper-kupp",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 36
+                  }
+                },
+                {
+                  "player": "nfl-courtland-sutton",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 17
+                  }
+                },
+                {
+                  "player": "nfl-davante-adams",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 89
+                  }
+                },
+                {
+                  "player": "nfl-demario-douglas",
+                  "stats": {}
+                },
+                {
+                  "player": "nfl-drake-maye",
+                  "stats": {
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "PASSING_YARDS": 86,
+                    "RUSHING_YARDS": 65
+                  }
+                },
+                {
+                  "player": "nfl-elijah-moore",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 4
+                  }
+                },
+                {
+                  "player": "nfl-evan-engram",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 19
+                  }
+                },
+                {
+                  "player": "nfl-george-holani",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RUSHING_YARDS": 4,
+                    "RECEIVING_YARDS": 27
+                  }
+                },
+                {
+                  "player": "nfl-hunter-henry",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 12
+                  }
+                },
+                {
+                  "player": "nfl-jake-bobo",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 17
+                  }
+                },
+                {
+                  "player": "nfl-jaleel-mclaughlin",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RUSHING_YARDS": 11,
+                    "RECEIVING_YARDS": 2
+                  }
+                },
+                {
+                  "player": "nfl-jarrett-stidham",
+                  "stats": {
+                    "PASSING_TOUCHDOWNS": 1,
+                    "PASSING_YARDS": 133,
+                    "RUSHING_YARDS": 23
+                  }
+                },
+                {
+                  "player": "nfl-jaxon-smith-njigba",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 10,
+                    "RECEIVING_YARDS": 153
+                  }
+                },
+                {
+                  "player": "nfl-kayshon-boutte",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 6
+                  }
+                },
+                {
+                  "player": "nfl-kenneth-walker-iii",
+                  "stats": {
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 4,
+                    "RUSHING_YARDS": 62,
+                    "RECEIVING_YARDS": 49
+                  }
+                },
+                {
+                  "player": "nfl-konata-mumpfield",
+                  "stats": {}
+                },
+                {
+                  "player": "nfl-kyren-williams",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 2,
+                    "RUSHING_YARDS": 39,
+                    "RECEIVING_YARDS": 22
+                  }
+                },
+                {
+                  "player": "nfl-lil-jordan-humphrey",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 5
+                  }
+                },
+                {
+                  "player": "nfl-mack-hollins",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 51
+                  }
+                },
+                {
+                  "player": "nfl-marvin-mims-jr",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 62
+                  }
+                },
+                {
+                  "player": "nfl-matthew-stafford",
+                  "stats": {
+                    "PASSING_TOUCHDOWNS": 3,
+                    "PASSING_YARDS": 374,
+                    "RUSHING_YARDS": 16
+                  }
+                },
+                {
+                  "player": "nfl-pat-bryant",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RUSHING_YARDS": 1,
+                    "RECEIVING_YARDS": 2
+                  }
+                },
+                {
+                  "player": "nfl-puka-nacua",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 9,
+                    "RUSHING_YARDS": 4,
+                    "RECEIVING_YARDS": 165
+                  }
+                },
+                {
+                  "player": "nfl-rashid-shaheed",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 51
+                  }
+                },
+                {
+                  "player": "nfl-rhamondre-stevenson",
+                  "stats": {
+                    "RUSHING_YARDS": 71
+                  }
+                },
+                {
+                  "player": "nfl-rj-harvey",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RUSHING_YARDS": 37,
+                    "RECEIVING_YARDS": 22
+                  }
+                },
+                {
+                  "player": "nfl-ronnie-rivers",
+                  "stats": {}
+                },
+                {
+                  "player": "nfl-sam-darnold",
+                  "stats": {
+                    "PASSING_TOUCHDOWNS": 3,
+                    "PASSING_YARDS": 346,
+                    "RUSHING_YARDS": 9
+                  }
+                },
+                {
+                  "player": "nfl-stefon-diggs",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 17
+                  }
+                },
+                {
+                  "player": "nfl-terrance-ferguson",
+                  "stats": {}
+                },
+                {
+                  "player": "nfl-treveyon-henderson",
+                  "stats": {
+                    "RUSHING_YARDS": 5
+                  }
+                },
+                {
+                  "player": "nfl-tyler-badie",
+                  "stats": {
+                    "RUSHING_YARDS": 4
+                  }
+                },
+                {
+                  "player": "nfl-tyler-higbee",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 12
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Super Bowl",
+      "players": [
+        {
+          "key": "nfl-drake-maye",
+          "name": "Drake Maye",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "New England Patriots",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-sam-darnold",
+          "name": "Sam Darnold",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Seattle Seahawks",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-jaxon-smith-njigba",
+          "name": "Jaxon Smith-Njigba",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-stefon-diggs",
+          "name": "Stefon Diggs",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-treveyon-henderson",
+          "name": "TreVeyon Henderson",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-kenneth-walker-iii",
+          "name": "Kenneth Walker III",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-rhamondre-stevenson",
+          "name": "Rhamondre Stevenson",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-zach-charbonnet",
+          "name": "Zach Charbonnet",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-hunter-henry",
+          "name": "Hunter Henry",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-aj-barner",
+          "name": "AJ Barner",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-rashid-shaheed",
+          "name": "Rashid Shaheed",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-kayshon-boutte",
+          "name": "Kayshon Boutte",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-cooper-kupp",
+          "name": "Cooper Kupp",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-mack-hollins",
+          "name": "Mack Hollins",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-demario-douglas",
+          "name": "DeMario Douglas",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-tory-horton",
+          "name": "Tory Horton",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-austin-hooper",
+          "name": "Austin Hooper",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-kyle-williams",
+          "name": "Kyle Williams",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-elijah-arroyo",
+          "name": "Elijah Arroyo",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-cody-white",
+          "name": "Cody White",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-antonio-gibson",
+          "name": "Antonio Gibson",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-efton-chism-iii",
+          "name": "Efton Chism III",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "New England Patriots",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-george-holani",
+          "name": "George Holani",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-terrell-jennings",
+          "name": "Terrell Jennings",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-cam-akers",
+          "name": "Cam Akers",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-dareke-young",
+          "name": "Dareke Young",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-eric-saubert",
+          "name": "Eric Saubert",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Seattle Seahawks",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-joshua-dobbs",
+          "name": "Joshua Dobbs",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "New England Patriots",
+          "position": "QB"
+        },
+        {
+          "key": "nfl-jake-bobo",
+          "name": "Jake Bobo",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-velus-jones-jr",
+          "name": "Velus Jones Jr.",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Seattle Seahawks",
+          "position": "WR"
+        },
+        {
+          "key": "nfl-jacardia-wright",
+          "name": "Jacardia Wright",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-d-ernest-johnson",
+          "name": "D'Ernest Johnson",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "New England Patriots",
+          "position": "RB"
+        },
+        {
+          "key": "nfl-jack-westover",
+          "name": "Jack Westover",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "New England Patriots",
+          "position": "TE"
+        },
+        {
+          "key": "nfl-brady-russell",
+          "name": "Brady Russell",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Seattle Seahawks",
+          "position": "RB"
+        }
+      ],
+      "events": [
+        {
+          "key": "super-bowl-lx",
+          "name": "Super Bowl LX",
+          "startDate": "2026-02-08",
+          "endDate": "2026-02-08",
+          "venue": "Levi's Stadium",
+          "location": "Santa Clara, California",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nfl-drake-maye",
+              "ranking": 1
+            },
+            {
+              "player": "nfl-sam-darnold",
+              "ranking": 2
+            },
+            {
+              "player": "nfl-jaxon-smith-njigba",
+              "ranking": 3
+            },
+            {
+              "player": "nfl-stefon-diggs",
+              "ranking": 4
+            },
+            {
+              "player": "nfl-treveyon-henderson",
+              "ranking": 5
+            },
+            {
+              "player": "nfl-kenneth-walker-iii",
+              "ranking": 6
+            },
+            {
+              "player": "nfl-rhamondre-stevenson",
+              "ranking": 7
+            },
+            {
+              "player": "nfl-zach-charbonnet",
+              "ranking": 8
+            },
+            {
+              "player": "nfl-hunter-henry",
+              "ranking": 9
+            },
+            {
+              "player": "nfl-aj-barner",
+              "ranking": 10
+            },
+            {
+              "player": "nfl-rashid-shaheed",
+              "ranking": 11
+            },
+            {
+              "player": "nfl-kayshon-boutte",
+              "ranking": 12
+            },
+            {
+              "player": "nfl-cooper-kupp",
+              "ranking": 13
+            },
+            {
+              "player": "nfl-mack-hollins",
+              "ranking": 14
+            },
+            {
+              "player": "nfl-demario-douglas",
+              "ranking": 15
+            },
+            {
+              "player": "nfl-tory-horton",
+              "ranking": 16
+            },
+            {
+              "player": "nfl-austin-hooper",
+              "ranking": 17
+            },
+            {
+              "player": "nfl-kyle-williams",
+              "ranking": 18
+            },
+            {
+              "player": "nfl-elijah-arroyo",
+              "ranking": 19
+            },
+            {
+              "player": "nfl-cody-white",
+              "ranking": 20
+            },
+            {
+              "player": "nfl-antonio-gibson",
+              "ranking": 21
+            },
+            {
+              "player": "nfl-efton-chism-iii",
+              "ranking": 22
+            },
+            {
+              "player": "nfl-george-holani",
+              "ranking": 23
+            },
+            {
+              "player": "nfl-terrell-jennings",
+              "ranking": 24
+            },
+            {
+              "player": "nfl-cam-akers",
+              "ranking": 25
+            },
+            {
+              "player": "nfl-dareke-young",
+              "ranking": 26
+            },
+            {
+              "player": "nfl-eric-saubert",
+              "ranking": 27
+            },
+            {
+              "player": "nfl-joshua-dobbs",
+              "ranking": 28
+            },
+            {
+              "player": "nfl-jake-bobo",
+              "ranking": 29
+            },
+            {
+              "player": "nfl-velus-jones-jr",
+              "ranking": 30
+            },
+            {
+              "player": "nfl-jacardia-wright",
+              "ranking": 31
+            },
+            {
+              "player": "nfl-d-ernest-johnson",
+              "ranking": 32
+            },
+            {
+              "player": "nfl-jack-westover",
+              "ranking": 33
+            },
+            {
+              "player": "nfl-brady-russell",
+              "ranking": 34
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "nfl-aj-barner",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 54
+                  }
+                },
+                {
+                  "player": "nfl-austin-hooper",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 10
+                  }
+                },
+                {
+                  "player": "nfl-cooper-kupp",
+                  "stats": {
+                    "RECEPTIONS": 6,
+                    "RECEIVING_YARDS": 61
+                  }
+                },
+                {
+                  "player": "nfl-demario-douglas",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 45
+                  }
+                },
+                {
+                  "player": "nfl-drake-maye",
+                  "stats": {
+                    "PASSING_TOUCHDOWNS": 2,
+                    "PASSING_YARDS": 295,
+                    "RUSHING_YARDS": 37
+                  }
+                },
+                {
+                  "player": "nfl-george-holani",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RUSHING_YARDS": 6,
+                    "RECEIVING_YARDS": 7
+                  }
+                },
+                {
+                  "player": "nfl-hunter-henry",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 31
+                  }
+                },
+                {
+                  "player": "nfl-jaxon-smith-njigba",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 27
+                  }
+                },
+                {
+                  "player": "nfl-kayshon-boutte",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 21
+                  }
+                },
+                {
+                  "player": "nfl-kenneth-walker-iii",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RUSHING_YARDS": 135,
+                    "RECEIVING_YARDS": 26
+                  }
+                },
+                {
+                  "player": "nfl-kyle-williams",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 7
+                  }
+                },
+                {
+                  "player": "nfl-mack-hollins",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 78
+                  }
+                },
+                {
+                  "player": "nfl-rashid-shaheed",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RUSHING_YARDS": -5,
+                    "RECEIVING_YARDS": 27
+                  }
+                },
+                {
+                  "player": "nfl-rhamondre-stevenson",
+                  "stats": {
+                    "RECEIVING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 5,
+                    "RUSHING_YARDS": 23,
+                    "RECEIVING_YARDS": 40
+                  }
+                },
+                {
+                  "player": "nfl-sam-darnold",
+                  "stats": {
+                    "PASSING_TOUCHDOWNS": 1,
+                    "PASSING_YARDS": 202,
+                    "RUSHING_YARDS": 5
+                  }
+                },
+                {
+                  "player": "nfl-stefon-diggs",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 37
+                  }
+                },
+                {
+                  "player": "nfl-treveyon-henderson",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RUSHING_YARDS": 19,
+                    "RECEIVING_YARDS": 26
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

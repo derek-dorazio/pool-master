@@ -25,7 +25,7 @@
  */
 
 import { z } from 'zod';
-import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, type SportComposite, sportPlaysMatches, SportStat, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
+import { BracketAdvancement, getSportDefinition, MatchEnding, MatchSide, matchPeriodsOf, RaceResultStatus, ScoringFamily, type Sport, type SportComposite, sportPlaysMatches, SPORT_STAT_VALUE_MAX, SportStat, sportStatValueMin, SUPPORTED_SPORTS } from '@poolmaster/shared/domain';
 import { findBracketProblems } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -67,9 +67,9 @@ const PlayerSchema = z.object({
   position: z.string().min(1).max(50).optional(),
 }).strict();
 
-/** A box score line's stats: each one the sport's composite counts, a stat left out counting 0. */
+/** A box score line's stats: each one the sport's composite counts, a stat left out counting 0. Only yards go below 0. */
 const StatLineSchema = z.object(Object.fromEntries(
-  Object.values(SportStat).map((stat) => [stat, z.number().int().min(0).optional()]),
+  Object.values(SportStat).map((stat) => [stat, z.number().int().min(-SPORT_STAT_VALUE_MAX).max(SPORT_STAT_VALUE_MAX).optional()]),
 ) as Record<SportStat, z.ZodOptional<z.ZodNumber>>).strict();
 
 const GameSchema = z.object({
@@ -431,6 +431,9 @@ function gameProblems(event: SportDataEvent, fieldKeys: ReadonlySet<string>, loa
       if (!fieldKeys.has(line.player)) problems.push(`game ${game.gameNumber}: ${line.player} is not in the field`);
       const strays = Object.keys(line.stats).filter((stat) => !counted.has(stat));
       if (strays.length > 0) problems.push(`game ${game.gameNumber}: ${line.player}'s ${strays.join(', ')} ${strays.length === 1 ? 'is not a stat' : 'are not stats'} the ${composite?.name ?? 'composite'} counts`);
+      for (const [stat, value] of Object.entries(line.stats) as Array<[SportStat, number]>) {
+        if (value < sportStatValueMin(stat)) problems.push(`game ${game.gameNumber}: ${line.player}'s ${stat} is ${value}; only yards go below 0`);
+      }
     }
   }
   return problems;

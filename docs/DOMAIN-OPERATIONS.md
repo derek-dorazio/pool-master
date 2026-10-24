@@ -694,7 +694,7 @@ with no line counts 0. Only events of a sport league scored by the composite fam
 | Operation | Role | Notes |
 |---|---|---|
 | Read for an event | `authenticated` | On each `listEventParticipants` round as its stat lines, empty for any other family |
-| Write | *(sport data loader, #935)* | No route writes them yet: the loader's box score files and the admin stat grid come next |
+| Write a game | `root_admin` | `applyEventGameStatLines` (`PUT /events/:eventId/rounds/:roundNumber/stat-lines`, #935): each row is one player's whole line for the game and replaces theirs, an empty row clears it, and players not named keep theirs; a game's rows go in all or none. Refuses an event not scored by the composite family (`EVENT_SCORING_FAMILY_MISMATCH`), a game the event does not schedule (`ROUND_BEYOND_SCHEDULE`), and, naming every problem, a player not in the field or named twice, or a stat the composite does not count or given twice (`STAT_LINE_ROWS_INVALID`). The sport data loader's box score files and the admin stat grid on the event's Results page both write through it |
 | Score | *(contest scoring)* | `COMPOSITE_TOTAL`: a player's games summed, each game the sport's composite of its lines; a game with no lines scores 0. Nothing is scored until the event's first lines are in. A correction to a line rescores every contest on the event until it settles |
 
 ### SportEventParticipantRaceResult — the finish-position extension

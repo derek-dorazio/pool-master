@@ -323,7 +323,7 @@ export const SportEventParticipantGolfRoundDtoSchema = z.object({
 
 export const SportEventParticipantStatLineDtoSchema = z.object({
   stat: z.nativeEnum(SportStat).describe('One of the stats the sport\'s composite counts.'),
-  value: z.number().int().min(0).describe('The player\'s count of it in the game.'),
+  value: z.number().int().describe('The player\'s count of it in the game; below 0 only for yards.'),
 }).describe('Composite extension of a participant round: one stat of a stat pool player\'s game.');
 export type SportEventParticipantStatLineDto = z.infer<typeof SportEventParticipantStatLineDtoSchema>;
 

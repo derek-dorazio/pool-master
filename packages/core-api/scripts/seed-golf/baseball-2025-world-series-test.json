@@ -1,0 +1,1398 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASEBALL",
+    "season": 2025,
+    "sportLeagues": [
+      "World Series"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-24",
+    "gatheredBy": "load-sport-data, the 2025 World Series as played (Los Angeles Dodgers beat the Toronto Blue Jays in seven): the field is both clubs' World Series position players, from the MLB Stats API rosters; each game's box score (total bases, runs, RBI, walks, stolen bases) from the MLB Stats API, cross-checked player by player against ESPN's box scores on runs, hits, RBI, home runs and walks, and on each side's total bases and stolen bases, which agree in every game. A player with no plate appearance in a game has no line. Ranking is the player's 2025 regular-season Box Score total.",
+    "sources": [
+      {
+        "name": "MLB Stats API, World Series Game 1 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813027/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 2 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813026/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 3 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813032/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 4 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813023/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 5 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813022/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 6 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813025/boxscore"
+      },
+      {
+        "name": "MLB Stats API, World Series Game 7 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/813024/boxscore"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809297"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809298"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809299"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809300"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 5 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809301"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 6 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809302"
+      },
+      {
+        "name": "ESPN MLB, World Series Game 7 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401809303"
+      },
+      {
+        "name": "MLB Stats API, Dodgers World Series roster with 2025 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/119/roster?rosterType=active&date=2025-10-24&hydrate=person(stats(type=season,season=2025,group=hitting))"
+      },
+      {
+        "name": "MLB Stats API, Blue Jays World Series roster with 2025 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/141/roster?rosterType=active&date=2025-10-24&hydrate=person(stats(type=season,season=2025,group=hitting))"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "World Series",
+      "players": [
+        {
+          "key": "mlb-shohei-ohtani",
+          "name": "Shohei Ohtani",
+          "countryCode": "JP",
+          "ranking": 1,
+          "team": "Los Angeles Dodgers",
+          "position": "TWP"
+        },
+        {
+          "key": "mlb-george-springer",
+          "name": "George Springer",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Toronto Blue Jays",
+          "position": "DH"
+        },
+        {
+          "key": "mlb-vladimir-guerrero-jr",
+          "name": "Vladimir Guerrero Jr.",
+          "countryCode": "CA",
+          "ranking": 3,
+          "team": "Toronto Blue Jays",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-freddie-freeman",
+          "name": "Freddie Freeman",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Los Angeles Dodgers",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-bo-bichette",
+          "name": "Bo Bichette",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Toronto Blue Jays",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-mookie-betts",
+          "name": "Mookie Betts",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Los Angeles Dodgers",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-andy-pages",
+          "name": "Andy Pages",
+          "countryCode": "CU",
+          "ranking": 7,
+          "team": "Los Angeles Dodgers",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-teoscar-hernandez",
+          "name": "Teoscar Hernández",
+          "countryCode": "DO",
+          "ranking": 8,
+          "team": "Los Angeles Dodgers",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-addison-barger",
+          "name": "Addison Barger",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Toronto Blue Jays",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-ernie-clement",
+          "name": "Ernie Clement",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Toronto Blue Jays",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-will-smith",
+          "name": "Will Smith",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Los Angeles Dodgers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-alejandro-kirk",
+          "name": "Alejandro Kirk",
+          "countryCode": "MX",
+          "ranking": 12,
+          "team": "Toronto Blue Jays",
+          "position": "C"
+        },
+        {
+          "key": "mlb-max-muncy",
+          "name": "Max Muncy",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Los Angeles Dodgers",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-nathan-lukes",
+          "name": "Nathan Lukes",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Toronto Blue Jays",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-ty-france",
+          "name": "Ty France",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Toronto Blue Jays",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-isiah-kiner-falefa",
+          "name": "Isiah Kiner-Falefa",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Toronto Blue Jays",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-daulton-varsho",
+          "name": "Daulton Varsho",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Toronto Blue Jays",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-tommy-edman",
+          "name": "Tommy Edman",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Los Angeles Dodgers",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-alex-call",
+          "name": "Alex Call",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Los Angeles Dodgers",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-andres-gimenez",
+          "name": "Andrés Giménez",
+          "countryCode": "VE",
+          "ranking": 20,
+          "team": "Toronto Blue Jays",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-myles-straw",
+          "name": "Myles Straw",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Toronto Blue Jays",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-miguel-rojas",
+          "name": "Miguel Rojas",
+          "countryCode": "VE",
+          "ranking": 22,
+          "team": "Los Angeles Dodgers",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-davis-schneider",
+          "name": "Davis Schneider",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Toronto Blue Jays",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-enrique-hernandez",
+          "name": "Enrique Hernández",
+          "countryCode": "PR",
+          "ranking": 24,
+          "team": "Los Angeles Dodgers",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-tyler-heineman",
+          "name": "Tyler Heineman",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Toronto Blue Jays",
+          "position": "C"
+        },
+        {
+          "key": "mlb-hyeseong-kim",
+          "name": "Hyeseong Kim",
+          "countryCode": "KR",
+          "ranking": 26,
+          "team": "Los Angeles Dodgers",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-ben-rortvedt",
+          "name": "Ben Rortvedt",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Los Angeles Dodgers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-justin-dean",
+          "name": "Justin Dean",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Los Angeles Dodgers",
+          "position": "CF"
+        }
+      ],
+      "events": [
+        {
+          "key": "world-series-2025",
+          "name": "World Series",
+          "startDate": "2025-10-24",
+          "endDate": "2025-11-01",
+          "venue": null,
+          "location": "Toronto and Los Angeles",
+          "rounds": 7,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mlb-shohei-ohtani",
+              "ranking": 1
+            },
+            {
+              "player": "mlb-george-springer",
+              "ranking": 2
+            },
+            {
+              "player": "mlb-vladimir-guerrero-jr",
+              "ranking": 3
+            },
+            {
+              "player": "mlb-freddie-freeman",
+              "ranking": 4
+            },
+            {
+              "player": "mlb-bo-bichette",
+              "ranking": 5
+            },
+            {
+              "player": "mlb-mookie-betts",
+              "ranking": 6
+            },
+            {
+              "player": "mlb-andy-pages",
+              "ranking": 7
+            },
+            {
+              "player": "mlb-teoscar-hernandez",
+              "ranking": 8
+            },
+            {
+              "player": "mlb-addison-barger",
+              "ranking": 9
+            },
+            {
+              "player": "mlb-ernie-clement",
+              "ranking": 10
+            },
+            {
+              "player": "mlb-will-smith",
+              "ranking": 11
+            },
+            {
+              "player": "mlb-alejandro-kirk",
+              "ranking": 12
+            },
+            {
+              "player": "mlb-max-muncy",
+              "ranking": 13
+            },
+            {
+              "player": "mlb-nathan-lukes",
+              "ranking": 14
+            },
+            {
+              "player": "mlb-ty-france",
+              "ranking": 15
+            },
+            {
+              "player": "mlb-isiah-kiner-falefa",
+              "ranking": 16
+            },
+            {
+              "player": "mlb-daulton-varsho",
+              "ranking": 17
+            },
+            {
+              "player": "mlb-tommy-edman",
+              "ranking": 18
+            },
+            {
+              "player": "mlb-alex-call",
+              "ranking": 19
+            },
+            {
+              "player": "mlb-andres-gimenez",
+              "ranking": 20
+            },
+            {
+              "player": "mlb-myles-straw",
+              "ranking": 21
+            },
+            {
+              "player": "mlb-miguel-rojas",
+              "ranking": 22
+            },
+            {
+              "player": "mlb-davis-schneider",
+              "ranking": 23
+            },
+            {
+              "player": "mlb-enrique-hernandez",
+              "ranking": 24
+            },
+            {
+              "player": "mlb-tyler-heineman",
+              "ranking": 25
+            },
+            {
+              "player": "mlb-hyeseong-kim",
+              "ranking": 26
+            },
+            {
+              "player": "mlb-ben-rortvedt",
+              "ranking": 27
+            },
+            {
+              "player": "mlb-justin-dean",
+              "ranking": 28
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 4
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "TOTAL_BASES": 6,
+                    "RUNS": 3,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-davis-schneider",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-george-springer",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-myles-straw",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-george-springer",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 3
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 3,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-alex-call",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-davis-schneider",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 2,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-george-springer",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-miguel-rojas",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-myles-straw",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 12,
+                    "RUNS": 3,
+                    "RUNS_BATTED_IN": 3,
+                    "WALKS": 5
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 7,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-ty-france",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-tyler-heineman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 2,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-alex-call",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-myles-straw",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-ty-france",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {}
+                }
+              ]
+            },
+            {
+              "gameNumber": 5,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-alex-call",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-davis-schneider",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-myles-straw",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 6,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 3
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-george-springer",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-miguel-rojas",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 7,
+              "lines": [
+                {
+                  "player": "mlb-addison-barger",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-alejandro-kirk",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-andres-gimenez",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-bo-bichette",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 3,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-daulton-varsho",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-davis-schneider",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-ernie-clement",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-george-springer",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-isiah-kiner-falefa",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 6,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-miguel-rojas",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-myles-straw",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-nathan-lukes",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-vladimir-guerrero-jr",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 6,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

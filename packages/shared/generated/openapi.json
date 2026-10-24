@@ -20108,8 +20108,7 @@
                 },
                 "value": {
                   "type": "integer",
-                  "minimum": 0,
-                  "description": "The player's count of it in the game."
+                  "description": "The player's count of it in the game; below 0 only for yards."
                 }
               },
               "required": [
@@ -20591,8 +20590,7 @@
                       },
                       "value": {
                         "type": "integer",
-                        "minimum": 0,
-                        "description": "The player's count of it in the game."
+                        "description": "The player's count of it in the game; below 0 only for yards."
                       }
                     },
                     "required": [
@@ -21172,8 +21170,7 @@
                             },
                             "value": {
                               "type": "integer",
-                              "minimum": 0,
-                              "description": "The player's count of it in the game."
+                              "description": "The player's count of it in the game; below 0 only for yards."
                             }
                           },
                           "required": [
@@ -21907,8 +21904,7 @@
                           },
                           "value": {
                             "type": "integer",
-                            "minimum": 0,
-                            "description": "The player's count of it in the game."
+                            "description": "The player's count of it in the game; below 0 only for yards."
                           }
                         },
                         "required": [
@@ -25502,8 +25498,7 @@
                             },
                             "value": {
                               "type": "integer",
-                              "minimum": 0,
-                              "description": "The player's count of it in the game."
+                              "description": "The player's count of it in the game; below 0 only for yards."
                             }
                           },
                           "required": [
@@ -38944,9 +38939,9 @@
                       },
                       "value": {
                         "type": "integer",
-                        "minimum": 0,
+                        "minimum": -9999,
                         "maximum": 9999,
-                        "description": "The player's count of it in the game."
+                        "description": "The player's count of it in the game; below 0 only for yards."
                       }
                     },
                     "required": [

@@ -51,7 +51,7 @@ function statLineColumns(composite: SportComposite) {
         return (
           <div className="max-w-[5rem]">
             <Input
-              aria-invalid={isStatInput(raw) ? undefined : true}
+              aria-invalid={isStatInput(raw, stat) ? undefined : true}
               aria-label={`${SPORT_STAT_LABELS[stat].long} for ${entry.playerName}`}
               className="h-8"
               data-testid={`root-admin-stat-lines-${stat}-${entry.sportEventParticipantId}`}

@@ -1,8 +1,5 @@
-import type { SportComposite, SportStat, StatLine } from '@poolmaster/shared/domain';
+import { SPORT_STAT_VALUE_MAX, sportStatValueMin, type SportComposite, type SportStat, type StatLine } from '@poolmaster/shared/domain';
 import type { GameStatLineUploadRequest, SportEventParticipantDto } from '@/lib/api';
-
-/** The largest count a stat line stores for one stat in one game. */
-const STAT_VALUE_MAX = 9999;
 
 /** One player's row in a game's stat grid: their stored line for the game, empty when they have none. */
 export interface StatLineGridRow {
@@ -30,10 +27,11 @@ export function statLineGridRows(field: readonly SportEventParticipantDto[], rou
   });
 }
 
-/** Whether a typed value is one a stat line stores: blank, or a whole number from 0 to 9999. */
-export function isStatInput(raw: string): boolean {
+/** Whether a typed value is one a stat line stores for the stat: blank, or a whole number from its lowest (0, or below for yards) to 9999. */
+export function isStatInput(raw: string, stat: SportStat): boolean {
   const trimmed = raw.trim();
-  return trimmed === '' || (/^\d+$/.test(trimmed) && Number(trimmed) <= STAT_VALUE_MAX);
+  return trimmed === ''
+    || (/^-?\d+$/.test(trimmed) && Number(trimmed) >= sportStatValueMin(stat) && Number(trimmed) <= SPORT_STAT_VALUE_MAX);
 }
 
 /** What one stat's input shows: the draft as typed, else the stored value, blank when none is stored. */
@@ -46,7 +44,7 @@ export function draftLine(row: StatLineGridRow, draft: StatLineDraft | undefined
   const line: Partial<Record<SportStat, number>> = {};
   for (const stat of composite.stats) {
     const raw = statInputValue(row, draft, stat);
-    if (!isStatInput(raw)) return undefined;
+    if (!isStatInput(raw, stat)) return undefined;
     if (raw.trim() !== '') line[stat] = Number(raw.trim());
   }
   return line;

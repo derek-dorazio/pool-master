@@ -7,8 +7,13 @@ const row: StatLineGridRow = { sportEventParticipantId: 'sep-1', participantId: 
 
 describe('stat grid inputs', () => {
   it('accepts blank and whole numbers from 0 to 9999, and refuses negatives, decimals, words and 10000', () => {
-    expect(['', ' ', '0', '42', '9999'].map(isStatInput)).toEqual([true, true, true, true, true]);
-    expect(['-1', '1.5', 'ten', '10000'].map(isStatInput)).toEqual([false, false, false, false]);
+    expect(['', ' ', '0', '42', '9999'].map((raw) => isStatInput(raw, 'POINTS'))).toEqual([true, true, true, true, true]);
+    expect(['-1', '1.5', 'ten', '10000'].map((raw) => isStatInput(raw, 'POINTS'))).toEqual([false, false, false, false]);
+  });
+
+  it('accepts negative yards, as a run for a loss gives', () => {
+    expect(['-3', '-9999'].map((raw) => isStatInput(raw, 'RUSHING_YARDS'))).toEqual([true, true]);
+    expect(isStatInput('-10000', 'RUSHING_YARDS')).toBe(false);
   });
 
   it('sends nothing for inputs that make the stored line, and the whole changed line in the composite\'s stat order', () => {

@@ -9813,7 +9813,7 @@ export interface components {
                  * @enum {string}
                  */
                 stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                /** @description The player's count of it in the game. */
+                /** @description The player's count of it in the game; below 0 only for yards. */
                 value: number;
             }[];
         };
@@ -9992,7 +9992,7 @@ export interface components {
                      * @enum {string}
                      */
                     stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                    /** @description The player's count of it in the game. */
+                    /** @description The player's count of it in the game; below 0 only for yards. */
                     value: number;
                 }[];
             }[];
@@ -10202,7 +10202,7 @@ export interface components {
                          * @enum {string}
                          */
                         stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game. */
+                        /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
                 }[];
@@ -10453,7 +10453,7 @@ export interface components {
                          * @enum {string}
                          */
                         stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game. */
+                        /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
                 }[];
@@ -11513,7 +11513,7 @@ export interface components {
                          * @enum {string}
                          */
                         stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                        /** @description The player's count of it in the game. */
+                        /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
                 }[];
@@ -16142,7 +16142,7 @@ export interface components {
                      * @enum {string}
                      */
                     stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
-                    /** @description The player's count of it in the game. */
+                    /** @description The player's count of it in the game; below 0 only for yards. */
                     value: number;
                 }[];
             }[];
