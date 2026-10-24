@@ -22,6 +22,9 @@ import { LeagueSelector } from "./league-selector";
 /** The public How to Play page (#803): linked from the signed-out header and from every page's footer. */
 const HOW_TO_PLAY_PATH = "/how-to-play";
 
+/** The public Plans page (#973): linked beside How to Play in the signed-out header and the footer. */
+const PLANS_PATH = "/plans";
+
 export function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -205,13 +208,22 @@ export function AppShell() {
                 />
               </>
             ) : (
-              <Link
-                className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
-                data-testid="app-shell-how-to-play"
-                to={HOW_TO_PLAY_PATH}
-              >
-                How to Play
-              </Link>
+              <>
+                <Link
+                  className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
+                  data-testid="app-shell-how-to-play"
+                  to={HOW_TO_PLAY_PATH}
+                >
+                  How to Play
+                </Link>
+                <Link
+                  className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
+                  data-testid="app-shell-plans"
+                  to={PLANS_PATH}
+                >
+                  Plans
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -229,6 +241,9 @@ export function AppShell() {
         <div className="mx-auto flex max-w-6xl flex-wrap gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6">
           <Link className="hover:text-foreground" data-testid="app-shell-footer-how-to-play" to={HOW_TO_PLAY_PATH}>
             How to Play
+          </Link>
+          <Link className="hover:text-foreground" data-testid="app-shell-footer-plans" to={PLANS_PATH}>
+            Plans
           </Link>
         </div>
       </footer>

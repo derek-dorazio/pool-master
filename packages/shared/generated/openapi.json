@@ -55894,7 +55894,7 @@
         "tags": [
           "Plans"
         ],
-        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.",
+        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.",
         "responses": {
           "200": {
             "description": "What each league plan allows.",
@@ -55902,16 +55902,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaguePlanListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }

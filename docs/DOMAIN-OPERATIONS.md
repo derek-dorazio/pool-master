@@ -344,7 +344,10 @@ of the contest: the template is where it came from, not what it is.
   to advertise each contest, and the signed-out How to Play page shows them, so a visitor can see
   what PoolMaster runs before signing up. Retired (inactive) templates are public too: they are
   the same kind of copy, with nothing about a league or a user. It was opened for that reason, not
-  because it is global; the other global objects stay `authenticated`.
+  because it is global; the other global objects stay `authenticated`. The plan list (#971) is
+  the third exception: every plan's caps and features, built from the plan settings alone, for
+  the signed-out Plans page. It holds nothing about any league or user; a league's own plan
+  still needs a session.
 - **Global is not a field-level exemption.** A11 decides which *rows* a caller may read.
   Whether a particular column should be visible stays §13: admin-only fields are annotated on
   the canonical DTO, not enforced. If a field on a global object turns out to be genuinely
@@ -457,7 +460,7 @@ edge. A6 restricts *writing* other users, not reading them.
 | Update details, icon | `commissioner` | **A3** |
 | Update championship settings | `commissioner` | A3 · `updateLeagueCupSettings`, `PUT /leagues/:id/cup-settings` (#841): the championship name (`cupName`, trimmed) and the points table (`cupPointsScale`, `cupCustomPoints`) and whether the record book shows its Hall of Lame (`hallOfLameVisible`, on at creation, #873) in one write. `CUSTOM` needs at least one place's points and every other table sends `[]` (400 `CUP_CUSTOM_POINTS_INVALID`); at most 50 places of 0 to 1000. Read-only while inactive (400 `LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE`). Open cups rescore on the new table at once; the championship keeps the points its contests earned when they settled |
 | Change the league's plan | `commissioner` | A3 · `updateLeaguePlan`, `PUT /leagues/:id/plan` (#945): moves the league to any of the four plans (`FREE`, `PRO`, `PREMIUM`, `PLATINUM`), free and at once; a root admin outside the league may too. Every change writes one `league_plan_changes` row (from, to, who, when); choosing the plan the league is already on writes nothing. Read-only while inactive (400 `LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE`). Every league read carries `planEntitlements` (plan, caps, features); the app shows the plan's name to commissioners only |
-| List the plans | `authenticated` | `listLeaguePlans`, `GET /plans` (#945): every plan's caps and features, lowest first, from `PLAN_CONFIG`, for the commissioner's comparison table; Platinum is unlimited with every feature |
+| List the plans | `public` | `listLeaguePlans`, `GET /plans` (#945, public since #971): every plan's caps and features, lowest first, from `PLAN_CONFIG`, for the public Plans page (`/plans`) and the commissioner's comparison table; Platinum is unlimited with every feature |
 | Update event email settings | `commissioner` | A3 · `updateLeagueEventEmailSettings`, `PUT /leagues/:id/event-email-settings` (#851): replaces the sport leagues whose upcoming events the league's commissioners are not emailed about (`mutedSportLeagueIds`, each saved once; `[]`, the default, hears about every sport league). An id that is not a sport league is refused (400 `SPORT_LEAGUE_NOT_FOUND`), at most 200. Read-only while inactive (400 `LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE`) |
 | Activate / inactivate *(soft)* | `commissioner` | **A3** · `isActive` |
 | Delete permanently *(hard)* | `commissioner` | A3 · `deleteInactiveLeague` — **gated: throws unless already inactive**, and requires typing the `leagueCode` to confirm |

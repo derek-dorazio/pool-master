@@ -840,7 +840,7 @@ export interface paths {
         };
         /**
          * List what each league plan allows
-         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.
+         * @description Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.
          */
         get: operations["listLeaguePlans"];
         put?: never;
@@ -21825,15 +21825,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaguePlanListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };
