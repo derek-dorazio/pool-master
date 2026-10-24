@@ -10233,6 +10233,14 @@ export type ContestSportEventDto = {
      * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
      */
     status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    /**
+     * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    /**
+     * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+     */
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
 };
 
 /**
@@ -10339,6 +10347,14 @@ export type ContestDto = {
          * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
          */
         status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+         */
+        participantType: 'INDIVIDUAL' | 'TEAM' | null;
+        /**
+         * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+         */
+        scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
@@ -10587,6 +10603,28 @@ export type ScoredContestEntryPickDto = {
          */
         isAlive: boolean;
     } | null;
+    /**
+     * Present for a championship stat pool, scored by composite; null otherwise.
+     */
+    composite: {
+        /**
+         * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
+         */
+        points: number | null;
+        /**
+         * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
+         */
+        games: Array<{
+            /**
+             * The game: the event's round number.
+             */
+            roundNumber: number;
+            /**
+             * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
+             */
+            score: number;
+        }>;
+    } | null;
 };
 
 /**
@@ -10725,6 +10763,28 @@ export type ContestEntryStandingDto = {
              */
             isAlive: boolean;
         } | null;
+        /**
+         * Present for a championship stat pool, scored by composite; null otherwise.
+         */
+        composite: {
+            /**
+             * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
+             */
+            points: number | null;
+            /**
+             * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
+             */
+            games: Array<{
+                /**
+                 * The game: the event's round number.
+                 */
+                roundNumber: number;
+                /**
+                 * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
+                 */
+                score: number;
+            }>;
+        } | null;
     }>;
 };
 
@@ -10758,6 +10818,14 @@ export type ContestLeaderboardResponse = {
      * Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.
      */
     sport: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event's definition from the sport and both overrides.
+     */
+    participantType: 'INDIVIDUAL' | 'TEAM' | null;
+    /**
+     * How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.
+     */
+    scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
     /**
      * The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client's own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.
      */
@@ -11168,6 +11236,28 @@ export type ContestLeaderboardResponse = {
                  */
                 isAlive: boolean;
             } | null;
+            /**
+             * Present for a championship stat pool, scored by composite; null otherwise.
+             */
+            composite: {
+                /**
+                 * The player's score in this contest: their games' composites summed, a game they did not play scoring 0. Null until the event's first game has stat lines.
+                 */
+                points: number | null;
+                /**
+                 * Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant's rounds.
+                 */
+                games: Array<{
+                    /**
+                     * The game: the event's round number.
+                     */
+                    roundNumber: number;
+                    /**
+                     * The player's composite for the game, from its stat lines. Can be below 0 where yards are lost.
+                     */
+                    score: number;
+                }>;
+            } | null;
         }>;
     }>;
     /**
@@ -11214,6 +11304,14 @@ export type ContestResponse = {
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             */
+            participantType: 'INDIVIDUAL' | 'TEAM' | null;
+            /**
+             * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             */
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -11266,6 +11364,14 @@ export type ContestListResponse = {
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * Who competes, when the event's sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.
+             */
+            participantType: 'INDIVIDUAL' | 'TEAM' | null;
+            /**
+             * How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.
+             */
+            scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD' | 'COMPOSITE' | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**

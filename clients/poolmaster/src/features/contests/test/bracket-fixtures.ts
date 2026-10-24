@@ -158,7 +158,7 @@ export function bracketContestFixture(overrides: Partial<ContestDto> = {}): Cont
     status: 'OPEN',
     contestFormat: 'PREDICTION',
     selectionType: 'BRACKET',
-    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'March Madness', startDate: BRACKET_START, status: 'SCHEDULED' }],
+    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'March Madness', startDate: BRACKET_START, status: 'SCHEDULED', participantType: null, scoringFamily: null }],
     ...overrides,
   };
 }

@@ -55,6 +55,7 @@ function pick(knockout: ScoredContestEntryPickDto['knockout']): ScoredContestEnt
     golf: null,
     race: null,
     knockout,
+    composite: null,
   };
 }
 
@@ -80,6 +81,8 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
     contestId: 'contest-1',
     sportEventId: 'event-1',
     sport: Sport.BASKETBALL,
+    participantType: null,
+    scoringFamily: null,
     scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
     countingRule: { type: 'BEST_N', count: 4 },
     participants: [team()],

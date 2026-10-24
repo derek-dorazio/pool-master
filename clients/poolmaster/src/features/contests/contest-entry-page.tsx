@@ -49,7 +49,7 @@ import {
   contestStatusLabel,
 } from './contest-status';
 import { ContestHeader, ContestSubMenu } from './contest-header';
-import { contestEntryTiebreaker, contestParticipantNoun } from './contest-sport';
+import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
 import { fetchContestEntries } from './use-contest-entries';
 import { useContestSchedule } from './use-contest-schedule';
 import { ContestEventSwitcher } from './contest-event-switcher';
@@ -560,10 +560,10 @@ function RosterContestEntryPage() {
 
   const contest = contestQuery.data;
   const selectionState = selectionStateQuery.data;
-  const participantNoun = contestParticipantNoun(contest.sport);
+  const participantNoun = contestRosterParticipantNoun(contest);
   // The prediction the contest's scoring family asks for: a golf entry's winning score, none
   // for a race, whose entries submit without one.
-  const tiebreaker = contestEntryTiebreaker(contest.sport);
+  const tiebreaker = contestEntryTiebreaker(contest);
   const backLeagueCode = hintedLeagueCode ?? contestLeague?.leagueCode ?? null;
   const backToContestPath = backLeagueCode
     ? buildLeagueContestPath(backLeagueCode, contestId)

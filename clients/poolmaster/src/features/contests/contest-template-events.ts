@@ -1,4 +1,4 @@
-import { SelectionType, isTemplateOfferedOn } from '@poolmaster/shared/domain';
+import { SelectionType, eventSportDefinition, isTemplateOfferedOn, sportAllowsSelectionType } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { bracketRoundCount, bracketStartRoundOptions, hasSecondChanceRound } from './bracket-start-round';
 import { isKnockoutUnderWay } from './contest-readiness';
@@ -10,7 +10,8 @@ import { isKnockoutUnderWay } from './contest-readiness';
  * games to come (#711): the Super Bowl is the last game of the playoffs.
  */
 export function contestEventsFor(events: readonly SportEventDto[], selectionType: SelectionType) {
-  return events.filter((event) => event.contestEligible
+  // An event offers only its own definition's formats: no bracket on a World Series stat pool (#936).
+  return events.filter((event) => sportAllowsSelectionType(eventSportDefinition(event), selectionType)).filter((event) => event.contestEligible
     || (selectionType === SelectionType.BRACKET
       && isKnockoutUnderWay(event)
       && hasSecondChanceRound(bracketRoundCount(event)))

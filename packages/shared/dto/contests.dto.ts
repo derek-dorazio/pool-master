@@ -9,6 +9,8 @@ import {
   ContestFormat,
   CupWeight,
   ParticipantScoringDefinitionIdSchema,
+  ParticipantType,
+  ScoringFamily,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -69,6 +71,8 @@ export const ContestSportEventDtoSchema = z.object({
   name: z.string().describe('The event\'s name.'),
   startDate: z.string().datetime().describe('The event\'s scheduled start: when its picks close.'),
   status: z.nativeEnum(SportEventStatus).describe('The event\'s own status. Each event of a contest is picked, submitted, played and settled on its own (#713).'),
+  participantType: z.nativeEnum(ParticipantType).nullable().describe('Who competes, when the event\'s sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. The same on every event of a contest, which covers one sport league.'),
+  scoringFamily: z.nativeEnum(ScoringFamily).nullable().describe('How the event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does. The same on every event of a contest, which covers one sport league.'),
 }).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
 export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
 
@@ -210,6 +214,18 @@ export const ScoredContestEntryPickKnockoutDtoSchema = z.object({
 }).describe('Head-to-head extension of a scored pick: the team\'s knockout points and how they came about.');
 export type ScoredContestEntryPickKnockoutDto = z.infer<typeof ScoredContestEntryPickKnockoutDtoSchema>;
 
+export const ScoredContestEntryPickCompositeGameDtoSchema = z.object({
+  roundNumber: z.number().int().min(1).describe('The game: the event\'s round number.'),
+  score: z.number().int().describe('The player\'s composite for the game, from its stat lines. Can be below 0 where yards are lost.'),
+}).describe('One game a stat pool player played, and their composite in it.');
+export type ScoredContestEntryPickCompositeGameDto = z.infer<typeof ScoredContestEntryPickCompositeGameDtoSchema>;
+
+export const ScoredContestEntryPickCompositeDtoSchema = z.object({
+  points: z.number().int().nullable().describe('The player\'s score in this contest: their games\' composites summed, a game they did not play scoring 0. Null until the event\'s first game has stat lines.'),
+  games: z.array(ScoredContestEntryPickCompositeGameDtoSchema).describe('Each game the player has stat lines for, in round order. A game they did not play is left out; its stats are on the participant\'s rounds.'),
+}).describe('Composite extension of a scored pick: a stat pool player\'s points and each game\'s composite.');
+export type ScoredContestEntryPickCompositeDto = z.infer<typeof ScoredContestEntryPickCompositeDtoSchema>;
+
 export const ScoredContestEntryPickDtoSchema = z.object({
   pickId: z.string().describe('ContestEntryPick row identifier.'),
   sportEventParticipantId: z.string().describe('The picked field row. Its scores are the matching entry of `participants`; a pick is a pointer, not a copy.'),
@@ -220,6 +236,7 @@ export const ScoredContestEntryPickDtoSchema = z.object({
   golf: ScoredContestEntryPickGolfDtoSchema.nullable().describe('Present for a golf contest; null otherwise.'),
   race: ScoredContestEntryPickRaceDtoSchema.nullable().describe('Present for a finish-position contest (a horse race); null otherwise.'),
   knockout: ScoredContestEntryPickKnockoutDtoSchema.nullable().describe('Present for a head-to-head contest (a basketball bracket); null otherwise.'),
+  composite: ScoredContestEntryPickCompositeDtoSchema.nullable().describe('Present for a championship stat pool, scored by composite; null otherwise.'),
 }).describe('One pick on a contest entry, with whether it counts.');
 export type ScoredContestEntryPickDto = z.infer<typeof ScoredContestEntryPickDtoSchema>;
 
@@ -259,6 +276,8 @@ export const ContestLeaderboardResponseSchema = z.object({
   sport: z.nativeEnum(Sport).describe(
     'Sport of the event the contest runs on. A client resolves it through the shared sport registry to the scoring family and vocabulary it renders the leaderboard with.',
   ),
+  participantType: z.nativeEnum(ParticipantType).nullable().describe('Who competes in the shown event, when its sport league overrides its sport: INDIVIDUAL in a championship stat pool. Null competes as the sport does. A client reads the event\'s definition from the sport and both overrides.'),
+  scoringFamily: z.nativeEnum(ScoringFamily).nullable().describe('How the shown event is scored, when its sport league overrides its sport: COMPOSITE in a championship stat pool. Null scores as the sport does.'),
   scoringDefinitionId: ParticipantScoringDefinitionIdSchema.describe(
     'The participant scoring definition this leaderboard was ranked by. Positions are already ranked and direction-free; the id keys the client\'s own PARTICIPANT_SCORING_DEFINITIONS to render scores and rounds.',
   ),
