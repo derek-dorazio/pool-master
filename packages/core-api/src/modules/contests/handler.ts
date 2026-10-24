@@ -76,16 +76,17 @@ export function createContestHandlers(contestService: ContestService) {
     const logger = createRequestContextLogger(request);
     logger.debug({ leagueId: request.params.id }, 'contest list route start');
     const contests = await contestService.listByLeague(request.params.id, readContestViewer(request));
-    const [entryCounts, eventsById] = await Promise.all([
+    const [entryCounts, eventsById, entryCaps] = await Promise.all([
       contestService.countEntriesByContest(contests.map((contest) => contest.id)),
       contestService.findEventsForContests(contests),
+      contestService.findEntryCaps(contests),
     ]);
     logger.info({
       leagueId: request.params.id,
       contestCount: contests.length,
       entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
     }, 'contest list route completed');
-    return toContestListResponse(contests, entryCounts, eventsById);
+    return toContestListResponse(contests, entryCounts, eventsById, entryCaps);
   }
 
   async function getContest(
@@ -100,7 +101,11 @@ export function createContestHandlers(contestService: ContestService) {
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
     logger.info({ contestId: request.params.contestId }, 'contest get route completed');
-    return reply.send(toContestResponse(contest, await contestService.findEventsForContests([contest])));
+    const [eventsById, entryCaps] = await Promise.all([
+      contestService.findEventsForContests([contest]),
+      contestService.findEntryCaps([contest]),
+    ]);
+    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
   }
 
   async function listEntries(
@@ -421,7 +426,11 @@ export function createContestHandlers(contestService: ContestService) {
         },
       );
       logger.info({ contestId: request.params.contestId }, 'contest update route completed');
-      return reply.send(toContestResponse(contest, await contestService.findEventsForContests([contest])));
+      const [eventsById, entryCaps] = await Promise.all([
+      contestService.findEventsForContests([contest]),
+      contestService.findEntryCaps([contest]),
+    ]);
+    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');
@@ -499,7 +508,11 @@ export function createCreateContestHandler(
         throw new ContestNotFoundError(contestId);
       }
       logger.info({ contestId, leagueId: request.params.id }, 'contest create route completed');
-      return reply.status(201).send(toContestResponse(created, await contestService.findEventsForContests([created])));
+      const [eventsById, entryCaps] = await Promise.all([
+        contestService.findEventsForContests([created]),
+        contestService.findEntryCaps([created]),
+      ]);
+      return reply.status(201).send(toContestResponse(created, eventsById, entryCaps.get(created.id) ?? null));
     } catch (error) {
       if (error instanceof ContestManagementError) {
         logger.warn({ leagueId: request.params.id, code: error.code }, 'contest create route rejected');

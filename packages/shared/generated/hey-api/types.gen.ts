@@ -681,6 +681,83 @@ export type SportLeaguesUsedResponse = {
 };
 
 /**
+ * One band a contest can be expanded to.
+ */
+export type ContestExpansionOffer = {
+    /**
+     * The band: the most entries the contest takes once expanded to it.
+     */
+    entriesPerContest: number;
+    /**
+     * What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on.
+     */
+    priceCents: number;
+};
+
+/**
+ * A contest's entry cap, and the expansions its commissioners can choose.
+ */
+export type ContestExpansionResponse = {
+    /**
+     * The most entries the contest takes now, drafts included: the higher of its plan's cap and its expansion. Null for no limit.
+     */
+    entriesPerContest: number | null;
+    /**
+     * Entries the contest holds now, drafts included: what the cap counts.
+     */
+    entryCount: number;
+    /**
+     * The band the contest was expanded to, or null when it never was.
+     */
+    expandedTo: number | null;
+    /**
+     * Whether the contest can be expanded: from its creation, a draft included, until it stops taking entries.
+     */
+    expandable: boolean;
+    /**
+     * Whether expansions are charged. While off, expanding is free.
+     */
+    paymentsEnabled: boolean;
+    /**
+     * The bands above the contest's cap on its league's plan, smallest first. Empty once it can no longer be expanded.
+     */
+    offers: Array<{
+        /**
+         * The band: the most entries the contest takes once expanded to it.
+         */
+        entriesPerContest: number;
+        /**
+         * What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on.
+         */
+        priceCents: number;
+    }>;
+};
+
+/**
+ * Expand a contest to one of its offered bands.
+ */
+export type ExpandContestRequest = {
+    /**
+     * One of the offered bands.
+     */
+    entriesPerContest: number;
+};
+
+/**
+ * A root admin gives a contest an expansion free, with a reason.
+ */
+export type GrantContestExpansionRequest = {
+    /**
+     * Any number of entries above the contest's cap.
+     */
+    entriesPerContest: number;
+    /**
+     * Why it is given free; shown in the league's payment history.
+     */
+    reason: string;
+};
+
+/**
  * Squad membership summary.
  */
 export type SquadMembershipDto = {
@@ -10194,6 +10271,10 @@ export type ContestDto = {
      * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
      */
     entryCount?: number;
+    /**
+     * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
+     */
+    entriesPerContest: number | null;
     startsAt?: string | null;
     endsAt?: string | null;
     /**
@@ -11056,6 +11137,10 @@ export type ContestResponse = {
          * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
          */
         entryCount?: number;
+        /**
+         * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
+         */
+        entriesPerContest: number | null;
         startsAt?: string | null;
         endsAt?: string | null;
         /**
@@ -11108,6 +11193,10 @@ export type ContestListResponse = {
          * Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.
          */
         entryCount?: number;
+        /**
+         * The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.
+         */
+        entriesPerContest: number | null;
         startsAt?: string | null;
         endsAt?: string | null;
         /**
@@ -12460,6 +12549,87 @@ export type PlanConfig = {
 };
 
 /**
+ * One expansion band and its price.
+ */
+export type ExpansionPrice = {
+    /**
+     * The band: the most entries an expanded contest takes.
+     */
+    entriesPerContest: number;
+    /**
+     * What expanding a contest to this band costs, in US cents.
+     */
+    priceCents: number;
+};
+
+/**
+ * Payments: whether they are on, and what expanding a contest costs on each plan.
+ */
+export type BillingConfig = {
+    /**
+     * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+     */
+    paymentsEnabled: boolean;
+    /**
+     * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+     */
+    expansionPrices: {
+        /**
+         * The plan's bands, smallest first; each band and each price above the one before.
+         */
+        FREE: Array<{
+            /**
+             * The band: the most entries an expanded contest takes.
+             */
+            entriesPerContest: number;
+            /**
+             * What expanding a contest to this band costs, in US cents.
+             */
+            priceCents: number;
+        }>;
+        /**
+         * The plan's bands, smallest first; each band and each price above the one before.
+         */
+        PRO: Array<{
+            /**
+             * The band: the most entries an expanded contest takes.
+             */
+            entriesPerContest: number;
+            /**
+             * What expanding a contest to this band costs, in US cents.
+             */
+            priceCents: number;
+        }>;
+        /**
+         * The plan's bands, smallest first; each band and each price above the one before.
+         */
+        PREMIUM: Array<{
+            /**
+             * The band: the most entries an expanded contest takes.
+             */
+            entriesPerContest: number;
+            /**
+             * What expanding a contest to this band costs, in US cents.
+             */
+            priceCents: number;
+        }>;
+        /**
+         * The plan's bands, smallest first; each band and each price above the one before.
+         */
+        PLATINUM: Array<{
+            /**
+             * The band: the most entries an expanded contest takes.
+             */
+            entriesPerContest: number;
+            /**
+             * What expanding a contest to this band costs, in US cents.
+             */
+            priceCents: number;
+        }>;
+    };
+};
+
+/**
  * Partial ingestion scheduling override used for global updates and per-sport overrides.
  */
 export type IngestionScheduleConfigOverride = {
@@ -12835,7 +13005,7 @@ export type EmailTestResponse = {
 /**
  * The stored key of a settings group.
  */
-export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG' | 'PLAN_CONFIG';
+export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG' | 'PLAN_CONFIG' | 'BILLING_CONFIG';
 
 /**
  * The root admin who saved a settings change.
@@ -13802,6 +13972,169 @@ export type SettingsGroup = {
             RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
         };
     };
+} | {
+    key: 'BILLING_CONFIG';
+    /**
+     * Short display name of the group.
+     */
+    title: string;
+    /**
+     * What the group controls.
+     */
+    description: string;
+    /**
+     * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+     */
+    source: 'stored' | 'defaults';
+    /**
+     * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+     */
+    updatedAt: string | null;
+    /**
+     * Who last saved the stored value, when known.
+     */
+    updatedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The value in use.
+     */
+    value: {
+        /**
+         * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+         */
+        paymentsEnabled: boolean;
+        /**
+         * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+         */
+        expansionPrices: {
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            FREE: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PRO: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PREMIUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PLATINUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+        };
+    };
+    /**
+     * The value a reset would store.
+     */
+    defaults: {
+        /**
+         * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+         */
+        paymentsEnabled: boolean;
+        /**
+         * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+         */
+        expansionPrices: {
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            FREE: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PRO: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PREMIUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PLATINUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+        };
+    };
 };
 
 /**
@@ -14759,6 +15092,169 @@ export type SettingsGroupList = {
                 RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
             };
         };
+    } | {
+        key: 'BILLING_CONFIG';
+        /**
+         * Short display name of the group.
+         */
+        title: string;
+        /**
+         * What the group controls.
+         */
+        description: string;
+        /**
+         * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+         */
+        source: 'stored' | 'defaults';
+        /**
+         * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+         */
+        updatedAt: string | null;
+        /**
+         * Who last saved the stored value, when known.
+         */
+        updatedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The value in use.
+         */
+        value: {
+            /**
+             * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+             */
+            paymentsEnabled: boolean;
+            /**
+             * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+             */
+            expansionPrices: {
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                FREE: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PRO: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PREMIUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PLATINUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+            };
+        };
+        /**
+         * The value a reset would store.
+         */
+        defaults: {
+            /**
+             * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+             */
+            paymentsEnabled: boolean;
+            /**
+             * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+             */
+            expansionPrices: {
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                FREE: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PRO: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PREMIUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PLATINUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+            };
+        };
     }>;
 };
 
@@ -15195,6 +15691,78 @@ export type SettingsGroupUpdateRequest = {
              * The first plan that has the feature; every plan above it has it too.
              */
             RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
+    };
+    /**
+     * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+     */
+    expectedUpdatedAt: string | null;
+} | {
+    key: 'BILLING_CONFIG';
+    /**
+     * The whole new value.
+     */
+    value: {
+        /**
+         * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+         */
+        paymentsEnabled: boolean;
+        /**
+         * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+         */
+        expansionPrices: {
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            FREE: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PRO: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PREMIUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PLATINUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
         };
     };
     /**
@@ -16110,6 +16678,158 @@ export type SettingsChange = {
             RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
         };
     };
+} | {
+    key: 'BILLING_CONFIG';
+    id: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    changedAt: string;
+    /**
+     * Who saved it, when known.
+     */
+    changedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The stored value before the save; null when the save created the first stored value.
+     */
+    previousValue: {
+        /**
+         * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+         */
+        paymentsEnabled: boolean;
+        /**
+         * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+         */
+        expansionPrices: {
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            FREE: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PRO: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PREMIUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PLATINUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+        };
+    } | null;
+    /**
+     * The value the save stored.
+     */
+    newValue: {
+        /**
+         * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+         */
+        paymentsEnabled: boolean;
+        /**
+         * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+         */
+        expansionPrices: {
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            FREE: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PRO: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PREMIUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+            /**
+             * The plan's bands, smallest first; each band and each price above the one before.
+             */
+            PLATINUM: Array<{
+                /**
+                 * The band: the most entries an expanded contest takes.
+                 */
+                entriesPerContest: number;
+                /**
+                 * What expanding a contest to this band costs, in US cents.
+                 */
+                priceCents: number;
+            }>;
+        };
+    };
 };
 
 /**
@@ -17021,6 +17741,158 @@ export type SettingsChangeList = {
                  * The first plan that has the feature; every plan above it has it too.
                  */
                 RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            };
+        };
+    } | {
+        key: 'BILLING_CONFIG';
+        id: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        changedAt: string;
+        /**
+         * Who saved it, when known.
+         */
+        changedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The stored value before the save; null when the save created the first stored value.
+         */
+        previousValue: {
+            /**
+             * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+             */
+            paymentsEnabled: boolean;
+            /**
+             * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+             */
+            expansionPrices: {
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                FREE: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PRO: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PREMIUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PLATINUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+            };
+        } | null;
+        /**
+         * The value the save stored.
+         */
+        newValue: {
+            /**
+             * Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free.
+             */
+            paymentsEnabled: boolean;
+            /**
+             * Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference.
+             */
+            expansionPrices: {
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                FREE: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PRO: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PREMIUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
+                /**
+                 * The plan's bands, smallest first; each band and each price above the one before.
+                 */
+                PLATINUM: Array<{
+                    /**
+                     * The band: the most entries an expanded contest takes.
+                     */
+                    entriesPerContest: number;
+                    /**
+                     * What expanding a contest to this band costs, in US cents.
+                     */
+                    priceCents: number;
+                }>;
             };
         };
     }>;
@@ -23790,6 +24662,130 @@ export type ListLeaguePlansResponses = {
 };
 
 export type ListLeaguePlansResponse = ListLeaguePlansResponses[keyof ListLeaguePlansResponses];
+
+export type GetContestExpansionData = {
+    body?: never;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/billing/contests/{contestId}/expansion';
+};
+
+export type GetContestExpansionErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND — no such contest in this league.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetContestExpansionError = GetContestExpansionErrors[keyof GetContestExpansionErrors];
+
+export type GetContestExpansionResponses = {
+    /**
+     * A contest's entry cap, and the expansions its commissioners can choose.
+     */
+    200: ContestExpansionResponse;
+};
+
+export type GetContestExpansionResponse = GetContestExpansionResponses[keyof GetContestExpansionResponses];
+
+export type ExpandContestData = {
+    body: ExpandContestRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/billing/contests/{contestId}/expansion';
+};
+
+export type ExpandContestErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND — no such contest in this league.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type ExpandContestError = ExpandContestErrors[keyof ExpandContestErrors];
+
+export type ExpandContestResponses = {
+    /**
+     * A contest's entry cap, and the expansions its commissioners can choose.
+     */
+    200: ContestExpansionResponse;
+};
+
+export type ExpandContestResponse = ExpandContestResponses[keyof ExpandContestResponses];
+
+export type GrantContestExpansionData = {
+    body: GrantContestExpansionRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/billing/contests/{contestId}/expansion/grant';
+};
+
+export type GrantContestExpansionErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND — no such contest in this league.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type GrantContestExpansionError = GrantContestExpansionErrors[keyof GrantContestExpansionErrors];
+
+export type GrantContestExpansionResponses = {
+    /**
+     * A contest's entry cap, and the expansions its commissioners can choose.
+     */
+    200: ContestExpansionResponse;
+};
+
+export type GrantContestExpansionResponse = GrantContestExpansionResponses[keyof GrantContestExpansionResponses];
 
 export type ListLeagueSquadsData = {
     body?: never;

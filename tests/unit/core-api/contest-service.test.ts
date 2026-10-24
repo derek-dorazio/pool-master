@@ -198,6 +198,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     configurations: createMockContestConfigurationRepo(),
     scoringRules: fakeParticipantContestScoringRuleRepo(),
     entries: createMockEntryRepo(),
+    expansions: { findHighestBands: async () => new Map() },
     picks: fakeContestEntryPickRepo(),
     predictions: { findByEntriesAndEvent: jest.fn().mockResolvedValue([]), findByEntriesAndEvents: jest.fn().mockResolvedValue([]) },
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]), findBySportEvents: jest.fn().mockResolvedValue([]) },

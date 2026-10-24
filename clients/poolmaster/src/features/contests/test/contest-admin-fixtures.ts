@@ -71,6 +71,7 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     contestFormat: 'ROSTER',
     selectionType: SelectionType.TIERED,
     leagueId: 'league-1',
+    entriesPerContest: null,
     sportEvents: [buildContestSportEvent()],
     sport: 'GOLF',
     entryCount: 0,

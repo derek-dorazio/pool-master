@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ContestDto, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
+import type { ContestDto, ContestExpansionResponse, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
@@ -32,6 +32,9 @@ import {
 } from './test/contest-admin-fixtures';
 
 const deleteContestMock = vi.fn();
+const expandContestMock = vi.fn();
+const getContestExpansionMock = vi.fn();
+const grantContestExpansionMock = vi.fn();
 const getContestConfigurationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
@@ -50,6 +53,9 @@ const updateContestMock = vi.fn();
 
 bindApiMocks({
   deleteContest: deleteContestMock,
+  expandContest: expandContestMock,
+  getContestExpansion: getContestExpansionMock,
+  grantContestExpansion: grantContestExpansionMock,
   getContestConfiguration: getContestConfigurationMock,
   getEvent: getEventMock,
   getUser: getCurrentUserMock,
@@ -91,18 +97,38 @@ function renderAt(path: string) {
   );
 }
 
+/** A Free contest's entries: 12 of its plan's 20, with the Free price list's bands on offer. */
+function buildExpansion(overrides: Partial<ContestExpansionResponse> = {}): ContestExpansionResponse {
+  return {
+    entriesPerContest: 20,
+    entryCount: 12,
+    expandedTo: null,
+    expandable: true,
+    paymentsEnabled: false,
+    offers: [
+      { entriesPerContest: 50, priceCents: 1000 },
+      { entriesPerContest: 100, priceCents: 2000 },
+    ],
+    ...overrides,
+  };
+}
+
 function primeMocks({
   contest = buildContest(),
   event = buildSportEvent(),
   managedContest = buildManagedContest(),
   features = Object.values(PlanFeature),
+  expansion = buildExpansion(),
+  isRootAdmin = false,
 }: {
   features?: PlanFeature[];
+  expansion?: ContestExpansionResponse;
+  isRootAdmin?: boolean;
   contest?: ContestDto;
   event?: SportEventDto;
   managedContest?: ContestManagementDetailDto;
 } = {}) {
-  getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
+  getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser({ isRootAdmin }) }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague({ planEntitlements: buildPlanEntitlements({ features }) }),
@@ -116,6 +142,7 @@ function primeMocks({
   listContestsMock.mockResolvedValue(apiSuccess({ contests: [contest] }));
   getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: managedContest }));
   getEventMock.mockResolvedValue(apiSuccess({ event }));
+  getContestExpansionMock.mockResolvedValue(apiSuccess(expansion));
   listContestEntriesMock.mockResolvedValue(apiSuccess({
     contestId: contest.id,
     total: 0,
@@ -126,7 +153,7 @@ function primeMocks({
 
 afterEach(() => {
   for (const mock of [
-    deleteContestMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
+    deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
     getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
     listContestEntriesMock, listContestsMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
@@ -313,6 +340,89 @@ describe('Commissioner tools › Contests › one contest', () => {
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByTestId('manage-contest-not-found')).toHaveTextContent("This contest isn't in this league");
+  });
+});
+
+describe('Commissioner tools › Contests › one contest › Entries', () => {
+  it('shows the entries against the cap and each larger size with its price, free while payments are off', async () => {
+    primeMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('contest-expansion-entries')).toHaveTextContent('12 of 20');
+    expect(screen.getByTestId('contest-expansion-offer-50')).toHaveTextContent('Up to 50');
+    expect(screen.getByTestId('contest-expansion-offer-50')).toHaveTextContent('$10, free while payments are off');
+    expect(screen.getByTestId('contest-expansion-offer-100')).toHaveTextContent('$20, free while payments are off');
+    expect(screen.queryByTestId('contest-expansion-full')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-expansion-grant')).not.toBeInTheDocument();
+  });
+
+  it('expands a full contest to the size chosen and then shows the new cap', async () => {
+    primeMocks({ expansion: buildExpansion({ entryCount: 20 }) });
+    const expanded = buildExpansion({
+      entriesPerContest: 50,
+      entryCount: 20,
+      expandedTo: 50,
+      offers: [{ entriesPerContest: 100, priceCents: 1000 }],
+    });
+    expandContestMock.mockResolvedValue(apiSuccess(expanded));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('contest-expansion-full')).toHaveTextContent('This contest is full at 20 entries.');
+    getContestExpansionMock.mockResolvedValue(apiSuccess(expanded));
+    fireEvent.click(screen.getByTestId('contest-expansion-expand-50'));
+
+    await waitFor(() => expect(expandContestMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1', contestId: 'contest-1' },
+      body: { entriesPerContest: 50 },
+    })));
+    expect(await screen.findByTestId('contest-expansion-expanded-to')).toHaveTextContent('50 entries');
+    expect(screen.getByTestId('contest-expansion-entries')).toHaveTextContent('20 of 50');
+    expect(screen.queryByTestId('contest-expansion-full')).not.toBeInTheDocument();
+  });
+
+  it('keeps Expand off and says paying is not available yet while payments are on', async () => {
+    primeMocks({ expansion: buildExpansion({ paymentsEnabled: true }) });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('contest-expansion-offer-50')).toHaveTextContent('$10');
+    expect(screen.getByTestId('contest-expansion-offer-50')).not.toHaveTextContent('free while payments are off');
+    expect(screen.getByTestId('contest-expansion-expand-50')).toBeDisabled();
+    expect(screen.getByTestId('contest-expansion-checkout-unavailable')).toHaveTextContent('Paying for an expansion isn\'t available yet.');
+  });
+
+  it('shows the reason when an expansion is refused', async () => {
+    primeMocks();
+    expandContestMock.mockResolvedValue({
+      error: { error: { code: 'CONTEST_EXPANSION_CLOSED', message: 'server sentence' } },
+      status: 409,
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    fireEvent.click(await screen.findByTestId('contest-expansion-expand-50'));
+
+    expect(await screen.findByTestId('contest-expansion-expand-error')).toHaveTextContent('can no longer be expanded');
+  });
+
+  it('lets a root admin give any size free with a reason, and sends nothing until both are filled', async () => {
+    primeMocks({ isRootAdmin: true });
+    grantContestExpansionMock.mockResolvedValue(apiSuccess(buildExpansion({ entriesPerContest: 75, expandedTo: 75 })));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    await screen.findByTestId('contest-expansion-grant');
+    fireEvent.change(screen.getByTestId('contest-expansion-grant-entries'), { target: { value: '75' } });
+    expect(screen.getByTestId('contest-expansion-grant-submit')).toBeDisabled();
+    fireEvent.change(screen.getByTestId('contest-expansion-grant-reason'), { target: { value: 'Charity pool' } });
+    fireEvent.click(screen.getByTestId('contest-expansion-grant-submit'));
+
+    await waitFor(() => expect(grantContestExpansionMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { id: 'league-1', contestId: 'contest-1' },
+      body: { entriesPerContest: 75, reason: 'Charity pool' },
+    })));
   });
 });
 

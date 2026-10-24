@@ -1195,6 +1195,142 @@
         "additionalProperties": false,
         "description": "The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts."
       },
+      "ContestExpansionOffer": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band: the most entries the contest takes once expanded to it."
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "priceCents"
+        ],
+        "additionalProperties": false,
+        "description": "One band a contest can be expanded to."
+      },
+      "ContestExpansionResponse": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most entries the contest takes now, drafts included: the higher of its plan's cap and its expansion. Null for no limit."
+          },
+          "entryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Entries the contest holds now, drafts included: what the cap counts."
+          },
+          "expandedTo": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band the contest was expanded to, or null when it never was."
+          },
+          "expandable": {
+            "type": "boolean",
+            "description": "Whether the contest can be expanded: from its creation, a draft included, until it stops taking entries."
+          },
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expansions are charged. While off, expanding is free."
+          },
+          "offers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entriesPerContest": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100000,
+                  "description": "The band: the most entries the contest takes once expanded to it."
+                },
+                "priceCents": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "What it costs, in US cents: the band's price on the league's plan, less the price of the band the contest already bought. Charged only while payments are on."
+                }
+              },
+              "required": [
+                "entriesPerContest",
+                "priceCents"
+              ],
+              "additionalProperties": false,
+              "description": "One band a contest can be expanded to."
+            },
+            "description": "The bands above the contest's cap on its league's plan, smallest first. Empty once it can no longer be expanded."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "entryCount",
+          "expandedTo",
+          "expandable",
+          "paymentsEnabled",
+          "offers"
+        ],
+        "additionalProperties": false,
+        "description": "A contest's entry cap, and the expansions its commissioners can choose."
+      },
+      "ExpandContestRequest": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "One of the offered bands."
+          }
+        },
+        "required": [
+          "entriesPerContest"
+        ],
+        "additionalProperties": false,
+        "description": "Expand a contest to one of its offered bands."
+      },
+      "GrantContestExpansionRequest": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Any number of entries above the contest's cap."
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Why it is given free; shown in the league's payment history.",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "description": "A root admin gives a contest an expansion free, with a reason."
+      },
       "SquadMembershipDto": {
         "type": "object",
         "properties": {
@@ -23844,6 +23980,14 @@
             "type": "number",
             "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
           },
+          "entriesPerContest": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+          },
           "startsAt": {
             "type": [
               "string",
@@ -23882,7 +24026,8 @@
           "contestFormat",
           "selectionType",
           "leagueId",
-          "sportEvents"
+          "sportEvents",
+          "entriesPerContest"
         ],
         "additionalProperties": false,
         "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -25630,6 +25775,14 @@
                 "type": "number",
                 "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
               },
+              "entriesPerContest": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+              },
               "startsAt": {
                 "type": [
                   "string",
@@ -25668,7 +25821,8 @@
               "contestFormat",
               "selectionType",
               "leagueId",
-              "sportEvents"
+              "sportEvents",
+              "entriesPerContest"
             ],
             "additionalProperties": false,
             "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -25798,6 +25952,14 @@
                   "type": "number",
                   "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read."
                 },
+                "entriesPerContest": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 1,
+                  "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit."
+                },
                 "startsAt": {
                   "type": [
                     "string",
@@ -25836,7 +25998,8 @@
                 "contestFormat",
                 "selectionType",
                 "leagueId",
-                "sportEvents"
+                "sportEvents",
+                "entriesPerContest"
               ],
               "additionalProperties": false,
               "description": "A contest: the one shape every contest read returns (#248 collapsed the summary and detail variants, which differed by two fields)."
@@ -28927,6 +29090,169 @@
         "additionalProperties": false,
         "description": "What each league plan allows: its caps and the plan each feature starts at."
       },
+      "ExpansionPrice": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band: the most entries an expanded contest takes."
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "What expanding a contest to this band costs, in US cents."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "priceCents"
+        ],
+        "additionalProperties": false,
+        "description": "One expansion band and its price."
+      },
+      "BillingConfig": {
+        "type": "object",
+        "properties": {
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+          },
+          "expansionPrices": {
+            "type": "object",
+            "properties": {
+              "FREE": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PRO": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PREMIUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PLATINUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              }
+            },
+            "required": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "additionalProperties": false,
+            "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+          }
+        },
+        "required": [
+          "paymentsEnabled",
+          "expansionPrices"
+        ],
+        "additionalProperties": false,
+        "description": "Payments: whether they are on, and what expanding a contest costs on each plan."
+      },
       "IngestionScheduleConfigOverride": {
         "type": "object",
         "properties": {
@@ -29585,7 +29911,8 @@
           "INGESTION_SCHEDULE_CONFIG",
           "EMAIL_CONFIG",
           "BUDGET_PRICING_CONFIG",
-          "PLAN_CONFIG"
+          "PLAN_CONFIG",
+          "BILLING_CONFIG"
         ],
         "description": "The stored key of a settings group."
       },
@@ -31480,6 +31807,355 @@
                 "required": [
                   "caps",
                   "features"
+                ],
+                "additionalProperties": false,
+                "description": "The value a reset would store."
+              }
+            },
+            "required": [
+              "key",
+              "title",
+              "description",
+              "source",
+              "updatedAt",
+              "updatedBy",
+              "value",
+              "defaults"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Short display name of the group."
+              },
+              "description": {
+                "type": "string",
+                "description": "What the group controls."
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "stored",
+                  "defaults"
+                ],
+                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+              },
+              "updatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+              },
+              "updatedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who last saved the stored value, when known."
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -33392,6 +34068,355 @@
                     "defaults"
                   ],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BILLING_CONFIG"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Short display name of the group."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What the group controls."
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "stored",
+                        "defaults"
+                      ],
+                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time",
+                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+                    },
+                    "updatedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who last saved the stored value, when known."
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value a reset would store."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "description",
+                    "source",
+                    "updatedAt",
+                    "updatedBy",
+                    "value",
+                    "defaults"
+                  ],
+                  "additionalProperties": false
                 }
               ],
               "description": "One settings group: its current value, its defaults, and who last changed it."
@@ -34280,6 +35305,171 @@
                 "required": [
                   "caps",
                   "features"
+                ],
+                "additionalProperties": false,
+                "description": "The whole new value."
+              },
+              "expectedUpdatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "expectedUpdatedAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -36134,6 +37324,341 @@
               "newValue"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "BILLING_CONFIG"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "changedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "paymentsEnabled": {
+                    "type": "boolean",
+                    "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                  },
+                  "expansionPrices": {
+                    "type": "object",
+                    "properties": {
+                      "FREE": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PRO": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PREMIUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      },
+                      "PLATINUM": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "entriesPerContest": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100000,
+                              "description": "The band: the most entries an expanded contest takes."
+                            },
+                            "priceCents": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 1000000,
+                              "description": "What expanding a contest to this band costs, in US cents."
+                            }
+                          },
+                          "required": [
+                            "entriesPerContest",
+                            "priceCents"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One expansion band and its price."
+                        },
+                        "maxItems": 10,
+                        "description": "The plan's bands, smallest first; each band and each price above the one before."
+                      }
+                    },
+                    "required": [
+                      "FREE",
+                      "PRO",
+                      "PREMIUM",
+                      "PLATINUM"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                  }
+                },
+                "required": [
+                  "paymentsEnabled",
+                  "expansionPrices"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
+              }
+            },
+            "required": [
+              "key",
+              "id",
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
+            ],
+            "additionalProperties": false
           }
         ],
         "description": "One saved change to a settings group, each value typed by the group's own schema."
@@ -37960,6 +39485,341 @@
                       "required": [
                         "caps",
                         "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "id",
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "BILLING_CONFIG"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "paymentsEnabled": {
+                          "type": "boolean",
+                          "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+                        },
+                        "expansionPrices": {
+                          "type": "object",
+                          "properties": {
+                            "FREE": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PRO": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PREMIUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            },
+                            "PLATINUM": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "entriesPerContest": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100000,
+                                    "description": "The band: the most entries an expanded contest takes."
+                                  },
+                                  "priceCents": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 1000000,
+                                    "description": "What expanding a contest to this band costs, in US cents."
+                                  }
+                                },
+                                "required": [
+                                  "entriesPerContest",
+                                  "priceCents"
+                                ],
+                                "additionalProperties": false,
+                                "description": "One expansion band and its price."
+                              },
+                              "maxItems": 10,
+                              "description": "The plan's bands, smallest first; each band and each price above the one before."
+                            }
+                          },
+                          "required": [
+                            "FREE",
+                            "PRO",
+                            "PREMIUM",
+                            "PLATINUM"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+                        }
+                      },
+                      "required": [
+                        "paymentsEnabled",
+                        "expansionPrices"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -55926,6 +57786,274 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LeaguePlanListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/contests/{contestId}/expansion": {
+      "get": {
+        "operationId": "getContestExpansion",
+        "summary": "Get a contest's entry cap and expansions",
+        "tags": [
+          "Billing"
+        ],
+        "description": "The contest's entry cap (the higher of its league plan's and its expansion), its entries counted drafts included, and the bands above its cap on its plan's price list, with what each would cost (#987). Commissioners and root admins only: members never see prices.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "expandContest",
+        "summary": "Expand a contest",
+        "tags": [
+          "Billing"
+        ],
+        "description": "Raises the contest's entry cap to one of its offered bands, at once, from its creation until it stops taking entries (#987). While payments are off it is free, and the league's payment history records a $0 line, \"free while payments are off\". A step up records the band it came from. Commissioners and root admins. 409 CONTEST_EXPANSION_CLOSED once the contest has stopped taking entries; CONTEST_EXPANSION_BAND_UNAVAILABLE for a band not offered; CONTEST_EXPANSION_NOT_ABOVE_CAP when another expansion to this band or higher landed first; PAYMENTS_CHECKOUT_UNAVAILABLE while payments are on, because checkout is not built yet.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExpandContestRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/billing/contests/{contestId}/expansion/grant": {
+      "post": {
+        "operationId": "grantContestExpansion",
+        "summary": "Give a contest an expansion free",
+        "tags": [
+          "Billing"
+        ],
+        "description": "A root admin raises the contest's entry cap to any number above it, free, with a reason, at any time (#987). The league's payment history records a $0 line with the reason. Root admin only. 409 CONTEST_EXPANSION_NOT_ABOVE_CAP when the number is not above the contest's cap, or the contest has no limit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantContestExpansionRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A contest's entry cap, and the expansions its commissioners can choose.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestExpansionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND — no such contest in this league.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }

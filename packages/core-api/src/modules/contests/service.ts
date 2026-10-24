@@ -24,6 +24,7 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
   UserRepository,
+  ContestExpansionRepository,
 } from '@poolmaster/shared/db';
 import type {
   Contest,
@@ -197,6 +198,8 @@ export interface ContestServiceDeps {
   tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
+  /** Each contest's expansion (#987), for the cap a contest read shows. */
+  expansions: Pick<ContestExpansionRepository, 'findHighestBands'>;
   logger?: LifecycleLogger;
   email?: EmailService;
   appBaseUrl?: string;
@@ -308,6 +311,23 @@ export class ContestService {
    * Entries that submitted at least one event: a draft is not an entry until its owner submits
    * it (#481), and in a contest of several events one submitted event is enough (#713).
    */
+  /**
+   * Each contest's entry cap (#987): its league plan's, raised by its expansion. Read for showing;
+   * an entry is checked against the cap under the contest's lock (`createEntry`).
+   */
+  async findEntryCaps(contests: readonly Contest[]): Promise<Map<string, number | null>> {
+    const leagueIds = [...new Set(contests.map((contest) => contest.leagueId))];
+    const [bands, entitlements] = await Promise.all([
+      this.deps.expansions.findHighestBands(contests.map((contest) => contest.id)),
+      Promise.all(leagueIds.map(async (leagueId) => [leagueId, await this.deps.planEntitlements.forLeague(leagueId)] as const)),
+    ]);
+    const byLeague = new Map(entitlements);
+    return new Map(contests.flatMap((contest) => {
+      const leagueEntitlements = byLeague.get(contest.leagueId);
+      return leagueEntitlements ? [[contest.id, contestEntriesCap(leagueEntitlements, bands.get(contest.id) ?? null)] as const] : [];
+    }));
+  }
+
   async countEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     const counts = new Map(contestIds.map((contestId) => [contestId, 0]));
     if (!contestIds.length) {
@@ -1443,8 +1463,11 @@ export class ContestService {
     return { contest, membership, squadMembership };
   }
 
-  /** Whether entries can be created, renamed or left now: see entry-window.ts. */
-  private async areEntriesOpen(contest: Contest): Promise<boolean> {
+  /**
+   * Whether entries can be created, renamed or left now: see entry-window.ts. Also how long the
+   * contest can be expanded (#987).
+   */
+  async areEntriesOpen(contest: Contest): Promise<boolean> {
     const sportEvents = contest.status === ContestStatus.OPEN ? await this.findContestEvents(contest) : [];
     const windows = await this.findContestWindows(contest, sportEvents);
     return areContestEntriesOpen(contest, windows.map(({ window }) => window), this.now());

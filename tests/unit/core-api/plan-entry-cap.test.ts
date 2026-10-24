@@ -106,4 +106,14 @@ describe('ContestService entries per contest', () => {
 
     expect([...world.entries.values()].filter((entry) => entry.contestId === contest.id)).toHaveLength(3);
   });
+
+  it('shows each contest\'s cap for a contest read: its plan\'s, or its expansion when higher (#987)', async () => {
+    const { world, league, contest, service } = setup(LeaguePlan.FREE);
+    const expanded = world.addContest(league.id, { status: ContestStatus.OPEN });
+    world.addContestExpansion(expanded.id, 50);
+
+    const caps = await service.findEntryCaps([contest, expanded]);
+
+    expect([caps.get(contest.id), caps.get(expanded.id)]).toEqual([2, 50]);
+  });
 });
