@@ -1,11 +1,39 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { GetSquadYearQuery, ListContestResultsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { toContestResultSummaryDto, toHistorySummaryDto, toSquadHistoryDto, toSquadYearDto } from '../../mappers/history.mapper';
+import { toContestResultSummaryDto, toHistorySummaryDto, toSquadHistoryDto, toSquadYearDto, toYearReviewDto } from '../../mappers/history.mapper';
 import { HistorySquadNotFoundError, HistorySquadRequiredError, type HistoryService } from './service';
+import {
+  YearReviewAlreadySentError,
+  YearReviewNothingToSendError,
+  YearReviewNotOpenError,
+  type YearReviewService,
+} from './year-review-service';
 
-export function createHistoryHandlers(service: HistoryService) {
-  return { listContestResults, getHistorySummary, getSquadYear, getSquadHistory };
+export function createHistoryHandlers(service: HistoryService, yearReviews: YearReviewService) {
+  return { listContestResults, getHistorySummary, getSquadYear, getSquadHistory, getYearReview, sendYearReview };
+
+  async function getYearReview(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    return reply.send({ yearReview: toYearReviewDto(await yearReviews.getLastYear(request.params.id)) });
+  }
+
+  async function sendYearReview(
+    request: FastifyRequest<{ Params: { id: string; year: number } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    try {
+      const view = await yearReviews.send(request.params.id, request.params.year, request.authUser?.userId as string);
+      return reply.send({ yearReview: toYearReviewDto(view) });
+    } catch (error) {
+      if (error instanceof YearReviewNotOpenError || error instanceof YearReviewNothingToSendError || error instanceof YearReviewAlreadySentError) {
+        return sendError(reply, 409, error.code, error.message);
+      }
+      throw error;
+    }
+  }
 
   async function getSquadHistory(
     request: FastifyRequest<{ Params: { id: string; squadId: string } }>,

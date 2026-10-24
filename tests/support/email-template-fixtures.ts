@@ -1,3 +1,4 @@
+import { CupTrophy } from '@poolmaster/shared/domain';
 import {
   ContestEventChangeKind,
   ContestResultsKind,
@@ -199,5 +200,18 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     environment: 'qa',
     requestedBy: 'poolmaster-admin',
     requestedAt: new Date('2026-10-23T16:20:00.000Z'),
+  },
+  YEAR_IN_REVIEW: {
+    userName: 'Casey Commissioner',
+    leagueName: 'Office League',
+    squadName: 'Casey Crushers',
+    year: 2026,
+    championship: { name: '2026 Office League Cup', place: '2nd', squadCount: 12, points: '612.5', trophy: CupTrophy.RUNNER_UP },
+    medals: { firsts: 4, seconds: 2, thirds: 1, played: 18 },
+    cups: [
+      { name: '2026 NFL Cup', place: '1st', squadCount: 12, points: '240', trophy: CupTrophy.CHAMPION },
+      { name: '2026 PGA Tour Cup', place: 'T5', squadCount: 12, points: '180', trophy: null },
+    ],
+    squadYearUrl: 'http://localhost:5173/league/OFFICE24/team?year=2026',
   },
 };

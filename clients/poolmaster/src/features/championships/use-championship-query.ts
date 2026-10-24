@@ -4,6 +4,7 @@ import {
   getHistorySummary,
   getSquadHistory,
   getSquadYear,
+  getYearReview,
   listChampionshipYears,
   listContestResults,
   type ChampionshipDto,
@@ -12,6 +13,7 @@ import {
   type HistorySummaryDto,
   type SquadHistoryDto,
   type SquadYearDto,
+  type YearReviewDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -132,6 +134,24 @@ export function useSquadHistoryQuery(leagueId: string, squadId: string) {
       return response.data.squadHistory;
     },
     enabled: Boolean(leagueId) && Boolean(squadId),
+    retry: false,
+  });
+}
+
+/** Where last year's year in review stands (#872): the commissioner's "ready to send" banner reads it. */
+export function useYearReviewQuery(leagueId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: QueryKeys.championship.yearReview(leagueId),
+    queryFn: async (): Promise<YearReviewDto> => {
+      const response = await getYearReview({ path: { id: leagueId } });
+
+      if (!response.data?.yearReview) {
+        throwApiError(response.error, 'Year in review response is missing data.');
+      }
+
+      return response.data.yearReview;
+    },
+    enabled: Boolean(leagueId) && enabled,
     retry: false,
   });
 }

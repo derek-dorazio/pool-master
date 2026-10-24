@@ -128,4 +128,4 @@ export type {
   CupRankedEntry,
   CupRepository,
 } from './cup-ports';
-export type { ChampionshipRepository, FinalContest } from './championship-ports';
+export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository } from './championship-ports';

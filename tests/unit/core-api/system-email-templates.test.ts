@@ -583,6 +583,29 @@ describe('the test email', () => {
   });
 });
 
+describe('the year in review', () => {
+  it('lists the squad\'s championship place with its trophy, its contest medals and each cup it placed in, and links to its squad page for the year', () => {
+    const message = renderSystemEmailTemplate('YEAR_IN_REVIEW', EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, UTC);
+
+    expect(message.subject).toBe('Casey Crushers\' 2026 in Office League');
+    expect(message.text).toContain('Here\'s how Casey Crushers did in Office League in 2026.');
+    expect(message.text).toContain('2026 Office League Cup: 2nd of 12, 612.5 points · Runner-up');
+    expect(message.text).toContain('1sts: 4\n2nds: 2\n3rds: 1\nContests played: 18');
+    expect(message.text).toContain('2026 NFL Cup: 1st of 12, 240 points · Champion');
+    expect(message.text).toContain('2026 PGA Tour Cup: T5 of 12, 180 points');
+    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/team?year=2026"');
+  });
+
+  it('says no championship contest counted for a squad that placed only in a cup, leaves out the Cups section for one in none, and gives a name not ending in s the usual possessive', () => {
+    const cupOnly = renderSystemEmailTemplate('YEAR_IN_REVIEW', { ...EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, championship: null }, UTC);
+    const noCups = renderSystemEmailTemplate('YEAR_IN_REVIEW', { ...EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, cups: [] }, UTC);
+
+    expect(cupOnly.text).toContain('No championship contest counted for Casey Crushers in 2026.');
+    expect(noCups.text).not.toContain('Cups:');
+    expect(renderSystemEmailTemplate('YEAR_IN_REVIEW', { ...EMAIL_TEMPLATE_FIXTURES.YEAR_IN_REVIEW, squadName: 'Birdie Brigade' }, UTC).subject).toBe('Birdie Brigade\'s 2026 in Office League');
+  });
+});
+
 describe('the email template registry', () => {
   it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails and the root admin\'s test email ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(Object.values(EmailTemplateKey).sort());
@@ -605,6 +628,7 @@ describe('the email template registry', () => {
       PASSWORD_RESET: EmailCategory.ACCOUNT,
       PASSWORD_CHANGED: EmailCategory.ACCOUNT,
       EMAIL_TEST: EmailCategory.ROOT_ADMIN,
+      YEAR_IN_REVIEW: EmailCategory.RESULTS,
     });
   });
 
@@ -628,6 +652,7 @@ describe('the email template registry', () => {
       PASSWORD_RESET: null,
       PASSWORD_CHANGED: null,
       EMAIL_TEST: null,
+      YEAR_IN_REVIEW: PlanFeature.EMAIL_YEAR_IN_REVIEW,
     });
   });
 

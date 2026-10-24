@@ -26668,7 +26668,8 @@
           "EVENT_STILL_DRAFT",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED",
-          "EMAIL_TEST"
+          "EMAIL_TEST",
+          "YEAR_IN_REVIEW"
         ],
         "description": "A system email template."
       },
@@ -26779,6 +26780,10 @@
               "EVENT_STILL_DRAFT": {
                 "type": "boolean",
                 "description": "Whether this email is sent."
+              },
+              "YEAR_IN_REVIEW": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
               }
             },
             "required": [
@@ -26796,7 +26801,8 @@
               "EVENT_COMING_UP",
               "EVENT_READY_FOR_CONTESTS",
               "CONTEST_NOT_OPEN",
-              "EVENT_STILL_DRAFT"
+              "EVENT_STILL_DRAFT",
+              "YEAR_IN_REVIEW"
             ],
             "additionalProperties": false,
             "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -27171,6 +27177,16 @@
                 ],
                 "description": "The first plan that has the feature; every plan above it has it too."
               },
+              "EMAIL_YEAR_IN_REVIEW": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
               "CUP_STANDINGS": {
                 "type": "string",
                 "enum": [
@@ -27263,6 +27279,7 @@
               "EMAIL_EVENT_COMING_UP",
               "EMAIL_EVENT_READY_FOR_CONTESTS",
               "EMAIL_CONTEST_NOT_OPEN",
+              "EMAIL_YEAR_IN_REVIEW",
               "CUP_STANDINGS",
               "CUP_CROWNING",
               "CHAMPIONSHIP",
@@ -28684,6 +28701,10 @@
                       "EVENT_STILL_DRAFT": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "YEAR_IN_REVIEW": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28701,7 +28722,8 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "CONTEST_NOT_OPEN",
-                      "EVENT_STILL_DRAFT"
+                      "EVENT_STILL_DRAFT",
+                      "YEAR_IN_REVIEW"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -28825,6 +28847,10 @@
                       "EVENT_STILL_DRAFT": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "YEAR_IN_REVIEW": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -28842,7 +28868,8 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "CONTEST_NOT_OPEN",
-                      "EVENT_STILL_DRAFT"
+                      "EVENT_STILL_DRAFT",
+                      "YEAR_IN_REVIEW"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -29332,6 +29359,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -29424,6 +29461,7 @@
                       "EMAIL_EVENT_COMING_UP",
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -29639,6 +29677,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -29731,6 +29779,7 @@
                       "EMAIL_EVENT_COMING_UP",
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -30492,6 +30541,10 @@
                             "EVENT_STILL_DRAFT": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "YEAR_IN_REVIEW": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -30509,7 +30562,8 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "CONTEST_NOT_OPEN",
-                            "EVENT_STILL_DRAFT"
+                            "EVENT_STILL_DRAFT",
+                            "YEAR_IN_REVIEW"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -30633,6 +30687,10 @@
                             "EVENT_STILL_DRAFT": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "YEAR_IN_REVIEW": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -30650,7 +30708,8 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "CONTEST_NOT_OPEN",
-                            "EVENT_STILL_DRAFT"
+                            "EVENT_STILL_DRAFT",
+                            "YEAR_IN_REVIEW"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -31140,6 +31199,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -31232,6 +31301,7 @@
                             "EMAIL_EVENT_COMING_UP",
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -31447,6 +31517,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -31539,6 +31619,7 @@
                             "EMAIL_EVENT_COMING_UP",
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -31958,6 +32039,10 @@
                       "EVENT_STILL_DRAFT": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "YEAR_IN_REVIEW": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -31975,7 +32060,8 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "CONTEST_NOT_OPEN",
-                      "EVENT_STILL_DRAFT"
+                      "EVENT_STILL_DRAFT",
+                      "YEAR_IN_REVIEW"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -32307,6 +32393,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -32399,6 +32495,7 @@
                       "EMAIL_EVENT_COMING_UP",
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -33132,6 +33229,10 @@
                       "EVENT_STILL_DRAFT": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "YEAR_IN_REVIEW": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -33149,7 +33250,8 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "CONTEST_NOT_OPEN",
-                      "EVENT_STILL_DRAFT"
+                      "EVENT_STILL_DRAFT",
+                      "YEAR_IN_REVIEW"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -33273,6 +33375,10 @@
                       "EVENT_STILL_DRAFT": {
                         "type": "boolean",
                         "description": "Whether this email is sent."
+                      },
+                      "YEAR_IN_REVIEW": {
+                        "type": "boolean",
+                        "description": "Whether this email is sent."
                       }
                     },
                     "required": [
@@ -33290,7 +33396,8 @@
                       "EVENT_COMING_UP",
                       "EVENT_READY_FOR_CONTESTS",
                       "CONTEST_NOT_OPEN",
-                      "EVENT_STILL_DRAFT"
+                      "EVENT_STILL_DRAFT",
+                      "YEAR_IN_REVIEW"
                     ],
                     "additionalProperties": false,
                     "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -33752,6 +33859,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -33844,6 +33961,7 @@
                       "EMAIL_EVENT_COMING_UP",
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -34059,6 +34177,16 @@
                         ],
                         "description": "The first plan that has the feature; every plan above it has it too."
                       },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
                       "CUP_STANDINGS": {
                         "type": "string",
                         "enum": [
@@ -34151,6 +34279,7 @@
                       "EMAIL_EVENT_COMING_UP",
                       "EMAIL_EVENT_READY_FOR_CONTESTS",
                       "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
                       "CUP_STANDINGS",
                       "CUP_CROWNING",
                       "CHAMPIONSHIP",
@@ -34884,6 +35013,10 @@
                             "EVENT_STILL_DRAFT": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "YEAR_IN_REVIEW": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -34901,7 +35034,8 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "CONTEST_NOT_OPEN",
-                            "EVENT_STILL_DRAFT"
+                            "EVENT_STILL_DRAFT",
+                            "YEAR_IN_REVIEW"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -35025,6 +35159,10 @@
                             "EVENT_STILL_DRAFT": {
                               "type": "boolean",
                               "description": "Whether this email is sent."
+                            },
+                            "YEAR_IN_REVIEW": {
+                              "type": "boolean",
+                              "description": "Whether this email is sent."
                             }
                           },
                           "required": [
@@ -35042,7 +35180,8 @@
                             "EVENT_COMING_UP",
                             "EVENT_READY_FOR_CONTESTS",
                             "CONTEST_NOT_OPEN",
-                            "EVENT_STILL_DRAFT"
+                            "EVENT_STILL_DRAFT",
+                            "YEAR_IN_REVIEW"
                           ],
                           "additionalProperties": false,
                           "description": "Per-template switches. A template that is off is skipped even while email is on."
@@ -35504,6 +35643,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -35596,6 +35745,7 @@
                             "EMAIL_EVENT_COMING_UP",
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -35811,6 +35961,16 @@
                               ],
                               "description": "The first plan that has the feature; every plan above it has it too."
                             },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
                             "CUP_STANDINGS": {
                               "type": "string",
                               "enum": [
@@ -35903,6 +36063,7 @@
                             "EMAIL_EVENT_COMING_UP",
                             "EMAIL_EVENT_READY_FOR_CONTESTS",
                             "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
                             "CUP_STANDINGS",
                             "CUP_CROWNING",
                             "CHAMPIONSHIP",
@@ -46730,6 +46891,98 @@
         "additionalProperties": false,
         "description": "A squad's whole history in the league."
       },
+      "YearReviewDto": {
+        "type": "object",
+        "properties": {
+          "year": {
+            "type": "integer",
+            "description": "Last year, US Eastern: the only year whose review can be sent."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "NOTHING_TO_SEND",
+              "READY",
+              "SENT"
+            ],
+            "description": "NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent."
+          },
+          "sentAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When it was sent; null until then."
+          },
+          "sentByName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Who sent it; null until then, or once their account is gone."
+          }
+        },
+        "required": [
+          "year",
+          "status",
+          "sentAt",
+          "sentByName"
+        ],
+        "additionalProperties": false,
+        "description": "Where the league's year in review for last year stands."
+      },
+      "YearReviewResponse": {
+        "type": "object",
+        "properties": {
+          "yearReview": {
+            "type": "object",
+            "properties": {
+              "year": {
+                "type": "integer",
+                "description": "Last year, US Eastern: the only year whose review can be sent."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "NOTHING_TO_SEND",
+                  "READY",
+                  "SENT"
+                ],
+                "description": "NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent."
+              },
+              "sentAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When it was sent; null until then."
+              },
+              "sentByName": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Who sent it; null until then, or once their account is gone."
+              }
+            },
+            "required": [
+              "year",
+              "status",
+              "sentAt",
+              "sentByName"
+            ],
+            "additionalProperties": false,
+            "description": "Where the league's year in review for last year stands."
+          }
+        },
+        "required": [
+          "yearReview"
+        ],
+        "additionalProperties": false,
+        "description": "Where the league's year in review for last year stands."
+      },
       "EventSyncRequest": {
         "type": "object",
         "properties": {
@@ -55304,6 +55557,132 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/history/year-review": {
+      "get": {
+        "operationId": "getYearReview",
+        "summary": "Get last year's year in review",
+        "tags": [
+          "History"
+        ],
+        "description": "Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The \"ready to send\" banner and the Send button read it. Active commissioners only (root admins bypass).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where the league's year in review for last year stands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YearReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/history/year-review/{year}/send": {
+      "post": {
+        "operationId": "sendYearReview",
+        "summary": "Send the year in review",
+        "tags": [
+          "History"
+        ],
+        "description": "Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 9999
+            },
+            "in": "path",
+            "name": "year",
+            "required": true,
+            "description": "The year whose review to send, such as 2026: only last year can be sent."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Where the league's year in review for last year stands.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/YearReviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/history/summary": {
       "get": {
         "operationId": "getHistorySummary",
@@ -55363,7 +55742,7 @@
         "tags": [
           "History"
         ],
-        "description": "A squad's whole history for its squad page: its contest medals all time (counted contests finished 1st, 2nd and 3rd), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as `getSquadYear` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "A squad's whole history for its squad page: its contest medals all time (its championship rows' 1sts, 2nds and 3rds summed over every year), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as `getSquadYear` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {

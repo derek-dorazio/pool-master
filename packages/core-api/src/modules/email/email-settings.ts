@@ -40,6 +40,7 @@ export const EMAIL_SETTINGS = defineSettingsGroup<EmailConfig>({
       EVENT_READY_FOR_CONTESTS: true,
       CONTEST_NOT_OPEN: true,
       EVENT_STILL_DRAFT: true,
+      YEAR_IN_REVIEW: true,
     },
   }),
 });

@@ -123,6 +123,7 @@ export const EmailConfigSchema = z.object({
     EVENT_READY_FOR_CONTESTS: templateSwitch,
     CONTEST_NOT_OPEN: templateSwitch,
     EVENT_STILL_DRAFT: templateSwitch,
+    YEAR_IN_REVIEW: templateSwitch,
   } satisfies Record<SwitchableEmailTemplateKey, z.ZodBoolean>).describe(
     'Per-template switches. A template that is off is skipped even while email is on.',
   ),
@@ -182,6 +183,7 @@ export const PlanConfigSchema = z.object({
     EMAIL_EVENT_COMING_UP: featureStartsAt,
     EMAIL_EVENT_READY_FOR_CONTESTS: featureStartsAt,
     EMAIL_CONTEST_NOT_OPEN: featureStartsAt,
+    EMAIL_YEAR_IN_REVIEW: featureStartsAt,
     CUP_STANDINGS: featureStartsAt,
     CUP_CROWNING: featureStartsAt,
     CHAMPIONSHIP: featureStartsAt,

@@ -21,6 +21,7 @@ import { CupsCard, LiveStandingsCard, OtherContestsCard, UpNextCard, YourTeamCar
 import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
+import { YearReviewBanner } from '@/features/championships/year-review-banner';
 
 const CLOCK_TICK_MS = 60_000;
 
@@ -119,6 +120,7 @@ export function LeagueHomePage() {
           <p>You can still see standings and history. Entries and changes are closed while the league is inactive.</p>
         </Alert>
       ) : null}
+      <YearReviewBanner isCommissioner={viewer.isCommissioner} leagueId={league.id} />
 
       <div className="space-y-1">
         <IdentityHeading

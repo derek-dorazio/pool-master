@@ -45,6 +45,7 @@ export const PLAN_SETTINGS = defineSettingsGroup<PlanConfig>({
       EMAIL_EVENT_COMING_UP: LeaguePlan.PRO,
       EMAIL_EVENT_READY_FOR_CONTESTS: LeaguePlan.PRO,
       EMAIL_CONTEST_NOT_OPEN: LeaguePlan.PRO,
+      EMAIL_YEAR_IN_REVIEW: LeaguePlan.PRO,
       CUP_STANDINGS: LeaguePlan.PRO,
       CUP_CROWNING: LeaguePlan.PRO,
       CHAMPIONSHIP: LeaguePlan.PRO,

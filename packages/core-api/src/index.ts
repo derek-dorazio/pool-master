@@ -215,7 +215,7 @@ export function buildApp() {
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email });
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups' });
   app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship' });
-  app.register(historyModule, { prefix: '/api/v1/leagues/:id/history' });
+  app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {
     prefix: '/api/v1/events',

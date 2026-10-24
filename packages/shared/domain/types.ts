@@ -341,6 +341,15 @@ export interface LeagueYearFinish {
   settledAt: Date;
 }
 
+/** A league's year in review (#872 slice 4): its commissioner sent it, once per league and year. */
+export interface LeagueYearReview {
+  leagueId: string;
+  year: number;
+  /** Null once the account that sent it is gone. */
+  sentByUserId: string | null;
+  sentAt: Date;
+}
+
 /** Tier definition used for tiered contest-selection modes. */
 export interface TierDefinition {
   tierId: string;

@@ -196,6 +196,7 @@ enum PrismaEmailTemplateKey {
   SQUAD_OWNER_INVITE
   SQUAD_OWNER_ADDED
   EMAIL_TEST
+  YEAR_IN_REVIEW
 }
 
 enum PrismaEmailMessageStatus {
@@ -550,6 +551,7 @@ model User {
   squadOwnerInvitationsAccepted SquadOwnerInvitation[] @relation("SquadOwnerAcceptedBy")
 
   contestDraws        ContestDraw[]
+  yearReviewsSent     LeagueYearReview[]
   squaresClaimed      ContestEntrySquare[]
   squaresDrawn        ContestSquaresDraw[]
   refreshTokens       RefreshToken[]
@@ -620,6 +622,7 @@ model League {
   memberships           LeagueMembership[]
   cups                  Cup[]
   yearFinishes          LeagueYearFinish[]
+  yearReviews           LeagueYearReview[]
   squads                Squad[]
   squadMemberships      SquadMembership[]
   contests              Contest[]
@@ -1121,6 +1124,23 @@ model LeagueYearFinish {
   @@unique([contestId, squadId])
   @@index([leagueId, year])
   @@map("league_year_finishes")
+}
+
+/// A league's year in review (#872): its commissioner sent every squad its year's email. One per
+/// league and year; the unique key is what stops two presses sending twice, and its existence
+/// clears the "ready to send" banner.
+model LeagueYearReview {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId     String   @map("league_id") @db.Uuid
+  year         Int
+  sentByUserId String?  @map("sent_by_user_id") @db.Uuid
+  sentAt       DateTime @default(now()) @map("sent_at") @db.Timestamptz
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  sentBy User?  @relation(fields: [sentByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([leagueId, year])
+  @@map("league_year_reviews")
 }
 
 // One event a contest covers (#713). Every contest has at least one: a golf or race contest has
