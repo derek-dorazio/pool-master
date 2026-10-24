@@ -1,4 +1,4 @@
-import { EmailCategory, EmailTemplateKey, ServiceClass } from '@poolmaster/shared/domain';
+import { EmailCategory, EmailTemplateKey, PLAN_FEATURE_GROUP, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   EMAIL_TEMPLATES,
@@ -608,27 +608,34 @@ describe('the email template registry', () => {
     });
   });
 
-  it('gives every template a service class: account and membership email essential, the contest opening, receipts, final results and event changes on the free class, reminders, the live email and live standings on the first paid class', () => {
-    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.serviceClass]))).toEqual({
-      LEAGUE_MEMBER_INVITE: ServiceClass.ESSENTIAL,
-      LEAGUE_JOIN_SUCCESS: ServiceClass.ESSENTIAL,
-      CONTEST_ENTRY_COMPLETED: ServiceClass.A,
-      CONTEST_STARTED_SUMMARY: ServiceClass.B,
-      CONTEST_ENTRY_REMINDER: ServiceClass.B,
-      CONTEST_OPENED: ServiceClass.A,
-      CONTEST_STANDINGS: ServiceClass.B,
-      CONTEST_RESULTS: ServiceClass.A,
-      CONTEST_EVENT_CHANGED: ServiceClass.A,
-      EVENT_COMING_UP: ServiceClass.B,
-      EVENT_READY_FOR_CONTESTS: ServiceClass.B,
-      CONTEST_NOT_OPEN: ServiceClass.B,
-      EVENT_STILL_DRAFT: ServiceClass.ESSENTIAL,
-      SQUAD_OWNER_INVITE: ServiceClass.ESSENTIAL,
-      SQUAD_OWNER_ADDED: ServiceClass.ESSENTIAL,
-      PASSWORD_RESET: ServiceClass.ESSENTIAL,
-      PASSWORD_CHANGED: ServiceClass.ESSENTIAL,
-      EMAIL_TEST: ServiceClass.ESSENTIAL,
+  it('gives every optional email its own plan feature and leaves account, membership and root admin email to every league, so a plan can stop only the optional ones', () => {
+    expect(Object.fromEntries(Object.entries(EMAIL_TEMPLATES).map(([key, template]) => [key, template.planFeature]))).toEqual({
+      LEAGUE_MEMBER_INVITE: null,
+      LEAGUE_JOIN_SUCCESS: null,
+      CONTEST_ENTRY_COMPLETED: PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED,
+      CONTEST_STARTED_SUMMARY: PlanFeature.EMAIL_CONTEST_STARTED_SUMMARY,
+      CONTEST_ENTRY_REMINDER: PlanFeature.EMAIL_CONTEST_ENTRY_REMINDER,
+      CONTEST_OPENED: PlanFeature.EMAIL_CONTEST_OPENED,
+      CONTEST_STANDINGS: PlanFeature.EMAIL_CONTEST_STANDINGS,
+      CONTEST_RESULTS: PlanFeature.EMAIL_CONTEST_RESULTS,
+      CONTEST_EVENT_CHANGED: PlanFeature.EMAIL_CONTEST_EVENT_CHANGED,
+      EVENT_COMING_UP: PlanFeature.EMAIL_EVENT_COMING_UP,
+      EVENT_READY_FOR_CONTESTS: PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS,
+      CONTEST_NOT_OPEN: PlanFeature.EMAIL_CONTEST_NOT_OPEN,
+      EVENT_STILL_DRAFT: null,
+      SQUAD_OWNER_INVITE: null,
+      SQUAD_OWNER_ADDED: null,
+      PASSWORD_RESET: null,
+      PASSWORD_CHANGED: null,
+      EMAIL_TEST: null,
     });
+  });
+
+  it('sends every email plan feature from exactly one template, so no email feature on the Plans page switches nothing', () => {
+    const emailFeatures = Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === PlanFeatureGroup.EMAILS);
+    const sentBy = Object.values(EMAIL_TEMPLATES).map((template) => template.planFeature).filter((feature) => feature !== null);
+
+    expect([...sentBy].sort()).toEqual([...emailFeatures].sort());
   });
 
   it('marks as switchable exactly the emails EMAIL_CONFIG has a switch for, so the service checks the right ones', () => {

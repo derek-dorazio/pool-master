@@ -23,6 +23,7 @@ import {
 import {
   DateFormat,
   LeagueIconKey,
+  LeaguePlan,
   LeagueRole,
   LeagueMembershipStatus,
   TimeFormat,
@@ -487,6 +488,19 @@ describe('identity cluster repositories (#202)', () => {
       const found = await repo.findAll({ search: marker.toLowerCase() });
 
       expect(found.map((row) => row.id)).toContain(league.id);
+    });
+  });
+
+  describe('LeagueRepository.create — the plan (#944)', () => {
+    it('starts a new league on Platinum, which has everything, until a commissioner picks another plan', async () => {
+      const repo = new PrismaLeagueRepository(getPrisma());
+
+      const league = await repo.create({
+        leagueCode: `${LEAGUE_CODE_PREFIX}P1`, name: 'Plan Default', isActive: true, iconKey: LeagueIconKey.TROPHY, cupName: 'Plan Default Cup',
+      });
+
+      expect(league.plan).toBe(LeaguePlan.PLATINUM);
+      expect((await repo.findById(league.id))?.plan).toBe(LeaguePlan.PLATINUM);
     });
   });
 

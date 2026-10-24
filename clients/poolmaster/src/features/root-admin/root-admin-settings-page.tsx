@@ -21,6 +21,7 @@ import { SETTINGS_PATH } from './manage-navigation';
 import {
   changedFields,
   summarizeBudgetPricing,
+  summarizePlans,
   summarizeEmail,
   summarizeIngestionSchedule,
   type SettingsSummaryItem,
@@ -126,6 +127,8 @@ function groupContent(group: SettingsGroup): { summary: SettingsSummaryItem[]; a
     case 'BUDGET_PRICING_CONFIG':
       // Edited in place: the section carries the form.
       return { summary: summarizeBudgetPricing(group.value), actions: null };
+    case 'PLAN_CONFIG':
+      return { summary: summarizePlans(group.value), actions: null };
   }
 }
 

@@ -5,7 +5,7 @@ import type {
   SquadMembershipRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
-import { CupPointsScale, LeagueIconKey, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
+import { CupPointsScale, LeagueIconKey, LeaguePlan, LeagueRole, SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { buildLeague, buildMembership, buildUser } from '../../factories';
 import {
   fakeLeagueMembershipRepo,
@@ -23,6 +23,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
     create: mockFn<LeagueRepository['create']>(async (input) => ({
       cupPointsScale: CupPointsScale.STANDARD,
       cupCustomPoints: [],
+      plan: LeaguePlan.PLATINUM,
       ...input,
       id: 'new-league-id',
       createdAt: new Date(),

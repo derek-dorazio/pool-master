@@ -233,6 +233,16 @@ flag, or keep them as a fallback. The decision and its alternatives are
   are the admin's. `SportEventSyncScope` has two values: `NONE` (unlinked) and `SCORES_ONLY`
   (linked). There is no provider-owned scope; do not add one.
 
+### League plans
+
+What a league's plan allows (#943) is data: `PLAN_CONFIG` holds each plan's caps and the first
+plan each feature starts at, and a root admin edits it. The one place a plan becomes caps and
+features is the plan entitlements service in `packages/core-api/src/modules/plans/`; a check
+asks it about a cap or a `PlanFeature`, never about a plan. `league.plan === LeaguePlan.FREE`,
+an order comparison against a plan, or a `switch` on a plan anywhere else is a rule a root admin
+cannot change, and `poolmaster/no-plan-branching` rejects it. A lower plan only stops new things;
+it never removes what a league has.
+
 ### Sport extension
 
 What differs between sports lives in exactly two places, so a new sport is added by

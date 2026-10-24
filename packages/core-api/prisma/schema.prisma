@@ -455,6 +455,14 @@ enum PrismaCupPointsScale {
   CUSTOM
 }
 
+/// A league's plan (#943), lowest first. Mirrors the domain `LeaguePlan`.
+enum PrismaLeaguePlan {
+  FREE
+  PRO
+  PREMIUM
+  PLATINUM
+}
+
 /// A cup's state (#841). Mirrors the domain `CupStatus`.
 enum PrismaCupStatus {
   OPEN
@@ -548,6 +556,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   emailMessages       EmailMessage[]
   emailOptOuts        EmailOptOut[]
+  leaguePlanChanges   LeaguePlanChange[]   @relation("LeaguePlanChangedBy")
 
   @@map("users")
 }
@@ -603,6 +612,8 @@ model League {
   cupCustomPoints Int[]                @default([]) @map("cup_custom_points")
   /// The league championship's name (#863), shown after its year: "2026 Derek's Pool Cup". Set to "<league name> Cup" at creation.
   cupName         String               @map("cup_name")
+  /// What the league may do (#943): its caps and features come from PLAN_CONFIG. Platinum, which has everything, until a commissioner picks another.
+  plan            PrismaLeaguePlan     @default(PLATINUM)
   createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime             @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -615,8 +626,25 @@ model League {
   invitations           LeagueInvitation[]
   squadOwnerInvitations SquadOwnerInvitation[]
   emailMessages         EmailMessage[]
+  planChanges           LeaguePlanChange[]
 
   @@map("leagues")
+}
+
+/// One change to a league's plan (#944): who moved it from which plan to which, and when. Append-only.
+model LeaguePlanChange {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId    String           @map("league_id") @db.Uuid
+  fromPlan    PrismaLeaguePlan @map("from_plan")
+  toPlan      PrismaLeaguePlan @map("to_plan")
+  changedById String           @map("changed_by_id") @db.Uuid
+  changedAt   DateTime         @default(now()) @map("changed_at") @db.Timestamptz
+
+  league    League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  changedBy User   @relation("LeaguePlanChangedBy", fields: [changedById], references: [id])
+
+  @@index([leagueId, changedAt(sort: Desc)])
+  @@map("league_plan_changes")
 }
 
 model LeagueMembership {

@@ -16,6 +16,7 @@ import type {
 } from '@poolmaster/shared/domain/types';
 import {
   CupPointsScale,
+  LeaguePlan,
   CupWeight,
   ContestStatus,
   ContestFormat,
@@ -57,6 +58,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     cupName: `League ${id} Cup`,
     cupPointsScale: CupPointsScale.STANDARD,
     cupCustomPoints: [],
+    plan: LeaguePlan.PLATINUM,
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,
     createdAt: new Date('2026-01-01'),

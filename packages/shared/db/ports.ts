@@ -172,8 +172,8 @@ export interface LeagueRepository {
    */
   findByUser(userId: string): Promise<League[]>;
 
-  /** The points table starts STANDARD, from the database default. */
-  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints'>): Promise<League>;
+  /** The points table starts STANDARD and the plan PLATINUM, from the database defaults. */
+  create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'plan'>): Promise<League>;
   update(id: string, updates: Partial<League>): Promise<League>;
 }
 

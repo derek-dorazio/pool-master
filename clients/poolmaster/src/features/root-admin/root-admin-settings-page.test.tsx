@@ -380,3 +380,47 @@ describe('RootAdminSettingsPage budget pricing card (#93)', () => {
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 });
+
+describe('RootAdminSettingsPage plans card', () => {
+  const PLAN_DEFAULTS = {
+    caps: {
+      ENTRIES_PER_CONTEST: { FREE: 20, PRO: 50, PREMIUM: null },
+      SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: 10 },
+    },
+    features: {
+      EMAIL_CONTEST_OPENED: 'FREE', EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE', EMAIL_CONTEST_RESULTS: 'FREE',
+      EMAIL_CONTEST_EVENT_CHANGED: 'FREE', EMAIL_CONTEST_STARTED_SUMMARY: 'PRO', EMAIL_CONTEST_ENTRY_REMINDER: 'PRO',
+      EMAIL_CONTEST_STANDINGS: 'PRO', EMAIL_EVENT_COMING_UP: 'PRO', EMAIL_EVENT_READY_FOR_CONTESTS: 'PRO',
+      EMAIL_CONTEST_NOT_OPEN: 'PRO', CUP_STANDINGS: 'PRO', CUP_CROWNING: 'PRO', CHAMPIONSHIP: 'PRO',
+      TROPHY_SHELF: 'PRO', CUP_SETTINGS: 'PRO', PAST_YEARS: 'PRO', ALL_TIME_SUMMARY: 'PLATINUM', RECORD_BOOK: 'PLATINUM',
+    },
+  } satisfies Extract<SettingsGroup, { key: 'PLAN_CONFIG' }>['value'];
+
+  beforeEach(() => {
+    listSettingsGroupsMock.mockReset();
+    listSettingsGroupsMock.mockResolvedValue({
+      data: {
+        groups: [{
+          key: 'PLAN_CONFIG',
+          title: 'Plans',
+          description: 'What each league plan allows: its caps, and the plan each feature starts at.',
+          source: 'defaults',
+          updatedAt: null,
+          updatedBy: null,
+          value: PLAN_DEFAULTS,
+          defaults: PLAN_DEFAULTS,
+        } satisfies SettingsGroup],
+      },
+    });
+  });
+
+  it('lists each cap\'s limit on every plan, Free to Platinum, with Platinum always unlimited', async () => {
+    renderPage();
+
+    const card = within(await screen.findByTestId('root-admin-settings-group-PLAN_CONFIG'));
+    expect(card.getByText('Entries per contest')).toBeInTheDocument();
+    expect(card.getByText('Free 20 · Pro 50 · Premium Unlimited · Platinum Unlimited')).toBeInTheDocument();
+    expect(card.getByText('Sports leagues a year')).toBeInTheDocument();
+    expect(card.getByText('Free 1 · Pro 3 · Premium 10 · Platinum Unlimited')).toBeInTheDocument();
+  });
+});

@@ -6,6 +6,10 @@ import { registerSchema } from './schema-registry';
 import {
   BudgetPricingProfileSchema,
   EmailTemplateKey,
+  LeaguePlan,
+  type CappedLeaguePlan,
+  type PlanCap,
+  type PlanFeature,
   Sport,
   SUPPORTED_SPORTS,
   type SwitchableEmailTemplateKey,
@@ -136,9 +140,65 @@ export const BudgetPricingConfigSchema = z.object({
 }).describe('The named sets of values an event\'s field is priced with for budget contests.');
 export type BudgetPricingConfig = z.infer<typeof BudgetPricingConfigSchema>;
 
+/** A plan's limit on one cap: a whole number, or null for unlimited. */
+const PlanCapLimitSchema = z.number().int().min(1).max(100_000).nullable().describe(
+  'The most this plan allows, or null for unlimited.',
+);
+
+const PlanCapRowSchema = z.object({
+  FREE: PlanCapLimitSchema,
+  PRO: PlanCapLimitSchema,
+  PREMIUM: PlanCapLimitSchema,
+} satisfies Record<CappedLeaguePlan, typeof PlanCapLimitSchema>).describe(
+  'One cap\'s limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises.',
+);
+export type PlanCapRow = z.infer<typeof PlanCapRowSchema>;
+
+const featureStartsAt = z.nativeEnum(LeaguePlan).describe('The first plan that has the feature; every plan above it has it too.');
+
+/**
+ * PLAN_CONFIG (#944): what each league plan allows. Two caps per plan, and the first plan each
+ * feature starts at. Platinum has no limits, so it has no cap values to set, and it has every
+ * feature because every feature starts at Platinum or below. Root admins edit it on the Plans page.
+ */
+export const PlanConfigSchema = z.object({
+  caps: z.object({
+    ENTRIES_PER_CONTEST: PlanCapRowSchema.describe(
+      'Entries per contest, drafts included. Checked when an entry is added.',
+    ),
+    SPORTS_LEAGUES_PER_YEAR: PlanCapRowSchema.describe(
+      'Different sports leagues among the league\'s contests this calendar year, drafts included, '
+      + 'deleted and cancelled contests not. Checked when a contest is created.',
+    ),
+  } satisfies Record<PlanCap, typeof PlanCapRowSchema>).describe('Each cap\'s limit on each plan.'),
+  features: z.object({
+    EMAIL_CONTEST_OPENED: featureStartsAt,
+    EMAIL_CONTEST_ENTRY_COMPLETED: featureStartsAt,
+    EMAIL_CONTEST_RESULTS: featureStartsAt,
+    EMAIL_CONTEST_EVENT_CHANGED: featureStartsAt,
+    EMAIL_CONTEST_STARTED_SUMMARY: featureStartsAt,
+    EMAIL_CONTEST_ENTRY_REMINDER: featureStartsAt,
+    EMAIL_CONTEST_STANDINGS: featureStartsAt,
+    EMAIL_EVENT_COMING_UP: featureStartsAt,
+    EMAIL_EVENT_READY_FOR_CONTESTS: featureStartsAt,
+    EMAIL_CONTEST_NOT_OPEN: featureStartsAt,
+    CUP_STANDINGS: featureStartsAt,
+    CUP_CROWNING: featureStartsAt,
+    CHAMPIONSHIP: featureStartsAt,
+    TROPHY_SHELF: featureStartsAt,
+    CUP_SETTINGS: featureStartsAt,
+    PAST_YEARS: featureStartsAt,
+    ALL_TIME_SUMMARY: featureStartsAt,
+    RECORD_BOOK: featureStartsAt,
+  } satisfies Record<PlanFeature, typeof featureStartsAt>).describe('The plan each feature starts at.'),
+}).describe('What each league plan allows: its caps and the plan each feature starts at.');
+export type PlanConfig = z.infer<typeof PlanConfigSchema>;
+
 registerSchema('EmailTemplateKey', EmailTemplateKeySchema);
 registerSchema('EmailConfig', EmailConfigSchema);
 registerSchema('BudgetPricingProfile', BudgetPricingProfileSchema);
 registerSchema('BudgetPricingConfig', BudgetPricingConfigSchema);
+registerSchema('PlanCapRow', PlanCapRowSchema);
+registerSchema('PlanConfig', PlanConfigSchema);
 registerSchema('IngestionScheduleConfigOverride', IngestionScheduleConfigOverrideSchema);
 registerSchema('IngestionScheduleConfig', IngestionScheduleConfigSchema);

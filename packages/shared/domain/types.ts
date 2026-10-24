@@ -27,6 +27,7 @@ import type {
   InvitationStatus,
   InviteType,
   LeagueIconKey,
+  LeaguePlan,
   LeagueMembershipStatus,
   LeagueRole,
   MappingConfidence,
@@ -85,6 +86,8 @@ export interface League extends DomainEntity {
   cupPointsScale: CupPointsScale;
   /** CUSTOM's points for 1st, 2nd ...; empty for every other scale (a database check holds it). */
   cupCustomPoints: number[];
+  /** What the league may do (#943): ask the plan entitlements service, never compare plans. PLATINUM at creation. */
+  plan: LeaguePlan;
 }
 
 /** User membership within a league. */

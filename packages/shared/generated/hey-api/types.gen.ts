@@ -11797,6 +11797,146 @@ export type BudgetPricingConfig = {
 };
 
 /**
+ * One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises.
+ */
+export type PlanCapRow = {
+    /**
+     * The most this plan allows, or null for unlimited.
+     */
+    FREE: number | null;
+    /**
+     * The most this plan allows, or null for unlimited.
+     */
+    PRO: number | null;
+    /**
+     * The most this plan allows, or null for unlimited.
+     */
+    PREMIUM: number | null;
+};
+
+/**
+ * What each league plan allows: its caps and the plan each feature starts at.
+ */
+export type PlanConfig = {
+    /**
+     * Each cap's limit on each plan.
+     */
+    caps: {
+        /**
+         * Entries per contest, drafts included. Checked when an entry is added.
+         */
+        ENTRIES_PER_CONTEST: {
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            FREE: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PRO: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PREMIUM: number | null;
+        };
+        /**
+         * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+         */
+        SPORTS_LEAGUES_PER_YEAR: {
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            FREE: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PRO: number | null;
+            /**
+             * The most this plan allows, or null for unlimited.
+             */
+            PREMIUM: number | null;
+        };
+    };
+    /**
+     * The plan each feature starts at.
+     */
+    features: {
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        /**
+         * The first plan that has the feature; every plan above it has it too.
+         */
+        RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+    };
+};
+
+/**
  * Partial ingestion scheduling override used for global updates and per-sport overrides.
  */
 export type IngestionScheduleConfigOverride = {
@@ -12172,7 +12312,7 @@ export type EmailTestResponse = {
 /**
  * The stored key of a settings group.
  */
-export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG';
+export type SettingsGroupKey = 'INGESTION_SCHEDULE_CONFIG' | 'EMAIL_CONFIG' | 'BUDGET_PRICING_CONFIG' | 'PLAN_CONFIG';
 
 /**
  * The root admin who saved a settings change.
@@ -12818,6 +12958,279 @@ export type SettingsGroup = {
             name: string;
         }>;
     };
+} | {
+    key: 'PLAN_CONFIG';
+    /**
+     * Short display name of the group.
+     */
+    title: string;
+    /**
+     * What the group controls.
+     */
+    description: string;
+    /**
+     * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+     */
+    source: 'stored' | 'defaults';
+    /**
+     * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+     */
+    updatedAt: string | null;
+    /**
+     * Who last saved the stored value, when known.
+     */
+    updatedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The value in use.
+     */
+    value: {
+        /**
+         * Each cap's limit on each plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included. Checked when an entry is added.
+             */
+            ENTRIES_PER_CONTEST: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+            /**
+             * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+             */
+            SPORTS_LEAGUES_PER_YEAR: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+        };
+        /**
+         * The plan each feature starts at.
+         */
+        features: {
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
+    };
+    /**
+     * The value a reset would store.
+     */
+    defaults: {
+        /**
+         * Each cap's limit on each plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included. Checked when an entry is added.
+             */
+            ENTRIES_PER_CONTEST: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+            /**
+             * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+             */
+            SPORTS_LEAGUES_PER_YEAR: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+        };
+        /**
+         * The plan each feature starts at.
+         */
+        features: {
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
+    };
 };
 
 /**
@@ -13454,6 +13867,279 @@ export type SettingsGroupList = {
                 name: string;
             }>;
         };
+    } | {
+        key: 'PLAN_CONFIG';
+        /**
+         * Short display name of the group.
+         */
+        title: string;
+        /**
+         * What the group controls.
+         */
+        description: string;
+        /**
+         * `stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid.
+         */
+        source: 'stored' | 'defaults';
+        /**
+         * When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save.
+         */
+        updatedAt: string | null;
+        /**
+         * Who last saved the stored value, when known.
+         */
+        updatedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The value in use.
+         */
+        value: {
+            /**
+             * Each cap's limit on each plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included. Checked when an entry is added.
+                 */
+                ENTRIES_PER_CONTEST: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+                /**
+                 * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+            };
+            /**
+             * The plan each feature starts at.
+             */
+            features: {
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            };
+        };
+        /**
+         * The value a reset would store.
+         */
+        defaults: {
+            /**
+             * Each cap's limit on each plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included. Checked when an entry is added.
+                 */
+                ENTRIES_PER_CONTEST: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+                /**
+                 * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+            };
+            /**
+             * The plan each feature starts at.
+             */
+            features: {
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            };
+        };
     }>;
 };
 
@@ -13740,6 +14426,133 @@ export type SettingsGroupUpdateRequest = {
              */
             name: string;
         }>;
+    };
+    /**
+     * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
+     */
+    expectedUpdatedAt: string | null;
+} | {
+    key: 'PLAN_CONFIG';
+    /**
+     * The whole new value.
+     */
+    value: {
+        /**
+         * Each cap's limit on each plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included. Checked when an entry is added.
+             */
+            ENTRIES_PER_CONTEST: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+            /**
+             * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+             */
+            SPORTS_LEAGUES_PER_YEAR: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+        };
+        /**
+         * The plan each feature starts at.
+         */
+        features: {
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
     };
     /**
      * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
@@ -14344,6 +15157,268 @@ export type SettingsChange = {
             name: string;
         }>;
     };
+} | {
+    key: 'PLAN_CONFIG';
+    id: string;
+    /**
+     * ISO 8601 datetime string.
+     */
+    changedAt: string;
+    /**
+     * Who saved it, when known.
+     */
+    changedBy: {
+        /**
+         * The user id of the root admin who made the change.
+         */
+        id: string;
+        /**
+         * The admin's full name, for display.
+         */
+        name: string;
+    } | null;
+    /**
+     * The stored value before the save; null when the save created the first stored value.
+     */
+    previousValue: {
+        /**
+         * Each cap's limit on each plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included. Checked when an entry is added.
+             */
+            ENTRIES_PER_CONTEST: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+            /**
+             * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+             */
+            SPORTS_LEAGUES_PER_YEAR: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+        };
+        /**
+         * The plan each feature starts at.
+         */
+        features: {
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
+    } | null;
+    /**
+     * The value the save stored.
+     */
+    newValue: {
+        /**
+         * Each cap's limit on each plan.
+         */
+        caps: {
+            /**
+             * Entries per contest, drafts included. Checked when an entry is added.
+             */
+            ENTRIES_PER_CONTEST: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+            /**
+             * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+             */
+            SPORTS_LEAGUES_PER_YEAR: {
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                FREE: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PRO: number | null;
+                /**
+                 * The most this plan allows, or null for unlimited.
+                 */
+                PREMIUM: number | null;
+            };
+        };
+        /**
+         * The plan each feature starts at.
+         */
+        features: {
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            /**
+             * The first plan that has the feature; every plan above it has it too.
+             */
+            RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+        };
+    };
 };
 
 /**
@@ -14946,6 +16021,268 @@ export type SettingsChangeList = {
                  */
                 name: string;
             }>;
+        };
+    } | {
+        key: 'PLAN_CONFIG';
+        id: string;
+        /**
+         * ISO 8601 datetime string.
+         */
+        changedAt: string;
+        /**
+         * Who saved it, when known.
+         */
+        changedBy: {
+            /**
+             * The user id of the root admin who made the change.
+             */
+            id: string;
+            /**
+             * The admin's full name, for display.
+             */
+            name: string;
+        } | null;
+        /**
+         * The stored value before the save; null when the save created the first stored value.
+         */
+        previousValue: {
+            /**
+             * Each cap's limit on each plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included. Checked when an entry is added.
+                 */
+                ENTRIES_PER_CONTEST: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+                /**
+                 * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+            };
+            /**
+             * The plan each feature starts at.
+             */
+            features: {
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            };
+        } | null;
+        /**
+         * The value the save stored.
+         */
+        newValue: {
+            /**
+             * Each cap's limit on each plan.
+             */
+            caps: {
+                /**
+                 * Entries per contest, drafts included. Checked when an entry is added.
+                 */
+                ENTRIES_PER_CONTEST: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+                /**
+                 * Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created.
+                 */
+                SPORTS_LEAGUES_PER_YEAR: {
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    FREE: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PRO: number | null;
+                    /**
+                     * The most this plan allows, or null for unlimited.
+                     */
+                    PREMIUM: number | null;
+                };
+            };
+            /**
+             * The plan each feature starts at.
+             */
+            features: {
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_OPENED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_COMPLETED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_RESULTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_EVENT_CHANGED: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STARTED_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_ENTRY_REMINDER: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_COMING_UP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_EVENT_READY_FOR_CONTESTS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                EMAIL_CONTEST_NOT_OPEN: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_STANDINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_CROWNING: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CHAMPIONSHIP: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                TROPHY_SHELF: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                CUP_SETTINGS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                PAST_YEARS: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                ALL_TIME_SUMMARY: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+                /**
+                 * The first plan that has the feature; every plan above it has it too.
+                 */
+                RECORD_BOOK: 'FREE' | 'PRO' | 'PREMIUM' | 'PLATINUM';
+            };
         };
     }>;
 };

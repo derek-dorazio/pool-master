@@ -46,6 +46,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   CupPointsScale,
+  LeaguePlan,
   InvitationStatus,
   LeagueIconKey,
   LeagueMembershipStatus,
@@ -188,8 +189,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       );
       return leagues.where((row) => leagueIds.has(row.id));
     },
-    // The points table starts STANDARD, as the database default has it.
-    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], ...row }),
+    // The points table starts STANDARD and the plan PLATINUM, as the database defaults have them.
+    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], plan: LeaguePlan.PLATINUM, ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
   };
 
@@ -367,6 +368,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         cupName: `League ${leagueSequence} Cup`,
         cupPointsScale: CupPointsScale.STANDARD,
         cupCustomPoints: [],
+        plan: LeaguePlan.PLATINUM,
         ...overrides,
       });
     },
