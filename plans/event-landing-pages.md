@@ -70,7 +70,7 @@ list of *offers*; each offer names one contest setup on one series:
 | Table | Columns |
 |---|---|
 | `event_pages` | `id`, `sport`, `slug` (unique per sport), `display_order`, `is_active`, `redirect_to_page_id` (null) |
-| `event_page_offers` | `event_page_id`, `sport_league_id`, `event_series_name`, `template_key`, `bracket_start_round` (null), `sort_order`, `is_primary` |
+| `event_page_offers` | `event_page_id`, `sport_league_id`, `event_series_name`, `template_id` (FK to `contest_config_templates`; a template key alone is not unique), `bracket_start_round` (null), `sort_order`, `is_primary` |
 
 Championship Weekend's offers: Clutch Card *Championship Weekend Stars* on the Championship
 Weekend league (primary: its dates head the page); the NFL playoff bracket from round 3 on
