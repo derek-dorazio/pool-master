@@ -3,6 +3,8 @@
  * the league read them and its commissioner crowns them (root admins bypass).
  */
 import type { FastifyInstance } from 'fastify';
+import { PlanFeature } from '@poolmaster/shared/domain';
+import type { ListCupsQuery } from '@poolmaster/shared/dto';
 import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto';
@@ -10,9 +12,10 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../leagues/permissions';
+import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
+import type { PlanModuleOptions } from '../plans/routes';
 import { createCupHandlers } from './handler';
 import { createCupService } from './wiring';
-import type { PlanModuleOptions } from '../plans/routes';
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
@@ -22,6 +25,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
   const prisma = getAppPrisma(fastify);
   const membershipRepo = new PrismaLeagueMembershipRepository(prisma);
   const membersOnly = requireMemberOfLeague(membershipRepo, leagueFromPath);
+  const withStandings = requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS]);
   const handlers = createCupHandlers(createCupService(prisma, fastify.log, opts.planEntitlements));
 
   fastify.get('/', {
@@ -29,7 +33,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
       tags: ['Cups'],
       summary: 'List a season\'s cups',
       description:
-        `The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. ${MEMBERS_ONLY}`,
+        `The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS], true)}`,
       operationId: 'listCups',
       querystring: schemaRef('ListCupsQuery'),
       response: {
@@ -39,7 +43,9 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         403: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS], {
+      yearOf: (request) => (request.query as ListCupsQuery).seasonYear,
+    })],
     handler: handlers.listCups,
   });
 
@@ -47,7 +53,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     schema: {
       tags: ['Cups'],
       summary: 'List the seasons with cups',
-      description: `The seasons in which the league has a contest a cup lists (drafts left out), newest first: with the championship's years, the years the Championships page offers. ${MEMBERS_ONLY}`,
+      description: `The seasons in which the league has a contest a cup lists (drafts left out), newest first: with the championship's years, the years the Championships page offers. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS, PlanFeature.PAST_YEARS])}`,
       operationId: 'listCupSeasons',
       response: {
         200: schemaRef('CupSeasonListResponse'),
@@ -55,7 +61,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         403: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS, PlanFeature.PAST_YEARS])],
     handler: handlers.listCupSeasons,
   });
 
@@ -63,7 +69,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     schema: {
       tags: ['Cups'],
       summary: 'Get a cup',
-      description: `One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY}`,
+      description: `One cup with its standings and contests: the Points race. 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS])}`,
       operationId: 'getCup',
       response: {
         200: schemaRef('CupResponse'),
@@ -72,7 +78,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         404: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, withStandings],
     handler: handlers.getCup,
   });
 
@@ -80,7 +86,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     schema: {
       tags: ['Cups'],
       summary: 'Get a squad\'s cup points',
-      description: `One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. ${MEMBERS_ONLY}`,
+      description: `One squad's points in a cup, counted contest by counted contest, in the order they went final. 404 CUP_NOT_FOUND for a cup that is not the league's, SQUAD_NOT_FOUND for a squad that is not. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS])}`,
       operationId: 'getCupSquadPoints',
       response: {
         200: schemaRef('CupSquadPointsResponse'),
@@ -89,7 +95,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         404: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, withStandings],
     handler: handlers.getCupSquadPoints,
   });
 
@@ -97,7 +103,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
     schema: {
       tags: ['Cups'],
       summary: 'Project a cup from its live contests',
-      description: `An open cup's standings if every live contest it counts ended now: each scores from its leaderboard's places as they stand, at its own weight, on top of the contests already counted. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. Nothing is stored. 409 CUP_CROWNED for a crowned cup, whose standings are final; 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY}`,
+      description: `An open cup's standings if every live contest it counts ended now: each scores from its leaderboard's places as they stand, at its own weight, on top of the contests already counted. A live contest whose picks are not revealed yet, or a squares contest, ranks nobody. Nothing is stored. 409 CUP_CROWNED for a crowned cup, whose standings are final; 404 CUP_NOT_FOUND for a cup that is not the league's. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CUP_STANDINGS])}`,
       operationId: 'getCupProjection',
       response: {
         200: schemaRef('CupProjectionResponse'),
@@ -107,7 +113,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         409: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: membersOnly,
+    preHandler: [membersOnly, withStandings],
     handler: handlers.getCupProjection,
   });
 
@@ -116,7 +122,8 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
       tags: ['Cups'],
       summary: 'Crown a cup',
       description:
-        'Allows a commissioner to crown a cup once its season is done: every squad\'s place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_NOTHING_COUNTED before any contest has counted toward it; 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league\'s. Active commissioners only (root admins bypass).',
+        'Allows a commissioner to crown a cup once its season is done: every squad\'s place is frozen with the points table it was scored on, and the squads 1st, 2nd and 3rd with points take its trophies, ties sharing. A contest that goes final later is listed AFTER_CROWNING and changes nothing. 409 CUP_HAS_UNFINISHED_CONTESTS while a counted contest is open or live, its `details.contests` listing each (`contestId`, `name`, `status`); 409 CUP_NOTHING_COUNTED before any contest has counted toward it; 409 CUP_CROWNED for a cup already crowned; 404 CUP_NOT_FOUND for a cup that is not the league\'s. Active commissioners only (root admins bypass).'
+        + ` ${describePlanFeatureGate([PlanFeature.CUP_CROWNING])}`,
       operationId: 'crownCup',
       response: {
         200: schemaRef('CupResponse'),
@@ -126,7 +133,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
         409: schemaRef('ErrorEnvelope'),
       },
     },
-    preHandler: requireCommissioner(membershipRepo),
+    preHandler: [requireCommissioner(membershipRepo), requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_CROWNING])],
     handler: handlers.crownCup,
   });
 }

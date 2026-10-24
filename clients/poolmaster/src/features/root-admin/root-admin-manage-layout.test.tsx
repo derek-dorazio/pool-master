@@ -52,6 +52,7 @@ describe('RootAdminManageLayout', () => {
     expect(links).toEqual([
       'Leagues',
       'Users',
+      'Plans',
       'Golf',
       'Horse racing',
       'Auto racing',

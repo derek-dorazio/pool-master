@@ -285,7 +285,7 @@ export class SquadOwnerInvitationService {
       if (!league || !inviter) {
         throw new Error(league ? `Inviter not found: ${actorUserId}` : `League not found: ${invitation.leagueId}`);
       }
-      const emailLeague = { id: league.id, name: league.name, leagueCode: league.leagueCode };
+      const emailLeague = { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan };
       const inviterName = formatUserName(inviter);
       // Replacing a squad's sole owner leaves the invitee as its only owner, not a co-owner.
       const soleOwner = owners.every((owner) => owner.userId === addedUser?.id);

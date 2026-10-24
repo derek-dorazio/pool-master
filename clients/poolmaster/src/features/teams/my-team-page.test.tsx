@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature, TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -17,6 +17,7 @@ import {
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
 import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadHistory, buildSquadYear } from '@/features/championships/test/fixtures';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { MyTeamEditPage } from './my-team-edit-page';
@@ -848,5 +849,43 @@ describe('Another team\'s page', () => {
 
     const notFound = await screen.findByTestId('team-page-not-found');
     expect(within(notFound).getByRole('link', { name: 'All members' })).toHaveAttribute('href', '/league/BIGDAWGS/teams');
+  });
+});
+
+describe('My team › on a plan without trophies or past years', () => {
+  const YEAR = championshipYear(new Date());
+  const without = (...locked: PlanFeature[]) => ({
+    planEntitlements: buildPlanEntitlements({ features: Object.values(PlanFeature).filter((feature) => !locked.includes(feature)) }),
+  });
+
+  it('shows the trophy shelf\'s name and a short note instead of the shelf, and still shows the squad\'s year', async () => {
+    primeTeam({ league: without(PlanFeature.TROPHY_SHELF) });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('plan-locked-TROPHY_SHELF')).toHaveTextContent('Trophy shelf');
+    expect(screen.getByTestId('squad-year')).toBeInTheDocument();
+    expect(getSquadHistoryMock).not.toHaveBeenCalled();
+    expect(listPerpetualTrophiesMock).not.toHaveBeenCalled();
+  });
+
+  it('offers only the current year and no All years strip without past years', async () => {
+    primeTeam({ league: without(PlanFeature.PAST_YEARS) });
+    getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory() }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-medal-firsts')).toBeInTheDocument();
+    expect(within(screen.getByTestId('squad-history-year')).getAllByRole('option').map((option) => option.textContent)).toEqual([String(YEAR)]);
+    expect(screen.queryByTestId('squad-history-years')).not.toBeInTheDocument();
+  });
+
+  it('asks for no records without the record book', async () => {
+    primeTeam({ league: without(PlanFeature.RECORD_BOOK) });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-trophies-none')).toBeInTheDocument();
+    expect(listRecordsMock).not.toHaveBeenCalled();
   });
 });

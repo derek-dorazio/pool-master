@@ -1,5 +1,6 @@
 import {
   ContestStatus,
+  PlanFeature,
   SelectionType,
   type SportNoun,
   countParticipants,
@@ -25,6 +26,7 @@ import {
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
+import { hasPlanFeature } from '@/features/plans/plan-features';
 import {
   Alert,
   Button,
@@ -302,33 +304,35 @@ export function ManageContestPage() {
         />
       </SettingsSection>
 
-      <SettingsSection
-        description="How much this contest counts toward its sports league cup and the league championship."
-        testId="manage-contest-championships"
-        title="Championships"
-      >
-        <SettingsRow
-          action={contest.status === ContestStatus.COMPLETED ? (
-            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
-              <Lock aria-hidden size={13} />
-              Final
-            </span>
-          ) : (
-            <LinkButton
-              data-testid="manage-contest-cup-weight-edit"
-              isDisabled={!league.isActive}
-              size="sm"
-              to={buildLeagueAdminContestCupWeightPath(leagueCode, contest.id)}
-              variant="secondary"
-            >
-              Edit
-            </LinkButton>
-          )}
-          label="Cup weight"
-          testId="manage-contest-cup-weight"
-          value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
-        />
-      </SettingsSection>
+      {hasPlanFeature(league, PlanFeature.CUP_SETTINGS) ? (
+        <SettingsSection
+          description="How much this contest counts toward its sports league cup and the league championship."
+          testId="manage-contest-championships"
+          title="Championships"
+        >
+          <SettingsRow
+            action={contest.status === ContestStatus.COMPLETED ? (
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="manage-contest-cup-weight-final" title="Fixed when the contest went final">
+                <Lock aria-hidden size={13} />
+                Final
+              </span>
+            ) : (
+              <LinkButton
+                data-testid="manage-contest-cup-weight-edit"
+                isDisabled={!league.isActive}
+                size="sm"
+                to={buildLeagueAdminContestCupWeightPath(leagueCode, contest.id)}
+                variant="secondary"
+              >
+                Edit
+              </LinkButton>
+            )}
+            label="Cup weight"
+            testId="manage-contest-cup-weight"
+            value={CUP_WEIGHT_COPY[managedContest.cupWeight].label}
+          />
+        </SettingsSection>
+      ) : null}
 
       {isTiered ? managedContest.sportEvents.map((managedEvent) => (
         <ContestTiersSection

@@ -102,17 +102,18 @@ export function buildApp() {
     env: process.env,
     logger: app.log,
   });
-  // One email outbox for the whole app; EMAIL_CONFIG decides on every email whether it is queued.
-  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest } = createEmailOutbox({
-    prisma,
-    readConfig: () => appSettings.get(EMAIL_SETTINGS),
-    env: process.env,
-    logger: app.log,
-  });
   // The one reader of PLAN_CONFIG: what each league's plan allows (#944).
   const planEntitlements = new PlanEntitlementsService({
     leagues: new PrismaLeagueRepository(prisma),
     readConfig: () => appSettings.get(PLAN_SETTINGS),
+  });
+  // One email outbox for the whole app; EMAIL_CONFIG and the league's plan decide on every email whether it is queued.
+  const { email, sender: emailSender, deliveryEvents, preferences: emailPreferences, test: emailTest } = createEmailOutbox({
+    prisma,
+    readConfig: () => appSettings.get(EMAIL_SETTINGS),
+    planEntitlements,
+    env: process.env,
+    logger: app.log,
   });
   const appBaseUrl = readApplicationBaseUrl(process.env);
   const contestNotices = createContestNotices(prisma, { email, appBaseUrl, logger: app.log, planEntitlements });
@@ -225,7 +226,7 @@ export function buildApp() {
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
-  app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship' });
+  app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
   app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates' });
   app.register(eventsModule, {

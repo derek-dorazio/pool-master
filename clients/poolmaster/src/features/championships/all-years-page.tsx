@@ -1,3 +1,4 @@
+import { PlanFeature } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -8,6 +9,8 @@ import {
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { EmptyState, ErrorState, LinkButton, LoadingState, MetricGrid, MetricTile, PageHeader, Tile } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { joinNames } from './cup-view';
 import { RecordBook } from './record-book';
 import {
@@ -22,13 +25,15 @@ import { useHistorySummaryQuery } from './use-championship-query';
 /**
  * All years (#837, mockup C): tiles for the most championships and cups won, the record book
  * (#873), then each year newest first with its champion and cup champions ("2026 so far" while
- * the year runs). A year opens that year's Championship tab; a cup opens its Points race.
+ * the year runs). A year opens that year's Championship tab; a cup opens its Points race. The
+ * summary and the record book each show the locked note on a plan without them (#948).
  */
 export function AllYearsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const logger = useMemo(() => getLogger().child({ feature: 'all-years-page' }), []);
-  const { league, query: leagueQuery } = useLeagueContext(leagueCode);
-  const summaryQuery = useHistorySummaryQuery(league?.id ?? '');
+  const { league, query: leagueQuery, viewer } = useLeagueContext(leagueCode);
+  const hasSummary = hasPlanFeature(league, PlanFeature.ALL_TIME_SUMMARY);
+  const summaryQuery = useHistorySummaryQuery(hasSummary ? league?.id ?? '' : '');
 
   useEffect(() => {
     if (leagueQuery.isError) {
@@ -44,6 +49,9 @@ export function AllYearsPage() {
     return leagueContext.element;
   }
   const years = summaryQuery.data ? historyYearsOnShow(summaryQuery.data.years) : [];
+  const recordBook = hasPlanFeature(league, PlanFeature.RECORD_BOOK)
+    ? <RecordBook leagueId={league?.id ?? ''} />
+    : <PlanLockedNotice feature={PlanFeature.RECORD_BOOK} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
 
   return (
     <section className="space-y-6" data-testid="all-years-page">
@@ -56,7 +64,12 @@ export function AllYearsPage() {
         description="Every year's champions, the league's records, and who has won the most."
         title="All years"
       />
-      {summaryQuery.isError ? (
+      {!hasSummary ? (
+        <>
+          <PlanLockedNotice feature={PlanFeature.ALL_TIME_SUMMARY} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />
+          {recordBook}
+        </>
+      ) : summaryQuery.isError ? (
         <ErrorState body="We couldn't load the league's history." testId="all-years-error" />
       ) : !summaryQuery.data ? (
         <LoadingState body="Loading league history..." />
@@ -74,7 +87,7 @@ export function AllYearsPage() {
             ))}
           </MetricGrid>
 
-          <RecordBook leagueId={league?.id ?? ''} />
+          {recordBook}
 
           {years.length ? (
             <div className="space-y-3" data-testid="all-years-list">

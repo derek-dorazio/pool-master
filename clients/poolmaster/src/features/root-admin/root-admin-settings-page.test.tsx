@@ -424,4 +424,10 @@ describe('RootAdminSettingsPage plans card', () => {
     expect(card.getByText('Sports leagues a year')).toBeInTheDocument();
     expect(card.getByText('Free 1 · Pro 3 · Premium 10 · Platinum Unlimited')).toBeInTheDocument();
   });
+
+  it('links the plans section to the Plans page, where the caps and features are edited', async () => {
+    renderPage();
+
+    expect(await screen.findByTestId('root-admin-settings-edit-PLAN_CONFIG')).toHaveAttribute('href', '/manage/plans');
+  });
 });

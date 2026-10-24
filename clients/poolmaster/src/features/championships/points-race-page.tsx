@@ -1,4 +1,4 @@
-import { ContestStatus, CupStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, CupStatus, PlanFeature } from '@poolmaster/shared/domain';
 import { useCallback, useMemo } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import type { CupDto } from '@/lib/api';
@@ -14,6 +14,8 @@ import {
   MetricTile,
   Tile,
 } from '@/features/shared/ui';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { buildPodium } from './championship-view';
 import { CupContestList } from './cup-contest-list';
 import { CupRaceChart } from './cup-race-chart';
@@ -98,12 +100,14 @@ function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonO
  * in it; a crowned cup's podium above its frozen standings, and "Not crowned" for a past season's
  * cup that never was, which drops the live parts. While a contest it counts is live, the
  * standings carry a greyed "If it ended now" column. A squad opens its points contest by contest;
- * a contest opens its leaderboard.
+ * a contest opens its leaderboard. On a plan without cups, the locked note instead, and without
+ * crowning no podium (#948).
  */
 export function PointsRacePage() {
   const { sportLeagueId } = useParams<{ sportLeagueId: string }>();
-  const { leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
-  const cupsQuery = useSeasonCupsQuery(leagueId, year);
+  const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
+  const isInPlan = hasPlanFeature(league, PlanFeature.CUP_STANDINGS);
+  const cupsQuery = useSeasonCupsQuery(isInPlan ? leagueId : '', year);
   const squadPath = useCallback(
     (squadId: string) => buildLeagueCupSquadPath(leagueCode, year, sportLeagueId ?? '', squadId),
     [leagueCode, sportLeagueId, year],
@@ -116,6 +120,9 @@ export function PointsRacePage() {
     [projection],
   );
 
+  if (!isInPlan) {
+    return <PlanLockedNotice feature={PlanFeature.CUP_STANDINGS} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
+  }
   if (cupsQuery.isLoading) {
     return <LoadingState body="Loading the points race..." />;
   }
@@ -158,7 +165,9 @@ export function PointsRacePage() {
           </p>
         </div>
         {isCrowned ? (
-          <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+          hasPlanFeature(league, PlanFeature.CUP_CROWNING)
+            ? <Podium focusSquadId={viewer.mySquadId} steps={buildPodium(cup.standings)} testId="cup-podium" />
+            : null
         ) : isSeasonOver ? (
           <p className="text-sm text-muted-foreground" data-testid="cup-not-crowned">
             {'This cup hasn\'t been crowned, so it has no trophies yet. These are its final standings.'}

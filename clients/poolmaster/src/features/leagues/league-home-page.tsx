@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { championshipYear, ContestStatus } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
@@ -22,6 +22,7 @@ import { LeagueIcon } from './league-icon';
 import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { YearReviewBanner } from '@/features/championships/year-review-banner';
+import { hasPlanFeature } from '@/features/plans/plan-features';
 
 const CLOCK_TICK_MS = 60_000;
 
@@ -120,7 +121,7 @@ export function LeagueHomePage() {
           <p>You can still see standings and history. Entries and changes are closed while the league is inactive.</p>
         </Alert>
       ) : null}
-      <YearReviewBanner isCommissioner={viewer.isCommissioner} leagueId={league.id} />
+      <YearReviewBanner isCommissioner={viewer.isCommissioner} league={league} />
 
       <div className="space-y-1">
         <IdentityHeading
@@ -182,12 +183,14 @@ export function LeagueHomePage() {
             {liveContest ? (
               <LiveStandingsCard contest={liveContest} leagueCode={leagueCode} mySquadId={viewer.mySquadId} />
             ) : null}
-            <CupsCard
-              leagueCode={leagueCode}
-              leagueId={leagueId}
-              mySquadId={viewer.mySquadId}
-              year={championshipYear(now)}
-            />
+            {hasPlanFeature(league, PlanFeature.CUP_STANDINGS) ? (
+              <CupsCard
+                leagueCode={leagueCode}
+                leagueId={leagueId}
+                mySquadId={viewer.mySquadId}
+                year={championshipYear(now)}
+              />
+            ) : null}
             {viewer.isMember ? (
               <YourTeamCard isLoading={squadsQuery.isLoading} leagueCode={leagueCode} team={myTeam} />
             ) : null}

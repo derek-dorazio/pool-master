@@ -158,11 +158,17 @@ async function buildTestApp(): Promise<FastifyInstance> {
   });
   await settings.load();
   appSettings = settings;
+  // The one reader of PLAN_CONFIG, as in index.ts: the outbox and the routes share it.
+  const planEntitlements = new PlanEntitlementsService({
+    leagues: new PrismaLeagueRepository(prisma),
+    readConfig: () => settings.get(PLAN_SETTINGS),
+  });
   // The outbox's sender has no timer here: a queued email wakes it, as in the app, and
   // deliverQueuedIntegrationEmail() waits for it to reach the sink.
   const outbox = createEmailOutbox({
     prisma,
     readConfig: () => settings.get(EMAIL_SETTINGS),
+    planEntitlements,
     env: process.env,
   });
   const { email } = outbox;
@@ -183,10 +189,6 @@ async function buildTestApp(): Promise<FastifyInstance> {
 
   // Route modules
   testApp.register(authModule, { prefix: '/api/v1/auth', email });
-  const planEntitlements = new PlanEntitlementsService({
-    leagues: new PrismaLeagueRepository(prisma),
-    readConfig: () => settings.get(PLAN_SETTINGS),
-  });
   testApp.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements });
   testApp.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
   testApp.register(squadsModule, { prefix: '/api/v1/leagues/:id/squads', email });

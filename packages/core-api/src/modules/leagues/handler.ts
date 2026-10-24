@@ -6,6 +6,8 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { LeagueListResponse, UpdateLeaguePlanRequest } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type { LeaguePlanService } from '../plans/league-plan-service';
+import { PlanFeatureNotIncludedError } from '../plans/plan-feature-error';
+import { sendPlanFeatureNotIncluded } from '../plans/plan-feature-gate';
 import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
@@ -449,7 +451,8 @@ export function createLeagueHandlers(
       data: { leagueId: request.params.id, cupPointsScale: request.body.cupPointsScale },
     }, 'Handling update league cup settings request');
     try {
-      const league = await leagueService.updateCupSettings(request.params.id, request.body);
+      const { features } = await planEntitlements.forLeague(request.params.id);
+      const league = await leagueService.updateCupSettings(request.params.id, request.body, features);
       logger.info({
         action: 'leagueRoute.updateCupSettings.success',
         data: { leagueId: request.params.id },
@@ -462,6 +465,9 @@ export function createLeagueHandlers(
           data: { leagueId: request.params.id },
         }, 'Cannot update cup settings for missing league');
         return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      if (err instanceof PlanFeatureNotIncludedError) {
+        return sendPlanFeatureNotIncluded(reply, err);
       }
       if (err instanceof LeagueOperationError) {
         logger.warn({

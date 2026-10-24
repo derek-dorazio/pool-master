@@ -164,8 +164,8 @@ export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
 
 export const RecordHolderDtoSchema = z.object({
   squad: ChampionshipSquadDtoSchema,
-  year: z.number().int().nullable().describe('The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count.'),
-  contestId: z.string().uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON; null otherwise.'),
+  year: z.number().int().nullable().describe('The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count.'),
+  contestId: z.string().uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON, or the last year\'s contest of a REPEAT_WINNER run; null otherwise.'),
   contestName: z.string().nullable().describe('That contest\'s name; null otherwise.'),
 }).describe('One holder of a record value.');
 export type RecordHolderDto = z.infer<typeof RecordHolderDtoSchema>;

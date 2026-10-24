@@ -14,6 +14,7 @@ const SKIP_REASON_TEXT: Record<EmailSkipReason, string> = {
   [EmailSkipReason.NOT_ALLOWED_IN_ENVIRONMENT]: 'Not sent: the address is not in "Only send to", or is a reserved test domain.',
   [EmailSkipReason.SUPPRESSED]: 'Not sent: this address bounced or marked an email as spam before.',
   [EmailSkipReason.OPTED_OUT]: 'Not sent: the address\'s owner turned this kind of email off.',
+  [EmailSkipReason.NOT_IN_PLAN]: 'Not sent: the league\'s plan doesn\'t include this email.',
 };
 
 const emailTestFormSchema = EmailTestRequestSchema.extend({

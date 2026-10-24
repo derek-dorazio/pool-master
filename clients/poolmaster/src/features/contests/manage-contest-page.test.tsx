@@ -1,4 +1,4 @@
-import { SelectionType } from '@poolmaster/shared/domain';
+import { PlanFeature, SelectionType } from '@poolmaster/shared/domain';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -16,6 +16,7 @@ import {
   getLeagueByCodeData,
   listLeagueSquadsData,
 } from '@/features/leagues/test/fixtures';
+import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
 import { EditContestCupWeightPage } from './edit-contest-cup-weight-page';
 import { EditContestPage } from './edit-contest-page';
@@ -94,7 +95,9 @@ function primeMocks({
   contest = buildContest(),
   event = buildSportEvent(),
   managedContest = buildManagedContest(),
+  features = Object.values(PlanFeature),
 }: {
+  features?: PlanFeature[];
   contest?: ContestDto;
   event?: SportEventDto;
   managedContest?: ContestManagementDetailDto;
@@ -102,7 +105,7 @@ function primeMocks({
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
-    buildLeague(),
+    buildLeague({ planEntitlements: buildPlanEntitlements({ features }) }),
     { membership: buildLeagueMembership() },
   )));
   listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
@@ -536,6 +539,24 @@ describe('Commissioner tools › Contests › one contest › Cup weight', () =>
 
     expect(await screen.findByRole('alert')).toHaveTextContent('This contest is final, so how much it counts is fixed.');
     expect(screen.getByTestId('edit-cup-weight-page')).toBeInTheDocument();
+  });
+
+  it('leaves the cup weight off the contest page on a plan without championship settings', async () => {
+    primeMocks({ managedContest: buildManagedContest({ status: 'OPEN' }), features: [PlanFeature.CHAMPIONSHIP] });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contest-championships')).not.toBeInTheDocument();
+  });
+
+  it('shows the locked note on Cup weight on a plan without championship settings', async () => {
+    primeMocks({ managedContest: buildManagedContest({ status: 'OPEN' }), features: [PlanFeature.CHAMPIONSHIP] });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1/cup-weight');
+
+    expect(await screen.findByTestId('plan-locked-CUP_SETTINGS')).toBeInTheDocument();
+    expect(screen.queryByTestId('edit-cup-weight-page')).not.toBeInTheDocument();
   });
 
   it('sends a commissioner who opens Cup weight on a final contest back to the contest page', async () => {

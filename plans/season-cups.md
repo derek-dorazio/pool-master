@@ -286,8 +286,9 @@ plan entitlements service.
 | `RECORD_BOOK` | Record book and Hall of Lame (#873) | Platinum |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
-and leader with a short note, and only the commissioner sees how to upgrade. Routes ask the
-plan entitlements service about the feature, never about a plan. Gating lands with #948.
+with a short note, and only the commissioner sees how to upgrade. Routes ask the
+plan entitlements service about the feature, never about a plan. Gated with #948
+(`docs/DOMAIN-OPERATIONS.md`, *Hidden by plan*).
 
 ## 8. Slices
 
@@ -306,7 +307,7 @@ journey row once a page exists.
    movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
    a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
    slice 2 adds the Championship tab. Each view's feature is now a `PlanFeature` (#944, §7);
-   the views are gated on it with #948.
+   the views are gated on it (#948).
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy
@@ -473,7 +474,7 @@ next best. Ties show every holder.
 ### Slices (#873)
 
 1. **Record book.** The endpoint, the record book rows, the section on All years. After #863
-   slice 1 and #837 slice 3. `REPEAT_WINNER` waits for #874.
+   slice 1 and #837 slice 3. `REPEAT_WINNER` came after #874.
    Built as `GET /leagues/:id/history/records` (`listRecords`, members), worked out by pure
    functions in `history/records.ts`; the record book sits under the All years tiles. Each record
    shows its best value and the next value down, every holder of each; a record nobody holds is
@@ -511,4 +512,6 @@ pick'em, 2022 Gimme Putts, 2023 Fore Play, 2024 Gimme Putts".
    #863 slice 1 and #841 slice 4.
    Built in the `history` module by pure functions in `history/perpetual-trophies.ts`, from the
    completed one-event contests (their series, event year and games) and the finishes. The squad
-   page reads the same list and keeps the plates naming the squad. `REPEAT_WINNER` follows.
+   page reads the same list and keeps the plates naming the squad. `REPEAT_WINNER` followed in
+   its own PR: the record book ranks each squad's longest run of a trophy won in consecutive event
+   years from the same trophies.

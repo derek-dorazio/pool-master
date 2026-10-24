@@ -17,7 +17,7 @@ import { EntryReceipts, type DrawnSquaresBoard } from '../../../packages/core-ap
 import type { GamePickGame, GamePickTeam, GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions, type InMemoryEmailMessages } from '../../support/in-memory-email-messages';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const SUBMITTED_AT = new Date('2026-09-10T12:00:00.000Z');
@@ -90,6 +90,7 @@ describe('EntryReceipts', () => {
       messages: outbox,
       providerName: 'smtp',
       readConfig: () => config,
+      planEntitlements: TEST_PLAN_ENTITLEMENTS,
       senderAddress: 'noreply@poolmaster.test',
       suppressions: inMemoryEmailSuppressions(),
       optOuts: inMemoryEmailOptOuts(),

@@ -1,6 +1,9 @@
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
+import { PlanFeature } from '@poolmaster/shared/domain';
+import { hasPlanFeature } from '@/features/plans/plan-features';
+import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
 import { describePointsTable } from './cup-settings-view';
 import { joinNames } from './cup-view';
@@ -21,11 +24,13 @@ import { useChampionshipsRoute } from './use-championships-route';
 /**
  * Championship (#863): the league championship of the year across every sport. The trophy and
  * podium once the year is over, the leader before; then the medal tiles, the finish matrix, and
- * the year's contests (#837), which a matrix count narrows to the contests behind it.
+ * the year's contests (#837), which a matrix count narrows to the contests behind it. On a plan
+ * without the championship, the locked note instead (#948).
  */
 export function ChampionshipPage() {
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
-  const championshipQuery = useChampionshipQuery(leagueId, year);
+  const isInPlan = hasPlanFeature(league, PlanFeature.CHAMPIONSHIP);
+  const championshipQuery = useChampionshipQuery(isInPlan ? leagueId : '', year);
   const [searchParams, setSearchParams] = useSearchParams();
   const filter = parseContestResultFilter(searchParams, championshipQuery.data?.standings ?? []);
   // The list waits for the standings, so a filter in the link is checked before it is asked for.
@@ -34,6 +39,9 @@ export function ChampionshipPage() {
     setSearchParams(next === null ? {} : { squad: next.squadId, ...(next.place === null ? {} : { place: String(next.place) }) }, { replace: true });
   }, [setSearchParams]);
 
+  if (!isInPlan) {
+    return <PlanLockedNotice feature={PlanFeature.CHAMPIONSHIP} isCommissioner={viewer.isCommissioner} leagueCode={leagueCode} />;
+  }
   if (championshipQuery.isLoading) {
     return <LoadingState body="Loading the championship..." />;
   }

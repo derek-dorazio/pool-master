@@ -29,6 +29,7 @@ import type {
   Contest,
   ContestEntry,
   LeagueMembership,
+  LeaguePlan,
   ParticipantScoringDefinitionId,
   RankedContestEntry,
   SportEvent,
@@ -141,6 +142,7 @@ interface ContestEntryReceiptData {
     league: {
       name: string;
       leagueCode: string;
+      plan: LeaguePlan;
     };
   };
   picks: Array<{
@@ -1282,7 +1284,7 @@ export class ContestService {
           to: { email: user.email, userId: user.id, timeZone: user.timezone },
           // One receipt per submission of the entry in the event.
           about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
-          league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode },
+          league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           refs: { contestId, entryId },
           data: { userName: formatUserName(user), ...data },
         });
@@ -1361,7 +1363,7 @@ export class ContestService {
         id: contest.id,
         leagueId: contest.leagueId,
         name: contest.name,
-        league: { name: league.name, leagueCode: league.leagueCode },
+        league: { name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       },
       picks: picks.map((pick) => ({
         pickedAt: pick.pickedAt,

@@ -180,7 +180,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
         await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
           to: { email: user.email, userId: user.id, timeZone: user.timezone },
           about: input.about,
-          league: { id: league.id, name: league.name, leagueCode: league.leagueCode },
+          league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           refs: { contestId: contest.id, entryId: entry.id },
           data: {
             userName: formatUserName(user),

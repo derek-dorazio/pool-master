@@ -1,13 +1,17 @@
-import type { EmailConfig } from '@poolmaster/shared/dto';
+import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
+import type { EmailConfig, PlanConfig } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
   EmailService,
   EntryReceiptKind,
+  type EmailLeague,
   type EmailSendInput,
   type MailDeliveryProviderName,
 } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
-import { TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { TEST_PLAN_ENTITLEMENTS, TEST_UNSUBSCRIBE } from '../../support/email-service';
+import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import {
   inMemoryEmailMessages,
   inMemoryEmailOptOuts,
@@ -17,7 +21,7 @@ import {
   type InMemoryEmailSuppressions,
 } from '../../support/in-memory-email-messages';
 
-const LEAGUE = { id: 'league-1', name: 'Office League', leagueCode: 'OFFICE24' };
+const LEAGUE: EmailLeague = { id: 'league-1', name: 'Office League', leagueCode: 'OFFICE24', plan: LeaguePlan.PLATINUM };
 const NOW = new Date('2026-10-22T12:00:00.000Z');
 
 function invite(to: string, overrides: Partial<EmailSendInput<'LEAGUE_MEMBER_INVITE'>> = {}): EmailSendInput<'LEAGUE_MEMBER_INVITE'> {
@@ -38,11 +42,11 @@ function invite(to: string, overrides: Partial<EmailSendInput<'LEAGUE_MEMBER_INV
   };
 }
 
-function entryReceipt(userId: string | undefined): EmailSendInput<'CONTEST_ENTRY_COMPLETED'> {
+function entryReceipt(userId: string | undefined, league = LEAGUE): EmailSendInput<'CONTEST_ENTRY_COMPLETED'> {
   return {
     to: { email: 'member@gmail.com', userId },
     about: 'entry-1:2026-10-22T12:00:00.000Z',
-    league: LEAGUE,
+    league,
     refs: { contestId: 'contest-1', entryId: 'entry-1' },
     data: {
       userName: 'Morgan Member',
@@ -67,9 +71,13 @@ function service(options: {
   optOuts?: InMemoryEmailOptOuts;
   providerName?: MailDeliveryProviderName;
   readConfig?: () => EmailConfig;
+  readPlanConfig?: () => PlanConfig;
   logger?: ReturnType<typeof fakeLogger>;
   onQueued?: () => void;
 } = {}) {
+  const planEntitlements = options.readPlanConfig
+    ? new PlanEntitlementsService({ leagues: { findById: () => Promise.resolve(null) }, readConfig: options.readPlanConfig })
+    : TEST_PLAN_ENTITLEMENTS;
   return new EmailService({
     messages: options.outbox ?? inMemoryEmailMessages(),
     suppressions: options.suppressions ?? inMemoryEmailSuppressions(),
@@ -77,6 +85,7 @@ function service(options: {
     unsubscribe: TEST_UNSUBSCRIBE,
     providerName: options.providerName ?? 'smtp',
     readConfig: options.readConfig ?? (() => emailConfig()),
+    planEntitlements,
     senderAddress: 'noreply@qa.example.com',
     onQueued: options.onQueued,
     logger: options.logger ?? fakeLogger(),
@@ -429,5 +438,70 @@ describe('email service: categories a member turned off', () => {
     expect(message.status).toBe('QUEUED');
     expect(message.textBody).not.toContain('Stop these emails');
     expect(message.listUnsubscribeUrl).toBeUndefined();
+  });
+});
+
+describe('email service: the league\'s plan', () => {
+  /** PLAN_CONFIG's defaults with the entry receipt starting at Pro, so a Free league lacks it. */
+  function receiptFromPro(): PlanConfig {
+    const defaults = PLAN_SETTINGS.defaults({});
+    return { ...defaults, features: { ...defaults.features, [PlanFeature.EMAIL_CONTEST_ENTRY_COMPLETED]: LeaguePlan.PRO } };
+  }
+
+  it('skips an email whose plan feature the league\'s plan lacks, recording NOT_IN_PLAN with no content and logging ids only', async () => {
+    const outbox = inMemoryEmailMessages();
+    const logger = fakeLogger();
+    const onQueued = jest.fn();
+
+    const message = await service({ outbox, logger, onQueued, readPlanConfig: receiptFromPro })
+      .send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1', { ...LEAGUE, plan: LeaguePlan.FREE }));
+
+    expect(message).toMatchObject({ status: 'SKIPPED', skipReason: 'NOT_IN_PLAN' });
+    expect(outbox.rows[0].subject).toBeUndefined();
+    expect(outbox.rows[0].textBody).toBeUndefined();
+    expect(onQueued).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        action: 'email.send.skip',
+        data: { reason: 'NOT_IN_PLAN', templateKey: 'CONTEST_ENTRY_COMPLETED', leagueId: 'league-1', contestId: 'contest-1', entryId: 'entry-1', invitationId: null },
+      },
+      expect.any(String),
+    );
+    expect(JSON.stringify(logger.info.mock.calls)).not.toContain('member@gmail.com');
+  });
+
+  it('queues the same email for a league on a plan that has its feature', async () => {
+    const outbox = inMemoryEmailMessages();
+
+    const message = await service({ outbox, readPlanConfig: receiptFromPro })
+      .send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1', { ...LEAGUE, plan: LeaguePlan.PRO }));
+
+    expect(message.status).toBe('QUEUED');
+  });
+
+  it('reads PLAN_CONFIG on every email, so moving a feature to another plan applies to the next one', async () => {
+    let config = receiptFromPro();
+    const email = service({ readPlanConfig: () => config });
+    const free = { ...LEAGUE, plan: LeaguePlan.FREE };
+
+    const before = await email.send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1', free));
+    config = PLAN_SETTINGS.defaults({});
+    const after = await email.send('CONTEST_ENTRY_COMPLETED', { ...entryReceipt('user-1', free), about: 'entry-1:later' });
+
+    expect(before.status).toBe('SKIPPED');
+    expect(after.status).toBe('QUEUED');
+  });
+
+  it('queues an email with no plan feature, such as an invite, for a league on Free', async () => {
+    const message = await service().send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { league: { ...LEAGUE, plan: LeaguePlan.FREE } }));
+
+    expect(message.status).toBe('QUEUED');
+  });
+
+  it('reports an email switched off in EMAIL_CONFIG as switched off, not as missing from the plan', async () => {
+    const message = await service({ readConfig: () => emailConfig({ enabled: false }), readPlanConfig: receiptFromPro })
+      .send('CONTEST_ENTRY_COMPLETED', entryReceipt('user-1', { ...LEAGUE, plan: LeaguePlan.FREE }));
+
+    expect(message.skipReason).toBe('EMAIL_DISABLED');
   });
 });

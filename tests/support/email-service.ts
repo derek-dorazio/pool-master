@@ -6,6 +6,8 @@ import {
   type EmailServiceOptions,
   type MailDeliveryProvider,
 } from '../../packages/core-api/src/modules/email';
+import { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
 import {
   inMemoryEmailMessages,
   inMemoryEmailOptOuts,
@@ -20,6 +22,15 @@ export const TEST_UNSUBSCRIBE: EmailServiceOptions['unsubscribe'] = {
   tokens: new UnsubscribeTokens('test-unsubscribe-secret'),
   appBaseUrl: 'https://app.example.test',
 };
+
+/**
+ * What each plan has under PLAN_CONFIG's defaults, for an EmailService in a test: only `forPlan`
+ * is used, so no league is ever looked up.
+ */
+export const TEST_PLAN_ENTITLEMENTS: EmailServiceOptions['planEntitlements'] = new PlanEntitlementsService({
+  leagues: { findById: () => Promise.resolve(null) },
+  readConfig: () => PLAN_SETTINGS.defaults({}),
+});
 
 /**
  * The real EmailService and EmailSender over an in-memory outbox and a test transport, with
@@ -40,6 +51,7 @@ export function emailServiceOver(
     unsubscribe: TEST_UNSUBSCRIBE,
     providerName: transport.providerName,
     readConfig,
+    planEntitlements: TEST_PLAN_ENTITLEMENTS,
     senderAddress: 'noreply@poolmaster.test',
     onQueued: () => { pendingDeliveries.push(sender.drain()); },
   });
@@ -65,6 +77,7 @@ export function emailServiceInto(messages: InMemoryEmailMessages = inMemoryEmail
     unsubscribe: TEST_UNSUBSCRIBE,
     providerName: 'smtp',
     readConfig: () => config,
+    planEntitlements: TEST_PLAN_ENTITLEMENTS,
     senderAddress: 'noreply@poolmaster.test',
   });
 }
