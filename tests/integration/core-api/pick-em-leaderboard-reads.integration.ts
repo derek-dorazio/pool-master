@@ -155,7 +155,7 @@ async function createPickEmContest(sportEventIds: string[]) {
     selectionType: SelectionType.PICK_EM,
     configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
-  const result = await new PrismaContestEntryRepository(prisma).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: null });
+  const result = await new PrismaContestEntryRepository(prisma).create({ contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers', tiebreakerValue: null }, { entriesPerContest: () => null });
   if (result.status !== 'created') throw new Error(`seed: entry refused (${result.status})`);
   return { contest, entry: result.entry, viewerId: owner.user.id };
 }

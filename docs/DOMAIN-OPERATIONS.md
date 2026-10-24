@@ -874,6 +874,16 @@ place cannot both get it. The cap is read when the entry is created: moving the 
 the next entry in at once, and moving it down removes no entry, which can still be renamed,
 picked and submitted.
 
+**An expansion raises one contest's cap** (#980, `plans/payments.md` §4). A `contest_expansions`
+row says the contest takes up to its band; the cap is the higher of the plan's and the
+contest's highest band (`contestEntriesCap` in the plan entitlements service), so an expansion
+never lowers a cap and a plan with more room always wins. Rows are append-only: a step up adds
+one, and the lower bands stay as its history. Each expansion has a `league_payments` line, the
+league's payment history (date, amount in cents, description, contest, payer; no card data),
+which is $0 while payments are off or when a root admin gives it. The entry repository reads the
+contest's band under the same row lock it counts under. Deleting a contest drops its expansions
+and keeps its payment lines with no contest named.
+
 **An entry counts only once submitted** (#481). It is created `DRAFT`, and its owner submits it
 when the lineup is complete. The leaderboard, settlement, the contest-started email and a
 contest's `entryCount` read `SUBMITTED` entries alone. A draft is kept, never deleted, so its

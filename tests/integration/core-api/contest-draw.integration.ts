@@ -231,7 +231,7 @@ describe('a draw racing an entry write', () => {
       entryNumber: 2,
       name: 'Late Entry',
       tiebreakerValue: null,
-    }, { entriesPerContest: null });
+    }, { entriesPerContest: () => null });
     await waitUntilBlockedBy(prisma, holderPid).finally(() => holder.release());
 
     expect(await created).toEqual({ status: 'contestDrawn' });

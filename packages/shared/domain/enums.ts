@@ -863,6 +863,16 @@ export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>>
   RECORD_BOOK: PlanFeatureGroup.HISTORY,
 };
 
+/**
+ * What one line of a league's payment history records (#980). An expansion while payments are
+ * off, and one a root admin gives, are both $0; the paid kinds arrive with checkout (#981).
+ */
+export const LeaguePaymentKind = {
+  CONTEST_EXPANSION_PAYMENTS_OFF: 'CONTEST_EXPANSION_PAYMENTS_OFF',
+  CONTEST_EXPANSION_GRANT: 'CONTEST_EXPANSION_GRANT',
+} as const;
+export type LeaguePaymentKind = (typeof LeaguePaymentKind)[keyof typeof LeaguePaymentKind];
+
 /** The limits a plan sets (#944): entries per contest, and sports leagues per calendar year. */
 export const PlanCap = {
   ENTRIES_PER_CONTEST: 'ENTRIES_PER_CONTEST',
