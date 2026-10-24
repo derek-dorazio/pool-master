@@ -40,7 +40,7 @@ The ideas that matter for this, in plain words, each with what Poolmaster does n
 | **Message match** | The ad, the page headline and the first screen after the click use the same words and picture. A mismatch is the most common reason people bounce. | Tile and page share the event name, hook line and contest types. | — |
 | **Seasonality** | Sports demand spikes before big events. Ads start 2 to 3 weeks before; commissioner emails go about 10 days before (C1) and when the event opens for contests (C2). | *Event calendar* below. | Put the calendar in the marketing tool. |
 | **UTM tags** | Labels added to a link so you know where a click came from: `?utm_source=instagram&utm_medium=paid&utm_campaign=championship-weekend-2027&utm_content=square-a`. Every analytics tool reads them. | Event pages keep them through sign-up (Q4). | — |
-| **Conversion tracking** | Counting how many visitors reach each funnel step, split by UTM tag. Tells you which ad paid off. | A privacy-friendly analytics tool, no cookies, counting page views and five goals (Q4). | Store the first UTM on the user if a report needs it. |
+| **Conversion tracking** | Counting how many visitors reach each funnel step, split by UTM tag. Tells you which ad paid off. | Nothing yet: deferred (Q4). Links carry UTM tags so a tool added later can read them. | Store the first UTM on the user if a report needs it. |
 | **Activation** | The moment a user gets value. **Defined here, once:** a contest on one of an event page's editions with at least two squads entered. A sign-up that never gets there is not a win. | The last of Q4's goals. | Nudge emails for leagues that stall. |
 | **Pixels and consent** | Ad networks (Meta for Instagram) offer a "pixel" script that reports conversions back to them, so their ads target better. It sets cookies, which in places like the EU needs a consent banner. | No pixel (Q4). | Add Meta's pixel plus a consent banner when paid ads spend enough to need it. |
 | **Email consent** | US law (CAN-SPAM) allows promotional email to people who signed up for a service, as long as it is honest and has a working unsubscribe. EU and Canada need opt-in. Event emails to commissioners are a feature; "start your own league" to members is promotion. | Commissioner event emails stay as they are. | A "News from Poolmaster" category, sent from the marketing tool (Q5). |
@@ -250,37 +250,43 @@ Each has a recommendation; a one-word answer per number is enough.
 2. **Event names.** Recommend real names on our own pages (as in the app today) and generic
    names in paid ads ("the big game", "Championship Weekend", not "AFC/NFC"); no logos, teams or
    players anywhere. A short check with a trademark lawyer before the first paid ad is cheap
-   insurance.
+   insurance. **Decided (Derek 2026-10-24): yes.**
 3. **A member who runs no league** clicks the button. Recommend offering "Start your own league"
    and "Share with your commissioner" (copies the page link). Both are useful, and neither
-   reaches into the other league.
+   reaches into the other league. Derek (2026-10-24): likely fine; asked for the use cases,
+   which were explained in the thread. Open until he confirms.
 4. **Tracking.** Recommend a cookieless analytics tool (Plausible, Fathom or similar, about
    $10–20 a month) on public pages and the sign-up path, counting page views by UTM tag and five
    goals: start, sign-up, league created, contest created, activation (as defined in the
    primer). No Meta pixel and no consent banner until paid ads spend enough to need Meta's
    targeting. The privacy page (#921) names the tool before it goes live. Storing the first UTM
-   tag on the user waits until a report needs it.
+   tag on the user waits until a report needs it. **Decided (Derek 2026-10-24): deferred.** No
+   analytics tool is chosen or built now. Ad and email links still carry UTM tags, which cost
+   nothing and are read by whatever tool is added later.
 5. **Promotional email.** Recommend leaving commissioner event emails (C1, C2, digest) as the
    commissioner channel, and adding a "News from Poolmaster" email category, on by default for
    new sign-ups with a clear line on the sign-up form and one-click unsubscribe, sent from a
    product-email tool (Loops or Customer.io) once production is live. Poolmaster's own email
    preferences and suppression list stay the source of truth and are synced to the tool, so
    there is one unsubscribe list, not two that drift. It fits US law, and becomes opt-in if
-   Poolmaster ever targets the EU or Canada.
+   Poolmaster ever targets the EU or Canada. **Decided (Derek 2026-10-24):** basic
+   notifications only for now: commissioner event emails as they are, plus the tile and event
+   page link. No promotional category yet; a real marketing automation tool comes later. The
+   event pages are built to stand on their own, whatever campaigns come later.
 6. **Link previews.** Recommend building Open Graph tags and one preview image per event page
    before the first ad or email goes out: shared links are Poolmaster's main channel, and a
    single-page app shows no preview without them. The how (prerendered page shells at deploy,
-   or a small server route) is decided in the build.
-7. **Order of work.** Recommend five slices, all before production, so the first campaign
-   (Championship Weekend, late January) can run once production is live:
+   or a small server route) is decided in the build. **Decided (Derek 2026-10-24): yes.**
+7. **Order of work.** After Derek's answers (2026-10-24), four slices, all before production, so
+   the pages are ready for Championship Weekend in late January once production is live:
    (a) `event_pages` tables and seed rows, the two public reads, the event page, How to Play's
    and the welcome page's Coming up row;
    (b) `/start`, the sign-up banner, the league picker, `?event=` and `?startRound=` on Create
    contest, and the not-open-yet card;
    (c) C1 and C2 get the tile header, `&event=` and the event page link; the digest links its
    events to their pages;
-   (d) link previews;
-   (e) analytics, with the privacy page naming the tool.
+   (d) link previews.
+   Analytics is deferred (Q4) and promotional email is Later (Q5).
 
 ## Later
 
@@ -290,6 +296,7 @@ Each has a recommendation; a one-word answer per number is enough.
   league's page, which members see as their league's space, so it needs Derek's yes before it is
   built; it never links to or names another league.
 - A root admin page to edit event pages, if seeding them by migration becomes a chore.
+- Analytics (Q4): a tool, its goals, and the privacy page naming it.
 - Storing first-touch UTM tags on the user.
 
 ## Out of scope
