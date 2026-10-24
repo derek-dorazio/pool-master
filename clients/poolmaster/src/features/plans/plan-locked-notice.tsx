@@ -1,5 +1,5 @@
 import type { PlanFeature } from '@poolmaster/shared/domain';
-import { buildLeagueAdminPlanEditPath } from '@/features/leagues/league-routing';
+import { buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { EmptyState, LinkButton } from '@/features/shared/ui';
 import { PLAN_FEATURE_LABEL } from './plan-labels';
 
@@ -23,7 +23,7 @@ export function PlanLockedNotice({
   return (
     <EmptyState
       action={isCommissioner ? (
-        <LinkButton data-testid={`plan-locked-${feature}-change`} size="sm" to={buildLeagueAdminPlanEditPath(leagueCode)} variant="secondary">
+        <LinkButton data-testid={`plan-locked-${feature}-change`} size="sm" to={buildLeagueAdminPlanPath(leagueCode)} variant="secondary">
           Change plan
         </LinkButton>
       ) : undefined}

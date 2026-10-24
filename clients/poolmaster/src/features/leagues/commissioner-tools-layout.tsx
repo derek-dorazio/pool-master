@@ -4,7 +4,7 @@ import { AdminAreaLayout } from '@/features/shared/ui';
 import {
   buildLeagueAdminChampionshipsEditPath,
   buildLeagueAdminEventEmailsEditPath,
-  buildLeagueAdminPlanEditPath,
+  buildLeagueAdminPlanPath,
   buildLeagueAdminContestsPath,
   buildLeagueAdminEditPath,
   buildLeagueAdminInvitesPath,
@@ -44,7 +44,7 @@ export function CommissionerToolsLayout() {
             || pathname === buildLeagueAdminEditPath(leagueCode)
             || pathname === buildLeagueAdminChampionshipsEditPath(leagueCode)
             || pathname === buildLeagueAdminEventEmailsEditPath(leagueCode)
-            || pathname === buildLeagueAdminPlanEditPath(leagueCode),
+            || pathname === buildLeagueAdminPlanPath(leagueCode),
           label: 'League settings',
           testId: 'commissioner-tools-menu-settings',
           to: settingsPath,

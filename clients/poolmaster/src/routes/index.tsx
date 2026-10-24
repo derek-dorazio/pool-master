@@ -31,7 +31,7 @@ import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-l
 import { EditLeaguePage } from '@/features/leagues/edit-league-page';
 import { EditChampionshipSettingsPage } from '@/features/championships/edit-championship-settings-page';
 import { EditEventEmailsPage } from '@/features/leagues/edit-event-emails-page';
-import { EditLeaguePlanPage } from '@/features/plans/edit-league-plan-page';
+import { LeaguePlanEditRedirect, LeaguePlanPage } from '@/features/plans/league-plan-page';
 import { EditContestCupWeightPage } from '@/features/contests/edit-contest-cup-weight-page';
 import { LeagueHomePage } from '@/features/leagues/league-home-page';
 import { LeagueSettingsPage } from '@/features/leagues/league-settings-page';
@@ -182,8 +182,12 @@ export const router = createBrowserRouter([
                     element: <EditEventEmailsPage />,
                   },
                   {
+                    path: 'plan',
+                    element: <LeaguePlanPage />,
+                  },
+                  {
                     path: 'plan/edit',
-                    element: <EditLeaguePlanPage />,
+                    element: <LeaguePlanEditRedirect />,
                   },
                   {
                     path: 'teams',

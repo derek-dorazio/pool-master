@@ -456,6 +456,8 @@ export interface ContestEntryRepository {
    */
   findByContestWithSquad(contestId: string, options?: { submittedFor?: string }): Promise<ContestEntryWithSquad[]>;
   findBySquad(squadId: string): Promise<ContestEntry[]>;
+  /** Every entry each contest holds, drafts included, by contest id (#972); 0 for one with none. */
+  countByContests(contestIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * Creates the entry with a DRAFT status row for each of its contest's events (#713). The
    * contest's entries are counted under its row lock (#947), so two entries taking the last place
