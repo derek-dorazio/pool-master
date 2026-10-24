@@ -95,7 +95,7 @@ export class ChampionshipService {
    * freezing the places and before completing the contest, so a failure leaves the contest to be
    * settled again. A second call for the contest writes nothing. Answers how many it wrote.
    */
-  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'selectionType' | 'cupWeight'>, settledAt: Date): Promise<number> {
+  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight'>, settledAt: Date): Promise<number> {
     const table = await this.deps.cups.findPointsTable(contest.leagueId);
     if (table === null) {
       this.deps.logger?.warn({ action: 'championship.record.leagueMissing', data: { contestId: contest.id, leagueId: contest.leagueId } }, 'Championship finishes not written: the contest\'s league is gone');
@@ -106,7 +106,6 @@ export class ChampionshipService {
       this.deps.logger?.debug({ action: 'championship.record.noResult', data: { contestId: contest.id } }, 'Championship finishes not written: nobody placed');
       return 0;
     }
-    const eventSeriesId = await this.deps.finishes.findSingleEventSeries(contest.id);
     const year = championshipYear(settledAt);
     const written = await this.deps.finishes.recordFinishes(finishes.map((finish) => ({
       leagueId: contest.leagueId,
@@ -116,8 +115,6 @@ export class ChampionshipService {
       place: finish.place,
       tiedCount: finish.tiedCount,
       rankedEntryCount: finish.rankedEntryCount,
-      eventSeriesId,
-      selectionType: contest.selectionType,
       weight: contest.cupWeight,
       points: cupFinishPoints(table, finish, contest.cupWeight),
       settledAt,

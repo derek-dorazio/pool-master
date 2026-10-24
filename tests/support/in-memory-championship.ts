@@ -1,6 +1,6 @@
 /**
  * An in-memory ChampionshipRepository (#863): the league championship's finishes, each league's
- * cup name, the single-event series of contests, the unfinished contest count, the completed
+ * cup name, the unfinished contest count, the completed
  * contests and the one-event ones with their series (#874), held in plain fields so a service test can settle contests and read a year back.
  */
 import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
@@ -9,7 +9,6 @@ import type { LeagueYearFinish } from '@poolmaster/shared/domain';
 export class InMemoryChampionship implements ChampionshipRepository {
   readonly finishes: LeagueYearFinish[] = [];
   readonly cupNames = new Map<string, string>();
-  readonly singleEventSeries = new Map<string, string>();
   unfinishedContests = 0;
   readonly finalContests: Array<{ leagueId: string; contest: FinalContest }> = [];
   readonly seriesContests: Array<{ leagueId: string; contest: SeriesContest }> = [];
@@ -19,10 +18,6 @@ export class InMemoryChampionship implements ChampionshipRepository {
       kept.contestId === finish.contestId && kept.squadId === finish.squadId));
     this.finishes.push(...fresh);
     return fresh.length;
-  }
-
-  async findSingleEventSeries(contestId: string): Promise<string | null> {
-    return this.singleEventSeries.get(contestId) ?? null;
   }
 
   async findByLeague(leagueId: string): Promise<LeagueYearFinish[]> {
