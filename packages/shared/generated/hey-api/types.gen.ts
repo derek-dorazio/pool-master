@@ -11638,7 +11638,7 @@ export type GamePicksResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW';
 
 /**
  * Whether and how system email is sent.
@@ -11728,6 +11728,10 @@ export type EmailConfig = {
          * Whether this email is sent.
          */
         EVENT_STILL_DRAFT: boolean;
+        /**
+         * Whether this email is sent.
+         */
+        YEAR_IN_REVIEW: boolean;
     };
 };
 
@@ -12627,6 +12631,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_STILL_DRAFT: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            YEAR_IN_REVIEW: boolean;
         };
     };
     /**
@@ -12717,6 +12725,10 @@ export type SettingsGroup = {
              * Whether this email is sent.
              */
             EVENT_STILL_DRAFT: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            YEAR_IN_REVIEW: boolean;
         };
     };
 } | {
@@ -13263,6 +13275,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_STILL_DRAFT: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                YEAR_IN_REVIEW: boolean;
             };
         };
         /**
@@ -13353,6 +13369,10 @@ export type SettingsGroupList = {
                  * Whether this email is sent.
                  */
                 EVENT_STILL_DRAFT: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                YEAR_IN_REVIEW: boolean;
             };
         };
     } | {
@@ -13699,6 +13719,10 @@ export type SettingsGroupUpdateRequest = {
              * Whether this email is sent.
              */
             EVENT_STILL_DRAFT: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            YEAR_IN_REVIEW: boolean;
         };
     };
     /**
@@ -14164,6 +14188,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_STILL_DRAFT: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            YEAR_IN_REVIEW: boolean;
         };
     } | null;
     /**
@@ -14254,6 +14282,10 @@ export type SettingsChange = {
              * Whether this email is sent.
              */
             EVENT_STILL_DRAFT: boolean;
+            /**
+             * Whether this email is sent.
+             */
+            YEAR_IN_REVIEW: boolean;
         };
     };
 } | {
@@ -14767,6 +14799,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_STILL_DRAFT: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                YEAR_IN_REVIEW: boolean;
             };
         } | null;
         /**
@@ -14857,6 +14893,10 @@ export type SettingsChangeList = {
                  * Whether this email is sent.
                  */
                 EVENT_STILL_DRAFT: boolean;
+                /**
+                 * Whether this email is sent.
+                 */
+                YEAR_IN_REVIEW: boolean;
             };
         };
     } | {
@@ -18630,6 +18670,55 @@ export type SquadHistoryResponse = {
                 };
             }>;
         }>;
+    };
+};
+
+/**
+ * Where the league's year in review for last year stands.
+ */
+export type YearReviewDto = {
+    /**
+     * Last year, US Eastern: the only year whose review can be sent.
+     */
+    year: number;
+    /**
+     * NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+     */
+    status: 'NOTHING_TO_SEND' | 'READY' | 'SENT';
+    /**
+     * When it was sent; null until then.
+     */
+    sentAt: string | null;
+    /**
+     * Who sent it; null until then, or once their account is gone.
+     */
+    sentByName: string | null;
+};
+
+/**
+ * Where the league's year in review for last year stands.
+ */
+export type YearReviewResponse = {
+    /**
+     * Where the league's year in review for last year stands.
+     */
+    yearReview: {
+        /**
+         * Last year, US Eastern: the only year whose review can be sent.
+         */
+        year: number;
+        /**
+         * NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+         */
+        status: 'NOTHING_TO_SEND' | 'READY' | 'SENT';
+        /**
+         * When it was sent; null until then.
+         */
+        sentAt: string | null;
+        /**
+         * Who sent it; null until then, or once their account is gone.
+         */
+        sentByName: string | null;
     };
 };
 
@@ -22910,6 +22999,76 @@ export type GetChampionshipResponses = {
 };
 
 export type GetChampionshipResponse = GetChampionshipResponses[keyof GetChampionshipResponses];
+
+export type GetYearReviewData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/history/year-review';
+};
+
+export type GetYearReviewErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type GetYearReviewError = GetYearReviewErrors[keyof GetYearReviewErrors];
+
+export type GetYearReviewResponses = {
+    /**
+     * Where the league's year in review for last year stands.
+     */
+    200: YearReviewResponse;
+};
+
+export type GetYearReviewResponse = GetYearReviewResponses[keyof GetYearReviewResponses];
+
+export type SendYearReviewData = {
+    body?: never;
+    path: {
+        id: string;
+        /**
+         * The year whose review to send, such as 2026: only last year can be sent.
+         */
+        year: number;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/history/year-review/{year}/send';
+};
+
+export type SendYearReviewErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SendYearReviewError = SendYearReviewErrors[keyof SendYearReviewErrors];
+
+export type SendYearReviewResponses = {
+    /**
+     * Where the league's year in review for last year stands.
+     */
+    200: YearReviewResponse;
+};
+
+export type SendYearReviewResponse = SendYearReviewResponses[keyof SendYearReviewResponses];
 
 export type GetHistorySummaryData = {
     body?: never;

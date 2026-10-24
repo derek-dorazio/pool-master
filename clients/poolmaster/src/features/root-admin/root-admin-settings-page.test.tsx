@@ -64,6 +64,7 @@ const EMAIL_DEFAULTS = {
     EVENT_STILL_DRAFT: true,
     SQUAD_OWNER_INVITE: true,
     SQUAD_OWNER_ADDED: true,
+    YEAR_IN_REVIEW: true,
   },
 };
 

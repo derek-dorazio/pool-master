@@ -13,6 +13,7 @@ import { getLogger } from '@/lib/logger';
 import { championshipsTitle, championshipYearsOffered, parseChampionshipYearParam } from './championship-year';
 import { useChampionshipYearsQuery } from './use-championship-query';
 import { useCupSeasonsQuery } from './use-cups-query';
+import { YearReviewBanner } from './year-review-banner';
 
 type ChampionshipsTab = 'championship' | 'trophies' | 'race';
 
@@ -34,7 +35,7 @@ export function ChampionshipsLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const logger = useMemo(() => getLogger().child({ feature: 'championships-layout' }), []);
-  const { league, query: leagueQuery } = useLeagueContext(leagueCode);
+  const { league, query: leagueQuery, viewer } = useLeagueContext(leagueCode);
   const year = parseChampionshipYearParam(yearParam);
   const championshipYearsQuery = useChampionshipYearsQuery(league?.id ?? '');
   const cupSeasonsQuery = useCupSeasonsQuery(league?.id ?? '');
@@ -103,6 +104,7 @@ export function ChampionshipsLayout() {
         )}
         title={championshipsTitle(year, new Date())}
       />
+      <YearReviewBanner isCommissioner={viewer.isCommissioner} leagueId={league?.id ?? ''} />
       <Outlet />
     </section>
   );

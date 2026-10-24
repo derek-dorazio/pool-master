@@ -433,6 +433,11 @@ email, not another page. Sent through the email outbox (#845), class B.
    trophy plates join the shelf with #874.
 3. **Records.** The squad's records and Hall of Lame entries. After #873.
 4. **Year in review email.** After slice 1 and #845's outbox.
+   Built as `GET /leagues/:id/history/year-review` and `POST .../year-review/:year/send`, the
+   `YEAR_IN_REVIEW` email (Results category, class B) and a `league_year_reviews` row per league
+   and year that clears the banner. Each active owner of an active squad that placed gets its
+   year; a squad that placed in nothing gets none. The banner, with its Send button, shows to
+   commissioners on league home and above every Championships tab.
 
 ## 11. Record book and Hall of Lame (#873)
 

@@ -1549,6 +1549,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/history/year-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get last year's year in review
+         * @description Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass).
+         */
+        get: operations["getYearReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/year-review/{year}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the year in review
+         * @description Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass).
+         */
+        post: operations["sendYearReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/history/summary": {
         parameters: {
             query?: never;
@@ -1578,7 +1618,7 @@ export interface paths {
         };
         /**
          * Get a squad's history
-         * @description A squad's whole history for its squad page: its contest medals all time (counted contests finished 1st, 2nd and 3rd), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as `getSquadYear` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description A squad's whole history for its squad page: its contest medals all time (its championship rows' 1sts, 2nds and 3rds summed over every year), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as `getSquadYear` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getSquadHistory"];
         put?: never;
@@ -11853,7 +11893,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -11898,6 +11938,8 @@ export interface components {
                 CONTEST_NOT_OPEN: boolean;
                 /** @description Whether this email is sent. */
                 EVENT_STILL_DRAFT: boolean;
+                /** @description Whether this email is sent. */
+                YEAR_IN_REVIEW: boolean;
             };
         };
         /** @description A named set of budget pricing values. */
@@ -12475,6 +12517,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
             /** @description The value a reset would store. */
@@ -12521,6 +12565,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
         } | {
@@ -12872,6 +12918,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
                 /** @description The value a reset would store. */
@@ -12918,6 +12966,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
             } | {
@@ -13118,6 +13168,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
             /**
@@ -13421,6 +13473,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             } | null;
             /** @description The value the save stored. */
@@ -13467,6 +13521,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
         } | {
@@ -13797,6 +13853,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 } | null;
                 /** @description The value the save stored. */
@@ -13843,6 +13901,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
             } | {
@@ -16479,6 +16539,43 @@ export interface components {
                         };
                     }[];
                 }[];
+            };
+        };
+        /** @description Where the league's year in review for last year stands. */
+        YearReviewDto: {
+            /** @description Last year, US Eastern: the only year whose review can be sent. */
+            year: number;
+            /**
+             * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+             * @enum {string}
+             */
+            status: "NOTHING_TO_SEND" | "READY" | "SENT";
+            /**
+             * Format: date-time
+             * @description When it was sent; null until then.
+             */
+            sentAt: string | null;
+            /** @description Who sent it; null until then, or once their account is gone. */
+            sentByName: string | null;
+        };
+        /** @description Where the league's year in review for last year stands. */
+        YearReviewResponse: {
+            /** @description Where the league's year in review for last year stands. */
+            yearReview: {
+                /** @description Last year, US Eastern: the only year whose review can be sent. */
+                year: number;
+                /**
+                 * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+                 * @enum {string}
+                 */
+                status: "NOTHING_TO_SEND" | "READY" | "SENT";
+                /**
+                 * Format: date-time
+                 * @description When it was sent; null until then.
+                 */
+                sentAt: string | null;
+                /** @description Who sent it; null until then, or once their account is gone. */
+                sentByName: string | null;
             };
         };
         /** @description Feed-aware event sync request. */
@@ -21939,6 +22036,97 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getYearReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Where the league's year in review for last year stands. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YearReviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendYearReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                /** @description The year whose review to send, such as 2026: only last year can be sent. */
+                year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Where the league's year in review for last year stands. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YearReviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

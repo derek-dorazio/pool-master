@@ -5,7 +5,7 @@
  * squad's year for its squad page (#872).
  */
 import { z } from 'zod';
-import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile, TrophyKind } from '@poolmaster/shared/domain';
+import { CHAMPIONSHIP_MATRIX_PLACES, ContestResultCount, CupStatus, CupTrophy, SelectionType, SummaryTile, TrophyKind, YearReviewStatus } from '@poolmaster/shared/domain';
 import { ChampionshipSquadDtoSchema, ChampionshipStandingRowDtoSchema } from './championship.dto';
 import { CupStandingRowDtoSchema } from './cups.dto';
 import { DateTimeSchema } from './common.dto';
@@ -149,6 +149,19 @@ export const SquadHistoryResponseSchema = z.object({
 }).describe('A squad\'s whole history in the league.');
 export type SquadHistoryResponse = z.infer<typeof SquadHistoryResponseSchema>;
 
+export const YearReviewDtoSchema = z.object({
+  year: z.number().int().describe('Last year, US Eastern: the only year whose review can be sent.'),
+  status: z.nativeEnum(YearReviewStatus).describe('NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.'),
+  sentAt: DateTimeSchema.nullable().describe('When it was sent; null until then.'),
+  sentByName: z.string().nullable().describe('Who sent it; null until then, or once their account is gone.'),
+}).describe('Where the league\'s year in review for last year stands.');
+export type YearReviewDto = z.infer<typeof YearReviewDtoSchema>;
+
+export const YearReviewResponseSchema = z.object({
+  yearReview: YearReviewDtoSchema,
+}).describe('Where the league\'s year in review for last year stands.');
+export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
+
 registerSchema('ListContestResultsQuery', ListContestResultsQuerySchema);
 registerSchema('ContestResultSquadFinishDto', ContestResultSquadFinishDtoSchema);
 registerSchema('ContestResultSummaryDto', ContestResultSummaryDtoSchema);
@@ -167,3 +180,5 @@ registerSchema('SquadMedalsDto', SquadMedalsDtoSchema);
 registerSchema('SquadTrophyDto', SquadTrophyDtoSchema);
 registerSchema('SquadHistoryDto', SquadHistoryDtoSchema);
 registerSchema('SquadHistoryResponse', SquadHistoryResponseSchema);
+registerSchema('YearReviewDto', YearReviewDtoSchema);
+registerSchema('YearReviewResponse', YearReviewResponseSchema);

@@ -64,3 +64,25 @@ export function buildContestAdminUrl(appBaseUrl: string, leagueCode: string, con
 export function buildSportEventAdminUrl(appBaseUrl: string, sport: Sport, sportEventId: string): string {
   return `${appBaseUrl.replace(/\/+$/, '')}/manage/sports/${sportPathSegment(sport)}/events/${encodeURIComponent(sportEventId)}`;
 }
+
+/** The reader's squad page for one year (#872). */
+export function buildSquadYearUrl(appBaseUrl: string, leagueCode: string, year: number): string {
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/team?year=${String(year)}`;
+}
+
+const POINTS_FORMAT = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, minimumFractionDigits: 0 });
+
+/** Cup and championship points arrive in tenths of a point: 6125 reads "612.5", 6000 reads "600". */
+export function formatTenthsOfPoints(tenths: number): string {
+  return POINTS_FORMAT.format(tenths / 10);
+}
+
+const ORDINAL_SUFFIXES = new Map([[1, 'st'], [2, 'nd'], [3, 'rd']]);
+
+/** A place as a sentence reads it: "6th", or "T2" for a shared 2nd. */
+export function formatStandingPlace(row: { position: number; displayPosition: string }): string {
+  if (row.displayPosition.startsWith('T')) return row.displayPosition;
+  const lastTwo = row.position % 100;
+  const suffix = lastTwo >= 11 && lastTwo <= 13 ? 'th' : ORDINAL_SUFFIXES.get(row.position % 10) ?? 'th';
+  return `${String(row.position)}${suffix}`;
+}
