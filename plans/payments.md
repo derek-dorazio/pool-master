@@ -123,7 +123,8 @@ Plans page. Almost all of it is plan settings that already exist; only two thing
 An **expansion** is a one-time purchase that raises one contest's entry cap.
 
 - **Bands** (Q5), above whatever the plan allows: up to 50 entries for $10, up to 100 for
-  $20, up to 250 for $40, offered only where higher than the contest's cap. A contest
+  $20, up to 200 for $30, up to 500 for $40 (Derek 2026-10-24), offered only where higher
+  than the contest's cap. A contest
   can step up a band later by paying the difference. The bands and their Stripe Prices live
   in the billing settings (§9); the amounts shown on screen are read from Stripe.
 - **The cap that applies** is the higher of the league's plan cap and the contest's
@@ -144,8 +145,8 @@ An **expansion** is a one-time purchase that raises one contest's entry cap.
 ## 5. Buying an expansion, step by step
 
 1. A contest fills up. Its commissioners see "This contest is full at 100 entries" (or
-   whatever its cap is), with
-   "Expand: 50 entries for $10, 100 for $20, 250 for $40". Create contest and the contest's
+   whatever its cap is), with the bands above its cap: "Expand: 200 entries for $30, 500
+   for $40". Create contest and the contest's
    settings show the same choice before it fills.
 2. The app calls `POST /contests/:id/expansions/checkout { band }`. The server checks the
    caller is a commissioner of the contest's league, the contest still takes entries, and the
@@ -352,25 +353,30 @@ subscriptions later, annual or monthly with monthly at a premium.
    other plans stay in the picker (§3).
 3. **Decided (Derek 2026-10-24): yes.** Day 1 caps: Free 20, Pro 50, Premium 100, Platinum
    1000 entries per contest; Premium and Platinum unlimited sports leagues (§3).
-4. **Day 1 in production: payments built but switched off, so no prices show; on in QA
-   test mode?** Recommended: yes. Nothing about money can slow adoption, and everything is
-   tested and ready. Lowering the cap later gets an announced date and an email two weeks
-   before.
-5. **Bands: 50 entries for $10, 100 for $20, 250 for $40, stepping up for the difference?**
-   Recommended: yes, as a starting point; amounts can change in Stripe without code. Above
-   250 points to Platinum later.
-6. **Buy any time until the contest stops taking entries?** Recommended: yes. That is when a
-   commissioner needs it; after that it would do nothing.
-7. **Root admin can grant an expansion free, with a reason?** Recommended: yes, for favours,
-   disputes and testing; it shows in the history as $0.
+4. **Decided (Derek 2026-10-24): yes.** Day 1 in production: payments built but switched off,
+   so no prices show; on in QA test mode. Lowering the cap later gets an announced date and
+   an email two weeks before.
+5. **Decided (Derek 2026-10-24):** bands of 50 entries for $10, 100 for $20, 200 for $30 and
+   500 for $40, stepping up for the difference. Amounts can change in Stripe without code.
+6. **Decided (Derek 2026-10-24): yes.** Buy any time until the contest stops taking entries.
+7. **Decided (Derek 2026-10-24): yes.** The root admin can grant an expansion free, with a
+   reason; it shows in the history as $0.
 8. **No automatic refunds; you refund case by case in Stripe, which removes the expansion
-   but keeps the entries?** Recommended: yes, written into the Terms (#921).
-9. **Stripe sends receipts; we send only the cap-date notice and "contest expanded"?**
-   Recommended: yes. Stripe's receipts are complete and legally formatted.
-10. **Sales tax: don't collect at launch, ask an accountant, turn on Stripe Tax when
-    needed?** Recommended: yes. Thresholds are high, and it is a setting.
-11. **Prices final before going live, not now?** Recommended: yes; test mode uses the bands
-    above.
+   but keeps the entries?** Recommended: yes, written into the Terms (#921). In practice: a
+   commissioner who wants money back emails you; you open the payment from the root admin
+   link and press Refund in Stripe (full or part); Stripe returns the money to the card in
+   5 to 10 days and emails a refund receipt; the webhook marks the payment refunded in the
+   history and removes the expansion. Entries already in stay, but the contest takes no new
+   ones while over its cap. A part refund keeps the expansion. A cancelled contest is not
+   refunded automatically; you decide each time. Stripe keeps its fee on a refunded payment
+   (about 59¢ on $10).
+9. **Decided (Derek 2026-10-24): yes.** Stripe sends receipts; we send only the cap-date
+   notice and "contest expanded".
+10. **Decided (Derek 2026-10-24):** no sales tax at launch; ask an accountant, turn on
+    Stripe Tax when needed.
+11. **Prices final before going live, not now?** Recommended: yes. Nothing is needed now:
+    test mode uses the bands above, and the live amounts are typed into Stripe when phase 1
+    goes live (#985).
 
 ## 14. Monetization order (Derek 2026-10-24)
 
