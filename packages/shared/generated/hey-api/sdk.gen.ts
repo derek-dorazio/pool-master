@@ -628,7 +628,7 @@ export const importMembers = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List what each league plan allows
  *
- * Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.
+ * Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also how long the Premium gift every new league starts with runs, and each plan's contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.
  */
 export const listLeaguePlans = <ThrowOnError extends boolean = false>(options?: Options<ListLeaguePlansData, ThrowOnError>) => (options?.client ?? client).get<ListLeaguePlansResponses, unknown, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

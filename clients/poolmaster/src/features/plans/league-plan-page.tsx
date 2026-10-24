@@ -70,7 +70,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
     invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });
 
-  const plans = plansQuery.data;
+  const plans = plansQuery.data?.plans;
   const currentIndex = plans?.findIndex((plan) => plan.plan === current.plan) ?? -1;
   const chosen = plans?.find((plan) => plan.plan === choice) ?? null;
   const sportLeagueNames = new Map((sportLeaguesQuery.data ?? []).map((sportLeague) => [sportLeague.id, sportLeague.name]));

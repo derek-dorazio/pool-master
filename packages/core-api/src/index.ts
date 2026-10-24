@@ -218,7 +218,11 @@ export function buildApp() {
   // Domain modules (protected by auth-guard)
   // =========================================================================
   app.register(leaguesModule, { prefix: '/api/v1/leagues', email, planEntitlements, memberJoined });
-  app.register(plansModule, { prefix: '/api/v1/plans', planEntitlements });
+  app.register(plansModule, {
+    prefix: '/api/v1/plans',
+    planEntitlements,
+    readBillingConfig: () => appSettings.get(BILLING_SETTINGS),
+  });
   app.register(billingModule, {
     prefix: '/api/v1/leagues/:id/billing',
     planEntitlements,

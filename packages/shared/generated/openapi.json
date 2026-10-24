@@ -945,6 +945,1229 @@
         "additionalProperties": false,
         "description": "Token refresh response carrying the rotated access, refresh and CSRF tokens."
       },
+      "EmailTemplateKey": {
+        "type": "string",
+        "enum": [
+          "LEAGUE_MEMBER_INVITE",
+          "LEAGUE_JOIN_SUCCESS",
+          "SQUAD_OWNER_INVITE",
+          "SQUAD_OWNER_ADDED",
+          "CONTEST_ENTRY_COMPLETED",
+          "CONTEST_STARTED_SUMMARY",
+          "CONTEST_ENTRY_REMINDER",
+          "CONTEST_OPENED",
+          "CONTEST_STANDINGS",
+          "CONTEST_RESULTS",
+          "CONTEST_EVENT_CHANGED",
+          "EVENT_COMING_UP",
+          "EVENT_READY_FOR_CONTESTS",
+          "CONTEST_NOT_OPEN",
+          "EVENT_STILL_DRAFT",
+          "PASSWORD_RESET",
+          "PASSWORD_CHANGED",
+          "EMAIL_TEST",
+          "YEAR_IN_REVIEW",
+          "EVENT_WEEKLY_DIGEST",
+          "LEAGUE_MEMBER_JOINED"
+        ],
+        "description": "A system email template."
+      },
+      "EmailConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether any system email is sent. Off: every email is skipped and logged."
+          },
+          "allowedRecipients": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 254,
+              "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+              "description": "An email address, or @domain for every address at that domain.",
+              "x-transform": [
+                "trim",
+                "toLowerCase"
+              ]
+            },
+            "maxItems": 100,
+            "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
+          },
+          "sendRatePerSecond": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
+          },
+          "entryReminderHours": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 168
+            },
+            "minItems": 1,
+            "maxItems": 5,
+            "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
+          },
+          "standingsBufferMinutes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 240,
+            "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
+          },
+          "weeklyDigestHour": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 23,
+            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
+          },
+          "templates": {
+            "type": "object",
+            "properties": {
+              "LEAGUE_MEMBER_INVITE": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "LEAGUE_JOIN_SUCCESS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "SQUAD_OWNER_INVITE": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "SQUAD_OWNER_ADDED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_ENTRY_COMPLETED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_STARTED_SUMMARY": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_ENTRY_REMINDER": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_OPENED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_STANDINGS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_RESULTS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_EVENT_CHANGED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "EVENT_COMING_UP": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "EVENT_READY_FOR_CONTESTS": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "EVENT_WEEKLY_DIGEST": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "LEAGUE_MEMBER_JOINED": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "CONTEST_NOT_OPEN": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "EVENT_STILL_DRAFT": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              },
+              "YEAR_IN_REVIEW": {
+                "type": "boolean",
+                "description": "Whether this email is sent."
+              }
+            },
+            "required": [
+              "LEAGUE_MEMBER_INVITE",
+              "LEAGUE_JOIN_SUCCESS",
+              "SQUAD_OWNER_INVITE",
+              "SQUAD_OWNER_ADDED",
+              "CONTEST_ENTRY_COMPLETED",
+              "CONTEST_STARTED_SUMMARY",
+              "CONTEST_ENTRY_REMINDER",
+              "CONTEST_OPENED",
+              "CONTEST_STANDINGS",
+              "CONTEST_RESULTS",
+              "CONTEST_EVENT_CHANGED",
+              "EVENT_COMING_UP",
+              "EVENT_READY_FOR_CONTESTS",
+              "EVENT_WEEKLY_DIGEST",
+              "LEAGUE_MEMBER_JOINED",
+              "CONTEST_NOT_OPEN",
+              "EVENT_STILL_DRAFT",
+              "YEAR_IN_REVIEW"
+            ],
+            "additionalProperties": false,
+            "description": "Per-template switches. A template that is off is skipped even while email is on."
+          }
+        },
+        "required": [
+          "enabled",
+          "allowedRecipients",
+          "sendRatePerSecond",
+          "entryReminderHours",
+          "standingsBufferMinutes",
+          "weeklyDigestHour",
+          "templates"
+        ],
+        "additionalProperties": false,
+        "description": "Whether and how system email is sent."
+      },
+      "BudgetPricingProfile": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The profile's name, such as \"Standard\".",
+            "x-transform": [
+              "trim"
+            ]
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A named set of budget pricing values."
+      },
+      "BudgetPricingConfig": {
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "salaryCap": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                },
+                "unit": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000000,
+                  "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                },
+                "topSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The best seed's price, as a percentage of the salary cap."
+                },
+                "floorSharePercent": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 100,
+                  "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                },
+                "steepness": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 10,
+                  "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 50,
+                  "description": "The profile's name, such as \"Standard\".",
+                  "x-transform": [
+                    "trim"
+                  ]
+                }
+              },
+              "required": [
+                "salaryCap",
+                "unit",
+                "topSharePercent",
+                "floorSharePercent",
+                "steepness",
+                "name"
+              ],
+              "additionalProperties": false,
+              "description": "A named set of budget pricing values."
+            },
+            "minItems": 1,
+            "maxItems": 10,
+            "description": "The pricing profiles, the default first. Names are unique."
+          }
+        },
+        "required": [
+          "profiles"
+        ],
+        "additionalProperties": false,
+        "description": "The named sets of values an event's field is priced with for budget contests."
+      },
+      "PlanCapRow": {
+        "type": "object",
+        "properties": {
+          "FREE": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          },
+          "PRO": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          },
+          "PREMIUM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          },
+          "PLATINUM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          }
+        },
+        "required": [
+          "FREE",
+          "PRO",
+          "PREMIUM",
+          "PLATINUM"
+        ],
+        "additionalProperties": false,
+        "description": "One cap's limit on each plan. A limit never falls as the plan rises."
+      },
+      "PlanConfig": {
+        "type": "object",
+        "properties": {
+          "caps": {
+            "type": "object",
+            "properties": {
+              "ENTRIES_PER_CONTEST": {
+                "type": "object",
+                "properties": {
+                  "FREE": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PRO": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PREMIUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  }
+                },
+                "required": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "additionalProperties": false,
+                "description": "Entries per contest, drafts included. Checked when an entry is added."
+              },
+              "SPORTS_LEAGUES_PER_YEAR": {
+                "type": "object",
+                "properties": {
+                  "FREE": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PRO": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PREMIUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  }
+                },
+                "required": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "additionalProperties": false,
+                "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+              }
+            },
+            "required": [
+              "ENTRIES_PER_CONTEST",
+              "SPORTS_LEAGUES_PER_YEAR"
+            ],
+            "additionalProperties": false,
+            "description": "Each cap's limit on each plan."
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "EMAIL_CONTEST_OPENED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_RESULTS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_EVENT_CHANGED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_STARTED_SUMMARY": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_ENTRY_REMINDER": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_STANDINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_EVENT_COMING_UP": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_NOT_OPEN": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_YEAR_IN_REVIEW": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_LEAGUE_MEMBER_JOINED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_STANDINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_CROWNING": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CHAMPIONSHIP": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "TROPHY_SHELF": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_SETTINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "PAST_YEARS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "ALL_TIME_SUMMARY": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "RECORD_BOOK": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              }
+            },
+            "required": [
+              "EMAIL_CONTEST_OPENED",
+              "EMAIL_CONTEST_ENTRY_COMPLETED",
+              "EMAIL_CONTEST_RESULTS",
+              "EMAIL_CONTEST_EVENT_CHANGED",
+              "EMAIL_CONTEST_STARTED_SUMMARY",
+              "EMAIL_CONTEST_ENTRY_REMINDER",
+              "EMAIL_CONTEST_STANDINGS",
+              "EMAIL_EVENT_COMING_UP",
+              "EMAIL_EVENT_READY_FOR_CONTESTS",
+              "EMAIL_CONTEST_NOT_OPEN",
+              "EMAIL_YEAR_IN_REVIEW",
+              "EMAIL_LEAGUE_MEMBER_JOINED",
+              "CUP_STANDINGS",
+              "CUP_CROWNING",
+              "CHAMPIONSHIP",
+              "TROPHY_SHELF",
+              "CUP_SETTINGS",
+              "PAST_YEARS",
+              "ALL_TIME_SUMMARY",
+              "RECORD_BOOK"
+            ],
+            "additionalProperties": false,
+            "description": "The plan each feature starts at."
+          }
+        },
+        "required": [
+          "caps",
+          "features"
+        ],
+        "additionalProperties": false,
+        "description": "What each league plan allows: its caps and the plan each feature starts at."
+      },
+      "ExpansionPrice": {
+        "type": "object",
+        "properties": {
+          "entriesPerContest": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The band: the most entries an expanded contest takes."
+          },
+          "priceCents": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000000,
+            "description": "What expanding a contest to this band costs, in US cents."
+          }
+        },
+        "required": [
+          "entriesPerContest",
+          "priceCents"
+        ],
+        "additionalProperties": false,
+        "description": "One expansion band and its price."
+      },
+      "BillingConfig": {
+        "type": "object",
+        "properties": {
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
+          },
+          "expansionPrices": {
+            "type": "object",
+            "properties": {
+              "FREE": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PRO": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PREMIUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PLATINUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              }
+            },
+            "required": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "additionalProperties": false,
+            "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
+          }
+        },
+        "required": [
+          "paymentsEnabled",
+          "expansionPrices"
+        ],
+        "additionalProperties": false,
+        "description": "Payments: whether they are on, and what expanding a contest costs on each plan."
+      },
+      "IngestionScheduleConfigOverride": {
+        "type": "object",
+        "properties": {
+          "scheduledSports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "HORSE_RACING",
+                "AUTO_RACING",
+                "CYCLING",
+                "RUNNING",
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL",
+                "HOCKEY",
+                "BASEBALL",
+                "SOCCER",
+                "TENNIS"
+              ]
+            },
+            "minItems": 1
+          },
+          "healthCheck": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventParticipants": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          },
+          "eventLiveScores": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "additionalProperties": false,
+            "description": "Partial feed-scheduling override payload."
+          }
+        },
+        "additionalProperties": false,
+        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+      },
+      "IngestionScheduleConfig": {
+        "type": "object",
+        "properties": {
+          "scheduledSports": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "GOLF",
+                "HORSE_RACING",
+                "AUTO_RACING",
+                "CYCLING",
+                "RUNNING",
+                "BASKETBALL",
+                "AMERICAN_FOOTBALL",
+                "HOCKEY",
+                "BASEBALL",
+                "SOCCER",
+                "TENNIS"
+              ]
+            },
+            "minItems": 1,
+            "default": [
+              "GOLF",
+              "HORSE_RACING",
+              "AUTO_RACING",
+              "CYCLING",
+              "RUNNING",
+              "BASKETBALL",
+              "AMERICAN_FOOTBALL",
+              "HOCKEY",
+              "BASEBALL",
+              "SOCCER",
+              "TENNIS"
+            ],
+            "description": "Sports that scheduled ingestion is allowed to run automatically."
+          },
+          "healthCheck": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for provider health checks."
+          },
+          "eventParticipants": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
+          },
+          "eventLiveScores": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "description": "Whether the feed should be scheduled automatically."
+              },
+              "intervalMinutes": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+              },
+              "intervalSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+              },
+              "lookaheadDays": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "additionalProperties": false,
+            "description": "Scheduling policy for live score polling."
+          },
+          "perSportOverrides": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "scheduledSports": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "GOLF",
+                      "HORSE_RACING",
+                      "AUTO_RACING",
+                      "CYCLING",
+                      "RUNNING",
+                      "BASKETBALL",
+                      "AMERICAN_FOOTBALL",
+                      "HOCKEY",
+                      "BASEBALL",
+                      "SOCCER",
+                      "TENNIS"
+                    ]
+                  },
+                  "minItems": 1
+                },
+                "healthCheck": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventParticipants": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                },
+                "eventLiveScores": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether the feed should be scheduled automatically."
+                    },
+                    "intervalMinutes": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
+                    },
+                    "intervalSeconds": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
+                    },
+                    "lookaheadDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Partial feed-scheduling override payload."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
+            },
+            "description": "Per-sport scheduling overrides applied on top of the global feed policies."
+          }
+        },
+        "required": [
+          "healthCheck",
+          "eventParticipants",
+          "eventLiveScores",
+          "perSportOverrides"
+        ],
+        "additionalProperties": false,
+        "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
+      },
       "PlanCapsDto": {
         "type": "object",
         "properties": {
@@ -1138,13 +2361,150 @@
               "description": "What a league on one plan may do, from the current plan settings."
             },
             "description": "Every plan, lowest first, for comparing them."
+          },
+          "previewPeriodMonths": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "How many months of Premium every new league is gifted from signup (#986), before it moves to Free."
+          },
+          "paymentsEnabled": {
+            "type": "boolean",
+            "description": "Whether expanding a contest is charged. While false, expanding is free."
+          },
+          "expansionPrices": {
+            "type": "object",
+            "properties": {
+              "FREE": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PRO": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PREMIUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              },
+              "PLATINUM": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entriesPerContest": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "The band: the most entries an expanded contest takes."
+                    },
+                    "priceCents": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "description": "What expanding a contest to this band costs, in US cents."
+                    }
+                  },
+                  "required": [
+                    "entriesPerContest",
+                    "priceCents"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One expansion band and its price."
+                },
+                "maxItems": 10,
+                "description": "The plan's bands, smallest first; each band and each price above the one before."
+              }
+            },
+            "required": [
+              "FREE",
+              "PRO",
+              "PREMIUM",
+              "PLATINUM"
+            ],
+            "additionalProperties": false,
+            "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
           }
         },
         "required": [
-          "plans"
+          "plans",
+          "previewPeriodMonths",
+          "paymentsEnabled",
+          "expansionPrices"
         ],
         "additionalProperties": false,
-        "description": "What each league plan allows."
+        "description": "What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan."
       },
       "UpdateLeaguePlanRequest": {
         "type": "object",
@@ -28986,1229 +30346,6 @@
         ],
         "additionalProperties": false,
         "description": "A prediction contest entry's picks on one event's games."
-      },
-      "EmailTemplateKey": {
-        "type": "string",
-        "enum": [
-          "LEAGUE_MEMBER_INVITE",
-          "LEAGUE_JOIN_SUCCESS",
-          "SQUAD_OWNER_INVITE",
-          "SQUAD_OWNER_ADDED",
-          "CONTEST_ENTRY_COMPLETED",
-          "CONTEST_STARTED_SUMMARY",
-          "CONTEST_ENTRY_REMINDER",
-          "CONTEST_OPENED",
-          "CONTEST_STANDINGS",
-          "CONTEST_RESULTS",
-          "CONTEST_EVENT_CHANGED",
-          "EVENT_COMING_UP",
-          "EVENT_READY_FOR_CONTESTS",
-          "CONTEST_NOT_OPEN",
-          "EVENT_STILL_DRAFT",
-          "PASSWORD_RESET",
-          "PASSWORD_CHANGED",
-          "EMAIL_TEST",
-          "YEAR_IN_REVIEW",
-          "EVENT_WEEKLY_DIGEST",
-          "LEAGUE_MEMBER_JOINED"
-        ],
-        "description": "A system email template."
-      },
-      "EmailConfig": {
-        "type": "object",
-        "properties": {
-          "enabled": {
-            "type": "boolean",
-            "description": "Whether any system email is sent. Off: every email is skipped and logged."
-          },
-          "allowedRecipients": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "maxLength": 254,
-              "pattern": "^([^\\s@]+)?@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
-              "description": "An email address, or @domain for every address at that domain.",
-              "x-transform": [
-                "trim",
-                "toLowerCase"
-              ]
-            },
-            "maxItems": 100,
-            "description": "When not empty, the only addresses email is sent to (addresses or @domain); every other recipient is skipped and logged. Empty: no limit."
-          },
-          "sendRatePerSecond": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100,
-            "description": "The most emails each API server task sends a second. SES accounts start at 14 a second in all."
-          },
-          "entryReminderHours": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 168
-            },
-            "minItems": 1,
-            "maxItems": 5,
-            "description": "How many hours before a contest's picks close each entry reminder goes, to members with nothing submitted (#845). Everyone gets each reminder at the same moment."
-          },
-          "standingsBufferMinutes": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 240,
-            "description": "How many minutes after a round, week or event finishes its live standings email goes (#877), so a late score correction lands first."
-          },
-          "weeklyDigestHour": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 23,
-            "description": "The hour on Monday, US Eastern time, every weekly event digest goes (#851): one moment for every league, so it is waiting in the morning. The next day's \"New member joined\" email for a busy day goes at the same hour every day (#903)."
-          },
-          "templates": {
-            "type": "object",
-            "properties": {
-              "LEAGUE_MEMBER_INVITE": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "LEAGUE_JOIN_SUCCESS": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "SQUAD_OWNER_INVITE": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "SQUAD_OWNER_ADDED": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_ENTRY_COMPLETED": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_STARTED_SUMMARY": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_ENTRY_REMINDER": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_OPENED": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_STANDINGS": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_RESULTS": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_EVENT_CHANGED": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "EVENT_COMING_UP": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "EVENT_READY_FOR_CONTESTS": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "EVENT_WEEKLY_DIGEST": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "LEAGUE_MEMBER_JOINED": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "CONTEST_NOT_OPEN": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "EVENT_STILL_DRAFT": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              },
-              "YEAR_IN_REVIEW": {
-                "type": "boolean",
-                "description": "Whether this email is sent."
-              }
-            },
-            "required": [
-              "LEAGUE_MEMBER_INVITE",
-              "LEAGUE_JOIN_SUCCESS",
-              "SQUAD_OWNER_INVITE",
-              "SQUAD_OWNER_ADDED",
-              "CONTEST_ENTRY_COMPLETED",
-              "CONTEST_STARTED_SUMMARY",
-              "CONTEST_ENTRY_REMINDER",
-              "CONTEST_OPENED",
-              "CONTEST_STANDINGS",
-              "CONTEST_RESULTS",
-              "CONTEST_EVENT_CHANGED",
-              "EVENT_COMING_UP",
-              "EVENT_READY_FOR_CONTESTS",
-              "EVENT_WEEKLY_DIGEST",
-              "LEAGUE_MEMBER_JOINED",
-              "CONTEST_NOT_OPEN",
-              "EVENT_STILL_DRAFT",
-              "YEAR_IN_REVIEW"
-            ],
-            "additionalProperties": false,
-            "description": "Per-template switches. A template that is off is skipped even while email is on."
-          }
-        },
-        "required": [
-          "enabled",
-          "allowedRecipients",
-          "sendRatePerSecond",
-          "entryReminderHours",
-          "standingsBufferMinutes",
-          "weeklyDigestHour",
-          "templates"
-        ],
-        "additionalProperties": false,
-        "description": "Whether and how system email is sent."
-      },
-      "BudgetPricingProfile": {
-        "type": "object",
-        "properties": {
-          "salaryCap": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10000000,
-            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-          },
-          "unit": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 10000000,
-            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-          },
-          "topSharePercent": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 100,
-            "description": "The best seed's price, as a percentage of the salary cap."
-          },
-          "floorSharePercent": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 100,
-            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-          },
-          "steepness": {
-            "type": "number",
-            "minimum": 0.1,
-            "maximum": 10,
-            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 50,
-            "description": "The profile's name, such as \"Standard\".",
-            "x-transform": [
-              "trim"
-            ]
-          }
-        },
-        "required": [
-          "salaryCap",
-          "unit",
-          "topSharePercent",
-          "floorSharePercent",
-          "steepness",
-          "name"
-        ],
-        "additionalProperties": false,
-        "description": "A named set of budget pricing values."
-      },
-      "BudgetPricingConfig": {
-        "type": "object",
-        "properties": {
-          "profiles": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "salaryCap": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 10000000,
-                  "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
-                },
-                "unit": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 10000000,
-                  "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
-                },
-                "topSharePercent": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 100,
-                  "description": "The best seed's price, as a percentage of the salary cap."
-                },
-                "floorSharePercent": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 100,
-                  "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
-                },
-                "steepness": {
-                  "type": "number",
-                  "minimum": 0.1,
-                  "maximum": 10,
-                  "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
-                },
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 50,
-                  "description": "The profile's name, such as \"Standard\".",
-                  "x-transform": [
-                    "trim"
-                  ]
-                }
-              },
-              "required": [
-                "salaryCap",
-                "unit",
-                "topSharePercent",
-                "floorSharePercent",
-                "steepness",
-                "name"
-              ],
-              "additionalProperties": false,
-              "description": "A named set of budget pricing values."
-            },
-            "minItems": 1,
-            "maxItems": 10,
-            "description": "The pricing profiles, the default first. Names are unique."
-          }
-        },
-        "required": [
-          "profiles"
-        ],
-        "additionalProperties": false,
-        "description": "The named sets of values an event's field is priced with for budget contests."
-      },
-      "PlanCapRow": {
-        "type": "object",
-        "properties": {
-          "FREE": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "The most this plan allows, or null for unlimited."
-          },
-          "PRO": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "The most this plan allows, or null for unlimited."
-          },
-          "PREMIUM": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "The most this plan allows, or null for unlimited."
-          },
-          "PLATINUM": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "The most this plan allows, or null for unlimited."
-          }
-        },
-        "required": [
-          "FREE",
-          "PRO",
-          "PREMIUM",
-          "PLATINUM"
-        ],
-        "additionalProperties": false,
-        "description": "One cap's limit on each plan. A limit never falls as the plan rises."
-      },
-      "PlanConfig": {
-        "type": "object",
-        "properties": {
-          "caps": {
-            "type": "object",
-            "properties": {
-              "ENTRIES_PER_CONTEST": {
-                "type": "object",
-                "properties": {
-                  "FREE": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PRO": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PREMIUM": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PLATINUM": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  }
-                },
-                "required": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "additionalProperties": false,
-                "description": "Entries per contest, drafts included. Checked when an entry is added."
-              },
-              "SPORTS_LEAGUES_PER_YEAR": {
-                "type": "object",
-                "properties": {
-                  "FREE": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PRO": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PREMIUM": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  },
-                  "PLATINUM": {
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "The most this plan allows, or null for unlimited."
-                  }
-                },
-                "required": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "additionalProperties": false,
-                "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
-              }
-            },
-            "required": [
-              "ENTRIES_PER_CONTEST",
-              "SPORTS_LEAGUES_PER_YEAR"
-            ],
-            "additionalProperties": false,
-            "description": "Each cap's limit on each plan."
-          },
-          "features": {
-            "type": "object",
-            "properties": {
-              "EMAIL_CONTEST_OPENED": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_ENTRY_COMPLETED": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_RESULTS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_EVENT_CHANGED": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_STARTED_SUMMARY": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_ENTRY_REMINDER": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_STANDINGS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_EVENT_COMING_UP": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_EVENT_READY_FOR_CONTESTS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_CONTEST_NOT_OPEN": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_YEAR_IN_REVIEW": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "EMAIL_LEAGUE_MEMBER_JOINED": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "CUP_STANDINGS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "CUP_CROWNING": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "CHAMPIONSHIP": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "TROPHY_SHELF": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "CUP_SETTINGS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "PAST_YEARS": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "ALL_TIME_SUMMARY": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              },
-              "RECORD_BOOK": {
-                "type": "string",
-                "enum": [
-                  "FREE",
-                  "PRO",
-                  "PREMIUM",
-                  "PLATINUM"
-                ],
-                "description": "The first plan that has the feature; every plan above it has it too."
-              }
-            },
-            "required": [
-              "EMAIL_CONTEST_OPENED",
-              "EMAIL_CONTEST_ENTRY_COMPLETED",
-              "EMAIL_CONTEST_RESULTS",
-              "EMAIL_CONTEST_EVENT_CHANGED",
-              "EMAIL_CONTEST_STARTED_SUMMARY",
-              "EMAIL_CONTEST_ENTRY_REMINDER",
-              "EMAIL_CONTEST_STANDINGS",
-              "EMAIL_EVENT_COMING_UP",
-              "EMAIL_EVENT_READY_FOR_CONTESTS",
-              "EMAIL_CONTEST_NOT_OPEN",
-              "EMAIL_YEAR_IN_REVIEW",
-              "EMAIL_LEAGUE_MEMBER_JOINED",
-              "CUP_STANDINGS",
-              "CUP_CROWNING",
-              "CHAMPIONSHIP",
-              "TROPHY_SHELF",
-              "CUP_SETTINGS",
-              "PAST_YEARS",
-              "ALL_TIME_SUMMARY",
-              "RECORD_BOOK"
-            ],
-            "additionalProperties": false,
-            "description": "The plan each feature starts at."
-          }
-        },
-        "required": [
-          "caps",
-          "features"
-        ],
-        "additionalProperties": false,
-        "description": "What each league plan allows: its caps and the plan each feature starts at."
-      },
-      "ExpansionPrice": {
-        "type": "object",
-        "properties": {
-          "entriesPerContest": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "The band: the most entries an expanded contest takes."
-          },
-          "priceCents": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1000000,
-            "description": "What expanding a contest to this band costs, in US cents."
-          }
-        },
-        "required": [
-          "entriesPerContest",
-          "priceCents"
-        ],
-        "additionalProperties": false,
-        "description": "One expansion band and its price."
-      },
-      "BillingConfig": {
-        "type": "object",
-        "properties": {
-          "paymentsEnabled": {
-            "type": "boolean",
-            "description": "Whether expansions are charged. Off until checkout is built (#981): while off, commissioners expand contests free."
-          },
-          "expansionPrices": {
-            "type": "object",
-            "properties": {
-              "FREE": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "entriesPerContest": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100000,
-                      "description": "The band: the most entries an expanded contest takes."
-                    },
-                    "priceCents": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 1000000,
-                      "description": "What expanding a contest to this band costs, in US cents."
-                    }
-                  },
-                  "required": [
-                    "entriesPerContest",
-                    "priceCents"
-                  ],
-                  "additionalProperties": false,
-                  "description": "One expansion band and its price."
-                },
-                "maxItems": 10,
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
-              },
-              "PRO": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "entriesPerContest": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100000,
-                      "description": "The band: the most entries an expanded contest takes."
-                    },
-                    "priceCents": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 1000000,
-                      "description": "What expanding a contest to this band costs, in US cents."
-                    }
-                  },
-                  "required": [
-                    "entriesPerContest",
-                    "priceCents"
-                  ],
-                  "additionalProperties": false,
-                  "description": "One expansion band and its price."
-                },
-                "maxItems": 10,
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
-              },
-              "PREMIUM": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "entriesPerContest": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100000,
-                      "description": "The band: the most entries an expanded contest takes."
-                    },
-                    "priceCents": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 1000000,
-                      "description": "What expanding a contest to this band costs, in US cents."
-                    }
-                  },
-                  "required": [
-                    "entriesPerContest",
-                    "priceCents"
-                  ],
-                  "additionalProperties": false,
-                  "description": "One expansion band and its price."
-                },
-                "maxItems": 10,
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
-              },
-              "PLATINUM": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "entriesPerContest": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100000,
-                      "description": "The band: the most entries an expanded contest takes."
-                    },
-                    "priceCents": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 1000000,
-                      "description": "What expanding a contest to this band costs, in US cents."
-                    }
-                  },
-                  "required": [
-                    "entriesPerContest",
-                    "priceCents"
-                  ],
-                  "additionalProperties": false,
-                  "description": "One expansion band and its price."
-                },
-                "maxItems": 10,
-                "description": "The plan's bands, smallest first; each band and each price above the one before."
-              }
-            },
-            "required": [
-              "FREE",
-              "PRO",
-              "PREMIUM",
-              "PLATINUM"
-            ],
-            "additionalProperties": false,
-            "description": "Each plan's expansion price list. A contest is offered the bands above its cap; a step up costs the difference."
-          }
-        },
-        "required": [
-          "paymentsEnabled",
-          "expansionPrices"
-        ],
-        "additionalProperties": false,
-        "description": "Payments: whether they are on, and what expanding a contest costs on each plan."
-      },
-      "IngestionScheduleConfigOverride": {
-        "type": "object",
-        "properties": {
-          "scheduledSports": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "minItems": 1
-          },
-          "healthCheck": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          },
-          "eventParticipants": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          },
-          "eventLiveScores": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "additionalProperties": false,
-            "description": "Partial feed-scheduling override payload."
-          }
-        },
-        "additionalProperties": false,
-        "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-      },
-      "IngestionScheduleConfig": {
-        "type": "object",
-        "properties": {
-          "scheduledSports": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "GOLF",
-                "HORSE_RACING",
-                "AUTO_RACING",
-                "CYCLING",
-                "RUNNING",
-                "BASKETBALL",
-                "AMERICAN_FOOTBALL",
-                "HOCKEY",
-                "BASEBALL",
-                "SOCCER",
-                "TENNIS"
-              ]
-            },
-            "minItems": 1,
-            "default": [
-              "GOLF",
-              "HORSE_RACING",
-              "AUTO_RACING",
-              "CYCLING",
-              "RUNNING",
-              "BASKETBALL",
-              "AMERICAN_FOOTBALL",
-              "HOCKEY",
-              "BASEBALL",
-              "SOCCER",
-              "TENNIS"
-            ],
-            "description": "Sports that scheduled ingestion is allowed to run automatically."
-          },
-          "healthCheck": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for provider health checks."
-          },
-          "eventParticipants": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for event participant and event-scoped odds hydration before the field locks. Candidate events must be field-available and not field-locked."
-          },
-          "eventLiveScores": {
-            "type": "object",
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
-              },
-              "intervalMinutes": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-              },
-              "intervalSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-              },
-              "lookaheadDays": {
-                "type": "integer",
-                "minimum": 0,
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "additionalProperties": false,
-            "description": "Scheduling policy for live score polling."
-          },
-          "perSportOverrides": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "scheduledSports": {
-                  "type": "array",
-                  "items": {
-                    "type": "string",
-                    "enum": [
-                      "GOLF",
-                      "HORSE_RACING",
-                      "AUTO_RACING",
-                      "CYCLING",
-                      "RUNNING",
-                      "BASKETBALL",
-                      "AMERICAN_FOOTBALL",
-                      "HOCKEY",
-                      "BASEBALL",
-                      "SOCCER",
-                      "TENNIS"
-                    ]
-                  },
-                  "minItems": 1
-                },
-                "healthCheck": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                },
-                "eventParticipants": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                },
-                "eventLiveScores": {
-                  "type": "object",
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether the feed should be scheduled automatically."
-                    },
-                    "intervalMinutes": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in minutes, for interval-driven orchestration."
-                    },
-                    "intervalSeconds": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring."
-                    },
-                    "lookaheadDays": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration)."
-                    }
-                  },
-                  "additionalProperties": false,
-                  "description": "Partial feed-scheduling override payload."
-                }
-              },
-              "additionalProperties": false,
-              "description": "Partial ingestion scheduling override used for global updates and per-sport overrides."
-            },
-            "description": "Per-sport scheduling overrides applied on top of the global feed policies."
-          }
-        },
-        "required": [
-          "healthCheck",
-          "eventParticipants",
-          "eventLiveScores",
-          "perSportOverrides"
-        ],
-        "additionalProperties": false,
-        "description": "Feed-aware ingestion scheduling configuration exposed to root-admin tooling."
       },
       "SnsMessageType": {
         "type": "string",
@@ -58787,10 +58924,10 @@
         "tags": [
           "Plans"
         ],
-        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.",
+        "description": "Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from; also how long the Premium gift every new league starts with runs, and each plan's contest expansion prices from the payments settings. Public: no session is needed, and it holds nothing about any league or user.",
         "responses": {
           "200": {
-            "description": "What each league plan allows.",
+            "description": "What each league plan allows, how long the Premium gift runs, and what expanding a contest costs on each plan.",
             "content": {
               "application/json": {
                 "schema": {
