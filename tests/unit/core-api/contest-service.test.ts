@@ -605,7 +605,7 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
-      }), { entriesPerContest: null });
+      }), { entriesPerContest: 500 });
     });
 
     it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
@@ -897,7 +897,7 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 2,
         name: "Derek's Squad Entry 2",
-      }), { entriesPerContest: null });
+      }), { entriesPerContest: 500 });
     });
 
     it('returns the joined entry state for pre-draft contest views', async () => {

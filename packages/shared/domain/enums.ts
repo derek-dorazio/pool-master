@@ -781,8 +781,8 @@ export function isOptionalEmailCategory(category: EmailCategory): category is Op
 
 /**
  * A league's plan (#943), in order: a feature that starts at Pro is in Pro, Premium and
- * Platinum, and a cap never falls as the plan rises. Every league starts on Platinum, which has
- * everything, until a commissioner picks a lower one. "Plan" on screen, never "tier": tiers are
+ * Platinum, and a cap never falls as the plan rises. Every league starts on Premium, a gift until
+ * its renewal date (plans/payments.md §3). "Plan" on screen, never "tier": tiers are
  * player tiers in tiered selection. Only the plan entitlements service compares plans
  * (`poolmaster/no-plan-branching`); everything else asks it about a cap or a feature.
  */
@@ -801,10 +801,6 @@ export const LEAGUE_PLANS: readonly LeaguePlan[] = [
   LeaguePlan.PREMIUM,
   LeaguePlan.PLATINUM,
 ];
-
-/** The plans a cap can limit: every plan but Platinum, which is always unlimited. */
-export type CappedLeaguePlan = Exclude<LeaguePlan, typeof LeaguePlan.PLATINUM>;
-export const CAPPED_LEAGUE_PLANS: readonly CappedLeaguePlan[] = [LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM];
 
 /**
  * What a plan can switch on or off (#944), each with the first plan that gets it in

@@ -7,6 +7,7 @@ import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { RootAdminManageLeaguesPage } from './root-admin-manage-leagues-page';
 
 const {
+  extendRunningPlanRenewalsMock,
   listLeaguesMock,
   mockLogger,
 } = vi.hoisted(() => {
@@ -21,12 +22,14 @@ const {
   mockLogger.child.mockReturnValue(mockLogger);
 
   return {
+    extendRunningPlanRenewalsMock: vi.fn(),
     listLeaguesMock: vi.fn(),
     mockLogger,
   };
 });
 
 bindApiMocks({
+  extendRunningPlanRenewals: extendRunningPlanRenewalsMock,
   listLeagues: listLeaguesMock,
 });
 
@@ -51,6 +54,7 @@ function seedLeagues() {
           activeContestCount: 3,
           createdAt: '2026-04-10T12:00:00.000Z',
           planEntitlements: buildPlanEntitlements(),
+          planRenewsAt: '2027-04-24T12:00:00.000Z',
         },
         {
           id: 'league-inactive-1',
@@ -63,6 +67,7 @@ function seedLeagues() {
           activeContestCount: 0,
           createdAt: '2026-03-01T12:00:00.000Z',
           planEntitlements: buildPlanEntitlements({ plan: 'FREE' }),
+          planRenewsAt: '2027-03-01T12:00:00.000Z',
         },
       ],
       // #202 (A8) — the viewer's own memberships among the returned leagues. Legitimately
@@ -91,6 +96,7 @@ function renderPage() {
 
 describe('RootAdminManageLeaguesPage', () => {
   afterEach(() => {
+    extendRunningPlanRenewalsMock.mockReset();
     listLeaguesMock.mockReset();
     mockLogger.info.mockReset();
   });
@@ -133,6 +139,43 @@ describe('RootAdminManageLeaguesPage', () => {
     expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-manage-leagues-link-league-active-1')).toHaveTextContent('Platinum');
     expect(screen.getByTestId('root-admin-manage-leagues-link-league-inactive-1')).toHaveTextContent('Free');
+  });
+
+  it('shows when each league\'s Premium preview period ends in its own column', async () => {
+    seedLeagues();
+
+    renderPage();
+
+    expect(await screen.findByRole('columnheader', { name: 'Preview ends' })).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-manage-leagues-link-league-active-1'))
+      .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+  });
+
+  it('extends every running gift by the chosen months, says how many leagues moved to which date, and reloads the list', async () => {
+    seedLeagues();
+    extendRunningPlanRenewalsMock.mockResolvedValue({ data: { extendedCount: 2, renewsAt: '2027-10-24T12:00:00.000Z' } });
+
+    renderPage();
+
+    await screen.findByTestId('root-admin-manage-leagues-link-league-active-1');
+    fireEvent.change(screen.getByTestId('root-admin-manage-leagues-extend-months'), { target: { value: '6' } });
+    fireEvent.click(screen.getByTestId('root-admin-manage-leagues-extend-submit'));
+
+    expect(await screen.findByTestId('root-admin-manage-leagues-extend-result'))
+      .toHaveTextContent(`2 leagues now have a Premium preview period ending on ${new Date('2027-10-24T12:00:00.000Z').toLocaleDateString()}.`);
+    expect(extendRunningPlanRenewalsMock).toHaveBeenCalledWith(expect.objectContaining({ body: { months: 6 } }));
+    await waitFor(() => expect(listLeaguesMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('shows the reason when extending every gift fails', async () => {
+    seedLeagues();
+    extendRunningPlanRenewalsMock.mockResolvedValue({ error: { error: { code: 'ROOT_ADMIN_ACCESS_REQUIRED', message: 'Root admin access required' } } });
+
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-manage-leagues-extend-submit'));
+
+    expect(await screen.findByText('Root admin access required')).toBeInTheDocument();
   });
 
   it('does not render any lifecycle action controls on the admin list', async () => {

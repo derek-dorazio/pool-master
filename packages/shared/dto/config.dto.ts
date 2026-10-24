@@ -7,7 +7,6 @@ import {
   BudgetPricingProfileSchema,
   EmailTemplateKey,
   LeaguePlan,
-  type CappedLeaguePlan,
   type PlanCap,
   type PlanFeature,
   Sport,
@@ -155,17 +154,19 @@ const PlanCapRowSchema = z.object({
   FREE: PlanCapLimitSchema,
   PRO: PlanCapLimitSchema,
   PREMIUM: PlanCapLimitSchema,
-} satisfies Record<CappedLeaguePlan, typeof PlanCapLimitSchema>).describe(
-  'One cap\'s limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises.',
+  PLATINUM: PlanCapLimitSchema,
+} satisfies Record<LeaguePlan, typeof PlanCapLimitSchema>).describe(
+  'One cap\'s limit on each plan. A limit never falls as the plan rises.',
 );
 export type PlanCapRow = z.infer<typeof PlanCapRowSchema>;
 
 const featureStartsAt = z.nativeEnum(LeaguePlan).describe('The first plan that has the feature; every plan above it has it too.');
 
 /**
- * PLAN_CONFIG (#944): what each league plan allows. Two caps per plan, and the first plan each
- * feature starts at. Platinum has no limits, so it has no cap values to set, and it has every
- * feature because every feature starts at Platinum or below. Root admins edit it on the Plans page.
+ * PLAN_CONFIG (#944): what each league plan allows. Two caps per plan, Platinum's included
+ * (plans/payments.md §3), and the first plan each feature starts at; Platinum has every feature
+ * because every feature starts at Platinum or below. Root admins edit it on the Plans page. A row
+ * saved before Platinum had caps loads with Platinum's defaults filled in.
  */
 export const PlanConfigSchema = z.object({
   caps: z.object({

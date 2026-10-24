@@ -1035,12 +1035,17 @@
               ]
             },
             "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+          },
+          "commissionerSelectable": {
+            "type": "boolean",
+            "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
           }
         },
         "required": [
           "plan",
           "caps",
-          "features"
+          "features",
+          "commissionerSelectable"
         ],
         "additionalProperties": false,
         "description": "What a league on one plan may do, from the current plan settings."
@@ -1115,12 +1120,17 @@
                     ]
                   },
                   "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                },
+                "commissionerSelectable": {
+                  "type": "boolean",
+                  "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                 }
               },
               "required": [
                 "plan",
                 "caps",
-                "features"
+                "features",
+                "commissionerSelectable"
               ],
               "additionalProperties": false,
               "description": "What a league on one plan may do, from the current plan settings."
@@ -1153,6 +1163,42 @@
         ],
         "additionalProperties": false,
         "description": "A league's new plan."
+      },
+      "ExtendPlanRenewalRequest": {
+        "type": "object",
+        "properties": {
+          "months": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 24,
+            "description": "How many months from now the gifted plan runs to."
+          }
+        },
+        "required": [
+          "months"
+        ],
+        "additionalProperties": false,
+        "description": "How far to extend a gifted plan: its renewal date moves to this many months from now, and never earlier than it is."
+      },
+      "ExtendRunningPlanRenewalsResponse": {
+        "type": "object",
+        "properties": {
+          "extendedCount": {
+            "type": "integer",
+            "description": "How many leagues' renewal dates moved: every league whose gift still runs and ended sooner."
+          },
+          "renewsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The renewal date they moved to."
+          }
+        },
+        "required": [
+          "extendedCount",
+          "renewsAt"
+        ],
+        "additionalProperties": false,
+        "description": "What extending every running gifted plan did."
       },
       "ListSportLeaguesUsedQuery": {
         "type": "object",
@@ -3173,15 +3219,25 @@
                   ]
                 },
                 "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+              },
+              "commissionerSelectable": {
+                "type": "boolean",
+                "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
               }
             },
             "required": [
               "plan",
               "caps",
-              "features"
+              "features",
+              "commissionerSelectable"
             ],
             "additionalProperties": false,
-            "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+            "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+          },
+          "planRenewsAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
           },
           "mutedSportLeagueIds": {
             "type": "array",
@@ -3213,6 +3269,7 @@
           "cupCustomPoints",
           "hallOfLameVisible",
           "planEntitlements",
+          "planRenewsAt",
           "mutedSportLeagueIds",
           "eventEmailDelivery"
         ],
@@ -3744,15 +3801,25 @@
                       ]
                     },
                     "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  },
+                  "commissionerSelectable": {
+                    "type": "boolean",
+                    "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                   }
                 },
                 "required": [
                   "plan",
                   "caps",
-                  "features"
+                  "features",
+                  "commissionerSelectable"
                 ],
                 "additionalProperties": false,
-                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "planRenewsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
               },
               "mutedSportLeagueIds": {
                 "type": "array",
@@ -3784,6 +3851,7 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
+              "planRenewsAt",
               "mutedSportLeagueIds",
               "eventEmailDelivery"
             ],
@@ -3955,15 +4023,25 @@
                       ]
                     },
                     "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                  },
+                  "commissionerSelectable": {
+                    "type": "boolean",
+                    "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                   }
                 },
                 "required": [
                   "plan",
                   "caps",
-                  "features"
+                  "features",
+                  "commissionerSelectable"
                 ],
                 "additionalProperties": false,
-                "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "planRenewsAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
               },
               "mutedSportLeagueIds": {
                 "type": "array",
@@ -3995,6 +4073,7 @@
               "cupCustomPoints",
               "hallOfLameVisible",
               "planEntitlements",
+              "planRenewsAt",
               "mutedSportLeagueIds",
               "eventEmailDelivery"
             ],
@@ -4460,15 +4539,25 @@
                         ]
                       },
                       "description": "Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted."
+                    },
+                    "commissionerSelectable": {
+                      "type": "boolean",
+                      "description": "Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set."
                     }
                   },
                   "required": [
                     "plan",
                     "caps",
-                    "features"
+                    "features",
+                    "commissionerSelectable"
                   ],
                   "additionalProperties": false,
-                  "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                  "description": "The league's plan and what it allows now: its caps and features. Premium at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                },
+                "planRenewsAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the league's gifted plan ends: six months after signup, unless a root admin extended it."
                 },
                 "mutedSportLeagueIds": {
                   "type": "array",
@@ -4500,6 +4589,7 @@
                 "cupCustomPoints",
                 "hallOfLameVisible",
                 "planEntitlements",
+                "planRenewsAt",
                 "mutedSportLeagueIds",
                 "eventEmailDelivery"
               ],
@@ -28552,15 +28642,25 @@
             "minimum": 1,
             "maximum": 100000,
             "description": "The most this plan allows, or null for unlimited."
+          },
+          "PLATINUM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
           }
         },
         "required": [
           "FREE",
           "PRO",
-          "PREMIUM"
+          "PREMIUM",
+          "PLATINUM"
         ],
         "additionalProperties": false,
-        "description": "One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises."
+        "description": "One cap's limit on each plan. A limit never falls as the plan rises."
       },
       "PlanConfig": {
         "type": "object",
@@ -28597,12 +28697,22 @@
                     "minimum": 1,
                     "maximum": 100000,
                     "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
                   }
                 },
                 "required": [
                   "FREE",
                   "PRO",
-                  "PREMIUM"
+                  "PREMIUM",
+                  "PLATINUM"
                 ],
                 "additionalProperties": false,
                 "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -28636,12 +28746,22 @@
                     "minimum": 1,
                     "maximum": 100000,
                     "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PLATINUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
                   }
                 },
                 "required": [
                   "FREE",
                   "PRO",
-                  "PREMIUM"
+                  "PREMIUM",
+                  "PLATINUM"
                 ],
                 "additionalProperties": false,
                 "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -30804,12 +30924,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -30843,12 +30973,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -31122,12 +31262,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -31161,12 +31311,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -32668,12 +32828,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -32707,12 +32877,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -32986,12 +33166,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -33025,12 +33215,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -33874,12 +34074,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -33913,12 +34123,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -35364,12 +35584,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -35403,12 +35633,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -35682,12 +35922,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -35721,12 +35971,22 @@
                             "minimum": 1,
                             "maximum": 100000,
                             "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PLATINUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
                           }
                         },
                         "required": [
                           "FREE",
                           "PRO",
-                          "PREMIUM"
+                          "PREMIUM",
+                          "PLATINUM"
                         ],
                         "additionalProperties": false,
                         "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -37172,12 +37432,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -37211,12 +37481,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -37490,12 +37770,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Entries per contest, drafts included. Checked when an entry is added."
@@ -37529,12 +37819,22 @@
                                   "minimum": 1,
                                   "maximum": 100000,
                                   "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PLATINUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
                                 }
                               },
                               "required": [
                                 "FREE",
                                 "PRO",
-                                "PREMIUM"
+                                "PREMIUM",
+                                "PLATINUM"
                               ],
                               "additionalProperties": false,
                               "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
@@ -54819,7 +55119,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick any plan at any time, free, and it applies at once. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.",
+        "description": "Moves an active league to another plan (#945): any commissioner of the league, or a root admin, may pick a plan at any time, free, and it applies at once. A plan whose `commissionerSelectable` is false only a root admin may pick. Every change is logged with who made it; picking the plan the league is already on changes and logs nothing. A lower plan only stops new things: nothing the league already has is removed. Returns the league with its new `planEntitlements`. 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league; 400 LEAGUE_PLAN_NOT_AVAILABLE when a commissioner picks a plan not offered yet; 409 LEAGUE_PLAN_CHANGED when someone else changed the plan during this change, which then changes and logs nothing.",
         "requestBody": {
           "required": true,
           "content": {
@@ -54892,6 +55192,150 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/plan-renewals/extend": {
+      "post": {
+        "operationId": "extendRunningPlanRenewals",
+        "summary": "Extend every running gifted plan",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Root admin only (#986). Moves the renewal date of every league whose gifted plan still runs out to `months` from now; a league whose date is already later keeps it. Each move is logged with who made it, from which date and to which. Returns how many leagues moved and the date they moved to.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendPlanRenewalRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "What extending every running gifted plan did.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtendRunningPlanRenewalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/plan-renewal/extend": {
+      "post": {
+        "operationId": "extendLeaguePlanRenewal",
+        "summary": "Extend the league's gifted plan",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Root admin only (#986). Moves the league's renewal date out to `months` from now, logged with who made it, from which date and to which; a date already later is kept and nothing is logged. The plan itself does not change. Returns the league with its new `planRenewsAt`. 404 LEAGUE_NOT_FOUND for a missing league.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtendPlanRenewalRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

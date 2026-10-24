@@ -3,7 +3,12 @@
  */
 
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { LeagueListResponse, UpdateLeaguePlanRequest } from '@poolmaster/shared/dto';
+import type {
+  ExtendPlanRenewalRequest,
+  ExtendRunningPlanRenewalsResponse,
+  LeagueListResponse,
+  UpdateLeaguePlanRequest,
+} from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type { LeaguePlanService } from '../plans/league-plan-service';
 import { PlanFeatureNotIncludedError } from '../plans/plan-feature-error';
@@ -44,6 +49,8 @@ export function createLeagueHandlers(
     updateLeagueDetails,
     updateLeagueCupSettings,
     updateLeaguePlan,
+    extendLeaguePlanRenewal,
+    extendRunningPlanRenewals,
     inactivateLeague,
     activateLeague,
     deleteLeague,
@@ -498,7 +505,10 @@ export function createLeagueHandlers(
       return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
     }
     try {
-      const league = await leaguePlanService.changePlan(request.params.id, request.body.plan, userId);
+      const league = await leaguePlanService.changePlan(request.params.id, request.body.plan, {
+        userId,
+        isRootAdmin: request.authUser?.isRootAdmin === true,
+      });
       logger.info({
         action: 'leagueRoute.updatePlan.success',
         data: { leagueId: request.params.id, plan: league.plan },
@@ -521,6 +531,59 @@ export function createLeagueHandlers(
       }
       throw err;
     }
+  }
+
+  /** Root admin only: the route's `onRequest: requireRootAdmin` refuses everyone else (#986). */
+  async function extendLeaguePlanRenewal(
+    request: FastifyRequest<{
+      Params: { id: string };
+      Body: ExtendPlanRenewalRequest;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueRoute.extendPlanRenewal.enter',
+      data: { leagueId: request.params.id, months: request.body.months },
+    }, 'Handling extend league plan renewal request');
+    const userId = request.authUser?.userId;
+    if (!userId) {
+      logger.warn({ action: 'leagueRoute.extendPlanRenewal.unauthenticated' }, 'Rejected plan renewal extension without authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    }
+    try {
+      const league = await leaguePlanService.extendRenewal(request.params.id, request.body.months, userId);
+      return reply.send({ league: leagueDto(league) });
+    } catch (err) {
+      if (err instanceof LeagueNotFoundError) {
+        logger.warn({
+          action: 'leagueRoute.extendPlanRenewal.notFound',
+          data: { leagueId: request.params.id },
+        }, 'Cannot extend the plan of a missing league');
+        return sendError(reply, 404, 'LEAGUE_NOT_FOUND', err.message);
+      }
+      throw err;
+    }
+  }
+
+  /** Root admin only, like `extendLeaguePlanRenewal`. */
+  async function extendRunningPlanRenewals(
+    request: FastifyRequest<{ Body: ExtendPlanRenewalRequest }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    logger.debug({
+      action: 'leagueRoute.extendRunningPlanRenewals.enter',
+      data: { months: request.body.months },
+    }, 'Handling extend every running plan renewal request');
+    const userId = request.authUser?.userId;
+    if (!userId) {
+      logger.warn({ action: 'leagueRoute.extendRunningPlanRenewals.unauthenticated' }, 'Rejected plan renewal extension without authenticated session');
+      return sendError(reply, 401, 'AUTH_SESSION_REQUIRED', 'Authenticated session required');
+    }
+    const { extendedCount, renewsAt } = await leaguePlanService.extendRunningRenewals(request.body.months, userId);
+    const body: ExtendRunningPlanRenewalsResponse = { extendedCount, renewsAt: renewsAt.toISOString() };
+    return reply.send(body);
   }
 
   async function deleteLeague(

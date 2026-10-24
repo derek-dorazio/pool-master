@@ -13,7 +13,7 @@ export function planEntitlementsOver(leagues: Pick<LeagueRepository, 'findById'>
   return new PlanEntitlementsService({ leagues, readConfig: config ?? (() => defaults) });
 }
 
-/** For a test whose leagues exist only by id: every league is on Platinum, the default plan. */
+/** For a test whose leagues exist only by id: every league is on Platinum, the test factories' plan. */
 export function platinumEntitlements(): PlanEntitlementsService {
   return planEntitlementsOver({ findById: async (id) => buildLeague({ id }) });
 }

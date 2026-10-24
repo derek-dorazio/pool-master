@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useForm, type UseFormReturn } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  CAPPED_LEAGUE_PLANS,
   LEAGUE_PLANS,
   LeaguePlan,
   PLAN_FEATURE_GROUP,
@@ -85,8 +84,9 @@ export function RootAdminPlansPage() {
     >
       <ManagePageIntro>
         What each league plan allows, from Free up to Platinum. A higher plan always allows at least
-        as much as the one below it, and Platinum has no limits and every feature. A saved change
-        reaches every server within 30 seconds.
+        as much as the one below it, and Platinum has every feature. Commissioners can&apos;t pick
+        Platinum yet: they see it as coming soon. A saved change reaches every server within 30
+        seconds.
       </ManagePageIntro>
       {group ? <PlanSettingsForm group={group} /> : null}
     </AsyncPage>
@@ -204,7 +204,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
             {Object.values(PlanCap).map((cap) => (
               <tr data-testid={`root-admin-plans-cap-${cap}`} key={cap}>
                 <th className="px-4 py-3 align-top font-medium text-foreground" scope="row">{PLAN_CAP_LABEL[cap]}</th>
-                {CAPPED_LEAGUE_PLANS.map((plan) => {
+                {LEAGUE_PLANS.map((plan) => {
                   const cellName = `${PLAN_CAP_LABEL[cap]} on ${LEAGUE_PLAN_LABEL[plan]}`;
                   const error = errors.caps?.[cap]?.[plan]?.limit?.message;
                   const errorId = `root-admin-plans-${cap}-${plan}-error`;
@@ -236,10 +236,6 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                     </td>
                   );
                 })}
-                <td className="px-4 py-3 align-top">
-                  <p className="py-2 text-foreground" data-testid={`root-admin-plans-${cap}-PLATINUM`}>{formatPlanLimit(null)}</p>
-                  <p className="text-sm text-muted-foreground">Always</p>
-                </td>
               </tr>
             ))}
           </tbody>

@@ -9,14 +9,16 @@ import { QueryKeys } from '@/lib/query-keys';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ChoiceCard, FormPage } from '@/features/shared/ui';
+import { useAuth } from '@/features/auth/auth-context';
+import { ChoiceCard, FormPage, formatDateDisplay } from '@/features/shared/ui';
 import { PlanComparisonTable } from './plan-comparison-table';
 import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { useLeaguePlansQuery } from './use-league-plans-query';
 
 /**
- * Choose a plan (#945): any commissioner, or a root admin, moves the league to any plan, free,
- * and it applies at once. The comparison table shows what each plan includes.
+ * Choose a plan (#945): any commissioner, or a root admin, moves the league to a plan, free, and
+ * it applies at once. A plan not offered yet (Platinum, #986) shows as coming soon, and only a
+ * root admin can pick it. The comparison table shows what each plan includes.
  */
 export function EditLeaguePlanPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -41,7 +43,11 @@ function LeaguePlanForm({ league }: { league: LeagueDto }) {
   const queryClient = useQueryClient();
   const settingsPath = buildLeagueAdminPath(league.leagueCode);
   const plansQuery = useLeaguePlansQuery();
+  const { isRootAdmin } = useAuth();
   const [plan, setPlan] = useState<LeaguePlan>(league.planEntitlements.plan);
+  const comingSoon = new Set(isRootAdmin
+    ? []
+    : (plansQuery.data ?? []).filter((option) => !option.commissionerSelectable).map((option) => option.plan));
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (chosen: LeaguePlan) => {
@@ -62,7 +68,7 @@ function LeaguePlanForm({ league }: { league: LeagueDto }) {
   return (
     <FormPage
       cancelTo={settingsPath}
-      description="Every plan is free for now. A change applies at once. Members never see which plan the league is on."
+      description="Every plan is free for now, and Platinum is coming soon. A change applies at once. Members never see which plan the league is on."
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not change the plan.' })
         : null}
@@ -77,18 +83,25 @@ function LeaguePlanForm({ league }: { league: LeagueDto }) {
       testId="edit-plan-page"
       title="Choose a plan"
     >
+      <p className="text-sm text-muted-foreground" data-testid="edit-plan-renews">
+        You&apos;ve been gifted Premium for a preview period. Your league&apos;s Premium preview period ends on {formatDateDisplay(league.planRenewsAt)}.
+      </p>
+
       <fieldset className="space-y-2">
         <legend className="text-sm font-medium text-foreground">Plan</legend>
         <div aria-label="Plan" className="grid gap-2 sm:grid-cols-2" role="radiogroup">
           {LEAGUE_PLANS.map((option) => (
             <ChoiceCard
-              isDisabled={saveMutation.isPending}
+              isDisabled={saveMutation.isPending || comingSoon.has(option)}
               isSelected={option === plan}
               key={option}
               onSelect={() => setPlan(option)}
               testId={`edit-plan-option-${option}`}
             >
               <span className="font-semibold">{LEAGUE_PLAN_LABEL[option]}</span>
+              {comingSoon.has(option) ? (
+                <span className="block text-xs text-muted-foreground" data-testid={`edit-plan-coming-soon-${option}`}>Coming soon</span>
+              ) : null}
             </ChoiceCard>
           ))}
         </div>

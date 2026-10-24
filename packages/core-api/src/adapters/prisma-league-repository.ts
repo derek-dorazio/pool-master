@@ -52,7 +52,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
     return rows.map(mapToLeague);
   }
 
-  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League> {
+  async create(league: Omit<League, 'id' | 'createdAt' | 'updatedAt' | 'cupPointsScale' | 'cupCustomPoints' | 'hallOfLameVisible' | 'plan' | 'planRenewsAt' | 'mutedSportLeagueIds' | 'eventEmailDelivery'>): Promise<League> {
     const row = await this.prisma.league.create({
       data: {
         leagueCode: league.leagueCode,
@@ -84,6 +84,53 @@ export class PrismaLeagueRepository implements LeagueRepository {
       });
       return mapToLeague(await tx.league.findUniqueOrThrow({ where: { id: leagueId } }));
     });
+  }
+
+  async extendPlanRenewal(leagueId: string, change: { renewsAt: Date; changedById: string }): Promise<League | null> {
+    // Serializable, so a date moved meanwhile fails the extension instead of being logged with a
+    // stale from-date. (The stored date has microseconds a JS Date lacks, so it can't be matched by value.)
+    return this.prisma.$transaction(async (tx) => {
+      const league = await tx.league.findUnique({ where: { id: leagueId } });
+      if (!league) {
+        return null;
+      }
+      if (league.planRenewsAt >= change.renewsAt) {
+        return mapToLeague(league);
+      }
+      const moved = await tx.league.update({ where: { id: leagueId }, data: { planRenewsAt: change.renewsAt } });
+      await tx.leaguePlanRenewalChange.create({
+        data: { leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById },
+      });
+      return mapToLeague(moved);
+    }, { isolationLevel: 'Serializable' });
+  }
+
+  async extendRunningPlanRenewals(change: { renewsAt: Date; now: Date; changedById: string }): Promise<number> {
+    // Serializable, so a league whose date moves meanwhile fails the extension instead of being
+    // logged with a stale from-date.
+    return this.prisma.$transaction(async (tx) => {
+      const running = { gt: change.now, lt: change.renewsAt };
+      const leagues = await tx.league.findMany({
+        where: { planRenewsAt: running },
+        select: { id: true, planRenewsAt: true },
+      });
+      if (leagues.length === 0) {
+        return 0;
+      }
+      await tx.league.updateMany({
+        where: { id: { in: leagues.map((league) => league.id) } },
+        data: { planRenewsAt: change.renewsAt },
+      });
+      await tx.leaguePlanRenewalChange.createMany({
+        data: leagues.map((league) => ({
+          leagueId: league.id,
+          fromRenewsAt: league.planRenewsAt,
+          toRenewsAt: change.renewsAt,
+          changedById: change.changedById,
+        })),
+      });
+      return leagues.length;
+    }, { isolationLevel: 'Serializable' });
   }
 
   async update(id: string, updates: Partial<League>): Promise<League> {
@@ -121,6 +168,7 @@ function mapToLeague(row: PrismaLeague): League {
     cupCustomPoints: row.cupCustomPoints,
     hallOfLameVisible: row.hallOfLameVisible,
     plan: row.plan,
+    planRenewsAt: row.planRenewsAt,
     mutedSportLeagueIds: row.mutedSportLeagueIds,
     eventEmailDelivery: row.eventEmailDelivery,
     createdAt: row.createdAt,

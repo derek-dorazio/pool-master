@@ -32,6 +32,7 @@ import {
 
 const activateLeagueMock = vi.fn();
 const deleteLeagueMock = vi.fn();
+const extendLeaguePlanRenewalMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const inactivateLeagueMock = vi.fn();
@@ -48,6 +49,7 @@ const updateLeaguePlanMock = vi.fn();
 bindApiMocks({
   activateLeague: activateLeagueMock,
   deleteLeague: deleteLeagueMock,
+  extendLeaguePlanRenewal: extendLeaguePlanRenewalMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
   inactivateLeague: inactivateLeagueMock,
@@ -140,7 +142,7 @@ function primeMocks({
 
 afterEach(() => {
   for (const mock of [
-    activateLeagueMock, deleteLeagueMock, getCurrentUserMock, getLeagueByCodeMock,
+    activateLeagueMock, deleteLeagueMock, extendLeaguePlanRenewalMock, getCurrentUserMock, getLeagueByCodeMock,
     inactivateLeagueMock, listLeagueMembersMock, listLeaguePlansMock, listLeagueSquadsMock, listSportLeaguesMock,
     refreshTokenMock, updateLeagueCupSettingsMock, updateLeagueDetailsMock, updateLeagueEventEmailSettingsMock,
     updateLeaguePlanMock,
@@ -653,14 +655,15 @@ const FREE_PLAN = buildPlanEntitlements({
   plan: 'FREE',
   caps: { ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 1 },
   features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS'],
+  commissionerSelectable: true,
 });
 
 function primePlanList() {
   listLeaguePlansMock.mockResolvedValue(apiSuccess({
     plans: [
       FREE_PLAN,
-      buildPlanEntitlements({ plan: 'PRO', caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 }, features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'] }),
-      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 } }),
+      buildPlanEntitlements({ plan: 'PRO', caps: { ENTRIES_PER_CONTEST: 50, SPORTS_LEAGUES_PER_YEAR: 3 }, features: ['EMAIL_CONTEST_OPENED', 'EMAIL_CONTEST_RESULTS', 'CHAMPIONSHIP'], commissionerSelectable: true }),
+      buildPlanEntitlements({ plan: 'PREMIUM', caps: { ENTRIES_PER_CONTEST: 100, SPORTS_LEAGUES_PER_YEAR: 10 }, commissionerSelectable: true }),
       buildPlanEntitlements(),
     ],
   }));
@@ -679,13 +682,81 @@ describe('League plan', () => {
     expect(plan.getByRole('link', { name: 'Change' })).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan/edit');
   });
 
-  it('shows Platinum, the plan every league starts on, as unlimited', async () => {
+  it('shows a plan with no limit set as unlimited', async () => {
     primeMocks();
 
     renderCommissionerTools();
 
     expect(await screen.findByTestId('league-settings-plan-name')).toHaveTextContent('Platinum');
     expect(screen.getByTestId('league-settings-plan-cap-ENTRIES_PER_CONTEST')).toHaveTextContent('Unlimited');
+  });
+
+  it('shows on League settings when the league\'s Premium preview period ends, and offers a commissioner no way to extend it', async () => {
+    primeMocks({ league: { planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+
+    renderCommissionerTools();
+
+    expect(await screen.findByTestId('league-settings-plan-renews'))
+      .toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+    expect(screen.queryByTestId('league-settings-plan-extend')).not.toBeInTheDocument();
+  });
+
+  it('lets a root admin extend the league\'s Premium preview period by the chosen months, showing the new date', async () => {
+    primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER' });
+    const extended = buildLeague({ planRenewsAt: '2027-10-24T12:00:00.000Z' });
+    extendLeaguePlanRenewalMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(extended)));
+    const { queryClient } = renderCommissionerTools();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
+
+    fireEvent.change(await screen.findByTestId('league-settings-plan-extend-months'), { target: { value: '12' } });
+    fireEvent.click(screen.getByTestId('league-settings-plan-extend-submit'));
+
+    expect(await screen.findByTestId('league-settings-plan-extend-result'))
+      .toHaveTextContent(`The Premium preview period now ends on ${new Date('2027-10-24T12:00:00.000Z').toLocaleDateString()}.`);
+    expect(extendLeaguePlanRenewalMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, body: { months: 12 } }));
+    expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-10-24T12:00:00.000Z').toLocaleDateString());
+    expect(invalidate).toHaveBeenCalledWith(expect.objectContaining({ queryKey: QueryKeys.rootAdmin.manageLeagues }));
+  });
+
+  it('shows the reason when extending the gift fails, keeping the date', async () => {
+    primeMocks({ isRootAdmin: true, league: { planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+    extendLeaguePlanRenewalMock.mockResolvedValue({ error: { error: { code: 'LEAGUE_NOT_FOUND', message: 'League not found' } } });
+
+    renderCommissionerTools();
+
+    fireEvent.click(await screen.findByTestId('league-settings-plan-extend-submit'));
+
+    expect(await screen.findByText('League not found')).toBeInTheDocument();
+    expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
+  });
+
+  it('shows a commissioner Platinum as coming soon, not selectable, and says when the Premium preview period ends', async () => {
+    primeMocks({ league: { planEntitlements: FREE_PLAN, planRenewsAt: '2027-04-24T12:00:00.000Z' } });
+    primePlanList();
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    expect(await screen.findByTestId('edit-plan-coming-soon-PLATINUM')).toHaveTextContent('Coming soon');
+    expect(screen.getByTestId('edit-plan-option-PLATINUM')).toBeDisabled();
+    expect(screen.getByTestId('edit-plan-option-PREMIUM')).toBeEnabled();
+    expect(screen.queryByTestId('edit-plan-coming-soon-PREMIUM')).not.toBeInTheDocument();
+    expect(screen.getByTestId('edit-plan-renews'))
+      .toHaveTextContent(`You've been gifted Premium for a preview period. Your league's Premium preview period ends on ${new Date('2027-04-24T12:00:00.000Z').toLocaleDateString()}.`);
+  });
+
+  it('lets a root admin pick Platinum, which commissioners see as coming soon', async () => {
+    primeMocks({ isRootAdmin: true, leagueRole: 'MEMBER', league: { planEntitlements: FREE_PLAN } });
+    primePlanList();
+    updateLeaguePlanMock.mockResolvedValue(apiSuccess(updateLeagueDetailsData(buildLeague())));
+
+    renderCommissionerTools('/league/BIGDAWGS/admin/plan/edit');
+
+    await screen.findByTestId('plan-comparison-table');
+    expect(screen.queryByTestId('edit-plan-coming-soon-PLATINUM')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('edit-plan-option-PLATINUM'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save plan' }));
+
+    await waitFor(() => expect(updateLeaguePlanMock).toHaveBeenCalledWith(expect.objectContaining({ body: { plan: 'PLATINUM' } })));
   });
 
   it('compares every plan side by side, its limits and which features it includes', async () => {

@@ -1,15 +1,27 @@
 import { LeaguePlan } from '@poolmaster/shared/domain';
-import { LeaguePlanService } from '../../../packages/core-api/src/modules/plans/league-plan-service';
+import { LeaguePlanService, type LeaguePlanServiceDeps } from '../../../packages/core-api/src/modules/plans/league-plan-service';
+import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
+import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { LeagueNotFoundError, LeagueOperationError } from '../../../packages/core-api/src/modules/leagues/service';
 import { inMemoryLeagueWorld } from '../../support/in-memory-league-world';
 
-// Choosing a plan (#945): any commissioner or root admin moves a league to any plan, at once, logged.
+// Choosing a plan (#945): any commissioner or root admin moves a league to a plan, at once, logged;
+// only a root admin to one not offered yet (#986). Extending a gifted plan (#986): a root admin moves
+// renewal dates out, never earlier, logged.
 
-function setup() {
+const NOW = new Date('2026-10-24T15:00:00.000Z');
+
+function planEntitlements() {
+  return new PlanEntitlementsService({ leagues: { findById: async () => null }, readConfig: () => PLAN_SETTINGS.defaults({}) });
+}
+
+function setup(leagues?: LeaguePlanServiceDeps['leagues']) {
   const world = inMemoryLeagueWorld();
-  const service = new LeaguePlanService({ leagues: world.leagues });
-  const commissioner = world.addUser();
-  return { world, service, commissioner };
+  const service = new LeaguePlanService({ leagues: leagues ?? world.leagues, planEntitlements: planEntitlements(), now: () => NOW });
+  const user = world.addUser();
+  const commissioner = { userId: user.id, isRootAdmin: false };
+  const rootAdmin = { userId: user.id, isRootAdmin: true };
+  return { world, service, commissioner, rootAdmin };
 }
 
 describe('LeaguePlanService', () => {
@@ -17,12 +29,12 @@ describe('LeaguePlanService', () => {
     const { world, service, commissioner } = setup();
     const league = world.addLeague();
 
-    const updated = await service.changePlan(league.id, LeaguePlan.FREE, commissioner.id);
+    const updated = await service.changePlan(league.id, LeaguePlan.FREE, commissioner);
 
     expect(updated.plan).toBe(LeaguePlan.FREE);
     expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.FREE);
     expect(world.planChanges).toEqual([
-      { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: commissioner.id },
+      { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: commissioner.userId },
     ]);
   });
 
@@ -30,8 +42,8 @@ describe('LeaguePlanService', () => {
     const { world, service, commissioner } = setup();
     const league = world.addLeague();
 
-    await service.changePlan(league.id, LeaguePlan.FREE, commissioner.id);
-    const updated = await service.changePlan(league.id, LeaguePlan.PREMIUM, commissioner.id);
+    await service.changePlan(league.id, LeaguePlan.FREE, commissioner);
+    const updated = await service.changePlan(league.id, LeaguePlan.PREMIUM, commissioner);
 
     expect(updated.plan).toBe(LeaguePlan.PREMIUM);
     expect(world.planChanges.map((change) => [change.fromPlan, change.toPlan])).toEqual([
@@ -44,27 +56,29 @@ describe('LeaguePlanService', () => {
     const { world, service, commissioner } = setup();
     const league = world.addLeague({ plan: LeaguePlan.PRO });
 
-    const updated = await service.changePlan(league.id, LeaguePlan.PRO, commissioner.id);
+    const updated = await service.changePlan(league.id, LeaguePlan.PRO, commissioner);
 
     expect(updated.plan).toBe(LeaguePlan.PRO);
     expect(world.planChanges).toEqual([]);
   });
 
   it('refuses with 409 LEAGUE_PLAN_CHANGED, changing and logging nothing, when someone else changed the plan during the change', async () => {
-    const { world, commissioner } = setup();
+    const world = inMemoryLeagueWorld();
+    const commissioner = { userId: world.addUser().id, isRootAdmin: false };
     const league = world.addLeague();
     // Someone else moves the league to Pro between this change's read and its write.
     const service = new LeaguePlanService({
       leagues: {
-        findById: world.leagues.findById,
+        ...world.leagues,
         changePlan: async (leagueId, change) => {
           await world.leagues.changePlan(leagueId, { fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.PRO, changedById: 'other' });
           return world.leagues.changePlan(leagueId, change);
         },
       },
+      planEntitlements: planEntitlements(),
     });
 
-    const attempt = service.changePlan(league.id, LeaguePlan.FREE, commissioner.id);
+    const attempt = service.changePlan(league.id, LeaguePlan.FREE, commissioner);
 
     await expect(attempt).rejects.toMatchObject({ code: 'LEAGUE_PLAN_CHANGED', statusCode: 409 });
     expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.PRO);
@@ -74,7 +88,7 @@ describe('LeaguePlanService', () => {
   it('rejects a plan change for a league that does not exist', async () => {
     const { service, commissioner } = setup();
 
-    await expect(service.changePlan('missing-league', LeaguePlan.FREE, commissioner.id))
+    await expect(service.changePlan('missing-league', LeaguePlan.FREE, commissioner))
       .rejects.toBeInstanceOf(LeagueNotFoundError);
   });
 
@@ -82,11 +96,79 @@ describe('LeaguePlanService', () => {
     const { world, service, commissioner } = setup();
     const league = world.addLeague({ isActive: false });
 
-    const attempt = service.changePlan(league.id, LeaguePlan.FREE, commissioner.id);
+    const attempt = service.changePlan(league.id, LeaguePlan.FREE, commissioner);
 
     await expect(attempt).rejects.toBeInstanceOf(LeagueOperationError);
     await expect(attempt).rejects.toMatchObject({ code: 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE' });
     expect(world.planChanges).toEqual([]);
     expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.PLATINUM);
+  });
+
+  it('refuses a commissioner Platinum, which is not offered yet, with 400 LEAGUE_PLAN_NOT_AVAILABLE, changing and logging nothing', async () => {
+    const { world, service, commissioner } = setup();
+    const league = world.addLeague({ plan: LeaguePlan.PREMIUM });
+
+    const attempt = service.changePlan(league.id, LeaguePlan.PLATINUM, commissioner);
+
+    await expect(attempt).rejects.toMatchObject({ code: 'LEAGUE_PLAN_NOT_AVAILABLE', statusCode: 400 });
+    expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.PREMIUM);
+    expect(world.planChanges).toEqual([]);
+  });
+
+  it('lets a root admin move a league to Platinum, logged', async () => {
+    const { world, service, rootAdmin } = setup();
+    const league = world.addLeague({ plan: LeaguePlan.PREMIUM });
+
+    const updated = await service.changePlan(league.id, LeaguePlan.PLATINUM, rootAdmin);
+
+    expect(updated.plan).toBe(LeaguePlan.PLATINUM);
+    expect(world.planChanges.map((change) => change.toPlan)).toEqual([LeaguePlan.PLATINUM]);
+  });
+
+  it('extends one league\'s gift to the chosen months from now, logging who moved it from which date to which', async () => {
+    const { world, service, rootAdmin } = setup();
+    const league = world.addLeague({ planRenewsAt: new Date('2027-01-10T00:00:00.000Z') });
+
+    const updated = await service.extendRenewal(league.id, 6, rootAdmin.userId);
+
+    expect(updated.planRenewsAt).toEqual(new Date('2027-04-24T15:00:00.000Z'));
+    expect(updated.plan).toBe(LeaguePlan.PLATINUM);
+    expect(world.planRenewalChanges).toEqual([{
+      leagueId: league.id,
+      fromRenewsAt: new Date('2027-01-10T00:00:00.000Z'),
+      toRenewsAt: new Date('2027-04-24T15:00:00.000Z'),
+      changedById: rootAdmin.userId,
+    }]);
+  });
+
+  it('never moves a gift earlier: a league renewing after the new date keeps it, and nothing is logged', async () => {
+    const { world, service, rootAdmin } = setup();
+    const league = world.addLeague({ planRenewsAt: new Date('2028-01-01T00:00:00.000Z') });
+
+    const updated = await service.extendRenewal(league.id, 1, rootAdmin.userId);
+
+    expect(updated.planRenewsAt).toEqual(new Date('2028-01-01T00:00:00.000Z'));
+    expect(world.planRenewalChanges).toEqual([]);
+  });
+
+  it('refuses to extend the gift of a league that does not exist', async () => {
+    const { service, rootAdmin } = setup();
+
+    await expect(service.extendRenewal('missing-league', 3, rootAdmin.userId)).rejects.toBeInstanceOf(LeagueNotFoundError);
+  });
+
+  it('extends every gift that still runs and ends sooner, leaving ended gifts and later ones alone', async () => {
+    const { world, service, rootAdmin } = setup();
+    const soon = world.addLeague({ planRenewsAt: new Date('2026-11-01T00:00:00.000Z') });
+    const ended = world.addLeague({ planRenewsAt: new Date('2026-10-01T00:00:00.000Z') });
+    const later = world.addLeague({ planRenewsAt: new Date('2027-12-01T00:00:00.000Z') });
+
+    const result = await service.extendRunningRenewals(3, rootAdmin.userId);
+
+    expect(result).toEqual({ extendedCount: 1, renewsAt: new Date('2027-01-24T15:00:00.000Z') });
+    expect((await world.leagues.findById(soon.id))?.planRenewsAt).toEqual(new Date('2027-01-24T15:00:00.000Z'));
+    expect((await world.leagues.findById(ended.id))?.planRenewsAt).toEqual(new Date('2026-10-01T00:00:00.000Z'));
+    expect((await world.leagues.findById(later.id))?.planRenewsAt).toEqual(new Date('2027-12-01T00:00:00.000Z'));
+    expect(world.planRenewalChanges.map((change) => change.leagueId)).toEqual([soon.id]);
   });
 });

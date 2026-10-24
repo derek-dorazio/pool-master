@@ -50,16 +50,16 @@ describe('RootAdminPlansPage', () => {
     listSettingsGroupsMock.mockResolvedValue({ data: { groups: [planGroupFixture()] } });
   });
 
-  it('shows each cap\'s limit on Free, Pro and Premium, with Platinum fixed at unlimited and not editable', async () => {
+  it('shows each cap\'s limit on every plan, Platinum\'s editable like the rest', async () => {
     renderPage();
 
     const entries = within(await screen.findByTestId('root-admin-plans-cap-ENTRIES_PER_CONTEST'));
     expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit')).toHaveValue('20');
     expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PRO-limit')).toHaveValue('50');
     expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PREMIUM-limit')).toHaveValue('100');
-    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PLATINUM')).toHaveTextContent('Unlimited');
-    expect(entries.queryByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PLATINUM-limit')).not.toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-FREE-limit')).toHaveValue('1');
+    expect(entries.getByTestId('root-admin-plans-ENTRIES_PER_CONTEST-PLATINUM-limit')).toHaveValue('500');
+    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-FREE-limit')).toHaveValue('5');
+    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-limit')).toHaveValue('50');
     expect(screen.getByTestId('root-admin-plans-last-change')).toHaveTextContent('Never changed: using the starting values.');
   });
 
@@ -82,7 +82,7 @@ describe('RootAdminPlansPage', () => {
     expect(championships.getByRole('combobox', { name: 'Sports league cups starts at' })).toHaveValue('PRO');
     const history = within(screen.getByTestId('root-admin-plans-features-HISTORY'));
     expect(history.getByText('Contest results and places, and the Contests page History view')).toBeInTheDocument();
-    expect(history.getByRole('combobox', { name: 'Record book starts at' })).toHaveValue('PLATINUM');
+    expect(history.getByRole('combobox', { name: 'Record book starts at' })).toHaveValue('PREMIUM');
     // Each always-included row says so and offers nothing to change.
     expect(history.getAllByRole('combobox')).toHaveLength(3);
     expect(history.getByText('Always')).toBeInTheDocument();
@@ -94,8 +94,8 @@ describe('RootAdminPlansPage', () => {
 
     await screen.findByTestId('root-admin-plans-form');
     setLimit('root-admin-plans-ENTRIES_PER_CONTEST-FREE-limit', '25');
-    fireEvent.click(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PREMIUM-unlimited'));
-    fireEvent.change(screen.getByTestId('root-admin-plans-feature-RECORD_BOOK'), { target: { value: 'PREMIUM' } });
+    fireEvent.click(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-unlimited'));
+    fireEvent.change(screen.getByTestId('root-admin-plans-feature-RECORD_BOOK'), { target: { value: 'PLATINUM' } });
     fireEvent.click(screen.getByTestId('root-admin-plans-save'));
 
     await waitFor(() => expect(updateSettingsGroupMock).toHaveBeenCalledTimes(1));
@@ -104,13 +104,13 @@ describe('RootAdminPlansPage', () => {
     expect(request.body.expectedUpdatedAt).toBeNull();
     expect(savedValue()).toEqual({
       caps: {
-        ENTRIES_PER_CONTEST: { FREE: 25, PRO: 50, PREMIUM: 100 },
-        SPORTS_LEAGUES_PER_YEAR: { FREE: 1, PRO: 3, PREMIUM: null },
+        ENTRIES_PER_CONTEST: { FREE: 25, PRO: 50, PREMIUM: 100, PLATINUM: 500 },
+        SPORTS_LEAGUES_PER_YEAR: { FREE: 5, PRO: 15, PREMIUM: 30, PLATINUM: null },
       },
-      features: { ...planGroupFixture().value.features, RECORD_BOOK: 'PREMIUM' },
+      features: { ...planGroupFixture().value.features, RECORD_BOOK: 'PLATINUM' },
     });
     expect(await screen.findByTestId('root-admin-plans-last-change')).toHaveTextContent('Last changed by Ada Admin');
-    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PREMIUM-unlimited')).toBeChecked();
+    expect(screen.getByTestId('root-admin-plans-SPORTS_LEAGUES_PER_YEAR-PLATINUM-unlimited')).toBeChecked();
   });
 
   it('refuses to save a cap below the plan beneath it, saying so on that plan\'s cell', async () => {
@@ -155,7 +155,7 @@ describe('RootAdminPlansPage', () => {
   it('offers to load the newer plans when someone else saved first, then saves against that version', async () => {
     const theirs = savedGroup({
       ...planGroupFixture().value,
-      caps: { ...planGroupFixture().value.caps, ENTRIES_PER_CONTEST: { FREE: 30, PRO: 50, PREMIUM: 100 } },
+      caps: { ...planGroupFixture().value.caps, ENTRIES_PER_CONTEST: { FREE: 30, PRO: 50, PREMIUM: 100, PLATINUM: 500 } },
     });
     updateSettingsGroupMock.mockResolvedValueOnce({
       error: { error: { code: 'SETTINGS_CONFLICT', message: 'Settings group PLAN_CONFIG was changed by someone else; reload and try again.' } },

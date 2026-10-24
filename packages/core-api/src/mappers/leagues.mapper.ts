@@ -37,6 +37,7 @@ export function toLeagueDto(
     cupCustomPoints: league.cupCustomPoints,
     hallOfLameVisible: league.hallOfLameVisible,
     planEntitlements: toPlanEntitlementsDto(entitlements),
+    planRenewsAt: league.planRenewsAt.toISOString(),
     mutedSportLeagueIds: league.mutedSportLeagueIds,
     eventEmailDelivery: league.eventEmailDelivery,
   };
