@@ -24,6 +24,7 @@ import {
 
 import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearView } from '../championship/service';
 import type { CupService, CupStandingView, CupView } from '../cups/service';
+import { buildPerpetualTrophies, type PerpetualTrophy } from './perpetual-trophies';
 import { rankRecords, type RecordStand } from './records';
 
 /** No date range: the record book names its contests by id alone. */
@@ -163,8 +164,21 @@ export interface RecordView {
   nextBest: RecordStandView | null;
 }
 
+/** A plate of a perpetual trophy (#874): the year's contest and its winners, none for no result. */
+export interface PerpetualPlateView {
+  year: number;
+  contestId: string;
+  /** In name order. */
+  winners: Squad[];
+}
+
+/** One perpetual trophy (#874): a contest the league runs every year, with a plate per year. */
+export interface PerpetualTrophyView extends Omit<PerpetualTrophy, 'plates'> {
+  plates: PerpetualPlateView[];
+}
+
 export interface HistoryServiceDeps {
-  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests'>;
+  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests' | 'findSeriesContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
   leagues: Pick<LeagueRepository, 'findById'>;
   championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
@@ -254,6 +268,31 @@ export class HistoryService {
     });
     this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length, hallOfLame } }, 'Read the league\'s record book');
     return ranked.map((record) => ({ type: record.type, best: standView(record.best), nextBest: record.nextBest === null ? null : standView(record.nextBest) }));
+  }
+
+  /**
+   * The league's perpetual trophies (#874): every contest of one event it has run in two or more
+   * years, the same series and selection type, with a plate per year naming its winners. A week of
+   * games and a contest not counted earn none. A squad that has since gone inactive keeps its plates.
+   */
+  async getPerpetualTrophies(leagueId: string): Promise<PerpetualTrophyView[]> {
+    const [contests, finishes, squads] = await Promise.all([
+      this.deps.finishes.findSeriesContests(leagueId),
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+    ]);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const trophies = buildPerpetualTrophies(contests, finishes).map((trophy) => ({
+      ...trophy,
+      plates: trophy.plates.map(({ winnerSquadIds, ...plate }) => ({
+        ...plate,
+        winners: winnerSquadIds
+          .flatMap((squadId) => squadsById.get(squadId) ?? [])
+          .sort((left, right) => left.name.localeCompare(right.name)),
+      })),
+    }));
+    this.deps.logger?.debug({ action: 'history.perpetualTrophies', data: { leagueId, trophyCount: trophies.length } }, 'Read the league\'s perpetual trophies');
+    return trophies;
   }
 
   /**

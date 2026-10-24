@@ -7,11 +7,13 @@ import {
   getYearReview,
   listChampionshipYears,
   listContestResults,
+  listPerpetualTrophies,
   listRecords,
   type ChampionshipDto,
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
   type HistorySummaryDto,
+  type PerpetualTrophyDto,
   type RecordDto,
   type SquadHistoryDto,
   type SquadYearDto,
@@ -172,6 +174,24 @@ export function useYearReviewQuery(leagueId: string, enabled: boolean) {
       return response.data.yearReview;
     },
     enabled: Boolean(leagueId) && enabled,
+    retry: false,
+  });
+}
+
+/** The league's perpetual trophies (#874): each contest it runs every year, with a plate per year. */
+export function usePerpetualTrophiesQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.perpetualTrophies(leagueId),
+    queryFn: async (): Promise<PerpetualTrophyDto[]> => {
+      const response = await listPerpetualTrophies({ path: { id: leagueId } });
+
+      if (!response.data?.trophies) {
+        throwApiError(response.error, 'Perpetual trophies response is missing data.');
+      }
+
+      return response.data.trophies;
+    },
+    enabled: Boolean(leagueId),
     retry: false,
   });
 }

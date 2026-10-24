@@ -91,7 +91,7 @@ function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {
       settledAt,
     })));
   };
-  return { contest, finish, service };
+  return { contest, finish, finishes, service };
 }
 
 describe('HistoryService (#837)', () => {
@@ -114,6 +114,31 @@ describe('HistoryService (#837)', () => {
       RecordType.BIGGEST_FIELD_WON,
       RecordType.MOST_LAST_PLACES,
       RecordType.LONGEST_DROUGHT,
+    ]);
+  });
+
+  it('names each perpetual trophy plate\'s winners as squads, in name order', async () => {
+    const { finish, finishes, service } = build();
+    for (const year of [2024, 2025]) {
+      finishes.seriesContests.push({ leagueId: LEAGUE, contest: {
+        id: `masters-${year}`,
+        selectionType: SelectionType.TIERED,
+        cupWeight: CupWeight.NORMAL,
+        eventSeriesId: 'masters',
+        seriesName: 'Masters Tournament',
+        sportLeagueName: 'PGA Tour',
+        eventYear: year,
+        completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
+        games: [],
+      } });
+    }
+    finish('masters-2024', 2024, [['eagles', 1, 2], ['bogeys', 1, 2]]);
+    finish('masters-2025', 2025, [['birdies', 1, 1], ['eagles', 2, 1]]);
+
+    const trophies = await service.getPerpetualTrophies(LEAGUE);
+
+    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
+      ['Masters Tournament', [[2025, 'masters-2025', ['Birdies']], [2024, 'masters-2024', ['Bogeys', 'Eagles']]]],
     ]);
   });
 

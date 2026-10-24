@@ -1,7 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { GetSquadYearQuery, ListContestResultsQuery } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
-import { toContestResultSummaryDto, toHistorySummaryDto, toRecordDto, toSquadHistoryDto, toSquadYearDto, toYearReviewDto } from '../../mappers/history.mapper';
+import { toContestResultSummaryDto, toHistorySummaryDto, toPerpetualTrophyDto, toRecordDto, toSquadHistoryDto, toSquadYearDto, toYearReviewDto } from '../../mappers/history.mapper';
 import { HistorySquadNotFoundError, HistorySquadRequiredError, type HistoryService } from './service';
 import {
   YearReviewAlreadySentError,
@@ -11,7 +11,7 @@ import {
 } from './year-review-service';
 
 export function createHistoryHandlers(service: HistoryService, yearReviews: YearReviewService) {
-  return { listContestResults, getHistorySummary, getSquadYear, getSquadHistory, getYearReview, sendYearReview, listRecords };
+  return { listContestResults, getHistorySummary, getSquadYear, getSquadHistory, getYearReview, sendYearReview, listRecords, listPerpetualTrophies };
 
   async function getYearReview(
     request: FastifyRequest<{ Params: { id: string } }>,
@@ -33,6 +33,13 @@ export function createHistoryHandlers(service: HistoryService, yearReviews: Year
       }
       throw error;
     }
+  }
+
+  async function listPerpetualTrophies(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    return reply.send({ trophies: (await service.getPerpetualTrophies(request.params.id)).map(toPerpetualTrophyDto) });
   }
 
   async function listRecords(

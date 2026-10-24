@@ -1,7 +1,7 @@
 import { TrophyKind } from '@poolmaster/shared/domain';
-import type { ContestResultSummaryDto, HistorySummaryDto, RecordDto, RecordStandDto, SquadHistoryDto, SquadYearDto, YearReviewDto } from '@poolmaster/shared/dto';
+import type { ContestResultSummaryDto, HistorySummaryDto, PerpetualTrophyDto, RecordDto, RecordStandDto, SquadHistoryDto, SquadYearDto, YearReviewDto } from '@poolmaster/shared/dto';
 import { formatUserName } from '../modules/email/email-content';
-import type { ContestResultView, HistorySummaryView, RecordStandView, RecordView, SquadHistoryView, SquadYearView } from '../modules/history/service';
+import type { ContestResultView, HistorySummaryView, PerpetualTrophyView, RecordStandView, RecordView, SquadHistoryView, SquadYearView } from '../modules/history/service';
 import type { YearReviewView } from '../modules/history/year-review-service';
 import { championshipName, toChampionshipSquadDto, toChampionshipStandingRowDto } from './championship.mapper';
 import { cupName, toCupStandingRowDto } from './cups.mapper';
@@ -108,6 +108,20 @@ function toRecordStandDto(view: RecordStandView): RecordStandDto {
       year: holder.year,
       contestId: holder.contest?.id ?? null,
       contestName: holder.contest?.name ?? null,
+    })),
+  };
+}
+
+export function toPerpetualTrophyDto(view: PerpetualTrophyView): PerpetualTrophyDto {
+  return {
+    eventSeriesId: view.eventSeriesId,
+    seriesName: view.seriesName,
+    sportLeagueName: view.sportLeagueName,
+    selectionType: view.selectionType,
+    plates: view.plates.map((plate) => ({
+      year: plate.year,
+      contestId: plate.contestId,
+      winners: plate.winners.map(toChampionshipSquadDto),
     })),
   };
 }

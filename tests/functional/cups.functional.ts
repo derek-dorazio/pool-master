@@ -22,6 +22,7 @@ import {
   listChampionshipYears,
   listContestConfigTemplates,
   listContestResults,
+  listPerpetualTrophies,
   listRecords,
   listCupSeasons,
   listCups,
@@ -49,6 +50,7 @@ import {
   CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueResponseSchema,
+  PerpetualTrophyListResponseSchema,
   RecordListResponseSchema,
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
@@ -134,10 +136,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     })).data).templates.find((template) => template.templateKey === 'wmm-men-tiered-top-10'));
 
     /** A released race with the five runners, tiered one to a tier by ranking. */
-    const releaseRace = async (name: string, startDate: string) => {
+    const releaseRace = async (name: string, startDate: string, eventYear = SEASON) => {
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { sportLeagueId: majorsMen.id, eventYear: SEASON, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { sportLeagueId: majorsMen.id, eventYear, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });
@@ -453,6 +455,21 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });
     expect(unknownSquad.response.status).toBe(404);
     expect(unknownSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
+
+    // --- Perpetual trophies (#874): the Harbour Marathon picks, run again the next year, make one ---
+    const perpetual = async () => PerpetualTrophyListResponseSchema.parse(expectDefined((await listPerpetualTrophies({ client: member.client, path: { id: league.id } })).data)).trophies;
+    expect(await perpetual()).toEqual([]);
+    const harbourAgain = await releaseRace('Harbour Marathon', `${SEASON + 1}-04-18T13:30:00.000Z`, SEASON + 1);
+    const harbourAgainContest = await runContest(harbourAgain, `Harbour Picks again ${RUN}`, { Kiplimo: 1, Kipruto: 2, Tola: 3, Abdi: 4, Lemma: 5 });
+    const trophies = await perpetual();
+    expect(trophies).toHaveLength(1);
+    const trophy = expectDefined(trophies[0]);
+    expect([trophy.seriesName, trophy.selectionType]).toEqual([`Harbour Marathon ${RUN}`, SelectionType.TIERED]);
+    // The commissioner's Tola 3rd wins the second year; the member won the first.
+    expect(trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.squadId === memberSquadId)])).toEqual([
+      [SEASON + 1, harbourAgainContest, [false]],
+      [SEASON, harbourContest, [true]],
+    ]);
   });
 
   it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {

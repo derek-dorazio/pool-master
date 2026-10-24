@@ -29,7 +29,7 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, listRecordsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getHistorySummaryMock: vi.fn(),
@@ -42,6 +42,7 @@ const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjecti
   listContestResultsMock: vi.fn(),
   listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
+  listPerpetualTrophiesMock: vi.fn(),
   listRecordsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
   sendYearReviewMock: vi.fn(),
@@ -60,6 +61,7 @@ bindApiMocks({
   listContestResults: listContestResultsMock,
   listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
+  listPerpetualTrophies: listPerpetualTrophiesMock,
   listRecords: listRecordsMock,
   refreshToken: refreshTokenMock,
   sendYearReview: sendYearReviewMock,
@@ -111,6 +113,7 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
   getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'NOTHING_TO_SEND', sentAt: null, sentByName: null } }));
   listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
+  listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
 }
 
 /** The year's final contests, newest first: a counted one, a not-counted one, one rained out. */
@@ -187,7 +190,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
     mock.mockReset();
   }
 });
@@ -467,6 +470,68 @@ describe('Championships › Trophy case', () => {
 
     expect(await screen.findByTestId('trophy-case-empty')).toHaveTextContent('once two of its contests have counted');
     expect(screen.queryByTestId('cup-card-cup-nba')).not.toBeInTheDocument();
+  });
+
+  it('shows each perpetual trophy under the cups with a plate per year, naming every winner, and a year with no result', async () => {
+    primeViewer([buildRunningCup()]);
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Super Bowl',
+      sportLeagueName: 'NFL',
+      selectionType: 'SQUARES',
+      plates: [
+        { year: 2026, contestId: 'bowl-2026', winners: [casey, birdies] },
+        { year: 2025, contestId: 'bowl-2025', winners: [] },
+        { year: 2024, contestId: 'bowl-2024', winners: [birdies] },
+      ],
+    }] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    const trophy = await screen.findByTestId('perpetual-trophy-11111111-1111-4111-8111-111111111111-SQUARES');
+    expect(trophy).toHaveTextContent('Super Bowl Squares');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2026')).toHaveTextContent('2026Casey Crushers and Birdie Bandits');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2025')).toHaveTextContent('2025No result');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2024')).toHaveTextContent('2024Birdie Bandits');
+    expect(screen.getByTestId('cup-card-cup-pga')).toBeInTheDocument();
+  });
+
+  it('tells apart the men\'s and women\'s trophies of a shared series by their sports league', async () => {
+    primeViewer([buildRunningCup()]);
+    const draw = (eventSeriesId: string, sportLeagueName: string) => ({
+      eventSeriesId,
+      seriesName: 'US Open',
+      sportLeagueName,
+      selectionType: 'BRACKET',
+      plates: [{ year: 2026, contestId: `${sportLeagueName}-2026`, winners: [] }, { year: 2025, contestId: `${sportLeagueName}-2025`, winners: [] }],
+    } as const);
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [
+      draw('11111111-1111-4111-8111-111111111111', 'ATP'),
+      draw('22222222-2222-4222-8222-222222222222', 'WTA'),
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('perpetual-trophy-11111111-1111-4111-8111-111111111111-BRACKET')).toHaveTextContent('US Open BracketATP');
+    expect(screen.getByTestId('perpetual-trophy-22222222-2222-4222-8222-222222222222-BRACKET')).toHaveTextContent('US Open BracketWTA');
+  });
+
+  it('shows the perpetual trophies even in a year with no cup on show', async () => {
+    primeViewer([NBA_CUP]);
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Masters Tournament',
+      sportLeagueName: 'PGA Tour',
+      selectionType: 'TIERED',
+      plates: [{ year: 2025, contestId: 'masters-2025', winners: [] }, { year: 2024, contestId: 'masters-2024', winners: [] }],
+    }] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('perpetual-trophies')).toHaveTextContent('Masters Tournament Tiered');
+    expect(screen.getByTestId('trophy-case-empty')).toBeInTheDocument();
   });
 
   it('says so when the cups cannot be loaded', async () => {

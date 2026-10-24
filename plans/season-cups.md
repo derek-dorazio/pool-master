@@ -490,19 +490,25 @@ next best. Ties show every holder.
 One trophy per contest a league runs every year, with a plate per year's winner: "The Masters
 pick'em, 2022 Gimme Putts, 2023 Fore Play, 2024 Gimme Putts".
 
-- **What makes a contest recurring:** all its events are in one event series that has one
-  edition a year (the Masters, the Super Bowl). Its `LeagueYearFinish` rows carry that
-  `eventSeriesId`; contests across several series, or a series with many events a year (NFL
-  weeks), get none. Trophies are keyed by (`eventSeriesId`, `selectionType`), so the Masters
+- **What makes a contest recurring:** it has exactly one event, and an event is one edition of
+  its series a year (the Masters, the Super Bowl), so the same series and selection type in a
+  later year is the same contest run again. A week of games (several games, one round, none
+  sending its winner on) earns none: each NFL regular-season week is its own series, and Week 1
+  Pick'em is not a trophy (Derek, 2026-10-24). Contests over several events and Not counted
+  contests get none. Trophies are keyed by (`eventSeriesId`, `selectionType`), so the Masters
   pick'em and the Masters squares are two trophies.
-- A trophy appears once the league has run it in two years. Each plate shows the year and the
-  winner(s); a year it didn't run is skipped, and a year with no result says so.
-- The name is built from the series and the selection type ("The Masters pick'em"), no setting.
+- A trophy appears once the league has run it in two event years. Each plate shows the event's
+  year and the winner(s); a year it didn't run is skipped, and a year with no result says so.
+- The name is built from the series and the selection type ("Masters Tournament Tiered"), no
+  setting, with the sports league beside it so the ATP and WTA "US Open Bracket" tell apart.
 - Shown on the Trophy case tab under the cups, and as plates on each winner's squad page.
-- `GET /leagues/:leagueId/trophies/perpetual` returns `PerpetualTrophyDto[]`. Class:
+- `GET /leagues/:id/history/trophies` (`listPerpetualTrophies`) returns `{ trophies }`. Class:
   `TROPHY_SHELF`, B.
 
 ### Slices (#874)
 
 1. **Perpetual trophies.** The endpoint, the Trophy case section, plates on squad pages. After
    #863 slice 1 and #841 slice 4.
+   Built in the `history` module by pure functions in `history/perpetual-trophies.ts`, from the
+   completed one-event contests (their series, event year and games) and the finishes. The squad
+   page reads the same list and keeps the plates naming the squad. `REPEAT_WINNER` follows.
