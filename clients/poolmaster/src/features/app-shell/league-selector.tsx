@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { LeagueDto } from '@/lib/api';
 import { getLogger } from "@/lib/logger";
-import { Button, Tile } from "@/features/shared/ui";
+import { Button, cn, Tile } from "@/features/shared/ui";
 import {
   buildLeaguePath,
   getLeagueSelectorOptions,
@@ -12,6 +12,8 @@ import { LeagueIcon } from "@/features/leagues/league-icon";
 
 type LeagueSelectorProps = {
   activeLeagueCode?: string | null;
+  /** Placement in the app bar, which gives the selector its own full-width row on a phone. */
+  className?: string;
   // #202 (A8) — which of these leagues the viewer commissions travels beside the list, not on
   // each league row.
   commissionerLeagueIds: ReadonlySet<string>;
@@ -22,6 +24,7 @@ type LeagueSelectorProps = {
 
 export function LeagueSelector({
   activeLeagueCode,
+  className,
   commissionerLeagueIds,
   leagues,
   onCreateLeague,
@@ -62,17 +65,17 @@ export function LeagueSelector({
   }, [isOpen]);
 
   return (
-    <div className="relative" ref={containerRef}>
+    <div className={cn("relative min-w-0", className)} ref={containerRef}>
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="flex cursor-pointer items-center gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm"
+        className="flex w-full cursor-pointer items-center justify-start gap-3 rounded-[1.5rem] border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
         data-testid="league-selector-toggle"
         onClick={() => setIsOpen((current) => !current)}
         size="auto"
         type="button"
       >
-        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <div className="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-primary text-primary-foreground">
           <LeagueIcon iconKey={activeLeague?.iconKey} size="md" />
         </div>
         <div className="min-w-0">
@@ -87,7 +90,7 @@ export function LeagueSelector({
 
       {isOpen ? (
         <Tile
-          className="absolute right-0 z-20 mt-3 w-72 shadow-xl"
+          className="absolute left-0 z-20 mt-3 w-72 max-w-[calc(100vw-2rem)] shadow-xl lg:left-auto lg:right-0"
           padding="sm"
           radius="lg"
         >

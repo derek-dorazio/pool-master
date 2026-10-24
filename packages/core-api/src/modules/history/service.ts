@@ -4,7 +4,7 @@
  * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
   CupContestCount,
@@ -12,15 +12,23 @@ import {
   CupTrophy,
   CupWeight,
   SummaryTile,
+  TrophyKind,
   championshipYear,
   championshipYearStart,
+  trophyForPlace,
+  type RecordType,
   type SelectionType,
   type LeagueYearFinish,
   type Squad,
 } from '@poolmaster/shared/domain';
 
-import type { ChampionshipService } from '../championship/service';
-import type { CupService, CupView } from '../cups/service';
+import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearView } from '../championship/service';
+import type { CupService, CupStandingView, CupView } from '../cups/service';
+import { buildPerpetualTrophies, type PerpetualTrophy } from './perpetual-trophies';
+import { rankRecords, type RecordStand } from './records';
+
+/** No date range: the record book names its contests by id alone. */
+const NO_DATE = new Date(0);
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -94,10 +102,86 @@ export interface HistorySummaryView {
   years: HistoryYearView[];
 }
 
+/** One squad's row of a championship year, with what the squad page needs around it. */
+export interface SquadChampionshipView {
+  cupName: string;
+  isOver: boolean;
+  standing: ChampionshipStandingView;
+  squadCount: number;
+  /** Tenths of a point behind 1st. */
+  pointsBehindLeader: number;
+  contestsCounted: number;
+  contestsToGo: number;
+}
+
+/** One squad's row of a cup. */
+export interface SquadCupView {
+  view: CupView;
+  contestsCounted: number;
+  standing: CupStandingView;
+}
+
+export interface SquadYearView {
+  squad: Squad;
+  year: number;
+  championship: SquadChampionshipView | null;
+  cups: SquadCupView[];
+}
+
+/** A trophy on a squad's shelf: a championship finished on the podium in a year that is over, or a crowned cup's trophy. */
+export type SquadTrophyView =
+  | { kind: typeof TrophyKind.CHAMPIONSHIP; year: number; trophy: CupTrophy; cupName: string }
+  | { kind: typeof TrophyKind.CUP; year: number; trophy: CupTrophy; cup: CupView };
+
+/** A squad's whole history in the league: contest medals, its trophy shelf, and every year's rows. */
+export interface SquadHistoryView {
+  squad: Squad;
+  /** Counted contests it finished 1st, 2nd and 3rd in, all time. */
+  medals: { firsts: number; seconds: number; thirds: number };
+  /** Newest first; within a year the championship first, then cups by sports league. */
+  trophies: SquadTrophyView[];
+  /** Every year the league has a championship or a cup season, newest first. */
+  years: SquadYearView[];
+}
+
+/** One holder of a record value: the squad, and the year or contest it was set in when the record names one. */
+export interface RecordHolderView {
+  squad: Squad;
+  year: number | null;
+  contest: FinalContest | null;
+}
+
+export interface RecordStandView {
+  value: number;
+  /** In squad name order, then newest year first. */
+  holders: RecordHolderView[];
+}
+
+/** One record of the league's record book (#873): its holders, every one on a tie, and the next best. */
+export interface RecordView {
+  type: RecordType;
+  best: RecordStandView;
+  nextBest: RecordStandView | null;
+}
+
+/** A plate of a perpetual trophy (#874): the year's contest and its winners, none for no result. */
+export interface PerpetualPlateView {
+  year: number;
+  contestId: string;
+  /** In name order. */
+  winners: Squad[];
+}
+
+/** One perpetual trophy (#874): a contest the league runs every year, with a plate per year. */
+export interface PerpetualTrophyView extends Omit<PerpetualTrophy, 'plates'> {
+  plates: PerpetualPlateView[];
+}
+
 export interface HistoryServiceDeps {
-  finishes: Pick<ChampionshipRepository, 'findByLeagueYear' | 'findFinalContests'>;
+  finishes: Pick<ChampionshipRepository, 'findByLeague' | 'findByLeagueYear' | 'findFinalContests' | 'findSeriesContests'>;
   squads: Pick<SquadRepository, 'findById' | 'findByLeague'>;
-  championship: Pick<ChampionshipService, 'listYears'>;
+  leagues: Pick<LeagueRepository, 'findById'>;
+  championship: Pick<ChampionshipService, 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listSeasonYears' | 'listSeasonCups'>;
   logger?: HistoryLogger;
   now?: () => Date;
@@ -149,6 +233,138 @@ export class HistoryService {
       tiles: [mostOf(SummaryTile.MOST_CHAMPIONSHIPS, championships), mostOf(SummaryTile.MOST_CUPS, cupWins)],
       years,
     };
+  }
+
+  /**
+   * The record book (#873): every record somebody holds, worked out from the league's counted
+   * contest finishes and its championships of years over, with the Hall of Lame's records unless
+   * the league hides them. A squad that has since gone inactive still holds its records.
+   */
+  async getRecords(leagueId: string): Promise<RecordView[]> {
+    const [finishes, championshipYears, squads, league] = await Promise.all([
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.championship.listYears(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+      this.deps.leagues.findById(leagueId),
+    ]);
+    // The route has checked membership, so the league is there; were it gone, the Hall of Lame stays hidden.
+    const hallOfLame = league?.hallOfLameVisible ?? false;
+    const ranked = rankRecords(finishes, championshipYears
+      .filter((row) => row.isOver)
+      .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), { hallOfLame });
+    const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
+      .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
+    const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
+    const standView = (stand: RecordStand): RecordStandView => ({
+      value: stand.value,
+      holders: stand.holders
+        .flatMap((holder): RecordHolderView[] => {
+          const squad = squadsById.get(holder.squadId);
+          return squad === undefined ? [] : [{ squad, year: holder.year, contest: holder.contestId === null ? null : contestsById.get(holder.contestId) ?? null }];
+        })
+        .sort((left, right) => left.squad.name.localeCompare(right.squad.name) || (right.year ?? 0) - (left.year ?? 0)),
+    });
+    this.deps.logger?.debug({ action: 'history.records', data: { leagueId, recordCount: ranked.length, hallOfLame } }, 'Read the league\'s record book');
+    return ranked.map((record) => ({ type: record.type, best: standView(record.best), nextBest: record.nextBest === null ? null : standView(record.nextBest) }));
+  }
+
+  /**
+   * The league's perpetual trophies (#874): every contest of one event it has run in two or more
+   * years, the same series and selection type, with a plate per year naming its winners. A week of
+   * games and a contest not counted earn none. A squad that has since gone inactive keeps its plates.
+   */
+  async getPerpetualTrophies(leagueId: string): Promise<PerpetualTrophyView[]> {
+    const [contests, finishes, squads] = await Promise.all([
+      this.deps.finishes.findSeriesContests(leagueId),
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+    ]);
+    const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
+    const trophies = buildPerpetualTrophies(contests, finishes).map((trophy) => ({
+      ...trophy,
+      plates: trophy.plates.map(({ winnerSquadIds, ...plate }) => ({
+        ...plate,
+        winners: winnerSquadIds
+          .flatMap((squadId) => squadsById.get(squadId) ?? [])
+          .sort((left, right) => left.name.localeCompare(right.name)),
+      })),
+    }));
+    this.deps.logger?.debug({ action: 'history.perpetualTrophies', data: { leagueId, trophyCount: trophies.length } }, 'Read the league\'s perpetual trophies');
+    return trophies;
+  }
+
+  /**
+   * One squad's year for its squad page (#872): its row of the championship and of each cup of the
+   * season, read through the same services the league pages use, so the two can never disagree.
+   */
+  async getSquadYear(leagueId: string, squadId: string, year: number): Promise<SquadYearView> {
+    const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadYear.squadNotFound');
+    const view = await this.readSquadYear(leagueId, squad, year);
+    this.deps.logger?.debug({ action: 'history.squadYear', data: { leagueId, squadId, year, cupCount: view.cups.length } }, 'Read a squad\'s year');
+    return view;
+  }
+
+  /**
+   * A squad's whole history for its squad page (#872): its contest medals all time, its trophy
+   * shelf (championship podiums in years that are over, crowned cups' trophies), and its rows of
+   * every year the league has a championship or a cup season in, newest first.
+   */
+  async getSquadHistory(leagueId: string, squadId: string): Promise<SquadHistoryView> {
+    const squad = await this.requireLeagueSquad(leagueId, squadId, 'history.squadHistory.squadNotFound');
+    const [championshipYears, seasonYears] = await Promise.all([
+      this.deps.championship.listYears(leagueId),
+      this.deps.cups.listSeasonYears(leagueId),
+    ]);
+    const yearNumbers = [...new Set([...championshipYears.map((row) => row.year), ...seasonYears])].sort((left, right) => right - left);
+    const years = await Promise.all(yearNumbers.map((year) => this.readSquadYear(leagueId, squad, year)));
+    const trophies = years.flatMap(squadYearTrophies);
+    this.deps.logger?.debug({ action: 'history.squadHistory', data: { leagueId, squadId, yearCount: years.length, trophyCount: trophies.length } }, 'Read a squad\'s history');
+    return {
+      squad,
+      // Summed from the years' championship rows, so they always match the Championship tab.
+      medals: {
+        firsts: sumFinishes(years, 0),
+        seconds: sumFinishes(years, 1),
+        thirds: sumFinishes(years, 2),
+      },
+      trophies,
+      years,
+    };
+  }
+
+  private async requireLeagueSquad(leagueId: string, squadId: string, action: string): Promise<Squad> {
+    const squad = await this.deps.squads.findById(squadId);
+    if (squad === null || squad.leagueId !== leagueId) {
+      this.deps.logger?.warn({ action, data: { leagueId, squadId } }, 'Squad history asked for a squad outside the league');
+      throw new HistorySquadNotFoundError(`Squad ${squadId} is not in this league.`);
+    }
+    return squad;
+  }
+
+  /**
+   * Every active squad's year (#872 slice 4, the year in review), from one read of the year's
+   * championship and cups, by squad name.
+   */
+  async getLeagueSquadYears(leagueId: string, year: number): Promise<SquadYearView[]> {
+    const [squads, championship, cups] = await Promise.all([
+      this.deps.squads.findByLeague(leagueId),
+      this.deps.championship.getYear(leagueId, year),
+      this.deps.cups.listSeasonCups(leagueId, year),
+    ]);
+    return [...squads]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((squad) => squadYearFrom(squad, year, championship, cups));
+  }
+
+  /** One year of a squad, from the same championship and cup reads as the league pages. */
+  private async readSquadYear(leagueId: string, squad: Squad, year: number): Promise<SquadYearView> {
+    const [championship, cups] = await Promise.all([
+      this.deps.championship.getYear(leagueId, year),
+      this.deps.cups.listSeasonCups(leagueId, year),
+    ]);
+    return squadYearFrom(squad, year, championship, cups);
   }
 
   /**
@@ -235,4 +451,52 @@ function mostOf(tile: SummaryTile, wins: readonly Squad[]): HistorySummaryTileVi
     count,
     squads: byName([...counts.values()].filter((row) => row.count === count && count > 0).map((row) => row.squad)),
   };
+}
+
+/** How many times the squad finished in a place (0 for 1st) over its championship rows. */
+function sumFinishes(years: SquadYearView[], placeIndex: number): number {
+  return years.reduce((total, year) => total + (year.championship?.standing.finishes[placeIndex] ?? 0), 0);
+}
+
+/** A squad's rows of a year's championship and cups. */
+function squadYearFrom(squad: Squad, year: number, championship: ChampionshipYearView, cups: readonly CupView[]): SquadYearView {
+  const squadId = squad.id;
+  const standing = championship.standings.find((row) => row.squad.id === squadId);
+  const leaderPoints = championship.standings.at(0)?.points ?? 0;
+  const squadCups = cups
+    .flatMap((view): SquadCupView[] => {
+      const row = view.standings.find((candidate) => candidate.squad.id === squadId);
+      return row === undefined ? [] : [{
+        view,
+        contestsCounted: view.contests.filter((contest) => contest.count === CupContestCount.COUNTED).length,
+        standing: row,
+      }];
+    })
+    .sort((left, right) => left.view.sportLeagueName.localeCompare(right.view.sportLeagueName));
+  return {
+    squad,
+    year,
+    championship: standing === undefined ? null : {
+      cupName: championship.cupName,
+      isOver: championship.isOver,
+      standing,
+      squadCount: championship.standings.length,
+      pointsBehindLeader: leaderPoints - standing.points,
+      contestsCounted: championship.contestsCounted,
+      contestsToGo: championship.contestsToGo,
+    },
+    cups: squadCups,
+  };
+}
+
+/** The trophies a squad took in a year: its championship podium once the year is over, then its crowned cups'. */
+export function squadYearTrophies(year: SquadYearView): SquadTrophyView[] {
+  const { championship } = year;
+  const podium = championship !== null && championship.isOver
+    ? trophyForPlace(championship.standing.position, championship.standing.points)
+    : null;
+  return [
+    ...(podium === null || championship === null ? [] : [{ kind: TrophyKind.CHAMPIONSHIP, year: year.year, trophy: podium, cupName: championship.cupName }]),
+    ...year.cups.flatMap((cup) => cup.standing.trophy === null ? [] : [{ kind: TrophyKind.CUP, year: year.year, trophy: cup.standing.trophy, cup: cup.view }]),
+  ];
 }

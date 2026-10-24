@@ -21,6 +21,7 @@ import { buildRunningCup } from '@/features/championships/test/fixtures';
 const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const getYearReviewMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const listCupsMock = vi.fn();
@@ -31,6 +32,7 @@ bindApiMocks({
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
   getLeagueByCode: getLeagueByCodeMock,
+  getYearReview: getYearReviewMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
   listCups: listCupsMock,
@@ -146,6 +148,7 @@ function primeMocks({
   eventStarts = {} as Record<string, string>,
   isActive = true,
   hasTeam = true,
+  role = 'MEMBER' as 'MEMBER' | 'COMMISSIONER',
 }: {
   contests?: ReturnType<typeof contest>[];
   cups?: CupDto[];
@@ -153,13 +156,14 @@ function primeMocks({
   eventStarts?: Record<string, string>;
   isActive?: boolean;
   hasTeam?: boolean;
+  role?: 'MEMBER' | 'COMMISSIONER';
 } = {}) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague({ isActive, memberCount: 12, activeContestCount: 2 }),
     {
-      membership: buildLeagueMembership({ role: 'MEMBER' }),
+      membership: buildLeagueMembership({ role }),
       squadMembership: hasTeam ? buildLeagueSquadMember() : null,
     },
   )));
@@ -177,6 +181,7 @@ function primeMocks({
     hasTeam ? [buildLeagueSquad({ members: [buildLeagueSquadMember()] })] : [],
   )));
   listCupsMock.mockResolvedValue(apiSuccess({ cups }));
+  getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'READY', sentAt: null, sentByName: null } }));
   listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) =>
     entryList(path.contestId, entriesByContest[path.contestId] ?? []),
   );
@@ -190,7 +195,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   for (const mock of [
-    getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock,
+    getCurrentUserMock, getContestLeaderboardMock, getLeagueByCodeMock, getYearReviewMock,
     listContestEntriesMock, listContestsMock, listCupsMock, listLeagueSquadsMock, refreshTokenMock,
   ]) {
     mock.mockReset();
@@ -198,6 +203,20 @@ afterEach(() => {
 });
 
 describe('League Home', () => {
+  it('tells the commissioner last year\'s year in review is ready to send, and never asks for it for a member', async () => {
+    primeMocks({ role: 'COMMISSIONER' });
+    const { unmount } = renderLeagueHome();
+    expect(await screen.findByTestId('year-review-ready')).toHaveTextContent('Your 2025 year in review is ready to send');
+    unmount();
+
+    getYearReviewMock.mockClear();
+    primeMocks();
+    renderLeagueHome();
+    expect(await screen.findByTestId('league-home-identity')).toBeInTheDocument();
+    expect(getYearReviewMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+  });
+
   it('shows the league once, compactly: name, code and counts', async () => {
     primeMocks();
 

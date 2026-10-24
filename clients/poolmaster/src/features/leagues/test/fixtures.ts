@@ -24,6 +24,7 @@ type LeagueFixture = Pick<
   | 'cupName'
   | 'cupPointsScale'
   | 'cupCustomPoints'
+  | 'hallOfLameVisible'
   | 'mutedSportLeagueIds'
 >;
 
@@ -124,6 +125,7 @@ const baseLeague: LeagueFixture = {
   cupName: 'Big Dawgs Cup',
   cupPointsScale: 'STANDARD',
   cupCustomPoints: [],
+  hallOfLameVisible: true,
   mutedSportLeagueIds: [],
 };
 

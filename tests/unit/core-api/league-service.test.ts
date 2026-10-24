@@ -23,6 +23,7 @@ function createMockLeagueRepo(overrides: Partial<LeagueRepository> = {}): League
     create: mockFn<LeagueRepository['create']>(async (input) => ({
       cupPointsScale: CupPointsScale.STANDARD,
       cupCustomPoints: [],
+      hallOfLameVisible: true,
       mutedSportLeagueIds: [],
       ...input,
       id: 'new-league-id',

@@ -141,6 +141,13 @@ export const QueryKeys = {
     byYear: (leagueId: QueryKeyId, year: number) => ['poolmaster', 'championship', leagueId, year] as const,
     years: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'years'] as const,
     summary: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'summary'] as const,
+    yearReview: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'year-review'] as const,
+    records: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'records'] as const,
+    perpetualTrophies: (leagueId: QueryKeyId) => ['poolmaster', 'championship', leagueId, 'perpetual-trophies'] as const,
+    squadYear: (leagueId: QueryKeyId, squadId: QueryKeyId, year: number) =>
+      ['poolmaster', 'championship', leagueId, year, 'squad', squadId] as const,
+    squadHistory: (leagueId: QueryKeyId, squadId: QueryKeyId) =>
+      ['poolmaster', 'championship', leagueId, 'squad', squadId] as const,
     contests: (leagueId: QueryKeyId, year: number | null, squadId: QueryKeyId | null, place: number | null) =>
       ['poolmaster', 'championship', leagueId, year, 'contests', squadId, place] as const,
   },

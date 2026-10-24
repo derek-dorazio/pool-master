@@ -258,6 +258,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       cupName: 'Big Dawgs Cup',
       cupPointsScale: 'STANDARD',
       cupCustomPoints: [],
+      hallOfLameVisible: true,
       mutedSportLeagueIds: [],
     },
     membership: {

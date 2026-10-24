@@ -85,6 +85,8 @@ export interface League extends DomainEntity {
   cupPointsScale: CupPointsScale;
   /** CUSTOM's points for 1st, 2nd ...; empty for every other scale (a database check holds it). */
   cupCustomPoints: number[];
+  /** Whether the record book shows its Hall of Lame rows (#873). On at creation. */
+  hallOfLameVisible: boolean;
   /**
    * Sport leagues whose upcoming events the league's commissioners are not emailed about (#851):
    * "Coming up soon" and "Ready for contests". Empty at creation: every sport league.
@@ -341,6 +343,15 @@ export interface LeagueYearFinish {
   /** Tenths of a point. */
   points: number;
   settledAt: Date;
+}
+
+/** A league's year in review (#872 slice 4): its commissioner sent it, once per league and year. */
+export interface LeagueYearReview {
+  leagueId: string;
+  year: number;
+  /** Null once the account that sent it is gone. */
+  sentByUserId: string | null;
+  sentAt: Date;
 }
 
 /** Tier definition used for tiered contest-selection modes. */

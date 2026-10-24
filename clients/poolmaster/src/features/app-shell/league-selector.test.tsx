@@ -52,6 +52,7 @@ describe('LeagueSelector', () => {
               cupName: 'League One Cup',
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
+              hallOfLameVisible: true,
               mutedSportLeagueIds: [],
             },
             {
@@ -65,6 +66,7 @@ describe('LeagueSelector', () => {
               cupName: 'League Two Cup',
               cupPointsScale: 'STANDARD',
               cupCustomPoints: [],
+              hallOfLameVisible: true,
               mutedSportLeagueIds: [],
             },
           ]}

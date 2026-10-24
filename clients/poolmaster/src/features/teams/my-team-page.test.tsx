@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { TeamIconKey } from '@poolmaster/shared/domain';
+import { TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -16,6 +16,7 @@ import {
   listLeagueSquadsData,
   updateLeagueSquadData,
 } from '@/features/leagues/test/fixtures';
+import { buildContestResult, buildSquadChampionship, buildSquadCup, buildSquadHistory, buildSquadYear } from '@/features/championships/test/fixtures';
 import type { LeagueDto, SquadDto } from '@/lib/api';
 import { QueryKeys } from '@/lib/query-keys';
 import { MyTeamEditPage } from './my-team-edit-page';
@@ -26,6 +27,11 @@ const createLeagueSquadMock = vi.fn();
 const createSquadOwnerInvitationMock = vi.fn();
 const getCurrentUserMock = vi.fn();
 const getContestLeaderboardMock = vi.fn();
+const getSquadYearMock = vi.fn();
+const getSquadHistoryMock = vi.fn();
+const listContestResultsMock = vi.fn();
+const listRecordsMock = vi.fn();
+const listPerpetualTrophiesMock = vi.fn();
 const listContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
@@ -42,8 +48,13 @@ bindApiMocks({
   createSquadOwnerInvitation: createSquadOwnerInvitationMock,
   getUser: getCurrentUserMock,
   getContestLeaderboard: getContestLeaderboardMock,
+  getSquadHistory: getSquadHistoryMock,
+  getSquadYear: getSquadYearMock,
+  listContestResults: listContestResultsMock,
   listContestEntries: listContestEntriesMock,
   listContests: listContestsMock,
+  listPerpetualTrophies: listPerpetualTrophiesMock,
+  listRecords: listRecordsMock,
   getLeagueByCode: getLeagueByCodeMock,
   listLeagueMembers: listLeagueMembersMock,
   listLeagueSquads: listLeagueSquadsMock,
@@ -135,6 +146,11 @@ function primeTeam({
   }));
   listSquadOwnerInvitationsMock.mockResolvedValue(apiSuccess({ invitations: [] }));
   listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+  getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: null, cups: [] }) }));
+  listContestResultsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+  getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory({ medals: { firsts: 0, seconds: 0, thirds: 0 }, trophies: [], years: [] }) }));
+  listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
+  listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
 }
 
 function contest(id: string, name: string, status: 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED') {
@@ -190,7 +206,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, listLeagueSquadsMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listContestEntriesMock, listContestsMock,
+    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
     mock.mockReset();
   }
@@ -337,6 +353,216 @@ describe('My team › My entries', () => {
     renderTeamRoutes();
 
     expect(await screen.findByTestId('my-team-entries-error')).toBeInTheDocument();
+  });
+});
+
+describe('My team › This year', () => {
+  const YEAR = championshipYear(new Date());
+
+  it('shows the squad\'s championship place of N, its gap and movement, its own medal counts and matrix row, its cups on show and its counted contests', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({
+      squadYear: buildSquadYear({
+        cups: [
+          buildSquadCup(),
+          buildSquadCup({ cupId: 'cup-2', sportLeagueId: 'nfl', name: '2026 NFL Cup', status: 'CROWNED', contestsCounted: 1 }, { trophy: 'CHAMPION' }),
+          buildSquadCup({ cupId: 'cup-3', sportLeagueId: 'nba', name: '2026 NBA Cup', contestsCounted: 1 }),
+        ],
+      }),
+    }));
+    listContestResultsMock.mockResolvedValue(apiSuccess({
+      contests: [buildContestResult({ squadFinish: { place: 2, displayPlace: '2', points: 800 } })],
+    }));
+
+    renderTeamRoutes();
+
+    const standing = await screen.findByTestId('squad-year-championship-standing');
+    expect(screen.getByText(`${YEAR} so far`)).toBeInTheDocument();
+    expect(standing).toHaveTextContent('2nd of 3 · 180 points · 6 behind 1st');
+    expect(screen.getByTestId('squad-year-championship')).toHaveAttribute('href', `/league/BIGDAWGS/championships/${YEAR}`);
+    expect(screen.getByTestId('squad-year-championship')).toHaveTextContent('▲1');
+    expect(screen.getByTestId('squad-year-tile-firsts')).toHaveTextContent('1');
+    expect(screen.getByTestId('squad-year-tile-played')).toHaveTextContent('2');
+    expect(screen.getByTestId('championship-standing-team-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('championship-standings-search')).not.toBeInTheDocument();
+    // A crowned cup always shows; an open one only once two of its contests have counted.
+    expect(screen.getByTestId('squad-year-cup-cup-1')).toHaveTextContent('1st of 3 · 160 points');
+    expect(screen.getByTestId('squad-year-cup-cup-1')).toHaveAttribute('href', `/league/BIGDAWGS/championships/${YEAR}/race/pga-tour/squads/team-1`);
+    expect(screen.getByTestId('squad-year-cup-cup-2')).toHaveTextContent('Champion');
+    expect(screen.queryByTestId('squad-year-cup-cup-3')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('squad-year-contest-contest-1')).toHaveTextContent('2 · 80 pts');
+    expect(screen.getByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers played in ${YEAR}`);
+    expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: YEAR, squadId: 'team-1' } }));
+  });
+
+  it('narrows its contests to one place when a count in its matrix row is tapped, and shows them all again', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear() }));
+
+    renderTeamRoutes();
+    // Every read has landed, so the grid is not re-rendered under the click.
+    await screen.findByTestId('squad-history-trophies-none');
+
+    fireEvent.click(await screen.findByTestId('championship-cell-team-1-2'));
+
+    await waitFor(() => expect(screen.getByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers finished 2nd in ${YEAR}`));
+    await waitFor(() => expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: YEAR, squadId: 'team-1', place: 2 } })));
+    fireEvent.click(screen.getByTestId('squad-year-contests-clear'));
+    await waitFor(() => expect(screen.getByTestId('squad-year-contests-heading')).toHaveTextContent(`Contests Casey Crushers played in ${YEAR}`));
+  });
+
+  it('says when nothing has counted yet, and leaves the championship card off for a squad with no row', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ championship: buildSquadChampionship({ contestsCounted: 0, pointsBehindLeader: 0 }, { played: 0 }), cups: [] }) }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toHaveTextContent('No championship contest has counted yet');
+    expect(await screen.findByTestId('squad-year-contests-empty')).toHaveTextContent(`Casey Crushers hasn't placed in a counted contest in ${YEAR} yet.`);
+  });
+
+  it('says the squad\'s year could not load rather than showing an empty one', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-year-error')).toBeInTheDocument();
+    expect(screen.queryByTestId('squad-year-championship')).not.toBeInTheDocument();
+  });
+
+  it('shows another team\'s year on its page, read for that team', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ pointsBehindLeader: 0 }, { squadId: 'team-2', squadName: 'Rival Squad', position: 1, displayPosition: '1' }) }) }));
+
+    renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
+
+    expect(await screen.findByTestId('squad-year-championship-standing')).toHaveTextContent('1st of 3 · 180 points · Leads');
+    expect(getSquadYearMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', squadId: 'team-2' }, query: { year: YEAR } }));
+  });
+});
+
+describe('My team › Trophies and past years', () => {
+  const YEAR = championshipYear(new Date());
+
+  it('shows the squad\'s contest medals and every trophy it won, each opening where it was won', async () => {
+    primeTeam();
+    getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory() }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-medal-firsts')).toHaveTextContent('4');
+    expect(screen.getByTestId('squad-history-medal-seconds')).toHaveTextContent('2');
+    expect(screen.getByTestId('squad-history-medal-thirds')).toHaveTextContent('1');
+    const championship = screen.getByTestId('squad-history-trophy-2025-championship');
+    expect(championship).toHaveTextContent('2025 Derek\'s Pool Cup · Runner-up');
+    expect(championship).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025');
+    const cup = screen.getByTestId('squad-history-trophy-2025-cup-nfl');
+    expect(cup).toHaveTextContent('2025 NFL Cup · Champion');
+    expect(cup).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025/race/nfl');
+  });
+
+  it('says the shelf is empty rather than showing nothing when the squad has won no trophy', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-trophies-none')).toHaveTextContent('No trophies yet.');
+    expect(screen.queryByTestId('squad-history-years')).not.toBeInTheDocument();
+  });
+
+  it('lists each year the squad placed in with its championship place and cup finishes, and opens a year here from the strip or the picker', async () => {
+    primeTeam();
+    getSquadHistoryMock.mockResolvedValue(apiSuccess({ squadHistory: buildSquadHistory() }));
+
+    renderTeamRoutes();
+
+    const past = await screen.findByTestId('squad-history-year-2025');
+    expect(past).toHaveTextContent('2025');
+    expect(past).toHaveTextContent('Championship 2nd of 12 · 2025 NFL Cup champion');
+    // The running year has nothing placed yet, so the strip leaves it out.
+    expect(screen.queryByTestId(`squad-history-year-${YEAR}`)).not.toBeInTheDocument();
+
+    fireEvent.click(past);
+
+    await waitFor(() => expect(getSquadYearMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2025 } })));
+    expect(screen.getByTestId('squad-history-year')).toHaveValue('2025');
+    fireEvent.change(screen.getByTestId('squad-history-year'), { target: { value: String(YEAR) } });
+    await waitFor(() => expect(screen.getByTestId('squad-history-year')).toHaveValue(String(YEAR)));
+  });
+
+  it('shows the records the squad holds, with when it set each, and leaves out the ones another squad holds', async () => {
+    primeTeam();
+    const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      {
+        type: 'MOST_WINS_IN_A_YEAR',
+        best: { value: 4, holders: [{ squad: rival, year: 2025, contestId: null, contestName: null }, { squad: mine, year: 2024, contestId: null, contestName: null }] },
+        nextBest: null,
+      },
+      {
+        type: 'MOST_WINS_ALL_TIME',
+        best: { value: 9, holders: [{ squad: rival, year: null, contestId: null, contestName: null }] },
+        nextBest: { value: 7, holders: [{ squad: mine, year: null, contestId: null, contestName: null }] },
+      },
+      {
+        type: 'BIGGEST_FIELD_WON',
+        best: { value: 48, holders: [{ squad: mine, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
+        nextBest: null,
+      },
+    ] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a year4 wins · 2024');
+    expect(screen.getByTestId('squad-record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Masters Pick 6 (2025)');
+    // Next best is not a record held, so the all-time count stays on the record book only.
+    expect(screen.queryByTestId('squad-record-MOST_WINS_ALL_TIME')).not.toBeInTheDocument();
+  });
+
+  it('puts each perpetual trophy plate the squad won in its trophy case, and none it did not win', async () => {
+    primeTeam();
+    const mine = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const rival = { squadId: 'team-2', squadName: 'Rival Squad', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Super Bowl',
+      sportLeagueName: 'NFL',
+      selectionType: 'SQUARES',
+      plates: [
+        { year: 2025, contestId: 'bowl-2025', winners: [mine, rival] },
+        { year: 2024, contestId: 'bowl-2024', winners: [rival] },
+      ],
+    }] }));
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-plate-bowl-2025')).toHaveTextContent('2025 Super Bowl Squares (NFL)');
+    expect(screen.queryByTestId('squad-history-plate-bowl-2024')).not.toBeInTheDocument();
+    // A plate is a trophy, so the empty shelf's note gives way to it.
+    expect(screen.queryByTestId('squad-history-trophies-none')).not.toBeInTheDocument();
+  });
+
+  it('shows no records section for a squad that holds none', async () => {
+    primeTeam();
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-trophies-none')).toBeInTheDocument();
+    await waitFor(() => expect(listRecordsMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('squad-records')).not.toBeInTheDocument();
+  });
+
+  it('says the trophies could not load, and still shows the year', async () => {
+    primeTeam();
+    getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear() }));
+    getSquadHistoryMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderTeamRoutes();
+
+    expect(await screen.findByTestId('squad-history-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('squad-year-championship-standing')).toBeInTheDocument();
   });
 });
 

@@ -2,6 +2,7 @@ import { LeagueRole } from '@poolmaster/shared/domain';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
+import { SquadHistorySection } from '@/features/championships/squad-history-section';
 import {
   buildLeagueAdminTeamPath,
   buildLeagueTeamPath,
@@ -23,8 +24,9 @@ import { TeamIcon } from './team-icon';
 import { useLeagueSquadsQuery } from './use-league-squads-query';
 
 /**
- * Another team's page: read-only for every member. The viewer's own team opens My team, and a
- * commissioner manages a team from Commissioner tools.
+ * Another team's page: read-only for every member, with its owners and its year in the
+ * championship and cups (#872). The viewer's own team opens My team, and a commissioner manages a
+ * team from Commissioner tools.
  */
 export function TeamPage() {
   const { leagueCode = '', teamId = '' } = useParams<{ leagueCode: string; teamId: string }>();
@@ -99,6 +101,8 @@ export function TeamPage() {
           <p className="text-sm text-muted-foreground">{team.name} has no owners.</p>
         )}
       </section>
+
+      <SquadHistorySection leagueCode={leagueCode} leagueId={leagueId} squad={team} />
     </section>
   );
 }

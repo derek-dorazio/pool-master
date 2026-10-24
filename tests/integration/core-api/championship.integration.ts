@@ -8,7 +8,8 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 import { CupPointsScale, CupWeight, SelectionType, cupFinishPoints } from '@poolmaster/shared/domain';
-import { PrismaChampionshipRepository } from '../../../packages/core-api/src/adapters';
+import { expectDefined } from '../../support/expect-defined';
+import { PrismaChampionshipRepository, PrismaLeagueYearReviewRepository } from '../../../packages/core-api/src/adapters';
 import {
   cleanupTestData,
   createTestUser,
@@ -264,5 +265,56 @@ describe('PrismaChampionshipRepository (#863)', () => {
       ['Undated', null, sportLeague.sportLeague.name, SelectionType.TIERED],
     ]);
     await expect(repo.findFinalContests(randomUUID(), from, to, [undated.id])).resolves.toEqual([]);
+  });
+
+  it('reads the completed one-event contests with their series, event year and games, each game\'s round and whether it sends its winner on (#874)', async () => {
+    const prisma = getPrisma();
+    const repo = new PrismaChampionshipRepository(prisma);
+    const { league, contest } = await seedLeague();
+    const masters = await contest('Masters', { cupWeight: 'NOT_COUNTED' });
+    const final = await contest('Final');
+    await contest('Majors', { events: 2 });
+    await contest('Live', { status: 'ACTIVE' });
+    const eventId = expectDefined(final.sportEvents[0]).sportEventId;
+    const round = (roundNumber: number) => prisma.sportEventRound.create({ data: { sportEventId: eventId, roundNumber, scheduledDate: new Date('2026-04-09T12:00:00.000Z') } });
+    const [semis, decider] = [await round(1), await round(2)];
+    const game = (matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventMatch.create({
+      data: { sportEventId: eventId, sportEventRoundId: roundId, matchNumber, isNeutralSite: true, advancesToMatchId, advancesToSide: advancesToMatchId === null ? null : 'HOME' },
+    });
+    const last = await game(3, decider.id);
+    await game(1, semis.id, last.id);
+
+    const contests = await repo.findSeriesContests(league.id);
+
+    const series = await prisma.eventSeries.findUniqueOrThrow({ where: { id: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId }, select: { name: true, sportLeague: { select: { name: true } } } });
+    expect(contests.map((row) => [row.id === masters.id ? 'Masters' : 'Final', row.cupWeight, row.eventYear, row.games.map((one) => [one.roundNumber, one.sendsWinnerOn]).sort((left, right) => Number(left[0]) - Number(right[0]))]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
+      ['Final', CupWeight.NORMAL, 2026, [[1, true], [2, false]]],
+      ['Masters', CupWeight.NOT_COUNTED, 2026, []],
+    ]);
+    expect(contests.find((row) => row.id === masters.id)).toMatchObject({
+      eventSeriesId: expectDefined(masters.sportEvents[0]).sportEvent.eventSeriesId,
+      seriesName: series.name,
+      sportLeagueName: series.sportLeague.name,
+      selectionType: SelectionType.TIERED,
+    });
+    await expect(repo.findSeriesContests(randomUUID())).resolves.toEqual([]);
+  });
+});
+
+describe('PrismaLeagueYearReviewRepository (#872)', () => {
+  it('records a league\'s year in review once and reads it back; a second record for the same year answers null and keeps the first', async () => {
+    const repo = new PrismaLeagueYearReviewRepository(getPrisma());
+    const { league } = await seedLeague();
+    const sender = await createTestUser({ firstName: 'Review', lastName: `Sender${randomUUID().slice(0, 8)}` });
+    const other = await createTestUser({ firstName: 'Second', lastName: `Press${randomUUID().slice(0, 8)}` });
+
+    expect(await repo.findByLeagueYear(league.id, 2025)).toBeNull();
+    const first = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
+    const again = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: other.user.id });
+
+    expect(first).toMatchObject({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
+    expect(again).toBeNull();
+    expect(await repo.findByLeagueYear(league.id, 2025)).toEqual(first);
+    expect(await repo.findByLeagueYear(league.id, 2024)).toBeNull();
   });
 });

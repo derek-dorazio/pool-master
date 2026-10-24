@@ -29,7 +29,7 @@ import {
   buildRunningCupProjection,
 } from './test/fixtures';
 
-const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listContestResultsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock } = vi.hoisted(() => ({
   crownCupMock: vi.fn(),
   getChampionshipMock: vi.fn(),
   getHistorySummaryMock: vi.fn(),
@@ -37,11 +37,15 @@ const { crownCupMock, getChampionshipMock, getHistorySummaryMock, getCupProjecti
   getCupSquadPointsMock: vi.fn(),
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
+  getYearReviewMock: vi.fn(),
   listChampionshipYearsMock: vi.fn(),
   listContestResultsMock: vi.fn(),
   listCupSeasonsMock: vi.fn(),
   listCupsMock: vi.fn(),
+  listPerpetualTrophiesMock: vi.fn(),
+  listRecordsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
+  sendYearReviewMock: vi.fn(),
 }));
 
 bindApiMocks({
@@ -52,11 +56,15 @@ bindApiMocks({
   getCupSquadPoints: getCupSquadPointsMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
+  getYearReview: getYearReviewMock,
   listChampionshipYears: listChampionshipYearsMock,
   listContestResults: listContestResultsMock,
   listCupSeasons: listCupSeasonsMock,
   listCups: listCupsMock,
+  listPerpetualTrophies: listPerpetualTrophiesMock,
+  listRecords: listRecordsMock,
   refreshToken: refreshTokenMock,
+  sendYearReview: sendYearReviewMock,
 });
 
 const NOW = new Date('2026-09-01T12:00:00.000Z');
@@ -103,6 +111,9 @@ function primeViewer(cups = [buildRunningCup()], championship = buildRunningCham
   listCupSeasonsMock.mockResolvedValue(apiSuccess({ seasonYears: [2026, 2025] }));
   getChampionshipMock.mockResolvedValue(apiSuccess({ championship }));
   listContestResultsMock.mockResolvedValue(apiSuccess({ contests: YEAR_CONTESTS }));
+  getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: 2025, status: 'NOTHING_TO_SEND', sentAt: null, sentByName: null } }));
+  listRecordsMock.mockResolvedValue(apiSuccess({ records: [] }));
+  listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [] }));
 }
 
 /** The year's final contests, newest first: a counted one, a not-counted one, one rained out. */
@@ -179,7 +190,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
-  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, refreshTokenMock]) {
+  for (const mock of [crownCupMock, getChampionshipMock, getCupProjectionMock, getCupSquadPointsMock, getCurrentUserMock, getLeagueByCodeMock, getYearReviewMock, listChampionshipYearsMock, listCupSeasonsMock, listCupsMock, listPerpetualTrophiesMock, listRecordsMock, refreshTokenMock, sendYearReviewMock]) {
     mock.mockReset();
   }
 });
@@ -461,6 +472,68 @@ describe('Championships › Trophy case', () => {
     expect(screen.queryByTestId('cup-card-cup-nba')).not.toBeInTheDocument();
   });
 
+  it('shows each perpetual trophy under the cups with a plate per year, naming every winner, and a year with no result', async () => {
+    primeViewer([buildRunningCup()]);
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Super Bowl',
+      sportLeagueName: 'NFL',
+      selectionType: 'SQUARES',
+      plates: [
+        { year: 2026, contestId: 'bowl-2026', winners: [casey, birdies] },
+        { year: 2025, contestId: 'bowl-2025', winners: [] },
+        { year: 2024, contestId: 'bowl-2024', winners: [birdies] },
+      ],
+    }] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    const trophy = await screen.findByTestId('perpetual-trophy-11111111-1111-4111-8111-111111111111-SQUARES');
+    expect(trophy).toHaveTextContent('Super Bowl Squares');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2026')).toHaveTextContent('2026Casey Crushers and Birdie Bandits');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2025')).toHaveTextContent('2025No result');
+    expect(within(trophy).getByTestId('perpetual-plate-bowl-2024')).toHaveTextContent('2024Birdie Bandits');
+    expect(screen.getByTestId('cup-card-cup-pga')).toBeInTheDocument();
+  });
+
+  it('tells apart the men\'s and women\'s trophies of a shared series by their sports league', async () => {
+    primeViewer([buildRunningCup()]);
+    const draw = (eventSeriesId: string, sportLeagueName: string) => ({
+      eventSeriesId,
+      seriesName: 'US Open',
+      sportLeagueName,
+      selectionType: 'BRACKET',
+      plates: [{ year: 2026, contestId: `${sportLeagueName}-2026`, winners: [] }, { year: 2025, contestId: `${sportLeagueName}-2025`, winners: [] }],
+    } as const);
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [
+      draw('11111111-1111-4111-8111-111111111111', 'ATP'),
+      draw('22222222-2222-4222-8222-222222222222', 'WTA'),
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('perpetual-trophy-11111111-1111-4111-8111-111111111111-BRACKET')).toHaveTextContent('US Open BracketATP');
+    expect(screen.getByTestId('perpetual-trophy-22222222-2222-4222-8222-222222222222-BRACKET')).toHaveTextContent('US Open BracketWTA');
+  });
+
+  it('shows the perpetual trophies even in a year with no cup on show', async () => {
+    primeViewer([NBA_CUP]);
+    listPerpetualTrophiesMock.mockResolvedValue(apiSuccess({ trophies: [{
+      eventSeriesId: '11111111-1111-4111-8111-111111111111',
+      seriesName: 'Masters Tournament',
+      sportLeagueName: 'PGA Tour',
+      selectionType: 'TIERED',
+      plates: [{ year: 2025, contestId: 'masters-2025', winners: [] }, { year: 2024, contestId: 'masters-2024', winners: [] }],
+    }] }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/trophies');
+
+    expect(await screen.findByTestId('perpetual-trophies')).toHaveTextContent('Masters Tournament Tiered');
+    expect(screen.getByTestId('trophy-case-empty')).toBeInTheDocument();
+  });
+
   it('says so when the cups cannot be loaded', async () => {
     primeViewer();
     listCupsMock.mockRejectedValue(new Error('down'));
@@ -516,6 +589,64 @@ describe('Championships › Trophy case', () => {
 
     expect(await screen.findByText('The cup cannot be crowned while Super Bowl Picks is not final.')).toBeInTheDocument();
     expect(screen.getByTestId('crown-cup-dialog-cup-nfl')).toBeInTheDocument();
+  });
+});
+
+describe('Championships › Year in review', () => {
+  const READY = { year: 2025, status: 'READY', sentAt: null, sentByName: null } as const;
+
+  it('offers the commissioner the year in review once last year is ready to send', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('year-review-ready')).toHaveTextContent('Your 2025 year in review is ready to send');
+    expect(screen.getByTestId('year-review-send')).toHaveTextContent('Send the 2025 year in review');
+  });
+
+  it('shows no year in review once it is sent, with nothing to send, or to a member', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { ...READY, status: 'SENT', sentAt: '2026-01-02T15:00:00.000Z', sentByName: 'Casey Commish' } }));
+    const { unmount } = renderChampionships('/league/BIGDAWGS/championships/2026');
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    await waitFor(() => expect(getYearReviewMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+    unmount();
+
+    getYearReviewMock.mockClear();
+    primeViewer();
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    expect(getYearReviewMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+  });
+
+  it('sends the year in review once the commissioner confirms, then says it is on its way', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+    sendYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { ...READY, status: 'SENT', sentAt: '2026-09-01T12:00:00.000Z', sentByName: 'Casey Commish' } }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    fireEvent.click(await screen.findByTestId('year-review-send'));
+    expect(screen.getByText('Every squad that placed in 2025 gets its year by email. It can be sent once.')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
+
+    expect(await screen.findByTestId('year-review-sent')).toHaveTextContent('The 2025 year in review is on its way to every squad that placed.');
+    expect(sendYearReviewMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1', year: '2025' } }));
+  });
+
+  it('says why when the year in review cannot be sent, keeping the dialog open', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+    sendYearReviewMock.mockResolvedValue({ error: { error: { code: 'YEAR_REVIEW_ALREADY_SENT', message: 'The 2025 year in review was already sent.' } } });
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    fireEvent.click(await screen.findByTestId('year-review-send'));
+    fireEvent.click(screen.getByTestId('year-review-dialog-confirm'));
+
+    expect(await screen.findByText('The 2025 year in review was already sent.')).toBeInTheDocument();
+    expect(screen.getByTestId('year-review-dialog')).toBeInTheDocument();
   });
 });
 
@@ -803,6 +934,63 @@ describe('Championships › All years', () => {
 
     expect(await screen.findByTestId('all-years-year-link-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025');
     expect(screen.getByTestId('all-years-cup-cup-nfl-2025')).toHaveAttribute('href', '/league/BIGDAWGS/championships/2025/race/sport-league-nfl');
+  });
+
+  it('shows the record book: each record\'s holders, every one on a tie, with the year or contest it was set in, and the next best', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    const birdies = { squadId: 'team-2', squadName: 'Birdie Bandits', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      {
+        type: 'MOST_WINS_IN_A_YEAR',
+        best: { value: 4, holders: [{ squad: birdies, year: 2025, contestId: null, contestName: null }, { squad: casey, year: 2024, contestId: null, contestName: null }] },
+        nextBest: { value: 1, holders: [{ squad: casey, year: 2025, contestId: null, contestName: null }] },
+      },
+      {
+        type: 'BIGGEST_FIELD_WON',
+        best: { value: 48, holders: [{ squad: casey, year: 2025, contestId: 'contest-1', contestName: 'Masters Pick 6' }] },
+        nextBest: null,
+      },
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('record-MOST_WINS_IN_A_YEAR')).toHaveTextContent('Most wins in a year4 wins · Birdie Bandits (2025) and Casey Crushers (2024)');
+    expect(screen.getByTestId('record-MOST_WINS_IN_A_YEAR-next')).toHaveTextContent('Next best: 1 win · Casey Crushers (2025)');
+    expect(screen.getByTestId('record-BIGGEST_FIELD_WON')).toHaveTextContent('Biggest field won48 entries · Casey Crushers, Masters Pick 6 (2025)');
+    expect(screen.queryByTestId('record-BIGGEST_FIELD_WON-next')).not.toBeInTheDocument();
+  });
+
+  it('shows the Hall of Lame below the record book, each with its own records', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+    const casey = { squadId: 'team-1', squadName: 'Casey Crushers', squadIconKey: 'CAPTAIN_SMILE_FIELD' } as const;
+    listRecordsMock.mockResolvedValue(apiSuccess({ records: [
+      { type: 'MOST_WINS_ALL_TIME', best: { value: 3, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'MOST_RUNNER_UPS', best: { value: 5, holders: [{ squad: casey, year: null, contestId: null, contestName: null }] }, nextBest: null },
+      { type: 'LONGEST_DROUGHT', best: { value: 7, holders: [{ squad: casey, year: 2026, contestId: null, contestName: null }] }, nextBest: null },
+    ] }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    const lame = await screen.findByTestId('hall-of-lame');
+    expect(within(lame).getByTestId('record-MOST_RUNNER_UPS')).toHaveTextContent('Most runner-ups5 2nd places · Casey Crushers');
+    expect(within(lame).getByTestId('record-LONGEST_DROUGHT')).toHaveTextContent('Longest drought7 contests without a win · Casey Crushers (2026)');
+    expect(within(screen.getByTestId('record-book')).getByTestId('record-MOST_WINS_ALL_TIME')).toBeInTheDocument();
+    expect(within(screen.getByTestId('record-book')).queryByTestId('record-MOST_RUNNER_UPS')).not.toBeInTheDocument();
+  });
+
+  it('shows no record book until a record is held', async () => {
+    primeViewer();
+    getHistorySummaryMock.mockResolvedValue(apiSuccess({ summary: SUMMARY }));
+
+    renderChampionships('/league/BIGDAWGS/history');
+
+    expect(await screen.findByTestId('all-years-year-2026')).toBeInTheDocument();
+    await waitFor(() => expect(listRecordsMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('record-book')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('hall-of-lame')).not.toBeInTheDocument();
   });
 
   it('says nothing has counted yet for a league with no history', async () => {

@@ -1569,6 +1569,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/history/year-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get last year's year in review
+         * @description Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass).
+         */
+        get: operations["getYearReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/year-review/{year}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the year in review
+         * @description Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass).
+         */
+        post: operations["sendYearReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/history/summary": {
         parameters: {
             query?: never;
@@ -1581,6 +1621,86 @@ export interface paths {
          * @description Every year the league has a counted championship contest or a cup in, newest first: the championship's champions (its leaders for the current year) and each cup of that season with its champions (its leaders while open). Tiles for the most championships won (years over only) and the most cups won (crowned cups only), ties naming every squad. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["getHistorySummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/trophies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the perpetual trophies
+         * @description The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listPerpetualTrophies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the record book
+         * @description The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listRecords"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/squads/{squadId}/years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's history
+         * @description A squad's whole history for its squad page: its contest medals all time (its championship rows' 1sts, 2nds and 3rds summed over every year), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as `getSquadYear` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getSquadHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/history/squads/{squadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a squad's year
+         * @description One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["getSquadYear"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4031,7 +4151,7 @@ export interface components {
              */
             iconKey: "GOLF_FLAG" | "GOLF_BALL" | "FOOTBALL" | "FOOTBALL_HELMET" | "BASKETBALL" | "BASKETBALL_HOOP" | "CHECKERED_FLAG" | "RACING_WHEEL" | "TENNIS_BALL" | "TENNIS_RACKET" | "HORSESHOE" | "SOCCER_BALL" | "HOCKEY_STICK" | "HOCKEY_PUCK" | "BASEBALL" | "BASEBALL_BAT" | "FIGHT_GLOVE" | "TROPHY" | "WHISTLE" | "STOPWATCH";
         };
-        /** @description Commissioner request payload for the league's championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table. */
+        /** @description Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table. */
         UpdateLeagueCupSettingsRequest: {
             /** @description The league championship's name, shown after its year. */
             cupName: string;
@@ -4042,6 +4162,8 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ... (0 to 1000, at most 50 places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale. */
             cupCustomPoints: number[];
+            /** @description Whether the record book shows its Hall of Lame rows, for the whole league. */
+            hallOfLameVisible: boolean;
         };
         /** @description Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced. */
         UpdateLeagueEventEmailSettingsRequest: {
@@ -4153,6 +4275,8 @@ export interface components {
             cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
             /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
             cupCustomPoints: number[];
+            /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+            hallOfLameVisible: boolean;
             /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
             mutedSportLeagueIds: string[];
         };
@@ -4359,6 +4483,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
             };
@@ -4400,6 +4526,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
             };
@@ -4587,6 +4715,8 @@ export interface components {
                 cupPointsScale: "STANDARD" | "TOP_TEN" | "FIELD_BEATEN" | "CUSTOM";
                 /** @description CUSTOM's whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale. */
                 cupCustomPoints: number[];
+                /** @description Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation. */
+                hallOfLameVisible: boolean;
                 /** @description Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league. */
                 mutedSportLeagueIds: string[];
             }[];
@@ -11846,7 +11976,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -11891,6 +12021,8 @@ export interface components {
                 CONTEST_NOT_OPEN: boolean;
                 /** @description Whether this email is sent. */
                 EVENT_STILL_DRAFT: boolean;
+                /** @description Whether this email is sent. */
+                YEAR_IN_REVIEW: boolean;
             };
         };
         /** @description A named set of budget pricing values. */
@@ -12468,6 +12600,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
             /** @description The value a reset would store. */
@@ -12514,6 +12648,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
         } | {
@@ -12865,6 +13001,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
                 /** @description The value a reset would store. */
@@ -12911,6 +13049,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
             } | {
@@ -13111,6 +13251,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
             /**
@@ -13414,6 +13556,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             } | null;
             /** @description The value the save stored. */
@@ -13460,6 +13604,8 @@ export interface components {
                     CONTEST_NOT_OPEN: boolean;
                     /** @description Whether this email is sent. */
                     EVENT_STILL_DRAFT: boolean;
+                    /** @description Whether this email is sent. */
+                    YEAR_IN_REVIEW: boolean;
                 };
             };
         } | {
@@ -13790,6 +13936,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 } | null;
                 /** @description The value the save stored. */
@@ -13836,6 +13984,8 @@ export interface components {
                         CONTEST_NOT_OPEN: boolean;
                         /** @description Whether this email is sent. */
                         EVENT_STILL_DRAFT: boolean;
+                        /** @description Whether this email is sent. */
+                        YEAR_IN_REVIEW: boolean;
                     };
                 };
             } | {
@@ -15305,6 +15455,8 @@ export interface components {
             topTens: number;
             /** @description Counted contests the squad placed in. */
             played: number;
+            /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+            movement: number | null;
         };
         /** @description One medal tile. */
         ChampionshipTileDto: {
@@ -15371,6 +15523,8 @@ export interface components {
                 topTens: number;
                 /** @description Counted contests the squad placed in. */
                 played: number;
+                /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                movement: number | null;
             }[];
             /** @description The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played. */
             tiles: {
@@ -15440,6 +15594,8 @@ export interface components {
                     topTens: number;
                     /** @description Counted contests the squad placed in. */
                     played: number;
+                    /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                    movement: number | null;
                 }[];
                 /** @description The medal tiles, in display order: 1sts, 2nds, 3rds, podiums, top tens, played. */
                 tiles: {
@@ -15842,6 +15998,942 @@ export interface components {
                     }[];
                 }[];
             };
+        };
+        /** @description Which year of the squad to read. */
+        GetSquadYearQuery: {
+            /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+            year: number;
+        };
+        /** @description One squad's place in a championship year. */
+        SquadChampionshipDto: {
+            /** @description The championship's name: "2026 Derek's Pool Cup". */
+            name: string;
+            /** @description True once the year has ended in US Eastern: the place is final. */
+            isOver: boolean;
+            /** @description Squads in the standings, for "3rd of 12". */
+            squadCount: number;
+            /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+            pointsBehindLeader: number;
+            /** @description Counted contests that went final in the year, league-wide. */
+            contestsCounted: number;
+            /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+            contestsToGo: number;
+            /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+            standing: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                squadIsActive: boolean;
+                /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                finishes: number[];
+                /** @description Counted contests finished 1st, 2nd or 3rd. */
+                podiums: number;
+                /** @description Counted contests finished in the top ten. */
+                topTens: number;
+                /** @description Counted contests the squad placed in. */
+                played: number;
+                /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                movement: number | null;
+            };
+        };
+        /** @description One squad's place in a cup. */
+        SquadCupDto: {
+            /** Format: uuid */
+            cupId: string;
+            /** Format: uuid */
+            sportLeagueId: string;
+            /** @description The cup's name: "2026 PGA Tour Cup". */
+            name: string;
+            /** @enum {string} */
+            status: "OPEN" | "CROWNED";
+            /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+            contestsCounted: number;
+            /** @description Squads in the cup's standings. */
+            squadCount: number;
+            /** @description The squad's row of the cup's standings, as the Points race shows it. */
+            standing: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                squadIsActive: boolean;
+                /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                position: number;
+                /** @description The place as shown: "T2" for a shared 2nd. */
+                displayPosition: string;
+                /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                points: number;
+                /** @description Counted contests the squad won, alone or tied. */
+                wins: number;
+                /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                podiums: number;
+                /** @description Counted contests the squad placed in. */
+                contestsCounted: number;
+                /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                movement: number | null;
+                /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                pointsAfter: number[];
+                /**
+                 * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                 * @enum {string|null}
+                 */
+                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+            };
+        };
+        /** @description One squad's year: its championship row and its cup rows, the same rows the league pages show. */
+        SquadYearDto: {
+            /** Format: uuid */
+            squadId: string;
+            year: number;
+            /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+            championship: {
+                /** @description The championship's name: "2026 Derek's Pool Cup". */
+                name: string;
+                /** @description True once the year has ended in US Eastern: the place is final. */
+                isOver: boolean;
+                /** @description Squads in the standings, for "3rd of 12". */
+                squadCount: number;
+                /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                pointsBehindLeader: number;
+                /** @description Counted contests that went final in the year, league-wide. */
+                contestsCounted: number;
+                /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                contestsToGo: number;
+                /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                standing: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                    squadIsActive: boolean;
+                    /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                    finishes: number[];
+                    /** @description Counted contests finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests finished in the top ten. */
+                    topTens: number;
+                    /** @description Counted contests the squad placed in. */
+                    played: number;
+                    /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                    movement: number | null;
+                };
+            } | null;
+            /** @description Every cup of the season the squad has a row in, by sports league name. */
+            cups: {
+                /** Format: uuid */
+                cupId: string;
+                /** Format: uuid */
+                sportLeagueId: string;
+                /** @description The cup's name: "2026 PGA Tour Cup". */
+                name: string;
+                /** @enum {string} */
+                status: "OPEN" | "CROWNED";
+                /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                contestsCounted: number;
+                /** @description Squads in the cup's standings. */
+                squadCount: number;
+                /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                standing: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                    squadIsActive: boolean;
+                    /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                    position: number;
+                    /** @description The place as shown: "T2" for a shared 2nd. */
+                    displayPosition: string;
+                    /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                    points: number;
+                    /** @description Counted contests the squad won, alone or tied. */
+                    wins: number;
+                    /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                    podiums: number;
+                    /** @description Counted contests the squad placed in. */
+                    contestsCounted: number;
+                    /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                    movement: number | null;
+                    /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                    pointsAfter: number[];
+                    /**
+                     * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                     * @enum {string|null}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                };
+            }[];
+        };
+        /** @description One squad's year. */
+        SquadYearResponse: {
+            /** @description One squad's year: its championship row and its cup rows, the same rows the league pages show. */
+            squadYear: {
+                /** Format: uuid */
+                squadId: string;
+                year: number;
+                /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+                championship: {
+                    /** @description The championship's name: "2026 Derek's Pool Cup". */
+                    name: string;
+                    /** @description True once the year has ended in US Eastern: the place is final. */
+                    isOver: boolean;
+                    /** @description Squads in the standings, for "3rd of 12". */
+                    squadCount: number;
+                    /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                    pointsBehindLeader: number;
+                    /** @description Counted contests that went final in the year, league-wide. */
+                    contestsCounted: number;
+                    /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                    contestsToGo: number;
+                    /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                        squadIsActive: boolean;
+                        /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                        finishes: number[];
+                        /** @description Counted contests finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests finished in the top ten. */
+                        topTens: number;
+                        /** @description Counted contests the squad placed in. */
+                        played: number;
+                        /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                        movement: number | null;
+                    };
+                } | null;
+                /** @description Every cup of the season the squad has a row in, by sports league name. */
+                cups: {
+                    /** Format: uuid */
+                    cupId: string;
+                    /** Format: uuid */
+                    sportLeagueId: string;
+                    /** @description The cup's name: "2026 PGA Tour Cup". */
+                    name: string;
+                    /** @enum {string} */
+                    status: "OPEN" | "CROWNED";
+                    /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                    contestsCounted: number;
+                    /** @description Squads in the cup's standings. */
+                    squadCount: number;
+                    /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                        squadIsActive: boolean;
+                        /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description Counted contests the squad won, alone or tied. */
+                        wins: number;
+                        /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests the squad placed in. */
+                        contestsCounted: number;
+                        /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                        movement: number | null;
+                        /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                        pointsAfter: number[];
+                        /**
+                         * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                         * @enum {string|null}
+                         */
+                        trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                    };
+                }[];
+            };
+        };
+        /** @description A squad's contest medals, all time. */
+        SquadMedalsDto: {
+            /** @description Counted contests the squad finished 1st in, every year. */
+            firsts: number;
+            /** @description Counted contests it finished 2nd in, every year. */
+            seconds: number;
+            /** @description Counted contests it finished 3rd in, every year. */
+            thirds: number;
+        };
+        /** @description One trophy on a squad's shelf. */
+        SquadTrophyDto: {
+            /**
+             * @description CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.
+             * @enum {string}
+             */
+            kind: "CHAMPIONSHIP" | "CUP";
+            year: number;
+            /**
+             * @description The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.
+             * @enum {string}
+             */
+            trophy: "CHAMPION" | "RUNNER_UP" | "THIRD";
+            /** @description What it was won in: "2025 Derek's Pool Cup" or "2025 NFL Cup". */
+            name: string;
+            /**
+             * Format: uuid
+             * @description The cup, for a cup trophy; null for a championship.
+             */
+            cupId: string | null;
+            /**
+             * Format: uuid
+             * @description The cup's sports league, for a cup trophy; null for a championship.
+             */
+            sportLeagueId: string | null;
+        };
+        /** @description A squad's whole history in the league. */
+        SquadHistoryDto: {
+            /** Format: uuid */
+            squadId: string;
+            /** @description A squad's contest medals, all time. */
+            medals: {
+                /** @description Counted contests the squad finished 1st in, every year. */
+                firsts: number;
+                /** @description Counted contests it finished 2nd in, every year. */
+                seconds: number;
+                /** @description Counted contests it finished 3rd in, every year. */
+                thirds: number;
+            };
+            /** @description Newest year first; within a year the championship first, then cups by sports league name. */
+            trophies: {
+                /**
+                 * @description CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.
+                 * @enum {string}
+                 */
+                kind: "CHAMPIONSHIP" | "CUP";
+                year: number;
+                /**
+                 * @description The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.
+                 * @enum {string}
+                 */
+                trophy: "CHAMPION" | "RUNNER_UP" | "THIRD";
+                /** @description What it was won in: "2025 Derek's Pool Cup" or "2025 NFL Cup". */
+                name: string;
+                /**
+                 * Format: uuid
+                 * @description The cup, for a cup trophy; null for a championship.
+                 */
+                cupId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The cup's sports league, for a cup trophy; null for a championship.
+                 */
+                sportLeagueId: string | null;
+            }[];
+            /** @description The squad's year for every year the league has a championship or a cup season in, newest first. */
+            years: {
+                /** Format: uuid */
+                squadId: string;
+                year: number;
+                /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+                championship: {
+                    /** @description The championship's name: "2026 Derek's Pool Cup". */
+                    name: string;
+                    /** @description True once the year has ended in US Eastern: the place is final. */
+                    isOver: boolean;
+                    /** @description Squads in the standings, for "3rd of 12". */
+                    squadCount: number;
+                    /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                    pointsBehindLeader: number;
+                    /** @description Counted contests that went final in the year, league-wide. */
+                    contestsCounted: number;
+                    /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                    contestsToGo: number;
+                    /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                        squadIsActive: boolean;
+                        /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                        finishes: number[];
+                        /** @description Counted contests finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests finished in the top ten. */
+                        topTens: number;
+                        /** @description Counted contests the squad placed in. */
+                        played: number;
+                        /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                        movement: number | null;
+                    };
+                } | null;
+                /** @description Every cup of the season the squad has a row in, by sports league name. */
+                cups: {
+                    /** Format: uuid */
+                    cupId: string;
+                    /** Format: uuid */
+                    sportLeagueId: string;
+                    /** @description The cup's name: "2026 PGA Tour Cup". */
+                    name: string;
+                    /** @enum {string} */
+                    status: "OPEN" | "CROWNED";
+                    /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                    contestsCounted: number;
+                    /** @description Squads in the cup's standings. */
+                    squadCount: number;
+                    /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                    standing: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                        squadIsActive: boolean;
+                        /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                        position: number;
+                        /** @description The place as shown: "T2" for a shared 2nd. */
+                        displayPosition: string;
+                        /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                        points: number;
+                        /** @description Counted contests the squad won, alone or tied. */
+                        wins: number;
+                        /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                        podiums: number;
+                        /** @description Counted contests the squad placed in. */
+                        contestsCounted: number;
+                        /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                        movement: number | null;
+                        /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                        pointsAfter: number[];
+                        /**
+                         * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                         * @enum {string|null}
+                         */
+                        trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                    };
+                }[];
+            }[];
+        };
+        /** @description A squad's whole history in the league. */
+        SquadHistoryResponse: {
+            /** @description A squad's whole history in the league. */
+            squadHistory: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description A squad's contest medals, all time. */
+                medals: {
+                    /** @description Counted contests the squad finished 1st in, every year. */
+                    firsts: number;
+                    /** @description Counted contests it finished 2nd in, every year. */
+                    seconds: number;
+                    /** @description Counted contests it finished 3rd in, every year. */
+                    thirds: number;
+                };
+                /** @description Newest year first; within a year the championship first, then cups by sports league name. */
+                trophies: {
+                    /**
+                     * @description CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.
+                     * @enum {string}
+                     */
+                    kind: "CHAMPIONSHIP" | "CUP";
+                    year: number;
+                    /**
+                     * @description The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.
+                     * @enum {string}
+                     */
+                    trophy: "CHAMPION" | "RUNNER_UP" | "THIRD";
+                    /** @description What it was won in: "2025 Derek's Pool Cup" or "2025 NFL Cup". */
+                    name: string;
+                    /**
+                     * Format: uuid
+                     * @description The cup, for a cup trophy; null for a championship.
+                     */
+                    cupId: string | null;
+                    /**
+                     * Format: uuid
+                     * @description The cup's sports league, for a cup trophy; null for a championship.
+                     */
+                    sportLeagueId: string | null;
+                }[];
+                /** @description The squad's year for every year the league has a championship or a cup season in, newest first. */
+                years: {
+                    /** Format: uuid */
+                    squadId: string;
+                    year: number;
+                    /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
+                    championship: {
+                        /** @description The championship's name: "2026 Derek's Pool Cup". */
+                        name: string;
+                        /** @description True once the year has ended in US Eastern: the place is final. */
+                        isOver: boolean;
+                        /** @description Squads in the standings, for "3rd of 12". */
+                        squadCount: number;
+                        /** @description Tenths of a point behind 1st; 0 for a squad in 1st. */
+                        pointsBehindLeader: number;
+                        /** @description Counted contests that went final in the year, league-wide. */
+                        contestsCounted: number;
+                        /** @description For the current year, the league's open and live contests that will count once final; 0 for any other year. */
+                        contestsToGo: number;
+                        /** @description The squad's row of the championship standings, as the Championship tab shows it. */
+                        standing: {
+                            /** Format: uuid */
+                            squadId: string;
+                            /** @description The squad's current name. */
+                            squadName: string;
+                            /**
+                             * @description The squad's built-in team icon.
+                             * @enum {string}
+                             */
+                            squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                            /** @description False for an inactive squad, shown because it placed in a counted contest of the year. */
+                            squadIsActive: boolean;
+                            /** @description Place in the championship, 1 best. Squads equal on points, 1sts and 2nds share it. */
+                            position: number;
+                            /** @description The place as shown: "T2" for a shared 2nd. */
+                            displayPosition: string;
+                            /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                            points: number;
+                            /** @description The finish matrix row: how many counted contests the squad finished 1st, 2nd ... 10th in; index 0 counts 1sts. */
+                            finishes: number[];
+                            /** @description Counted contests finished 1st, 2nd or 3rd. */
+                            podiums: number;
+                            /** @description Counted contests finished in the top ten. */
+                            topTens: number;
+                            /** @description Counted contests the squad placed in. */
+                            played: number;
+                            /** @description Places gained (positive) or lost (negative) since before the year's latest counted contest went final; null until two contests have counted, and once the year is over. */
+                            movement: number | null;
+                        };
+                    } | null;
+                    /** @description Every cup of the season the squad has a row in, by sports league name. */
+                    cups: {
+                        /** Format: uuid */
+                        cupId: string;
+                        /** Format: uuid */
+                        sportLeagueId: string;
+                        /** @description The cup's name: "2026 PGA Tour Cup". */
+                        name: string;
+                        /** @enum {string} */
+                        status: "OPEN" | "CROWNED";
+                        /** @description The cup's contests that counted, so the client can leave off a cup not yet on show. */
+                        contestsCounted: number;
+                        /** @description Squads in the cup's standings. */
+                        squadCount: number;
+                        /** @description The squad's row of the cup's standings, as the Points race shows it. */
+                        standing: {
+                            /** Format: uuid */
+                            squadId: string;
+                            /** @description The squad's current name. */
+                            squadName: string;
+                            /**
+                             * @description The squad's built-in team icon.
+                             * @enum {string}
+                             */
+                            squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                            /** @description False for an inactive squad, shown because it placed in a counted contest. */
+                            squadIsActive: boolean;
+                            /** @description Place in the cup, 1 best. Squads equal on points, wins and podiums share it. */
+                            position: number;
+                            /** @description The place as shown: "T2" for a shared 2nd. */
+                            displayPosition: string;
+                            /** @description Points in tenths of a point: 725 is 72.5. Show to one decimal. */
+                            points: number;
+                            /** @description Counted contests the squad won, alone or tied. */
+                            wins: number;
+                            /** @description Counted contests the squad finished 1st, 2nd or 3rd. */
+                            podiums: number;
+                            /** @description Counted contests the squad placed in. */
+                            contestsCounted: number;
+                            /** @description Places gained (positive) or lost (negative) since before the latest counted contest went final; null until two contests have counted. */
+                            movement: number | null;
+                            /** @description The squad's running total after each counted contest, in the order they went final (tenths): the race chart's line. Empty until a contest counts. */
+                            pointsAfter: number[];
+                            /**
+                             * @description The trophy the squad took from a crowned cup: CHAMPION, RUNNER_UP or THIRD, shared on a tie. Null while the cup is open, below 3rd, and at 0 points.
+                             * @enum {string|null}
+                             */
+                            trophy: "CHAMPION" | "RUNNER_UP" | "THIRD" | null;
+                        };
+                    }[];
+                }[];
+            };
+        };
+        /** @description Where the league's year in review for last year stands. */
+        YearReviewDto: {
+            /** @description Last year, US Eastern: the only year whose review can be sent. */
+            year: number;
+            /**
+             * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+             * @enum {string}
+             */
+            status: "NOTHING_TO_SEND" | "READY" | "SENT";
+            /**
+             * Format: date-time
+             * @description When it was sent; null until then.
+             */
+            sentAt: string | null;
+            /** @description Who sent it; null until then, or once their account is gone. */
+            sentByName: string | null;
+        };
+        /** @description Where the league's year in review for last year stands. */
+        YearReviewResponse: {
+            /** @description Where the league's year in review for last year stands. */
+            yearReview: {
+                /** @description Last year, US Eastern: the only year whose review can be sent. */
+                year: number;
+                /**
+                 * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+                 * @enum {string}
+                 */
+                status: "NOTHING_TO_SEND" | "READY" | "SENT";
+                /**
+                 * Format: date-time
+                 * @description When it was sent; null until then.
+                 */
+                sentAt: string | null;
+                /** @description Who sent it; null until then, or once their account is gone. */
+                sentByName: string | null;
+            };
+        };
+        /** @description One holder of a record value. */
+        RecordHolderDto: {
+            /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+            squad: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            };
+            /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+            year: number | null;
+            /**
+             * Format: uuid
+             * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+             */
+            contestId: string | null;
+            /** @description That contest's name; null otherwise. */
+            contestName: string | null;
+        };
+        /** @description One value of a record and who holds it. */
+        RecordStandDto: {
+            /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
+            value: number;
+            /** @description Every holder of the value, in squad name order, then newest year first. */
+            holders: {
+                /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+                squad: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                };
+                /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+                year: number | null;
+                /**
+                 * Format: uuid
+                 * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                 */
+                contestId: string | null;
+                /** @description That contest's name; null otherwise. */
+                contestName: string | null;
+            }[];
+        };
+        /** @description One record of the league's record book. */
+        RecordDto: {
+            /**
+             * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
+             * @enum {string}
+             */
+            type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
+            /** @description One value of a record and who holds it. */
+            best: {
+                /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
+                value: number;
+                /** @description Every holder of the value, in squad name order, then newest year first. */
+                holders: {
+                    /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+                    squad: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    };
+                    /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+                    year: number | null;
+                    /**
+                     * Format: uuid
+                     * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                     */
+                    contestId: string | null;
+                    /** @description That contest's name; null otherwise. */
+                    contestName: string | null;
+                }[];
+            };
+            /** @description The next value down and its holders; null when nobody else has one. */
+            nextBest: {
+                /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
+                value: number;
+                /** @description Every holder of the value, in squad name order, then newest year first. */
+                holders: {
+                    /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+                    squad: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    };
+                    /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+                    year: number | null;
+                    /**
+                     * Format: uuid
+                     * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                     */
+                    contestId: string | null;
+                    /** @description That contest's name; null otherwise. */
+                    contestName: string | null;
+                }[];
+            } | null;
+        };
+        /** @description The league's record book. */
+        RecordListResponse: {
+            /** @description Every record somebody holds, in RecordType order; a record nobody holds yet is left out. */
+            records: {
+                /**
+                 * @description MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).
+                 * @enum {string}
+                 */
+                type: "MOST_CHAMPIONSHIPS" | "BACK_TO_BACK_CHAMPIONS" | "MOST_WINS_IN_A_YEAR" | "MOST_WINS_ALL_TIME" | "LONGEST_PODIUM_RUN" | "BIGGEST_FIELD_WON" | "MOST_RUNNER_UPS" | "MOST_FOURTHS" | "MOST_LAST_PLACES" | "LONGEST_DROUGHT";
+                /** @description One value of a record and who holds it. */
+                best: {
+                    /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
+                    value: number;
+                    /** @description Every holder of the value, in squad name order, then newest year first. */
+                    holders: {
+                        /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+                        squad: {
+                            /** Format: uuid */
+                            squadId: string;
+                            /** @description The squad's current name. */
+                            squadName: string;
+                            /**
+                             * @description The squad's built-in team icon.
+                             * @enum {string}
+                             */
+                            squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        };
+                        /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+                        year: number | null;
+                        /**
+                         * Format: uuid
+                         * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                         */
+                        contestId: string | null;
+                        /** @description That contest's name; null otherwise. */
+                        contestName: string | null;
+                    }[];
+                };
+                /** @description The next value down and its holders; null when nobody else has one. */
+                nextBest: {
+                    /** @description Championships, years in a row, wins, contests in a row or ranked entries, by the record's type. */
+                    value: number;
+                    /** @description Every holder of the value, in squad name order, then newest year first. */
+                    holders: {
+                        /** @description A squad named on the championship: a leader, a champion or a tile holder. */
+                        squad: {
+                            /** Format: uuid */
+                            squadId: string;
+                            /** @description The squad's current name. */
+                            squadName: string;
+                            /**
+                             * @description The squad's built-in team icon.
+                             * @enum {string}
+                             */
+                            squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                        };
+                        /** @description The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN); null for an all-time count. */
+                        year: number | null;
+                        /**
+                         * Format: uuid
+                         * @description The contest won, for BIGGEST_FIELD_WON; null otherwise.
+                         */
+                        contestId: string | null;
+                        /** @description That contest's name; null otherwise. */
+                        contestName: string | null;
+                    }[];
+                } | null;
+            }[];
+        };
+        /** @description One plate of a perpetual trophy: a year's contest and its winners. */
+        PerpetualTrophyPlateDto: {
+            /** @description The year of the event the contest was on: the 2026 Masters. */
+            year: number;
+            /** Format: uuid */
+            contestId: string;
+            /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
+            winners: {
+                /** Format: uuid */
+                squadId: string;
+                /** @description The squad's current name. */
+                squadName: string;
+                /**
+                 * @description The squad's built-in team icon.
+                 * @enum {string}
+                 */
+                squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+            }[];
+        };
+        /** @description A perpetual trophy: a contest of one event the league has run in two or more years. */
+        PerpetualTrophyDto: {
+            /** Format: uuid */
+            eventSeriesId: string;
+            /** @description The event series the contest is run on every year, such as "Masters Tournament". */
+            seriesName: string;
+            sportLeagueName: string;
+            /**
+             * @description How the contest is picked: a series run as two ways of picking is two trophies.
+             * @enum {string}
+             */
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+            /** @description Newest year first; a year the league did not run it has no plate. */
+            plates: {
+                /** @description The year of the event the contest was on: the 2026 Masters. */
+                year: number;
+                /** Format: uuid */
+                contestId: string;
+                /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
+                winners: {
+                    /** Format: uuid */
+                    squadId: string;
+                    /** @description The squad's current name. */
+                    squadName: string;
+                    /**
+                     * @description The squad's built-in team icon.
+                     * @enum {string}
+                     */
+                    squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                }[];
+            }[];
+        };
+        /** @description The league's perpetual trophies. */
+        PerpetualTrophyListResponse: {
+            /** @description In sports league, series and selection type order. */
+            trophies: {
+                /** Format: uuid */
+                eventSeriesId: string;
+                /** @description The event series the contest is run on every year, such as "Masters Tournament". */
+                seriesName: string;
+                sportLeagueName: string;
+                /**
+                 * @description How the contest is picked: a series run as two ways of picking is two trophies.
+                 * @enum {string}
+                 */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /** @description Newest year first; a year the league did not run it has no plate. */
+                plates: {
+                    /** @description The year of the event the contest was on: the 2026 Masters. */
+                    year: number;
+                    /** Format: uuid */
+                    contestId: string;
+                    /** @description The contest's 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed. */
+                    winners: {
+                        /** Format: uuid */
+                        squadId: string;
+                        /** @description The squad's current name. */
+                        squadName: string;
+                        /**
+                         * @description The squad's built-in team icon.
+                         * @enum {string}
+                         */
+                        squadIconKey: "CAPTAIN_SMILE_SUNSET" | "CAPTAIN_SMILE_FIELD" | "CAPTAIN_SMILE_OCEAN" | "CAPTAIN_SMILE_MIDNIGHT" | "CAPTAIN_SMILE_CANDY" | "CAPTAIN_WINK_SUNSET" | "CAPTAIN_WINK_FIELD" | "CAPTAIN_WINK_OCEAN" | "CAPTAIN_WINK_MIDNIGHT" | "CAPTAIN_WINK_CANDY" | "CHAMPION_BEARD_SUNSET" | "CHAMPION_BEARD_FIELD" | "CHAMPION_BEARD_OCEAN" | "CHAMPION_BEARD_MIDNIGHT" | "CHAMPION_BEARD_CANDY" | "MAVERICK_MASK_SUNSET" | "MAVERICK_MASK_FIELD" | "MAVERICK_MASK_OCEAN" | "MAVERICK_MASK_MIDNIGHT" | "MAVERICK_MASK_CANDY" | "STARFACE_SUNSET" | "STARFACE_FIELD" | "STARFACE_OCEAN" | "STARFACE_MIDNIGHT" | "STARFACE_CANDY" | "HELMET_STRIPE_SUNSET" | "HELMET_STRIPE_FIELD" | "HELMET_STRIPE_OCEAN" | "HELMET_STRIPE_MIDNIGHT" | "HELMET_STRIPE_CANDY" | "HELMET_BOLT_SUNSET" | "HELMET_BOLT_FIELD" | "HELMET_BOLT_OCEAN" | "HELMET_BOLT_MIDNIGHT" | "HELMET_BOLT_CANDY" | "HELMET_HORN_SUNSET" | "HELMET_HORN_FIELD" | "HELMET_HORN_OCEAN" | "HELMET_HORN_MIDNIGHT" | "HELMET_HORN_CANDY" | "HELMET_WING_SUNSET" | "HELMET_WING_FIELD" | "HELMET_WING_OCEAN" | "HELMET_WING_MIDNIGHT" | "HELMET_WING_CANDY" | "HELMET_GRID_SUNSET" | "HELMET_GRID_FIELD" | "HELMET_GRID_OCEAN" | "HELMET_GRID_MIDNIGHT" | "HELMET_GRID_CANDY" | "GOLF_BAG_SUNSET" | "GOLF_BAG_FIELD" | "GOLF_BAG_OCEAN" | "GOLF_BAG_MIDNIGHT" | "GOLF_BAG_CANDY" | "WHISTLE_BADGE_SUNSET" | "WHISTLE_BADGE_FIELD" | "WHISTLE_BADGE_OCEAN" | "WHISTLE_BADGE_MIDNIGHT" | "WHISTLE_BADGE_CANDY" | "STOPWATCH_BADGE_SUNSET" | "STOPWATCH_BADGE_FIELD" | "STOPWATCH_BADGE_OCEAN" | "STOPWATCH_BADGE_MIDNIGHT" | "STOPWATCH_BADGE_CANDY" | "MEGAPHONE_SUNSET" | "MEGAPHONE_FIELD" | "MEGAPHONE_OCEAN" | "MEGAPHONE_MIDNIGHT" | "MEGAPHONE_CANDY" | "FOAM_FINGER_SUNSET" | "FOAM_FINGER_FIELD" | "FOAM_FINGER_OCEAN" | "FOAM_FINGER_MIDNIGHT" | "FOAM_FINGER_CANDY" | "BULL_HEAD_SUNSET" | "BULL_HEAD_FIELD" | "BULL_HEAD_OCEAN" | "BULL_HEAD_MIDNIGHT" | "BULL_HEAD_CANDY" | "LUCKY_DUCK_SUNSET" | "LUCKY_DUCK_FIELD" | "LUCKY_DUCK_OCEAN" | "LUCKY_DUCK_MIDNIGHT" | "LUCKY_DUCK_CANDY" | "TURBO_TURTLE_SUNSET" | "TURBO_TURTLE_FIELD" | "TURBO_TURTLE_OCEAN" | "TURBO_TURTLE_MIDNIGHT" | "TURBO_TURTLE_CANDY" | "FIRE_PIZZA_SUNSET" | "FIRE_PIZZA_FIELD" | "FIRE_PIZZA_OCEAN" | "FIRE_PIZZA_MIDNIGHT" | "FIRE_PIZZA_CANDY" | "BANANA_BAT_SUNSET" | "BANANA_BAT_FIELD" | "BANANA_BAT_OCEAN" | "BANANA_BAT_MIDNIGHT" | "BANANA_BAT_CANDY";
+                    }[];
+                }[];
+            }[];
         };
         /** @description Feed-aware event sync request. */
         EventSyncRequest: {
@@ -21372,6 +22464,97 @@ export interface operations {
             };
         };
     };
+    getYearReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Where the league's year in review for last year stands. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YearReviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    sendYearReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                /** @description The year whose review to send, such as 2026: only last year can be sent. */
+                year: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Where the league's year in review for last year stands. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["YearReviewResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
     getHistorySummary: {
         parameters: {
             query?: never;
@@ -21403,6 +22586,198 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listPerpetualTrophies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The league's perpetual trophies. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerpetualTrophyListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listRecords: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The league's record book. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSquadHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A squad's whole history in the league. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquadHistoryResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    getSquadYear: {
+        parameters: {
+            query: {
+                /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+                year: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+                squadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One squad's year. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquadYearResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

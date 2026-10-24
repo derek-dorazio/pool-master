@@ -81,6 +81,7 @@ export function buildLeague(overrides: Partial<League> = {}): League {
     cupName: `League ${id} Cup`,
     cupPointsScale: CupPointsScale.STANDARD,
     cupCustomPoints: [],
+    hallOfLameVisible: true,
     mutedSportLeagueIds: [],
     isActive: true,
     iconKey: LeagueIconKey.TROPHY,

@@ -1,10 +1,12 @@
 /**
  * League history (#837): a championship year's final contests, and the squad and matrix-cell
- * filters that must list exactly what the finish matrix counts.
+ * filters that must list exactly what the finish matrix counts; the All years summary; and one
+ * squad's year (#872).
  */
 import type { FinalContest } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
+  RecordType,
   CupContestCount,
   CupStatus,
   CupTrophy,
@@ -12,10 +14,11 @@ import {
   SummaryTile,
   SelectionType,
   TeamIconKey,
+  TrophyKind,
   type LeagueYearFinish,
   type Squad,
 } from '@poolmaster/shared/domain';
-import type { ChampionshipYearSummaryView } from '../../../packages/core-api/src/modules/championship/service';
+import type { ChampionshipStandingView, ChampionshipYearSummaryView, ChampionshipYearView } from '../../../packages/core-api/src/modules/championship/service';
 import type { CupStandingView, CupView } from '../../../packages/core-api/src/modules/cups/service';
 import {
   HistoryService,
@@ -23,7 +26,8 @@ import {
   HistorySquadRequiredError,
 } from '../../../packages/core-api/src/modules/history/service';
 import { InMemoryChampionship } from '../../support/in-memory-championship';
-import { fakeSquadRepo } from '../../support/repo-fakes';
+import { fakeLeagueRepo, fakeSquadRepo } from '../../support/repo-fakes';
+import { buildLeague } from '../../factories';
 
 const LEAGUE = 'league-1';
 
@@ -45,15 +49,16 @@ const BIRDIES = squad('birdies', 'Birdies');
 const BOGEYS = squad('bogeys', 'Bogeys');
 const SQUADS = [EAGLES, BIRDIES, BOGEYS];
 
-function build() {
+function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {}) {
   const finishes = new InMemoryChampionship();
   const service = new HistoryService({
     finishes,
+    leagues: fakeLeagueRepo({ findById: jest.fn().mockResolvedValue(buildLeague({ id: LEAGUE, hallOfLameVisible })) }),
     squads: fakeSquadRepo({
       findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
       findByLeague: jest.fn().mockResolvedValue(SQUADS),
     }),
-    championship: { listYears: jest.fn().mockResolvedValue([]) },
+    championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue([]) },
     cups: { listSeasonYears: jest.fn().mockResolvedValue([]), listSeasonCups: jest.fn().mockResolvedValue([]) },
   });
   const contest = (id: string, completedAt: string | null, overrides: Partial<FinalContest> = {}) => {
@@ -86,10 +91,72 @@ function build() {
       settledAt,
     })));
   };
-  return { contest, finish, service };
+  return { contest, finish, finishes, service };
 }
 
 describe('HistoryService (#837)', () => {
+  it('ranks the record book with each holder\'s squad, the year and the contest won, holders in name order', async () => {
+    const { contest, finish, service } = build();
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 2], ['bogeys', 1, 2], ['birdies', 3, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    const biggest = records.find((row) => row.type === RecordType.BIGGEST_FIELD_WON);
+    expect(biggest?.best.holders.map((holder) => [holder.squad.name, holder.year, holder.contest?.name])).toEqual([
+      ['Bogeys', 2025, 'masters'],
+      ['Eagles', 2025, 'masters'],
+    ]);
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+      RecordType.MOST_LAST_PLACES,
+      RecordType.LONGEST_DROUGHT,
+    ]);
+  });
+
+  it('names each perpetual trophy plate\'s winners as squads, in name order', async () => {
+    const { finish, finishes, service } = build();
+    for (const year of [2024, 2025]) {
+      finishes.seriesContests.push({ leagueId: LEAGUE, contest: {
+        id: `masters-${year}`,
+        selectionType: SelectionType.TIERED,
+        cupWeight: CupWeight.NORMAL,
+        eventSeriesId: 'masters',
+        seriesName: 'Masters Tournament',
+        sportLeagueName: 'PGA Tour',
+        eventYear: year,
+        completedAt: new Date(`${year}-04-14T00:00:00.000Z`),
+        games: [],
+      } });
+    }
+    finish('masters-2024', 2024, [['eagles', 1, 2], ['bogeys', 1, 2]]);
+    finish('masters-2025', 2025, [['birdies', 1, 1], ['eagles', 2, 1]]);
+
+    const trophies = await service.getPerpetualTrophies(LEAGUE);
+
+    expect(trophies.map((trophy) => [trophy.seriesName, trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.name)])])).toEqual([
+      ['Masters Tournament', [[2025, 'masters-2025', ['Birdies']], [2024, 'masters-2024', ['Bogeys', 'Eagles']]]],
+    ]);
+  });
+
+  it('leaves the Hall of Lame out of the record book of a league that hides it', async () => {
+    const { contest, finish, service } = build({ hallOfLameVisible: false });
+    contest('masters', '2025-04-13T22:00:00.000Z');
+    finish('masters', 2025, [['eagles', 1, 1], ['birdies', 2, 1], ['bogeys', 4, 1]]);
+
+    const records = await service.getRecords(LEAGUE);
+
+    expect(records.map((row) => row.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+    ]);
+  });
+
   it('lists every contest that went final in the year newest first, counted, not counted or without a result, with co-winners in name order and the entries ranked', async () => {
     const { contest, finish, service } = build();
     contest('masters', '2026-04-13T22:00:00.000Z');
@@ -208,8 +275,9 @@ describe('HistoryService summary (#837)', () => {
   function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>) {
     return new HistoryService({
       finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
       squads: fakeSquadRepo(),
-      championship: { listYears: jest.fn().mockResolvedValue(years) },
+      championship: { getYear: jest.fn(), listYears: jest.fn().mockResolvedValue(years) },
       cups: {
         listSeasonYears: jest.fn().mockResolvedValue(Object.keys(cupsBySeason).map(Number).sort((left, right) => right - left)),
         listSeasonCups: jest.fn((_leagueId: string, seasonYear: number) => Promise.resolve(cupsBySeason[seasonYear] ?? [])),
@@ -277,5 +345,200 @@ describe('HistoryService summary (#837)', () => {
       [SummaryTile.MOST_CHAMPIONSHIPS, 0, []],
       [SummaryTile.MOST_CUPS, 0, []],
     ]);
+  });
+});
+
+describe('HistoryService squad year (#872)', () => {
+  function standing(rowSquad: Squad, position: number, points: number, movement: number | null): ChampionshipStandingView {
+    return {
+      squad: rowSquad,
+      position,
+      displayPosition: String(position),
+      points,
+      finishes: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      podiums: 1,
+      topTens: 1,
+      played: 1,
+      movement,
+    };
+  }
+
+  function buildSquadYear(standings: ChampionshipStandingView[], cups: CupView[]) {
+    const year: ChampionshipYearView = {
+      leagueId: LEAGUE,
+      year: 2026,
+      cupName: 'Derek\'s Pool Cup',
+      isOver: false,
+      contestsCounted: 4,
+      contestsToGo: 2,
+      standings,
+      tiles: [],
+    };
+    const getYear = jest.fn().mockResolvedValue(year);
+    const listSeasonCups = jest.fn().mockResolvedValue(cups);
+    const service = new HistoryService({
+      finishes: new InMemoryChampionship(),
+      leagues: fakeLeagueRepo(),
+      squads: fakeSquadRepo({
+        findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
+      }),
+      championship: { getYear, listYears: jest.fn() },
+      cups: { listSeasonYears: jest.fn(), listSeasonCups },
+    });
+    return { service, getYear, listSeasonCups };
+  }
+
+  it('keeps the squad\'s own championship row with its place of N and points behind 1st, read from the same year the Championship tab reads', async () => {
+    const { service, getYear } = buildSquadYear(
+      [standing(EAGLES, 1, 2400, 1), standing(BIRDIES, 2, 1800, -1), standing(BOGEYS, 3, 900, 0)],
+      [],
+    );
+
+    const view = await service.getSquadYear(LEAGUE, 'birdies', 2026);
+
+    expect(getYear).toHaveBeenCalledWith(LEAGUE, 2026);
+    expect(view.championship).toMatchObject({
+      cupName: 'Derek\'s Pool Cup',
+      isOver: false,
+      squadCount: 3,
+      pointsBehindLeader: 600,
+      contestsCounted: 4,
+      contestsToGo: 2,
+      standing: { position: 2, points: 1800, movement: -1 },
+    });
+  });
+
+  it('lists only the cups of the season the squad has a row in, by sports league name, each with its counted contests', async () => {
+    const { service, listSeasonCups } = buildSquadYear(
+      [standing(EAGLES, 1, 2400, null), standing(BIRDIES, 2, 1800, null)],
+      [
+        cupView('PGA Tour', 2026, CupStatus.OPEN, [[EAGLES, 1, 900, null], [BIRDIES, 2, 800, null]], 3),
+        cupView('NFL', 2026, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION]], 1),
+        cupView('NBA', 2026, CupStatus.OPEN, [[EAGLES, 1, 400, null]]),
+      ],
+    );
+
+    const view = await service.getSquadYear(LEAGUE, 'birdies', 2026);
+
+    expect(listSeasonCups).toHaveBeenCalledWith(LEAGUE, 2026);
+    expect(view.cups.map((cup) => [cup.view.sportLeagueName, cup.contestsCounted, cup.standing.position, cup.standing.trophy])).toEqual([
+      ['NFL', 1, 1, CupTrophy.CHAMPION],
+      ['PGA Tour', 3, 2, null],
+    ]);
+  });
+
+  it('has no championship row for a squad missing from the standings, such as an inactive one that placed in nothing', async () => {
+    const { service } = buildSquadYear([standing(EAGLES, 1, 2400, null)], []);
+
+    const view = await service.getSquadYear(LEAGUE, 'bogeys', 2026);
+
+    expect(view.championship).toBeNull();
+    expect(view.cups).toEqual([]);
+  });
+
+  it('refuses a squad of another league with SQUAD_NOT_FOUND', async () => {
+    const { service } = buildSquadYear([], []);
+
+    await expect(service.getSquadYear(LEAGUE, 'elsewhere', 2026)).rejects.toBeInstanceOf(HistorySquadNotFoundError);
+  });
+});
+
+describe('HistoryService squad history (#872)', () => {
+  const NOW = new Date('2026-08-01T12:00:00.000Z');
+
+  function standingRow(rowSquad: Squad, position: number, points: number, finishes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]): ChampionshipStandingView {
+    return {
+      squad: rowSquad,
+      position,
+      displayPosition: String(position),
+      points,
+      finishes,
+      podiums: 0,
+      topTens: 0,
+      played: 1,
+      movement: null,
+    };
+  }
+
+  function buildHistory(years: Record<number, { isOver: boolean; standings: ChampionshipStandingView[]; cups: CupView[] }>) {
+    const finishes = new InMemoryChampionship();
+    const byYear = new Map(Object.entries(years).map(([year, row]) => [Number(year), row]));
+    const yearNumbers = [...byYear.keys()].sort((left, right) => right - left);
+    return new HistoryService({
+      finishes,
+      leagues: fakeLeagueRepo(),
+      squads: fakeSquadRepo({
+        findById: jest.fn((id: string) => Promise.resolve([...SQUADS, squad('elsewhere', 'Elsewhere', 'league-2')].find((row) => row.id === id) ?? null)),
+      }),
+      championship: {
+        listYears: jest.fn().mockResolvedValue(yearNumbers
+          .filter((year) => (byYear.get(year)?.standings.length ?? 0) > 0)
+          .map((year) => ({ year, isOver: byYear.get(year)?.isOver ?? false, leaders: [] }))),
+        getYear: jest.fn((_leagueId: string, year: number): Promise<ChampionshipYearView> => Promise.resolve({
+          leagueId: LEAGUE,
+          year,
+          cupName: 'Derek\'s Pool Cup',
+          isOver: byYear.get(year)?.isOver ?? false,
+          contestsCounted: 2,
+          contestsToGo: 0,
+          standings: byYear.get(year)?.standings ?? [],
+          tiles: [],
+        })),
+      },
+      cups: {
+        listSeasonYears: jest.fn().mockResolvedValue(yearNumbers.filter((year) => (byYear.get(year)?.cups.length ?? 0) > 0)),
+        listSeasonCups: jest.fn((_leagueId: string, year: number) => Promise.resolve(byYear.get(year)?.cups ?? [])),
+      },
+      now: () => NOW,
+    });
+  }
+
+  it('reads the squad\'s year for every league year newest first, and shelves its championship podiums of years over and its crowned cups\' trophies', async () => {
+    const service = buildHistory({
+      2026: { isOver: false, standings: [standingRow(EAGLES, 1, 900)], cups: [] },
+      2025: {
+        isOver: true,
+        standings: [standingRow(BIRDIES, 1, 2000), standingRow(EAGLES, 2, 1500)],
+        cups: [
+          cupView('PGA Tour', 2025, CupStatus.CROWNED, [[EAGLES, 1, 1200, CupTrophy.CHAMPION]]),
+          cupView('NFL', 2025, CupStatus.CROWNED, [[EAGLES, 3, 400, CupTrophy.THIRD]]),
+          cupView('NBA', 2025, CupStatus.OPEN, [[EAGLES, 1, 800, null]]),
+        ],
+      },
+      2024: { isOver: true, standings: [standingRow(EAGLES, 4, 300)], cups: [] },
+    });
+
+    const history = await service.getSquadHistory(LEAGUE, 'eagles');
+
+    expect(history.years.map((year) => [year.year, year.championship?.standing.position])).toEqual([[2026, 1], [2025, 2], [2024, 4]]);
+    // The running year's lead is no trophy; 4th is off the podium; an open cup's lead is none either.
+    expect(history.trophies.map((row) => [row.kind, row.year, row.trophy, row.kind === TrophyKind.CUP ? row.cup.sportLeagueName : row.cupName])).toEqual([
+      [TrophyKind.CHAMPIONSHIP, 2025, CupTrophy.RUNNER_UP, 'Derek\'s Pool Cup'],
+      [TrophyKind.CUP, 2025, CupTrophy.THIRD, 'NFL'],
+      [TrophyKind.CUP, 2025, CupTrophy.CHAMPION, 'PGA Tour'],
+    ]);
+  });
+
+  it('gives no championship trophy for a podium place at 0 points', async () => {
+    const service = buildHistory({ 2025: { isOver: true, standings: [standingRow(EAGLES, 1, 0)], cups: [] } });
+
+    const history = await service.getSquadHistory(LEAGUE, 'eagles');
+
+    expect(history.trophies).toEqual([]);
+  });
+
+  it('sums the squad\'s contest 1sts, 2nds and 3rds over its championship rows of every year, leaving out other squads', async () => {
+    const service = buildHistory({
+      2026: { isOver: false, standings: [standingRow(BIRDIES, 1, 900, [5, 5, 5, 0, 0, 0, 0, 0, 0, 0]), standingRow(EAGLES, 2, 600, [1, 0, 1, 1, 0, 0, 0, 0, 0, 0])], cups: [] },
+      2025: { isOver: true, standings: [standingRow(EAGLES, 1, 2000, [1, 1, 0, 0, 0, 0, 0, 0, 0, 0])], cups: [] },
+    });
+
+    const history = await service.getSquadHistory(LEAGUE, 'eagles');
+
+    expect(history.medals).toEqual({ firsts: 2, seconds: 1, thirds: 1 });
+  });
+
+  it('refuses a squad of another league with SQUAD_NOT_FOUND', async () => {
+    await expect(buildHistory({}).getSquadHistory(LEAGUE, 'elsewhere')).rejects.toBeInstanceOf(HistorySquadNotFoundError);
   });
 });

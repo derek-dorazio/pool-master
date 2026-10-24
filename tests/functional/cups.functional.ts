@@ -17,9 +17,13 @@ import {
   getCupProjection,
   getCupSquadPoints,
   getHistorySummary,
+  getSquadHistory,
+  getSquadYear,
   listChampionshipYears,
   listContestConfigTemplates,
   listContestResults,
+  listPerpetualTrophies,
+  listRecords,
   listCupSeasons,
   listCups,
   listEventParticipants,
@@ -33,7 +37,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, SelectionType, Sport, championshipYear, findSportRow } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind, championshipYear, findSportRow } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -46,6 +50,10 @@ import {
   CupSquadPointsResponseSchema,
   HistorySummaryResponseSchema,
   LeagueResponseSchema,
+  PerpetualTrophyListResponseSchema,
+  RecordListResponseSchema,
+  SquadHistoryResponseSchema,
+  SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -65,7 +73,9 @@ import { standardEventPricing } from '../support/budget-pricing';
 // Last, crowning (#841 slice 4): refused while a counted contest is live, then the cup is crowned
 // with both squads sharing the trophy, has no projection, and keeps its points when the table
 // changes again. All years (#837) then lists the cup's season with its two champions and this
-// year's championship so far, and counts the shared cup for both squads.
+// year's championship so far, and counts the shared cup for both squads. Last, the member's squad
+// page (#872) reads its own championship row and its crowned cup row, and its history shelves
+// the crowned cup.
 
 const RUN = `cups-${Date.now()}`;
 const SEASON = 2099;
@@ -126,10 +136,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     })).data).templates.find((template) => template.templateKey === 'wmm-men-tiered-top-10'));
 
     /** A released race with the five runners, tiered one to a tier by ranking. */
-    const releaseRace = async (name: string, startDate: string) => {
+    const releaseRace = async (name: string, startDate: string, eventYear = SEASON) => {
       const eventId = expectDefined((await createEvent({
         client: a,
-        body: { sportLeagueId: majorsMen.id, eventYear: SEASON, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
+        body: { sportLeagueId: majorsMen.id, eventYear, name: `${name} ${RUN}`, startDate, autoLifecycleEnabled: false },
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });
@@ -307,7 +317,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const custom = await updateLeagueCupSettings({
       client: commissioner.client,
       path: { id: league.id },
-      body: { cupName: '  Harriers Shield  ', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5] },
+      body: { cupName: '  Harriers Shield  ', cupPointsScale: CupPointsScale.CUSTOM, cupCustomPoints: [10, 5], hallOfLameVisible: true },
     });
     expect(LeagueResponseSchema.parse(expectDefined(custom.data)).league).toMatchObject({
       cupName: 'Harriers Shield',
@@ -371,7 +381,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     await updateLeagueCupSettings({
       client: commissioner.client,
       path: { id: league.id },
-      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [] },
+      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true },
     });
     const kept = CupResponseSchema.parse(expectDefined((await getCup({ client: member.client, path: { id: league.id, cupId } })).data)).cup;
     expect(Object.fromEntries(kept.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', [row.points, row.pointsAfter, row.trophy]])))
@@ -387,6 +397,79 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       [SummaryTile.MOST_CHAMPIONSHIPS, 0, 0],
       [SummaryTile.MOST_CUPS, 1, 2],
     ]);
+
+    // --- The record book: each squad won once and was 2nd once, no year is over yet ---
+    const readRecords = async () => RecordListResponseSchema.parse(expectDefined((await listRecords({ client: member.client, path: { id: league.id } })).data)).records;
+    const records = await readRecords();
+    expect(records.map((record) => [record.type, record.best.value, record.best.holders.map((holder) => [holder.year, holder.contestName]), record.nextBest])).toEqual([
+      [RecordType.MOST_WINS_IN_A_YEAR, 1, [[year, null], [year, null]], null],
+      [RecordType.MOST_WINS_ALL_TIME, 1, [[null, null], [null, null]], null],
+      [RecordType.LONGEST_PODIUM_RUN, 2, [[year, null], [year, null]], null],
+      [RecordType.BIGGEST_FIELD_WON, 2, expect.arrayContaining([[year, `Harbour Picks ${RUN}`], [year, `Valley Picks ${RUN}`]]), null],
+      // The Hall of Lame: no 4th or last place in two-entry contests; each squad went one without a win.
+      [RecordType.MOST_RUNNER_UPS, 1, [[null, null], [null, null]], null],
+      [RecordType.LONGEST_DROUGHT, 1, [[year, null], [year, null]], null],
+    ]);
+    // Hiding the Hall of Lame takes its rows out for every member, and leaves the record book.
+    await updateLeagueCupSettings({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { cupName: 'Harriers Shield', cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: false },
+    });
+    expect((await readRecords()).map((record) => record.type)).toEqual([
+      RecordType.MOST_WINS_IN_A_YEAR,
+      RecordType.MOST_WINS_ALL_TIME,
+      RecordType.LONGEST_PODIUM_RUN,
+      RecordType.BIGGEST_FIELD_WON,
+    ]);
+
+    // --- The member's squad page (#872): its championship row this year, and its 2099 cup row ---
+    const squadYear = async (forYear: number) => SquadYearResponseSchema.parse(expectDefined((await getSquadYear({
+      client: member.client,
+      path: { id: league.id, squadId: memberSquadId },
+      query: { year: forYear },
+    })).data)).squadYear;
+    const thisYear = await squadYear(year);
+    expect(thisYear.championship).toMatchObject({
+      name: `${year} Harriers Shield`,
+      squadCount: 2,
+      pointsBehindLeader: 0,
+      contestsCounted: 2,
+      standing: { squadId: memberSquadId, displayPosition: 'T1', points: 1800, movement: 0, played: 2 },
+    });
+    expect(thisYear.cups).toEqual([]);
+    const seasonYear = await squadYear(SEASON);
+    expect(seasonYear.cups.map((row) => [row.name, row.status, row.standing.displayPosition, row.squadCount, row.standing.points, row.standing.trophy])).toEqual([
+      [`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 'T1', 2, 150, CupTrophy.CHAMPION],
+    ]);
+    const history = SquadHistoryResponseSchema.parse(expectDefined((await getSquadHistory({
+      client: member.client,
+      path: { id: league.id, squadId: memberSquadId },
+    })).data)).squadHistory;
+    expect(history.years.map((row) => row.year)).toEqual([SEASON, year]);
+    expect(history.medals).toEqual({ firsts: 1, seconds: 1, thirds: 0 });
+    // The shared crowned cup is on the shelf; this year's running championship is not.
+    expect(history.trophies.map((row) => [row.kind, row.year, row.trophy, row.name])).toEqual([
+      [TrophyKind.CUP, SEASON, CupTrophy.CHAMPION, `${SEASON} World Marathon Majors (men) Cup`],
+    ]);
+    const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });
+    expect(unknownSquad.response.status).toBe(404);
+    expect(unknownSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
+
+    // --- Perpetual trophies (#874): the Harbour Marathon picks, run again the next year, make one ---
+    const perpetual = async () => PerpetualTrophyListResponseSchema.parse(expectDefined((await listPerpetualTrophies({ client: member.client, path: { id: league.id } })).data)).trophies;
+    expect(await perpetual()).toEqual([]);
+    const harbourAgain = await releaseRace('Harbour Marathon', `${SEASON + 1}-04-18T13:30:00.000Z`, SEASON + 1);
+    const harbourAgainContest = await runContest(harbourAgain, `Harbour Picks again ${RUN}`, { Kiplimo: 1, Kipruto: 2, Tola: 3, Abdi: 4, Lemma: 5 });
+    const trophies = await perpetual();
+    expect(trophies).toHaveLength(1);
+    const trophy = expectDefined(trophies[0]);
+    expect([trophy.seriesName, trophy.selectionType]).toEqual([`Harbour Marathon ${RUN}`, SelectionType.TIERED]);
+    // The commissioner's Tola 3rd wins the second year; the member won the first.
+    expect(trophy.plates.map((plate) => [plate.year, plate.contestId, plate.winners.map((squad) => squad.squadId === memberSquadId)])).toEqual([
+      [SEASON + 1, harbourAgainContest, [false]],
+      [SEASON, harbourContest, [true]],
+    ]);
   });
 
   it('refuses championship settings from a member with 403, and a custom table without points or past 50 places with 400', async () => {
@@ -395,7 +478,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
     const update = (client: typeof member.client, cupPointsScale: CupPointsScale, cupCustomPoints: number[]) =>
-      updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints } });
+      updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true } });
 
     expect((await update(member.client, CupPointsScale.TOP_TEN, [])).response.status).toBe(403);
     const empty = await update(commissioner.client, CupPointsScale.CUSTOM, []);

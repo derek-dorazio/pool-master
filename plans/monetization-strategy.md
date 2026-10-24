@@ -1,11 +1,13 @@
 # Monetization strategy
 
-**Tracking issue:** #581
+**Tracking issue:** #581. First build: epic #943. Payments: #931.
 
-Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22. Open questions sit under the section they belong to,
+Written 2026-10-10 for Derek's review; sports and pool styles added 2026-10-12; tier order and the levers revised 2026-10-22; first build of plans designed 2026-10-23. Open questions sit under the section they belong to,
 each with a recommendation. Research and strategy only: no implementation is
 scheduled. **Taking payments is out of scope** throughout: this document covers what to sell
-and how the app would know a league or contest has it, not how money is collected.
+and how the app would know a league or contest has it, not how money is collected. Payments
+and account payment history are deferred to #931. The first build is *First build: plans and
+plan behaviour*; it wins where older sections disagree.
 
 ## Summary
 
@@ -24,7 +26,8 @@ and how the app would know a league or contest has it, not how money is collecte
   pool, pick'em or DFS-style, each sold almost as its own product with light branding, and
   Platinum getting all of them. See *Sports and pool styles*.
 - **Plans differ mostly by levers, not by feature lists** (Derek, 2026-10-22): entries per
-  contest, how many sports leagues a league plays, league size and pool styles. Features
+  contest, how many sports leagues a league plays, and pool styles (league size dropped
+  2026-10-24). Features
   (cups, championship, history, emails) are classed only as finely as they naturally need,
   often just free or paid. See *The levers*.
 - Charge for **scale, depth and automation**. Keep the core loop free: invite, pick, watch the
@@ -36,6 +39,218 @@ and how the app would know a league or contest has it, not how money is collecte
   contest option is offered only when it is built (the sport registry), released by the root
   admin, and covered by the league's plan or the contest's unlocks (see *Enablement*). History and notifications are the real work, and they
   are features, not plumbing.
+
+## First build: plans and plan behaviour (2026-10-23)
+
+Derek's brief (2026-10-23): build the plans and what each plan allows, and nothing about
+money yet. Every commissioner may choose any plan without paying. Leagues default to
+**Platinum**, which keeps full and unlimited access to everything, so nothing changes for
+anyone until a commissioner picks a lower plan. Derek then tests a lower plan on a test league
+and checks that features disappear and caps apply. The caps, the count of sports leagues and
+the plan each feature starts at are settings a root admin edits on screen. Payments and
+account payment history are deferred to #931.
+
+This section is the design for that build. Where it disagrees with the older sections below,
+this section wins; *Conflicts with the older sections* lists each one. Questions are at the
+end of the section, each with a recommendation.
+
+### Plans
+
+Four plans, in order: **Free, Pro, Premium, Platinum**. The order matters: a feature that
+starts at Pro is in Pro, Premium and Platinum, and a cap never falls as the plan rises.
+
+- **On the league**: a typed `LeaguePlan` enum (Postgres enum plus shared code enum) as a
+  column on the league, default `PLATINUM`. Every existing league is set to Platinum by the
+  migration.
+- **Change log**: one row per change (league, from, to, who, when), so Derek can see what a
+  test league went through, and so payments later have a history to build on. No start or
+  end dates, no source, no trial: those belong to paying (#931).
+- **Who changes it**: the league's commissioners, on league settings, any plan at any time;
+  and a root admin, on the league's root admin page. A change applies at once.
+- **Where it is shown**: league settings, for commissioners, with a table of what each plan
+  allows, read from the settings below so it is never out of date. Members never see a plan
+  name; they only meet its effects ("This contest is full").
+
+### Caps
+
+Two numbers per plan, each a whole number or unlimited. There is no league size cap (Derek
+2026-10-24): invites and joining are never limited, and members who join and want to enter
+are what push a commissioner to a higher plan.
+
+| Cap | Counts | Checked when | Starting numbers (Free / Pro / Premium / Platinum) |
+|---|---|---|---|
+| Entries per contest | Every entry in the contest, drafts included | An entry is added | 20 / 50 / 100 / unlimited |
+| Sports leagues per year | The different sports leagues (PGA Tour, NFL, ...) of the league's contests this calendar year, drafts included, deleted and cancelled contests not | A contest is created | 1 / 3 / 10 / unlimited |
+
+The numbers are Derek's examples from 2026-10-22, to tune on screen.
+
+- The entry cap sits beside the existing per-squad entry limit (`maxEntriesPerSquad`) and
+  needs a counted insert inside the transaction, so two people taking the last place at once
+  cannot both get in.
+- The sports league count works from contests, not from a list the commissioner keeps, so
+  there is nothing to set up and past years never count against a league (Q5).
+
+### Features
+
+Each feature that a plan can switch on or off has one row in a feature list, with the first
+plan that gets it. Today's features, with the plan they start at, taken from their current
+class (`plans/season-cups.md` §7, `plans/email-notifications.md` *Class*):
+
+| Feature | Starts at today |
+|---|---|
+| Contest results and places, the Contests page History view | Always (not editable) |
+| Account, security and membership emails | Always (not editable) |
+| Contest opening, receipt and final results emails (class A) | Free |
+| Reminders, nudges, live standings, cup, championship and trophy emails (class B) | Pro |
+| Cup standings, cup crowning, cup settings, the Championship tab, the trophy shelf, past years | Pro |
+| All years summary, record book and Hall of Lame | Platinum |
+
+The admin edits the plan per feature, not per class letter, because the letters were only a
+stand-in until plans existed (Q8). Each email template and each championship or history view
+is its own row, grouped as above on screen.
+
+### Root admin Plans page
+
+A new **Plans** page under the root admin's Manage area, with two grids:
+
+1. **Caps**: one row per cap, one column per plan, each cell a number or "Unlimited".
+2. **Features**: one row per feature, grouped (emails, championships, history), with the plan
+   it starts at. "Always" rows show but cannot be changed.
+
+Both save to one new app settings group, `PLAN_CONFIG` (one JSON payload, like
+`EMAIL_CONFIG`), so every save lands in the settings change history that already exists and
+takes effect within the settings refresh, with no deploy. The page is its own editor rather
+than the generic settings form, because a grid by plan reads far better than a form.
+
+Saving checks that caps never fall as the plan rises, and Platinum is fixed at unlimited and
+every feature (Q9), so the default plan can never lose anything by accident.
+
+### One entitlements function
+
+A single service turns a league's plan and `PLAN_CONFIG` into what the league may do: its
+two caps and its feature set. Every check calls it, and nothing else compares plans
+(`rules/architecture-rules.md` §4 *Service Topology*). A lint rule bans comparisons against
+`LeaguePlan` values outside it, like the sport branching rule. Contracts carry what the app
+needs to show state: the league's plan and features, a contest's cap and entry count, the
+sports leagues the league has used this year. The server stays the authority
+(`rules/architecture-rules.md` §2 *Contract-First API Architecture*).
+
+### Moving to a lower plan
+
+One rule covers everything: **a lower plan stops new things; it never removes what exists.**
+
+- **Checked live, not frozen.** Each cap is checked at the moment of the action, against the
+  plan the league is on now. A contest does not keep the plan it opened with (Q3).
+- **Entries.** A contest already over its new cap keeps every entry, and editing them still
+  works; it accepts no new entry until it is under the cap. Members see "This contest is
+  full"; commissioners also see "Your plan allows 20 entries per contest" and where to change
+  the plan.
+- **Sports leagues.** Contests already created in other sports leagues keep running. While
+  over the count, new contests can be created only in sports leagues the league already uses
+  this year. Create contest shows the others locked with the same kind of note.
+- **Features.** Hidden, never deleted. Rows (cup standings, finishes, history) keep being
+  written for every league, so moving back up shows everything as if it had never left. A
+  locked view shows its name and a short note; only commissioners see where to change the
+  plan. A higher-plan email is simply not sent, checked at send time.
+- **Moving up** takes effect at once and shows everything again, including what was written
+  while it was hidden.
+
+### Not in the first build
+
+Kept for later refinement and tickets, none scheduled:
+
+- **Paying** (#931): payment processing, dated subscriptions, renewals and lapses, account
+  payment history, and the ideas that only work with money: per-contest unlocks, the majors
+  pass, free trials, unlock credit, referral credit. Also whether new leagues default to
+  Free once paying exists.
+- **Selection types by plan** (free gets tiered only): a fourth lever, cheap to add to the
+  same settings later (*Scale and formats*).
+- **Pool styles** (office pool, pick'em, DFS-style) as product lines with their own look
+  (*Pool style as a product line*): not built at all yet.
+- **Release switch** per sport and pool style with a beta list (*Enablement*, gate 2).
+- **A commissioner's own lower cap** on a contest (*The entry cap*, Q6).
+- **Other paid ideas in this document**: branding, CSV export, paid tracking, co-commissioner
+  counts, pick popularity, projected finish, contests per event, organisation accounts,
+  member subscriptions, ads.
+
+### Conflicts with the older sections
+
+1. **Default plan.** Older sections make Free the default, with root-admin grants and a free
+   Platinum period for existing leagues. Now: Platinum is the default for every league, new
+   and existing.
+2. **Who sets the plan.** Older: root admin only (*contest unlocks vs league tiers* Q8). Now:
+   any commissioner, free of charge, and the root admin.
+3. **Subscriptions table.** Older: `league_subscriptions` with dates and a source. Now: a plan
+   column and a change log; dates and sources move to #931.
+4. **Freeze at open.** Older: a contest keeps the cap and selection type it opened with. Now:
+   caps are checked live and never remove anything. Freezing only guarded paid upgrades,
+   which don't exist yet.
+5. **Sports leagues the league "plays".** Older: chosen in league settings. Since then, #851
+   is adding a list of sports leagues a league follows for emails, starting with all of them.
+   Using that list for the cap would make a Free league pick one sports league for its
+   emails too. Now: count the sports leagues of this year's contests instead (Q5).
+6. **"The mapping is already configurable."** Not yet. Emails carry a code constant
+   (`ServiceClass`: Essential, A, B), the view features exist only as a table in
+   `plans/season-cups.md` §7, and no class is mapped to any plan anywhere. The first slice
+   builds the feature list and its settings.
+7. **Enum order.** *Domain model* listed Premium before Pro; corrected here to Free, Pro,
+   Premium, Platinum.
+8. **Per-contest unlocks, trials and lapses** throughout the older sections assume paying;
+   they wait for #931.
+
+### Open questions: first build
+
+Each has a recommendation; answer only where you disagree. All answered (Derek 2026-10-24): 1 to 5 and 7 to 12
+agreed; 6 changed to no league size cap.
+
+1. **Decided (Derek 2026-10-24): yes.** **Call it "Plan" on screen, not "Tier"?** Recommended: yes, and `LeaguePlan` in code.
+   "Tier" already means player tiers in tiered selection, on Create contest and in the root
+   admin's event screens; two meanings on one screen would confuse commissioners.
+2. **Decided (Derek 2026-10-24): yes.** **Any commissioner can change the plan, any time, taking effect at once, with every change
+   logged?** Recommended: yes. Co-commissioners already share every other league setting.
+3. **Decided (Derek 2026-10-24): yes.** **Caps checked live, never removing anything, instead of frozen when a contest opens?**
+   Recommended: yes. Nobody is paying, so there is nothing to protect by freezing, and it is
+   what lets you see a cap bite on a test league straight away.
+4. **Decided (Derek 2026-10-24): yes.** **Count draft entries against the entry cap?** Recommended: yes, so the count never
+   surprises anyone at submit; deleting a draft frees a place.
+5. **Decided (Derek 2026-10-24): yes.** **Count sports leagues from this year's contests** (drafts in, deleted and cancelled out),
+   not from a list in league settings? Recommended: yes. Nothing to set up, past years never
+   count, and it stays separate from the email follow list in #851.
+6. ~~League size counts active squads~~ **Decided (Derek 2026-10-24): no league size cap.**
+   Only entries are capped, so invites and joins always go through, and the members who join
+   and want to enter are the upsell.
+7. **Decided (Derek 2026-10-24): yes**, so the data is there if they move back up. **Hide, never delete, on a lower plan, and keep writing the hidden data?** Recommended:
+   yes, so moving back up loses nothing, which is also what makes a later upgrade worth it.
+8. **Decided (Derek 2026-10-24): yes**, one list with one dropdown per feature, on the same page as the caps. **Edit the plan per feature on the admin page, and retire the class letters?**
+   Recommended: yes. The letters were a stand-in until plans existed; per feature is what you
+   asked to edit, and one fewer layer to explain. Account and security emails and contest
+   results stay "Always" and can't be changed.
+9. **Decided (Derek 2026-10-24): yes.** **Platinum fixed at unlimited and every feature, and caps must not fall as the plan
+   rises?** Recommended: yes, so the default plan can never lose anything through a typo.
+10. **Decided (Derek 2026-10-24): yes, without league size.** **First build caps are only entries per contest and sports leagues per year**, with selection types, pool styles and the others in *Not in the first build*?
+    Recommended: yes; they are what you named, and selection types can join the same
+    settings later in one small slice.
+11. **Decided (Derek 2026-10-24): yes**, one list with one dropdown per feature, on the same page as the caps. **A dedicated Plans page in the root admin, saved as one `PLAN_CONFIG` settings group?**
+    Recommended: yes. It reuses the settings history and refresh, and a grid by plan is
+    easier to read than the generic settings form.
+12. **Decided (Derek 2026-10-24): yes.** **What a commissioner sees**: a plan picker on league settings with the comparison table,
+    and counters where caps bite ("18 of 20 entries", "1 of 1 sports leagues this year")? Recommended: yes; members see only "full" messages, never a plan name.
+
+### Slices
+
+Ticketed as epic #943 (2026-10-24); the issues carry the live state.
+
+1. **Plan model**: `LeaguePlan` enum and column (default Platinum), change log, `PLAN_CONFIG`
+   settings group, the feature list replacing `ServiceClass`, and the entitlements function.
+   No behaviour change.
+2. **Choosing a plan**: league settings plan picker and comparison table; the root admin's
+   league page shows and changes it; API and contracts.
+3. **Root admin Plans page**: the caps and features grids over `PLAN_CONFIG`.
+4. **Caps**: entries per contest and sports leagues per year; counters and locked
+   states; failing tests first for each refusal.
+5. **Feature gating**: championship and history routes and views, and emails at send time.
+
+Slices 2 and 3 can run in parallel after 1; 4 and 5 can run in parallel after 2.
 
 ## What other sites charge
 
@@ -123,7 +338,6 @@ A starting point to react to, not a decision. Names follow Derek's message.
 |---|---|---|---|---|
 | **Entries per contest** | 20 | 50 | 100 | Unlimited |
 | **Sports leagues the league plays** (PGA Tour, NFL, ...) | 1 | 3 | 10 | All |
-| **League size** (active squads) | 20 | 50 | 100 | Unlimited |
 | **Pool styles** (office pool, pick'em, DFS-style) | 1 | 1 | 2 | All |
 | Selection types | Tiered | All in its styles | All in its styles | All |
 | Core loop: invites, picks, live leaderboard, results | ✓ | ✓ | ✓ | ✓ |
@@ -258,7 +472,8 @@ the LPGA Tour are two.
 
 ### Vector: league size
 
-New 2026-10-22 (Derek): upper plans unlock larger leagues, counted as **active squads** (for
+**Dropped (Derek 2026-10-24): no league size cap; see *First build*, Q6.** Kept for the
+record. New 2026-10-22 (Derek): upper plans unlock larger leagues, counted as **active squads** (for
 example Free 20, Pro 50, Premium 100, Platinum unlimited). This sits beside the entry cap; it
 does not replace it (*Where the cap goes*).
 
@@ -320,7 +535,6 @@ work. A feature does not need a different version on every plan.
 |---|---|---|
 | Entries per contest | Number | Adding an entry (*Where the cap goes*) |
 | Sports leagues the league plays | Number | League settings and Create contest (*Number of sports leagues*) |
-| League size (active squads) | Number | Accepting an invite (*League size*) |
 | Pool styles | Number, plus which | League settings and Create contest (*Pool style*) |
 | Selection types | Set | Create contest (*Enablement*) |
 | Features | Feature classes | Each feature's routes, tiles or emails |
@@ -344,7 +558,7 @@ plan that gets it. Nothing is gated yet.
 | Email notifications | #845 | Per email: Essential and A free, B paid; cup, championship, season standings and trophy emails B | `plans/email-notifications.md`, *Class* |
 
 Pro and Premium leagues see the same cups and championship; Premium's bigger numbers on the
-levers (more entries, more sports leagues, more squads) are what make it worth more.
+levers (more entries, more sports leagues) are what make it worth more.
 
 ## Paid features worth paying for
 
@@ -459,7 +673,7 @@ of decision.
 
 ### Domain model
 
-- **League plan**: a typed enum `LeaguePlan` (`FREE`, `PREMIUM`, `PRO`, `PLATINUM`) and a
+- **League plan**: a typed enum `LeaguePlan` (`FREE`, `PRO`, `PREMIUM`, `PLATINUM`) and a
   `league_subscriptions` table holding a league's plan with start and end dates and a typed
   source (`MANUAL_GRANT` and `TRIAL` now, a purchase source when payments arrive). A league
   with no current row is `FREE`. The history of rows is kept, so upgrades and lapses are

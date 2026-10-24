@@ -815,6 +815,8 @@ export const EmailTemplateKey = {
   PASSWORD_CHANGED: 'PASSWORD_CHANGED',
   /** A root admin's test of the email setup, from the Email settings (#910). */
   EMAIL_TEST: 'EMAIL_TEST',
+  /** A squad's year in the league, sent by the commissioner after the year ends (#872). */
+  YEAR_IN_REVIEW: 'YEAR_IN_REVIEW',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 
@@ -960,6 +962,68 @@ export const SummaryTile = {
   MOST_CUPS: 'MOST_CUPS',
 } as const;
 export type SummaryTile = (typeof SummaryTile)[keyof typeof SummaryTile];
+
+/**
+ * The league's record book on All years (#873), each worked out on read from its counted
+ * contest finishes and championships. A record shows its holders and the next best; ties show
+ * every holder.
+ */
+export const RecordType = {
+  /** League championships won, years over only. */
+  MOST_CHAMPIONSHIPS: 'MOST_CHAMPIONSHIPS',
+  /** The longest run of championships in consecutive years, two or more. */
+  BACK_TO_BACK_CHAMPIONS: 'BACK_TO_BACK_CHAMPIONS',
+  /** The most contest wins in one year. */
+  MOST_WINS_IN_A_YEAR: 'MOST_WINS_IN_A_YEAR',
+  /** The most contest wins of all time. */
+  MOST_WINS_ALL_TIME: 'MOST_WINS_ALL_TIME',
+  /** The most contests in a row on the podium, of the contests a squad placed in, in settlement order. */
+  LONGEST_PODIUM_RUN: 'LONGEST_PODIUM_RUN',
+  /** A contest win with the most ranked entries. */
+  BIGGEST_FIELD_WON: 'BIGGEST_FIELD_WON',
+  /** Hall of Lame: the most 2nd places. */
+  MOST_RUNNER_UPS: 'MOST_RUNNER_UPS',
+  /** Hall of Lame: the most 4th places, just off the podium. */
+  MOST_FOURTHS: 'MOST_FOURTHS',
+  /** Hall of Lame: the most last places among the squads, in contests of three or more squads. */
+  MOST_LAST_PLACES: 'MOST_LAST_PLACES',
+  /** Hall of Lame: the most contests in a row placed in without a win, past or still running. */
+  LONGEST_DROUGHT: 'LONGEST_DROUGHT',
+} as const;
+export type RecordType = (typeof RecordType)[keyof typeof RecordType];
+
+/** The Hall of Lame's records (#873): shown below the record book, and hidden with the league's setting. */
+export const HALL_OF_LAME_RECORD_TYPES: readonly RecordType[] = [
+  RecordType.MOST_RUNNER_UPS,
+  RecordType.MOST_FOURTHS,
+  RecordType.MOST_LAST_PLACES,
+  RecordType.LONGEST_DROUGHT,
+];
+
+export function isHallOfLameRecord(type: RecordType): boolean {
+  return HALL_OF_LAME_RECORD_TYPES.includes(type);
+}
+
+/**
+ * Which trophy a squad page's trophy shelf (#872) shows: a league championship finished 1st to 3rd
+ * in a year that is over, or a crowned cup's trophy. Both use `CupTrophy` for the place.
+ */
+export const TrophyKind = {
+  CHAMPIONSHIP: 'CHAMPIONSHIP',
+  CUP: 'CUP',
+} as const;
+export type TrophyKind = (typeof TrophyKind)[keyof typeof TrophyKind];
+
+/**
+ * Where a league's year in review (#872) stands for last year: nothing to send (no championship
+ * contest counted that year), ready for the commissioner to send, or sent.
+ */
+export const YearReviewStatus = {
+  NOTHING_TO_SEND: 'NOTHING_TO_SEND',
+  READY: 'READY',
+  SENT: 'SENT',
+} as const;
+export type YearReviewStatus = (typeof YearReviewStatus)[keyof typeof YearReviewStatus];
 
 /**
  * The league championship's medal tiles (#863): which count each one leads on. A podium is a 1st,

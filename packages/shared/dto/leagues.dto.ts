@@ -96,7 +96,8 @@ export const UpdateLeagueCupSettingsRequestSchema = z.object({
     .array(z.number().int().min(0).max(CUP_CUSTOM_POINTS_MAX))
     .max(CUP_CUSTOM_POINTS_MAX_PLACES)
     .describe(`CUSTOM's whole points for 1st, 2nd ... (0 to ${CUP_CUSTOM_POINTS_MAX}, at most ${CUP_CUSTOM_POINTS_MAX_PLACES} places). Required, and only allowed, for CUSTOM: 400 CUP_CUSTOM_POINTS_INVALID otherwise. Send [] for every other scale.`),
-}).describe('Commissioner request payload for the league\'s championship settings: its name and points table, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.');
+  hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows, for the whole league.'),
+}).describe('Commissioner request payload for the league\'s championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.');
 export type UpdateLeagueCupSettingsRequest = z.infer<typeof UpdateLeagueCupSettingsRequestSchema>;
 
 export const UpdateLeagueEventEmailSettingsRequestSchema = z.object({
@@ -183,6 +184,7 @@ export const LeagueDtoSchema = z.object({
   cupName: z.string().describe('The league championship\'s name, shown after its year: "2026 Big Dawgs Cup".'),
   cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
+  hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.'),
   mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;

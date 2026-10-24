@@ -21,17 +21,17 @@ export function AccountMenu({
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card"
+        className="max-w-[11rem] rounded-2xl border border-border bg-background px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/40 hover:bg-card sm:max-w-none"
         data-testid="account-menu-trigger"
         onClick={() => setIsOpen((open) => !open)}
         type="button"
       >
-        {userName}
+        <span className="truncate">{userName}</span>
       </Button>
 
       {isOpen ? (
         <Tile
-          className="absolute right-0 z-40 mt-3 w-72 shadow-xl"
+          className="absolute right-0 z-40 mt-3 w-72 max-w-[calc(100vw-2rem)] shadow-xl"
           data-testid="account-menu-panel"
           padding="sm"
           radius="lg"

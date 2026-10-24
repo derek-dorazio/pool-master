@@ -189,7 +189,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       return leagues.where((row) => leagueIds.has(row.id));
     },
     // The points table starts STANDARD, as the database default has it.
-    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], mutedSportLeagueIds: [], ...row }),
+    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, mutedSportLeagueIds: [], ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
   };
 
@@ -367,6 +367,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         cupName: `League ${leagueSequence} Cup`,
         cupPointsScale: CupPointsScale.STANDARD,
         cupCustomPoints: [],
+        hallOfLameVisible: true,
         mutedSportLeagueIds: [],
         ...overrides,
       });

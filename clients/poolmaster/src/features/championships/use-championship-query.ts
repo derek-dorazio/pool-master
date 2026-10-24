@@ -2,12 +2,22 @@ import { useQuery } from '@tanstack/react-query';
 import {
   getChampionship,
   getHistorySummary,
+  getSquadHistory,
+  getSquadYear,
+  getYearReview,
   listChampionshipYears,
   listContestResults,
+  listPerpetualTrophies,
+  listRecords,
   type ChampionshipDto,
   type ChampionshipYearDto,
   type ContestResultSummaryDto,
   type HistorySummaryDto,
+  type PerpetualTrophyDto,
+  type RecordDto,
+  type SquadHistoryDto,
+  type SquadYearDto,
+  type YearReviewDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -90,6 +100,96 @@ export function useHistorySummaryQuery(leagueId: string) {
       }
 
       return response.data.summary;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/** The league's record book (#873): every record somebody holds, with the next best. */
+export function useRecordsQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.records(leagueId),
+    queryFn: async (): Promise<RecordDto[]> => {
+      const response = await listRecords({ path: { id: leagueId } });
+
+      if (!response.data?.records) {
+        throwApiError(response.error, 'Records response is missing data.');
+      }
+
+      return response.data.records;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  });
+}
+
+/** One squad's year for its squad page (#872): its championship row and its cup rows. */
+export function useSquadYearQuery(leagueId: string, squadId: string, year: number) {
+  return useQuery({
+    queryKey: QueryKeys.championship.squadYear(leagueId, squadId, year),
+    queryFn: async (): Promise<SquadYearDto> => {
+      const response = await getSquadYear({ path: { id: leagueId, squadId }, query: { year } });
+
+      if (!response.data?.squadYear) {
+        throwApiError(response.error, 'Squad year response is missing data.');
+      }
+
+      return response.data.squadYear;
+    },
+    enabled: Boolean(leagueId) && Boolean(squadId),
+    retry: false,
+  });
+}
+
+/** One squad's whole history (#872): its contest medals, trophy shelf, and every year's rows. */
+export function useSquadHistoryQuery(leagueId: string, squadId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.squadHistory(leagueId, squadId),
+    queryFn: async (): Promise<SquadHistoryDto> => {
+      const response = await getSquadHistory({ path: { id: leagueId, squadId } });
+
+      if (!response.data?.squadHistory) {
+        throwApiError(response.error, 'Squad history response is missing data.');
+      }
+
+      return response.data.squadHistory;
+    },
+    enabled: Boolean(leagueId) && Boolean(squadId),
+    retry: false,
+  });
+}
+
+/** Where last year's year in review stands (#872): the commissioner's "ready to send" banner reads it. */
+export function useYearReviewQuery(leagueId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: QueryKeys.championship.yearReview(leagueId),
+    queryFn: async (): Promise<YearReviewDto> => {
+      const response = await getYearReview({ path: { id: leagueId } });
+
+      if (!response.data?.yearReview) {
+        throwApiError(response.error, 'Year in review response is missing data.');
+      }
+
+      return response.data.yearReview;
+    },
+    enabled: Boolean(leagueId) && enabled,
+    retry: false,
+  });
+}
+
+/** The league's perpetual trophies (#874): each contest it runs every year, with a plate per year. */
+export function usePerpetualTrophiesQuery(leagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.championship.perpetualTrophies(leagueId),
+    queryFn: async (): Promise<PerpetualTrophyDto[]> => {
+      const response = await listPerpetualTrophies({ path: { id: leagueId } });
+
+      if (!response.data?.trophies) {
+        throwApiError(response.error, 'Perpetual trophies response is missing data.');
+      }
+
+      return response.data.trophies;
     },
     enabled: Boolean(leagueId),
     retry: false,

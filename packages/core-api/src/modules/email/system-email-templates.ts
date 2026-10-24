@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { EmailCategory, ServiceClass, formatDollars } from '@poolmaster/shared/domain';
+import { CupTrophy, EmailCategory, ServiceClass, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -516,6 +516,35 @@ export interface EmailTestEmailData {
   requestedAt: Date;
 }
 
+/** A squad's place in its league championship or in a cup, as its year in review lists it (#872). */
+export interface YearInReviewPlace {
+  /** "2026 Derek's Pool Cup", "2026 NFL Cup". */
+  name: string;
+  /** "2nd", or "T2" for a shared 2nd. */
+  place: string;
+  squadCount: number;
+  /** "180", "612.5". */
+  points: string;
+  /** The trophy it took; null below the podium, at 0 points, or for a cup not crowned. */
+  trophy: CupTrophy | null;
+}
+
+/** One squad's year, sent to each of its owners by the commissioner once the year is over (#872). */
+export interface YearInReviewEmailData {
+  userName: string;
+  leagueName: string;
+  squadName: string;
+  year: number;
+  /** Null when no championship contest counted for the squad that year. */
+  championship: YearInReviewPlace | null;
+  /** Its counted contests that year: 1sts, 2nds, 3rds and every one it placed in. */
+  medals: { firsts: number; seconds: number; thirds: number; played: number };
+  /** The cups it placed in, by sports league. */
+  cups: YearInReviewPlace[];
+  /** Its squad page for that year. */
+  squadYearUrl: string;
+}
+
 export interface SystemEmailTemplateDataByKey {
   LEAGUE_MEMBER_INVITE: LeagueMemberInviteEmailData;
   LEAGUE_JOIN_SUCCESS: LeagueJoinSuccessEmailData;
@@ -535,6 +564,7 @@ export interface SystemEmailTemplateDataByKey {
   PASSWORD_RESET: PasswordResetEmailData;
   PASSWORD_CHANGED: PasswordChangedEmailData;
   EMAIL_TEST: EmailTestEmailData;
+  YEAR_IN_REVIEW: YearInReviewEmailData;
 }
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
@@ -609,6 +639,7 @@ export interface EmailTemplateScopeByKey {
   PASSWORD_RESET: typeof EmailTemplateScope.PLATFORM;
   PASSWORD_CHANGED: typeof EmailTemplateScope.PLATFORM;
   EMAIL_TEST: typeof EmailTemplateScope.PLATFORM;
+  YEAR_IN_REVIEW: typeof EmailTemplateScope.LEAGUE;
 }
 
 type EmailTemplateRegistry = {
@@ -801,6 +832,14 @@ export const EMAIL_TEMPLATES: EmailTemplateRegistry = {
     keepsContent: true,
     sendWithinMs: null,
     render: renderEmailTestEmail,
+  },
+  YEAR_IN_REVIEW: {
+    category: EmailCategory.RESULTS,
+    serviceClass: ServiceClass.B,
+    settingsSwitch: true,
+    keepsContent: true,
+    sendWithinMs: null,
+    render: renderYearInReviewEmail,
   },
 };
 
@@ -1743,6 +1782,70 @@ function renderEmailTestEmail(
     title: 'Test email',
     bodyBlocks: [paragraph(escapeHtml(sentSentence)), paragraph(workingSentence)].join(''),
     textLines: [sentSentence, '', workingSentence],
+  });
+}
+
+/** A name's possessive: "Casey Crushers'" for a name ending in s, "Birdie Brigade's" otherwise. */
+function possessive(name: string): string {
+  return name.endsWith('s') ? `${name}'` : `${name}'s`;
+}
+
+/** A trophy as the year in review names it. */
+const YEAR_IN_REVIEW_TROPHIES: Record<CupTrophy, string> = {
+  [CupTrophy.CHAMPION]: 'Champion',
+  [CupTrophy.RUNNER_UP]: 'Runner-up',
+  [CupTrophy.THIRD]: '3rd place',
+};
+
+/** "2026 NFL Cup: 2nd of 12, 180 points · Champion". */
+function yearInReviewPlaceLine(row: YearInReviewPlace): string {
+  const line = `${row.name}: ${row.place} of ${String(row.squadCount)}, ${row.points} points`;
+  return row.trophy === null ? line : `${line} · ${YEAR_IN_REVIEW_TROPHIES[row.trophy]}`;
+}
+
+function renderYearInReviewEmail(
+  data: YearInReviewEmailData,
+  context: EmailRenderContext,
+): SystemEmailMessage {
+  const year = String(data.year);
+  const lead = `Here's how ${data.squadName} did in ${data.leagueName} in ${year}.`;
+  const championshipLine = data.championship === null
+    ? `No championship contest counted for ${data.squadName} in ${year}.`
+    : yearInReviewPlaceLine(data.championship);
+  const medals: Array<[string, string]> = [
+    ['1sts', String(data.medals.firsts)],
+    ['2nds', String(data.medals.seconds)],
+    ['3rds', String(data.medals.thirds)],
+    ['Contests played', String(data.medals.played)],
+  ];
+  const cupLines = data.cups.map(yearInReviewPlaceLine);
+  const buttonLabel = `See your ${year}`;
+  return buildMessage(context, {
+    templateKey: 'YEAR_IN_REVIEW',
+    subject: `${possessive(data.squadName)} ${year} in ${data.leagueName}`,
+    preheader: lead,
+    title: `Your ${year} year in review`,
+    bodyBlocks: [
+      paragraph(`Hi ${escapeHtml(data.userName)},`),
+      paragraph(escapeHtml(lead)),
+      sectionTitle('Championship'),
+      paragraph(escapeHtml(championshipLine)),
+      detailList(medals),
+      ...(cupLines.length > 0 ? [sectionTitle('Cups'), ...cupLines.map((line) => paragraph(escapeHtml(line)))] : []),
+      button(buttonLabel, data.squadYearUrl),
+    ].join(''),
+    textLines: [
+      `Hi ${data.userName},`,
+      '',
+      lead,
+      '',
+      'Championship:',
+      championshipLine,
+      ...medals.map(([label, value]) => `${label}: ${value}`),
+      ...(cupLines.length > 0 ? ['', 'Cups:', ...cupLines] : []),
+      '',
+      `${buttonLabel}: ${data.squadYearUrl}`,
+    ],
   });
 }
 

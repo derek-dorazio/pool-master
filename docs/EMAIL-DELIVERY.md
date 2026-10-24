@@ -473,5 +473,13 @@ what it still needs before release (the release refusal's own list: field, tiers
 bracket), or that it only needs releasing, with a link to its Manage page. The idempotency key
 (event, start, whole days left, person) sends one a day and stops once it is released or starts.
 
+The year in review (`YEAR_IN_REVIEW`, #872, category Results) is not on a timer: a league's
+commissioner sends it from the "ready to send" banner on league home and Championships, from
+1 January for the year before. Each active owner of an active squad that placed that year gets
+its year: championship place and points (with its trophy once the year is over), its contest
+1sts, 2nds and 3rds and contests played, each cup it placed in, and a link to its squad page for
+that year. The idempotency key (league, year, person) sends each once; the emails are recorded
+before the league's `league_year_reviews` row, so a send that fails partway can be pressed again.
+
 If the outbox cannot record a welcome, a receipt, a new contest, a contest-started, a final results or an event changed email, the action that
 sends it still succeeds and PoolMaster logs the template and ids.

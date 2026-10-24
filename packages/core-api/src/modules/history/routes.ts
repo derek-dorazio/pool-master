@@ -9,18 +9,67 @@ import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
-import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
+import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../leagues/permissions';
 import { createHistoryHandlers } from './handler';
-import { createHistoryService } from './wiring';
+import { createHistoryService, createYearReviewService } from './wiring';
+import type { MailModuleOptions } from '../email';
+
+const COMMISSIONERS_ONLY = 'Active commissioners only (root admins bypass).';
+
+const YEAR_PARAMS = {
+  type: 'object',
+  required: ['id', 'year'],
+  properties: {
+    id: { type: 'string', format: 'uuid' },
+    year: { type: 'integer', minimum: 2000, maximum: 9999, description: 'The year whose review to send, such as 2026: only last year can be sent.' },
+  },
+} as const;
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
-export function historyModule(fastify: FastifyInstance): void {
+export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
-  const membersOnly = requireMemberOfLeague(new PrismaLeagueMembershipRepository(prisma), leagueFromPath);
-  const handlers = createHistoryHandlers(createHistoryService(prisma, fastify.log));
+  const memberships = new PrismaLeagueMembershipRepository(prisma);
+  const membersOnly = requireMemberOfLeague(memberships, leagueFromPath);
+  const commissionersOnly = requireCommissioner(memberships);
+  const history = createHistoryService(prisma, fastify.log);
+  const handlers = createHistoryHandlers(history, createYearReviewService(prisma, { history, email: opts.email, logger: fastify.log }));
+
+  fastify.get('/year-review', {
+    schema: {
+      tags: ['History'],
+      summary: 'Get last year\'s year in review',
+      description: `Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. ${COMMISSIONERS_ONLY}`,
+      operationId: 'getYearReview',
+      response: {
+        200: schemaRef('YearReviewResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: commissionersOnly,
+    handler: handlers.getYearReview,
+  });
+
+  fastify.post('/year-review/:year/send', {
+    schema: {
+      tags: ['History'],
+      summary: 'Send the year in review',
+      description: `Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. ${COMMISSIONERS_ONLY}`,
+      operationId: 'sendYearReview',
+      params: YEAR_PARAMS,
+      response: {
+        200: schemaRef('YearReviewResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: commissionersOnly,
+    handler: handlers.sendYearReview,
+  });
 
   fastify.get('/summary', {
     schema: {
@@ -36,6 +85,74 @@ export function historyModule(fastify: FastifyInstance): void {
     },
     preHandler: membersOnly,
     handler: handlers.getHistorySummary,
+  });
+
+  fastify.get('/trophies', {
+    schema: {
+      tags: ['History'],
+      summary: 'List the perpetual trophies',
+      description: `The league's perpetual trophies, worked out on read: one for each contest of one event it has run in two or more years, the same event series and the same way of picking, with a plate per year naming its 1st place squads (none for a contest that went final with nobody placed). A week of games (several games, one round, none sending its winner on, such as an NFL regular-season week) earns none, and contests not counted are left out. ${MEMBERS_ONLY}`,
+      operationId: 'listPerpetualTrophies',
+      response: {
+        200: schemaRef('PerpetualTrophyListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listPerpetualTrophies,
+  });
+
+  fastify.get('/records', {
+    schema: {
+      tags: ['History'],
+      summary: 'List the record book',
+      description: `The league's record book, worked out on read from its counted contest finishes and its championships of years over: most championships, the longest run of championships in consecutive years, most contest wins in a year and of all time, the longest run of contests on the podium, and the biggest field won; then the Hall of Lame (most 2nds, 4ths and last places, the longest drought), unless the league hides it. Each names every holder on a tie and the next best. Contests not counted and cancelled ones are left out. ${MEMBERS_ONLY}`,
+      operationId: 'listRecords',
+      response: {
+        200: schemaRef('RecordListResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.listRecords,
+  });
+
+  fastify.get('/squads/:squadId/years', {
+    schema: {
+      tags: ['History'],
+      summary: 'Get a squad\'s history',
+      description: `A squad's whole history for its squad page: its contest medals all time (its championship rows' 1sts, 2nds and 3rds summed over every year), its trophy shelf (league championships finished 1st to 3rd in years that are over, and crowned cups' trophies), and its year, as \`getSquadYear\` reads it, for every year the league has a championship or a cup season in, newest first. A squad of another league is 404 SQUAD_NOT_FOUND. ${MEMBERS_ONLY}`,
+      operationId: 'getSquadHistory',
+      response: {
+        200: schemaRef('SquadHistoryResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getSquadHistory,
+  });
+
+  fastify.get('/squads/:squadId', {
+    schema: {
+      tags: ['History'],
+      summary: 'Get a squad\'s year',
+      description: `One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are \`listContestResults\` with its squadId. A squad of another league is 404 SQUAD_NOT_FOUND. ${MEMBERS_ONLY}`,
+      operationId: 'getSquadYear',
+      querystring: schemaRef('GetSquadYearQuery'),
+      response: {
+        200: schemaRef('SquadYearResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: membersOnly,
+    handler: handlers.getSquadYear,
   });
 
   fastify.get('/contests', {

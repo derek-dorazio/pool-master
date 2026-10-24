@@ -23,13 +23,16 @@ export function LeagueMenuBar({ leagueCode }: { leagueCode: string }) {
     <LeagueMenu
       action={canOpenCommissionerTools ? (
         <LinkButton
+          aria-label="Commissioner tools"
+          className="max-sm:h-10 max-sm:w-10 max-sm:px-0"
           data-testid="league-menu-commissioner-tools"
           size="sm"
           to={buildLeagueAdminPath(leagueCode)}
           variant="subtle"
         >
           <Settings aria-hidden size={16} />
-          Commissioner tools
+          {/* A phone shows the gear alone, so the league's own links keep the menu's width. */}
+          <span className="hidden sm:inline">Commissioner tools</span>
         </LinkButton>
       ) : null}
       aria-label="League"

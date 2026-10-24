@@ -32,6 +32,7 @@ export const ChampionshipStandingRowDtoSchema = z.object({
   podiums: z.number().int().describe('Counted contests finished 1st, 2nd or 3rd.'),
   topTens: z.number().int().describe('Counted contests finished in the top ten.'),
   played: z.number().int().describe('Counted contests the squad placed in.'),
+  movement: z.number().int().nullable().describe('Places gained (positive) or lost (negative) since before the year\'s latest counted contest went final; null until two contests have counted, and once the year is over.'),
 }).describe('One squad\'s row in a championship year. Every active squad has one, at 0 until it places.');
 export type ChampionshipStandingRowDto = z.infer<typeof ChampionshipStandingRowDtoSchema>;
 

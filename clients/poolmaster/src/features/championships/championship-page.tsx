@@ -67,7 +67,7 @@ export function ChampionshipPage() {
         ) : null}
       </Tile>
 
-      <MetricGrid className="grid-cols-2 sm:grid-cols-3">
+      <MetricGrid>
         {championship.tiles.map((tile) => (
           <div data-testid={`championship-tile-${tile.tile}`} key={tile.tile}>
             <MetricTile

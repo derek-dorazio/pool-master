@@ -1,4 +1,4 @@
-import type { LeagueYearFinish, SelectionType } from '../domain';
+import type { CupWeight, LeagueYearFinish, LeagueYearReview, SelectionType } from '../domain';
 
 /** A contest that went final, as a year's contest list names it (#837). */
 export interface FinalContest {
@@ -9,6 +9,26 @@ export interface FinalContest {
   sportLeagueName: string;
   /** When it went final; null for a contest completed before the time was kept. */
   completedAt: Date | null;
+}
+
+/**
+ * A final contest of exactly one event (#874): what a perpetual trophy is built from. An event is
+ * one edition of its series a year, so the same series and selection type again is the same
+ * contest run again.
+ */
+export interface SeriesContest {
+  id: string;
+  selectionType: SelectionType;
+  cupWeight: CupWeight;
+  eventSeriesId: string;
+  seriesName: string;
+  sportLeagueName: string;
+  /** The year the edition is branded with: the 2026 Masters. */
+  eventYear: number;
+  /** When it went final; null for a contest completed before the time was kept. */
+  completedAt: Date | null;
+  /** The event's games, if it has any: each one's round and whether it sends its winner on. */
+  games: Array<{ roundNumber: number; sendsWinnerOn: boolean }>;
 }
 
 /** The league championship's finishes, written at settlement and read by year (#863). */
@@ -30,4 +50,13 @@ export interface ChampionshipRepository {
    * `contestIds` whenever they did (#837).
    */
   findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]>;
+  /** The league's completed contests of exactly one event, with that event's series (#874). */
+  findSeriesContests(leagueId: string): Promise<SeriesContest[]>;
+}
+
+/** Whether a league's year in review was sent (#872 slice 4). */
+export interface LeagueYearReviewRepository {
+  findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null>;
+  /** Records the send; null when one is already recorded for the league and year. */
+  create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null>;
 }
