@@ -10,6 +10,32 @@ export function hasEventEmails(league: Pick<LeagueDto, 'planEntitlements'>): boo
   return EVENT_EMAIL_FEATURES.some((feature) => hasPlanFeature(league, feature));
 }
 
+/** Which of the two upcoming-event emails the league's plan sends; each starts on its own plan. */
+function eventEmailsInPlan(league: Pick<LeagueDto, 'planEntitlements'>) {
+  return {
+    comingUp: hasPlanFeature(league, PlanFeature.EMAIL_EVENT_COMING_UP),
+    ready: hasPlanFeature(league, PlanFeature.EMAIL_EVENT_READY_FOR_CONTESTS),
+  };
+}
+
+/** League settings' line on the emails the plan sends, so it never promises one the league won't get. */
+export function describeEventEmailsSection(league: Pick<LeagueDto, 'planEntitlements'>): string {
+  const { comingUp, ready } = eventEmailsInPlan(league);
+  if (comingUp && ready) return 'Emails to commissioners when an event is coming up and when it\'s ready for contests.';
+  return comingUp ? 'Emails to commissioners when an event is coming up.' : 'Emails to commissioners when an event is ready for contests.';
+}
+
+/** The edit page's line on the emails the plan sends. */
+export function describeEventEmailsPage(league: Pick<LeagueDto, 'planEntitlements'>): string {
+  const { comingUp, ready } = eventEmailsInPlan(league);
+  const sent = comingUp && ready
+    ? 'Commissioners get an email about 10 days before an event, and another once it\'s ready for contests.'
+    : comingUp
+      ? 'Commissioners get an email about 10 days before an event.'
+      : 'Commissioners get an email once an event is ready for contests.';
+  return `${sent} Choose the sport leagues you want to hear about.`;
+}
+
 export interface EventEmailSport {
   sport: Sport;
   name: string;

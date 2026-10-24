@@ -7,7 +7,13 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { Button, Checkbox, ErrorState, FormPage, LoadingState } from '@/features/shared/ui';
-import { EVENT_EMAIL_FEATURES, groupEventEmailSportLeagues, hasEventEmails, type EventEmailSport } from './event-emails-view';
+import {
+  EVENT_EMAIL_FEATURES,
+  describeEventEmailsPage,
+  groupEventEmailSportLeagues,
+  hasEventEmails,
+  type EventEmailSport,
+} from './event-emails-view';
 import { syncLeagueCaches } from './league-cache';
 import { buildLeagueAdminPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
@@ -32,7 +38,7 @@ export function EditEventEmailsPage() {
     return <Navigate replace to={buildLeagueAdminPath(league.leagueCode)} />;
   }
   if (!hasEventEmails(league)) {
-    return <PlanLockedNotice feature={EVENT_EMAIL_FEATURES[0]} isCommissioner={viewer.isCommissioner} leagueCode={league.leagueCode} />;
+    return <PlanLockedNotice feature={EVENT_EMAIL_FEATURES[0]} isCommissioner={viewer.isCommissioner} leagueCode={league.leagueCode} title="Event emails" />;
   }
   if (sportLeaguesQuery.isLoading) {
     return <LoadingState testId="edit-event-emails-loading" />;
@@ -97,7 +103,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
   return (
     <FormPage
       cancelTo={settingsPath}
-      description="Commissioners get an email about 10 days before an event, and another once it's ready for contests. Choose the sport leagues you want to hear about."
+      description={describeEventEmailsPage(league)}
       errorMessage={saveMutation.isError
         ? extractErrorMessage(saveMutation.error, { fallback: 'We could not save the event email settings.' })
         : null}

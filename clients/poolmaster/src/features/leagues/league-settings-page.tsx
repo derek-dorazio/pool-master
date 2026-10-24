@@ -15,7 +15,7 @@ import { describePointsTable } from '@/features/championships/cup-settings-view'
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { describeEventEmailSportLeagues, hasEventEmails } from './event-emails-view';
+import { describeEventEmailSportLeagues, describeEventEmailsSection, hasEventEmails } from './event-emails-view';
 import { LeagueDangerZone } from './league-danger-zone';
 import { LeagueIcon } from './league-icon';
 import { LEAGUE_PLAN_LABEL, PLAN_CAP_LABEL, formatPlanLimit } from '@/features/plans/plan-labels';
@@ -189,7 +189,7 @@ export function LeagueSettingsPage() {
               Edit
             </LinkButton>
           )}
-          description="Emails to commissioners when an event is coming up and when it's ready for contests."
+          description={describeEventEmailsSection(league)}
           testId="league-settings-event-emails"
           title="Event emails"
         >
