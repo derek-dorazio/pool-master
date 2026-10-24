@@ -402,6 +402,28 @@ ends for leagues that don't subscribe, what they drop to, grace length, and pror
 - **Where it starts**: the plan comparison pages (designed on PR #974), whose
   Yearly / Monthly toggle hands a plan and period to checkout.
 
+### Tentative plan prices (2026-10-24, to revisit)
+
+| Plan | Long-term entries per contest | Annual | Monthly |
+|---|---|---|---|
+| Free | 20 | $0 | $0 |
+| Pro | 50 | $49 | $4.99 |
+| Premium | 100 | $99 | $9.99 |
+| Platinum | 1000 | $199 | $19.99 |
+
+- **Anchored on expansions.** Each annual price is about five expansions of its cap
+  ($10, $20, $40), so a league running five or more sizeable contests a year saves by
+  subscribing. That is the "I'm paying more than a plan" moment Derek expects.
+- **Against the market** (`plans/monetization-strategy.md` *What other sites charge*):
+  per-entry pool sites charge about $100 for one 50-entry pool and $175 for 100; fantasy
+  commissioner upgrades run $130 to $180 a season (Fantrax, CBS). Premium at $99 a year for
+  every contest, sport and feature is well under both; Platinum at $199 sits at CBS's level
+  for far larger pools.
+- **Monthly** follows Derek's example, about 20% over annual. Watch one risk: a month of
+  Premium ($9.99) is cheaper than one 100-entry expansion ($20), so a commissioner could
+  subscribe for the month of one big pool and cancel. If that shows up, raise monthly or let
+  monthly start at Pro only.
+
 ## 16. Checkout, changes and hand-over
 
 - **Checkout**: `POST /leagues/:id/billing/checkout { plan, interval }`, `mode: subscription`,
