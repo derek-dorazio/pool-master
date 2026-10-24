@@ -261,6 +261,7 @@ export function bracketLeagueContextFixture(): LeagueContextResponse {
       cupCustomPoints: [],
       hallOfLameVisible: true,
       planEntitlements: buildPlanEntitlements(),
+      mutedSportLeagueIds: [],
     },
     membership: {
       id: 'league-membership-1',

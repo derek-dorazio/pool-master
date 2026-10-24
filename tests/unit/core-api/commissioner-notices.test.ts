@@ -216,6 +216,24 @@ describe('CommissionerNotices', () => {
       expect(text).toContain('Create contest: https://app.example.test/league/OFFICE24/admin/contests/new');
     });
 
+    it("tells no commissioner of a league that muted the event's sport league, coming up or ready, while a league that muted another one is told", async () => {
+      const muted = world.addLeague({ name: 'No Golf League', mutedSportLeagueIds: ['pga-tour'] });
+      const other = world.addLeague({ name: 'No Racing League', mutedSportLeagueIds: ['nascar'] });
+      person(muted.id, 'Casey');
+      const riley = person(other.id, 'Riley');
+      event({ name: 'The Masters', startDate: inDays(9.5) });
+      event({ name: 'The Open', startDate: inDays(6) });
+
+      await notices().queueDue(NOW);
+
+      const told = outbox.rows.map((row) => [row.templateKey, row.recipientUserId]);
+      expect(told).toHaveLength(2);
+      expect(told).toEqual(expect.arrayContaining([
+        ['EVENT_COMING_UP', riley.id],
+        ['EVENT_READY_FOR_CONTESTS', riley.id],
+      ]));
+    });
+
     it('waits for a draft event to be released, then tells at once', async () => {
       const league = world.addLeague();
       const casey = person(league.id, 'Casey');

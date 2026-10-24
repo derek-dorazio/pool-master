@@ -2807,6 +2807,25 @@
         "additionalProperties": false,
         "description": "Commissioner request payload for the league's championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table."
       },
+      "UpdateLeagueEventEmailSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "mutedSportLeagueIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "maxItems": 200,
+            "description": "The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league."
+          }
+        },
+        "required": [
+          "mutedSportLeagueIds"
+        ],
+        "additionalProperties": false,
+        "description": "Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced."
+      },
       "SendLeagueInvitationsRequest": {
         "type": "object",
         "properties": {
@@ -3154,6 +3173,14 @@
             ],
             "additionalProperties": false,
             "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+          },
+          "mutedSportLeagueIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
           }
         },
         "required": [
@@ -3168,7 +3195,8 @@
           "cupPointsScale",
           "cupCustomPoints",
           "hallOfLameVisible",
-          "planEntitlements"
+          "planEntitlements",
+          "mutedSportLeagueIds"
         ],
         "additionalProperties": false,
         "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3707,6 +3735,14 @@
                 ],
                 "additionalProperties": false,
                 "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "mutedSportLeagueIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
               }
             },
             "required": [
@@ -3721,7 +3757,8 @@
               "cupPointsScale",
               "cupCustomPoints",
               "hallOfLameVisible",
-              "planEntitlements"
+              "planEntitlements",
+              "mutedSportLeagueIds"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -3900,6 +3937,14 @@
                 ],
                 "additionalProperties": false,
                 "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+              },
+              "mutedSportLeagueIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
               }
             },
             "required": [
@@ -3914,7 +3959,8 @@
               "cupPointsScale",
               "cupCustomPoints",
               "hallOfLameVisible",
-              "planEntitlements"
+              "planEntitlements",
+              "mutedSportLeagueIds"
             ],
             "additionalProperties": false,
             "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -4387,6 +4433,14 @@
                   ],
                   "additionalProperties": false,
                   "description": "The league's plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan's name to commissioners only; members only meet its effects."
+                },
+                "mutedSportLeagueIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "description": "Sport leagues whose upcoming events the league's commissioners are not emailed about (\"Coming up soon\", \"Ready for contests\"). Empty, the default: every sport league."
                 }
               },
               "required": [
@@ -4401,7 +4455,8 @@
                 "cupPointsScale",
                 "cupCustomPoints",
                 "hallOfLameVisible",
-                "planEntitlements"
+                "planEntitlements",
+                "mutedSportLeagueIds"
               ],
               "additionalProperties": false,
               "description": "A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object."
@@ -53787,6 +53842,88 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/event-email-settings": {
+      "put": {
+        "operationId": "updateLeagueEventEmailSettings",
+        "summary": "Choose which sport leagues' upcoming events the commissioners are emailed about",
+        "tags": [
+          "Leagues"
+        ],
+        "description": "Allows a commissioner to set which sport leagues an active league's commissioners are not emailed about (#851): \"Coming up soon\" about 10 days before an event, and \"Ready for contests\" once it is released. The list is replaced whole; [] hears about every sport league, the default. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league; LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE for an inactive league.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLeagueEventEmailSettingsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Single-league response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeagueResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

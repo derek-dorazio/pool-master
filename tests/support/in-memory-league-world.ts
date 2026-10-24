@@ -193,8 +193,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       );
       return leagues.where((row) => leagueIds.has(row.id));
     },
-    // The points table starts STANDARD, the Hall of Lame shown and the plan PLATINUM, as the database defaults have them.
-    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, plan: LeaguePlan.PLATINUM, ...row }),
+    // The points table starts STANDARD, the Hall of Lame shown, the plan PLATINUM and no sport league muted, as the database defaults have them.
+    create: async (row) => leagues.insert({ cupPointsScale: CupPointsScale.STANDARD, cupCustomPoints: [], hallOfLameVisible: true, plan: LeaguePlan.PLATINUM, mutedSportLeagueIds: [], ...row }),
     update: async (id, updates) => leagues.patch(id, updates),
     changePlan: async (leagueId, change) => {
       if (leagues.get(leagueId)?.plan !== change.fromPlan) {
@@ -382,6 +382,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
         cupCustomPoints: [],
         hallOfLameVisible: true,
         plan: LeaguePlan.PLATINUM,
+        mutedSportLeagueIds: [],
         ...overrides,
       });
     },

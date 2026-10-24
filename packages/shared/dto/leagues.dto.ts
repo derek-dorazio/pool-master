@@ -101,6 +101,14 @@ export const UpdateLeagueCupSettingsRequestSchema = z.object({
 }).describe('Commissioner request payload for the league\'s championship settings: its name, points table and whether the Hall of Lame shows, replaced together. Cups score on read, so they follow a new table at once; the championship keeps the points each contest earned when it went final, and scores later contests on the new table.');
 export type UpdateLeagueCupSettingsRequest = z.infer<typeof UpdateLeagueCupSettingsRequestSchema>;
 
+export const UpdateLeagueEventEmailSettingsRequestSchema = z.object({
+  mutedSportLeagueIds: z
+    .array(z.string().uuid())
+    .max(200)
+    .describe('The sport leagues whose upcoming events the league\'s commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.'),
+}).describe('Commissioner request payload for which sport leagues\' upcoming events the league\'s commissioners hear about (#851): the whole list, replaced.');
+export type UpdateLeagueEventEmailSettingsRequest = z.infer<typeof UpdateLeagueEventEmailSettingsRequestSchema>;
+
 export const SendLeagueInvitationsRequestSchema = z.object({
   emails: z.array(EmailInputSchema).min(1).max(50).describe('Email recipients to invite into the league.'),
   message: z.string().max(500).optional().describe('Optional commissioner note included with the invitation email.'),
@@ -181,6 +189,7 @@ export const LeagueDtoSchema = z.object({
   planEntitlements: PlanEntitlementsDtoSchema.describe(
     'The league\'s plan and what it allows now: its caps and features. Platinum at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
   ),
+  mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
@@ -406,6 +415,7 @@ registerSchema('CreateLeagueRequest', CreateLeagueRequestSchema);
 registerSchema('DeleteLeagueRequest', DeleteLeagueRequestSchema);
 registerSchema('UpdateLeagueDetailsRequest', UpdateLeagueDetailsRequestSchema);
 registerSchema('UpdateLeagueCupSettingsRequest', UpdateLeagueCupSettingsRequestSchema);
+registerSchema('UpdateLeagueEventEmailSettingsRequest', UpdateLeagueEventEmailSettingsRequestSchema);
 registerSchema('SendLeagueInvitationsRequest', SendLeagueInvitationsRequestSchema);
 registerSchema('GenerateInviteLinkRequest', GenerateInviteLinkRequestSchema);
 registerSchema('ChangeLeagueMemberRoleRequest', ChangeLeagueMemberRoleRequestSchema);

@@ -1310,6 +1310,16 @@ export type UpdateLeagueCupSettingsRequest = {
 };
 
 /**
+ * Commissioner request payload for which sport leagues' upcoming events the league's commissioners hear about (#851): the whole list, replaced.
+ */
+export type UpdateLeagueEventEmailSettingsRequest = {
+    /**
+     * The sport leagues whose upcoming events the league's commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.
+     */
+    mutedSportLeagueIds: Array<string>;
+};
+
+/**
  * Commissioner request payload for sending direct email invites.
  */
 export type SendLeagueInvitationsRequest = {
@@ -1506,6 +1516,10 @@ export type LeagueDto = {
          */
         features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     };
+    /**
+     * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+     */
+    mutedSportLeagueIds: Array<string>;
 };
 
 /**
@@ -1805,6 +1819,10 @@ export type LeagueResponse = {
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     };
 };
 
@@ -1894,6 +1912,10 @@ export type LeagueContextResponse = {
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     };
     /**
      * The viewer's membership in this league, or null when they have none.
@@ -2156,6 +2178,10 @@ export type LeagueListResponse = {
              */
             features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
         };
+        /**
+         * Sport leagues whose upcoming events the league's commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.
+         */
+        mutedSportLeagueIds: Array<string>;
     }>;
     /**
      * The viewer's own memberships across the returned leagues. Empty for a root admin listing leagues they do not belong to.
@@ -22915,6 +22941,45 @@ export type UpdateLeaguePlanResponses = {
 };
 
 export type UpdateLeaguePlanResponse = UpdateLeaguePlanResponses[keyof UpdateLeaguePlanResponses];
+
+export type UpdateLeagueEventEmailSettingsData = {
+    body: UpdateLeagueEventEmailSettingsRequest;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/event-email-settings';
+};
+
+export type UpdateLeagueEventEmailSettingsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type UpdateLeagueEventEmailSettingsError = UpdateLeagueEventEmailSettingsErrors[keyof UpdateLeagueEventEmailSettingsErrors];
+
+export type UpdateLeagueEventEmailSettingsResponses = {
+    /**
+     * Single-league response.
+     */
+    200: LeagueResponse;
+};
+
+export type UpdateLeagueEventEmailSettingsResponse = UpdateLeagueEventEmailSettingsResponses[keyof UpdateLeagueEventEmailSettingsResponses];
 
 export type InactivateLeagueData = {
     body?: never;
