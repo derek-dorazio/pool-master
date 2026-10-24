@@ -334,9 +334,6 @@ export interface LeagueYearFinish {
   /** Entries sharing the place, the squad's own included. */
   tiedCount: number;
   rankedEntryCount: number;
-  /** The series of a single-event contest (the Masters); null for a contest of several events. */
-  eventSeriesId: string | null;
-  selectionType: SelectionType;
   weight: CupWeight;
   /** Tenths of a point. */
   points: number;
