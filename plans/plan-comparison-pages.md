@@ -1,7 +1,7 @@
 # Plan comparison pages
 
 **Tracking issue:** #969. Parent: #581. Payments: #931 (`plans/payments.md`). Per-event
-pricing: #970.
+pricing: #968.
 
 Written 2026-10-24 for Derek's review. Questions are in *Questions*, each with a
 recommendation; answer only where you disagree. Mockups:
@@ -37,7 +37,7 @@ designed elsewhere (*Out of scope*).
 | Each plan's highlight list | Built from the two rows above | Same |
 | Plan names, taglines, feature names and one-line descriptions, group names, questions | `plan-labels.ts` and the page (UI copy) | A code change |
 | "In every plan" rows (members, contest types, leaderboards, results) | The page (UI copy) | A code change |
-| Prices | Placeholders now; Stripe later (`plans/payments.md` §3) | Payments |
+| Prices, yearly and monthly | Public `GET /billing/prices` (amounts read from Stripe; empty while payments are off) | A price changes in Stripe |
 
 Nothing on either page compares plan names: the rows are built from what the API says each
 plan has, as the current table is, so moving a feature to another plan on `/manage/plans`
@@ -120,19 +120,22 @@ Members never reach this page and never see a plan name, as now.
 This page only hands over; the flow itself is `plans/payments.md`.
 
 - **Moving up** past what the league has paid for: the button leads into the payment and
-  renewal flow with the chosen plan and billing period (`plans/payments.md` §5).
+  renewal flow: checkout takes the chosen plan and interval (yearly or monthly)
+  (`plans/payments.md`).
 - **Moving down**: confirmed here, free, and takes effect at the end of the paid period
-  (`plans/payments.md` §6); the current plan card then says "Platinum until [date], then Pro"
+  (`plans/payments.md` §7); the current plan card then says "Platinum until [date], then Pro"
   with **Keep Platinum** to undo.
-- The yearly and monthly prices and the toggle between them (Derek: monthly is a premium over
-  yearly, for example $99 a year or $9.99 a month) are set by that design. These pages show the
-  toggle and the price for the chosen period once prices exist (Q2).
+- **Prices** come from `GET /billing/prices`, which payments serves publicly: each paid plan's
+  yearly and monthly amounts, read from Stripe, and an empty list while payments are off. Both
+  pages read it, never config or copy (Derek: monthly is a premium over yearly, for example $99
+  a year or $9.99 a month). The Yearly/Monthly toggle shows only when the list has prices, and
+  picks the interval handed to checkout (Q2).
 
 ## Out of scope
 
 - **Payments**, renewal, yearly and monthly pricing: #931, `plans/payments.md`.
 - **Per-event pricing**, paying once to raise one contest's entry cap, which Derek expects to be
-  the first thing people pay for: designed after this, #970. Both pages leave room for a "Need
+  the first thing people pay for: designed after this, #968. Both pages leave room for a "Need
   more room for one pool?" block under the cards.
 - **New caps or features**: these pages show whatever PLAN_CONFIG holds and need no change when
   a feature is added, beyond its name and description in `plan-labels.ts`.
@@ -143,8 +146,9 @@ Each has a recommendation; answer only where you disagree.
 
 1. **Public page at `/plans`, open to anyone, with `GET /plans` made public?** Recommended: yes.
    It holds no league or user data, and How to Play already reads two public lists the same way.
-2. **Price slot until prices exist**: the paid plans show **Free for now** where the price will
-   go, and the yearly/monthly toggle stays hidden until payments are on? Recommended: yes. A
+2. **Price slot until prices exist**: while `GET /billing/prices` is empty, the paid plans show
+   **Free for now** where the price will go, and the yearly/monthly toggle stays hidden?
+   Recommended: yes. A
    "[PRICE]" placeholder or a made-up number on a public page would read as broken or binding;
    the mockups show where the prices and toggle will sit.
 3. **Highlights built from the config**, with three or more features of one group starting at
@@ -185,3 +189,8 @@ Ticketed under epic #969 as #971, #972 and #973; the issues carry the live state
    signed-in button, phone layout.
 
 Slices 2 and 3 run in parallel after 1.
+
+Prices and the Yearly/Monthly toggle are wired to `GET /billing/prices` when the payments build
+adds it; until then the price slot shows Free for now, which is what the empty list means anyway.
+If the route is not in yet when slice 1 is built, the cards take the prices as an input and the
+pages pass none.
