@@ -1,7 +1,8 @@
 /**
  * The plan's entries per contest (#947), through ContestService against the in-memory world:
  * every entry counts, drafts included, checked live against the plan the league is on now, and a
- * lower plan never removes or freezes the entries a contest already has.
+ * lower plan never removes or freezes the entries a contest already has. A contest expansion
+ * (#980) raises one contest's cap above its plan's, never below it.
  */
 import { ContestService } from '../../../packages/core-api/src/modules/contests/service';
 import { ContestStatus, LeaguePlan, PlanCap } from '@poolmaster/shared/domain';
@@ -67,6 +68,42 @@ describe('ContestService entries per contest', () => {
     const renamed = await service.updateEntry(contest.id, avaEntry?.id ?? '', ava.id, { name: 'Ava keeps going' });
 
     expect(renamed.name).toBe('Ava keeps going');
+    expect([...world.entries.values()].filter((entry) => entry.contestId === contest.id)).toHaveLength(3);
+  });
+
+  it('lets a contest expanded past its plan\'s cap take entries up to the expansion, then refuses the next with CONTEST_FULL (#980)', async () => {
+    const { world, contest, owners: [ava, ben, cal], service } = setup(LeaguePlan.FREE);
+    const dan = world.addUser({ firstName: 'Dan' });
+    world.addMember(contest.leagueId, dan.id);
+    world.addSquadMember(world.addSquad(contest.leagueId, 'Dan\'s squad').id, dan.id);
+    world.addContestExpansion(contest.id, 3);
+
+    for (const owner of [ava, ben, cal]) await service.createEntry(contest.id, owner.id);
+
+    await expect(service.createEntry(contest.id, dan.id)).rejects.toMatchObject({ code: 'CONTEST_FULL' });
+    expect([...world.entries.values()].filter((entry) => entry.contestId === contest.id)).toHaveLength(3);
+  });
+
+  it('uses the contest\'s highest expansion after a step up, so a step from 3 to 4 entries lets the fourth in (#980)', async () => {
+    const { world, contest, owners, service } = setup(LeaguePlan.FREE);
+    const dan = world.addUser({ firstName: 'Dan' });
+    world.addMember(contest.leagueId, dan.id);
+    world.addSquadMember(world.addSquad(contest.leagueId, 'Dan\'s squad').id, dan.id);
+    world.addContestExpansion(contest.id, 3);
+    world.addContestExpansion(contest.id, 4);
+
+    for (const owner of [...owners, dan]) await service.createEntry(contest.id, owner.id);
+
+    expect([...world.entries.values()].filter((entry) => entry.contestId === contest.id)).toHaveLength(4);
+  });
+
+  it('keeps the plan\'s cap when it is above the contest\'s expansion, so a league moving up never loses room (#980)', async () => {
+    const { world, league, contest, owners, service } = setup(LeaguePlan.FREE);
+    world.addContestExpansion(contest.id, 1);
+
+    world.leagues.set(league.id, { ...league, plan: LeaguePlan.PLATINUM });
+    for (const owner of owners) await service.createEntry(contest.id, owner.id);
+
     expect([...world.entries.values()].filter((entry) => entry.contestId === contest.id)).toHaveLength(3);
   });
 });

@@ -1,3 +1,4 @@
+import type { ContestEntryCreateLimits } from '@poolmaster/shared/db';
 import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
 import {
   ContestService,
@@ -605,7 +606,10 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 1,
         name: "Derek's Squad Entry 1",
-      }), { entriesPerContest: null });
+      }), expect.anything());
+      // A Platinum league's contest has no cap, expanded or not.
+      const limits: ContestEntryCreateLimits = jest.mocked(entryRepo.create).mock.calls[0][1];
+      expect([limits.entriesPerContest(null), limits.entriesPerContest(200)]).toEqual([null, null]);
     });
 
     it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
@@ -897,7 +901,10 @@ describe('ContestService', () => {
         squadId: 'squad-1',
         entryNumber: 2,
         name: "Derek's Squad Entry 2",
-      }), { entriesPerContest: null });
+      }), expect.anything());
+      // A Platinum league's contest has no cap, expanded or not.
+      const limits: ContestEntryCreateLimits = jest.mocked(entryRepo.create).mock.calls[0][1];
+      expect([limits.entriesPerContest(null), limits.entriesPerContest(200)]).toEqual([null, null]);
     });
 
     it('returns the joined entry state for pre-draft contest views', async () => {

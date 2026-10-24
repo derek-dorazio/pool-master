@@ -337,15 +337,18 @@ Kept in Poolmaster, with a link to Stripe's receipt (Derek asked, 2026-10-24).
   league, whose contact is whoever paid last; one person paying in two leagues is two
   customers.
 - **Model changes, phase 1** (`rules/model-change-rules.md`):
-  - `contest_expansions`: contest, band (entry cap), the payment it came from (or the root
-    admin grant and reason), who bought, when. One current
-    expansion per contest; a step up replaces it, keeping history.
+  - `contest_expansions` (shipped in #980): contest, band (entry cap), the `league_payments`
+    line it came from, when. Rows are append-only, one per band (unique contest + band); the
+    highest band is current, so a step up adds a row and the lower ones stay as history. A
+    root admin lowering a band does not fit this shape and is decided with #981.
   - `league_billing`: one row per league: Stripe customer id, open Checkout Session ids.
   - `billing_events`: Stripe event id (unique), type, received and processed times, and
     whether its league or contest was unknown.
-  - `league_payments`: league, contest (optional), payer, a typed kind (`CONTEST_EXPANSION`,
-    `REFUND`; `SUBSCRIPTION` in phase 2), amount, currency, description, Stripe payment id
-    and receipt link.
+  - `league_payments` (shipped in #980): league, contest (optional), payer, a typed kind,
+    amount in cents, description, date. The kinds shipped are `CONTEST_EXPANSION_PAYMENTS_OFF`
+    (a $0 expansion while payments are off) and `CONTEST_EXPANSION_GRANT` (a root admin's free
+    expansion, its reason in the description). #981 adds the paid expansion kind and `REFUND`
+    with currency, Stripe payment id and receipt link; `SUBSCRIPTION` comes in phase 2.
   - Platinum joins `CAPPED_LEAGUE_PLANS`; the default plan becomes `PREMIUM`.
   - `League.planRenewsAt` (date): signup + 6 months, or the move date + 6 months for
     existing leagues; phase 1 only shows it.
