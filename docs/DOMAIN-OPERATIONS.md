@@ -1076,7 +1076,7 @@ went with it.
 ### PlatformRuntimeConfig — `platform`
 
 Runtime-tunable settings groups, one JSON document each: the ingestion schedule, email (`EMAIL_CONFIG`: whether system email is sent, per-email switches,
-the allow list; see `docs/EMAIL-DELIVERY.md`), and budget pricing (`BUDGET_PRICING_CONFIG`, #93: the named pricing profiles, default first, that the Tiers page's price dialog starts from; Standard $50,000 cap / $100 unit and Small $5,000 / $10, both best 24%, worst 12%, steepness 4). Every group is owned by `AppSettingsService` (#450): each core-api task
+the allow list; see `docs/EMAIL-DELIVERY.md`), budget pricing (`BUDGET_PRICING_CONFIG`, #93: the named pricing profiles, default first, that the Tiers page's price dialog starts from; Standard $50,000 cap / $100 unit and Small $5,000 / $10, both best 24%, worst 12%, steepness 4), and plans (`PLAN_CONFIG`, #944: each league plan's entries-per-contest and sports-leagues-a-year caps, Free 20 / 1, Pro 50 / 3, Premium 100 / 10, Platinum always unlimited and not stored, and the plan each `PlanFeature` starts at; a save is refused when a cap falls as the plan rises; read only by the plan entitlements service). Every group is owned by `AppSettingsService` (#450): each core-api task
 refreshes them from the database every 30 seconds, and every save is recorded in
 `platform_runtime_config_history`. Which settings belong here and which stay in env is
 `rules/architecture-rules.md` §6 *Runtime settings live in the database, not in env*.

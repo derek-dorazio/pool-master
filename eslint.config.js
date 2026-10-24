@@ -436,6 +436,21 @@ export default tseslint.config(
     rules: { 'poolmaster/no-sport-branching': 'error' },
   },
   {
+    // What a league plan allows comes from the plan entitlements service (#944), the one place
+    // that compares plans; tests compare plans freely in fakes and assertions.
+    files: ['packages/*/src/**/*.ts', 'packages/shared/**/*.ts', 'packages/core-api/scripts/**/*.ts',
+            'clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: [
+      'packages/core-api/src/modules/plans/**',
+      'packages/shared/generated/**',
+      'packages/shared/dist/**',
+      '**/*.test.{ts,tsx}',
+      '**/*.spec.{ts,tsx}',
+    ],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-plan-branching': 'error' },
+  },
+  {
     // Which environment this is comes from POOLMASTER_ENVIRONMENT via readAppEnv(); NODE_ENV
     // is the Node ecosystem's and is "production" in every deployment (#184). No allowlist.
     files: ['packages/*/src/**/*.ts'],

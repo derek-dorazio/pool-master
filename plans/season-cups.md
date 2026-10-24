@@ -58,7 +58,8 @@ Derek's (2026-10-21 and 22), not to reopen:
 - **Service classes:** contest results free; cups and championship from Pro; all-time summary
   Platinum. Use only as many classes as a feature needs.
 
-Technical, decided in this plan: a shared `ServiceClass` enum for views and emails; championship
+Technical, decided in this plan: a shared feature list for views and emails (`ServiceClass`
+until #944 replaced it with `PlanFeature`, see §7); championship
 points stored at settlement so a later points-table change never shifts a past year; the year
 picker skips empty years; matrix cells filter the contest list; Not counted and cancelled
 contests are listed, marked; a renamed squad shows its name at the time with today's name beside
@@ -263,29 +264,30 @@ league ever gets slow, cache by its latest `settledAt`.
 
 ## 7. Service classes
 
-The shared `ServiceClass` enum (`ESSENTIAL`, `A`, `B`; `C` and `D` join with their first feature) in `packages/shared/domain`
-serves views and emails, using the email catalog's letters (`plans/email-notifications.md`,
-*Class*): Essential every league, A free and up, B from Pro, C from Premium, D Platinum. The
+Since #944 each view and email is a `PlanFeature` (`packages/shared/domain`), and the first plan
+that has it is a root admin setting in `PLAN_CONFIG`, so the class letters below are only where
+each started: Essential is every league always (not a feature at all), A starts at Free, B at Pro,
+D at Platinum (`plans/monetization-strategy.md`, *First build: plans and plan behaviour*). The
 upper plans differ mainly through the levers in `plans/monetization-strategy.md`, *The levers*.
 
-Each view belongs to one **feature**, and each feature to one class. Plans map classes later;
-the views only ask about their feature (Q4).
+Each view belongs to one **feature**. The views only ask about their feature (Q4), through the
+plan entitlements service.
 
-| Feature (`ChampionshipFeature`) | What | Class |
+| Feature (`PlanFeature`) | What | Starts at |
 |---|---|---|
-| `CONTEST_RESULTS` | Contest results and places, any contest's leaderboard, the Contests page History view | Essential |
-| `CUP_STANDINGS` | Trophy case, Points race, race chart, movement, squad breakdown, projected points, league home card | B (Pro) |
-| `CUP_CROWNING` | Ready to crown, crowned podiums, cup trophies | B (Pro) |
-| `CHAMPIONSHIP` | The Championship tab: trophy, podium, medal tiles, finish matrix, year's contests | B (Pro) |
-| `TROPHY_SHELF` | Cup and championship trophies, contest medals and perpetual trophies on squad pages and the Trophy case | B (Pro) |
-| `CUP_SETTINGS` | Points table, cup weights, cup name | B (Pro) |
-| `PAST_YEARS` | The year picker's earlier years, on every tab, and their drill-through | B (Pro) |
-| `ALL_TIME_SUMMARY` | All years | D (Platinum) |
-| `RECORD_BOOK` | Record book and Hall of Lame (#873) | D (Platinum) |
+| (none) | Contest results and places, any contest's leaderboard, the Contests page History view | Always |
+| `CUP_STANDINGS` | Trophy case, Points race, race chart, movement, squad breakdown, projected points, league home card | Pro |
+| `CUP_CROWNING` | Ready to crown, crowned podiums, cup trophies | Pro |
+| `CHAMPIONSHIP` | The Championship tab: trophy, podium, medal tiles, finish matrix, year's contests | Pro |
+| `TROPHY_SHELF` | Cup and championship trophies, contest medals and perpetual trophies on squad pages and the Trophy case | Pro |
+| `CUP_SETTINGS` | Points table, cup weights, cup name | Pro |
+| `PAST_YEARS` | The year picker's earlier years, on every tab, and their drill-through | Pro |
+| `ALL_TIME_SUMMARY` | All years | Platinum |
+| `RECORD_BOOK` | Record book and Hall of Lame (#873) | Platinum |
 
 Downgrades hide, never delete: rows are written for every league, the locked view shows the name
-and leader with a short note, and only the commissioner sees how to upgrade. Routes ask an
-entitlements function about the feature, never about a plan. Nothing is gated yet (Q4).
+and leader with a short note, and only the commissioner sees how to upgrade. Routes ask the
+plan entitlements service about the feature, never about a plan. Gating lands with #948.
 
 ## 8. Slices
 
@@ -303,8 +305,8 @@ journey row once a page exists.
 2. **Pages.** The Championships menu item and page shell with Trophy case and Points race tabs,
    movement and race chart, the squad sheet, the league home card. Built with the squad sheet as
    a full page (`rules/ux-rules.md` §12 rule 4) and the Trophy case as the landing tab until #863
-   slice 2 adds the Championship tab. The `ChampionshipFeature` map in code waits for the first
-   gate; this table is the categorization until then.
+   slice 2 adds the Championship tab. Each view's feature is now a `PlanFeature` (#944, §7);
+   the views are gated on it with #948.
 3. **Commissioner settings.** Points table with preview; cup weight. Brought the championship
    name setting with it, since it shares the section.
 4. **Crowning.** `POST .../crown`, Ready to crown, frozen standings, the podium. The trophy

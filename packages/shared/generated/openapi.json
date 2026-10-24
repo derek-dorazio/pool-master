@@ -26968,6 +26968,363 @@
         "additionalProperties": false,
         "description": "The named sets of values an event's field is priced with for budget contests."
       },
+      "PlanCapRow": {
+        "type": "object",
+        "properties": {
+          "FREE": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          },
+          "PRO": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          },
+          "PREMIUM": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "The most this plan allows, or null for unlimited."
+          }
+        },
+        "required": [
+          "FREE",
+          "PRO",
+          "PREMIUM"
+        ],
+        "additionalProperties": false,
+        "description": "One cap's limit on each plan but Platinum, which is always unlimited. A limit never falls as the plan rises."
+      },
+      "PlanConfig": {
+        "type": "object",
+        "properties": {
+          "caps": {
+            "type": "object",
+            "properties": {
+              "ENTRIES_PER_CONTEST": {
+                "type": "object",
+                "properties": {
+                  "FREE": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PRO": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PREMIUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  }
+                },
+                "required": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM"
+                ],
+                "additionalProperties": false,
+                "description": "Entries per contest, drafts included. Checked when an entry is added."
+              },
+              "SPORTS_LEAGUES_PER_YEAR": {
+                "type": "object",
+                "properties": {
+                  "FREE": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PRO": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  },
+                  "PREMIUM": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 100000,
+                    "description": "The most this plan allows, or null for unlimited."
+                  }
+                },
+                "required": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM"
+                ],
+                "additionalProperties": false,
+                "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+              }
+            },
+            "required": [
+              "ENTRIES_PER_CONTEST",
+              "SPORTS_LEAGUES_PER_YEAR"
+            ],
+            "additionalProperties": false,
+            "description": "Each cap's limit on each plan."
+          },
+          "features": {
+            "type": "object",
+            "properties": {
+              "EMAIL_CONTEST_OPENED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_RESULTS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_EVENT_CHANGED": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_STARTED_SUMMARY": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_ENTRY_REMINDER": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_STANDINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_EVENT_COMING_UP": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_CONTEST_NOT_OPEN": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "EMAIL_YEAR_IN_REVIEW": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_STANDINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_CROWNING": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CHAMPIONSHIP": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "TROPHY_SHELF": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "CUP_SETTINGS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "PAST_YEARS": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "ALL_TIME_SUMMARY": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              },
+              "RECORD_BOOK": {
+                "type": "string",
+                "enum": [
+                  "FREE",
+                  "PRO",
+                  "PREMIUM",
+                  "PLATINUM"
+                ],
+                "description": "The first plan that has the feature; every plan above it has it too."
+              }
+            },
+            "required": [
+              "EMAIL_CONTEST_OPENED",
+              "EMAIL_CONTEST_ENTRY_COMPLETED",
+              "EMAIL_CONTEST_RESULTS",
+              "EMAIL_CONTEST_EVENT_CHANGED",
+              "EMAIL_CONTEST_STARTED_SUMMARY",
+              "EMAIL_CONTEST_ENTRY_REMINDER",
+              "EMAIL_CONTEST_STANDINGS",
+              "EMAIL_EVENT_COMING_UP",
+              "EMAIL_EVENT_READY_FOR_CONTESTS",
+              "EMAIL_CONTEST_NOT_OPEN",
+              "EMAIL_YEAR_IN_REVIEW",
+              "CUP_STANDINGS",
+              "CUP_CROWNING",
+              "CHAMPIONSHIP",
+              "TROPHY_SHELF",
+              "CUP_SETTINGS",
+              "PAST_YEARS",
+              "ALL_TIME_SUMMARY",
+              "RECORD_BOOK"
+            ],
+            "additionalProperties": false,
+            "description": "The plan each feature starts at."
+          }
+        },
+        "required": [
+          "caps",
+          "features"
+        ],
+        "additionalProperties": false,
+        "description": "What each league plan allows: its caps and the plan each feature starts at."
+      },
       "IngestionScheduleConfigOverride": {
         "type": "object",
         "properties": {
@@ -27624,7 +27981,8 @@
         "enum": [
           "INGESTION_SCHEDULE_CONFIG",
           "EMAIL_CONFIG",
-          "BUDGET_PRICING_CONFIG"
+          "BUDGET_PRICING_CONFIG",
+          "PLAN_CONFIG"
         ],
         "description": "The stored key of a settings group."
       },
@@ -28758,6 +29116,711 @@
                 },
                 "required": [
                   "profiles"
+                ],
+                "additionalProperties": false,
+                "description": "The value a reset would store."
+              }
+            },
+            "required": [
+              "key",
+              "title",
+              "description",
+              "source",
+              "updatedAt",
+              "updatedBy",
+              "value",
+              "defaults"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "PLAN_CONFIG"
+                ]
+              },
+              "title": {
+                "type": "string",
+                "description": "Short display name of the group."
+              },
+              "description": {
+                "type": "string",
+                "description": "What the group controls."
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "stored",
+                  "defaults"
+                ],
+                "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+              },
+              "updatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+              },
+              "updatedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who last saved the stored value, when known."
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Entries per contest, drafts included. Checked when an entry is added."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on each plan."
+                  },
+                  "features": {
+                    "type": "object",
+                    "properties": {
+                      "EMAIL_CONTEST_OPENED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_RESULTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_EVENT_CHANGED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STARTED_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_REMINDER": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_COMING_UP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_NOT_OPEN": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_CROWNING": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CHAMPIONSHIP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "TROPHY_SHELF": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_SETTINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "PAST_YEARS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "ALL_TIME_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "RECORD_BOOK": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      }
+                    },
+                    "required": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The plan each feature starts at."
+                  }
+                },
+                "required": [
+                  "caps",
+                  "features"
+                ],
+                "additionalProperties": false,
+                "description": "The value in use."
+              },
+              "defaults": {
+                "type": "object",
+                "properties": {
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Entries per contest, drafts included. Checked when an entry is added."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on each plan."
+                  },
+                  "features": {
+                    "type": "object",
+                    "properties": {
+                      "EMAIL_CONTEST_OPENED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_RESULTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_EVENT_CHANGED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STARTED_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_REMINDER": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_COMING_UP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_NOT_OPEN": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_CROWNING": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CHAMPIONSHIP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "TROPHY_SHELF": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_SETTINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "PAST_YEARS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "ALL_TIME_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "RECORD_BOOK": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      }
+                    },
+                    "required": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The plan each feature starts at."
+                  }
+                },
+                "required": [
+                  "caps",
+                  "features"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -29909,6 +30972,711 @@
                     "defaults"
                   ],
                   "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "PLAN_CONFIG"
+                      ]
+                    },
+                    "title": {
+                      "type": "string",
+                      "description": "Short display name of the group."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "What the group controls."
+                    },
+                    "source": {
+                      "type": "string",
+                      "enum": [
+                        "stored",
+                        "defaults"
+                      ],
+                      "description": "`stored` when a saved value is in use; `defaults` when nothing is saved or the saved value is invalid."
+                    },
+                    "updatedAt": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time",
+                      "description": "When the stored value was last saved, or null when nothing is stored. Send it back as `expectedUpdatedAt` on the next save."
+                    },
+                    "updatedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who last saved the stored value, when known."
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "caps": {
+                          "type": "object",
+                          "properties": {
+                            "ENTRIES_PER_CONTEST": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Entries per contest, drafts included. Checked when an entry is added."
+                            },
+                            "SPORTS_LEAGUES_PER_YEAR": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                            }
+                          },
+                          "required": [
+                            "ENTRIES_PER_CONTEST",
+                            "SPORTS_LEAGUES_PER_YEAR"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each cap's limit on each plan."
+                        },
+                        "features": {
+                          "type": "object",
+                          "properties": {
+                            "EMAIL_CONTEST_OPENED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_RESULTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_EVENT_CHANGED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STARTED_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_REMINDER": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_COMING_UP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_NOT_OPEN": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_CROWNING": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CHAMPIONSHIP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "TROPHY_SHELF": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_SETTINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "PAST_YEARS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "ALL_TIME_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "RECORD_BOOK": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            }
+                          },
+                          "required": [
+                            "EMAIL_CONTEST_OPENED",
+                            "EMAIL_CONTEST_ENTRY_COMPLETED",
+                            "EMAIL_CONTEST_RESULTS",
+                            "EMAIL_CONTEST_EVENT_CHANGED",
+                            "EMAIL_CONTEST_STARTED_SUMMARY",
+                            "EMAIL_CONTEST_ENTRY_REMINDER",
+                            "EMAIL_CONTEST_STANDINGS",
+                            "EMAIL_EVENT_COMING_UP",
+                            "EMAIL_EVENT_READY_FOR_CONTESTS",
+                            "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
+                            "CUP_STANDINGS",
+                            "CUP_CROWNING",
+                            "CHAMPIONSHIP",
+                            "TROPHY_SHELF",
+                            "CUP_SETTINGS",
+                            "PAST_YEARS",
+                            "ALL_TIME_SUMMARY",
+                            "RECORD_BOOK"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The plan each feature starts at."
+                        }
+                      },
+                      "required": [
+                        "caps",
+                        "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value in use."
+                    },
+                    "defaults": {
+                      "type": "object",
+                      "properties": {
+                        "caps": {
+                          "type": "object",
+                          "properties": {
+                            "ENTRIES_PER_CONTEST": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Entries per contest, drafts included. Checked when an entry is added."
+                            },
+                            "SPORTS_LEAGUES_PER_YEAR": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                            }
+                          },
+                          "required": [
+                            "ENTRIES_PER_CONTEST",
+                            "SPORTS_LEAGUES_PER_YEAR"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each cap's limit on each plan."
+                        },
+                        "features": {
+                          "type": "object",
+                          "properties": {
+                            "EMAIL_CONTEST_OPENED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_RESULTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_EVENT_CHANGED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STARTED_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_REMINDER": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_COMING_UP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_NOT_OPEN": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_CROWNING": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CHAMPIONSHIP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "TROPHY_SHELF": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_SETTINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "PAST_YEARS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "ALL_TIME_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "RECORD_BOOK": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            }
+                          },
+                          "required": [
+                            "EMAIL_CONTEST_OPENED",
+                            "EMAIL_CONTEST_ENTRY_COMPLETED",
+                            "EMAIL_CONTEST_RESULTS",
+                            "EMAIL_CONTEST_EVENT_CHANGED",
+                            "EMAIL_CONTEST_STARTED_SUMMARY",
+                            "EMAIL_CONTEST_ENTRY_REMINDER",
+                            "EMAIL_CONTEST_STANDINGS",
+                            "EMAIL_EVENT_COMING_UP",
+                            "EMAIL_EVENT_READY_FOR_CONTESTS",
+                            "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
+                            "CUP_STANDINGS",
+                            "CUP_CROWNING",
+                            "CHAMPIONSHIP",
+                            "TROPHY_SHELF",
+                            "CUP_SETTINGS",
+                            "PAST_YEARS",
+                            "ALL_TIME_SUMMARY",
+                            "RECORD_BOOK"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The plan each feature starts at."
+                        }
+                      },
+                      "required": [
+                        "caps",
+                        "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value a reset would store."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "title",
+                    "description",
+                    "source",
+                    "updatedAt",
+                    "updatedBy",
+                    "value",
+                    "defaults"
+                  ],
+                  "additionalProperties": false
                 }
               ],
               "description": "One settings group: its current value, its defaults, and who last changed it."
@@ -30426,6 +32194,349 @@
                 },
                 "required": [
                   "profiles"
+                ],
+                "additionalProperties": false,
+                "description": "The whole new value."
+              },
+              "expectedUpdatedAt": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time",
+                "description": "The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT."
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "expectedUpdatedAt"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "PLAN_CONFIG"
+                ]
+              },
+              "value": {
+                "type": "object",
+                "properties": {
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Entries per contest, drafts included. Checked when an entry is added."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on each plan."
+                  },
+                  "features": {
+                    "type": "object",
+                    "properties": {
+                      "EMAIL_CONTEST_OPENED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_RESULTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_EVENT_CHANGED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STARTED_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_REMINDER": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_COMING_UP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_NOT_OPEN": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_CROWNING": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CHAMPIONSHIP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "TROPHY_SHELF": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_SETTINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "PAST_YEARS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "ALL_TIME_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "RECORD_BOOK": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      }
+                    },
+                    "required": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The plan each feature starts at."
+                  }
+                },
+                "required": [
+                  "caps",
+                  "features"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -31533,6 +33644,697 @@
               "newValue"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "enum": [
+                  "PLAN_CONFIG"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "changedAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "ISO 8601 datetime string."
+              },
+              "changedBy": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The user id of the root admin who made the change."
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "The admin's full name, for display."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false,
+                "description": "Who saved it, when known."
+              },
+              "previousValue": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Entries per contest, drafts included. Checked when an entry is added."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on each plan."
+                  },
+                  "features": {
+                    "type": "object",
+                    "properties": {
+                      "EMAIL_CONTEST_OPENED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_RESULTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_EVENT_CHANGED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STARTED_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_REMINDER": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_COMING_UP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_NOT_OPEN": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_CROWNING": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CHAMPIONSHIP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "TROPHY_SHELF": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_SETTINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "PAST_YEARS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "ALL_TIME_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "RECORD_BOOK": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      }
+                    },
+                    "required": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The plan each feature starts at."
+                  }
+                },
+                "required": [
+                  "caps",
+                  "features"
+                ],
+                "additionalProperties": false,
+                "description": "The stored value before the save; null when the save created the first stored value."
+              },
+              "newValue": {
+                "type": "object",
+                "properties": {
+                  "caps": {
+                    "type": "object",
+                    "properties": {
+                      "ENTRIES_PER_CONTEST": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Entries per contest, drafts included. Checked when an entry is added."
+                      },
+                      "SPORTS_LEAGUES_PER_YEAR": {
+                        "type": "object",
+                        "properties": {
+                          "FREE": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PRO": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          },
+                          "PREMIUM": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "The most this plan allows, or null for unlimited."
+                          }
+                        },
+                        "required": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                      }
+                    },
+                    "required": [
+                      "ENTRIES_PER_CONTEST",
+                      "SPORTS_LEAGUES_PER_YEAR"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Each cap's limit on each plan."
+                  },
+                  "features": {
+                    "type": "object",
+                    "properties": {
+                      "EMAIL_CONTEST_OPENED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_RESULTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_EVENT_CHANGED": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STARTED_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_ENTRY_REMINDER": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_COMING_UP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_CONTEST_NOT_OPEN": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "EMAIL_YEAR_IN_REVIEW": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_STANDINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_CROWNING": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CHAMPIONSHIP": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "TROPHY_SHELF": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "CUP_SETTINGS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "PAST_YEARS": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "ALL_TIME_SUMMARY": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      },
+                      "RECORD_BOOK": {
+                        "type": "string",
+                        "enum": [
+                          "FREE",
+                          "PRO",
+                          "PREMIUM",
+                          "PLATINUM"
+                        ],
+                        "description": "The first plan that has the feature; every plan above it has it too."
+                      }
+                    },
+                    "required": [
+                      "EMAIL_CONTEST_OPENED",
+                      "EMAIL_CONTEST_ENTRY_COMPLETED",
+                      "EMAIL_CONTEST_RESULTS",
+                      "EMAIL_CONTEST_EVENT_CHANGED",
+                      "EMAIL_CONTEST_STARTED_SUMMARY",
+                      "EMAIL_CONTEST_ENTRY_REMINDER",
+                      "EMAIL_CONTEST_STANDINGS",
+                      "EMAIL_EVENT_COMING_UP",
+                      "EMAIL_EVENT_READY_FOR_CONTESTS",
+                      "EMAIL_CONTEST_NOT_OPEN",
+                      "EMAIL_YEAR_IN_REVIEW",
+                      "CUP_STANDINGS",
+                      "CUP_CROWNING",
+                      "CHAMPIONSHIP",
+                      "TROPHY_SHELF",
+                      "CUP_SETTINGS",
+                      "PAST_YEARS",
+                      "ALL_TIME_SUMMARY",
+                      "RECORD_BOOK"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The plan each feature starts at."
+                  }
+                },
+                "required": [
+                  "caps",
+                  "features"
+                ],
+                "additionalProperties": false,
+                "description": "The value the save stored."
+              }
+            },
+            "required": [
+              "key",
+              "id",
+              "changedAt",
+              "changedBy",
+              "previousValue",
+              "newValue"
+            ],
+            "additionalProperties": false
           }
         ],
         "description": "One saved change to a settings group, each value typed by the group's own schema."
@@ -32612,6 +35414,697 @@
                       },
                       "required": [
                         "profiles"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The value the save stored."
+                    }
+                  },
+                  "required": [
+                    "key",
+                    "id",
+                    "changedAt",
+                    "changedBy",
+                    "previousValue",
+                    "newValue"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "enum": [
+                        "PLAN_CONFIG"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "ISO 8601 datetime string."
+                    },
+                    "changedBy": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The user id of the root admin who made the change."
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "The admin's full name, for display."
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Who saved it, when known."
+                    },
+                    "previousValue": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "caps": {
+                          "type": "object",
+                          "properties": {
+                            "ENTRIES_PER_CONTEST": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Entries per contest, drafts included. Checked when an entry is added."
+                            },
+                            "SPORTS_LEAGUES_PER_YEAR": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                            }
+                          },
+                          "required": [
+                            "ENTRIES_PER_CONTEST",
+                            "SPORTS_LEAGUES_PER_YEAR"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each cap's limit on each plan."
+                        },
+                        "features": {
+                          "type": "object",
+                          "properties": {
+                            "EMAIL_CONTEST_OPENED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_RESULTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_EVENT_CHANGED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STARTED_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_REMINDER": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_COMING_UP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_NOT_OPEN": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_CROWNING": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CHAMPIONSHIP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "TROPHY_SHELF": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_SETTINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "PAST_YEARS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "ALL_TIME_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "RECORD_BOOK": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            }
+                          },
+                          "required": [
+                            "EMAIL_CONTEST_OPENED",
+                            "EMAIL_CONTEST_ENTRY_COMPLETED",
+                            "EMAIL_CONTEST_RESULTS",
+                            "EMAIL_CONTEST_EVENT_CHANGED",
+                            "EMAIL_CONTEST_STARTED_SUMMARY",
+                            "EMAIL_CONTEST_ENTRY_REMINDER",
+                            "EMAIL_CONTEST_STANDINGS",
+                            "EMAIL_EVENT_COMING_UP",
+                            "EMAIL_EVENT_READY_FOR_CONTESTS",
+                            "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
+                            "CUP_STANDINGS",
+                            "CUP_CROWNING",
+                            "CHAMPIONSHIP",
+                            "TROPHY_SHELF",
+                            "CUP_SETTINGS",
+                            "PAST_YEARS",
+                            "ALL_TIME_SUMMARY",
+                            "RECORD_BOOK"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The plan each feature starts at."
+                        }
+                      },
+                      "required": [
+                        "caps",
+                        "features"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The stored value before the save; null when the save created the first stored value."
+                    },
+                    "newValue": {
+                      "type": "object",
+                      "properties": {
+                        "caps": {
+                          "type": "object",
+                          "properties": {
+                            "ENTRIES_PER_CONTEST": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Entries per contest, drafts included. Checked when an entry is added."
+                            },
+                            "SPORTS_LEAGUES_PER_YEAR": {
+                              "type": "object",
+                              "properties": {
+                                "FREE": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PRO": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                },
+                                "PREMIUM": {
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": 1,
+                                  "maximum": 100000,
+                                  "description": "The most this plan allows, or null for unlimited."
+                                }
+                              },
+                              "required": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM"
+                              ],
+                              "additionalProperties": false,
+                              "description": "Different sports leagues among the league's contests this calendar year, drafts included, deleted and cancelled contests not. Checked when a contest is created."
+                            }
+                          },
+                          "required": [
+                            "ENTRIES_PER_CONTEST",
+                            "SPORTS_LEAGUES_PER_YEAR"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Each cap's limit on each plan."
+                        },
+                        "features": {
+                          "type": "object",
+                          "properties": {
+                            "EMAIL_CONTEST_OPENED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_COMPLETED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_RESULTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_EVENT_CHANGED": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STARTED_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_ENTRY_REMINDER": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_COMING_UP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_EVENT_READY_FOR_CONTESTS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_CONTEST_NOT_OPEN": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "EMAIL_YEAR_IN_REVIEW": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_STANDINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_CROWNING": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CHAMPIONSHIP": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "TROPHY_SHELF": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "CUP_SETTINGS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "PAST_YEARS": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "ALL_TIME_SUMMARY": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            },
+                            "RECORD_BOOK": {
+                              "type": "string",
+                              "enum": [
+                                "FREE",
+                                "PRO",
+                                "PREMIUM",
+                                "PLATINUM"
+                              ],
+                              "description": "The first plan that has the feature; every plan above it has it too."
+                            }
+                          },
+                          "required": [
+                            "EMAIL_CONTEST_OPENED",
+                            "EMAIL_CONTEST_ENTRY_COMPLETED",
+                            "EMAIL_CONTEST_RESULTS",
+                            "EMAIL_CONTEST_EVENT_CHANGED",
+                            "EMAIL_CONTEST_STARTED_SUMMARY",
+                            "EMAIL_CONTEST_ENTRY_REMINDER",
+                            "EMAIL_CONTEST_STANDINGS",
+                            "EMAIL_EVENT_COMING_UP",
+                            "EMAIL_EVENT_READY_FOR_CONTESTS",
+                            "EMAIL_CONTEST_NOT_OPEN",
+                            "EMAIL_YEAR_IN_REVIEW",
+                            "CUP_STANDINGS",
+                            "CUP_CROWNING",
+                            "CHAMPIONSHIP",
+                            "TROPHY_SHELF",
+                            "CUP_SETTINGS",
+                            "PAST_YEARS",
+                            "ALL_TIME_SUMMARY",
+                            "RECORD_BOOK"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The plan each feature starts at."
+                        }
+                      },
+                      "required": [
+                        "caps",
+                        "features"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
