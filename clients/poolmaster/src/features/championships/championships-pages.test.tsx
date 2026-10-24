@@ -334,6 +334,19 @@ describe('Championships › Championship', () => {
     expect(screen.queryByTestId('championship-standing-team-2')).not.toBeInTheDocument();
   });
 
+  it('jumps from a search back to the viewer\'s own row in the standings, highlighted', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    fireEvent.change(await screen.findByTestId('championship-standings-search'), { target: { value: 'fore' } });
+    fireEvent.click(screen.getByTestId('championship-standings-jump'));
+
+    expect(await screen.findByTestId('championship-standing-team-1')).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByTestId('championship-standings-jump')).toHaveTextContent('Jump to Casey Crushers');
+    expect(screen.getByTestId('championship-standings-search')).toHaveValue('');
+  });
+
   it('says nobody leads before any contest has counted', async () => {
     primeViewer([], buildRunningChampionship({
       contestsCounted: 0,
@@ -706,6 +719,17 @@ describe('Championships › Points race', () => {
       'href',
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga/squads/team-1',
     );
+  });
+
+  it('jumps to the viewer\'s own row in the cup standings, highlighted', async () => {
+    primeViewer();
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+
+    fireEvent.click(await screen.findByTestId('cup-standings-jump'));
+
+    expect(await screen.findByTestId('cup-standing-team-1')).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByTestId('cup-standing-team-2')).not.toHaveAttribute('aria-current');
   });
 
   it('greys where each squad would stand if the live contest ended now beside its place, naming the contest', async () => {

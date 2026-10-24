@@ -10,7 +10,8 @@ import {
   type SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { useMemo, useState, type AnchorHTMLAttributes } from "react";
+import { useEffect, useMemo, useRef, useState, type AnchorHTMLAttributes } from "react";
+import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
 import { Pager } from "./pager";
@@ -20,6 +21,18 @@ export type DataGridSearch = {
   /** Accessible name of the search box, e.g. "Find a member". */
   label: string;
   placeholder?: string;
+  testId?: string;
+};
+
+/**
+ * A "jump to my row" action (rules/ux-rules.md §12 rule 7): clears the search and filters, turns
+ * to the page holding the row in the current sort, scrolls to it and highlights it. Needs
+ * `getRowId`; the button shows only while the row is in the data.
+ */
+export type DataGridJumpToRow = {
+  rowId: string;
+  /** The button's text, e.g. "Jump to Casey Crushers". */
+  label: string;
   testId?: string;
 };
 
@@ -52,6 +65,7 @@ type DataGridProps<TData> = {
   pageSize?: number;
   /** Whether each filterable column gets its own filter box. On by default. */
   showColumnFilters?: boolean;
+  jumpToRow?: DataGridJumpToRow;
 };
 
 function getSortIndicator(direction: false | "asc" | "desc") {
@@ -80,6 +94,7 @@ export function DataGrid<TData>({
   search,
   pageSize,
   showColumnFilters = true,
+  jumpToRow,
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -88,6 +103,14 @@ export function DataGrid<TData>({
     pageIndex: 0,
     pageSize: pageSize ?? Number.MAX_SAFE_INTEGER,
   });
+
+  // Set by the jump action until the unfiltered rows render; then its page is turned to.
+  const [pendingJumpRowId, setPendingJumpRowId] = useState<string | null>(null);
+  // The last jump that landed: its row stays highlighted until the next jump. A new object per
+  // jump, so a repeat jump to the same row scrolls again and nothing else (a sort, a page) does.
+  const [landedJump, setLandedJump] = useState<{ rowId: string } | null>(null);
+  const jumpedRowId = landedJump?.rowId ?? null;
+  const tableRef = useRef<HTMLTableElement>(null);
 
   const resetPageIndex = () =>
     setPagination((current) => ({ ...current, pageIndex: 0 }));
@@ -131,6 +154,39 @@ export function DataGrid<TData>({
     [table],
   );
 
+  const sortedRows = table.getSortedRowModel().rows;
+  const isUnfiltered = globalFilter === "" && columnFilters.length === 0;
+  const canJump = jumpToRow !== undefined && table.getCoreRowModel().rows.some((row) => row.id === jumpToRow.rowId);
+
+  useEffect(() => {
+    if (pendingJumpRowId === null || !isUnfiltered) {
+      return;
+    }
+    const index = sortedRows.findIndex((row) => row.id === pendingJumpRowId);
+    setPendingJumpRowId(null);
+    if (index < 0) {
+      return;
+    }
+    setPagination((current) => ({ ...current, pageIndex: Math.floor(index / current.pageSize) }));
+    setLandedJump({ rowId: pendingJumpRowId });
+  }, [isUnfiltered, pendingJumpRowId, sortedRows]);
+
+  // Runs after the render that turned to the row's page, so the row is there to scroll to.
+  useEffect(() => {
+    if (landedJump === null) {
+      return;
+    }
+    tableRef.current
+      ?.querySelector(`[data-row-id="${CSS.escape(landedJump.rowId)}"]`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [landedJump]);
+
+  const jump = (rowId: string) => {
+    setGlobalFilter("");
+    setColumnFilters([]);
+    setPendingJumpRowId(rowId);
+  };
+
   const matchingRowCount = table.getFilteredRowModel().rows.length;
   const pageCount = table.getPageCount();
   if (pagination.pageIndex > 0 && pagination.pageIndex >= pageCount) {
@@ -141,21 +197,36 @@ export function DataGrid<TData>({
 
   return (
     <div className="grid gap-3">
-      {search ? (
-        <Input
-          aria-label={search.label}
-          className="max-w-sm"
-          data-testid={search.testId}
-          onChange={(event) => table.setGlobalFilter(event.target.value)}
-          placeholder={search.placeholder ?? search.label}
-          type="search"
-          value={globalFilter}
-        />
+      {search || canJump ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {search ? (
+            <Input
+              aria-label={search.label}
+              className="max-w-sm"
+              data-testid={search.testId}
+              onChange={(event) => table.setGlobalFilter(event.target.value)}
+              placeholder={search.placeholder ?? search.label}
+              type="search"
+              value={globalFilter}
+            />
+          ) : null}
+          {jumpToRow && canJump ? (
+            <Button
+              data-testid={jumpToRow.testId}
+              onClick={() => jump(jumpToRow.rowId)}
+              size="sm"
+              variant="secondary"
+            >
+              {jumpToRow.label}
+            </Button>
+          ) : null}
+        </div>
       ) : null}
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table
           className="min-w-full border-collapse text-left text-sm"
           data-testid={tableTestId}
+          ref={tableRef}
         >
           <thead>
             {headerGroups.map((headerGroup) => (
@@ -234,7 +305,12 @@ export function DataGrid<TData>({
 
                 return (
                   <tr
-                    className="border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]"
+                    aria-current={row.id === jumpedRowId ? "true" : undefined}
+                    className={cn(
+                      "border-b border-border/70 align-top text-foreground transition hover:bg-[var(--table-row-hover-surface)]",
+                      row.id === jumpedRowId && "bg-[var(--status-active-surface)]",
+                    )}
+                    data-row-id={row.id}
                     data-testid={rowTestId?.(row.original, index)}
                     key={row.id}
                   >

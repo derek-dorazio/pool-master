@@ -249,7 +249,7 @@ administration area (root admin included), reusing the same shared components.
 7. **Lists scale.** Member, owner and leaderboard lists have search and paging,
    assuming hundreds of rows: tables through `DataGrid`, other lists through
    the same `Pager`. A long ranked list also offers a way to jump to the
-   viewer's own row. Summary cards show a few rows and link to the full page.
+   viewer's own row (`DataGrid`'s `jumpToRow`). Summary cards show a few rows and link to the full page.
 8. **Summary first.** A landing page leads with what needs the member now (the
    next contest to enter, with its cutoff), then live standings, then their own
    squad.
