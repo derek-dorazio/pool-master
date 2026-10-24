@@ -777,6 +777,25 @@ describe('The seeded NFL league and its knockout templates', () => {
       { name: 'NCAA Division I Women', noun: 'LEAGUE', sport: { sport: 'TENNIS' } },
     ]);
   });
+
+  it('gives every seeded sport league its own place among its sport\'s leagues, the major professional leagues before the NCAA\'s', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({
+      select: { name: true, displayOrder: true, sport: { select: { sport: true } } },
+      orderBy: [{ displayOrder: 'asc' }, { name: 'asc' }],
+    });
+    expect(leagues.filter((league) => league.displayOrder === null).map((league) => league.name)).toEqual([]);
+    const namesBySport = new Map<string, string[]>();
+    for (const league of leagues) {
+      namesBySport.set(league.sport.sport, [...(namesBySport.get(league.sport.sport) ?? []), league.name]);
+    }
+    for (const sport of namesBySport.keys()) {
+      const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
+      expect(new Set(orders).size).toBe(orders.length);
+    }
+    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women']);
+    expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
+  });
 });
 
 // What contest creation holds a template's rules to, checked on every seeded template of every

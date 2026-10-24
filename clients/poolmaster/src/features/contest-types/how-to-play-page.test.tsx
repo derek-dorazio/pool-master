@@ -73,10 +73,10 @@ const GOLF_AND_FOOTBALL = [
 ];
 
 const SPORT_LEAGUES = [
-  sportLeagueFixture({ id: 'pga', sport: 'GOLF', name: 'PGA TOUR' }),
-  sportLeagueFixture({ id: 'lpga', sport: 'GOLF', name: 'LPGA Tour' }),
-  sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL' }),
-  sportLeagueFixture({ id: 'cfp', sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff' }),
+  sportLeagueFixture({ id: 'lpga', sport: 'GOLF', name: 'LPGA Tour', displayOrder: 20 }),
+  sportLeagueFixture({ id: 'pga', sport: 'GOLF', name: 'PGA TOUR', displayOrder: 10 }),
+  sportLeagueFixture({ id: 'cfp', sport: 'AMERICAN_FOOTBALL', name: 'College Football Playoff', displayOrder: 20 }),
+  sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL', displayOrder: 10 }),
 ];
 
 beforeEach(() => {
@@ -140,15 +140,25 @@ describe('How to Play', () => {
     expect(screen.queryByTestId('how-to-play-sport-banner')).not.toBeInTheDocument();
   });
 
-  it('names each sport\'s leagues as chips grouped under their sport, in the platform\'s sport order and by name within one', async () => {
+  it('names each sport\'s leagues as chips in a row beside their sport, the most popular sport first and its major league first', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
 
-    const golf = await screen.findByTestId('how-to-play-sport-group-GOLF');
-    expect(within(golf).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['Golf', 'LPGA Tour', 'PGA TOUR']);
-    const football = screen.getByTestId('how-to-play-sport-group-AMERICAN_FOOTBALL');
-    expect(within(football).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['American football', 'College Football Playoff', 'NFL']);
-    expect(golf.compareDocumentPosition(football) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const football = await screen.findByTestId('how-to-play-sport-group-AMERICAN_FOOTBALL');
+    expect(within(football).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['American football', 'NFL', 'College Football Playoff']);
+    const golf = screen.getByTestId('how-to-play-sport-group-GOLF');
+    expect(within(golf).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['Golf', 'PGA TOUR', 'LPGA Tour']);
+    expect(football.compareDocumentPosition(golf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('keeps a sport\'s label in its own column, apart from the leagues that wrap beside it, so a sport never lands mid-row', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    renderPage();
+
+    const leagues = await screen.findByTestId('how-to-play-sport-leagues-GOLF');
+    expect(within(leagues).getAllByRole('button').map((chip) => chip.textContent)).toEqual(['PGA TOUR', 'LPGA Tour']);
+    expect(within(leagues).queryByTestId('how-to-play-sport-GOLF')).not.toBeInTheDocument();
+    expect(within(screen.getByTestId('how-to-play-sport-group-GOLF')).getByTestId('how-to-play-sport-GOLF')).toBeInTheDocument();
   });
 
   it('narrows the page to a chosen league: its name over its sport\'s picture, only the ways to play it offers, and its own template inside each, kept in the link', async () => {

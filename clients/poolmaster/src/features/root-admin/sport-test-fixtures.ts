@@ -145,6 +145,7 @@ export function sportLeagueFixture(overrides: Partial<SportLeagueDto> = {}): Spo
     squaresFromRound: null,
     noun: null,
     displayName: null,
+    displayOrder: null,
     currentEventYear: null,
     isActive: true,
     affiliationCount: 0,

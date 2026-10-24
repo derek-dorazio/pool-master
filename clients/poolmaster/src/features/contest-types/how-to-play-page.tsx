@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SelectionType, formatSelectionTypeName, type Sport } from '@poolmaster/shared/domain';
 import { useAuth } from '@/features/auth/auth-context';
@@ -110,27 +110,16 @@ interface SportLeagueChipsProps {
 }
 
 /**
- * The sport leagues people know, the NFL and the PGA TOUR, as chips in groups by sport. Each
- * group opens with its sport, which chooses every league of it. On a phone the groups scroll
- * sideways as one row; wider, they wrap.
+ * The sport leagues people know, the NFL and the PGA TOUR, as chips in rows by sport, the most
+ * popular sport first. Each row opens with its sport in a fixed left column, which chooses every
+ * league of it, and its leagues wrap to the right of it, so a sport never lands mid-row.
  */
 function SportLeagueChips({ catalog, chosenSport, chosenLeague, onChoose }: SportLeagueChipsProps) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  // On a phone the chosen chip may sit past the edge of the row, as when a link names the WNBA:
-  // scroll the row so it shows. Wider, the row wraps and does not scroll.
-  useEffect(() => {
-    const row = rowRef.current;
-    const chip = row?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (row && chip) {
-      row.scrollLeft = chip.offsetLeft - row.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2;
-    }
-  }, [chosenLeague, chosenSport]);
-
   return (
-    <div aria-label="Sport league" ref={rowRef} className="-mx-1 flex items-center gap-x-3 gap-y-2 overflow-x-auto px-1 pb-1 md:flex-wrap md:gap-x-5 md:overflow-visible" role="group">
+    <div aria-label="Sport league" className="space-y-3" role="group">
       <Button
         aria-pressed={chosenSport === null}
-        className="shrink-0 rounded-full"
+        className="rounded-full"
         data-testid="how-to-play-sport-all"
         onClick={() => onChoose(null)}
         size="sm"
@@ -138,37 +127,41 @@ function SportLeagueChips({ catalog, chosenSport, chosenLeague, onChoose }: Spor
       >
         All sports
       </Button>
-      {catalog.map((sport) => {
-        const isSportChosen = chosenSport?.sport === sport.sport;
-        return (
-          <div className="flex shrink-0 items-center gap-1.5 border-l border-border pl-3 md:shrink md:flex-wrap md:border-0 md:pl-0" data-testid={`how-to-play-sport-group-${sport.sport}`} key={sport.sport}>
-            <Button
-              aria-pressed={isSportChosen && chosenLeague === null}
-              className={cn('h-auto gap-1.5 rounded-full py-1 pl-1 pr-2 text-xs font-semibold uppercase', isSportChosen && chosenLeague === null ? 'text-foreground underline decoration-primary decoration-2 underline-offset-4' : 'text-muted-foreground')}
-              data-testid={`how-to-play-sport-${sport.sport}`}
-              onClick={() => onChoose(sport.sport)}
-              size="auto"
-              variant="ghost"
-            >
-              <SportThumb className="h-7 w-7" sport={sport.sport} />
-              {sport.name}
-            </Button>
-            {sport.leagues.map((league) => (
+      <div className="divide-y divide-border">
+        {catalog.map((sport) => {
+          const isSportChosen = chosenSport?.sport === sport.sport;
+          return (
+            <div className="grid grid-cols-[6rem_minmax(0,1fr)] items-start gap-3 py-2 sm:grid-cols-[11rem_minmax(0,1fr)]" data-testid={`how-to-play-sport-group-${sport.sport}`} key={sport.sport}>
               <Button
-                aria-pressed={chosenLeague?.sportLeagueId === league.sportLeagueId}
-                className="shrink-0 rounded-full"
-                data-testid={`how-to-play-league-${sport.sport}-${league.slug}`}
-                key={league.sportLeagueId}
-                onClick={() => onChoose(sport.sport, league)}
-                size="sm"
-                variant={chosenLeague?.sportLeagueId === league.sportLeagueId ? 'primary' : 'secondary'}
+                aria-pressed={isSportChosen && chosenLeague === null}
+                className={cn('h-auto flex-col items-start justify-start gap-1 whitespace-normal rounded-lg p-1 text-left text-xs font-semibold uppercase sm:flex-row sm:items-center sm:gap-1.5 sm:rounded-full sm:pr-2', isSportChosen && chosenLeague === null ? 'text-foreground underline decoration-primary decoration-2 underline-offset-4' : 'text-muted-foreground')}
+                data-testid={`how-to-play-sport-${sport.sport}`}
+                onClick={() => onChoose(sport.sport)}
+                size="auto"
+                variant="ghost"
               >
-                {league.name}
+                <SportThumb className="h-7 w-7" sport={sport.sport} />
+                {sport.name}
               </Button>
-            ))}
-          </div>
-        );
-      })}
+              <div className="flex flex-wrap gap-2" data-testid={`how-to-play-sport-leagues-${sport.sport}`}>
+                {sport.leagues.map((league) => (
+                  <Button
+                    aria-pressed={chosenLeague?.sportLeagueId === league.sportLeagueId}
+                    className="rounded-full"
+                    data-testid={`how-to-play-league-${sport.sport}-${league.slug}`}
+                    key={league.sportLeagueId}
+                    onClick={() => onChoose(sport.sport, league)}
+                    size="sm"
+                    variant={chosenLeague?.sportLeagueId === league.sportLeagueId ? 'primary' : 'secondary'}
+                  >
+                    {league.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

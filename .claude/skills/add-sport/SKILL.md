@@ -145,7 +145,9 @@ In order:
    of contest types) read the contest templates and sport leagues, so the sport's leagues and
    formats appear there once their templates exist. A league whose name is shared with another
    sport's ("NCAA Division I Men") gets a `display_name` in its migration, so its How to Play
-   chip says the sport. The hand-written parts are the sport's line in
+   chip says the sport, and every league gets a `display_order` there, its place among its
+   sport's leagues (major professional first, then NCAA); a new sport also gets its place in
+   the registry's popularity order. The hand-written parts are the sport's line in
    `SPORT_BLURBS` and, for a new sport, its picture in the How to Play illustrations (the
    typecheck asks for it); a new way to play also needs its picture and its guide. Write the
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
