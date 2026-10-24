@@ -1,9 +1,9 @@
-Source: https://www.basketball-reference.com/boxscores/202506050OKC.html
-Final URL: https://www.basketball-reference.com/boxscores/202506050OKC.html
+Source: https://www.basketball-reference.com/boxscores/202506110IND.html
+Final URL: https://www.basketball-reference.com/boxscores/202506110IND.html
 HTTP 200
-Fetched: 2026-10-24T14:57:51.507Z
+Fetched: 2026-10-24T15:00:29.268Z
 
-2025 NBA Finals Game 1: Pacers vs Thunder, June 5, 2025 | Basketball-Reference.com
+2025 NBA Finals Game 3: Thunder vs Pacers, June 11, 2025 | Basketball-Reference.com
 Opens in a new window Opens an external website Opens an external website in a new window
 This website utilizes technologies such as cookies to enable essential site functionality, as well as for analytics, personalization, and targeted advertising. To learn more, view the following link: Privacy Policy
 Manage Preferences
@@ -294,32 +294,32 @@ Team Season Finder
 » All Stathead Tools
 Newsletter
 Full Site Menu Below
-You are here: BBR Home Page > Box Scores > 2025 NBA Finals Game 1: Indiana Pacers at Oklahoma City Thunder Box Score, June 5, 2025
+You are here: BBR Home Page > Box Scores > 2025 NBA Finals Game 3: Oklahoma City Thunder at Indiana Pacers Box Score, June 11, 2025
 Welcome · Your Account
 Logout
 Ad-Free Login
 Create Account
 The NBA is back! See your teams in Hub.
 Box Scores Menu
-Jun 5, 2025 NBA Scores & Boxes
+Jun 11, 2025 NBA Scores & Boxes
 2024-25 NBA Schedule & Results
-Indiana Pacers Schedule
 Oklahoma City Thunder Schedule
+Indiana Pacers Schedule
 Team and League Schedules
-Indiana Pacers Schedule
 Oklahoma City Thunder Schedule
+Indiana Pacers Schedule
 2024-25 NBA Schedule & Results
 On this page
 Line Score
 Four Factors
-Indiana Pacers Basic and Advanced Stats
 Oklahoma City Thunder Basic and Advanced Stats
+Indiana Pacers Basic and Advanced Stats
 Full Site Menu
 Keyboard Shortcuts
 \ to toggle sidebar navigation
 / to toggle search input
 More about this update
-2025 NBA Finals Game 1: Indiana Pacers at Oklahoma City Thunder Box Score, June 5, 2025
+2025 NBA Finals Game 3: Oklahoma City Thunder at Indiana Pacers Box Score, June 11, 2025
 2025 NBA Finals
 Game 1, Jun 5
 IND
@@ -366,20 +366,20 @@ OKC
 Series Summary
 via Sports Logos.net
 About logos
-Indiana Pacers
-111
-1-0
+Oklahoma City Thunder
+107
+1-2
 Prev Game
 Next Game
 via Sports Logos.net
 About logos
-Oklahoma City Thunder
-110
-0-1
+Indiana Pacers
+116
+2-1
 Prev Game
 Next Game
-8:30 PM, June 5, 2025
-Paycom Center, Oklahoma City, Oklahoma
+8:30 PM, June 11, 2025
+Gainbridge Fieldhouse, Indianapolis, Indiana
 Logos via Sports Logos.net
 / About logos
 Box Score
@@ -399,8 +399,8 @@ Scoring
 3
 4
 T
-IND 20 25 31 35 111
-OKC 29 28 28 25 110
+OKC 32 28 29 18 107
+IND 24 40 20 32 116
 Four Factors
 Four Factors Table
 Four Factors
@@ -410,8 +410,8 @@ TOV%
 ORB%
 FT/FGA
 ORtg
-IND 101.9 .585 21.5 31.0 .183 108.9
-OKC 101.9 .454 6.1 18.9 .214 107.9
+OKC 99.7 .532 17.1 23.7 .291 107.3
+IND 99.7 .571 12.9 17.5 .224 116.3
 Game
 Q1
 Q2
@@ -419,517 +419,6 @@ H1
 Q3
 Q4
 H2
-Indiana Pacers Basic and Advanced Stats
-Share & Export Modify, Export & Share Table
-Get as Excel Workbook
-Get table as CSV (for Excel)
-Get Link to Table
-About Sharing Tools
-Video: SR Sharing Tools & How-to
-Video: Stats Table Tips & Tricks
-Data Usage Terms
-Glossary
-Indiana Pacers Basic and Advanced Stats Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 38:55 6 13 .462 2 7 .286 0 0 0 10 10 6 0 1 3 2 14 11.4 +12
-Pascal Siakam 34:59 7 15 .467 1 2 .500 4 6 .667 4 6 10 3 0 1 1 1 19 16.5 -10
-Andrew Nembhard 32:24 4 11 .364 2 6 .333 4 5 .800 1 3 4 6 0 0 2 3 14 10.1 +11
-Aaron Nesmith 31:10 3 9 .333 3 7 .429 1 2 .500 0 12 12 1 0 1 5 2 10 3.7 +13
-Myles Turner 27:36 5 10 .500 2 5 .400 3 4 .750 5 4 9 0 0 3 6 3 15 9.2 +8
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 25:18 6 9 .667 5 8 .625 0 0 0 5 5 2 0 0 3 2 17 12.2 +13
-T.J. McConnell 16:33 4 6 .667 1 1 1.000 0 0 0 1 1 4 1 0 3 1 9 7.1 -13
-Bennedict Mathurin 15:53 1 5 .200 0 0 3 4 .750 3 0 3 2 0 1 1 2 5 3.9 -8
-Ben Sheppard 9:05 1 2 .500 1 2 .500 0 0 0 2 2 0 0 0 0 3 3 1.4 -12
-Thomas Bryant 8:07 2 2 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 3 5 3.2 -9
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 240 39 82 .476 18 39 .462 15 21 .714 13 43 56 24 1 7 25 22 111
-Indiana Pacers (Q1)
-Indiana Pacers (Q1) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 9:52 1 3 .333 1 2 .500 0 0 0 2 2 1 0 0 0 0 3 2.6 -6
-Pascal Siakam 9:52 2 2 1.000 0 0 0 0 0 1 1 1 0 0 1 1 4 3.0 -5
-Andrew Nembhard 9:09 1 3 .333 1 3 .333 0 0 0 1 1 1 0 0 1 1 3 0.9 -7
-Aaron Nesmith 7:44 0 2 .000 0 1 .000 0 0 0 3 3 0 0 1 3 0 0 -2.8 -2
-Myles Turner 7:28 1 3 .333 0 2 .000 1 2 .500 0 0 0 0 0 0 1 1 3 -0.5 -4
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 5:13 1 1 1.000 1 1 1.000 0 0 0 2 2 0 0 0 3 1 3 -0.1 -4
-T.J. McConnell 4:34 2 2 1.000 0 0 0 0 0 1 1 2 0 0 0 0 4 5.1 -5
-Bennedict Mathurin 2:33 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.7 -3
-Ben Sheppard 2:08 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -4
-Thomas Bryant 1:27 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -5
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 60 8 17 .471 3 9 .333 1 2 .500 0 10 10 5 0 1 9 6 20
-Indiana Pacers (Q2)
-Indiana Pacers (Q2) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 8:45 1 1 1.000 1 1 1.000 0 0 0 5 5 2 0 1 3 0 3 3.3 -1
-Pascal Siakam 8:53 1 4 .250 0 0 2 2 1.000 1 1 2 1 0 0 0 0 4 3.3 -8
-Andrew Nembhard 4:33 0 1 .000 0 1 .000 1 2 .500 0 0 0 0 0 0 1 1 1 -1.5 +1
-Aaron Nesmith 8:45 1 2 .500 1 2 .500 1 2 .500 0 5 5 0 0 0 1 0 4 3.1 -1
-Myles Turner 5:55 0 1 .000 0 0 2 2 1.000 2 1 3 0 0 2 3 1 2 1.0 +3
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 9:12 1 3 .333 1 3 .333 0 0 0 1 1 1 0 0 0 0 3 2.3 -1
-T.J. McConnell 6:41 2 3 .667 1 1 1.000 0 0 0 0 0 0 0 0 1 0 5 2.7 -4
-Bennedict Mathurin 4:01 0 1 .000 0 0 0 0 1 0 1 1 0 0 1 1 0 -0.7 -2
-Ben Sheppard 3:15 1 2 .500 1 2 .500 0 0 0 1 1 0 0 0 0 2 3 1.5 -2
-Thomas Bryant
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 60 7 18 .389 5 10 .500 6 8 .750 4 14 18 5 0 3 10 5 25
-Indiana Pacers (H1)
-Indiana Pacers (H1) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 18:37 2 4 .500 2 3 .667 0 0 0 7 7 3 0 1 3 0 6 5.9 -7
-Pascal Siakam 18:45 3 6 .500 0 0 2 2 1.000 1 2 3 2 0 0 1 1 8 6.3 -13
-Andrew Nembhard 13:42 1 4 .250 1 4 .250 1 2 .500 0 1 1 1 0 0 2 2 4 -0.6 -6
-Aaron Nesmith 16:29 1 4 .250 1 3 .333 1 2 .500 0 8 8 0 0 1 4 0 4 0.3 -3
-Myles Turner 13:23 1 4 .250 0 2 .000 3 4 .750 2 1 3 0 0 2 4 2 5 0.5 -1
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 14:25 2 4 .500 2 4 .500 0 0 0 3 3 1 0 0 3 1 6 2.2 -5
-T.J. McConnell 11:15 4 5 .800 1 1 1.000 0 0 0 1 1 2 0 0 1 0 9 7.8 -9
-Bennedict Mathurin 6:34 0 2 .000 0 0 0 0 1 0 1 1 0 0 1 1 0 -1.4 -5
-Ben Sheppard 5:23 1 2 .500 1 2 .500 0 0 0 1 1 0 0 0 0 3 3 1.1 -6
-Thomas Bryant 1:27 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -5
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 120 15 35 .429 8 19 .421 7 10 .700 4 24 28 10 0 4 19 11 45
-Indiana Pacers (Q3)
-Indiana Pacers (Q3) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 10:36 2 5 .400 0 3 .000 0 0 0 1 1 2 0 0 0 0 4 3.0 +3
-Pascal Siakam 7:59 3 7 .429 1 2 .500 1 2 .500 1 3 4 1 0 0 0 0 8 6.2 +2
-Andrew Nembhard 9:00 1 2 .500 0 0 0 0 1 1 2 2 0 0 0 0 2 3.4 +1
-Aaron Nesmith 4:59 1 2 .500 1 2 .500 0 0 0 0 0 0 0 0 1 1 3 0.6 0
-Myles Turner 7:38 1 2 .500 0 0 0 0 2 3 5 0 0 1 1 0 2 3.0 +1
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 4:01 2 3 .667 1 2 .500 0 0 0 0 0 0 0 0 0 0 5 3.7 +1
-T.J. McConnell 3:00 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 1.4 +2
-Bennedict Mathurin 7:01 0 0 0 0 2 2 1.000 0 0 0 1 0 1 0 0 2 3.4 +3
-Ben Sheppard 1:24 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0.3 0
-Thomas Bryant 4:22 2 2 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 2 5 3.6 +2
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 60 12 23 .522 4 10 .400 3 4 .750 4 9 13 8 0 2 2 3 31
-Indiana Pacers (Q4)
-Indiana Pacers (Q4) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 9:42 2 4 .500 0 1 .000 0 0 0 2 2 1 0 0 0 2 4 2.5 +16
-Pascal Siakam 8:15 1 2 .500 0 0 1 2 .500 2 1 3 0 0 1 0 0 3 4.0 +1
-Andrew Nembhard 9:42 2 5 .400 1 2 .500 3 3 1.000 0 1 1 3 0 0 0 1 8 7.3 +16
-Aaron Nesmith 9:42 1 3 .333 1 2 .500 0 0 0 4 4 1 0 0 0 1 3 2.8 +16
-Myles Turner 6:35 3 4 .750 2 3 .667 0 0 1 0 1 0 0 0 1 1 8 5.7 +8
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 6:52 2 2 1.000 2 2 1.000 0 0 0 2 2 1 0 0 0 1 6 6.3 +17
-T.J. McConnell 2:18 0 1 .000 0 0 0 0 0 0 0 0 1 0 2 1 0 -2.1 -6
-Bennedict Mathurin 2:18 1 3 .333 0 0 1 2 .500 2 0 2 0 0 0 0 1 3 1.9 -6
-Ben Sheppard 2:18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 -6
-Thomas Bryant 2:18 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 -6
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 60 12 24 .500 6 10 .600 5 7 .714 5 10 15 6 1 1 3 8 35
-Indiana Pacers (H2)
-Indiana Pacers (H2) Table
-Basic Box Score Stats
-Starters
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Tyrese Haliburton 20:18 4 9 .444 0 4 .000 0 0 0 3 3 3 0 0 0 2 8 5.5 +19
-Pascal Siakam 16:14 4 9 .444 1 2 .500 2 4 .500 3 4 7 1 0 1 0 0 11 10.2 +3
-Andrew Nembhard 18:42 3 7 .429 1 2 .500 3 3 1.000 1 2 3 5 0 0 0 1 10 10.7 +17
-Aaron Nesmith 14:41 2 5 .400 2 4 .500 0 0 0 4 4 1 0 0 1 2 6 3.4 +16
-Myles Turner 14:13 4 6 .667 2 3 .667 0 0 3 3 6 0 0 1 2 1 10 8.7 +9
-Reserves
-MP
-FG
-FGA
-FG%
-3P
-3PA
-3P%
-FT
-FTA
-FT%
-ORB
-DRB
-TRB
-AST
-STL
-BLK
-TOV
-PF
-PTS
-GmSc
-+/-
-Obi Toppin 10:53 4 5 .800 3 4 .750 0 0 0 2 2 1 0 0 0 1 11 10.0 +18
-T.J. McConnell 5:18 0 1 .000 0 0 0 0 0 0 0 2 1 0 2 1 0 -0.7 -4
-Bennedict Mathurin 9:19 1 3 .333 0 0 3 4 .750 2 0 2 1 0 1 0 1 5 5.3 -3
-Ben Sheppard 3:42 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0.3 -6
-Thomas Bryant 6:40 2 2 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 2 5 3.6 -4
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 120 24 47 .511 10 20 .500 8 11 .727 9 19 28 14 1 3 5 11 66
-Share & Export Modify, Export & Share Table
-Get as Excel Workbook
-Get table as CSV (for Excel)
-Get Link to Table
-About Sharing Tools
-Video: SR Sharing Tools & How-to
-Video: Stats Table Tips & Tricks
-Data Usage Terms
-Glossary
-Table
-Advanced Box Score Stats
-Starters
-MP
-TS%
-eFG%
-3PAr
-FTr
-ORB%
-DRB%
-TRB%
-AST%
-STL%
-BLK%
-TOV%
-USG%
-ORtg
-DRtg
-BPM
-Tyrese Haliburton 38:55 .538 .538 .538 .000 0.0 23.3 13.0 23.4 0.0 1.8 18.8 17.0 108 107 0.4
-Pascal Siakam 34:59 .539 .500 .133 .400 13.1 15.5 14.4 14.0 0.0 2.0 5.4 22.0 125 109 5.4
-Andrew Nembhard 32:24 .530 .455 .545 .455 3.5 8.4 6.2 26.9 0.0 0.0 13.2 19.4 121 113 1.7
-Aaron Nesmith 31:10 .506 .500 .778 .222 0.0 34.9 19.5 4.5 0.0 2.3 33.6 19.7 69 103 -3.5
-Myles Turner 27:36 .638 .600 .500 .400 20.7 13.1 16.5 0.0 0.0 7.7 33.8 26.6 92 105 -1.4
-Reserves
-MP
-TS%
-eFG%
-3PAr
-FTr
-ORB%
-DRB%
-TRB%
-AST%
-STL%
-BLK%
-TOV%
-USG%
-ORtg
-DRtg
-BPM
-Obi Toppin 25:18 .944 .944 .889 .000 0.0 17.9 10.0 13.7 0.0 0.0 25.0 19.6 128 110 11.5
-T.J. McConnell 16:33 .750 .750 .167 .000 0.0 5.5 3.1 42.3 2.8 0.0 33.3 22.5 112 107 6.5
-Bennedict Mathurin 15:53 .370 .200 .000 .800 21.6 0.0 9.5 16.8 0.0 4.4 12.9 20.2 105 111 -1.1
-Ben Sheppard 9:05 .750 .750 1.000 .000 0.0 19.9 11.1 0.0 0.0 0.0 0.0 9.1 152 109 0.6
-Thomas Bryant 8:07 1.250 1.250 .500 .000 0.0 0.0 0.0 0.0 0.0 0.0 0.0 10.2 250 115 8.5
-Tony Bradley Did Not Play
-Johnny Furphy Did Not Play
-Isaiah Jackson Did Not Dress
-James Johnson Did Not Play
-Jarace Walker Did Not Dress
-Team Totals 240 .608 .585 .476 .256 31.0 81.1 58.9 61.5 1.0 10.3 21.5 100.0 108.9 107.9
 Oklahoma City Thunder Basic and Advanced Stats
 Share & Export Modify, Export & Share Table
 Get as Excel Workbook
@@ -964,11 +453,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 39:34 14 30 .467 3 6 .500 7 8 .875 0 5 5 3 3 0 2 2 38 26.0 +3
-Jalen Williams 36:27 6 19 .316 1 4 .250 4 4 1.000 1 3 4 6 1 0 0 4 17 11.3 -4
-Luguentz Dort 36:21 5 10 .500 5 9 .556 0 0 2 2 4 1 4 2 0 3 15 16.9 -3
-Cason Wallace 33:16 3 9 .333 0 3 .000 0 0 0 2 2 1 1 1 0 2 6 3.1 -13
-Chet Holmgren 23:31 2 9 .222 0 1 .000 2 2 1.000 0 6 6 0 0 1 1 1 6 1.6 +4
+Shai Gilgeous-Alexander 42:02 9 20 .450 1 3 .333 5 6 .833 2 6 8 4 0 3 6 2 24 14.5 -3
+Jalen Williams 36:27 9 18 .500 1 2 .500 7 11 .636 2 4 6 3 1 0 4 3 26 15.9 -9
+Luguentz Dort 35:46 4 8 .500 4 5 .800 0 0 1 3 4 0 0 0 0 3 12 8.4 +1
+Chet Holmgren 34:42 6 15 .400 0 6 .000 8 9 .889 1 9 10 2 1 0 1 0 20 16.3 +1
+Cason Wallace 24:20 3 5 .600 0 1 .000 1 2 .500 1 3 4 1 1 1 2 2 7 5.5 -10
 Reserves
 MP
 FG
@@ -991,16 +480,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 28:28 3 8 .375 1 4 .250 4 5 .800 2 4 6 2 3 2 1 5 11 11.6 +2
-Isaiah Hartenstein 17:01 3 5 .600 0 0 3 3 1.000 2 7 9 0 1 0 0 2 9 10.4 +2
-Isaiah Joe 11:08 2 3 .667 1 1 1.000 0 0 0 0 0 0 0 0 0 0 5 3.7 +3
-Aaron Wiggins 9:25 1 2 .500 0 1 .000 1 2 .500 0 0 0 0 1 0 2 0 3 0.6 +6
-Ajay Mitchell 4:10 0 3 .000 0 1 .000 0 0 3 0 3 0 0 0 0 0 0 0.0 -3
-Kenrich Williams 0:39 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 -2
+Alex Caruso 32:13 2 5 .400 2 2 1.000 2 2 1.000 1 4 5 4 2 0 1 3 8 9.8 -15
+Isaiah Hartenstein 18:14 2 3 .667 0 0 0 0 0 3 3 0 1 0 2 2 4 1.8 -4
+Aaron Wiggins 9:39 0 2 .000 0 0 0 0 1 1 2 2 0 0 1 3 0 -1.2 -5
+Isaiah Joe 4:13 2 2 1.000 2 2 1.000 0 0 0 0 0 0 0 0 0 2 6 4.6 0
+Kenrich Williams 2:04 0 1 .000 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 -0.7 -2
+Jaylin Williams 0:20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 +1
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 240 39 98 .398 11 30 .367 21 24 .875 10 29 39 13 14 6 7 19 110
+Ajay Mitchell Did Not Play
+Team Totals 240 37 79 .468 10 22 .455 23 30 .767 9 33 42 16 6 4 19 20 107
 Oklahoma City Thunder (Q1)
 Oklahoma City Thunder (Q1) Table
 Basic Box Score Stats
@@ -1026,11 +515,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 12:00 5 12 .417 1 1 1.000 1 2 .500 0 2 2 1 1 0 1 0 12 6.5 +9
-Jalen Williams 7:01 1 4 .250 1 1 1.000 0 0 0 2 2 0 0 0 0 0 3 1.2 +4
-Luguentz Dort 9:52 0 3 .000 0 2 .000 0 0 2 2 4 1 2 0 0 0 0 2.6 +6
-Cason Wallace 7:20 0 1 .000 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 -0.7 +2
-Chet Holmgren 6:55 1 3 .333 0 0 0 0 0 0 0 0 0 0 1 1 2 -1.1 +2
+Shai Gilgeous-Alexander 12:00 2 6 .333 0 1 .000 2 2 1.000 0 2 2 1 0 1 1 1 6 3.2 +8
+Jalen Williams 7:10 2 3 .667 0 0 0 0 2 1 3 1 1 0 2 0 4 4.1 +5
+Luguentz Dort 10:41 3 5 .600 3 3 1.000 0 0 0 1 1 0 0 0 0 1 9 6.6 +6
+Chet Holmgren 8:29 4 5 .800 0 1 .000 5 6 .833 0 4 4 0 1 0 0 0 13 12.9 +7
+Cason Wallace 6:44 0 1 .000 0 0 0 0 0 0 0 1 1 1 0 0 0 1.7 +7
 Reserves
 MP
 FG
@@ -1053,16 +542,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 5:05 1 1 1.000 1 1 1.000 0 0 0 1 1 0 0 2 0 0 3 4.4 +7
-Isaiah Hartenstein 4:40 2 2 1.000 0 0 3 3 1.000 1 1 2 0 1 0 0 1 7 8.0 +7
-Isaiah Joe 4:34 1 1 1.000 0 0 0 0 0 0 0 0 0 0 0 0 2 1.7 +5
-Aaron Wiggins 1:54 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 -1.0 +5
-Ajay Mitchell
-Kenrich Williams 0:39 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 -2
+Alex Caruso 5:16 0 0 0 0 0 0 0 1 1 2 0 0 0 0 0 1.7 +1
+Isaiah Hartenstein 4:06 0 0 0 0 0 0 0 1 1 0 1 0 1 1 0 -0.1 +2
+Aaron Wiggins 3:31 0 1 .000 0 0 0 0 0 0 0 1 0 0 1 1 0 -1.4 +1
+Isaiah Joe 1:19 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 +2
+Kenrich Williams 0:24 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 0
+Jaylin Williams 0:20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 +1
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 60 11 27 .407 3 6 .500 4 5 .800 3 8 11 2 4 2 3 2 29
+Ajay Mitchell Did Not Play
+Team Totals 60 11 21 .524 3 5 .600 7 8 .875 2 10 12 6 4 2 5 4 32
 Oklahoma City Thunder (Q2)
 Oklahoma City Thunder (Q2) Table
 Basic Box Score Stats
@@ -1088,11 +577,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 7:50 3 6 .500 1 4 .250 0 0 0 1 1 0 2 0 0 0 7 6.3 +6
-Jalen Williams 9:48 1 3 .333 0 1 .000 2 2 1.000 0 0 0 4 0 0 0 1 4 4.7 +3
-Luguentz Dort 8:12 3 3 1.000 3 3 1.000 0 0 0 0 0 0 2 0 0 2 9 9.3 +1
-Cason Wallace 8:16 0 2 .000 0 0 0 0 0 1 1 0 1 1 0 1 0 0.2 -2
-Chet Holmgren 5:30 0 3 .000 0 1 .000 2 2 1.000 0 3 3 0 0 0 0 0 2 0.8 +1
+Shai Gilgeous-Alexander 8:58 3 5 .600 0 0 0 0 0 2 2 2 0 1 2 0 6 4.4 -3
+Jalen Williams 8:49 1 3 .333 0 0 5 7 .714 0 1 1 0 0 0 0 1 7 4.4 -8
+Luguentz Dort 4:01 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 1 0 -1.1 +3
+Chet Holmgren 7:17 0 2 .000 0 1 .000 2 2 1.000 0 1 1 1 0 0 0 0 2 1.6 -9
+Cason Wallace 7:09 1 1 1.000 0 0 0 0 0 2 2 0 0 0 2 1 2 -0.1 -15
 Reserves
 MP
 FG
@@ -1115,16 +604,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 7:56 1 3 .333 0 1 .000 2 2 1.000 0 1 1 1 3 0 1 2 4 4.5 +7
-Isaiah Hartenstein 2:51 0 1 .000 0 0 0 0 0 2 2 0 0 0 0 0 0 -0.1 0
-Isaiah Joe 2:12 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 0 0 -0.7 0
-Aaron Wiggins 3:15 1 2 .500 0 1 .000 0 0 0 0 0 0 0 0 0 0 2 1.0 +2
-Ajay Mitchell 4:10 0 3 .000 0 1 .000 0 0 3 0 3 0 0 0 0 0 0 0.0 -3
-Kenrich Williams
+Alex Caruso 9:56 1 3 .333 1 1 1.000 0 0 1 1 2 0 0 0 0 0 3 2.3 -10
+Isaiah Hartenstein 6:04 1 1 1.000 0 0 0 0 0 0 0 0 0 0 0 1 2 1.3 -5
+Aaron Wiggins 3:12 0 1 .000 0 0 0 0 1 0 1 1 0 0 0 1 0 0.3 -9
+Isaiah Joe 2:54 2 2 1.000 2 2 1.000 0 0 0 0 0 0 0 0 0 2 6 4.6 -2
+Kenrich Williams 1:40 0 1 .000 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 -0.7 -2
+Jaylin Williams
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 60 9 27 .333 4 12 .333 6 6 1.000 3 8 11 5 8 1 1 6 28
+Ajay Mitchell Did Not Play
+Team Totals 60 9 20 .450 3 5 .600 7 9 .778 2 7 9 4 0 1 4 7 28
 Oklahoma City Thunder (H1)
 Oklahoma City Thunder (H1) Table
 Basic Box Score Stats
@@ -1150,11 +639,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 19:50 8 18 .444 2 5 .400 1 2 .500 0 3 3 1 3 0 1 0 19 12.8 +15
-Jalen Williams 16:49 2 7 .286 1 2 .500 2 2 1.000 0 2 2 4 0 0 0 1 7 5.9 +7
-Luguentz Dort 18:04 3 6 .500 3 5 .600 0 0 2 2 4 1 4 0 0 2 9 11.9 +7
-Cason Wallace 15:36 0 3 .000 0 1 .000 0 0 0 1 1 0 1 1 0 1 0 -0.5 0
-Chet Holmgren 12:25 1 6 .167 0 1 .000 2 2 1.000 0 3 3 0 0 0 1 1 4 -0.3 +3
+Shai Gilgeous-Alexander 20:58 5 11 .455 0 1 .000 2 2 1.000 0 4 4 3 0 2 3 1 12 7.6 +5
+Jalen Williams 15:59 3 6 .500 0 0 5 7 .714 2 2 4 1 1 0 2 1 11 8.5 -3
+Luguentz Dort 14:42 3 6 .500 3 3 1.000 0 0 0 1 1 0 0 0 0 2 9 5.5 +9
+Chet Holmgren 15:46 4 7 .571 0 2 .000 7 8 .875 0 5 5 1 1 0 0 0 15 14.5 -2
+Cason Wallace 13:53 1 2 .500 0 0 0 0 0 2 2 1 1 1 2 1 2 1.6 -8
 Reserves
 MP
 FG
@@ -1177,16 +666,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 13:01 2 4 .500 1 2 .500 2 2 1.000 0 2 2 1 3 2 1 2 7 8.9 +14
-Isaiah Hartenstein 7:31 2 3 .667 0 0 3 3 1.000 1 3 4 0 1 0 0 1 7 7.9 +7
-Isaiah Joe 6:46 1 2 .500 0 0 0 0 0 0 0 0 0 0 0 0 2 1.0 +5
-Aaron Wiggins 5:09 1 2 .500 0 1 .000 0 0 0 0 0 0 0 0 1 0 2 0.0 +7
-Ajay Mitchell 4:10 0 3 .000 0 1 .000 0 0 3 0 3 0 0 0 0 0 0 0.0 -3
-Kenrich Williams 0:39 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 -2
+Alex Caruso 15:12 1 3 .333 1 1 1.000 0 0 1 2 3 2 0 0 0 0 3 4.0 -9
+Isaiah Hartenstein 10:10 1 1 1.000 0 0 0 0 0 1 1 0 1 0 1 2 2 1.2 -3
+Aaron Wiggins 6:43 0 2 .000 0 0 0 0 1 0 1 2 0 0 1 2 0 -1.1 -8
+Isaiah Joe 4:13 2 2 1.000 2 2 1.000 0 0 0 0 0 0 0 0 0 2 6 4.6 0
+Kenrich Williams 2:04 0 1 .000 0 1 .000 0 0 0 0 0 0 0 0 0 0 0 -0.7 -2
+Jaylin Williams 0:20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 +1
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 120 20 54 .370 7 18 .389 10 11 .909 6 16 22 7 12 3 4 8 57
+Ajay Mitchell Did Not Play
+Team Totals 120 20 41 .488 6 10 .600 14 17 .824 4 17 21 10 4 3 9 11 60
 Oklahoma City Thunder (Q3)
 Oklahoma City Thunder (Q3) Table
 Basic Box Score Stats
@@ -1212,11 +701,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 12:00 4 8 .500 1 1 1.000 0 0 0 1 1 2 0 0 1 2 9 4.9 -3
-Jalen Williams 7:38 1 5 .200 0 1 .000 0 0 1 0 1 1 0 0 0 1 2 -0.1 -1
-Luguentz Dort 10:33 2 2 1.000 2 2 1.000 0 0 0 0 0 0 0 1 0 1 6 5.7 -1
-Cason Wallace 8:13 2 3 .667 0 0 0 0 0 1 1 1 0 0 0 0 4 3.7 -1
-Chet Holmgren 6:46 1 2 .500 0 0 0 0 0 2 2 0 0 1 0 0 2 2.3 +1
+Shai Gilgeous-Alexander 11:08 3 6 .500 1 2 .500 2 2 1.000 1 2 3 1 0 1 2 1 9 6.3 +3
+Jalen Williams 8:28 4 7 .571 1 1 1.000 0 0 0 1 1 2 0 0 0 1 9 7.0 +8
+Luguentz Dort 11:08 1 1 1.000 1 1 1.000 0 0 1 1 2 0 0 0 0 0 3 3.7 +3
+Chet Holmgren 10:44 1 3 .333 0 2 .000 1 1 1.000 0 2 2 1 0 0 1 0 3 1.6 +8
+Cason Wallace 5:54 1 2 .500 0 1 .000 0 0 0 1 1 0 0 0 0 1 2 0.9 +7
 Reserves
 MP
 FG
@@ -1239,16 +728,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 5:14 0 3 .000 0 2 .000 0 0 2 0 2 1 0 0 0 0 0 0.0 -4
-Isaiah Hartenstein 5:14 1 1 1.000 0 0 0 0 1 3 4 0 0 0 0 1 2 2.9 -4
-Isaiah Joe 4:22 1 1 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 0 3 2.7 -2
-Aaron Wiggins
-Ajay Mitchell
+Alex Caruso 6:40 1 2 .500 1 1 1.000 0 0 0 2 2 0 1 0 0 1 3 3.2 +5
+Isaiah Hartenstein 5:06 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0.6 +5
+Aaron Wiggins 0:52 0 0 0 0 0 0 0 1 1 0 0 0 0 0 0 0.3 +6
+Isaiah Joe
 Kenrich Williams
+Jaylin Williams
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 60 12 25 .480 4 7 .571 0 0 4 7 11 5 0 2 1 5 28
+Ajay Mitchell Did Not Play
+Team Totals 60 11 21 .524 4 8 .500 3 3 1.000 2 12 14 4 1 1 3 4 29
 Oklahoma City Thunder (Q4)
 Oklahoma City Thunder (Q4) Table
 Basic Box Score Stats
@@ -1274,11 +763,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 7:44 2 4 .500 0 0 6 6 1.000 0 1 1 0 0 0 0 0 10 8.3 -9
-Jalen Williams 12:00 3 7 .429 0 1 .000 2 2 1.000 0 1 1 1 1 0 0 2 8 5.5 -10
-Luguentz Dort 7:44 0 2 .000 0 2 .000 0 0 0 0 0 0 0 1 0 0 0 -0.7 -9
-Cason Wallace 9:27 1 3 .333 0 2 .000 0 0 0 0 0 0 0 0 0 1 2 -0.1 -12
-Chet Holmgren 4:20 0 1 .000 0 0 0 0 0 1 1 0 0 0 0 0 0 -0.4 0
+Shai Gilgeous-Alexander 9:56 1 3 .333 0 0 1 2 .500 1 0 1 0 0 0 1 0 3 0.6 -11
+Jalen Williams 12:00 2 5 .400 0 1 .000 2 4 .500 0 1 1 0 0 0 2 1 6 0.4 -14
+Luguentz Dort 9:56 0 1 .000 0 1 .000 0 0 0 1 1 0 0 0 0 1 0 -0.8 -11
+Chet Holmgren 8:12 1 5 .200 0 2 .000 0 0 1 2 3 0 0 0 0 0 2 0.2 -5
+Cason Wallace 4:33 1 1 1.000 0 0 1 2 .500 1 0 1 0 0 0 0 0 3 3.0 -9
 Reserves
 MP
 FG
@@ -1301,16 +790,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 10:13 1 1 1.000 0 0 2 3 .667 0 2 2 0 0 0 0 3 4 2.7 -8
-Isaiah Hartenstein 4:16 0 1 .000 0 0 0 0 0 1 1 0 0 0 0 0 0 -0.4 -1
+Alex Caruso 10:21 0 0 0 0 2 2 1.000 0 0 0 2 1 0 1 2 2 2.6 -11
+Isaiah Hartenstein 2:58 1 2 .500 0 0 0 0 0 0 0 0 0 0 1 0 2 0.0 -6
+Aaron Wiggins 2:04 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -3
 Isaiah Joe
-Aaron Wiggins 4:16 0 0 0 0 1 2 .500 0 0 0 0 1 0 1 0 1 0.6 -1
-Ajay Mitchell
 Kenrich Williams
+Jaylin Williams
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 60 7 19 .368 0 5 .000 11 13 .846 0 6 6 1 2 1 1 6 25
+Ajay Mitchell Did Not Play
+Team Totals 60 6 17 .353 0 4 .000 6 10 .600 3 4 7 2 1 0 5 5 18
 Oklahoma City Thunder (H2)
 Oklahoma City Thunder (H2) Table
 Basic Box Score Stats
@@ -1336,11 +825,11 @@ PF
 PTS
 GmSc
 +/-
-Shai Gilgeous-Alexander 19:44 6 12 .500 1 1 1.000 6 6 1.000 0 2 2 2 0 0 1 2 19 13.2 -12
-Jalen Williams 19:38 4 12 .333 0 2 .000 2 2 1.000 1 1 2 2 1 0 0 3 10 5.4 -11
-Luguentz Dort 18:17 2 4 .500 2 4 .500 0 0 0 0 0 0 0 2 0 1 6 5.0 -10
-Cason Wallace 17:40 3 6 .500 0 2 .000 0 0 0 1 1 1 0 0 0 1 6 3.6 -13
-Chet Holmgren 11:06 1 3 .333 0 0 0 0 0 3 3 0 0 1 0 0 2 1.9 +1
+Shai Gilgeous-Alexander 21:04 4 9 .444 1 2 .500 3 4 .750 2 2 4 1 0 1 3 1 12 6.9 -8
+Jalen Williams 20:28 6 12 .500 1 2 .500 2 4 .500 0 2 2 2 0 0 2 2 15 7.4 -6
+Luguentz Dort 21:04 1 2 .500 1 2 .500 0 0 1 2 3 0 0 0 0 1 3 2.9 -8
+Chet Holmgren 18:56 2 8 .250 0 4 .000 1 1 1.000 1 4 5 1 0 0 1 0 5 1.8 +3
+Cason Wallace 10:27 2 3 .667 0 1 .000 1 2 .500 1 1 2 0 0 0 0 1 5 3.9 -2
 Reserves
 MP
 FG
@@ -1363,16 +852,16 @@ PF
 PTS
 GmSc
 +/-
-Alex Caruso 15:27 1 4 .250 0 2 .000 2 3 .667 2 2 4 1 0 0 0 3 4 2.7 -12
-Isaiah Hartenstein 9:30 1 2 .500 0 0 0 0 1 4 5 0 0 0 0 1 2 2.5 -5
-Isaiah Joe 4:22 1 1 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 0 3 2.7 -2
-Aaron Wiggins 4:16 0 0 0 0 1 2 .500 0 0 0 0 1 0 1 0 1 0.6 -1
-Ajay Mitchell
+Alex Caruso 17:01 1 2 .500 1 1 1.000 2 2 1.000 0 2 2 2 2 0 1 3 5 5.8 -6
+Isaiah Hartenstein 8:04 1 2 .500 0 0 0 0 0 2 2 0 0 0 1 0 2 0.6 -1
+Aaron Wiggins 2:56 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 -0.1 +3
+Isaiah Joe
 Kenrich Williams
+Jaylin Williams
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 120 19 44 .432 4 12 .333 11 13 .846 4 13 17 6 2 3 2 11 53
+Ajay Mitchell Did Not Play
+Team Totals 120 17 38 .447 4 12 .333 9 13 .692 5 16 21 6 2 1 8 9 47
 Share & Export Modify, Export & Share Table
 Get as Excel Workbook
 Get table as CSV (for Excel)
@@ -1401,11 +890,11 @@ USG%
 ORtg
 DRtg
 BPM
-Shai Gilgeous-Alexander 39:34 .567 .517 .200 .267 0.0 14.4 6.4 16.5 3.6 0.0 5.6 37.3 114 108 10.4
-Jalen Williams 36:27 .409 .342 .211 .211 2.5 9.4 5.5 25.4 1.3 0.0 0.0 23.7 102 115 -1.2
-Luguentz Dort 36:21 .750 .750 .900 .000 5.0 6.3 5.6 4.1 5.2 6.1 0.0 11.4 158 104 12.3
-Cason Wallace 33:16 .333 .333 .333 .000 0.0 6.9 3.0 4.2 1.4 3.4 0.0 11.2 76 114 -6.0
-Chet Holmgren 23:31 .304 .222 .111 .222 0.0 29.2 12.9 0.0 0.0 4.7 9.2 19.2 60 110 -10.9
+Shai Gilgeous-Alexander 42:02 .530 .475 .150 .300 6.0 17.1 11.7 17.1 0.0 5.9 20.9 29.4 96 115 -0.4
+Jalen Williams 36:27 .569 .528 .111 .611 6.9 13.2 10.1 15.7 1.3 0.0 14.9 31.8 108 118 0.6
+Luguentz Dort 35:46 .750 .750 .625 .000 3.5 10.1 6.9 0.0 0.0 0.0 0.0 9.7 155 121 2.7
+Chet Holmgren 34:42 .527 .400 .400 .600 3.6 31.1 17.7 9.6 1.4 0.0 5.0 24.8 116 115 3.0
+Cason Wallace 24:20 .595 .600 .200 .400 5.2 14.8 10.1 6.3 2.0 3.4 25.4 14.0 98 113 0.5
 Reserves
 MP
 TS%
@@ -1423,30 +912,541 @@ USG%
 ORtg
 DRtg
 BPM
-Alex Caruso 28:28 .539 .438 .500 .625 6.4 16.1 10.6 9.9 5.0 7.8 8.9 16.3 116 100 6.2
-Isaiah Hartenstein 17:01 .712 .600 .000 .600 10.6 47.0 26.7 0.0 2.8 0.0 0.0 15.4 158 99 6.0
-Isaiah Joe 11:08 .833 .833 .333 .000 0.0 0.0 0.0 0.0 0.0 0.0 0.0 11.2 165 122 2.5
-Aaron Wiggins 9:25 .521 .500 .500 1.000 0.0 0.0 0.0 0.0 5.0 0.0 41.0 21.5 60 110 -9.2
-Ajay Mitchell 4:10 .000 .000 .333 .000 65.2 0.0 36.4 0.0 0.0 0.0 0.0 29.9 65 122 -15.9
-Kenrich Williams 0:39 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0 122 -7.9
+Alex Caruso 32:13 .680 .600 .400 .400 3.9 14.9 9.6 17.5 3.0 0.0 14.5 9.2 141 114 5.7
+Isaiah Hartenstein 18:14 .667 .667 .000 .000 0.0 19.7 10.1 0.0 2.6 0.0 40.0 11.8 73 114 -5.4
+Aaron Wiggins 9:39 .000 .000 .000 .000 13.1 12.4 12.8 26.9 0.0 0.0 33.3 13.4 56 120 -12.6
+Isaiah Joe 4:13 1.500 1.500 1.000 .000 0.0 0.0 0.0 0.0 0.0 0.0 0.0 20.5 300 122 35.7
+Kenrich Williams 2:04 .000 .000 1.000 .000 0.0 0.0 0.0 0.0 0.0 0.0 0.0 20.9 0 123 -23.8
+Jaylin Williams 0:20 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0 123 -5.2
 Ousmane Dieng Did Not Play
 Dillon Jones Did Not Play
-Jaylin Williams Did Not Play
-Team Totals 240 .507 .454 .306 .245 18.9 69.0 41.1 33.3 13.7 14.0 6.1 100.0 107.9 108.9
-Inactive: IND None OKC Nikola Topić
-Officials: Marc Davis , John Goble , David Guthrie
-Attendance: 18,203
-Time of Game: 2:30
+Ajay Mitchell Did Not Play
+Team Totals 240 .580 .532 .278 .380 23.7 82.5 53.8 43.2 6.0 6.9 17.1 100.0 107.3 116.3
+Indiana Pacers Basic and Advanced Stats
+Share & Export Modify, Export & Share Table
+Get as Excel Workbook
+Get table as CSV (for Excel)
+Get Link to Table
+About Sharing Tools
+Video: SR Sharing Tools & How-to
+Video: Stats Table Tips & Tricks
+Data Usage Terms
+Glossary
+Indiana Pacers Basic and Advanced Stats Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 36:20 9 17 .529 4 8 .500 0 0 1 8 9 11 2 1 4 1 22 22.8 +1
+Andrew Nembhard 33:25 3 5 .600 1 2 .500 1 2 .500 1 3 4 1 0 0 3 5 8 2.6 +3
+Pascal Siakam 31:58 8 14 .571 0 2 .000 5 6 .833 0 6 6 4 2 1 0 3 21 20.1 +8
+Myles Turner 29:44 3 11 .273 1 4 .250 2 2 1.000 0 2 2 1 1 5 2 2 9 5.5 -8
+Aaron Nesmith 22:06 3 5 .600 1 2 .500 0 0 1 1 2 0 1 1 0 6 7 5.0 +1
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 27:48 4 8 .500 0 3 .000 0 0 1 5 6 1 0 2 1 3 8 6.1 +18
+Bennedict Mathurin 22:24 9 12 .750 2 3 .667 7 8 .875 1 3 4 1 0 1 1 0 27 23.8 +16
+Ben Sheppard 18:05 2 5 .400 0 2 .000 0 0 1 1 2 0 2 0 0 1 4 3.9 -2
+T.J. McConnell 15:06 3 8 .375 0 1 .000 4 4 1.000 1 0 1 5 5 0 2 1 10 12.4 +12
+Thomas Bryant 3:04 0 0 0 0 0 0 0 0 0 0 0 0 0 2 0 -0.8 -4
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 240 44 85 .518 9 27 .333 19 22 .864 7 29 36 24 13 11 14 24 116
+Indiana Pacers (Q1)
+Indiana Pacers (Q1) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 10:41 2 3 .667 1 1 1.000 0 0 0 1 1 4 1 1 2 0 5 6.5 -6
+Andrew Nembhard 10:57 0 1 .000 0 1 .000 1 2 .500 0 0 0 1 0 0 3 1 1 -2.8 -8
+Pascal Siakam 7:17 3 4 .750 0 0 1 2 .500 0 2 2 0 0 0 0 1 7 5.2 -9
+Myles Turner 9:08 1 5 .200 1 2 .500 0 0 0 1 1 0 0 1 0 1 3 0.5 -8
+Aaron Nesmith 5:28 0 0 0 0 0 0 0 1 1 0 0 0 0 1 0 -0.1 -9
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 7:21 3 5 .600 0 2 .000 0 0 0 2 2 0 0 0 0 1 6 3.9 +2
+Bennedict Mathurin
+Ben Sheppard 7:35 1 2 .500 0 1 .000 0 0 0 1 1 0 2 0 0 1 2 2.9 +1
+T.J. McConnell 1:19 0 0 0 0 0 0 0 0 0 0 0 0 1 0 0 -1.0 -2
+Thomas Bryant 0:14 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -1
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 60 10 20 .500 2 7 .286 2 4 .500 0 8 8 5 3 2 6 7 24
+Indiana Pacers (Q2)
+Indiana Pacers (Q2) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 7:27 3 5 .600 1 2 .500 0 0 0 2 2 3 0 0 0 1 7 7.0 +1
+Andrew Nembhard 3:22 1 1 1.000 1 1 1.000 0 0 0 0 0 0 0 0 0 2 3 1.9 +4
+Pascal Siakam 7:53 2 4 .500 0 1 .000 2 2 1.000 0 2 2 2 0 1 0 2 6 5.9 +10
+Myles Turner 5:22 0 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0.7 -1
+Aaron Nesmith 4:57 1 1 1.000 0 0 0 0 0 0 0 0 0 0 0 2 2 0.9 +11
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 7:19 0 0 0 0 0 0 0 1 1 1 0 1 0 0 0 1.7 +11
+Bennedict Mathurin 10:05 5 6 .833 1 1 1.000 3 3 1.000 1 1 2 0 0 1 1 0 14 12.5 +10
+Ben Sheppard 5:36 1 3 .333 0 1 .000 0 0 0 0 0 0 0 0 0 0 2 0.3 -1
+T.J. McConnell 7:59 1 3 .333 0 0 4 4 1.000 1 0 1 4 3 0 0 0 6 10.8 +15
+Thomas Bryant
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 60 14 23 .609 3 6 .500 9 9 1.000 2 6 8 10 3 4 1 7 40
+Indiana Pacers (H1)
+Indiana Pacers (H1) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 18:08 5 8 .625 2 3 .667 0 0 0 3 3 7 1 1 2 1 12 13.5 -5
+Andrew Nembhard 14:19 1 2 .500 1 2 .500 1 2 .500 0 0 0 1 0 0 3 3 4 -0.9 -4
+Pascal Siakam 15:10 5 8 .625 0 1 .000 3 4 .750 0 4 4 2 0 1 0 3 13 11.1 +1
+Myles Turner 14:30 1 5 .200 1 2 .500 0 0 0 1 1 0 0 2 0 1 3 1.2 -9
+Aaron Nesmith 10:25 1 1 1.000 0 0 0 0 0 1 1 0 0 0 0 3 2 0.8 +2
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 14:40 3 5 .600 0 2 .000 0 0 0 3 3 1 0 1 0 1 6 5.6 +13
+Bennedict Mathurin 10:05 5 6 .833 1 1 1.000 3 3 1.000 1 1 2 0 0 1 1 0 14 12.5 +10
+Ben Sheppard 13:11 2 5 .400 0 2 .000 0 0 0 1 1 0 2 0 0 1 4 3.2 0
+T.J. McConnell 9:18 1 3 .333 0 0 4 4 1.000 1 0 1 4 3 0 1 0 6 9.8 +13
+Thomas Bryant 0:14 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -1
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 120 24 43 .558 5 13 .385 11 13 .846 2 14 16 15 6 6 7 14 64
+Indiana Pacers (Q3)
+Indiana Pacers (Q3) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 11:08 3 5 .600 1 3 .333 0 0 0 2 2 1 1 0 1 0 7 6.0 -3
+Andrew Nembhard 9:10 0 0 0 0 0 0 0 2 2 0 0 0 0 0 0 0.6 -4
+Pascal Siakam 8:18 1 3 .333 0 1 .000 2 2 1.000 0 2 2 2 1 0 0 0 4 5.3 0
+Myles Turner 9:10 1 5 .200 0 2 .000 2 2 1.000 0 0 0 0 1 0 0 0 4 1.9 -6
+Aaron Nesmith 5:36 1 2 .500 0 0 0 0 1 0 1 0 0 0 0 0 2 1.7 -4
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 3:42 0 2 .000 0 1 .000 0 0 0 1 1 0 0 0 1 0 0 -2.1 -9
+Bennedict Mathurin 6:24 1 2 .500 0 1 .000 1 2 .500 0 1 1 1 0 0 0 0 3 2.6 -5
+Ben Sheppard 2:50 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0.7 -5
+T.J. McConnell 0:52 0 2 .000 0 1 .000 0 0 0 0 0 0 0 0 0 1 0 -1.8 -6
+Thomas Bryant 2:50 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -3
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 60 7 21 .333 1 9 .111 5 6 .833 2 8 10 4 3 0 2 2 20
+Indiana Pacers (Q4)
+Indiana Pacers (Q4) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 7:04 1 4 .250 1 2 .500 0 0 1 3 4 3 0 0 1 0 3 3.3 +9
+Andrew Nembhard 9:56 2 3 .667 0 0 0 0 1 1 2 0 0 0 0 2 4 2.9 +11
+Pascal Siakam 8:30 2 3 .667 0 0 0 0 0 0 0 0 1 0 0 0 4 3.7 +7
+Myles Turner 6:04 1 1 1.000 0 0 0 0 0 1 1 1 0 3 2 1 2 2.4 +7
+Aaron Nesmith 6:05 1 2 .500 1 2 .500 0 0 0 0 0 0 1 1 0 3 3 2.5 +3
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 9:26 1 1 1.000 0 0 0 0 1 1 2 0 0 1 0 2 2 2.6 +14
+Bennedict Mathurin 5:55 3 4 .750 1 1 1.000 3 3 1.000 0 1 1 0 0 0 0 0 10 8.7 +11
+Ben Sheppard 2:04 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0 +3
+T.J. McConnell 4:56 2 3 .667 0 0 0 0 0 0 0 1 2 0 1 0 4 4.4 +5
+Thomas Bryant
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 60 13 21 .619 3 5 .600 3 3 1.000 3 7 10 5 4 5 4 8 32
+Indiana Pacers (H2)
+Indiana Pacers (H2) Table
+Basic Box Score Stats
+Starters
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Tyrese Haliburton 18:12 4 9 .444 2 5 .400 0 0 1 5 6 4 1 0 2 0 10 9.3 +6
+Andrew Nembhard 19:06 2 3 .667 0 0 0 0 1 3 4 0 0 0 0 2 4 3.5 +7
+Pascal Siakam 16:48 3 6 .500 0 1 .000 2 2 1.000 0 2 2 2 2 0 0 0 8 9.0 +7
+Myles Turner 15:14 2 6 .333 0 2 .000 2 2 1.000 0 1 1 1 1 3 2 1 6 4.3 +1
+Aaron Nesmith 11:41 2 4 .500 1 2 .500 0 0 1 0 1 0 1 1 0 3 5 4.2 -1
+Reserves
+MP
+FG
+FGA
+FG%
+3P
+3PA
+3P%
+FT
+FTA
+FT%
+ORB
+DRB
+TRB
+AST
+STL
+BLK
+TOV
+PF
+PTS
+GmSc
++/-
+Obi Toppin 13:08 1 3 .333 0 1 .000 0 0 1 2 3 0 0 1 1 2 2 0.5 +5
+Bennedict Mathurin 12:19 4 6 .667 1 2 .500 4 5 .800 0 2 2 1 0 0 0 0 13 11.3 +6
+Ben Sheppard 4:54 0 0 0 0 0 0 1 0 1 0 0 0 0 0 0 0.7 -2
+T.J. McConnell 5:48 2 5 .400 0 1 .000 0 0 0 0 0 1 2 0 1 1 4 2.6 -1
+Thomas Bryant 2:50 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0 -0.4 -3
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 120 20 42 .476 4 14 .286 8 9 .889 5 15 20 9 7 5 6 10 52
+Share & Export Modify, Export & Share Table
+Get as Excel Workbook
+Get table as CSV (for Excel)
+Get Link to Table
+About Sharing Tools
+Video: SR Sharing Tools & How-to
+Video: Stats Table Tips & Tricks
+Data Usage Terms
+Glossary
+Table
+Advanced Box Score Stats
+Starters
+MP
+TS%
+eFG%
+3PAr
+FTr
+ORB%
+DRB%
+TRB%
+AST%
+STL%
+BLK%
+TOV%
+USG%
+ORtg
+DRtg
+BPM
+Tyrese Haliburton 36:20 .647 .647 .471 .000 3.3 27.8 15.2 45.3 2.6 2.3 19.0 25.5 120 106 10.5
+Andrew Nembhard 33:25 .680 .700 .400 .400 3.6 11.3 7.4 3.6 0.0 0.0 33.8 11.7 92 117 -8.3
+Pascal Siakam 31:58 .631 .571 .143 .429 0.0 23.7 11.6 18.8 3.0 2.6 0.0 23.0 137 106 8.8
+Myles Turner 29:44 .379 .318 .364 .182 0.0 8.5 4.1 4.1 1.6 14.2 14.4 20.6 70 104 -4.3
+Aaron Nesmith 22:06 .700 .700 .400 .000 5.4 5.7 5.6 0.0 2.2 3.8 0.0 10.0 143 110 -0.8
+Reserves
+MP
+TS%
+eFG%
+3PAr
+FTr
+ORB%
+DRB%
+TRB%
+AST%
+STL%
+BLK%
+TOV%
+USG%
+ORtg
+DRtg
+BPM
+Obi Toppin 27:48 .500 .500 .375 .000 4.3 22.7 13.3 4.7 0.0 6.1 11.1 14.3 97 110 -3.7
+Bennedict Mathurin 22:24 .870 .833 .250 .667 5.4 16.9 11.0 8.7 0.0 3.8 6.1 32.6 162 113 19.5
+Ben Sheppard 18:05 .400 .400 .400 .000 6.6 7.0 6.8 0.0 5.3 0.0 0.0 12.2 93 106 -1.2
+T.J. McConnell 15:06 .512 .375 .125 .500 7.9 0.0 4.1 46.1 15.9 0.0 17.0 34.4 109 84 19.3
+Thomas Bryant 3:04 0.0 0.0 0.0 0.0 0.0 0.0 0.0 0 118 -17.3
+Tony Bradley Did Not Play
+Johnny Furphy Did Not Play
+Isaiah Jackson Did Not Dress
+James Johnson Did Not Play
+Jarace Walker Did Not Dress
+Team Totals 240 .613 .571 .318 .259 17.5 76.3 46.2 54.5 13.0 19.3 12.9 100.0 116.3 107.3
+Inactive: OKC Nikola Topić IND None
+Officials: Tony Brothers , James Capers Jr. , Tyler Ford , Courtney Kirkland
+Attendance: 17,274
+Time of Game: 2:36
 Team and League Schedules
-Jun 5, 2025 NBA Scores & Boxes
-Indiana Pacers Schedule
+Jun 11, 2025 NBA Scores & Boxes
 Oklahoma City Thunder Schedule
+Indiana Pacers Schedule
 2024-25 NBA Schedule & Results
 Welcome · Your Account
 Logout
 Ad-Free Login
 Create Account
-You are here: BBR Home Page > Box Scores > 2025 NBA Finals Game 1: Indiana Pacers at Oklahoma City Thunder Box Score, June 5, 2025
+You are here: BBR Home Page > Box Scores > 2025 NBA Finals Game 3: Oklahoma City Thunder at Indiana Pacers Box Score, June 11, 2025
 Full Site Menu
 Return to Top
 Players
