@@ -26,6 +26,8 @@ import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
 import type { DateFormat, TimeFormat, User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
+import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
+import { EmailChangedBy } from '../email';
 import {
   cancelOpenPasswordResetTokens,
   countUserDeleteDependencies,
@@ -69,6 +71,7 @@ export class UserService {
     private readonly users: UserRepository,
     private readonly prisma: PrismaClient,
     private readonly passwordChanged: PasswordChangedNotifier,
+    private readonly emailChanged: Pick<EmailChangeUndoService, 'tellOldAddress'>,
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
@@ -121,6 +124,15 @@ export class UserService {
       action: 'userService.updateProfile.success',
       data: { userId: updated.id, actorUserId: actor.userId },
     }, 'Updated user profile');
+    if (updated.email !== user.email) {
+      // After the write, so a send failure can never undo the change.
+      await this.emailChanged.tellOldAddress({
+        user: updated,
+        oldEmail: user.email,
+        changedBy: actor.userId === user.id ? EmailChangedBy.ACCOUNT_OWNER : EmailChangedBy.ROOT_ADMIN,
+        changedAt: new Date(),
+      });
+    }
     return updated;
   }
 

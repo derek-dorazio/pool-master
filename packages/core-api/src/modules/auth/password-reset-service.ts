@@ -290,7 +290,8 @@ function buildResetUrl(appBaseUrl: string, token: string): string {
   return `${appBaseUrl}/reset-password#token=${token}`;
 }
 
-function readPerMinuteLimit(name: string, fallback: number): number {
+/** A per-minute limit from the environment, or `fallback` when it isn't set. */
+export function readPerMinuteLimit(name: string, fallback: number): number {
   const raw = process.env[name];
   if (raw === undefined || raw.trim() === '') return fallback;
   const parsed = Number.parseInt(raw, 10);

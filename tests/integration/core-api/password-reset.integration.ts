@@ -24,6 +24,7 @@ import {
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
+import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import {
   PrismaEmailMessageRepository,
   PrismaEmailOptOutRepository,
@@ -64,7 +65,13 @@ const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
 
 function buildUserService(mail: MailDeliveryProvider): UserService {
   const users = new PrismaUserRepository(getPrisma());
-  return new UserService(users, getPrisma(), new PasswordChangedNotifier(users, emailServiceOver(mail), APP_BASE_URL));
+  const email = emailServiceOver(mail);
+  return new UserService(
+    users,
+    getPrisma(),
+    new PasswordChangedNotifier(users, email, APP_BASE_URL),
+    new EmailChangeUndoService({ prisma: getPrisma(), email, appBaseUrl: APP_BASE_URL }),
+  );
 }
 
 /** The token from the link in a reset email's plain text. */

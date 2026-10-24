@@ -132,7 +132,7 @@ keep the letters as a record of where each email started.
 | A2 | Your password was changed | The password changes by reset link, by the user on their profile, or by a root admin reset | The account's email | At once | When, how (reset, profile, admin), "wasn't you? reset it now" link | | P1 (password recovery design) | Essential |
 | A3 | Welcome to Poolmaster | A new account is registered **without** an invitation (a commissioner signing up to start a league) | The new account | At once | Start a league button, how a league works in three lines | | P3 | Essential |
 | A4 | Confirm your email address | Sign-up, if email verification is adopted (Q3.1) | The new account | At once | Confirm link | | P3 | Essential |
-| A5 | Your email address was changed | The account's email is changed | The **old** address | At once | New address, "wasn't you?" link | | P2 | Essential |
+| A5 | Your email address was changed | The account's email is changed | The **old** address | At once | New address, "wasn't you?" link that puts the old address back and signs everyone out | ✅ `EMAIL_CHANGED` (#903): also when a root admin changes it; the link works 7 days and cancels links from later changes | P2 | Essential |
 
 **Q3.1 Verify email at sign-up?** Most people arrive through an invite sent to their address,
 but they can register under a different one.

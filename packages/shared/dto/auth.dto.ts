@@ -64,6 +64,12 @@ export type LogoutRequest = z.infer<typeof LogoutRequestSchema>;
  */
 export const PASSWORD_RESET_LINK_MINUTES = 10;
 
+/**
+ * How long the "put my address back" link works, in the email an account's old address gets when
+ * its email changes (#903 A5). Long enough to notice the email after a few days away.
+ */
+export const EMAIL_CHANGE_UNDO_LINK_DAYS = 7;
+
 export const PasswordResetRequestSchema = z.object({
   identifier: z
     .string()
@@ -85,6 +91,15 @@ export const PasswordResetConfirmRequestSchema = z.object({
   confirmNewPassword: NewPasswordInputSchema.describe('Repeat of the new password to guard against typing mistakes.'),
 }).describe('Sets a new password with a reset link. Every session of the account is signed out.');
 export type PasswordResetConfirmRequest = z.infer<typeof PasswordResetConfirmRequestSchema>;
+
+export const EmailChangeUndoRequestSchema = z.object({
+  token: z
+    .string()
+    .min(1)
+    .max(256)
+    .describe('The one-time token from the link in the email sent to the old address. It works once and for 7 days.'),
+}).describe('Puts back the email address an account had before a change. Every session of the account is signed out.');
+export type EmailChangeUndoRequest = z.infer<typeof EmailChangeUndoRequestSchema>;
 
 // --- Response Sub-schemas ---
 
@@ -128,5 +143,6 @@ registerSchema('RegisterRequest', RegisterRequestSchema);
 registerSchema('LoginRequest', LoginRequestSchema);
 registerSchema('PasswordResetRequest', PasswordResetRequestSchema);
 registerSchema('PasswordResetConfirmRequest', PasswordResetConfirmRequestSchema);
+registerSchema('EmailChangeUndoRequest', EmailChangeUndoRequestSchema);
 registerSchema('AuthResponse', AuthResponseSchema);
 registerSchema('TokenRefreshResponse', TokenRefreshResponseSchema);

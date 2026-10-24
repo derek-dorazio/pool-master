@@ -793,6 +793,22 @@
         "additionalProperties": false,
         "description": "Sets a new password with a reset link. Every session of the account is signed out."
       },
+      "EmailChangeUndoRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "The one-time token from the link in the email sent to the old address. It works once and for 7 days."
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false,
+        "description": "Puts back the email address an account had before a change. Every session of the account is signed out."
+      },
       "AuthResponse": {
         "type": "object",
         "properties": {
@@ -28265,6 +28281,7 @@
           "EVENT_STILL_DRAFT",
           "PASSWORD_RESET",
           "PASSWORD_CHANGED",
+          "EMAIL_CHANGED",
           "EMAIL_TEST",
           "YEAR_IN_REVIEW",
           "EVENT_WEEKLY_DIGEST",
@@ -53314,6 +53331,68 @@
             }
           },
           "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email-change/undo": {
+      "post": {
+        "operationId": "undoEmailChange",
+        "summary": "Put back an account's old email address",
+        "tags": [
+          "Auth"
+        ],
+        "description": "Public; the token from the link in the \"your email address was changed\" email, sent to the old address, is the whole authority. Puts the old address back, cancels the links from any later email change and the account's open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailChangeUndoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Minimal success response envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

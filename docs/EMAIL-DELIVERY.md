@@ -355,6 +355,17 @@ Password changed emails (#848) are queued after a reset by link and after a pers
 own password, not after a root admin's reset, once the password write commits. Like the reset,
 they have no switch in EMAIL_CONFIG. A failure to queue one is logged and never undoes the change.
 
+Email changed emails (`EMAIL_CHANGED`, #903 A5) go to the account's **old** address whenever its
+email changes, by its owner or by a root admin, once the write commits. They say the new address
+and when, and carry a "Put my address back" link (`/undo-email-change#token=...`, live 7 days,
+stored only as its SHA-256 in `email_change_undo_tokens`). A password reset can't be that link,
+as a reset goes to the account's new address. The link opens a page whose button calls
+`POST /api/v1/auth/email-change/undo`, which puts the old address back, cancels the links from
+any later change and the open reset links, and signs the account out everywhere; the person then
+resets their password. Like the reset, the email has no switch in EMAIL_CONFIG, the outbox keeps
+no copy of it once sent, and it is never sent after its link is dead. A failure to queue one is
+logged and never undoes the change.
+
 "Contest is live" emails (`CONTEST_STARTED_SUMMARY`) are queued when a sport event moves to
 `IN_PROGRESS` (a root admin's transition, or the lifecycle scheduler) and first moves its
 contests from `OPEN` to `ACTIVE`. They go to every active league member, once each: "Good luck,

@@ -11,6 +11,7 @@ import {
   PasswordResetError,
   PasswordResetService,
 } from '../../../packages/core-api/src/modules/auth/password-reset-service';
+import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
 import {
@@ -239,7 +240,7 @@ describe('password reset request handler', () => {
         return Promise.resolve();
       }),
     });
-    const handlers = createAuthHandlers(stubInstance(AuthService, {}), passwordResets);
+    const handlers = createAuthHandlers(stubInstance(AuthService, {}), passwordResets, stubInstance(EmailChangeUndoService, {}));
     const reply = createReply(order);
 
     await handlers.requestPasswordReset(createRequest() as never, reply);
@@ -256,7 +257,7 @@ describe('password reset request handler', () => {
       }),
       requestReset: jest.fn(),
     });
-    const handlers = createAuthHandlers(stubInstance(AuthService, {}), passwordResets);
+    const handlers = createAuthHandlers(stubInstance(AuthService, {}), passwordResets, stubInstance(EmailChangeUndoService, {}));
     const reply = createReply([]);
 
     await handlers.requestPasswordReset(createRequest() as never, reply);

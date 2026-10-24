@@ -7,7 +7,8 @@ import { sendError } from '../../core/error-handler';
 import type { AuthService } from './auth-service';
 import { AuthError } from './auth-service';
 import { PasswordResetError, type PasswordResetService } from './password-reset-service';
-import type { PasswordResetConfirmRequest, PasswordResetRequest } from '@poolmaster/shared/dto';
+import { EmailChangeUndoError, type EmailChangeUndoService } from './email-change-undo-service';
+import type { EmailChangeUndoRequest, PasswordResetConfirmRequest, PasswordResetRequest } from '@poolmaster/shared/dto';
 import {
   createClearedSessionCookieHeaders,
   createSessionCookieHeaders,
@@ -25,6 +26,7 @@ import {
 export function createAuthHandlers(
   authService: AuthService,
   passwordResetService: PasswordResetService,
+  emailChangeUndoService: EmailChangeUndoService,
 ) {
   return {
     register: handleRegister,
@@ -33,6 +35,7 @@ export function createAuthHandlers(
     logout: handleLogout,
     requestPasswordReset: handleRequestPasswordReset,
     confirmPasswordReset: handleConfirmPasswordReset,
+    undoEmailChange: handleUndoEmailChange,
   };
 
   async function handleRegister(
@@ -281,6 +284,28 @@ export function createAuthHandlers(
           errorCode: err.code,
           statusCode: err.statusCode,
         }, 'Password reset confirm rejected');
+        return sendError(reply, err.statusCode, err.code, err.message);
+      }
+      throw err;
+    }
+  }
+
+  async function handleUndoEmailChange(
+    request: FastifyRequest<{ Body: EmailChangeUndoRequest }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = request.contextLogger ?? request.log;
+    try {
+      emailChangeUndoService.assertUndoAllowed(request.ip);
+      await emailChangeUndoService.undo(request.body.token);
+      return reply.send({ success: true });
+    } catch (err) {
+      if (err instanceof EmailChangeUndoError) {
+        logger.warn({
+          action: 'auth.emailChangeUndo.rejected',
+          errorCode: err.code,
+          statusCode: err.statusCode,
+        }, 'Email change undo rejected');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       throw err;

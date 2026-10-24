@@ -177,6 +177,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/email-change/undo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Put back an account's old email address
+         * @description Public; the token from the link in the "your email address was changed" email, sent to the old address, is the whole authority. Puts the old address back, cancels the links from any later email change and the account's open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.
+         */
+        post: operations["undoEmailChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/": {
         parameters: {
             query?: never;
@@ -3632,6 +3652,11 @@ export interface components {
             newPassword: string;
             /** @description Repeat of the new password to guard against typing mistakes. */
             confirmNewPassword: string;
+        };
+        /** @description Puts back the email address an account had before a change. Every session of the account is signed out. */
+        EmailChangeUndoRequest: {
+            /** @description The one-time token from the link in the email sent to the old address. It works once and for 7 days. */
+            token: string;
         };
         /** @description Successful authentication response returned after registration or login. */
         AuthResponse: {
@@ -12367,7 +12392,7 @@ export interface components {
          * @description A system email template.
          * @enum {string}
          */
-        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED";
+        EmailTemplateKey: "LEAGUE_MEMBER_INVITE" | "LEAGUE_JOIN_SUCCESS" | "SQUAD_OWNER_INVITE" | "SQUAD_OWNER_ADDED" | "CONTEST_ENTRY_COMPLETED" | "CONTEST_STARTED_SUMMARY" | "CONTEST_ENTRY_REMINDER" | "CONTEST_OPENED" | "CONTEST_STANDINGS" | "CONTEST_RESULTS" | "CONTEST_EVENT_CHANGED" | "EVENT_COMING_UP" | "EVENT_READY_FOR_CONTESTS" | "CONTEST_NOT_OPEN" | "EVENT_STILL_DRAFT" | "PASSWORD_RESET" | "PASSWORD_CHANGED" | "EMAIL_CHANGED" | "EMAIL_TEST" | "YEAR_IN_REVIEW" | "EVENT_WEEKLY_DIGEST" | "LEAGUE_MEMBER_JOINED";
         /** @description Whether and how system email is sent. */
         EmailConfig: {
             /** @description Whether any system email is sent. Off: every email is skipped and logged. */
@@ -19847,6 +19872,57 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    undoEmailChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailChangeUndoRequest"];
+            };
+        };
+        responses: {
+            /** @description Minimal success response envelope. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
