@@ -23690,15 +23690,6 @@ export type ListLeaguePlansData = {
     url: '/api/v1/plans/';
 };
 
-export type ListLeaguePlansErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-};
-
-export type ListLeaguePlansError = ListLeaguePlansErrors[keyof ListLeaguePlansErrors];
-
 export type ListLeaguePlansResponses = {
     /**
      * What each league plan allows.

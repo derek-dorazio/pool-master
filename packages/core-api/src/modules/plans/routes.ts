@@ -1,7 +1,7 @@
 /**
- * Plans module (#945) — what each league plan allows, under /api/v1/plans, for the plan
- * comparison commissioners choose from. A league's own plan is changed on its league route
- * (`updateLeaguePlan`); PLAN_CONFIG itself is a root admin settings group.
+ * Plans module (#945) — what each league plan allows, under /api/v1/plans, for the public Plans
+ * page (#971) and the plan comparison commissioners choose from. A league's own plan is changed
+ * on its league route (`updateLeaguePlan`); PLAN_CONFIG itself is a root admin settings group.
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
@@ -26,11 +26,10 @@ export function plansModule(fastify: FastifyInstance, opts: PlanModuleOptions): 
       tags: ['Plans'],
       summary: 'List what each league plan allows',
       description:
-        'Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the comparison a commissioner picks a plan from. Any signed-in user may read it; it holds nothing about a league.',
+        'Every league plan, lowest first (FREE, PRO, PREMIUM, PLATINUM), with its caps and features under the current plan settings, for the public Plans page and the comparison a commissioner picks a plan from. Public: no session is needed, and it holds nothing about any league or user.',
       operationId: 'listLeaguePlans',
       response: {
         200: schemaRef('LeaguePlanListResponse'),
-        401: schemaRef('ErrorEnvelope'),
       },
     },
     handler: async (request: FastifyRequest, _reply: FastifyReply): Promise<LeaguePlanListResponse> => {

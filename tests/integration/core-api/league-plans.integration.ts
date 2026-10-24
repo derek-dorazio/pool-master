@@ -166,9 +166,10 @@ describe('League plans', () => {
     expect(plans[3]?.caps).toEqual({ ENTRIES_PER_CONTEST: null, SPORTS_LEAGUES_PER_YEAR: null });
   });
 
-  it('refuses the plan list without a signed-in user with 401', async () => {
+  it('lets a visitor without a session read the plan list, for the public Plans page', async () => {
     const res = await getApp().inject({ method: 'GET', url: API_ROUTES.plans.list });
 
-    expect(res.statusCode).toBe(401);
+    expect(res.statusCode).toBe(200);
+    expect(LeaguePlanListResponseSchema.parse(res.json()).plans).toHaveLength(4);
   });
 });
