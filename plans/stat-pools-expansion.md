@@ -123,12 +123,14 @@ Answered by Derek on 2026-10-24.
 
 ---
 
-## 6. Names (open)
+## 6. Names
 
-Each sport has one composite, so college football and college basketball reuse their sport's
+**College names. Decided (Derek 2026-10-24):** each sport has one composite, so college football and college basketball reuse their sport's
 composite and formula. The CFP scores **Redzone** and the Final Four scores **Triple Threat**,
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
-Q7 of the stat pools plan did: **College Football Playoff** and **Final Four**.
+Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
+
+Open: the soccer composite's name (#994).
 
 Soccer composite name options:
 
