@@ -84,7 +84,7 @@ function LeaguePlanForm({ league }: { league: LeagueDto }) {
       title="Choose a plan"
     >
       <p className="text-sm text-muted-foreground" data-testid="edit-plan-renews">
-        You&apos;ve been gifted Premium for a preview period. Your league&apos;s Premium preview period ends on {formatDateDisplay(league.planRenewsAt)}.
+        Premium gifted for your preview period, until {formatDateDisplay(league.planRenewsAt)}.
       </p>
 
       <fieldset className="space-y-2">

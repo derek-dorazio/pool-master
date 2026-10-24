@@ -106,9 +106,15 @@ export class LeaguePlanService {
   }
 }
 
-/** `date` plus whole calendar months, in UTC. */
+/**
+ * `date` plus whole calendar months, in UTC, held at the month's last day when the day doesn't
+ * exist there (Aug 31 + 6 is Feb 28), as Postgres adds the six months a new league is gifted.
+ */
 function addMonths(date: Date, months: number): Date {
   const moved = new Date(date);
+  moved.setUTCDate(1);
   moved.setUTCMonth(moved.getUTCMonth() + months);
+  const lastDay = new Date(Date.UTC(moved.getUTCFullYear(), moved.getUTCMonth() + 1, 0)).getUTCDate();
+  moved.setUTCDate(Math.min(date.getUTCDate(), lastDay));
   return moved;
 }

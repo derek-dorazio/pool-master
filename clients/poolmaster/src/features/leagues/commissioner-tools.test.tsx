@@ -730,7 +730,7 @@ describe('League plan', () => {
     expect(screen.getByTestId('league-settings-plan-renews')).toHaveTextContent(new Date('2027-04-24T12:00:00.000Z').toLocaleDateString());
   });
 
-  it('shows a commissioner Platinum as coming soon, not selectable, and says when the Premium preview period ends', async () => {
+  it('shows a commissioner Platinum as coming soon, not selectable, and says until when Premium is gifted for its preview period', async () => {
     primeMocks({ league: { planEntitlements: FREE_PLAN, planRenewsAt: '2027-04-24T12:00:00.000Z' } });
     primePlanList();
 
@@ -741,7 +741,7 @@ describe('League plan', () => {
     expect(screen.getByTestId('edit-plan-option-PREMIUM')).toBeEnabled();
     expect(screen.queryByTestId('edit-plan-coming-soon-PREMIUM')).not.toBeInTheDocument();
     expect(screen.getByTestId('edit-plan-renews'))
-      .toHaveTextContent(`You've been gifted Premium for a preview period. Your league's Premium preview period ends on ${new Date('2027-04-24T12:00:00.000Z').toLocaleDateString()}.`);
+      .toHaveTextContent(`Premium gifted for your preview period, until ${new Date('2027-04-24T12:00:00.000Z').toLocaleDateString()}.`);
   });
 
   it('lets a root admin pick Platinum, which commissioners see as coming soon', async () => {

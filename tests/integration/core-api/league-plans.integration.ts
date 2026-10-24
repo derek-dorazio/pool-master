@@ -271,6 +271,60 @@ describe('League plans', () => {
     expect(await getPrisma().leaguePlanRenewalChange.count({ where: { leagueId: ended.id } })).toBe(0);
   });
 
+  it('lets an extension that starts while another write holds the league wait for it, then log the move from the date that write left', async () => {
+    const { league } = await createLeague();
+    const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const movedMeanwhile = new Date(Date.now() + 200 * 24 * 60 * 60_000);
+    const later = new Date(Date.now() + 400 * 24 * 60 * 60_000);
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    let moved: () => void = () => undefined;
+    const movedSignal = new Promise<void>((resolve) => { moved = resolve; });
+
+    const holder = getPrisma().$transaction(async (tx) => {
+      await tx.league.update({ where: { id: league.id }, data: { planRenewsAt: movedMeanwhile } });
+      moved();
+      await held;
+    });
+    await movedSignal;
+    const extendOne = repo.extendPlanRenewal(league.id, { renewsAt: later, changedById: rootAdmin.user.id });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    release();
+    await holder;
+
+    await expect(extendOne).resolves.toMatchObject({ planRenewsAt: later });
+    expect(await getPrisma().leaguePlanRenewalChange.findMany({ where: { leagueId: league.id } }))
+      .toEqual([expect.objectContaining({ fromRenewsAt: movedMeanwhile, toRenewsAt: later })]);
+  });
+
+  it('lets an extend-all that starts while another write holds a running league wait for it, then log that league\'s move from the date that write left', async () => {
+    const { league } = await createLeague();
+    const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const movedMeanwhile = new Date(Date.now() + 200 * 24 * 60 * 60_000);
+    const later = new Date(Date.now() + 400 * 24 * 60 * 60_000);
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    let moved: () => void = () => undefined;
+    const movedSignal = new Promise<void>((resolve) => { moved = resolve; });
+
+    const holder = getPrisma().$transaction(async (tx) => {
+      await tx.league.update({ where: { id: league.id }, data: { planRenewsAt: movedMeanwhile } });
+      moved();
+      await held;
+    });
+    await movedSignal;
+    const extendAll = repo.extendRunningPlanRenewals({ renewsAt: later, now: new Date(), changedById: rootAdmin.user.id });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    release();
+    await holder;
+
+    await expect(extendAll).resolves.toBeGreaterThanOrEqual(1);
+    expect(await getPrisma().leaguePlanRenewalChange.findMany({ where: { leagueId: league.id } }))
+      .toEqual([expect.objectContaining({ fromRenewsAt: movedMeanwhile, toRenewsAt: later })]);
+  });
+
   it('refuses a commissioner extending every gift with 403', async () => {
     const { commissioner } = await createLeague();
 

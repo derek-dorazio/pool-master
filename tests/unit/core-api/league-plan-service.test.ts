@@ -151,6 +151,18 @@ describe('LeaguePlanService', () => {
     expect(world.planRenewalChanges).toEqual([]);
   });
 
+  it('holds an extension at the month\'s last day as Postgres does: Aug 31 plus 6 months is Feb 28, not Mar 3', async () => {
+    const world = inMemoryLeagueWorld();
+    const service = new LeaguePlanService({
+      leagues: world.leagues, planEntitlements: planEntitlements(), now: () => new Date('2026-08-31T15:00:00.000Z'),
+    });
+    const league = world.addLeague({ planRenewsAt: new Date('2026-09-01T00:00:00.000Z') });
+
+    const updated = await service.extendRenewal(league.id, 6, world.addUser().id);
+
+    expect(updated.planRenewsAt).toEqual(new Date('2027-02-28T15:00:00.000Z'));
+  });
+
   it('refuses to extend the gift of a league that does not exist', async () => {
     const { service, rootAdmin } = setup();
 

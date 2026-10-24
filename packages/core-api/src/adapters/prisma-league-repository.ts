@@ -87,9 +87,10 @@ export class PrismaLeagueRepository implements LeagueRepository {
   }
 
   async extendPlanRenewal(leagueId: string, change: { renewsAt: Date; changedById: string }): Promise<League | null> {
-    // Serializable, so a date moved meanwhile fails the extension instead of being logged with a
+    // The league row is locked first, so a concurrent move waits rather than being logged with a
     // stale from-date. (The stored date has microseconds a JS Date lacks, so it can't be matched by value.)
     return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
       const league = await tx.league.findUnique({ where: { id: leagueId } });
       if (!league) {
         return null;
@@ -102,21 +103,25 @@ export class PrismaLeagueRepository implements LeagueRepository {
         data: { leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById },
       });
       return mapToLeague(moved);
-    }, { isolationLevel: 'Serializable' });
+    });
   }
 
   async extendRunningPlanRenewals(change: { renewsAt: Date; now: Date; changedById: string }): Promise<number> {
-    // Serializable, so a league whose date moves meanwhile fails the extension instead of being
-    // logged with a stale from-date.
+    // The running leagues' rows are locked first, in id order, so a concurrent move waits rather
+    // than being logged with a stale from-date; the lock re-checks each row's date once it is free.
     return this.prisma.$transaction(async (tx) => {
-      const running = { gt: change.now, lt: change.renewsAt };
-      const leagues = await tx.league.findMany({
-        where: { planRenewsAt: running },
-        select: { id: true, planRenewsAt: true },
-      });
-      if (leagues.length === 0) {
+      const locked = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id FROM "leagues"
+        WHERE "plan_renews_at" > ${change.now} AND "plan_renews_at" < ${change.renewsAt}
+        ORDER BY id
+        FOR UPDATE`;
+      if (locked.length === 0) {
         return 0;
       }
+      const leagues = await tx.league.findMany({
+        where: { id: { in: locked.map((league) => league.id) } },
+        select: { id: true, planRenewsAt: true },
+      });
       await tx.league.updateMany({
         where: { id: { in: leagues.map((league) => league.id) } },
         data: { planRenewsAt: change.renewsAt },
@@ -130,7 +135,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         })),
       });
       return leagues.length;
-    }, { isolationLevel: 'Serializable' });
+    });
   }
 
   async update(id: string, updates: Partial<League>): Promise<League> {
