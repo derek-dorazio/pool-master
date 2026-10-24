@@ -181,7 +181,7 @@ describe('profile, username and preferences', () => {
     // One check for both columns: login accepts either, so a username matching somebody
     // else's email address is just as unusable as a duplicate username.
     const { users, service } = serviceFor(buildUser(), {
-      findByIdentifier: jest.fn().mockResolvedValue(buildUser({ id: 'someone-else' })),
+      findHolderOtherThan: jest.fn().mockResolvedValue(buildUser({ id: 'someone-else' })),
     });
 
     await expect(service.updateUsername(self, 'user-1', 'taken@example.com'))
@@ -194,19 +194,17 @@ describe('profile, username and preferences', () => {
     expect(users.update).not.toHaveBeenCalled();
   });
 
-  it('allows an identifier the subject already holds themselves', async () => {
-    // "Not me" is the caller's business, not the query's — `findByIdentifier` has no idea who
-    // is asking. Without the id comparison, re-saving an unchanged profile would report your
-    // own email as taken.
-    const { users, service } = serviceFor(buildUser(), {
-      findByIdentifier: jest.fn().mockResolvedValue(buildUser()),
-    });
+  it('asks only whether ANOTHER account holds the identifier, so re-saving your own email is allowed', async () => {
+    // "Not me" is part of the question: a lookup that may return the subject's own row could
+    // hide another account holding the same string in the other column (#1012).
+    const { users, service } = serviceFor(buildUser());
 
     await expect(service.updateProfile(self, 'user-1', {
       firstName: 'Derek',
       lastName: 'Dorazio',
       email: 'user@example.com',
     })).resolves.toMatchObject({ id: 'user-1' });
+    expect(users.findHolderOtherThan).toHaveBeenCalledWith('user@example.com', 'user-1');
     expect(users.update).toHaveBeenCalled();
   });
 

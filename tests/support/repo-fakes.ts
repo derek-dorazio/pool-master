@@ -114,6 +114,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     findAll: many(),
     findByLeague: many(),
     findByIdentifier: one(),
+    findHolderOtherThan: one(),
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
     create: echoCreate('user'),
     update: echoUpdate(),

@@ -46,7 +46,7 @@ export interface UserSearchFilters {
  * `passwordHash` is absent by design — it is a secret, set through `create`'s separate
  * `credentials` parameter and rotated by the password operations, never by a general update.
  * `email` and `username` are here because they are ordinary profile fields; uniqueness is
- * the caller's check, via `findByIdentifier`.
+ * the caller's check, via `findHolderOtherThan`.
  */
 export interface UserUpdate {
   email?: string;
@@ -98,15 +98,20 @@ export interface UserRepository {
   /**
    * Resolves a user by an identifier that may be either their email or their username.
    *
-   * Login accepts either, and both are `@unique`, so "is this string taken" is one question
-   * rather than two. Written out by hand in FOUR places before #202: `auth-service`'s login,
-   * its registration collision check, and `account/service`'s two near-identical
-   * email- and username-availability checks.
-   *
-   * Callers excluding themselves — an availability check during a rename — compare the
-   * returned id, because "not me" is the caller's business, not the query's.
+   * Login accepts either, so "is this string taken" is one question rather than two. Each
+   * column is `@unique` on its own, so one account's email and another's username can both
+   * match (two renames racing make it); this returns one of them. Written out by hand in FOUR
+   * places before #202: `auth-service`'s login, its registration collision check, and
+   * `account/service`'s two near-identical email- and username-availability checks.
    */
   findByIdentifier(identifier: string): Promise<User | null>;
+
+  /**
+   * A user other than `exceptUserId` holding `identifier` as their email or username: the
+   * availability check for a rename. Not `findByIdentifier` and an id comparison, which can be
+   * handed the subject's own row when another account also matches (#1012).
+   */
+  findHolderOtherThan(identifier: string, exceptUserId: string): Promise<User | null>;
 
   /**
    * How many ACTIVE users hold `isRootAdmin`.

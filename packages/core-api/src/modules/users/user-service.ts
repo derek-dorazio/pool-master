@@ -560,8 +560,8 @@ export class UserService {
     targetUserId: string,
     code: 'ACCOUNT_EMAIL_TAKEN' | 'ACCOUNT_USERNAME_TAKEN',
   ): Promise<void> {
-    const holder = await this.users.findByIdentifier(identifier);
-    if (!holder || holder.id === targetUserId) {
+    const holder = await this.users.findHolderOtherThan(identifier, targetUserId);
+    if (!holder) {
       return;
     }
 
