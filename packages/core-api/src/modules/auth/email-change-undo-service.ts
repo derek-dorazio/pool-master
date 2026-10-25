@@ -21,6 +21,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
+import type { UserRepository } from '@poolmaster/shared/db';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { EmailMessageStatus, EmailTemplateKey, type User } from '@poolmaster/shared/domain';
 import type { EmailChangedBy, EmailService } from '../email';
@@ -58,6 +59,7 @@ export interface EmailChange {
 }
 
 export interface EmailChangeUndoServiceDeps {
+  users: Pick<UserRepository, 'findHolderOtherThan'>;
   prisma: PrismaClient;
   email: Pick<EmailService, 'send'>;
   appBaseUrl: string;
@@ -157,11 +159,7 @@ export class EmailChangeUndoService {
     });
     if (!link) this.rejectDeadLink();
     // Login takes an email or a username, so the address must be neither for any other account.
-    // Not `findByIdentifier`: one account's username and another's email can both match.
-    const holders = await this.deps.prisma.user.count({
-      where: { id: { not: link.userId }, OR: [{ email: link.oldEmail }, { username: link.oldEmail }] },
-    });
-    if (holders > 0) this.rejectTakenAddress(link.userId);
+    if (await this.deps.users.findHolderOtherThan(link.oldEmail, link.userId)) this.rejectTakenAddress(link.userId);
     // Hashed before the transaction, as bcrypt is slow. Not a null hash: a reset treats an account
     // without one as passwordless and sends nothing.
     const unknownPasswordHash = await bcrypt.hash(randomBytes(32).toString('base64url'), BCRYPT_ROUNDS);

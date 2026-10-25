@@ -79,7 +79,7 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
     users,
     prisma,
     new PasswordChangedNotifier(users, opts.email, appBaseUrl, fastify.log),
-    new EmailChangeUndoService({ prisma, email: opts.email, appBaseUrl, logger: fastify.log }),
+    new EmailChangeUndoService({ users, prisma, email: opts.email, appBaseUrl, logger: fastify.log }),
     fastify.log,
   );
   const authService = new AuthService(users, prisma, fastify.log);

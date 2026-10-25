@@ -11,6 +11,7 @@ import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-se
 import { PasswordResetService } from '../../../packages/core-api/src/modules/auth/password-reset-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
 import { asPrismaClient } from '../../support/prisma-double';
+import { fakeUserRepo } from '../../support/repo-fakes';
 import { fakeLogger } from '../../support/fake-logger';
 import { stubInstance } from '../../support/stub-instance';
 import { emailServiceOver } from '../../support/email-service';
@@ -63,6 +64,7 @@ describe('undo link rate limit', () => {
   function undoService() {
     const undo = jest.fn(() => Promise.resolve());
     const service = new EmailChangeUndoService({
+      users: fakeUserRepo(),
       prisma: asPrismaClient({}),
       email: emailServiceOver({ providerName: 'smtp', send: () => Promise.resolve({ provider: 'smtp' }) }),
       appBaseUrl: 'https://app.example.test',
@@ -112,9 +114,10 @@ describe('undo race for the old address', () => {
       user: { update: jest.fn(() => Promise.reject(takenMeanwhile)) },
     };
     const service = new EmailChangeUndoService({
+      // Nobody holds the address when it is checked; another account takes it before the write.
+      users: fakeUserRepo(),
       prisma: asPrismaClient({
         emailChangeUndoToken: { findFirst: jest.fn(() => Promise.resolve({ userId: 'user-1', oldEmail: 'old@example.test' })) },
-        user: { count: jest.fn(() => Promise.resolve(0)) },
         $transaction: jest.fn((run: (client: typeof tx) => Promise<unknown>) => run(tx)),
       }),
       email: emailServiceOver({ providerName: 'smtp', send: () => Promise.resolve({ provider: 'smtp' }) }),
