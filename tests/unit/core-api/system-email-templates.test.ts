@@ -676,6 +676,42 @@ describe('contest expanded', () => {
   });
 });
 
+describe('Premium preview period ending', () => {
+  it('frames the end as the close of a gifted preview period, with the end time in the reader\'s zone, what Free allows, and a See your plan button', () => {
+    const message = renderSystemEmailTemplate('LEAGUE_PLAN_PREVIEW_ENDING', EMAIL_TEMPLATE_FIXTURES.LEAGUE_PLAN_PREVIEW_ENDING, { timeZone: 'America/New_York' });
+
+    expect(message.subject).toBe('Office League\'s Premium preview period ends in 7 days');
+    expect(message.text).toContain('Office League was gifted Premium for its preview period. The preview period ends in 7 days, on Apr 24, 2027, 2:30 PM EDT.');
+    expect(message.text).toContain('After that, Office League moves to the Free plan: up to 20 entries per contest and 5 sports leagues a year.');
+    expect(message.text).toContain('Nothing is deleted: contests keep the entries they have, and Premium features are hidden, not removed.');
+    expect(message.text).toContain('See your plan: http://localhost:5173/league/OFFICE24/admin/plan');
+    expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/plan"');
+    expect(`${message.subject} ${message.text}`.toLowerCase()).not.toContain('expire');
+  });
+
+  it('says the last reminder ends tomorrow, and leaves out a Free limit set to unlimited', () => {
+    const message = renderSystemEmailTemplate('LEAGUE_PLAN_PREVIEW_ENDING', {
+      ...EMAIL_TEMPLATE_FIXTURES.LEAGUE_PLAN_PREVIEW_ENDING,
+      daysLeft: 1,
+      freeSportsLeaguesPerYear: null,
+    }, UTC);
+
+    expect(message.subject).toBe('Office League\'s Premium preview period ends tomorrow');
+    expect(message.text).toContain('The preview period ends tomorrow, on Apr 24, 2027, 6:30 PM UTC.');
+    expect(message.text).toContain('After that, Office League moves to the Free plan: up to 20 entries per contest.');
+  });
+
+  it('escapes the league\'s name in the HTML', () => {
+    const message = renderSystemEmailTemplate('LEAGUE_PLAN_PREVIEW_ENDING', {
+      ...EMAIL_TEMPLATE_FIXTURES.LEAGUE_PLAN_PREVIEW_ENDING,
+      leagueName: 'Pool <i>One</i>',
+    }, UTC);
+
+    expect(message.html).toContain('Pool &lt;i&gt;One&lt;/i&gt; was gifted Premium');
+    expect(message.html).not.toContain('<i>One</i>');
+  });
+});
+
 describe('the email template registry', () => {
   it('gives every template key a category, with invitations, welcomes, the password reset and password changed emails, the contest expanded email and the root admin\'s test email ones a member can\'t turn off', () => {
     expect(Object.keys(EMAIL_TEMPLATES).sort()).toEqual(Object.values(EmailTemplateKey).sort());
@@ -703,6 +739,7 @@ describe('the email template registry', () => {
       YEAR_IN_REVIEW: EmailCategory.RESULTS,
       LEAGUE_MEMBER_JOINED: EmailCategory.COMMISSIONER_UPDATES,
       CONTEST_EXPANDED: EmailCategory.ACCOUNT,
+      LEAGUE_PLAN_PREVIEW_ENDING: EmailCategory.ACCOUNT,
     });
   });
 
@@ -731,6 +768,7 @@ describe('the email template registry', () => {
       YEAR_IN_REVIEW: PlanFeature.EMAIL_YEAR_IN_REVIEW,
       LEAGUE_MEMBER_JOINED: PlanFeature.EMAIL_LEAGUE_MEMBER_JOINED,
       CONTEST_EXPANDED: null,
+      LEAGUE_PLAN_PREVIEW_ENDING: null,
     });
   });
 

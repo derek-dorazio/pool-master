@@ -7,7 +7,7 @@ import { inMemoryLeagueWorld } from '../../support/in-memory-league-world';
 
 // Choosing a plan (#945): any commissioner or root admin moves a league to a plan, at once, logged;
 // only a root admin to one not offered yet (#986). Extending a gifted plan (#986): a root admin moves
-// renewal dates out, never earlier, logged.
+// renewal dates out, never earlier, logged. Once a league's date passes, it moves to Free, logged.
 
 const NOW = new Date('2026-10-24T15:00:00.000Z');
 
@@ -182,5 +182,36 @@ describe('LeaguePlanService', () => {
     expect((await world.leagues.findById(ended.id))?.planRenewsAt).toEqual(new Date('2026-10-01T00:00:00.000Z'));
     expect((await world.leagues.findById(later.id))?.planRenewsAt).toEqual(new Date('2027-12-01T00:00:00.000Z'));
     expect(world.planRenewalChanges.map((change) => change.leagueId)).toEqual([soon.id]);
+  });
+
+  it('moves every league whose renewal date has passed to Free, logged as made by no one, and leaves running gifts and Free leagues alone', async () => {
+    const { world, service } = setup();
+    const ended = world.addLeague({ plan: LeaguePlan.PREMIUM, planRenewsAt: new Date('2026-10-24T14:59:00.000Z') });
+    const endsNow = world.addLeague({ plan: LeaguePlan.PRO, planRenewsAt: NOW });
+    const running = world.addLeague({ plan: LeaguePlan.PREMIUM, planRenewsAt: new Date('2026-10-24T15:01:00.000Z') });
+    const alreadyFree = world.addLeague({ plan: LeaguePlan.FREE, planRenewsAt: new Date('2026-10-01T00:00:00.000Z') });
+
+    const moved = await service.moveEndedToFree(NOW);
+
+    expect(moved).toBe(2);
+    expect((await world.leagues.findById(ended.id))?.plan).toBe(LeaguePlan.FREE);
+    expect((await world.leagues.findById(endsNow.id))?.plan).toBe(LeaguePlan.FREE);
+    expect((await world.leagues.findById(running.id))?.plan).toBe(LeaguePlan.PREMIUM);
+    expect((await world.leagues.findById(alreadyFree.id))?.plan).toBe(LeaguePlan.FREE);
+    expect(world.planChanges).toEqual([
+      { leagueId: ended.id, fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null },
+      { leagueId: endsNow.id, fromPlan: LeaguePlan.PRO, toPlan: LeaguePlan.FREE, changedById: null },
+    ]);
+  });
+
+  it('moves an ended league to Free once, however many sweeps run', async () => {
+    const { world, service } = setup();
+    world.addLeague({ plan: LeaguePlan.PREMIUM, planRenewsAt: new Date('2026-10-24T14:00:00.000Z') });
+
+    await service.moveEndedToFree(NOW);
+    const again = await service.moveEndedToFree(new Date(NOW.getTime() + 5 * 60_000));
+
+    expect(again).toBe(0);
+    expect(world.planChanges).toHaveLength(1);
   });
 });

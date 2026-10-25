@@ -911,6 +911,8 @@ export const EmailTemplateKey = {
   LEAGUE_MEMBER_JOINED: 'LEAGUE_MEMBER_JOINED',
   /** A contest was expanded, for the league's other commissioners (#987). */
   CONTEST_EXPANDED: 'CONTEST_EXPANDED',
+  /** A league's Premium preview period ends in 30, 7 or 1 days, for its commissioners (#986). */
+  LEAGUE_PLAN_PREVIEW_ENDING: 'LEAGUE_PLAN_PREVIEW_ENDING',
 } as const;
 export type EmailTemplateKey = (typeof EmailTemplateKey)[keyof typeof EmailTemplateKey];
 

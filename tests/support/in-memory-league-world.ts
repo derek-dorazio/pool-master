@@ -120,8 +120,8 @@ export interface InMemoryLeagueWorld {
   ownerInvitations: SquadOwnerInvitationRepository;
   /** One all-or-nothing unit over the tables above: a throw inside `run` rolls every table back. */
   transaction: MembershipTransaction;
-  /** Every plan change `leagues.changePlan` logged, oldest first. */
-  planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string }>;
+  /** Every plan change logged, by `leagues.changePlan` or the move to Free, oldest first. */
+  planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string | null }>;
   /** Every renewal date move the extend methods logged, oldest first. */
   planRenewalChanges: Array<{ leagueId: string; fromRenewsAt: Date; toRenewsAt: Date; changedById: string }>;
   tables: {
@@ -245,6 +245,16 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       }
       return running.length;
     },
+    findPlansEndingBetween: async (after, through) => leagues
+      .where((row) => row.isActive && row.plan !== LeaguePlan.FREE && row.planRenewsAt > after && row.planRenewsAt <= through)
+      .sort((left, right) => left.planRenewsAt.getTime() - right.planRenewsAt.getTime() || left.id.localeCompare(right.id)),
+    moveEndedPlansToFree: async (now) => leagues
+      .where((row) => row.plan !== LeaguePlan.FREE && row.planRenewsAt <= now)
+      .map((league) => {
+        planChanges.push({ leagueId: league.id, fromPlan: league.plan, toPlan: LeaguePlan.FREE, changedById: null });
+        leagues.patch(league.id, { plan: LeaguePlan.FREE });
+        return { leagueId: league.id, fromPlan: league.plan };
+      }),
   };
 
   const membershipRepo: LeagueMembershipRepository = {

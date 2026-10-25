@@ -45,6 +45,7 @@ export const EMAIL_TEMPLATE_LABELS: ReadonlyArray<readonly [keyof EmailConfig['t
   ['SQUAD_OWNER_ADDED', 'Added as a co-owner'],
   ['LEAGUE_MEMBER_JOINED', 'New member joined (commissioners)'],
   ['CONTEST_EXPANDED', 'Contest expanded (commissioners)'],
+  ['LEAGUE_PLAN_PREVIEW_ENDING', 'Premium preview period ending (commissioners)'],
   ['CONTEST_ENTRY_COMPLETED', 'Entry confirmation'],
   ['CONTEST_STARTED_SUMMARY', 'Contest started'],
   ['CONTEST_ENTRY_REMINDER', 'Entry reminders'],

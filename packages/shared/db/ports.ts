@@ -205,6 +205,19 @@ export interface LeagueRepository {
    * in one transaction: each one moved is logged. Returns how many moved.
    */
   extendRunningPlanRenewals(change: { renewsAt: Date; now: Date; changedById: string }): Promise<number>;
+
+  /**
+   * Every active league not on Free whose renewal date is after `after` and at or before
+   * `through`, soonest first: the leagues whose commissioners hear their preview period is ending (#986).
+   */
+  findPlansEndingBetween(after: Date, through: Date): Promise<League[]>;
+
+  /**
+   * Moves every league not on Free whose renewal date is at or before `now` to Free (#986), each
+   * logged as a plan change made by no one, in one transaction. Returns the leagues moved and the
+   * plan each was on; run again, it finds none.
+   */
+  moveEndedPlansToFree(now: Date): Promise<Array<{ leagueId: string; fromPlan: LeaguePlan }>>;
 }
 
 export interface LeagueMembershipRepository {

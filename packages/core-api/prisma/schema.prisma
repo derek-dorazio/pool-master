@@ -201,6 +201,7 @@ enum PrismaEmailTemplateKey {
   LEAGUE_MEMBER_JOINED
   CONTEST_EXPANDED
   EMAIL_CHANGED
+  LEAGUE_PLAN_PREVIEW_ENDING
 }
 
 enum PrismaEmailMessageStatus {
