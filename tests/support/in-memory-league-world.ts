@@ -180,6 +180,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     findByIdentifier: async (identifier) =>
       one(users.where((row) => row.email === identifier || row.username === identifier)),
+    findHolderOtherThan: async (identifier, exceptUserId) =>
+      one(users.where((row) => row.id !== exceptUserId && (row.email === identifier || row.username === identifier))),
     countActiveRootAdmins: async () =>
       users.where((row) => row.isRootAdmin === true && row.isActive).length,
     create: async (row) => users.insert(row),

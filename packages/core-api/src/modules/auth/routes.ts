@@ -40,7 +40,7 @@ export function authModule(fastify: FastifyInstance, opts: MailModuleOptions): v
     appBaseUrl,
     logger: fastify.log,
   });
-  const emailChangeUndoService = new EmailChangeUndoService({ prisma, email: opts.email, appBaseUrl, logger: fastify.log });
+  const emailChangeUndoService = new EmailChangeUndoService({ users, prisma, email: opts.email, appBaseUrl, logger: fastify.log });
   const handlers = createAuthHandlers(authService, passwordResetService, emailChangeUndoService);
 
   // --- Registration ---

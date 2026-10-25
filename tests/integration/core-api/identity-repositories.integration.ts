@@ -270,6 +270,21 @@ describe('identity cluster repositories (#202)', () => {
     });
   });
 
+  describe('UserRepository.findHolderOtherThan', () => {
+    it("finds another account holding the identifier in either column, even when the subject's own row matches too", async () => {
+      const prisma = getPrisma();
+      const repo = new PrismaUserRepository(prisma);
+      const shared = `held${Date.now().toString(36)}@integration.test`;
+      const subject = await createTestUser();
+      const other = await createTestUser();
+      await prisma.user.update({ where: { id: subject.user.id }, data: { username: shared } });
+      await prisma.user.update({ where: { id: other.user.id }, data: { email: shared } });
+
+      await expect(repo.findHolderOtherThan(shared, subject.user.id)).resolves.toMatchObject({ id: other.user.id });
+      await expect(repo.findHolderOtherThan(subject.user.email, subject.user.id)).resolves.toBeNull();
+    });
+  });
+
   // #202 step 3.3 — the platform-lockout guard's count. Written inline three times in
   // `admin/user-service.ts` before this.
   describe('UserRepository.countActiveRootAdmins', () => {

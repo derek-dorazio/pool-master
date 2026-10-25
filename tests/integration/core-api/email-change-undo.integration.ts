@@ -56,7 +56,7 @@ function build(options: { now?: () => Date } = {}) {
   const mail = new RecordingMailDelivery();
   const outbox = inMemoryEmailMessages();
   const email = emailServiceOver(mail, outbox);
-  const undo = new EmailChangeUndoService({ prisma, email, appBaseUrl: APP_BASE_URL, now: options.now });
+  const undo = new EmailChangeUndoService({ users, prisma, email, appBaseUrl: APP_BASE_URL, now: options.now });
   const userService = new UserService(users, prisma, new PasswordChangedNotifier(users, email, APP_BASE_URL), undo);
   const resets = new PasswordResetService({ users, prisma, email, appBaseUrl: APP_BASE_URL });
   return { undo, userService, resets, mail, outbox };

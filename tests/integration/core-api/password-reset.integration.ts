@@ -70,7 +70,7 @@ function buildUserService(mail: MailDeliveryProvider): UserService {
     users,
     getPrisma(),
     new PasswordChangedNotifier(users, email, APP_BASE_URL),
-    new EmailChangeUndoService({ prisma: getPrisma(), email, appBaseUrl: APP_BASE_URL }),
+    new EmailChangeUndoService({ users, prisma: getPrisma(), email, appBaseUrl: APP_BASE_URL }),
   );
 }
 
