@@ -36,6 +36,7 @@ export type {
   LeagueMembershipRepository,
   LeagueRepository,
   LeagueSearchFilters,
+  LeaguePlanChange,
   MembershipRepositories,
   MembershipTransaction,
   ParticipantProviderMappingRepository,

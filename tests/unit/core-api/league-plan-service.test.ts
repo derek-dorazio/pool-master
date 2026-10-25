@@ -214,4 +214,42 @@ describe('LeaguePlanService', () => {
     expect(again).toBe(0);
     expect(world.planChanges).toHaveLength(1);
   });
+
+  it('puts a league the end of its gift moved to Free back on the plan it had when its gift is extended, logged as the root admin\'s change', async () => {
+    const { world, service, rootAdmin } = setup();
+    const league = world.addLeague({ plan: LeaguePlan.PREMIUM, planRenewsAt: new Date('2026-10-24T14:00:00.000Z') });
+    await service.moveEndedToFree(NOW);
+
+    const updated = await service.extendRenewal(league.id, 3, rootAdmin.userId);
+
+    expect(updated.plan).toBe(LeaguePlan.PREMIUM);
+    expect(world.planChanges.at(-1)).toEqual({ leagueId: league.id, fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changedById: rootAdmin.userId });
+  });
+
+  it('leaves a league its commissioner moved to Free on Free when its gift is extended', async () => {
+    const { world, service, commissioner, rootAdmin } = setup();
+    const league = world.addLeague({ plan: LeaguePlan.PREMIUM });
+    await service.changePlan(league.id, LeaguePlan.FREE, commissioner);
+
+    const updated = await service.extendRenewal(league.id, 12, rootAdmin.userId);
+
+    expect(updated.plan).toBe(LeaguePlan.FREE);
+    expect(world.planChanges).toHaveLength(1);
+  });
+
+  it('leaves a league on Free when its last move to Free, by someone whose account is gone, came before its date', async () => {
+    const { world, rootAdmin } = setup();
+    const league = world.addLeague({ plan: LeaguePlan.FREE, planRenewsAt: new Date('2026-11-01T00:00:00.000Z') });
+    const leagues: LeaguePlanServiceDeps['leagues'] = {
+      ...world.leagues,
+      findLastPlanChange: async () => ({
+        fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null, changedAt: new Date('2026-10-01T00:00:00.000Z'),
+      }),
+    };
+    const withDeletedChanger = new LeaguePlanService({ leagues, planEntitlements: planEntitlements(), now: () => NOW });
+
+    const updated = await withDeletedChanger.extendRenewal(league.id, 3, rootAdmin.userId);
+
+    expect(updated.plan).toBe(LeaguePlan.FREE);
+  });
 });
