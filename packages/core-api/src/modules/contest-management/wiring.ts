@@ -13,7 +13,7 @@ import type {
   SportEventRepository,
   SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport } from '@poolmaster/shared/domain';
+import { MatchStatus, eventSportDefinition, getDefaultTournamentFormatForSport, isSquaresRound } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
@@ -31,6 +31,8 @@ import type { PlanEntitlementsService } from '../plans/plan-entitlements-service
 import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
+import { hasSportEventStarted } from '../events/operational-timing';
+import type { ContestOpeningReader } from './contest-opening';
 import { ContestManagementService, type ContestCreateSportEventReader } from './service';
 
 export function createContestManagementService(
@@ -135,5 +137,29 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
       ? sportEvent
       : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),
+  };
+}
+
+/**
+ * What asking whether a setup could open on an event needs (#1007): contest creation's reader,
+ * plus whether a squares contest still has a game to be played on.
+ */
+export function createContestOpeningReader(prisma: PrismaClient): ContestOpeningReader {
+  const matches = new PrismaSportEventMatchRepository(prisma);
+  const reader = createContestSportEventReader({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    sports: new PrismaSportRepository(prisma),
+    field: new PrismaSportEventParticipantRepository(prisma),
+    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+    matches,
+  });
+  return {
+    ...reader,
+    hasSquaresGameAhead: async (sportEvent, now) => {
+      const games = await matches.findBySportEvent(sportEvent.id);
+      return games.some((game) => game.status !== MatchStatus.CANCELLED
+        && isSquaresRound(sportEvent.squaresFromRound, game.roundNumber)
+        && !hasSportEventStarted(cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventMatchId: game.id }, sportEvent, games), now));
+    },
   };
 }

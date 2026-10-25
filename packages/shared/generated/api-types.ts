@@ -2891,6 +2891,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/event-pages/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List event pages
+         * @description The active event pages, of one sport or every sport, each with its offers and their next editions, for How to Play's and the welcome page's Coming up row. Public: no session is needed, and it holds nothing about any league or user.
+         */
+        get: operations["listEventPages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/event-pages/{sport}/{pageSlug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event page
+         * @description One event page by its sport and slug, active or retired: a retired page has no offers and names the page its URL redirects to, if any. Each offer carries its series' next edition that can still take the contest (the one under way, else the soonest upcoming) and whether Create contest would take it now (OPEN) or later (NOT_YET); an offer with no such edition is left out. 404 EVENT_PAGE_NOT_FOUND when no page has that address. Public: no session is needed, and it holds nothing about any league or user.
+         */
+        get: operations["getEventPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/participants/": {
         parameters: {
             query?: never;
@@ -18710,6 +18750,1807 @@ export interface components {
                 }[];
             }[];
         };
+        /** @description The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest. */
+        EventPageEditionDto: {
+            /**
+             * Format: uuid
+             * @description The edition's sport event: the one Create contest starts on.
+             */
+            sportEventId: string;
+            /** @description The edition's name, such as "Conference Championships". */
+            name: string;
+            /** @description The year the edition is branded with. */
+            eventYear: number;
+            /**
+             * Format: date-time
+             * @description When the edition starts. For a NOT_YET offer, when it is expected.
+             */
+            startDate: string;
+            /**
+             * Format: date-time
+             * @description When the edition ends, when known.
+             */
+            endDate: string | null;
+        };
+        /** @description One way to play on an event page: a contest setup on one sport league's series, with that series' next edition. An offer whose series has no edition that can still take the contest is left out. */
+        EventPageOfferDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The sport league whose series the offer runs on.
+             */
+            sportLeagueId: string;
+            /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+            sportLeagueName: string;
+            /** @description The series the offer runs on, by name in its sport league, such as "NFL Playoffs". */
+            eventSeriesName: string;
+            /** @description The contest setup the offer starts as: Create contest's ?template=. */
+            template: {
+                /**
+                 * Format: uuid
+                 * @description Seeded contest template identifier.
+                 */
+                id: string;
+                /**
+                 * @description Sport this template applies to.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * Format: uuid
+                 * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                 * @enum {string|null}
+                 */
+                eventType?: "KNOCKOUT" | "WEEK" | null;
+                /**
+                 * @description Contest type that may use the template.
+                 * @enum {string}
+                 */
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                /**
+                 * @description How an entry picks in a contest created from this template.
+                 * @enum {string}
+                 */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /** @description Stable machine key for the template. */
+                templateKey: string;
+                /** @description Commissioner-facing template label. */
+                name: string;
+                /** @description Commissioner-facing template description. */
+                description: string;
+                /** @description Display order for template selection. */
+                sortOrder: number;
+                /** @description Whether the template should be preselected in the create flow. */
+                isDefault: boolean;
+                /** @description Whether the template is currently selectable. */
+                active: boolean;
+                /** @description Version of the configuration schema metadata expected by the template. */
+                schemaVersion: number;
+                /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                configuration: {
+                    /** @enum {string} */
+                    selectionType: "TIERED";
+                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                    picksPerTier: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                    tiersUsed?: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BUDGET_PICK";
+                    /** @description How many golfers an entry picks, from anywhere in the field. */
+                    rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BRACKET";
+                    /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
+                    startsAtRound: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SURVIVOR";
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
+                    /** @description Maximum entries a Team may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        config: Record<string, never>;
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                        config: Record<string, never>;
+                    };
+                };
+            };
+            /** @description For a bracket, the round it starts at: the offer's own, else its template's (1 is the whole knockout). Null for any other selection type. */
+            startsAtRound: number | null;
+            /** @description Where the offer sits on its page, first first. */
+            sortOrder: number;
+            /** @description The offer whose edition heads the page: its dates are the page's. A page has one. */
+            isPrimary: boolean;
+            /**
+             * @description OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+             * @enum {string}
+             */
+            state: "OPEN" | "NOT_YET";
+            /** @description The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest. */
+            edition: {
+                /**
+                 * Format: uuid
+                 * @description The edition's sport event: the one Create contest starts on.
+                 */
+                sportEventId: string;
+                /** @description The edition's name, such as "Conference Championships". */
+                name: string;
+                /** @description The year the edition is branded with. */
+                eventYear: number;
+                /**
+                 * Format: date-time
+                 * @description When the edition starts. For a NOT_YET offer, when it is expected.
+                 */
+                startDate: string;
+                /**
+                 * Format: date-time
+                 * @description When the edition ends, when known.
+                 */
+                endDate: string | null;
+            };
+        };
+        /** @description A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event. */
+        EventPageDto: {
+            /** Format: uuid */
+            id: string;
+            /**
+             * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+             * @enum {string}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+            slug: string;
+            /** @description Where the page sits among its sport's pages, lower first. */
+            displayOrder: number;
+            /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
+            isActive: boolean;
+            /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
+            redirectTo: {
+                /** @enum {string} */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+                slug: string;
+            } | null;
+            /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
+            offers: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The sport league whose series the offer runs on.
+                 */
+                sportLeagueId: string;
+                /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+                sportLeagueName: string;
+                /** @description The series the offer runs on, by name in its sport league, such as "NFL Playoffs". */
+                eventSeriesName: string;
+                /** @description The contest setup the offer starts as: Create contest's ?template=. */
+                template: {
+                    /**
+                     * Format: uuid
+                     * @description Seeded contest template identifier.
+                     */
+                    id: string;
+                    /**
+                     * @description Sport this template applies to.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /**
+                     * Format: uuid
+                     * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                     */
+                    sportLeagueId: string | null;
+                    /**
+                     * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                     * @enum {string|null}
+                     */
+                    eventType?: "KNOCKOUT" | "WEEK" | null;
+                    /**
+                     * @description Contest type that may use the template.
+                     * @enum {string}
+                     */
+                    contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                    /**
+                     * @description How an entry picks in a contest created from this template.
+                     * @enum {string}
+                     */
+                    selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                    /** @description Stable machine key for the template. */
+                    templateKey: string;
+                    /** @description Commissioner-facing template label. */
+                    name: string;
+                    /** @description Commissioner-facing template description. */
+                    description: string;
+                    /** @description Display order for template selection. */
+                    sortOrder: number;
+                    /** @description Whether the template should be preselected in the create flow. */
+                    isDefault: boolean;
+                    /** @description Whether the template is currently selectable. */
+                    active: boolean;
+                    /** @description Version of the configuration schema metadata expected by the template. */
+                    schemaVersion: number;
+                    /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                    configuration: {
+                        /** @enum {string} */
+                        selectionType: "TIERED";
+                        /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                        picksPerTier: number;
+                        /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                        countedScores: number;
+                        /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                        tiersUsed?: number;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "BUDGET_PICK";
+                        /** @description How many golfers an entry picks, from anywhere in the field. */
+                        rosterSize: number;
+                        /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                        countedScores: number;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "RANDOM_DRAW";
+                        /** @description How many members of the field the draw deals each entry. */
+                        picksPerEntry: number;
+                        /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                        countedScores: number;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "PICK_EM";
+                        /**
+                         * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                         * @enum {string}
+                         */
+                        mode: "STRAIGHT_UP" | "CONFIDENCE";
+                        /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                        againstTheSpread: boolean;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "BRACKET";
+                        /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
+                        startsAtRound: number;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "SQUARES";
+                        /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                        maxSquaresPerEntry: number;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        selectionType: "SURVIVOR";
+                        /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                        reuseTeamsOnceAllUsed?: boolean;
+                        /** @description Maximum entries a Team may create. Null means unlimited. */
+                        maxEntriesPerSquad?: number | null;
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        scoring?: {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                            config: Record<string, never>;
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                            /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                            config: {
+                                /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                pointsTable: number[];
+                                /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                didNotFinishPoints: number;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                            /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                            config: {
+                                /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                roundValues: number[];
+                                /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                upsetBonus: {
+                                    /** @enum {string} */
+                                    rule: "SEED_DIFFERENCE";
+                                    /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                    multiplier: number;
+                                } | {
+                                    /** @enum {string} */
+                                    rule: "NONE";
+                                };
+                            };
+                        } | {
+                            /** @enum {string} */
+                            participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                            config: Record<string, never>;
+                        };
+                    };
+                };
+                /** @description For a bracket, the round it starts at: the offer's own, else its template's (1 is the whole knockout). Null for any other selection type. */
+                startsAtRound: number | null;
+                /** @description Where the offer sits on its page, first first. */
+                sortOrder: number;
+                /** @description The offer whose edition heads the page: its dates are the page's. A page has one. */
+                isPrimary: boolean;
+                /**
+                 * @description OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+                 * @enum {string}
+                 */
+                state: "OPEN" | "NOT_YET";
+                /** @description The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest. */
+                edition: {
+                    /**
+                     * Format: uuid
+                     * @description The edition's sport event: the one Create contest starts on.
+                     */
+                    sportEventId: string;
+                    /** @description The edition's name, such as "Conference Championships". */
+                    name: string;
+                    /** @description The year the edition is branded with. */
+                    eventYear: number;
+                    /**
+                     * Format: date-time
+                     * @description When the edition starts. For a NOT_YET offer, when it is expected.
+                     */
+                    startDate: string;
+                    /**
+                     * Format: date-time
+                     * @description When the edition ends, when known.
+                     */
+                    endDate: string | null;
+                };
+            }[];
+        };
+        /** @description One event page. */
+        EventPageResponse: {
+            /** @description A public event page, such as Championship Weekend: a curated grouping of contest setups on the series a fan would call one event. */
+            eventPage: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+                slug: string;
+                /** @description Where the page sits among its sport's pages, lower first. */
+                displayOrder: number;
+                /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
+                isActive: boolean;
+                /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
+                redirectTo: {
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+                    slug: string;
+                } | null;
+                /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
+                offers: {
+                    /** Format: uuid */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The sport league whose series the offer runs on.
+                     */
+                    sportLeagueId: string;
+                    /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+                    sportLeagueName: string;
+                    /** @description The series the offer runs on, by name in its sport league, such as "NFL Playoffs". */
+                    eventSeriesName: string;
+                    /** @description The contest setup the offer starts as: Create contest's ?template=. */
+                    template: {
+                        /**
+                         * Format: uuid
+                         * @description Seeded contest template identifier.
+                         */
+                        id: string;
+                        /**
+                         * @description Sport this template applies to.
+                         * @enum {string}
+                         */
+                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                        /**
+                         * Format: uuid
+                         * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                         */
+                        sportLeagueId: string | null;
+                        /**
+                         * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                         * @enum {string|null}
+                         */
+                        eventType?: "KNOCKOUT" | "WEEK" | null;
+                        /**
+                         * @description Contest type that may use the template.
+                         * @enum {string}
+                         */
+                        contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                        /**
+                         * @description How an entry picks in a contest created from this template.
+                         * @enum {string}
+                         */
+                        selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                        /** @description Stable machine key for the template. */
+                        templateKey: string;
+                        /** @description Commissioner-facing template label. */
+                        name: string;
+                        /** @description Commissioner-facing template description. */
+                        description: string;
+                        /** @description Display order for template selection. */
+                        sortOrder: number;
+                        /** @description Whether the template should be preselected in the create flow. */
+                        isDefault: boolean;
+                        /** @description Whether the template is currently selectable. */
+                        active: boolean;
+                        /** @description Version of the configuration schema metadata expected by the template. */
+                        schemaVersion: number;
+                        /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                        configuration: {
+                            /** @enum {string} */
+                            selectionType: "TIERED";
+                            /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                            picksPerTier: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                            tiersUsed?: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "BUDGET_PICK";
+                            /** @description How many golfers an entry picks, from anywhere in the field. */
+                            rosterSize: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "RANDOM_DRAW";
+                            /** @description How many members of the field the draw deals each entry. */
+                            picksPerEntry: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "PICK_EM";
+                            /**
+                             * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                             * @enum {string}
+                             */
+                            mode: "STRAIGHT_UP" | "CONFIDENCE";
+                            /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                            againstTheSpread: boolean;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "BRACKET";
+                            /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
+                            startsAtRound: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "SQUARES";
+                            /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                            maxSquaresPerEntry: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "SURVIVOR";
+                            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                            reuseTeamsOnceAllUsed?: boolean;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        };
+                    };
+                    /** @description For a bracket, the round it starts at: the offer's own, else its template's (1 is the whole knockout). Null for any other selection type. */
+                    startsAtRound: number | null;
+                    /** @description Where the offer sits on its page, first first. */
+                    sortOrder: number;
+                    /** @description The offer whose edition heads the page: its dates are the page's. A page has one. */
+                    isPrimary: boolean;
+                    /**
+                     * @description OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+                     * @enum {string}
+                     */
+                    state: "OPEN" | "NOT_YET";
+                    /** @description The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest. */
+                    edition: {
+                        /**
+                         * Format: uuid
+                         * @description The edition's sport event: the one Create contest starts on.
+                         */
+                        sportEventId: string;
+                        /** @description The edition's name, such as "Conference Championships". */
+                        name: string;
+                        /** @description The year the edition is branded with. */
+                        eventYear: number;
+                        /**
+                         * Format: date-time
+                         * @description When the edition starts. For a NOT_YET offer, when it is expected.
+                         */
+                        startDate: string;
+                        /**
+                         * Format: date-time
+                         * @description When the edition ends, when known.
+                         */
+                        endDate: string | null;
+                    };
+                }[];
+            };
+        };
+        /** @description Filters for the event page list. */
+        EventPageListQuery: {
+            /**
+             * @description Only this sport's pages. Omitted: every sport's.
+             * @enum {string}
+             */
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+        };
+        /** @description The active event pages. */
+        EventPageListResponse: {
+            /** @description The active pages, by sport then display order. A page between seasons has no offers. */
+            eventPages: {
+                /** Format: uuid */
+                id: string;
+                /**
+                 * @description The sport the page belongs to; its URL's first segment is this sport's path segment.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+                slug: string;
+                /** @description Where the page sits among its sport's pages, lower first. */
+                displayOrder: number;
+                /** @description False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved. */
+                isActive: boolean;
+                /** @description For a retired page with a successor, the page its URL now goes to; null otherwise. */
+                redirectTo: {
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description The page's URL name within its sport, such as championship-weekend: lower case letters and digits, words joined by single dashes. Stored, never derived from a name, and evergreen (it names the page, not a year). The web address is /play/<sport path segment>/<slug>. */
+                    slug: string;
+                } | null;
+                /** @description The page's ways to play in order, each with its next edition. Offers with no edition left to take the contest are left out, so an active page can have none: it is between seasons. */
+                offers: {
+                    /** Format: uuid */
+                    id: string;
+                    /**
+                     * Format: uuid
+                     * @description The sport league whose series the offer runs on.
+                     */
+                    sportLeagueId: string;
+                    /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+                    sportLeagueName: string;
+                    /** @description The series the offer runs on, by name in its sport league, such as "NFL Playoffs". */
+                    eventSeriesName: string;
+                    /** @description The contest setup the offer starts as: Create contest's ?template=. */
+                    template: {
+                        /**
+                         * Format: uuid
+                         * @description Seeded contest template identifier.
+                         */
+                        id: string;
+                        /**
+                         * @description Sport this template applies to.
+                         * @enum {string}
+                         */
+                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                        /**
+                         * Format: uuid
+                         * @description Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.
+                         */
+                        sportLeagueId: string | null;
+                        /**
+                         * @description The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season's games), for a sport played as matches. Null: every event of its sport.
+                         * @enum {string|null}
+                         */
+                        eventType?: "KNOCKOUT" | "WEEK" | null;
+                        /**
+                         * @description Contest type that may use the template.
+                         * @enum {string}
+                         */
+                        contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                        /**
+                         * @description How an entry picks in a contest created from this template.
+                         * @enum {string}
+                         */
+                        selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                        /** @description Stable machine key for the template. */
+                        templateKey: string;
+                        /** @description Commissioner-facing template label. */
+                        name: string;
+                        /** @description Commissioner-facing template description. */
+                        description: string;
+                        /** @description Display order for template selection. */
+                        sortOrder: number;
+                        /** @description Whether the template should be preselected in the create flow. */
+                        isDefault: boolean;
+                        /** @description Whether the template is currently selectable. */
+                        active: boolean;
+                        /** @description Version of the configuration schema metadata expected by the template. */
+                        schemaVersion: number;
+                        /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                        configuration: {
+                            /** @enum {string} */
+                            selectionType: "TIERED";
+                            /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                            picksPerTier: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description How many of the event's tiers an entry picks from, the first ones in tier order (tennis's "Seeds only": the first four). Left out, every tier. The event owns its tiers (#249), so this is the contest's rule, not a second tier layout. */
+                            tiersUsed?: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "BUDGET_PICK";
+                            /** @description How many golfers an entry picks, from anywhere in the field. */
+                            rosterSize: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "RANDOM_DRAW";
+                            /** @description How many members of the field the draw deals each entry. */
+                            picksPerEntry: number;
+                            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                            countedScores: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "PICK_EM";
+                            /**
+                             * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                             * @enum {string}
+                             */
+                            mode: "STRAIGHT_UP" | "CONFIDENCE";
+                            /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                            againstTheSpread: boolean;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "BRACKET";
+                            /** @description The round the bracket starts at: 1 for a full bracket; a later round (the Sweet 16) for a second-chance bracket, picked from that round on and closing at its first game. The event's round values score each round from it on. */
+                            startsAtRound: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "SQUARES";
+                            /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                            maxSquaresPerEntry: number;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        } | {
+                            /** @enum {string} */
+                            selectionType: "SURVIVOR";
+                            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                            reuseTeamsOnceAllUsed?: boolean;
+                            /** @description Maximum entries a Team may create. Null means unlimited. */
+                            maxEntriesPerSquad?: number | null;
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            scoring?: {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                                config: Record<string, never>;
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                                config: {
+                                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                                    pointsTable: number[];
+                                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                                    didNotFinishPoints: number;
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                                config: {
+                                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. */
+                                    roundValues: number[];
+                                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                                    upsetBonus: {
+                                        /** @enum {string} */
+                                        rule: "SEED_DIFFERENCE";
+                                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                        multiplier: number;
+                                    } | {
+                                        /** @enum {string} */
+                                        rule: "NONE";
+                                    };
+                                };
+                            } | {
+                                /** @enum {string} */
+                                participantScoringDefinitionId: "COMPOSITE_TOTAL";
+                                config: Record<string, never>;
+                            };
+                        };
+                    };
+                    /** @description For a bracket, the round it starts at: the offer's own, else its template's (1 is the whole knockout). Null for any other selection type. */
+                    startsAtRound: number | null;
+                    /** @description Where the offer sits on its page, first first. */
+                    sortOrder: number;
+                    /** @description The offer whose edition heads the page: its dates are the page's. A page has one. */
+                    isPrimary: boolean;
+                    /**
+                     * @description OPEN: Create contest would take the contest on the edition now. NOT_YET: the edition is still to open (not released, field not loaded, or a later-round bracket's teams not set); show when it is expected from its start date.
+                     * @enum {string}
+                     */
+                    state: "OPEN" | "NOT_YET";
+                    /** @description The edition of its series an offer is shown with: the one under way, or else the soonest upcoming that can still take the contest. */
+                    edition: {
+                        /**
+                         * Format: uuid
+                         * @description The edition's sport event: the one Create contest starts on.
+                         */
+                        sportEventId: string;
+                        /** @description The edition's name, such as "Conference Championships". */
+                        name: string;
+                        /** @description The year the edition is branded with. */
+                        eventYear: number;
+                        /**
+                         * Format: date-time
+                         * @description When the edition starts. For a NOT_YET offer, when it is expected.
+                         */
+                        startDate: string;
+                        /**
+                         * Format: date-time
+                         * @description When the edition ends, when known.
+                         */
+                        endDate: string | null;
+                    };
+                }[];
+            }[];
+        };
         /** @description Which year's contests to list, and for which squad or matrix cell. */
         ListContestResultsQuery: {
             /** @description The championship year, US Eastern, the contests went final in, such as 2026. */
@@ -30190,6 +32031,63 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventPages: {
+        parameters: {
+            query?: {
+                /** @description Only this sport's pages. Omitted: every sport's. */
+                sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The active event pages. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventPageListResponse"];
+                };
+            };
+        };
+    };
+    getEventPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The page's sport. */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /** @description The page's stored URL name, such as championship-weekend. */
+                pageSlug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One event page. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventPageResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

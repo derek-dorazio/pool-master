@@ -30,6 +30,7 @@ import { contestConfigTemplatesModule } from './modules/contest-config-templates
 import { eventsModule } from './modules/events/routes';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
+import { eventPagesModule } from './modules/event-pages/routes';
 import { participantsModule } from './modules/participants/routes';
 import { usersModule } from './modules/users/routes';
 import { platformModule } from './modules/platform/routes';
@@ -252,6 +253,7 @@ export function buildApp() {
   });
   app.register(sportsModule, { prefix: '/api/v1/sports' });
   app.register(sportLeaguesModule, { prefix: '/api/v1/sport-leagues' });
+  app.register(eventPagesModule, { prefix: '/api/v1/event-pages' });
   app.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry: registry });
   app.register(platformModule, { prefix: '/api/v1/platform', ingestionConfigService, platformSettingsService });
   app.register(emailTestModule, { prefix: '/api/v1/platform/email', emailTest });

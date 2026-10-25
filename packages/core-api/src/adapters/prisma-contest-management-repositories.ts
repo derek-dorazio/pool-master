@@ -224,7 +224,8 @@ function mapContestConfiguration(row: {
   };
 }
 
-function mapContestConfigTemplate(row: {
+/** A template row as the domain reads it; the event page adapter maps its offers' templates with it too. */
+export function mapContestConfigTemplate(row: {
   id: string;
   sport: Sport;
   sportLeagueId: string | null;
