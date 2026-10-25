@@ -178,6 +178,22 @@ describe('password reset request (#847)', () => {
     expect(mail.to(user.email)).toHaveLength(1);
   });
 
+  it("mails the account whose EMAIL the identifier is, when another account has it as its username", async () => {
+    // Email and username are unique per column, so both can hold one string. The username
+    // holder's row is written first, so Postgres returns it first for the OR lookup.
+    const { service, mail } = buildService();
+    const shared = `shared-${randomUUID().slice(0, 8)}@integration.test`;
+    const usernameHolder = await createTestUser();
+    const emailHolder = await createTestUser();
+    await getPrisma().user.update({ where: { id: usernameHolder.user.id }, data: { username: shared } });
+    await getPrisma().user.update({ where: { id: emailHolder.user.id }, data: { email: shared } });
+
+    await service.requestReset(shared);
+
+    expect(mail.to(shared)).toHaveLength(1);
+    expect(mail.to(usernameHolder.user.email)).toHaveLength(0);
+  });
+
   it('writes nothing and sends nothing when no account matches', async () => {
     const { service, mail } = buildService();
     const before = await getPrisma().passwordResetToken.count();
