@@ -154,6 +154,14 @@ export interface LeagueSearchFilters {
   isActive?: boolean;
 }
 
+/** One logged move of a league to another plan (#945); `changedById` is null for the end of a gift. */
+export interface LeaguePlanChange {
+  fromPlan: LeaguePlan;
+  toPlan: LeaguePlan;
+  changedById: string | null;
+  changedAt: Date;
+}
+
 export interface LeagueRepository {
   findById(id: string): Promise<League | null>;
   findByCode(code: string): Promise<League | null>;
@@ -195,9 +203,17 @@ export interface LeagueRepository {
   /**
    * Moves the league's renewal date out to `change.renewsAt` and logs who moved it from which
    * date (#986), in one transaction. A date already at or past `renewsAt` is left alone and
-   * nothing is logged, so an extension never shortens a gift. Returns null for a missing league.
+   * nothing is logged, so an extension never shortens a gift. With `restorePlan`, a league still on
+   * its `fromPlan` also moves to its `toPlan`, logged as a plan change by `changedById` (#1026).
+   * Returns null for a missing league.
    */
-  extendPlanRenewal(leagueId: string, change: { renewsAt: Date; changedById: string }): Promise<League | null>;
+  extendPlanRenewal(
+    leagueId: string,
+    change: { renewsAt: Date; changedById: string; restorePlan?: { fromPlan: LeaguePlan; toPlan: LeaguePlan } },
+  ): Promise<League | null>;
+
+  /** The league's latest plan change, or null when its plan never changed. */
+  findLastPlanChange(leagueId: string): Promise<LeaguePlanChange | null>;
 
   /**
    * The same for every league whose gift still runs at `change.now` (its renewal date is later),

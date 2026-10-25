@@ -3,7 +3,7 @@
  */
 
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
-import type { LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
+import type { LeaguePlanChange, LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
 
@@ -86,7 +86,15 @@ export class PrismaLeagueRepository implements LeagueRepository {
     });
   }
 
-  async extendPlanRenewal(leagueId: string, change: { renewsAt: Date; changedById: string }): Promise<League | null> {
+  async findLastPlanChange(leagueId: string): Promise<LeaguePlanChange | null> {
+    const row = await this.prisma.leaguePlanChange.findFirst({ where: { leagueId }, orderBy: { changedAt: 'desc' } });
+    return row ? { fromPlan: row.fromPlan, toPlan: row.toPlan, changedById: row.changedById, changedAt: row.changedAt } : null;
+  }
+
+  async extendPlanRenewal(
+    leagueId: string,
+    change: { renewsAt: Date; changedById: string; restorePlan?: { fromPlan: LeaguePlan; toPlan: LeaguePlan } },
+  ): Promise<League | null> {
     // The league row is locked first, so a concurrent move waits rather than being logged with a
     // stale from-date. (The stored date has microseconds a JS Date lacks, so it can't be matched by value.)
     return this.prisma.$transaction(async (tx) => {
@@ -98,10 +106,22 @@ export class PrismaLeagueRepository implements LeagueRepository {
       if (league.planRenewsAt >= change.renewsAt) {
         return mapToLeague(league);
       }
-      const moved = await tx.league.update({ where: { id: leagueId }, data: { planRenewsAt: change.renewsAt } });
+      // The plan moves back only if the league is still where the end of its gift left it.
+      const restored = change.restorePlan !== undefined && league.plan === change.restorePlan.fromPlan
+        ? change.restorePlan.toPlan
+        : null;
+      const moved = await tx.league.update({
+        where: { id: leagueId },
+        data: { planRenewsAt: change.renewsAt, ...(restored === null ? {} : { plan: restored }) },
+      });
       await tx.leaguePlanRenewalChange.create({
         data: { leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById },
       });
+      if (restored !== null) {
+        await tx.leaguePlanChange.create({
+          data: { leagueId, fromPlan: league.plan, toPlan: restored, changedById: change.changedById },
+        });
+      }
       return mapToLeague(moved);
     });
   }

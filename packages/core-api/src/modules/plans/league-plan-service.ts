@@ -15,7 +15,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import type { League, LeaguePlan } from '@poolmaster/shared/domain';
+import { LeaguePlan, type League } from '@poolmaster/shared/domain';
 import { LeagueNotFoundError, LeagueOperationError } from '../leagues/service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
@@ -26,7 +26,7 @@ import type { PlanEntitlementsService } from './plan-entitlements-service';
 export const PREMIUM_PREVIEW_PERIOD_MONTHS = 6;
 
 export interface LeaguePlanServiceDeps {
-  leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals' | 'moveEndedPlansToFree'>;
+  leagues: Pick<LeagueRepository, 'findById' | 'changePlan' | 'extendPlanRenewal' | 'extendRunningPlanRenewals' | 'moveEndedPlansToFree' | 'findLastPlanChange'>;
   planEntitlements: Pick<PlanEntitlementsService, 'forPlan'>;
   logger?: FastifyBaseLogger;
   now?: () => Date;
@@ -80,19 +80,28 @@ export class LeaguePlanService {
     return updated;
   }
 
-  /** Moves one league's renewal date out to `months` from now, unless it is already later. Root admin only. */
+  /**
+   * Moves one league's renewal date out to `months` from now, unless it is already later. A league
+   * the end of its gift moved to Free goes back to the plan it had, as the gift runs again (#1026).
+   * Root admin only.
+   */
   async extendRenewal(leagueId: string, months: number, changedById: string): Promise<League> {
     const { leagues, logger } = this.deps;
     const renewsAt = addMonths(this.now(), months);
     logger?.debug({ action: 'leaguePlan.extend.enter', data: { leagueId, months } }, 'Extending league plan renewal');
-    const updated = await leagues.extendPlanRenewal(leagueId, { renewsAt, changedById });
+    const [league, lastChange] = await Promise.all([leagues.findById(leagueId), leagues.findLastPlanChange(leagueId)]);
+    // The end of the gift is the one change made by no one, on or after the league's date.
+    const endedGift = league !== null && lastChange !== null && lastChange.changedById === null
+      && lastChange.toPlan === LeaguePlan.FREE && lastChange.changedAt >= league.planRenewsAt;
+    const restorePlan = endedGift ? { fromPlan: lastChange.toPlan, toPlan: lastChange.fromPlan } : undefined;
+    const updated = await leagues.extendPlanRenewal(leagueId, { renewsAt, changedById, restorePlan });
     if (!updated) {
       logger?.warn({ action: 'leaguePlan.extend.notFound', data: { leagueId } }, 'Cannot extend the plan of a missing league');
       throw new LeagueNotFoundError(leagueId);
     }
     logger?.info({
       action: 'leaguePlan.extend.success',
-      data: { leagueId, renewsAt: updated.planRenewsAt.toISOString(), changedById },
+      data: { leagueId, renewsAt: updated.planRenewsAt.toISOString(), plan: updated.plan, changedById },
     }, 'Extended league plan renewal');
     return updated;
   }

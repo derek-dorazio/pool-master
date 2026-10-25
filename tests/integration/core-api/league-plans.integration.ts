@@ -215,6 +215,49 @@ describe('League plans', () => {
     })]);
   });
 
+  it('puts a league its ended preview period moved to Free back on the plan it had when a root admin extends its gift, logging the plan change as theirs', async () => {
+    const { league } = await createLeague();
+    const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
+    const now = new Date();
+    await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(now.getTime() - 60_000) } });
+    await new PrismaLeagueRepository(getPrisma()).moveEndedPlansToFree(now);
+
+    const res = await getApp().inject({
+      method: 'POST',
+      url: `${API_ROUTES.leagues.detail(league.id)}/plan-renewal/extend`,
+      headers: rootAdmin.headers,
+      payload: { months: 3 },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(LeagueResponseSchema.parse(res.json()).league.planEntitlements.plan).toBe(LeaguePlan.PREMIUM);
+    expect(await getPrisma().leaguePlanChange.findMany({ where: { leagueId: league.id }, orderBy: { changedAt: 'asc' } })).toEqual([
+      expect.objectContaining({ fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null }),
+      expect.objectContaining({ fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changedById: rootAdmin.user.id }),
+    ]);
+  });
+
+  it('leaves a league its commissioner moved to Free on Free when a root admin extends its gift', async () => {
+    const { commissioner, league } = await createLeague();
+    const rootAdmin = await createTestUser({ displayName: 'Gift Root Admin', isRootAdmin: true });
+    await getApp().inject({
+      method: 'PUT',
+      url: API_ROUTES.leagues.plan(league.id),
+      headers: commissioner.headers,
+      payload: { plan: LeaguePlan.FREE },
+    });
+
+    const res = await getApp().inject({
+      method: 'POST',
+      url: `${API_ROUTES.leagues.detail(league.id)}/plan-renewal/extend`,
+      headers: rootAdmin.headers,
+      payload: { months: 12 },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(LeagueResponseSchema.parse(res.json()).league.planEntitlements.plan).toBe(LeaguePlan.FREE);
+  });
+
   it('refuses a commissioner extending their own gift with 403, changing and logging nothing', async () => {
     const { commissioner, league } = await createLeague();
     const before = await getPrisma().league.findUniqueOrThrow({ where: { id: league.id } });
