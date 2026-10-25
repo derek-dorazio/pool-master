@@ -792,7 +792,7 @@ describe('The seeded NFL league and its knockout templates', () => {
       const orders = leagues.filter((league) => league.sport.sport === sport).map((league) => league.displayOrder);
       expect(new Set(orders).size).toBe(orders.length);
     }
-    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl']);
+    expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
     expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Finals']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
   });
@@ -1163,9 +1163,11 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.HOCKEY, league: 'Stanley Cup Final', prefix: 'stanley-cup-final', composite: 'power-play' },
     { sport: Sport.AMERICAN_FOOTBALL, league: 'Championship Weekend', prefix: 'championship-weekend', composite: 'redzone' },
     { sport: Sport.AMERICAN_FOOTBALL, league: 'Super Bowl', prefix: 'super-bowl', composite: 'redzone' },
+    { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP Semifinals', prefix: 'cfp-semifinals', composite: 'redzone' },
+    { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP National Championship', prefix: 'cfp-national-championship', composite: 'redzone' },
   ];
 
-  it('seeds exactly the five championships as composite leagues of players', async () => {
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s semifinals and title game among them', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(
