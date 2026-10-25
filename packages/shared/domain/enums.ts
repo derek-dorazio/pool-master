@@ -863,6 +863,17 @@ export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>>
   RECORD_BOOK: PlanFeatureGroup.HISTORY,
 };
 
+/** Why a league's plan changed (#1032), recorded on each plan change log row. */
+export const LeaguePlanChangeReason = {
+  /** A commissioner or root admin picked the plan. */
+  CHOSEN: 'CHOSEN',
+  /** The league's preview period ended, and the sweep moved it to Free. */
+  PREVIEW_ENDED: 'PREVIEW_ENDED',
+  /** A root admin extended an ended gift, which put back the plan the league had. */
+  GIFT_RESTORED: 'GIFT_RESTORED',
+} as const;
+export type LeaguePlanChangeReason = (typeof LeaguePlanChangeReason)[keyof typeof LeaguePlanChangeReason];
+
 /**
  * What one line of a league's payment history records (#980). An expansion while payments are
  * off, and one a root admin gives, are both $0; the paid kinds arrive with checkout (#981).

@@ -14,6 +14,7 @@ import type {
   PredictedResult,
   League,
   LeaguePlan,
+  LeaguePlanChangeReason,
   LeagueInvitation,
   LeagueMembership,
   Participant,
@@ -154,10 +155,11 @@ export interface LeagueSearchFilters {
   isActive?: boolean;
 }
 
-/** One logged move of a league to another plan (#945); `changedById` is null for the end of a gift. */
+/** One logged move of a league to another plan (#945), with why it moved (#1032). */
 export interface LeaguePlanChange {
   fromPlan: LeaguePlan;
   toPlan: LeaguePlan;
+  changeReason: LeaguePlanChangeReason;
   changedById: string | null;
   changedAt: Date;
 }

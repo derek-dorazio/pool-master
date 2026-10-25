@@ -4,7 +4,7 @@
  * league world is in memory; the email service is the real one over an in-memory outbox, so the
  * tests assert on the emails recorded.
  */
-import { LeaguePlan, LeagueRole, type League, type User } from '@poolmaster/shared/domain';
+import { LeaguePlan, LeaguePlanChangeReason, LeagueRole, type League, type User } from '@poolmaster/shared/domain';
 import { EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
 import { PlanPreviewNotices } from '../../../packages/core-api/src/modules/notifications';
 import { LeaguePlanService } from '../../../packages/core-api/src/modules/plans/league-plan-service';
@@ -160,7 +160,9 @@ describe('PlanPreviewNotices', () => {
 
     await service.queueDue(ENDS_AT);
     expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.FREE);
-    expect(world.planChanges).toEqual([{ leagueId: league.id, fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null }]);
+    expect(world.planChanges).toEqual([{
+      leagueId: league.id, fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null,
+    }]);
   });
 
   it('still moves an ended league to Free when the reminders fail', async () => {

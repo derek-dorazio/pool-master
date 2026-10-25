@@ -20,7 +20,7 @@ import {
   revokeUserSessions,
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
-import { LeagueIconKey, LeaguePlan, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueIconKey, LeaguePlan, LeaguePlanChangeReason, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -88,7 +88,7 @@ describe('shared user delete cascade (#202)', () => {
       data: { cupName: 'Test Cup', leagueCode: `${LEAGUE_CODE_PREFIX}3`, name: 'Plan Change League', isActive: true, iconKey: LeagueIconKey.TROPHY },
     });
     const change = await prisma.leaguePlanChange.create({
-      data: { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: user.id },
+      data: { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.CHOSEN, changedById: user.id },
     });
 
     await prisma.$transaction((tx) => deleteUserCascade(tx, user.id));

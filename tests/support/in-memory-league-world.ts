@@ -48,6 +48,7 @@ import {
   CupPointsScale,
   EventEmailDelivery,
   LeaguePlan,
+  LeaguePlanChangeReason,
   InvitationStatus,
   LeagueIconKey,
   LeagueMembershipStatus,
@@ -121,7 +122,7 @@ export interface InMemoryLeagueWorld {
   /** One all-or-nothing unit over the tables above: a throw inside `run` rolls every table back. */
   transaction: MembershipTransaction;
   /** Every plan change logged, by `leagues.changePlan` or the move to Free, oldest first. */
-  planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changedById: string | null }>;
+  planChanges: Array<{ leagueId: string; fromPlan: LeaguePlan; toPlan: LeaguePlan; changeReason: LeaguePlanChangeReason; changedById: string | null }>;
   /** Every renewal date move the extend methods logged, oldest first. */
   planRenewalChanges: Array<{ leagueId: string; fromRenewsAt: Date; toRenewsAt: Date; changedById: string }>;
   tables: {
@@ -229,7 +230,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       if (leagues.get(leagueId)?.plan !== change.fromPlan) {
         return null;
       }
-      logPlanChange({ leagueId, ...change }, new Date());
+      logPlanChange({ leagueId, ...change, changeReason: LeaguePlanChangeReason.CHOSEN }, new Date());
       return leagues.patch(leagueId, { plan: change.toPlan });
     },
     extendPlanRenewal: async (leagueId, change) => {
@@ -242,7 +243,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       }
       planRenewalChanges.push({ leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById });
       if (change.restorePlan !== undefined && league.plan === change.restorePlan.fromPlan) {
-        logPlanChange({ leagueId, ...change.restorePlan, changedById: change.changedById }, new Date());
+        logPlanChange({ leagueId, ...change.restorePlan, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: change.changedById }, new Date());
         return leagues.patch(leagueId, { planRenewsAt: change.renewsAt, plan: change.restorePlan.toPlan });
       }
       return leagues.patch(leagueId, { planRenewsAt: change.renewsAt });
@@ -257,8 +258,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     findLastPlanChange: async (leagueId) => {
       for (let index = planChanges.length - 1; index >= 0; index -= 1) {
-        const { leagueId: changedLeagueId, fromPlan, toPlan, changedById } = planChanges[index];
-        if (changedLeagueId === leagueId) return { fromPlan, toPlan, changedById, changedAt: planChangeTimes[index] };
+        const { leagueId: changedLeagueId, ...change } = planChanges[index];
+        if (changedLeagueId === leagueId) return { ...change, changedAt: planChangeTimes[index] };
       }
       return null;
     },
@@ -268,7 +269,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     moveEndedPlansToFree: async (now) => leagues
       .where((row) => row.plan !== LeaguePlan.FREE && row.planRenewsAt <= now)
       .map((league) => {
-        logPlanChange({ leagueId: league.id, fromPlan: league.plan, toPlan: LeaguePlan.FREE, changedById: null }, now);
+        logPlanChange({ leagueId: league.id, fromPlan: league.plan, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null }, now);
         leagues.patch(league.id, { plan: LeaguePlan.FREE });
         return { leagueId: league.id, fromPlan: league.plan };
       }),

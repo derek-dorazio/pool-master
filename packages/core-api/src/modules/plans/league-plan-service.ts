@@ -15,7 +15,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository } from '@poolmaster/shared/db';
-import { LeaguePlan, type League } from '@poolmaster/shared/domain';
+import { LeaguePlanChangeReason, type League, type LeaguePlan } from '@poolmaster/shared/domain';
 import { LeagueNotFoundError, LeagueOperationError } from '../leagues/service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
@@ -89,11 +89,10 @@ export class LeaguePlanService {
     const { leagues, logger } = this.deps;
     const renewsAt = addMonths(this.now(), months);
     logger?.debug({ action: 'leaguePlan.extend.enter', data: { leagueId, months } }, 'Extending league plan renewal');
-    const [league, lastChange] = await Promise.all([leagues.findById(leagueId), leagues.findLastPlanChange(leagueId)]);
-    // The end of the gift is the one change made by no one, on or after the league's date.
-    const endedGift = league !== null && lastChange !== null && lastChange.changedById === null
-      && lastChange.toPlan === LeaguePlan.FREE && lastChange.changedAt >= league.planRenewsAt;
-    const restorePlan = endedGift ? { fromPlan: lastChange.toPlan, toPlan: lastChange.fromPlan } : undefined;
+    const lastChange = await leagues.findLastPlanChange(leagueId);
+    const restorePlan = lastChange?.changeReason === LeaguePlanChangeReason.PREVIEW_ENDED
+      ? { fromPlan: lastChange.toPlan, toPlan: lastChange.fromPlan }
+      : undefined;
     const updated = await leagues.extendPlanRenewal(leagueId, { renewsAt, changedById, restorePlan });
     if (!updated) {
       logger?.warn({ action: 'leaguePlan.extend.notFound', data: { leagueId } }, 'Cannot extend the plan of a missing league');
