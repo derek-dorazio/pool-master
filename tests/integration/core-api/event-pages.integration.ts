@@ -70,6 +70,61 @@ describe('Seeded event pages', () => {
   });
 });
 
+describe('Event page offers', () => {
+  /** A throwaway golf page with the seeded Clutch Card's league and a copy of its template, removed after. */
+  async function scratchPage(templateActive: boolean) {
+    const prisma = getPrisma();
+    const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { slug: 'championship-weekend' } }, include: { template: true } });
+    const template = seeded.template;
+    const copy = await prisma.contestConfigTemplate.create({
+      data: {
+        sport: template.sport,
+        sportLeagueId: template.sportLeagueId,
+        contestFormat: template.contestFormat,
+        selectionType: template.selectionType,
+        templateKey: `event-page-${randomUUID()}`,
+        name: template.name,
+        description: template.description,
+        sortOrder: template.sortOrder,
+        active: templateActive,
+        configJson: template.configJson ?? {},
+      },
+    });
+    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, slug: `scratch-${randomUUID()}`, displayOrder: 999 } });
+    const offer = (sortOrder: number, isPrimary: boolean) => prisma.eventPageOffer.create({
+      data: { eventPageId: page.id, sportLeagueId: seeded.sportLeagueId, eventSeriesName: 'Scratch', templateId: copy.id, sortOrder, isPrimary },
+    });
+    const remove = async () => {
+      await prisma.eventPage.delete({ where: { id: page.id } });
+      await prisma.contestConfigTemplate.delete({ where: { id: copy.id } });
+    };
+    return { page, offer, remove };
+  }
+
+  it('refuses a second primary offer on one page, so one edition alone heads it', async () => {
+    const { offer, remove } = await scratchPage(true);
+    try {
+      await offer(1, true);
+      await offer(2, false);
+
+      await expect(offer(3, true)).rejects.toThrow();
+    } finally {
+      await remove();
+    }
+  });
+
+  it('leaves out an offer whose setup is inactive, as Create contest refuses it', async () => {
+    const { page, offer, remove } = await scratchPage(false);
+    try {
+      await offer(1, true);
+
+      expect(await new PrismaEventPageRepository(getPrisma()).findOffers([page.id])).toEqual([]);
+    } finally {
+      await remove();
+    }
+  });
+});
+
 describe('PrismaEventPageRepository.findEditionsNotOver', () => {
   it('reads the edition under way first, then the rest soonest first, leaving out finished ones', async () => {
     const prisma = getPrisma();

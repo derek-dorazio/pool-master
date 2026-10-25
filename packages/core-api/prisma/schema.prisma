@@ -1421,7 +1421,8 @@ model EventPageOffer {
   bracketStartRound Int?     @map("bracket_start_round")
   /// Where the offer sits on its page, first first.
   sortOrder         Int      @map("sort_order")
-  /// The offer whose edition heads the page: its dates are the page's. One per page.
+  /// The offer whose edition heads the page: its dates are the page's. One per page at most (a
+  /// partial unique index the migration adds, which Prisma cannot declare).
   isPrimary         Boolean  @default(false) @map("is_primary")
   createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz

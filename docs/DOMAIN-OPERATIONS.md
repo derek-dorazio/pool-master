@@ -814,7 +814,7 @@ A public page for one event a fan would name, Championship Weekend at
 `/play/american-football/championship-weekend` (#1007, `plans/event-landing-pages.md`). A
 curated grouping, not a series: its `EventPageOffer` rows each name a contest template on one
 sport league's series, by name, with an optional bracket starting round, a sort order and one
-primary offer, whose edition heads the page. Unique on `(sport, slug)`; the slug is stored and
+primary offer, whose edition heads the page (at most one per page, by a partial unique index). Unique on `(sport, slug)`; the slug is stored and
 checked by the table against `isEventPageSlug`. Migration-seeded reference data like the
 templates: there is no write operation. A retired page has `isActive` false and an optional
 `redirectToPageId`.
@@ -822,7 +822,7 @@ templates: there is no write operation. A retired page has `isActive` false and 
 | Operation | Role | Notes |
 |---|---|---|
 | List | `public` | `listEventPages`, optionally by `sport`: the active pages with their offers, for How to Play's Coming up row |
-| Read one | `public` | `getEventPage` by sport and slug, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. Each offer carries its series' next edition still able to take the contest (the one under way, else the soonest upcoming) and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`); an offer with no such edition is left out. A retired page has no offers |
+| Read one | `public` | `getEventPage` by sport and slug, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. Each offer carries its series' next edition still able to take the contest (the one under way, else the soonest upcoming) and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`); an offer with no such edition, or whose template is inactive (Create contest refuses one), is left out. A retired page has no offers. An exception to #431: an edition still `DRAFT` shows its name and dates on the public page, as `NOT_YET`, so a fan learns when the event opens before a root admin releases it; nothing else of a draft event is shown |
 
 ### Contest
 

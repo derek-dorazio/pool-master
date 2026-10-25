@@ -37,6 +37,8 @@ CREATE UNIQUE INDEX "event_pages_sport_slug_key" ON "event_pages"("sport", "slug
 CREATE UNIQUE INDEX "event_page_offers_event_page_id_sort_order_key" ON "event_page_offers"("event_page_id", "sort_order");
 CREATE INDEX "event_page_offers_sport_league_id_idx" ON "event_page_offers"("sport_league_id");
 CREATE INDEX "event_page_offers_template_id_idx" ON "event_page_offers"("template_id");
+-- A page heads with one offer at most: its primary, whose edition dates the page.
+CREATE UNIQUE INDEX "event_page_offers_one_primary_key" ON "event_page_offers"("event_page_id") WHERE "is_primary";
 
 ALTER TABLE "event_pages" ADD CONSTRAINT "event_pages_redirect_to_page_id_fkey" FOREIGN KEY ("redirect_to_page_id") REFERENCES "event_pages"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 ALTER TABLE "event_page_offers" ADD CONSTRAINT "event_page_offers_event_page_id_fkey" FOREIGN KEY ("event_page_id") REFERENCES "event_pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
