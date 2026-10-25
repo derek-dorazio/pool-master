@@ -255,4 +255,13 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     expandedBy: 'Sam Commissioner',
     contestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/contest-1',
   },
+  LEAGUE_PLAN_PREVIEW_ENDING: {
+    userName: 'Casey Commissioner',
+    leagueName: 'Office League',
+    daysLeft: 7,
+    endsAt: new Date('2027-04-24T18:30:00.000Z'),
+    freeEntriesPerContest: 20,
+    freeSportsLeaguesPerYear: 5,
+    planUrl: 'http://localhost:5173/league/OFFICE24/admin/plan',
+  },
 };

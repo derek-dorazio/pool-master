@@ -325,6 +325,73 @@ describe('League plans', () => {
       .toEqual([expect.objectContaining({ fromRenewsAt: movedMeanwhile, toRenewsAt: later })]);
   });
 
+  it('moves every league whose preview period has ended to Free, logged as made by no one, once, leaving a running gift alone', async () => {
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const { league: ended } = await createLeague();
+    const { league: running } = await createLeague();
+    const now = new Date();
+    await getPrisma().league.update({ where: { id: ended.id }, data: { planRenewsAt: new Date(now.getTime() - 60_000) } });
+
+    const moved = await repo.moveEndedPlansToFree(now);
+    const again = await repo.moveEndedPlansToFree(now);
+
+    expect(moved).toContainEqual({ leagueId: ended.id, fromPlan: LeaguePlan.PREMIUM });
+    expect(moved.map((league) => league.leagueId)).not.toContain(running.id);
+    expect(again.map((league) => league.leagueId)).not.toContain(ended.id);
+    expect((await getPrisma().league.findUniqueOrThrow({ where: { id: ended.id } })).plan).toBe(LeaguePlan.FREE);
+    expect((await getPrisma().league.findUniqueOrThrow({ where: { id: running.id } })).plan).toBe(LeaguePlan.PREMIUM);
+    expect(await getPrisma().leaguePlanChange.findMany({ where: { leagueId: ended.id } }))
+      .toEqual([expect.objectContaining({ fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null })]);
+    expect(await getPrisma().leaguePlanChange.count({ where: { leagueId: running.id } })).toBe(0);
+  });
+
+  it('leaves an ended league on its plan when an extension holding it commits while the move to Free waits', async () => {
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const { league } = await createLeague();
+    const now = new Date();
+    await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(now.getTime() - 60_000) } });
+    let release: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    let extended: () => void = () => undefined;
+    const extendedSignal = new Promise<void>((resolve) => { extended = resolve; });
+
+    const holder = getPrisma().$transaction(async (tx) => {
+      await tx.league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(now.getTime() + 90 * 24 * 60 * 60_000) } });
+      extended();
+      await held;
+    });
+    await extendedSignal;
+    const move = repo.moveEndedPlansToFree(now);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    release();
+    await holder;
+
+    expect((await move).map((moved) => moved.leagueId)).not.toContain(league.id);
+    expect((await getPrisma().league.findUniqueOrThrow({ where: { id: league.id } })).plan).toBe(LeaguePlan.PREMIUM);
+    expect(await getPrisma().leaguePlanChange.count({ where: { leagueId: league.id } })).toBe(0);
+  });
+
+  it('finds the active leagues not on Free whose preview period ends within the window, soonest first, for the reminders', async () => {
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const now = new Date();
+    const at = (days: number) => new Date(now.getTime() + days * 24 * 60 * 60_000);
+    const { league: inWeek } = await createLeague();
+    const { league: tomorrow } = await createLeague();
+    const { league: free } = await createLeague();
+    const { league: inactive } = await createLeague();
+    const { league: later } = await createLeague();
+    await getPrisma().league.update({ where: { id: inWeek.id }, data: { planRenewsAt: at(7) } });
+    await getPrisma().league.update({ where: { id: tomorrow.id }, data: { planRenewsAt: at(1), plan: LeaguePlan.PRO } });
+    await getPrisma().league.update({ where: { id: free.id }, data: { planRenewsAt: at(2), plan: LeaguePlan.FREE } });
+    await getPrisma().league.update({ where: { id: inactive.id }, data: { planRenewsAt: at(2), isActive: false } });
+    await getPrisma().league.update({ where: { id: later.id }, data: { planRenewsAt: at(40) } });
+    const mine = new Set([inWeek.id, tomorrow.id, free.id, inactive.id, later.id]);
+
+    const ending = await repo.findPlansEndingBetween(now, at(31));
+
+    expect(ending.filter((league) => mine.has(league.id)).map((league) => league.id)).toEqual([tomorrow.id, inWeek.id]);
+  });
+
   it('refuses a commissioner extending every gift with 403', async () => {
     const { commissioner } = await createLeague();
 

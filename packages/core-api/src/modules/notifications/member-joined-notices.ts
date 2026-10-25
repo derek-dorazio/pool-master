@@ -27,11 +27,10 @@ import {
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
+import { easternDateOf, easternDayOf } from './overnight-day';
 
 /** The first this many joins of a league's day are told at once; the rest wait for the next day. */
 const AT_ONCE_PER_DAY = 3;
-/** Joins are counted by day in this zone, the one every scheduled email uses. */
-const DAY_TIME_ZONE = 'America/New_York';
 /** Far enough back to cover all of yesterday in US Eastern time. */
 const LOOKBACK_MS = 72 * 60 * 60_000;
 const DAY_MS = 24 * 60 * 60_000;
@@ -52,17 +51,6 @@ export interface MemberJoinedNoticeDeps extends LeagueMemberDeps {
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   appBaseUrl: string;
   logger?: FastifyBaseLogger;
-}
-
-/** `instant`'s date in US Eastern time, as YYYY-MM-DD. */
-function easternDateOf(instant: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: DAY_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(instant);
-}
-
-/** Today's date in US Eastern time, as YYYY-MM-DD, once `hour` has come there; otherwise null. */
-function easternDayOf(now: Date, hour: number): string | null {
-  const easternHour = Number(new Intl.DateTimeFormat('en-US', { timeZone: DAY_TIME_ZONE, hour: '2-digit', hourCycle: 'h23' }).format(now));
-  return easternHour < hour ? null : easternDateOf(now);
 }
 
 /** The at-once email's outbox subject for one join: the membership and when it joined, as a rejoin is a new join. */
