@@ -100,7 +100,8 @@ export interface UserRepository {
    *
    * Login accepts either, so "is this string taken" is one question rather than two. Each
    * column is `@unique` on its own, so one account's email and another's username can both
-   * match (two renames racing make it); this returns one of them. Written out by hand in FOUR
+   * match (two renames racing make it); the account whose email it is wins (#1028), so login
+   * and a reset reach the address's owner. Written out by hand in FOUR
    * places before #202: `auth-service`'s login, its registration collision check, and
    * `account/service`'s two near-identical email- and username-availability checks.
    */

@@ -179,7 +179,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       return users.where((row) => userIds.has(row.id));
     },
     findByIdentifier: async (identifier) =>
-      one(users.where((row) => row.email === identifier || row.username === identifier)),
+      one(users.where((row) => row.email === identifier)) ?? one(users.where((row) => row.username === identifier)),
     findHolderOtherThan: async (identifier, exceptUserId) =>
       one(users.where((row) => row.id !== exceptUserId && (row.email === identifier || row.username === identifier))),
     countActiveRootAdmins: async () =>
