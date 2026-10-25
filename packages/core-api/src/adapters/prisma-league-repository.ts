@@ -180,7 +180,8 @@ export class PrismaLeagueRepository implements LeagueRepository {
       }
       await tx.league.updateMany({ where: { id: { in: ended.map((league) => league.id) } }, data: { plan: 'FREE' } });
       await tx.leaguePlanChange.createMany({
-        data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changedById: null })),
+        // Stamped with the sweep's own time, the one the leagues were picked by.
+        data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changedById: null, changedAt: now })),
       });
       return ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan }));
     });

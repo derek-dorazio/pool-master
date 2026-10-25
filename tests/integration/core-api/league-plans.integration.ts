@@ -388,6 +388,18 @@ describe('League plans', () => {
     expect(await getPrisma().leaguePlanChange.count({ where: { leagueId: running.id } })).toBe(0);
   });
 
+  it('stamps each move to Free with the time the sweep picked the league by, not the database clock', async () => {
+    const repo = new PrismaLeagueRepository(getPrisma());
+    const { league } = await createLeague();
+    const sweptAt = new Date(Date.now() - 60 * 60_000);
+    await getPrisma().league.update({ where: { id: league.id }, data: { planRenewsAt: new Date(sweptAt.getTime() - 60_000) } });
+
+    await repo.moveEndedPlansToFree(sweptAt);
+
+    expect(await getPrisma().leaguePlanChange.findMany({ where: { leagueId: league.id } }))
+      .toEqual([expect.objectContaining({ toPlan: LeaguePlan.FREE, changedAt: sweptAt })]);
+  });
+
   it('leaves an ended league on its plan when an extension holding it commits while the move to Free waits', async () => {
     const repo = new PrismaLeagueRepository(getPrisma());
     const { league } = await createLeague();
