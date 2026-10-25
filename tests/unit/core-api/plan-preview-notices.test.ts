@@ -98,10 +98,14 @@ describe('PlanPreviewNotices', () => {
     expect(reminders()).toHaveLength(0);
   });
 
-  it('sends only the most urgent reminder due when earlier ones were missed', async () => {
-    await notices().service.queueDue(overnight('04-20'));
+  it('sends only the most urgent reminder due when earlier ones were missed, saying the days really left', async () => {
+    const { service } = notices();
 
-    expect(reminders().map((row) => row.subject)).toEqual(['Office Pool\'s Premium preview period ends in 7 days']);
+    await service.queueDue(overnight('04-20'));
+    await service.queueDue(overnight('04-21'));
+
+    expect(reminders().map((row) => row.subject)).toEqual(['Office Pool\'s Premium preview period ends in 4 days']);
+    expect(expectDefined(reminders()[0]).textBody).toContain('The preview period ends in 4 days');
   });
 
   it('starts the reminders over for the new date when the preview period is extended', async () => {

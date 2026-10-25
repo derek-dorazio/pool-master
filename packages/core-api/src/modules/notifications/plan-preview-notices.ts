@@ -7,9 +7,10 @@
  * once the overnight hour (EMAIL_CONFIG.weeklyDigestHour, 3am Eastern by default) has come, on the
  * day that is 30, 7 or 1 days, counted in US Eastern dates, before the renewal date. A league that
  * missed one (its sweep was down, or a root admin set the date sooner) gets only the most urgent
- * one due. Each reminder goes once per league and renewal date, its outbox idempotency key being
- * the date, the reminder and the league, so a root admin extending the gift starts the reminders
- * over for the new date. The move to Free follows the reminders on every sweep.
+ * one due, saying the days really left. Each reminder goes once per league and renewal date, its
+ * outbox idempotency key being the date, the reminder and the league, so a root admin extending
+ * the gift starts the reminders over for the new date. The move to Free follows the reminders on
+ * every sweep.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -78,11 +79,12 @@ export class PlanPreviewNotices implements DueNotifications {
     if (today === null) return;
     const due = (await this.deps.leagues.findPlansEndingBetween(now, new Date(now.getTime() + LOOKAHEAD_MS)))
       .flatMap((league) => {
-        const days = reminderFor(daysBetween(today, easternDateOf(league.planRenewsAt)));
-        return days === null ? [] : [{ league, days, about: reminderAbout(league.planRenewsAt, days) }];
+        const daysLeft = daysBetween(today, easternDateOf(league.planRenewsAt));
+        const days = reminderFor(daysLeft);
+        return days === null ? [] : [{ league, days, daysLeft, about: reminderAbout(league.planRenewsAt, days) }];
       });
     const sent = new Map<string, Set<string>>();
-    for (const { league, days, about } of due) {
+    for (const { league, days, daysLeft, about } of due) {
       try {
         let told = sent.get(about);
         if (told === undefined) {
@@ -90,7 +92,7 @@ export class PlanPreviewNotices implements DueNotifications {
           sent.set(about, told);
         }
         if (told.has(league.id)) continue;
-        await this.send(league, days, `${about}:${league.id}`);
+        await this.send(league, daysLeft, `${about}:${league.id}`);
       } catch (error) {
         this.deps.logger?.error({
           action: 'email.planPreviewEnding.failed',
@@ -100,7 +102,7 @@ export class PlanPreviewNotices implements DueNotifications {
     }
   }
 
-  private async send(league: League, daysLeft: PlanPreviewReminderDays, about: string): Promise<void> {
+  private async send(league: League, daysLeft: number, about: string): Promise<void> {
     const free = this.deps.planEntitlements.forPlan(LeaguePlan.FREE).caps;
     const planUrl = buildLeaguePlanUrl(this.deps.appBaseUrl, league.leagueCode);
     const members = await activeLeagueMembersWithRoles(this.deps, league.id);

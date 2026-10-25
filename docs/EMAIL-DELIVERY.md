@@ -532,7 +532,7 @@ Premium preview period ends: 30, 7 and 1 days before `planRenewsAt`, counted in 
 dates, once `weeklyDigestHour` has come. It says when the preview period ends (in the reader's
 zone), what Free allows (`PLAN_CONFIG`'s Free caps), that nothing is deleted, and links to the
 league's Plan page; the last one says it ends tomorrow. Only active leagues not on Free get it. A
-league that missed one gets only the most urgent one due. The idempotency key (renewal date,
+league that missed one gets only the most urgent one due, with the days really left. The idempotency key (renewal date,
 reminder, league, person) sends each once, and a root admin extending the gift starts them over
 for the new date. The same sweep then moves every league whose date has passed to Free
 (`docs/DOMAIN-OPERATIONS.md`). No email follows the move itself (`plans/payments.md` Q9).

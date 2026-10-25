@@ -524,8 +524,8 @@ export type PlanPreviewReminderDays = (typeof PLAN_PREVIEW_REMINDER_DAYS)[number
 export interface LeaguePlanPreviewEndingEmailData {
   userName: string;
   leagueName: string;
-  /** Which reminder this is: the days left until the preview period ends. */
-  daysLeft: PlanPreviewReminderDays;
+  /** The days left until the preview period ends, counted in US Eastern dates: 30, 7 or 1, or fewer for a missed reminder. */
+  daysLeft: number;
   /** When the preview period ends and the league moves to Free: its renewal date. */
   endsAt: Date;
   /** Free's limits; null for one Free doesn't limit. */
