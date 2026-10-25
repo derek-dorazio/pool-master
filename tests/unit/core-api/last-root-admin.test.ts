@@ -24,6 +24,11 @@ function quietNotifier(): PasswordChangedNotifier {
   return stubInstance(PasswordChangedNotifier, { notify: jest.fn() });
 }
 
+/** Tells nobody of an email change: the email and its undo link are tested on their own. */
+function quietEmailChanged() {
+  return { tellOldAddress: jest.fn(() => Promise.resolve()) };
+}
+
 function buildUser(id: string, overrides: Partial<User> = {}): User {
   return {
     id,
@@ -80,7 +85,7 @@ function createUserWorld(seed: User[]) {
   };
 
   return {
-    service: new UserService(users, asPrismaClient(prisma), quietNotifier()),
+    service: new UserService(users, asPrismaClient(prisma), quietNotifier(), quietEmailChanged()),
     row: (id: string) => rows.get(id),
   };
 }

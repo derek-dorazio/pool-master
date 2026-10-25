@@ -200,6 +200,7 @@ enum PrismaEmailTemplateKey {
   YEAR_IN_REVIEW
   LEAGUE_MEMBER_JOINED
   CONTEST_EXPANDED
+  EMAIL_CHANGED
   LEAGUE_PLAN_PREVIEW_ENDING
 }
 
@@ -604,6 +605,7 @@ model User {
   squaresDrawn             ContestSquaresDraw[]
   refreshTokens            RefreshToken[]
   passwordResetTokens      PasswordResetToken[]
+  emailChangeUndoTokens    EmailChangeUndoToken[]
   emailMessages            EmailMessage[]
   emailOptOuts             EmailOptOut[]
   leaguePlanChanges        LeaguePlanChange[]        @relation("LeaguePlanChangedBy")
@@ -645,6 +647,25 @@ model PasswordResetToken {
 
   @@index([userId, createdAt])
   @@map("password_reset_tokens")
+}
+
+/// The "put my address back" link in the email an account's old address gets when its email
+/// changes (#903 A5). Stored only as the token's SHA-256, usable once, live for 7 days.
+model EmailChangeUndoToken {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  tokenHash   String    @unique @map("token_hash") @db.Char(64)
+  /// The address the link puts back.
+  oldEmail    String    @map("old_email")
+  expiresAt   DateTime  @map("expires_at") @db.Timestamptz
+  usedAt      DateTime? @map("used_at") @db.Timestamptz
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("email_change_undo_tokens")
 }
 
 // =============================================================================

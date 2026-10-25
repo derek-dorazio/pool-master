@@ -68,6 +68,9 @@ const PUBLIC_ROUTES = new Set([
   // whether or not an account matches, and the confirm's token is its whole authority.
   'POST /api/v1/auth/password-reset/request',
   'POST /api/v1/auth/password-reset/confirm',
+  // #903 A5 — putting back an old email address is for someone whose account was taken over;
+  // the token from the email to that address is its whole authority.
+  'POST /api/v1/auth/email-change/undo',
   'POST /api/v1/client-logs',
   // #844 — SES delivery events, posted by Amazon SNS. The SNS signature and this environment's
   // topic are the whole authority; the route refuses anything else with 403.

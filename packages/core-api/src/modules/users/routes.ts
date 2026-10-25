@@ -28,6 +28,7 @@ import { UserService } from './user-service';
 import { PaymentHistoryService } from '../billing/payment-history-service';
 import { AuthService } from '../auth/auth-service';
 import { PasswordChangedNotifier } from '../auth/password-changed-notifier';
+import { EmailChangeUndoService } from '../auth/email-change-undo-service';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import type { EmailPreferencesService } from '../email/email-preferences-service';
 
@@ -73,10 +74,12 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
 
   const prisma = getAppPrisma(fastify);
   const users = new PrismaUserRepository(prisma);
+  const appBaseUrl = readApplicationBaseUrl(process.env);
   const service = new UserService(
     users,
     prisma,
-    new PasswordChangedNotifier(users, opts.email, readApplicationBaseUrl(process.env), fastify.log),
+    new PasswordChangedNotifier(users, opts.email, appBaseUrl, fastify.log),
+    new EmailChangeUndoService({ prisma, email: opts.email, appBaseUrl, logger: fastify.log }),
     fastify.log,
   );
   const authService = new AuthService(users, prisma, fastify.log);

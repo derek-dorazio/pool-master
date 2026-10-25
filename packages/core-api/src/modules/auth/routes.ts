@@ -8,11 +8,13 @@
  *   POST /logout          — Revoke refresh token
  *   POST /password-reset/request — Email a one-time reset link (#847)
  *   POST /password-reset/confirm — Set a new password with that link (#847)
+ *   POST /email-change/undo      — Put back an account's old email address (#903 A5)
  */
 
 import type { FastifyInstance } from 'fastify';
 import { AuthService } from './auth-service';
 import { PasswordResetService } from './password-reset-service';
+import { EmailChangeUndoService } from './email-change-undo-service';
 import { createAuthHandlers } from './handler';
 import { readApplicationBaseUrl, type MailModuleOptions } from '../email';
 import { getAppPrisma } from '../../core/prisma-context';
@@ -30,14 +32,16 @@ export function authModule(fastify: FastifyInstance, opts: MailModuleOptions): v
   const prisma = getAppPrisma(fastify);
   const users = new PrismaUserRepository(prisma);
   const authService = new AuthService(users, prisma, fastify.log);
+  const appBaseUrl = readApplicationBaseUrl(process.env);
   const passwordResetService = new PasswordResetService({
     users,
     prisma,
     email: opts.email,
-    appBaseUrl: readApplicationBaseUrl(process.env),
+    appBaseUrl,
     logger: fastify.log,
   });
-  const handlers = createAuthHandlers(authService, passwordResetService);
+  const emailChangeUndoService = new EmailChangeUndoService({ prisma, email: opts.email, appBaseUrl, logger: fastify.log });
+  const handlers = createAuthHandlers(authService, passwordResetService, emailChangeUndoService);
 
   // --- Registration ---
   fastify.post('/register', {
@@ -139,6 +143,25 @@ export function authModule(fastify: FastifyInstance, opts: MailModuleOptions): v
       },
     },
     handler: handlers.confirmPasswordReset,
+  });
+
+  // --- Undoing an email change (#903 A5) ---
+  fastify.post('/email-change/undo', {
+    schema: {
+      tags: ['Auth'],
+      summary: 'Put back an account\'s old email address',
+      description:
+        'Public; the token from the link in the "your email address was changed" email, sent to the old address, is the whole authority. Puts the old address back, replaces the password with a random one nobody knows (an account without a password stays without one), cancels the links from any later email change and the account\'s open reset links, and signs the account out on every device; the caller then resets the password, which now reaches the old address. The link works once and for 7 days. 400 EMAIL_CHANGE_UNDO_LINK_INVALID for a link that is unknown, used, cancelled or expired (one code for all four), 409 EMAIL_CHANGE_UNDO_ADDRESS_TAKEN when another account has the old address now, 429 EMAIL_CHANGE_UNDO_RATE_LIMITED when this address has tried too often in the last minute.',
+      operationId: 'undoEmailChange',
+      body: schemaRef('EmailChangeUndoRequest'),
+      response: {
+        200: schemaRef('SuccessResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        409: schemaRef('ErrorEnvelope'),
+        429: schemaRef('ErrorEnvelope'),
+      },
+    },
+    handler: handlers.undoEmailChange,
   });
 
   // #202 step 3.4 — `GET /auth/me` is gone. "Read a user" was one operation split two ways:

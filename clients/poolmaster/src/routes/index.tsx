@@ -3,6 +3,7 @@ import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { PublicPlansPage } from '@/features/plans/public-plans-page';
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';
 import { ResetPasswordPage } from '@/features/auth/reset-password-page';
+import { UndoEmailChangePage } from '@/features/auth/undo-email-change-page';
 import { EmailUnsubscribePage } from '@/features/account/email-unsubscribe-page';
 import { MyAccountPage } from '@/features/account/my-account-page';
 import { UserPage } from '@/features/account/user-page';
@@ -114,6 +115,10 @@ export const router = createBrowserRouter([
       {
         path: 'reset-password',
         element: <ResetPasswordPage />,
+      },
+      {
+        path: 'undo-email-change',
+        element: <UndoEmailChangePage />,
       },
       {
         path: 'email/unsubscribe',

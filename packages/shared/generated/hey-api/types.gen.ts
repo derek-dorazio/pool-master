@@ -468,6 +468,16 @@ export type PasswordResetConfirmRequest = {
 };
 
 /**
+ * Puts back the email address an account had before a change. The password is replaced with a random one and every session of the account is signed out.
+ */
+export type EmailChangeUndoRequest = {
+    /**
+     * The one-time token from the link in the email sent to the old address. It works once and for 7 days.
+     */
+    token: string;
+};
+
+/**
  * Successful authentication response returned after registration or login.
  */
 export type AuthResponse = {
@@ -576,7 +586,7 @@ export type TokenRefreshResponse = {
 /**
  * A system email template.
  */
-export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING';
+export type EmailTemplateKey = 'LEAGUE_MEMBER_INVITE' | 'LEAGUE_JOIN_SUCCESS' | 'SQUAD_OWNER_INVITE' | 'SQUAD_OWNER_ADDED' | 'CONTEST_ENTRY_COMPLETED' | 'CONTEST_STARTED_SUMMARY' | 'CONTEST_ENTRY_REMINDER' | 'CONTEST_OPENED' | 'CONTEST_STANDINGS' | 'CONTEST_RESULTS' | 'CONTEST_EVENT_CHANGED' | 'EVENT_COMING_UP' | 'EVENT_READY_FOR_CONTESTS' | 'CONTEST_NOT_OPEN' | 'EVENT_STILL_DRAFT' | 'PASSWORD_RESET' | 'PASSWORD_CHANGED' | 'EMAIL_CHANGED' | 'EMAIL_TEST' | 'YEAR_IN_REVIEW' | 'EVENT_WEEKLY_DIGEST' | 'LEAGUE_MEMBER_JOINED' | 'CONTEST_EXPANDED' | 'LEAGUE_PLAN_PREVIEW_ENDING';
 
 /**
  * Whether and how system email is sent.
@@ -24014,6 +24024,39 @@ export type ConfirmPasswordResetResponses = {
 };
 
 export type ConfirmPasswordResetResponse = ConfirmPasswordResetResponses[keyof ConfirmPasswordResetResponses];
+
+export type UndoEmailChangeData = {
+    body: EmailChangeUndoRequest;
+    path?: never;
+    query?: never;
+    url: '/api/v1/auth/email-change/undo';
+};
+
+export type UndoEmailChangeErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    429: ErrorEnvelope;
+};
+
+export type UndoEmailChangeError = UndoEmailChangeErrors[keyof UndoEmailChangeErrors];
+
+export type UndoEmailChangeResponses = {
+    /**
+     * Minimal success response envelope.
+     */
+    200: SuccessResponse;
+};
+
+export type UndoEmailChangeResponse = UndoEmailChangeResponses[keyof UndoEmailChangeResponses];
 
 export type ListUsersData = {
     body?: never;

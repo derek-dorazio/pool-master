@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthError, AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { createAuthHandlers } from '../../../packages/core-api/src/modules/auth/handler';
 import { PasswordResetService } from '../../../packages/core-api/src/modules/auth/password-reset-service';
+import { EmailChangeUndoService } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
 import { fakeLogger } from '../../support/fake-logger';
 import { stubInstance } from '../../support/stub-instance';
 
@@ -19,7 +20,7 @@ describe('auth handlers', () => {
       refresh: jest.fn(),
     });
 
-    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}));
+    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}), stubInstance(EmailChangeUndoService, {}));
     const reply = createReply();
     const logger = fakeLogger();
     const request = {
@@ -46,7 +47,7 @@ describe('auth handlers', () => {
       logout: jest.fn(),
     });
 
-    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}));
+    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}), stubInstance(EmailChangeUndoService, {}));
     const reply = createReply();
     const logger = fakeLogger();
     const request = {
@@ -69,7 +70,7 @@ describe('auth handlers', () => {
       login: jest.fn().mockRejectedValue(new AuthError('Invalid username, email, or password', 'INVALID_CREDENTIALS')),
     });
 
-    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}));
+    const handlers = createAuthHandlers(authService, stubInstance(PasswordResetService, {}), stubInstance(EmailChangeUndoService, {}));
     const reply = createReply();
     const logger = fakeLogger();
     const request = {
