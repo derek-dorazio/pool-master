@@ -10,6 +10,7 @@ import {
   resolveDefaultLeagueCode,
 } from './league-routing';
 import { useLeaguesQuery } from './use-leagues-query';
+import { ComingUpRow } from '@/features/event-pages/coming-up-row';
 
 export function WelcomePage() {
   const auth = useAuth();
@@ -47,7 +48,7 @@ export function WelcomePage() {
 
   if (!leagues?.length) {
     return (
-      <div data-testid="authenticated-landing">
+      <div className="space-y-8" data-testid="authenticated-landing">
         <EmptyState
           action={
             <>
@@ -78,6 +79,7 @@ export function WelcomePage() {
             auth.user?.lastName,
           )}.`}
         />
+        <ComingUpRow testId="welcome-coming-up" />
       </div>
     );
   }

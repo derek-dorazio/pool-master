@@ -11,6 +11,7 @@ import { FormatIllustration, SportIllustration, StepIllustration, type StepPictu
 import { SPORT_BLURBS } from './sport-blurbs';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_GUIDE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
+import { ComingUpRow } from '@/features/event-pages/coming-up-row';
 
 /** How a pool runs, in three steps, each with its picture. */
 const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string }[] = [
@@ -265,6 +266,8 @@ export function HowToPlayPage() {
           </li>
         ))}
       </ol>
+
+      <ComingUpRow key={chosenSport?.sport ?? 'all'} sport={chosenSport?.sport} testId="how-to-play-coming-up" />
 
       {templatesQuery.isLoading || sportLeaguesQuery.isLoading ? (
         <LoadingState body="Loading the ways to play..." />
