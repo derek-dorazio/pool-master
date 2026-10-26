@@ -43,7 +43,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Adds a module, port, adapter, mapper, or has one module call another | `architecture-rules.md` §5 *Project Structure and Layer Boundaries*, §4 *Service Topology* (there is no event bus; modules call each other's services) |
 | Defines product behavior, use cases, or screens | `poolmaster-webapp-rules.md`, `ux-rules.md` |
 | Changes process, plans, tracker state, or rules themselves | `workflow-rules.md` — §0 *Document Lifecycle*, §6 *Branching, Review, Merge*; `working-style.md` |
-| Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push* |
+| Touches CI, deployment, or infrastructure | `architecture-rules.md`, `workflow-rules.md` §3 *Required Local Validation Before Push*; a Terraform change also `workflow-rules.md` §6 *Applying Terraform* and the `apply-terraform` skill |
 | Is iOS or Android work | `mobile-rules.md` — one React Native app with Expo, not built or scheduled |
 | Is a review of someone else's diff | `review-triggers.md` — §2 for what the author should have disclosed, §5 *Reviewing for performance cost* when the diff has a performance surface |
 
@@ -80,6 +80,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `fix-broken-ci` | CI is red: find the run that matters, match the known causes, fix the cause |
 | `land-a-pr` | Merging an approved, green PR: trial-merge main, settle generated files and migrations, re-run lint, squash with the right closing keywords, close out |
 | `run-local-stack` | Running the whole app in an agent's container with test data, for screenshots, phone-width reviews or the browser E2E suite |
+| `apply-terraform` | A change under `infrastructure/terraform` needs applying to an environment: the copy-paste steps the owner runs on their machine, and the post-check |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
 and skills cite it as `rules/<file>.md §N *Section Name*`. A skill must not point at a plan,
