@@ -262,6 +262,25 @@ describe('identity cluster repositories (#202)', () => {
       expect(found?.id).toBe(created.user.id);
     });
 
+    it.each([
+      ['the email holder was created first', 'email-first'],
+      ['the username holder was created first', 'username-first'],
+    ] as const)('returns the account whose EMAIL the identifier is, not the one whose username it is, when %s', async (_order, order) => {
+      // Both orders, so the answer can't come from the order Postgres happens to return rows in.
+      const repo = new PrismaUserRepository(getPrisma());
+      const shared = `both${order}${Date.now().toString(36)}@integration.test`;
+      const createEmailHolder = () => createTestUser({ email: shared, username: `email-holder-${shared}` });
+      const createUsernameHolder = () => createTestUser({ username: shared });
+      const [first, second] = order === 'email-first'
+        ? [createEmailHolder, createUsernameHolder]
+        : [createUsernameHolder, createEmailHolder];
+      const firstCreated = await first();
+      const secondCreated = await second();
+      const emailHolder = order === 'email-first' ? firstCreated : secondCreated;
+
+      await expect(repo.findByIdentifier(shared)).resolves.toMatchObject({ id: emailHolder.user.id });
+    });
+
     it('returns null for an identifier nobody holds', async () => {
       const repo = new PrismaUserRepository(getPrisma());
 

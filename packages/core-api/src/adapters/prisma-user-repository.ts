@@ -58,10 +58,12 @@ export class PrismaUserRepository implements UserRepository {
 
   async findByIdentifier(identifier: string): Promise<User | null> {
     // Each column is @unique on its own, so up to two rows can match: one by email, one by
-    // username.
-    const row = await this.prisma.user.findFirst({
+    // username. The email holder wins (#1028).
+    const rows = await this.prisma.user.findMany({
       where: { OR: [{ email: identifier }, { username: identifier }] },
+      take: 2,
     });
+    const row = rows.find((candidate) => candidate.email === identifier) ?? rows.at(0);
     return row ? mapToUser(row) : null;
   }
 

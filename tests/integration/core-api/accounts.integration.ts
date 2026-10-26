@@ -161,6 +161,22 @@ describe('login', () => {
     expect(await liveRefreshTokens(userId)).toBe(3);
   });
 
+  it("signs in the account whose EMAIL the identifier is, when another account has it as its username", async () => {
+    // Email and username are unique per column, so both can hold one string. The username
+    // holder's row is written first, so Postgres returns it first for the OR lookup. Both
+    // accounts have the same password, so only the account chosen tells them apart.
+    const usernameHolder = await signedIn();
+    const emailHolder = await signedIn();
+    const shared = newIdentity().email;
+    await getPrisma().user.update({ where: { id: usernameHolder.userId }, data: { username: shared } });
+    await getPrisma().user.update({ where: { id: emailHolder.userId }, data: { email: shared } });
+
+    const response = await login(shared);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json<AuthResponse>().user.id).toBe(emailHolder.userId);
+  });
+
   it('answers a wrong password and an unknown account with the same 401, so neither reveals the other', async () => {
     const { identity } = await signedIn();
 
