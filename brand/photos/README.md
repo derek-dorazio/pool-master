@@ -33,3 +33,9 @@ record its link before you use it.
 | Hockey | hockey/hockey-skates-puck-pexels-6557325.jpg | cottonbro, /photo/6557325/ | Backup, usable: the skate maker's mark is small |
 | Hockey | hockey/hockey-stick-puck-pexels-13978854.jpg | Luke Miller, /photo/13978854/ | Usable only cropped away from the CCM logos on the pants and socks |
 | Hockey | hockey/hockey-player-puck-pexels-8974846.jpg | Ron Lach, /photo/8974846/ | Not usable: Bauer and club logos, a sweater number |
+| Baseball | baseball/baseball-field-aerial-pexels-35556680.jpg | Vitaliy Haiduk, /photo/35556680/ | In use: baseball header, cropped away from the "GRANT" lettering |
+| Baseball | baseball/baseball-glove-mound-pexels-13800932.jpg | Pexels user 107012008, /photo/13800932/ | Usable only cropped away from the city's name on the outfield wall |
+| Baseball | baseball/baseball-batter-overhead-pexels-236985.jpg | Pixabay, /photo/236985/ | Not usable as is: readable sweater numbers |
+| Baseball | baseball/baseball-globe-life-park-pexels-264279.jpg | Pixabay, /photo/264279/ | Not usable: a named ballpark, team names and sponsor boards |
+| Baseball | baseball/baseball-stadium-aerial-pexels-13653328.jpg | lasfotosdepipe, /photo/13653328/ | Not usable: sponsor and team logos |
+| Baseball | baseball/baseball-sunset-stadium-pexels-1757433.jpg | Timo Volz, /photo/1757433/ | Not usable: Under Armour and team signage |
