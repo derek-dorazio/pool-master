@@ -19,8 +19,10 @@ look better and be more intuitive, closer to how we market contest types:
   is useful but not the headline.
 - Look at every template, not only "Coming soon" and "Ready for contests".
 
-Time zones (show times in the reader's zone, ET by default) are a separate thread; the mockups
-already show ET.
+Time zones are a separate thread ("Show times in user's time zone"). Derek decided there
+(2026-10-26) that emails sent days ahead show only the date, and only the 3-hours-before reminder
+shows a time, in the reader's zone (ET by default). The mockups follow that. That thread owns the
+date and time formatting in `system-email-templates.ts`; this redesign only places its output.
 
 ## What changes, in every email
 
@@ -28,7 +30,8 @@ already show ET.
    today's tall navy header with its tagline, so the email's own subject is what the reader
    sees first.
 2. **An event header** wherever an email is about one event: a picture, the sport league as an
-   eyebrow, the event name as the headline, and one line for when. This replaces the
+   eyebrow, the event name as the headline, and one line for when: the date, or a time only in
+   the 3-hours-before reminder. This replaces the
    Starts/Field table. The picture is the sport's How to Play scene (Q1).
 3. **Contest type tiles** wherever we offer setups: the type's How to Play picture, the type
    name, the setup in a few words, its one-line summary from How to Play, and a link. The whole
