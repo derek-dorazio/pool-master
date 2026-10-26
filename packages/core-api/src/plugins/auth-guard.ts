@@ -96,6 +96,10 @@ const PUBLIC_ROUTES = new Set([
   // settings alone, identical for every viewer and tied to no league or user, so a visitor
   // comparing plans before signing up may read it. A league's own plan still needs a session.
   'GET /api/v1/plans',
+  // #1007 — the event pages, read by the public event pages and How to Play's Coming up row.
+  // Migration-seeded reference data with the next editions of public sport events, identical for
+  // every viewer and tied to no league or user.
+  'GET /api/v1/event-pages',
 ]);
 
 const PUBLIC_ROUTE_PATTERNS = [
@@ -105,6 +109,8 @@ const PUBLIC_ROUTE_PATTERNS = [
   // exempted, so an invited stranger could not read it. Found while making the register route
   // public; the league invitation preview one line above was already handled this way.
   /^GET \/api\/v1\/team-invitations\/[^/?#]+$/,
+  // #1007 — one event page, by its sport and slug: public for the same reason as the list.
+  /^GET \/api\/v1\/event-pages\/[^/?#]+\/[^/?#]+$/,
 ];
 
 const PUBLIC_ROUTE_OPTIONAL_AUTH_PATTERNS = [

@@ -50,6 +50,7 @@ export { lockContestRow, lockContestRows } from './contest-row-lock';
 export { PrismaSquaresRepository } from './prisma-squares-repository';
 export { PrismaCupRepository } from './prisma-cup-repository';
 export { PrismaChampionshipRepository } from './prisma-championship-repository';
+export { PrismaEventPageRepository } from './prisma-event-page-repository';
 export { PrismaLeagueYearReviewRepository } from './prisma-league-year-review-repository';
 export { PrismaContestExpansionRepository } from './prisma-contest-expansion-repository';
 export { PrismaLeaguePaymentRepository } from './prisma-league-payment-repository';

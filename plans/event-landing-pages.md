@@ -289,6 +289,19 @@ Each has a recommendation; a one-word answer per number is enough.
    (d) link previews.
    Analytics is deferred (Q4) and promotional email is Later (Q5).
 
+## Build notes
+
+- **Slice (a), part 1 (#1007):** the tables, Championship Weekend's seed and the two public
+  reads. Championship Weekend launches alone; the Super Bowl and the calendar's other pages follow
+  as small seed-only migrations a few weeks before each event. Its Clutch Card offer names the
+  series its editions are loaded as, `Conference Championships`. The API takes the sport as its
+  enum value (`AMERICAN_FOOTBALL`); the web maps the URL's path segment to it. `bracket_start_round`
+  overrides the template's own starting round (the second-chance template starts at round 2; the
+  page's bracket at 3). An offer's state comes from `contestOpening`, which asks Create contest's
+  own checks as a question: past the cutoff leaves the offer out, and the next edition is tried.
+- **Slice (a), part 2:** the `/play` page, the Coming up rows, and an upcoming Championship Weekend
+  in the test data, so QA can click the whole path through.
+
 ## Later
 
 - The "News from Poolmaster" category, its sign-up form line and the sync to the email tool

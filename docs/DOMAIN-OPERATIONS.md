@@ -318,7 +318,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate` |
+| **Global** | `Sport`, `SportLeague`, `EventSeries`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `ParticipantLeagueAffiliation`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate`, `EventPage` and its offers |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -807,6 +807,22 @@ edition is released (see *Set events*). The PGA TOUR's "Majors pool" names the f
 |---|---|---|
 | List | `public` | `listContestConfigTemplates` (#245; public since #803, see A11). Every filter optional — `sport`, `sportLeagueId`, `eventType`, `active`; an `eventType` narrows to that type plus the templates for any event type, and a `sportLeagueId` to that league's templates plus the sport-wide ones, never another league's. The create flow asks for the chosen event's league and starts on that league's default over the sport-wide default. One read for the create flow, the How to Play and Contest types pages, and the root-admin screens |
 | Update | `rootAdmin` | `updateContestConfigTemplate`, `PUT /api/v1/contest-config-templates/:templateId`, guarded by `requireRootAdmin` like every other global-object write. Seeded rows only; there is no create or delete. The rules keep the template's selection type: a body of another type is 422 `CONTEST_CONFIG_TEMPLATE_RULES_MISMATCH` (#93). Only an active template can be the default: deactivating one clears it, and an inactive one cannot take it. Making one the default clears the default of the others with its sport, selection type, event type and sport league exactly, so each sport league keeps its own default for each format (#624, #802). Until #248 it was `adminUpdateContestConfigTemplate` under `/api/v1/admin`, the last route there |
+
+### EventPage — `event-pages`
+
+A public page for one event a fan would name, Championship Weekend at
+`/play/american-football/championship-weekend` (#1007, `plans/event-landing-pages.md`). A
+curated grouping, not a series: its `EventPageOffer` rows each name a contest template on one
+sport league's series, by name, with an optional bracket starting round, a sort order and one
+primary offer, whose edition heads the page (at most one per page, by a partial unique index). Unique on `(sport, slug)`; the slug is stored and
+checked by the table against `isEventPageSlug`. Migration-seeded reference data like the
+templates: there is no write operation. A retired page has `isActive` false and an optional
+`redirectToPageId`.
+
+| Operation | Role | Notes |
+|---|---|---|
+| List | `public` | `listEventPages`, optionally by `sport`: the active pages with their offers, for How to Play's Coming up row |
+| Read one | `public` | `getEventPage` by sport and slug, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. Each offer carries its series' next edition still able to take the contest (the one under way, else the soonest upcoming) and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`); an offer with no such edition, or whose template is inactive (Create contest refuses one), is left out. A retired page has no offers. An exception to #431: an edition still `DRAFT` shows its name and dates on the public page, as `NOT_YET`, so a fan learns when the event opens before a root admin releases it; nothing else of a draft event is shown |
 
 ### Contest
 

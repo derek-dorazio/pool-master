@@ -22,3 +22,4 @@ export * from './championship.mapper';
 export * from './history.mapper';
 export * from './email-test.mapper';
 export * from './billing.mapper';
+export * from './event-pages.mapper';

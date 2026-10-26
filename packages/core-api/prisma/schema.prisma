@@ -1065,6 +1065,7 @@ model SportLeague {
   eventSeries            EventSeries[]
   contestConfigTemplates ContestConfigTemplate[]
   cups                   Cup[]
+  eventPageOffers        EventPageOffer[]
 
   @@unique([sportId, name])
   @@map("sport_leagues")
@@ -1374,13 +1375,75 @@ model ContestConfigTemplate {
   createdAt        DateTime                        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime                        @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague    SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
-  configurations ContestConfiguration[]
+  sportLeague     SportLeague?           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
+  configurations  ContestConfiguration[]
+  eventPageOffers EventPageOffer[]
 
   @@unique([sport, eventType, contestFormat, selectionType, templateKey])
   @@index([sport, contestFormat, active, sortOrder])
   @@index([sportLeagueId])
   @@map("contest_config_templates")
+}
+
+/// A public event page (#1007, `plans/event-landing-pages.md`): one event a fan would name,
+/// "Championship Weekend", at /play/<sport>/<slug>. A curated grouping, not a series: its offers
+/// name the contest setups it starts, each on its own sport league's series. Reference data,
+/// seeded by migrations like contest templates, so every environment has the same pages.
+model EventPage {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sport            PrismaSport
+  /// The page's URL name within its sport: lower case letters and digits in words joined by
+  /// single dashes (`isEventPageSlug`, checked by the table too). Stored, never derived, and
+  /// evergreen: it names the page, not a year.
+  slug             String      @db.VarChar(100)
+  /// Where the page sits among its sport's pages wherever they are listed together (How to
+  /// Play's Coming up row). Lower comes first.
+  displayOrder     Int         @map("display_order")
+  /// False retires the page: its URL redirects to `redirectToPageId`, or says it has moved.
+  isActive         Boolean     @default(true) @map("is_active")
+  /// The page a retired page's URL now goes to; null when it has no successor.
+  redirectToPageId String?     @map("redirect_to_page_id") @db.Uuid
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  redirectTo   EventPage?       @relation("EventPageRedirect", fields: [redirectToPageId], references: [id], onDelete: Restrict)
+  redirectedBy EventPage[]      @relation("EventPageRedirect")
+  offers       EventPageOffer[]
+
+  @@unique([sport, slug])
+  @@map("event_pages")
+}
+
+/// One way to play on an event page (#1007): a contest setup on one sport league's series. The
+/// page shows it with the series' next edition, the one under way or else the soonest upcoming.
+model EventPageOffer {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventPageId       String   @map("event_page_id") @db.Uuid
+  sportLeagueId     String   @map("sport_league_id") @db.Uuid
+  /// The series, by name in its sport league, as a template's `eventSeriesNames` names one: the
+  /// series row is made when its first edition is, which may be after the page is seeded.
+  eventSeriesName   String   @map("event_series_name") @db.VarChar(255)
+  /// The contest setup the offer starts as (a template key alone is not unique).
+  templateId        String   @map("template_id") @db.Uuid
+  /// The round a bracket starts at, when not the template's own: the NFL bracket from the
+  /// conference round. Null: the template's starting round.
+  bracketStartRound Int?     @map("bracket_start_round")
+  /// Where the offer sits on its page, first first.
+  sortOrder         Int      @map("sort_order")
+  /// The offer whose edition heads the page: its dates are the page's. One per page at most (a
+  /// partial unique index the migration adds, which Prisma cannot declare).
+  isPrimary         Boolean  @default(false) @map("is_primary")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  eventPage   EventPage             @relation(fields: [eventPageId], references: [id], onDelete: Cascade)
+  sportLeague SportLeague           @relation(fields: [sportLeagueId], references: [id], onDelete: Restrict)
+  template    ContestConfigTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+
+  @@unique([eventPageId, sortOrder])
+  @@index([sportLeagueId])
+  @@index([templateId])
+  @@map("event_page_offers")
 }
 
 model ParticipantContestScoringRule {
