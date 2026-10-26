@@ -780,8 +780,6 @@ type EmailTemplateRegistry = {
   [Key in SystemEmailTemplateKey]: EmailTemplateDefinition<Key>;
 };
 
-const BRAND_NAME = PRODUCT_NAME;
-const BRAND_TAGLINE = PRODUCT_TAGLINE;
 /** System email has no Reply-To (#844), so a reply bounces; the footer says so. */
 const NOT_MONITORED = 'Replies to this email aren\'t read.';
 const STOP_THESE_EMAILS = 'Stop these emails';
@@ -806,7 +804,7 @@ export function hasSettingsSwitch(templateKey: SystemEmailTemplateKey): template
 }
 
 /** The app's sender name, for email that is not about one league. */
-export const PLATFORM_SENDER_NAME = BRAND_NAME;
+export const PLATFORM_SENDER_NAME = PRODUCT_NAME;
 
 export function renderSystemEmailTemplate<Key extends SystemEmailTemplateKey>(
   templateKey: Key,
@@ -1052,7 +1050,7 @@ function renderLeagueMemberInviteEmail(
   return buildMessage(context, {
     templateKey: 'LEAGUE_MEMBER_INVITE',
     subject,
-    preheader: `Join ${data.leagueName} on ${BRAND_NAME}.`,
+    preheader: `Join ${data.leagueName} on ${PRODUCT_NAME}.`,
     title: 'League invitation',
     bodyBlocks,
     textLines,
@@ -1096,7 +1094,7 @@ function renderLeagueJoinSuccessEmail(
   return buildMessage(context, {
     templateKey: 'LEAGUE_JOIN_SUCCESS',
     subject,
-    preheader: `Your ${BRAND_NAME} account is ready.`,
+    preheader: `Your ${PRODUCT_NAME} account is ready.`,
     title: 'You are in',
     bodyBlocks,
     textLines,
@@ -1151,7 +1149,7 @@ function renderContestExpandedEmail(
   data: ContestExpandedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? BRAND_NAME}.`;
+  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? PRODUCT_NAME}.`;
   return buildMessage(context, {
     templateKey: 'CONTEST_EXPANDED',
     subject: `${data.contestName} now takes ${data.entriesPerContest} entries`,
@@ -2072,13 +2070,13 @@ function renderPasswordResetEmail(
   data: PasswordResetEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const subject = `Reset your ${BRAND_NAME} password`;
+  const subject = `Reset your ${PRODUCT_NAME} password`;
   const expiryLine = `This link works once and expires in ${data.expiresInMinutes} minutes. `
     + "If you didn't ask for this, you can ignore this email. Your password won't change.";
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.firstName)},`),
     paragraph(
-      `We got a request to reset the password for your ${BRAND_NAME} account (${strong(data.username)}).`,
+      `We got a request to reset the password for your ${PRODUCT_NAME} account (${strong(data.username)}).`,
     ),
     button('Choose a new password', data.resetUrl),
     paragraph(escapeHtml(expiryLine)),
@@ -2086,7 +2084,7 @@ function renderPasswordResetEmail(
   const textLines = [
     `Hi ${data.firstName},`,
     '',
-    `We got a request to reset the password for your ${BRAND_NAME} account (${data.username}).`,
+    `We got a request to reset the password for your ${PRODUCT_NAME} account (${data.username}).`,
     '',
     `Choose a new password: ${data.resetUrl}`,
     '',
@@ -2107,8 +2105,8 @@ function renderPasswordChangedEmail(
   data: PasswordChangedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const subject = `Your ${BRAND_NAME} password was changed`;
-  const changedSentence = `The password for your ${BRAND_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context.timeZone)}.`;
+  const subject = `Your ${PRODUCT_NAME} password was changed`;
+  const changedSentence = `The password for your ${PRODUCT_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context.timeZone)}.`;
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.firstName)},`),
     paragraph(escapeHtml(changedSentence)),
@@ -2127,7 +2125,7 @@ function renderPasswordChangedEmail(
   return buildMessage(context, {
     templateKey: 'PASSWORD_CHANGED',
     subject,
-    preheader: `Your ${BRAND_NAME} password was changed.`,
+    preheader: `Your ${PRODUCT_NAME} password was changed.`,
     title: 'Password changed',
     bodyBlocks,
     textLines,
@@ -2138,12 +2136,12 @@ function renderEmailChangedEmail(
   data: EmailChangedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const subject = `Your ${BRAND_NAME} email address was changed`;
+  const subject = `Your ${PRODUCT_NAME} email address was changed`;
   const when = formatInstant(data.changedAt, context.timeZone);
   const changedSentence = data.changedBy === EmailChangedBy.ROOT_ADMIN
-    ? `A ${BRAND_NAME} admin changed the email address for your account (${data.username}) to ${data.newEmail} on ${when}.`
-    : `The email address for your ${BRAND_NAME} account (${data.username}) was changed to ${data.newEmail} on ${when}.`;
-  const lastEmailSentence = `${BRAND_NAME} sends everything to the new address now, so this is the last email to this one.`;
+    ? `A ${PRODUCT_NAME} admin changed the email address for your account (${data.username}) to ${data.newEmail} on ${when}.`
+    : `The email address for your ${PRODUCT_NAME} account (${data.username}) was changed to ${data.newEmail} on ${when}.`;
+  const lastEmailSentence = `${PRODUCT_NAME} sends everything to the new address now, so this is the last email to this one.`;
   const undoDays = data.undoDays === 1 ? '1 day' : `${String(data.undoDays)} days`;
   const undoSentence = `If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for ${undoDays}. It signs everyone out of your account and clears its password, and then you set a new one.`;
   const bodyBlocks = [
@@ -2167,7 +2165,7 @@ function renderEmailChangedEmail(
   return buildMessage(context, {
     templateKey: 'EMAIL_CHANGED',
     subject,
-    preheader: `Your ${BRAND_NAME} email address was changed to ${data.newEmail}.`,
+    preheader: `Your ${PRODUCT_NAME} email address was changed to ${data.newEmail}.`,
     title: 'Email address changed',
     bodyBlocks,
     textLines,
@@ -2178,7 +2176,7 @@ function renderEmailTestEmail(
   data: EmailTestEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const subject = `${BRAND_NAME} test email (${data.environment})`;
+  const subject = `${PRODUCT_NAME} test email (${data.environment})`;
   const sentSentence = `${data.requestedBy} sent this test from the ${data.environment} Email settings on ${formatInstant(data.requestedAt, context.timeZone)}.`;
   const workingSentence = 'It reached you, so email from this site is working.';
   return buildMessage(context, {
@@ -2267,8 +2265,8 @@ function buildMessage(context: EmailRenderContext, input: {
     templateKey: input.templateKey,
     subject: input.subject,
     text: [
-      BRAND_NAME,
-      BRAND_TAGLINE,
+      PRODUCT_NAME,
+      PRODUCT_TAGLINE,
       '',
       input.title,
       '',
@@ -2310,8 +2308,8 @@ function documentShell(input: {
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:${EMAIL_THEME.raised};border:1px solid ${EMAIL_THEME.border};border-radius:16px;overflow:hidden;">
             <tr>
               <td style="background:${EMAIL_THEME.navy};padding:28px 32px;color:#ffffff;">
-                <div style="font-family:Archivo,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${BRAND_NAME}</div>
-                <div style="margin-top:8px;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.72);">${BRAND_TAGLINE}</div>
+                <div style="font-family:Archivo,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}</div>
+                <div style="margin-top:8px;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.72);">${PRODUCT_TAGLINE}</div>
               </td>
             </tr>
             <tr>
@@ -2322,7 +2320,7 @@ function documentShell(input: {
             </tr>
             <tr>
               <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:rgba(255,255,255,0.70);font-size:12px;line-height:1.5;">
-                Sent by ${BRAND_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${unsubscribe}
+                Sent by ${PRODUCT_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${unsubscribe}
               </td>
             </tr>
           </table>
