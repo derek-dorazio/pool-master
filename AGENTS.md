@@ -72,7 +72,12 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `add-frontend-feature` | Building anything in `clients/poolmaster` |
 | `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
 | `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
+| `load-new-season` | Next season's schedules for every sport league at once: take stock of what has published, one file per sport, dry-run together, apply on the user's yes |
+| `clutch-card-round` | One playoff round's Clutch Card: load the event and both teams' stars when the matchups are announced, then each game's box score so standings settle |
 | `release-check` | Before a push or PR, and when a gate fails |
+| `fix-broken-ci` | CI is red: find the run that matters, match the known causes, fix the cause |
+| `land-a-pr` | Merging an approved, green PR: trial-merge main, settle generated files and migrations, re-run lint, squash with the right closing keywords, close out |
+| `run-local-stack` | Running the whole app in an agent's container with test data, for screenshots, phone-width reviews or the browser E2E suite |
 
 Each skill is a sequence and a set of traps. The authoritative policy stays in `rules/`,
 and skills cite it as `rules/<file>.md §N *Section Name*`. A skill must not point at a plan,
