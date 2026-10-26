@@ -4,20 +4,22 @@ import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { bindApiMocks } from '@/test/msw-api';
+import { championshipWeekendFixture } from '@/features/event-pages/event-page-test-fixtures';
 import { HowToPlayPage } from './how-to-play-page';
 
-const { authState, listContestConfigTemplatesMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
+const { authState, listContestConfigTemplatesMock, listEventPagesMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockImplementation(() => logger);
   return {
     authState: { isAuthenticated: false, isLoading: false, isRootAdmin: false, user: null },
     listContestConfigTemplatesMock: vi.fn(),
+    listEventPagesMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
-bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock, listSportLeagues: listSportLeaguesMock });
+bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock, listEventPages: listEventPagesMock, listSportLeagues: listSportLeaguesMock });
 
 vi.mock('@/features/auth/auth-context', () => ({ useAuth: () => authState }));
 
@@ -81,15 +83,26 @@ const SPORT_LEAGUES = [
 
 beforeEach(() => {
   listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: SPORT_LEAGUES } });
+  listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
 });
 
 afterEach(() => {
   listContestConfigTemplatesMock.mockReset();
   listSportLeaguesMock.mockReset();
+  listEventPagesMock.mockReset();
   authState.isAuthenticated = false;
 });
 
 describe('How to Play', () => {
+  it('zooms in on a chosen sport\'s coming events: a Coming up card per event page, linking to it', async () => {
+    listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
+    renderPage('/how-to-play?sport=american-football');
+
+    expect(await screen.findByTestId('how-to-play-coming-up-championship-weekend')).toHaveAttribute('href', '/play/american-football/championship-weekend');
+    expect(listEventPagesMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sport: 'AMERICAN_FOOTBALL' } }));
+  });
+
   it('shows a signed-out visitor the three steps, one card for each way to play a template offers, and a way to create an account', async () => {
     listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
     renderPage();
