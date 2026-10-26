@@ -106,6 +106,7 @@ import type { SportEventParticipantService } from '../events/sport-event-partici
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import {
+  emailRecipientOf,
   EntryReceiptKind,
   buildEntryUrl,
   formatUserName,
@@ -1318,7 +1319,7 @@ export class ContestService {
     for (const user of owners) {
       try {
         await email.send(templateKey, {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           // One receipt per submission of the entry in the event.
           about: `${entryId}:${sportEventId}:${entry.updatedAt.toISOString()}`,
           league: { id: entry.contest.leagueId, name: league.name, leagueCode: league.leagueCode, plan: league.plan },

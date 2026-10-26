@@ -123,7 +123,9 @@ from the browser at signup), or in US Eastern when they have none (#1039). An em
 ahead gives only the day ("Thu, Apr 9, 2026"); a time, with its zone named, appears only when it
 matters that day: the entry reminder sent less than a day before picks close, the commissioner's
 "contest isn't open yet" email, an event moved within its own day, and account emails that
-record when something happened.
+record when something happened. Dates and times are written in the recipient's locale and with
+their 12-hour or 24-hour clock, or en-US with the locale's own clock when they have none
+(#1055); `emailRecipientOf(user)` carries all three into a send.
 
 ### Layout and Pictures
 

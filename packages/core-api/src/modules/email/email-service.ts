@@ -15,15 +15,19 @@ import type {
   EmailSuppressionRepository,
 } from '@poolmaster/shared/db';
 import {
+  DEFAULT_DISPLAY_LOCALE,
   DEFAULT_DISPLAY_TIME_ZONE,
   EmailMessageStatus,
   EmailSkipReason,
   EmailTemplateKey,
+  isKnownLocale,
   isKnownTimeZone,
   isOptionalEmailCategory,
+  TimeFormat,
   type EmailMessage,
   type LeaguePlan,
   type OptionalEmailCategory,
+  type User,
 } from '@poolmaster/shared/domain';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type { MailAddress, MailDeliveryProviderName } from './mail-delivery';
@@ -46,6 +50,21 @@ export interface EmailRecipient {
   userId?: string;
   /** The recipient's IANA time zone, when they have one; dates are shown in US Eastern otherwise. */
   timeZone?: string | null;
+  /** The recipient's locale, when they have one; dates are written en-US otherwise. */
+  locale?: string | null;
+  /** The recipient's clock, when they chose one; the locale's own otherwise. */
+  timeFormat?: TimeFormat | null;
+}
+
+/** A member as an email recipient: their address, account and how they read dates. */
+export function emailRecipientOf(user: Pick<User, 'id' | 'email' | 'timezone' | 'locale' | 'timeFormat'>): EmailRecipient {
+  return {
+    email: user.email,
+    userId: user.id,
+    timeZone: user.timezone,
+    locale: user.locale,
+    timeFormat: user.timeFormat,
+  };
 }
 
 /**
@@ -199,6 +218,8 @@ export class EmailService {
     const unsubscribe = this.unsubscribeLinks(templateKey, input.to.userId);
     const content = renderSystemEmailTemplate(templateKey, input.data, {
       timeZone: this.resolveTimeZone(input.to.timeZone, refs),
+      locale: this.resolveLocale(input.to.locale, refs),
+      hour12: input.to.timeFormat ? input.to.timeFormat === TimeFormat.TWELVE_HOUR : undefined,
       unsubscribeUrl: unsubscribe?.pageUrl,
     });
     const { message, created } = await this.options.messages.record({
@@ -308,6 +329,20 @@ export class EmailService {
       data: { timeZone, ...logRefs(metadata) },
     }, 'Recipient time zone is unknown; showing dates in US Eastern');
     return DEFAULT_DISPLAY_TIME_ZONE;
+  }
+
+  /**
+   * The recipient's locale, or en-US when they have none. A stored locale that isn't a language
+   * tag is logged and shown as en-US rather than failing the email.
+   */
+  private resolveLocale(locale: string | null | undefined, metadata: Parameters<typeof logRefs>[0]): string {
+    if (!locale) return DEFAULT_DISPLAY_LOCALE;
+    if (isKnownLocale(locale)) return locale;
+    this.options.logger?.warn({
+      action: 'email.send.unknownLocale',
+      data: { locale, ...logRefs(metadata) },
+    }, 'Recipient locale is unknown; writing dates in en-US');
+    return DEFAULT_DISPLAY_LOCALE;
   }
 
   /**

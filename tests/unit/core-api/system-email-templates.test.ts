@@ -302,6 +302,21 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Make your picks');
   });
 
+  it('writes the 3-hour reminder\'s closing time in the reader\'s locale and 24-hour clock', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'Masters Pick 6',
+      eventName: 'The Masters',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hoursBefore: 3,
+      standing: { kind: EntryReminderKind.NOT_ENTERED },
+      contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
+    }, { timeZone: 'Europe/London', locale: 'en-GB', hour12: false });
+
+    expect(message.text).toContain('Picks close: 9 Apr 2026, 12:40 BST');
+  });
+
   it('gives an entry reminder sent a day or more ahead the date picks close, without a time', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
       userName: 'Morgan Member',
