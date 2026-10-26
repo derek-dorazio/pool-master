@@ -21,6 +21,8 @@ export interface EventPageCopy {
   eyebrow: string;
   /** The hook line under the name, repeated by the page's ads and tiles. */
   hook: string;
+  /** When picks close, beside the date: "Picks close at the first kickoff". */
+  picksClose: string;
   /** The real league the footer says the page is not affiliated with. */
   leagueName: string;
   /** Each offer's card, by its template's key. */
@@ -37,6 +39,7 @@ export const EVENT_PAGE_COPY: Readonly<Partial<Record<Sport, Readonly<Record<str
       name: 'Championship Weekend',
       eyebrow: 'NFL conference championships',
       hook: 'Four teams, two games, one Sunday. Run a pool for your office, family or group chat, and everyone picks before the first kickoff.',
+      picksClose: 'Picks close at the first kickoff',
       leagueName: 'the NFL',
       offers: {
         'championship-weekend-tiered-redzone': {
@@ -74,6 +77,7 @@ export function eventPageCopy(page: Pick<EventPageDto, 'sport' | 'slug'>): Event
     name: nameFromSlug(page.slug),
     eyebrow: '',
     hook: SPORT_BLURBS[page.sport],
+    picksClose: 'Picks close when it starts',
     leagueName: 'any sports league',
     offers: {},
   };

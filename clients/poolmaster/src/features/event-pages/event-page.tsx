@@ -101,7 +101,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
         {primary ? (
           <div className="flex flex-wrap gap-2" data-testid="event-page-when">
             <Chip>{formatDateDisplay(primary.edition.startDate)}</Chip>
-            <Chip>Picks close at the first kickoff</Chip>
+            <Chip>{copy.picksClose}</Chip>
           </div>
         ) : (
           <p className="text-sm text-muted-foreground" data-testid="event-page-between-seasons">
