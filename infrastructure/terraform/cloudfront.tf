@@ -9,9 +9,9 @@
 # --- CloudFront Function for SPA routing ---
 #
 # Rewrites requests to /index.html for client-side routing, and gives a
-# link-preview crawler an event page's own shell (#1010). Applied ONLY to
-# the S3 default behavior, so API responses (403, 404, etc.) pass through
-# untouched. This replaces the custom_error_response approach which was
+# link-preview crawler an event page's own shell (#1010). Both distributions
+# use it, applied ONLY to their S3 default behavior, so API responses (403,
+# 404, etc.) pass through untouched. This replaces the custom_error_response approach which was
 # global and intercepted API error responses. The code is its own file so
 # scripts/cloudfront-spa-rewrite.test.mjs can run it.
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { eventPageLinkPreviews, withLinkPreview } from './link-preview';
 
 // The images committed in `public/og/`, by file name.
-const committedImages = Object.keys(import.meta.glob('../../../public/og/*.png')).map((file) => file.split('/').pop());
+const committedImages = Object.keys(import.meta.glob('../../../public/og/*.jpg')).map((file) => file.split('/').pop());
 
 const INDEX_HTML = `<!doctype html>
 <html lang="en">
@@ -24,7 +24,7 @@ describe('Event page link previews', () => {
   it('gives every event page with copy its own preview, named for its address', () => {
     expect(championshipWeekend()).toMatchObject({
       title: 'Championship Weekend',
-      imageFile: 'american-football-championship-weekend.png',
+      imageFile: 'american-football-championship-weekend.jpg',
       eyebrow: 'NFL conference championships',
       contestTypes: ['Clutch Card', 'Bracket', 'Squares'],
     });
@@ -43,7 +43,7 @@ describe('Event page link previews', () => {
     expect(shell).toContain('<title>Championship Weekend | Primetime Commissioner</title>');
     expect(shell).toContain('<meta property="og:title" content="Championship Weekend" />');
     expect(shell).toContain('<meta property="og:url" content="https://qa.example.com/play/american-football/championship-weekend" />');
-    expect(shell).toContain('<meta property="og:image" content="https://qa.example.com/releases/abc/og/american-football-championship-weekend.png" />');
+    expect(shell).toContain('<meta property="og:image" content="https://qa.example.com/releases/abc/og/american-football-championship-weekend.jpg" />');
     expect(shell).toContain('<meta name="twitter:card" content="summary_large_image" />');
     expect(shell).toContain('src="/releases/abc/assets/index-1.js"');
   });

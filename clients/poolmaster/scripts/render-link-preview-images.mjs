@@ -50,7 +50,7 @@ try {
     await page.setContent(tileHtml(preview), { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
     const imagePath = path.join(appRoot, 'public', LINK_PREVIEW_IMAGE_DIR, preview.imageFile);
-    await page.screenshot({ path: imagePath });
+    await page.screenshot({ path: imagePath, type: 'jpeg', quality: 85 });
     console.log(`Wrote ${path.relative(appRoot, imagePath)}`);
   }
 } finally {

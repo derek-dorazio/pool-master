@@ -25,9 +25,12 @@ export interface LinkPreview {
   contestTypes: readonly string[];
 }
 
-/** `american-football-championship-weekend.png`: one 1200 by 630 image per event page. */
+/**
+ * `american-football-championship-weekend.jpg`: one 1200 by 630 JPEG per event page, kept small
+ * because WhatsApp drops a preview image over about 300 KB.
+ */
 export function linkPreviewImageFile(path: string): string {
-  return `${path.replace(/^\/play\//, '').replaceAll('/', '-')}.png`;
+  return `${path.replace(/^\/play\//, '').replaceAll('/', '-')}.jpg`;
 }
 
 function linkPreview(sport: Sport, slug: string, copy: EventPageCopy): LinkPreview {
