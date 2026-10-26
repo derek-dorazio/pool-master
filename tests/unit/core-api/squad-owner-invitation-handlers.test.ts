@@ -88,6 +88,8 @@ const registerBody = {
   password: 'Sup3rSecret!',
   firstName: 'New',
   lastName: 'Owner',
+  timezone: 'America/Phoenix',
+  locale: 'en-US',
 };
 
 describe('Team-owner invitation route handlers', () => {
@@ -151,7 +153,7 @@ describe('Team-owner invitation route handlers', () => {
   });
 
   describe('register and accept', () => {
-    it('registers the invitee under the INVITED email, accepts the invitation, sets session cookies and answers 201', async () => {
+    it('registers the invitee under the INVITED email with the browser\'s time zone and locale, accepts the invitation, sets session cookies and answers 201', async () => {
       const accept = mockFn<SquadOwnerInvitationService['acceptInvitation']>(async () => invitation);
       const service = stubInstance(SquadOwnerInvitationService, {
         requireInvitationForRegistration: mockFn<SquadOwnerInvitationService['requireInvitationForRegistration']>(
@@ -165,7 +167,7 @@ describe('Team-owner invitation route handlers', () => {
       const reply = await call(handlers.registerAndAcceptInvitation, request({ body: registerBody }, false));
 
       expect(reply.statusCode).toBe(201);
-      expect(register).toHaveBeenCalledWith('newbie', 'invited@example.com', 'Sup3rSecret!', 'New', 'Owner');
+      expect(register).toHaveBeenCalledWith('newbie', 'invited@example.com', 'Sup3rSecret!', 'New', 'Owner', { timezone: 'America/Phoenix', locale: 'en-US' });
       expect(accept).toHaveBeenCalledWith('owner-code', 'user-new');
       expect(reply.headers['Set-Cookie']).toEqual(expect.arrayContaining([expect.stringContaining('access')]));
       expect(reply.body).toMatchObject({ user: { id: 'user-new' }, tokens: { accessToken: 'access' } });

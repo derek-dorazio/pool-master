@@ -139,6 +139,28 @@ describe('registration', () => {
     expect(errorCode(second.response)).toBe('ACCOUNT_USERNAME_TAKEN');
   });
 
+  it('keeps the time zone and locale the signup form read from the browser, and refuses an unknown zone before creating anything', async () => {
+    const kept = newIdentity();
+    const refused = newIdentity();
+
+    const created = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      payload: { ...kept, password: PASSWORD, firstName: 'Ada', lastName: 'Account', timezone: 'America/Denver', locale: 'en-CA' },
+    });
+    const unknown = await getApp().inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      payload: { ...refused, password: PASSWORD, firstName: 'Ada', lastName: 'Account', timezone: 'Mars/Olympus' },
+    });
+
+    expect(created.statusCode).toBe(201);
+    expect(created.json<AuthResponse>().user).toMatchObject({ timezone: 'America/Denver', locale: 'en-CA' });
+    expect(unknown.statusCode).toBe(400);
+    expect(errorCode(unknown)).toBe('TIME_ZONE_UNKNOWN');
+    expect(await getPrisma().user.count({ where: { email: refused.email } })).toBe(0);
+  });
+
   it('rejects a password shorter than eight characters with 400 before creating anything', async () => {
     const identity = newIdentity();
     const { response } = await register(identity, 'short');
@@ -461,6 +483,27 @@ describe('profile, username and preferences', () => {
     const stored = await getPrisma().user.findUniqueOrThrow({ where: { id: session.userId } });
     expect(stored.timezone).toBeNull();
     expect(stored.locale).toBe('en-GB');
+  });
+
+  it('refuses a time zone the server does not know with 400 TIME_ZONE_UNKNOWN and keeps the saved one', async () => {
+    const session = await signedIn();
+    await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/users/me/preferences',
+      headers: session.bearer,
+      payload: { timezone: 'America/Chicago' },
+    });
+
+    const response = await getApp().inject({
+      method: 'PUT',
+      url: '/api/v1/users/me/preferences',
+      headers: session.bearer,
+      payload: { timezone: 'Mars/Olympus' },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(errorCode(response)).toBe('TIME_ZONE_UNKNOWN');
+    expect((await getPrisma().user.findUniqueOrThrow({ where: { id: session.userId } })).timezone).toBe('America/Chicago');
   });
 
   it('refuses a user editing somebody else\'s profile with 403 USER_WRITE_FORBIDDEN and changes nothing', async () => {

@@ -151,6 +151,16 @@ describe('AuthHomePage', () => {
     authState.clearSession.mockReset();
   });
 
+  it('opens on Create account with a banner naming the pool when an event page\'s start waits behind sign-up', () => {
+    renderAuthHomePage({
+      pathname: '/',
+      state: { authMode: 'register', from: '/start?sport=american-football&page=championship-weekend&template=t-1' },
+    });
+
+    expect(screen.getByTestId('auth-start-banner')).toHaveTextContent('You\'re starting a Championship Weekend pool');
+    expect(screen.getByRole('radio', { name: 'Create account' })).toBeChecked();
+  });
+
   it('offers a Forgot password? link on the sign in form, and not on the create account form', () => {
     renderAuthHomePage();
 

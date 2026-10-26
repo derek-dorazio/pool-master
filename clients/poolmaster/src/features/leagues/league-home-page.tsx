@@ -23,6 +23,7 @@ import { buildLeagueContestsPath, buildLeagueTeamPath } from './league-routing';
 import { useLeagueContext } from './use-league-context';
 import { YearReviewBanner } from '@/features/championships/year-review-banner';
 import { hasPlanFeature } from '@/features/plans/plan-features';
+import { OpensSoonCard } from '@/features/event-pages/opens-soon-card';
 
 const CLOCK_TICK_MS = 60_000;
 
@@ -121,6 +122,7 @@ export function LeagueHomePage() {
           <p>You can still see standings and history. Entries and changes are closed while the league is inactive.</p>
         </Alert>
       ) : null}
+      {viewer.isCommissioner ? <OpensSoonCard leagueCode={leagueCode} /> : null}
       <YearReviewBanner isCommissioner={viewer.isCommissioner} league={league} />
 
       <div className="space-y-1">

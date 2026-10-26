@@ -71,7 +71,7 @@ describe('DraftEventNotices', () => {
 
     expect(outbox.rows.map((row) => [row.templateKey, row.recipientUserId, row.leagueId])).toEqual([['EVENT_STILL_DRAFT', riley.id, undefined]]);
     const text = outbox.rows[0]?.textBody ?? '';
-    expect(text).toContain('The Masters starts in 7 days (Apr 9, 2026, 12:00 AM UTC) and is still a draft, so no league can set up a contest on it.');
+    expect(text).toContain('The Masters starts in 7 days (Wed, Apr 8, 2026) and is still a draft, so no league can set up a contest on it.');
     expect(text).toContain('Still needed before release:\n- its field is not loaded\n- its prices have not been assigned');
     expect(text).toContain(`Open event: https://app.example.test/manage/sports/golf/events/${masters.id}`);
   });

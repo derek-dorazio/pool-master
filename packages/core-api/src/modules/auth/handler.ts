@@ -40,14 +40,14 @@ export function createAuthHandlers(
 
   async function handleRegister(
     request: FastifyRequest<{
-      Body: { username: string; email: string; password: string; firstName: string; lastName: string };
+      Body: { username: string; email: string; password: string; firstName: string; lastName: string; timezone?: string; locale?: string };
     }>,
     reply: FastifyReply,
   ): Promise<void> {
     const logger = request.contextLogger ?? request.log;
 
     try {
-      const { username, email, password, firstName, lastName } = request.body;
+      const { username, email, password, firstName, lastName, timezone, locale } = request.body;
       logger.debug({
         action: 'auth.register.request',
         data: {
@@ -58,7 +58,7 @@ export function createAuthHandlers(
           hasLastName: lastName.trim().length > 0,
         },
       }, 'Handling auth registration request');
-      const result = await authService.register(username, email, password, firstName, lastName);
+      const result = await authService.register(username, email, password, firstName, lastName, { timezone, locale });
       logger.info({
         action: 'auth.register.succeeded',
         data: {

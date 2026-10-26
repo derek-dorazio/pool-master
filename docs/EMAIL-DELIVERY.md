@@ -118,8 +118,12 @@ Templates are typed TypeScript renderers, not SES stored templates (#844, Q2.1).
 notification catalog's categories) and its renderer. Adding a key without a registry entry, a
 scope in `EmailTemplateScopeByKey`, a settings switch or a preview example is a compile error.
 Each template's data is a TypeScript type, so a missing token can't merge, and every value is
-HTML-escaped. Dates are shown in the recipient's time zone (their account setting), with the
-zone named, or in UTC when they have none.
+HTML-escaped. Dates are shown in the recipient's time zone (their account setting, captured
+from the browser at signup), or in US Eastern when they have none (#1039). An email sent days
+ahead gives only the day ("Thu, Apr 9, 2026"); a time, with its zone named, appears only when it
+matters that day: the entry reminder sent less than a day before picks close, the commissioner's
+"contest isn't open yet" email, an event moved within its own day, and account emails that
+record when something happened.
 
 ### Previewing Emails
 

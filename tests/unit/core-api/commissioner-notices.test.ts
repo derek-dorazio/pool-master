@@ -123,7 +123,7 @@ describe('CommissionerNotices', () => {
       expect(sent('EVENT_COMING_UP').map(({ userId, leagueId }) => `${userId}@${leagueId}`).sort())
         .toEqual([`${casey.id}@${office.id}`, `${casey.id}@${family.id}`, `${jordan.id}@${family.id}`].sort());
       const text = textTo('EVENT_COMING_UP', casey.id, office);
-      expect(text).toContain("The Masters starts Apr 12, 2026, 12:00 AM UTC. Get ready to set up Office League's contest.");
+      expect(text).toContain("The Masters starts Sat, Apr 11, 2026. Get ready to set up Office League's contest.");
       expect(text).toContain("It isn't open for contests yet. We'll email you when it is.");
       expect(text).toContain("Your league's contests: https://app.example.test/league/OFFICE24/admin/contests");
       expect(text).not.toContain('Last year');
@@ -213,7 +213,7 @@ describe('CommissionerNotices', () => {
       expect(sent('EVENT_COMING_UP')).toEqual([]);
       const text = textTo('EVENT_READY_FOR_CONTESTS', casey.id, office);
       expect(text).toContain("The Masters is ready. Set up Office League's contest.");
-      expect(text).toContain('Starts: Apr 8, 2026, 12:00 PM UTC');
+      expect(text).toContain('Starts: Wed, Apr 8, 2026');
       expect(text).toContain('Field: 40 golfers');
       expect(text).toContain([
         'Contest setups for it:',
@@ -298,15 +298,15 @@ describe('CommissionerNotices', () => {
       expect(text).toContain([
         'This week:',
         '',
-        'The Masters (PGA Tour), Apr 8, 2026, 7:00 AM UTC',
+        'The Masters (PGA Tour), Wed, Apr 8, 2026',
         'Ready for contests. Create contest: https://app.example.test/league/OFFICE24/admin/contests/new',
         '',
-        'RBC Heritage (PGA Tour), Apr 10, 2026, 7:00 AM UTC',
+        'RBC Heritage (PGA Tour), Fri, Apr 10, 2026',
         'Contest set up',
         '',
         'Next week:',
         '',
-        'Valero Texas Open (PGA Tour), Apr 15, 2026, 7:00 AM UTC',
+        'Valero Texas Open (PGA Tour), Wed, Apr 15, 2026',
         'Not ready for contests yet',
       ].join('\n'));
       expect(text).not.toContain('Too Far Open');
@@ -386,7 +386,7 @@ describe('CommissionerNotices', () => {
 
       expect(sent('CONTEST_NOT_OPEN').map(({ userId }) => userId)).toEqual([casey.id]);
       const text = textTo('CONTEST_NOT_OPEN', casey.id, office);
-      expect(text).toContain('Masters Pick 6 is still a draft, and its picks close Apr 4, 2026, 9:36 AM UTC.');
+      expect(text).toContain('Masters Pick 6 is still a draft, and its picks close Apr 4, 2026, 5:36 AM EDT.');
       expect(text).toContain("Members can't enter until you open it.");
       expect(text).toContain(`Open contest: https://app.example.test/league/OFFICE24/admin/contests/${contest.id}`);
     });

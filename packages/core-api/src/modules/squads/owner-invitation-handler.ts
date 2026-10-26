@@ -147,6 +147,8 @@ export function createSquadOwnerInvitationHandlers(
         password: string;
         firstName: string;
         lastName: string;
+        timezone?: string;
+        locale?: string;
       };
     }>,
     reply: FastifyReply,
@@ -164,11 +166,11 @@ export function createSquadOwnerInvitationHandlers(
       );
     }
 
-    const { inviteCode, username, password, firstName, lastName } = request.body;
+    const { inviteCode, username, password, firstName, lastName, timezone, locale } = request.body;
     try {
       const { email } = await service.requireInvitationForRegistration(inviteCode);
 
-      const registered = await authService.register(username, email, password, firstName, lastName);
+      const registered = await authService.register(username, email, password, firstName, lastName, { timezone, locale });
       try {
         await service.acceptInvitation(inviteCode, registered.user.id);
       } catch (error) {

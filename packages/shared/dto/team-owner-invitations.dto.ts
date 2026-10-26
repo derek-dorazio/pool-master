@@ -6,7 +6,7 @@ import {
   TeamIconKey as TeamIconKeyEnum,
   type TeamIconKey,
 } from '@poolmaster/shared/domain';
-import { DateTimeSchema, EmailInputSchema } from './common.dto';
+import { DateTimeSchema, EmailInputSchema, SignupLocaleInputSchema, SignupTimeZoneInputSchema } from './common.dto';
 
 const TeamIconKeyValues = Object.values(TeamIconKeyEnum) as [TeamIconKey, ...TeamIconKey[]];
 
@@ -134,6 +134,8 @@ export const RegisterWithTeamOwnerInvitationRequestSchema = z.object({
     .min(1)
     .max(100)
     .describe('Last name captured for the account profile.'),
+  timezone: SignupTimeZoneInputSchema,
+  locale: SignupLocaleInputSchema,
 }).describe('Registers a new account against a pending team-owner invitation and accepts it, joining the league and the squad in one request.');
 export type RegisterWithTeamOwnerInvitationRequest = z.infer<
   typeof RegisterWithTeamOwnerInvitationRequestSchema

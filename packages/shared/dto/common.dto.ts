@@ -21,6 +21,24 @@ export const EmailInputSchema = z.string().trim().toLowerCase().email();
  * and the reset link, so the three cannot drift apart (#847).
  */
 export const NewPasswordInputSchema = z.string().min(8).max(128);
+/**
+ * The time zone and locale a signup form sends, filled from the browser (#1039), so a new
+ * member's emails show their own dates from the start. One rule for every way to sign up.
+ */
+export const SignupTimeZoneInputSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(50)
+  .optional()
+  .describe('IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN.');
+export const SignupLocaleInputSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(10)
+  .optional()
+  .describe('BCP 47 locale for formatting the member\'s dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN.');
 
 // --- Success Envelope ---
 

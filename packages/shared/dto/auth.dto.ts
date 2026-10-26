@@ -3,7 +3,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { EmailInputSchema, NewPasswordInputSchema } from './common.dto';
+import { EmailInputSchema, NewPasswordInputSchema, SignupLocaleInputSchema, SignupTimeZoneInputSchema } from './common.dto';
 import { UserDtoSchema } from './users.dto';
 
 // --- Requests ---
@@ -28,6 +28,8 @@ export const RegisterRequestSchema = z.object({
     .min(1)
     .max(100)
     .describe('Last name captured for the account profile.'),
+  timezone: SignupTimeZoneInputSchema,
+  locale: SignupLocaleInputSchema,
 }).describe('Create-account payload for a new username/email/password user.');
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
 

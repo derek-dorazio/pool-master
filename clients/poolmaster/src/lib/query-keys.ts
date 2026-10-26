@@ -124,6 +124,11 @@ export const QueryKeys = {
     detail: (sportLeagueId: QueryKeyId) => ['poolmaster', 'sport-league', sportLeagueId] as const,
     list: () => ['poolmaster', 'sport-leagues'] as const,
   },
+  /** The public event pages (#1007): one by its address, and the active ones of a sport or all. */
+  eventPages: {
+    detail: (sport: string, pageSlug: string) => ['poolmaster', 'event-pages', sport, pageSlug] as const,
+    list: (sport: string | null) => ['poolmaster', 'event-pages', 'list', sport] as const,
+  },
   leagues: {
     all: ['poolmaster', 'leagues'] as const,
     list: ['poolmaster', 'leagues', 'list'] as const,

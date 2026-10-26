@@ -240,6 +240,16 @@ describe('profile, username and preferences', () => {
     expect(emailChanged.tellOldAddress).not.toHaveBeenCalled();
   });
 
+  it('refuses a time zone or locale the server does not know, and saves nothing', async () => {
+    const { users, service } = serviceFor(buildUser());
+
+    await expect(service.updatePreferences(self, 'user-1', { timezone: 'Mars/Olympus' }))
+      .rejects.toMatchObject({ code: 'TIME_ZONE_UNKNOWN', statusCode: 400 });
+    await expect(service.updatePreferences(self, 'user-1', { locale: 'not a locale' }))
+      .rejects.toMatchObject({ code: 'LOCALE_UNKNOWN', statusCode: 400 });
+    expect(users.update).not.toHaveBeenCalled();
+  });
+
   it('writes only the preferences the caller named, and clears the ones passed as null', async () => {
     const { users, service } = serviceFor(buildUser());
 

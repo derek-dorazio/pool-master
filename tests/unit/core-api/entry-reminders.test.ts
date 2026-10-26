@@ -470,7 +470,7 @@ describe('EntryReminders.queueDue', () => {
 
     expect(remindedUserIds()).toEqual([nora.user.id]);
     expect(outbox.rows[0]?.textBody).toContain('You haven\'t claimed a box on the Super Bowl Squares grid yet.');
-    expect(outbox.rows[0]?.textBody).toContain('Game starts: Apr 9, 2026');
+    expect(outbox.rows[0]?.textBody).toContain('Game starts: Thu, Apr 9, 2026');
 
     world.contests.set(contest.id, { ...contest, drawnAt: new Date() });
     await reminders().queueDue(before(CLOSES_AT, 3, 1));

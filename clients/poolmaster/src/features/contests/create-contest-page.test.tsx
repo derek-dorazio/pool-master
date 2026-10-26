@@ -883,13 +883,13 @@ describe('Commissioner tools › Contests › Create contest', () => {
       const SECOND_CHANCE = BRACKET_TEMPLATES[2];
       const NBA_PLAYOFFS = basketballEvent({ id: 'bb-nba', name: 'NBA Playoffs', rounds: 4, sportLeagueId: 'nba', startDate: '2099-04-18T16:00:00.000Z' });
 
-      function primeRequestedBracket(events: Array<Record<string, unknown>>) {
+      function primeRequestedBracket(events: Array<Record<string, unknown>>, query = '') {
         primeBasketballMocks(events, [], BRACKET_TEMPLATES);
         const byQuery = listContestConfigTemplatesMock.getMockImplementation() as (options: { query?: { sport?: string } }) => Promise<{ data: { templates: unknown[] } }>;
         listContestConfigTemplatesMock.mockImplementation(async (options: { query?: { sport?: string } }) => (options.query?.sport
           ? byQuery(options)
           : { data: { templates: [...(await byQuery({ query: { sport: 'GOLF' } })).data.templates, ...BRACKET_TEMPLATES] } }));
-        renderCreateContestPage(`/league/BIGDAWGS/admin/contests/new?template=${SECOND_CHANCE.id}`);
+        renderCreateContestPage(`/league/BIGDAWGS/admin/contests/new?template=${SECOND_CHANCE.id}${query}`);
       }
 
       it('opens a second chance asked for before the tournament starts on the full-bracket default instead', async () => {
@@ -899,6 +899,14 @@ describe('Commissioner tools › Contests › Create contest', () => {
         expect(screen.getByTestId('contest-sport-BASKETBALL')).toBeChecked();
         expect(screen.getByTestId('contest-format-BRACKET')).toBeChecked();
         expect(screen.queryByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).not.toBeInTheDocument();
+      });
+
+      it('starts on the edition and the round an event page asked for, over the template\'s own starting round', async () => {
+        primeRequestedBracket([basketballEvent(MARCH_MADNESS_UNDER_WAY)], '&event=bb-live&startRound=4');
+
+        await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket-second-chance-doubling')).toBeChecked());
+        expect(screen.getByTestId('contest-event-bb-live')).toBeChecked();
+        expect(screen.getByTestId('contest-bracket-starts-at-round')).toHaveDisplayValue('From the Elite Eight');
       });
 
       it('lets the commissioner move to another event rather than pulling them back to the template\'s', async () => {
@@ -913,6 +921,15 @@ describe('Commissioner tools › Contests › Create contest', () => {
         expect(screen.getByTestId('contest-event-bb-nba')).toBeChecked();
       });
     });
+  });
+
+  it('starts on the edition an event page asked for rather than the soonest event the template is offered on', async () => {
+    primeCommonMocks();
+    renderCreateContestPage('/league/BIGDAWGS/admin/contests/new?template=33333333-3333-4333-8333-333333333333&event=event-2');
+
+    await waitFor(() => expect(screen.getByTestId('contest-template-golf-tiered-pick-12')).toBeChecked());
+    expect(screen.getByTestId('contest-event-event-2')).toBeChecked();
+    expect(screen.getByTestId('contest-event-event-1')).not.toBeChecked();
   });
 
   it('starts on the usual default when the template asked for is not one of the active templates', async () => {

@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockApi } from '@/test/msw-api';
+import { championshipWeekendFixture } from '@/features/event-pages/event-page-test-fixtures';
 import { WelcomePage } from './leagues-page';
 import { RECENT_LEAGUE_COOKIE } from './league-routing';
 import { apiSuccess, buildLeague, buildLeagueMembership, listLeaguesData } from './test/fixtures';
@@ -146,6 +147,17 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
     );
     fireEvent.click(screen.getByTestId('welcome-create-league'));
     expect(screen.getByRole('button', { name: 'Create league' })).toBeInTheDocument();
+  });
+
+  it('shows a member with no leagues the Coming up row, each card linking to its event page', async () => {
+    mockApi.listLeagues.mockResolvedValue(apiSuccess(listLeaguesData([])));
+    mockApi.listEventPages.mockResolvedValue(apiSuccess({ eventPages: [championshipWeekendFixture()] }));
+
+    renderWelcomePage();
+
+    const card = await screen.findByTestId('welcome-coming-up-championship-weekend');
+    expect(card).toHaveAttribute('href', '/play/american-football/championship-weekend');
+    expect(card).toHaveTextContent('Championship Weekend');
   });
 
   it('pool-master-rop.63: renders the shared loading state while leagues load', () => {
