@@ -39,3 +39,15 @@ record its link before you use it.
 | Baseball | baseball/baseball-globe-life-park-pexels-264279.jpg | Pixabay, /photo/264279/ | Not usable: a named ballpark, team names and sponsor boards |
 | Baseball | baseball/baseball-stadium-aerial-pexels-13653328.jpg | lasfotosdepipe, /photo/13653328/ | Not usable: sponsor and team logos |
 | Baseball | baseball/baseball-sunset-stadium-pexels-1757433.jpg | Timo Volz, /photo/1757433/ | Not usable: Under Armour and team signage |
+| Soccer | soccer/soccer-pitch-overhead-pexels-27486717.jpg | Carlos Reyes, /photo/27486717/ | In use: soccer header |
+| Soccer | soccer/soccer-night-field-pexels-186239.jpg | /photo/186239/ | Usable: a plain lit field |
+| Soccer | soccer/soccer-ball-in-net-pexels-26955012.jpg | Milan Kiro, /photo/26955012/ | Probably usable: a worn ball with no readable brand |
+| Soccer | soccer/soccer-ball-net-closeup-pexels-19436350.jpg | /photo/19436350/ | Not usable as is: the ball maker's name |
+| Soccer | soccer/soccer-ball-goal-line-pexels-28222529.jpg | tunahan, /photo/28222529/ | Not usable as is: adidas logo on the ball |
+| Soccer | soccer/soccer-johor-stadium-pexels-27576504.jpg | /photo/27576504/ | Not usable: club name and sponsor boards |
+| Soccer | soccer/soccer-stadium-crowd-pexels-26694125.jpg | /photo/26694125/ | Not usable: sponsor boards |
+| Soccer | soccer/soccer-players-pexels-32190734.jpg | /photo/32190734/ | Not usable: federation badges, faces and numbers |
+| Tennis | tennis/tennis-net-balls-pexels-8224638.jpg | RDNE Stock project, /photo/8224638/ | In use: tennis header |
+| Tennis | tennis/tennis-racket-clay-pexels-27152935.jpg | Omer Derinyar, /photo/27152935/ | Not usable as is: the racket maker's name on the frame |
+| Tennis | tennis/tennis-rackets-bw-pexels-34015711.jpg | Sylvester Abigail, /photo/34015711/ | Not usable: Wilson, Prince and Penn marks |
+| Tennis | tennis/tennis-stadium-crowd-pexels-171568.jpg | Raj Tatavarthy, /photo/171568/ | Not usable: a named tournament, sponsors, player names and faces |
