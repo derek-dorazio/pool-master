@@ -115,7 +115,7 @@ Answered by Derek on 2026-10-24.
 - **Q1. Soccer composite. Decided:** yes to the Hat Trick formula. The name is open: Derek
   asked for other term ideas (section 6).
 - **Q2. College events. Decided:** yes to the College Football Playoff and the Final Four, men's
-  only for now. Derek wants their names to match the NFL's and the NBA's (section 6).
+  and women's (Derek 2026-10-26; on 2026-10-24 it was men's only). Derek wants their names to match the NFL's and the NBA's (section 6).
 - **Q3. Full playoffs. Decided:** scope stays big tournaments and playoffs; full playoffs follow
   the live provider.
 - **Q4. WNBA Finals. Decided:** yes, added in parallel with the NBA Finals, scored on Triple
@@ -123,7 +123,7 @@ Answered by Derek on 2026-10-24.
 - **Q5. One round per contest. Decided (Derek 2026-10-26):** a Clutch Card contest never spans
   playoff rounds. Each round is its own sport league and contest, the way Championship Weekend
   and the Super Bowl are: the CFP's semifinals and National Championship (#991, built that way),
-  and the Final Four's semifinals and national championship (#992). The same team's players are
+  and each Final Four's semifinals and national championship, men's and women's (#992). The same team's players are
   in both leagues' fields; nothing in the model minds. Soccer's knockouts (#994) follow the same
   rule, so their rounds are split the same way when that ticket is designed.
 
@@ -136,8 +136,8 @@ composite and formula. The CFP scores **Redzone** and the Final Four scores **Tr
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
 "College Football Playoff" was already the bracket league's name, so #991 built **CFP
-Semifinals** and **CFP National Championship**; the Final Four's two leagues get their names
-when #992 is built ("NCAA Division I Men" is the bracket league's).
+Semifinals** and **CFP National Championship**; the Final Fours' four leagues get their names
+when #992 is built ("NCAA Division I Men" and "NCAA Division I Women" are the bracket leagues').
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).
