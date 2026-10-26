@@ -18,7 +18,6 @@ import type {
   CupStatus,
   CupTrophy,
   CupWeight,
-  DateFormat,
   EmailMessageStatus,
   EmailSkipReason,
   EmailSuppressionReason,
@@ -68,7 +67,6 @@ export interface User extends DomainEntity {
   timezone?: string;
   locale?: string;
   timeFormat?: TimeFormat;
-  dateFormat?: DateFormat;
 }
 
 // --- League ---

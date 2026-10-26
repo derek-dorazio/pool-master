@@ -9,6 +9,7 @@ import {
   StatusBadge,
   Tile,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -42,6 +43,7 @@ export function SportEventWorkflowCard({
   roundsError: Error | null;
   tournament: SportEventDto;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-home-page',
   });
@@ -179,7 +181,7 @@ export function SportEventWorkflowCard({
               : rounds
                   .map(
                     (round) =>
-                      `${roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate)}`,
+                      `${roundLabel(round.roundNumber, rounds.length)} ${formatDateTimeDisplay(round.scheduledDate, displayPreferences)}`,
                   )
                   .join(' · ')
         }

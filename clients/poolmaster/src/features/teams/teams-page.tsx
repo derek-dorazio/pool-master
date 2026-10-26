@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { DataGrid, ErrorState, formatDateDisplay, LoadingState, PageHeader } from '@/features/shared/ui';
+import { DataGrid, ErrorState, formatDateDisplay, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildTeamDirectoryRows, type TeamDirectoryRow } from './team-directory';
 import { TeamNameCell } from './team-name-cell';
@@ -13,6 +13,7 @@ const TEAMS_PER_PAGE = 25;
 
 /** Teams: the league's directory of teams and their owners, for every member. */
 export function TeamsPage() {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'teams-page' });
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const { query: leagueQuery, league } = useLeagueContext(leagueCode);
@@ -51,11 +52,11 @@ export function TeamsPage() {
         accessorFn: (row) => row.team.createdAt,
         enableGlobalFilter: false,
         cell: ({ getValue }) => (
-          <span className="text-muted-foreground">{formatDateDisplay(getValue())}</span>
+          <span className="text-muted-foreground">{formatDateDisplay(getValue(), displayPreferences)}</span>
         ),
       },
     ],
-    [leagueCode],
+    [displayPreferences, leagueCode],
   );
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading members...' });

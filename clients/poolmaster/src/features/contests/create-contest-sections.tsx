@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ReactNode } from 'react';
 import type { SportEventDto } from '@/lib/api';
-import { Alert, ChoiceCard, Chip, formatDateTimeDisplay, SegmentedControl } from '@/features/shared/ui';
+import { Alert, ChoiceCard, Chip, formatDateTimeDisplay, SegmentedControl, useDisplayPreferences } from '@/features/shared/ui';
 import { formatStartsIn } from './contest-readiness';
 
 /** One numbered part of the form: 1 Event, 2 Format, 3 Rules, 4 Name. */
@@ -108,6 +108,7 @@ export function EventChoices({
   selectedEventId: string;
   sport: SportDefinition;
 }) {
+  const displayPreferences = useDisplayPreferences();
   return (
     <div aria-label="Event" className="grid gap-2" role="radiogroup">
       {events.map((event) => {
@@ -124,7 +125,7 @@ export function EventChoices({
               <span className="font-semibold">{event.name}</span>
               {event.venue ? <span className="text-xs text-muted-foreground"> · {event.venue}</span> : null}
               <span className="block text-xs text-muted-foreground">
-                {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate)}
+                {event.contestEligible ? 'Starts' : 'Started'} {formatDateTimeDisplay(event.startDate, displayPreferences)}
                 {' · '}
                 {countParticipants(event.participantCount ?? 0, sport.vocabulary.participant)}
                 {' · '}

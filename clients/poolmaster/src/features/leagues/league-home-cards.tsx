@@ -9,6 +9,7 @@ import {
   formatDateTimeDisplay,
   IconAvatar,
   LinkButton,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';
@@ -85,6 +86,7 @@ export function UpNextCard({
   now: Date;
   upNext: UpNextContest;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const countdown = countdownUntil(upNext.closesAt, now);
   const next = describeMyEntry(leagueCode, upNext.contest, myEntries, entriesState, hasTeam);
   const parts = [
@@ -104,7 +106,7 @@ export function UpNextCard({
         {upNext.contest.name}
       </h2>
       <p className="text-sm text-on-inverse-muted">
-        Entries close {formatDateTimeDisplay(upNext.closesAt)}.
+        Entries close {formatDateTimeDisplay(upNext.closesAt, displayPreferences)}.
       </p>
       <div
         aria-label={`Entries close in ${countdown.days} days ${countdown.hours} hours ${countdown.minutes} minutes`}

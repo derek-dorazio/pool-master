@@ -69,14 +69,12 @@ describe('SDK Functional: Account Lifecycle', () => {
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: '12H',
-        dateFormat: 'MDY',
       },
     });
 
     expect(preferencesResponse.data?.user.timezone).toBe('America/New_York');
     expect(preferencesResponse.data?.user.locale).toBe('en-US');
     expect(preferencesResponse.data?.user.timeFormat).toBe('12H');
-    expect(preferencesResponse.data?.user.dateFormat).toBe('MDY');
 
     const passwordResponse = await changeUserPassword({
       client: cookieClient,

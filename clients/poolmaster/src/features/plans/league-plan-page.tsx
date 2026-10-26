@@ -11,7 +11,7 @@ import { useAuth } from '@/features/auth/auth-context';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
 import { buildLeagueAdminPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { Alert, Button, Chip, ErrorState, formatDateDisplay, LoadingState, PageHeader, SectionHeader, Tile } from '@/features/shared/ui';
+import { Alert, Button, Chip, ErrorState, formatDateDisplay, LoadingState, PageHeader, SectionHeader, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { PlanCards } from './plan-cards';
 import { buildCapUsage, buildPlanChangeEffects, NAMED_CONTEST_LIMIT } from './plan-change';
 import { PlanComparisonTable } from './plan-comparison-table';
@@ -46,6 +46,7 @@ export function LeaguePlanEditRedirect() {
 }
 
 function LeaguePlanView({ league }: { league: LeagueDto }) {
+  const displayPreferences = useDisplayPreferences();
   const queryClient = useQueryClient();
   const plansQuery = useLeaguePlansQuery();
   const usageQuery = useLeaguePlanUsageQuery(league.id);
@@ -91,8 +92,8 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
 
       <p className="text-sm text-muted-foreground" data-testid="league-plan-renews">
         {previewEnded
-          ? `Your Premium preview period ended on ${formatDateDisplay(league.planRenewsAt)}.`
-          : `Premium gifted for your preview period, until ${formatDateDisplay(league.planRenewsAt)}.`}
+          ? `Your Premium preview period ended on ${formatDateDisplay(league.planRenewsAt, displayPreferences)}.`
+          : `Premium gifted for your preview period, until ${formatDateDisplay(league.planRenewsAt, displayPreferences)}.`}
       </p>
 
       <YourLeagueNow

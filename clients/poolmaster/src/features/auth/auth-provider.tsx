@@ -1,7 +1,8 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUser, logoutUser, refreshToken } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
+import { DisplayPreferencesContext, displayPreferencesOf } from '@/features/shared/ui';
 import {
   AUTH_ME_QUERY_KEY,
   AUTH_REFRESH_QUERY_KEY,
@@ -170,6 +171,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [meQuery.error, meQuery.refetch, queryClient, refreshQuery.refetch]);
 
   const user = meQuery.data ?? null;
+  // Keyed on the three fields, so a refetch that changes nothing else re-renders no date.
+  const displayPreferences = useMemo(
+    () => displayPreferencesOf(user),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- rules/react-ui-rules.md §5: narrow fields, not the whole user
+    [user?.timezone, user?.locale, user?.timeFormat],
+  );
 
   const value: AuthContextValue = {
     isAuthenticated: Boolean(user),
@@ -220,5 +227,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      <DisplayPreferencesContext.Provider value={displayPreferences}>{children}</DisplayPreferencesContext.Provider>
+    </AuthContext.Provider>
+  );
 }

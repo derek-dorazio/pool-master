@@ -50,7 +50,7 @@ describe('ContestListCard', () => {
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
-      `Starts ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date('2026-04-09T12:00:00.000Z'))}`,
+      'Starts Apr 9, 2026, 8:00 AM EDT',
     );
     expect(getEventMock).not.toHaveBeenCalled();
   });
@@ -62,7 +62,7 @@ describe('ContestListCard', () => {
     });
 
     expect(screen.getByTestId('contest-card-starts')).toHaveTextContent(
-      `Starts ${new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date('2026-04-10T08:00:00.000Z'))}`,
+      'Starts Apr 10, 2026, 4:00 AM EDT',
     );
   });
 

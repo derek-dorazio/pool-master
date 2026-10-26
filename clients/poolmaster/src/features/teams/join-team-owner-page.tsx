@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { RegisterWithTeamOwnerInvitationRequestSchema } from '@poolmaster/shared
 import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { setAuthSessionUser } from '@/features/auth/auth-session-cache';
+import { signUpWithDisplayPreferences } from '@/features/auth/signup-display-preferences';
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
 import {
@@ -17,6 +18,8 @@ import {
   Input,
   LinkButton,
   PublicInviteJoinPage,
+  TimeZoneSelect,
+  browserTimeZone,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -43,7 +46,7 @@ import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
  * squad-owner invitation grants league membership, so honouring an address typed in here would let
  * a forwarded invite link admit an unintended person.
  */
-const RegisterFormSchema = RegisterWithTeamOwnerInvitationRequestSchema.omit({ inviteCode: true });
+const RegisterFormSchema = RegisterWithTeamOwnerInvitationRequestSchema.omit({ inviteCode: true, locale: true });
 type RegisterFormValues = z.infer<typeof RegisterFormSchema>;
 
 export function JoinTeamOwnerPage() {
@@ -102,7 +105,7 @@ export function JoinTeamOwnerPage() {
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(RegisterFormSchema),
     mode: 'onSubmit',
-    defaultValues: { username: '', password: '', firstName: '', lastName: '' },
+    defaultValues: { username: '', password: '', firstName: '', lastName: '', timezone: browserTimeZone() },
   });
 
   /**
@@ -115,15 +118,17 @@ export function JoinTeamOwnerPage() {
    */
   const registerMutation = useInvalidatingMutation({
     mutationFn: async (values: RegisterFormValues) => {
-      const response = await registerWithTeamOwnerInvitation({
-        body: {
-          inviteCode,
-          username: values.username.trim().toLowerCase(),
-          password: values.password,
-          firstName: values.firstName.trim(),
-          lastName: values.lastName.trim(),
-        },
-      });
+      const response = await signUpWithDisplayPreferences(values.timezone ?? browserTimeZone(), (preferences) =>
+        registerWithTeamOwnerInvitation({
+          body: {
+            inviteCode,
+            username: values.username.trim().toLowerCase(),
+            password: values.password,
+            firstName: values.firstName.trim(),
+            lastName: values.lastName.trim(),
+            ...preferences,
+          },
+        }));
       if (!response.data?.user) {
         throwApiError(response.error, 'Registration response is missing data.');
       }
@@ -324,6 +329,28 @@ export function JoinTeamOwnerPage() {
                 data-testid="team-invite-register-password"
                 type="password"
                 {...registerForm.register('password')}
+              />
+            </FormField>
+            <FormField
+              error={registerForm.formState.errors.timezone?.message}
+              helperText="Dates and times are shown in this zone. You can change it later in your account."
+              id="team-invite-register-time-zone"
+              label="Time zone"
+            >
+              <Controller
+                control={registerForm.control}
+                name="timezone"
+                render={({ field }) => (
+                  <TimeZoneSelect
+                    data-testid="team-invite-register-time-zone"
+                    id="team-invite-register-time-zone"
+                    name={field.name}
+                    onBlur={field.onBlur}
+                    onChange={(event) => field.onChange(event.target.value)}
+                    ref={field.ref}
+                    value={field.value}
+                  />
+                )}
               />
             </FormField>
             {registerMutation.isError ? (

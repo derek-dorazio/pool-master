@@ -5,6 +5,7 @@ import {
   SettingsRow,
   SettingsSection,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { buildSportEventPath, buildSportLeaguePath, capitalize } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
@@ -22,6 +23,7 @@ export function SportEventDetailsSection({
   sportLeagueName: string | undefined;
   tournament: SportEventDto;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
@@ -42,8 +44,8 @@ export function SportEventDetailsSection({
     >
       <SettingsRow label="Venue" value={tournament.venue || 'Not set'} />
       <SettingsRow label="Location" value={tournament.location || 'Not set'} />
-      <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate)} />
-      <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate)} />
+      <SettingsRow label="Starts" value={formatDateTimeDisplay(tournament.startDate, displayPreferences)} />
+      <SettingsRow label="Ends" value={formatDateTimeDisplay(tournament.endDate, displayPreferences)} />
       <SettingsRow label={capitalize(vocabulary.round.many)} value={tournament.rounds ?? 'Not set'} />
       {scoresUnplayedRoundsAgainstPar ? (
         <SettingsRow label="Par per round" value={tournament.roundsPar ?? 'From scores'} />

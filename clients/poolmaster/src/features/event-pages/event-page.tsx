@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
-import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay } from '@/features/shared/ui';
+import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
 import { eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildEventPagePath, buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
@@ -77,6 +77,7 @@ function useScrolledPast(target: RefObject<HTMLElement | null>): boolean {
 }
 
 function EventPageContent({ page }: { page: EventPageDto }) {
+  const displayPreferences = useDisplayPreferences();
   const copy = eventPageCopy(page);
   const sportName = getSportDefinition(page.sport).name;
   const primary = page.offers.find((offer) => offer.isPrimary);
@@ -97,7 +98,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
         <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
         {primary ? (
           <div className="flex flex-wrap gap-2" data-testid="event-page-when">
-            <Chip>{formatDateDisplay(primary.edition.startDate)}</Chip>
+            <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
             <Chip>{copy.picksClose}</Chip>
           </div>
         ) : (

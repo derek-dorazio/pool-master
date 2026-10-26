@@ -7,6 +7,7 @@ import {
   LinkButton,
   StatusBadge,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -30,6 +31,7 @@ import { SportSectionMenu } from './sport-section-menu';
 const columnHelper = createColumnHelper<SportEventDto>();
 
 export function RootAdminSportEventListPage() {
+  const displayPreferences = useDisplayPreferences();
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
   const sportName = definition.name.toLowerCase();
@@ -71,7 +73,7 @@ export function RootAdminSportEventListPage() {
       }),
       columnHelper.accessor('startDate', {
         header: 'Starts',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue()),
+        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
       }),
       columnHelper.accessor('status', {
         header: 'Status',
@@ -113,7 +115,7 @@ export function RootAdminSportEventListPage() {
         cell: ({ getValue }) => getValue(),
       }),
     ],
-    [event.one],
+    [displayPreferences, event.one],
   );
 
   return (

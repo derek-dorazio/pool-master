@@ -31,6 +31,7 @@ import {
   StatusBadge,
   Tile,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -109,6 +110,7 @@ function formatScore(points: number | null) {
  * round is a week: a round switcher shows one round at a time, read as its own week.
  */
 export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'pick-em-entry-page' });
   const { entryId = '', leagueCode: routeLeagueCode } = useParams<{ entryId: string; leagueCode?: string }>();
   const location = useLocation();
@@ -347,8 +349,8 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {canChange && !isSubmitted && kickoff ? (
         <Alert data-testid="pick-em-not-submitted-warning" title="Not submitted yet" tone="warning">
           {isSurvivor
-            ? `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff)}. An entry that hasn't submitted by then is out.`
-            : `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff)}. A week that isn't submitted by then scores nothing.`}
+            ? `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. An entry that hasn't submitted by then is out.`
+            : `Submit this week before the ${eventStart}, ${formatDateTimeDisplay(kickoff, displayPreferences)}. A week that isn't submitted by then scores nothing.`}
         </Alert>
       ) : null}
       {roundNeedsPick ? (

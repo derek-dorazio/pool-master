@@ -665,7 +665,6 @@ describe('Contract verification (web)', () => {
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: '12H',
-        dateFormat: 'MDY',
       },
     });
 

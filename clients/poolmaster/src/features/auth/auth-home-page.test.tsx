@@ -455,6 +455,61 @@ describe('AuthHomePage', () => {
     });
   });
 
+  function fillAndSubmitRegisterForm(timeZone?: string) {
+    fireEvent.click(screen.getByRole('radio', { name: 'Create account' }));
+    fireEvent.change(screen.getByTestId('auth-register-first-name'), { target: { value: 'Reg' } });
+    fireEvent.change(screen.getByTestId('auth-register-last-name'), { target: { value: 'User' } });
+    fireEvent.change(screen.getByTestId('auth-register-email'), {
+      target: { value: 'registered@example.com' },
+    });
+    fireEvent.change(screen.getByTestId('auth-register-username'), { target: { value: 'registered' } });
+    fireEvent.change(screen.getByTestId('auth-register-password'), { target: { value: 'password123' } });
+    fireEvent.change(screen.getByTestId('auth-register-confirm-password'), {
+      target: { value: 'password123' },
+    });
+    if (timeZone) {
+      fireEvent.change(screen.getByTestId('auth-register-time-zone'), { target: { value: timeZone } });
+    }
+    fireEvent.click(screen.getByTestId('auth-register-submit'));
+  }
+
+  it('sends the time zone picked at signup and the browser locale with the new account', async () => {
+    registerUserMock.mockResolvedValue({ data: { user: createUser({ id: 'user-registered' }) } });
+
+    renderAuthHomePage();
+    fillAndSubmitRegisterForm('America/Chicago');
+    await screen.findByTestId('welcome-destination');
+
+    expect(registerUserMock).toHaveBeenCalledTimes(1);
+    expect(registerUserMock.mock.calls[0]?.[0]).toMatchObject({
+      body: {
+        timezone: 'America/Chicago',
+        locale: Intl.DateTimeFormat().resolvedOptions().locale,
+      },
+    });
+  });
+
+  it('signs up again without the time zone and locale when the server refuses the browser zone, so signup still succeeds', async () => {
+    registerUserMock
+      .mockResolvedValueOnce({
+        error: { error: { code: 'TIME_ZONE_UNKNOWN', message: 'Unknown time zone' } },
+      })
+      .mockResolvedValueOnce({ data: { user: createUser({ id: 'user-registered' }) } });
+
+    renderAuthHomePage();
+    fillAndSubmitRegisterForm();
+    await screen.findByTestId('welcome-destination');
+
+    expect(registerUserMock).toHaveBeenCalledTimes(2);
+    const retryBody = (registerUserMock.mock.calls[1]?.[0] as { body: Record<string, unknown> }).body;
+    expect(retryBody).not.toHaveProperty('timezone');
+    expect(retryBody).not.toHaveProperty('locale');
+    expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'auth.register.displayPreferencesRefused' }),
+      expect.any(String),
+    );
+  });
+
   it('treats a malformed login response as an unexpected error path', async () => {
     loginUserMock.mockResolvedValue({
       data: null,

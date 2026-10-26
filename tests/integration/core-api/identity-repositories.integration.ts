@@ -21,7 +21,6 @@ import {
   PrismaUserRepository,
 } from '../../../packages/core-api/src/adapters';
 import {
-  DateFormat,
   LeagueIconKey,
   LeaguePlan,
   LeagueRole,
@@ -350,24 +349,20 @@ describe('identity cluster repositories (#202)', () => {
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: TimeFormat.TWELVE_HOUR,
-        dateFormat: DateFormat.MDY,
       });
       expect(set).toMatchObject({
         timezone: 'America/New_York',
         locale: 'en-US',
         timeFormat: TimeFormat.TWELVE_HOUR,
-        dateFormat: DateFormat.MDY,
       });
 
       const cleared = await repo.update(created.user.id, {
         timezone: null,
         timeFormat: null,
-        dateFormat: null,
       });
 
       expect(cleared.timezone).toBeUndefined();
       expect(cleared.timeFormat).toBeUndefined();
-      expect(cleared.dateFormat).toBeUndefined();
       // Not named in the update, so untouched.
       expect(cleared.locale).toBe('en-US');
     });

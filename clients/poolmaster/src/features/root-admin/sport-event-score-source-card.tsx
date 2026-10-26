@@ -9,6 +9,7 @@ import {
   StatusBadge,
   Tile,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -47,6 +48,7 @@ export function SportEventScoreSourceCard({
   eventId: string;
   tournament: SportEventDto;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-home-page',
   });
@@ -245,7 +247,7 @@ export function SportEventScoreSourceCard({
           <span>
             <span className="font-medium text-foreground">{item.name}</span>
             <span className="mt-1 block text-xs text-muted-foreground">
-              {formatDateTimeDisplay(item.startDate)} – {formatDateTimeDisplay(item.endDate)}
+              {formatDateTimeDisplay(item.startDate, displayPreferences)} – {formatDateTimeDisplay(item.endDate, displayPreferences)}
             </span>
           </span>
         )}

@@ -202,11 +202,11 @@
           },
           "timezone": {
             "type": "string",
-            "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+            "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
           },
           "locale": {
             "type": "string",
-            "description": "Preferred locale for formatting and localized copy."
+            "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
           },
           "timeFormat": {
             "type": "string",
@@ -214,16 +214,7 @@
               "12H",
               "24H"
             ],
-            "description": "Preferred clock display used in account and scheduling surfaces."
-          },
-          "dateFormat": {
-            "type": "string",
-            "enum": [
-              "MDY",
-              "DMY",
-              "YMD"
-            ],
-            "description": "Preferred date display format used in account and scheduling surfaces."
+            "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
           },
           "createdAt": {
             "type": "string",
@@ -288,11 +279,11 @@
               },
               "timezone": {
                 "type": "string",
-                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
               },
               "locale": {
                 "type": "string",
-                "description": "Preferred locale for formatting and localized copy."
+                "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
               },
               "timeFormat": {
                 "type": "string",
@@ -300,16 +291,7 @@
                   "12H",
                   "24H"
                 ],
-                "description": "Preferred clock display used in account and scheduling surfaces."
-              },
-              "dateFormat": {
-                "type": "string",
-                "enum": [
-                  "MDY",
-                  "DMY",
-                  "YMD"
-                ],
-                "description": "Preferred date display format used in account and scheduling surfaces."
+                "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
               },
               "createdAt": {
                 "type": "string",
@@ -383,11 +365,11 @@
                 },
                 "timezone": {
                   "type": "string",
-                  "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                  "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                 },
                 "locale": {
                   "type": "string",
-                  "description": "Preferred locale for formatting and localized copy."
+                  "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                 },
                 "timeFormat": {
                   "type": "string",
@@ -395,16 +377,7 @@
                     "12H",
                     "24H"
                   ],
-                  "description": "Preferred clock display used in account and scheduling surfaces."
-                },
-                "dateFormat": {
-                  "type": "string",
-                  "enum": [
-                    "MDY",
-                    "DMY",
-                    "YMD"
-                  ],
-                  "description": "Preferred date display format used in account and scheduling surfaces."
+                  "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                 },
                 "createdAt": {
                   "type": "string",
@@ -529,19 +502,6 @@
               null
             ],
             "description": "Preferred clock display format. Omit to leave unchanged; null to clear it."
-          },
-          "dateFormat": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "MDY",
-              "DMY",
-              "YMD",
-              null
-            ],
-            "description": "Preferred date display format. Omit to leave unchanged; null to clear it."
           }
         },
         "additionalProperties": false,
@@ -872,11 +832,11 @@
               },
               "timezone": {
                 "type": "string",
-                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
               },
               "locale": {
                 "type": "string",
-                "description": "Preferred locale for formatting and localized copy."
+                "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
               },
               "timeFormat": {
                 "type": "string",
@@ -884,16 +844,7 @@
                   "12H",
                   "24H"
                 ],
-                "description": "Preferred clock display used in account and scheduling surfaces."
-              },
-              "dateFormat": {
-                "type": "string",
-                "enum": [
-                  "MDY",
-                  "DMY",
-                  "YMD"
-                ],
-                "description": "Preferred date display format used in account and scheduling surfaces."
+                "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
               },
               "createdAt": {
                 "type": "string",
@@ -3185,11 +3136,11 @@
               },
               "timezone": {
                 "type": "string",
-                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
               },
               "locale": {
                 "type": "string",
-                "description": "Preferred locale for formatting and localized copy."
+                "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
               },
               "timeFormat": {
                 "type": "string",
@@ -3197,16 +3148,7 @@
                   "12H",
                   "24H"
                 ],
-                "description": "Preferred clock display used in account and scheduling surfaces."
-              },
-              "dateFormat": {
-                "type": "string",
-                "enum": [
-                  "MDY",
-                  "DMY",
-                  "YMD"
-                ],
-                "description": "Preferred date display format used in account and scheduling surfaces."
+                "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
               },
               "createdAt": {
                 "type": "string",
@@ -3470,11 +3412,11 @@
                     },
                     "timezone": {
                       "type": "string",
-                      "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                      "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                     },
                     "locale": {
                       "type": "string",
-                      "description": "Preferred locale for formatting and localized copy."
+                      "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                     },
                     "timeFormat": {
                       "type": "string",
@@ -3482,16 +3424,7 @@
                         "12H",
                         "24H"
                       ],
-                      "description": "Preferred clock display used in account and scheduling surfaces."
-                    },
-                    "dateFormat": {
-                      "type": "string",
-                      "enum": [
-                        "MDY",
-                        "DMY",
-                        "YMD"
-                      ],
-                      "description": "Preferred date display format used in account and scheduling surfaces."
+                      "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                     },
                     "createdAt": {
                       "type": "string",
@@ -3775,11 +3708,11 @@
                         },
                         "timezone": {
                           "type": "string",
-                          "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                          "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                         },
                         "locale": {
                           "type": "string",
-                          "description": "Preferred locale for formatting and localized copy."
+                          "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                         },
                         "timeFormat": {
                           "type": "string",
@@ -3787,16 +3720,7 @@
                             "12H",
                             "24H"
                           ],
-                          "description": "Preferred clock display used in account and scheduling surfaces."
-                        },
-                        "dateFormat": {
-                          "type": "string",
-                          "enum": [
-                            "MDY",
-                            "DMY",
-                            "YMD"
-                          ],
-                          "description": "Preferred date display format used in account and scheduling surfaces."
+                          "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                         },
                         "createdAt": {
                           "type": "string",
@@ -4089,11 +4013,11 @@
                           },
                           "timezone": {
                             "type": "string",
-                            "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                            "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                           },
                           "locale": {
                             "type": "string",
-                            "description": "Preferred locale for formatting and localized copy."
+                            "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                           },
                           "timeFormat": {
                             "type": "string",
@@ -4101,16 +4025,7 @@
                               "12H",
                               "24H"
                             ],
-                            "description": "Preferred clock display used in account and scheduling surfaces."
-                          },
-                          "dateFormat": {
-                            "type": "string",
-                            "enum": [
-                              "MDY",
-                              "DMY",
-                              "YMD"
-                            ],
-                            "description": "Preferred date display format used in account and scheduling surfaces."
+                            "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                           },
                           "createdAt": {
                             "type": "string",
@@ -4257,11 +4172,11 @@
                   },
                   "timezone": {
                     "type": "string",
-                    "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                    "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                   },
                   "locale": {
                     "type": "string",
-                    "description": "Preferred locale for formatting and localized copy."
+                    "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                   },
                   "timeFormat": {
                     "type": "string",
@@ -4269,16 +4184,7 @@
                       "12H",
                       "24H"
                     ],
-                    "description": "Preferred clock display used in account and scheduling surfaces."
-                  },
-                  "dateFormat": {
-                    "type": "string",
-                    "enum": [
-                      "MDY",
-                      "DMY",
-                      "YMD"
-                    ],
-                    "description": "Preferred date display format used in account and scheduling surfaces."
+                    "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                   },
                   "createdAt": {
                     "type": "string",
@@ -5250,11 +5156,11 @@
               },
               "timezone": {
                 "type": "string",
-                "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
               },
               "locale": {
                 "type": "string",
-                "description": "Preferred locale for formatting and localized copy."
+                "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
               },
               "timeFormat": {
                 "type": "string",
@@ -5262,16 +5168,7 @@
                   "12H",
                   "24H"
                 ],
-                "description": "Preferred clock display used in account and scheduling surfaces."
-              },
-              "dateFormat": {
-                "type": "string",
-                "enum": [
-                  "MDY",
-                  "DMY",
-                  "YMD"
-                ],
-                "description": "Preferred date display format used in account and scheduling surfaces."
+                "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
               },
               "createdAt": {
                 "type": "string",
@@ -6059,11 +5956,11 @@
                   },
                   "timezone": {
                     "type": "string",
-                    "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                    "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                   },
                   "locale": {
                     "type": "string",
-                    "description": "Preferred locale for formatting and localized copy."
+                    "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                   },
                   "timeFormat": {
                     "type": "string",
@@ -6071,16 +5968,7 @@
                       "12H",
                       "24H"
                     ],
-                    "description": "Preferred clock display used in account and scheduling surfaces."
-                  },
-                  "dateFormat": {
-                    "type": "string",
-                    "enum": [
-                      "MDY",
-                      "DMY",
-                      "YMD"
-                    ],
-                    "description": "Preferred date display format used in account and scheduling surfaces."
+                    "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                   },
                   "createdAt": {
                     "type": "string",
@@ -6179,11 +6067,11 @@
                   },
                   "timezone": {
                     "type": "string",
-                    "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                    "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                   },
                   "locale": {
                     "type": "string",
-                    "description": "Preferred locale for formatting and localized copy."
+                    "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                   },
                   "timeFormat": {
                     "type": "string",
@@ -6191,16 +6079,7 @@
                       "12H",
                       "24H"
                     ],
-                    "description": "Preferred clock display used in account and scheduling surfaces."
-                  },
-                  "dateFormat": {
-                    "type": "string",
-                    "enum": [
-                      "MDY",
-                      "DMY",
-                      "YMD"
-                    ],
-                    "description": "Preferred date display format used in account and scheduling surfaces."
+                    "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                   },
                   "createdAt": {
                     "type": "string",
@@ -6576,11 +6455,11 @@
                     },
                     "timezone": {
                       "type": "string",
-                      "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                      "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                     },
                     "locale": {
                       "type": "string",
-                      "description": "Preferred locale for formatting and localized copy."
+                      "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                     },
                     "timeFormat": {
                       "type": "string",
@@ -6588,16 +6467,7 @@
                         "12H",
                         "24H"
                       ],
-                      "description": "Preferred clock display used in account and scheduling surfaces."
-                    },
-                    "dateFormat": {
-                      "type": "string",
-                      "enum": [
-                        "MDY",
-                        "DMY",
-                        "YMD"
-                      ],
-                      "description": "Preferred date display format used in account and scheduling surfaces."
+                      "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                     },
                     "createdAt": {
                       "type": "string",
@@ -6735,11 +6605,11 @@
                     },
                     "timezone": {
                       "type": "string",
-                      "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                      "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                     },
                     "locale": {
                       "type": "string",
-                      "description": "Preferred locale for formatting and localized copy."
+                      "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                     },
                     "timeFormat": {
                       "type": "string",
@@ -6747,16 +6617,7 @@
                         "12H",
                         "24H"
                       ],
-                      "description": "Preferred clock display used in account and scheduling surfaces."
-                    },
-                    "dateFormat": {
-                      "type": "string",
-                      "enum": [
-                        "MDY",
-                        "DMY",
-                        "YMD"
-                      ],
-                      "description": "Preferred date display format used in account and scheduling surfaces."
+                      "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                     },
                     "createdAt": {
                       "type": "string",
@@ -6890,11 +6751,11 @@
                   },
                   "timezone": {
                     "type": "string",
-                    "description": "Preferred IANA timezone for user-facing scheduling and reminders."
+                    "description": "IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern."
                   },
                   "locale": {
                     "type": "string",
-                    "description": "Preferred locale for formatting and localized copy."
+                    "description": "BCP 47 locale the member's dates are formatted in, e.g. en-US."
                   },
                   "timeFormat": {
                     "type": "string",
@@ -6902,16 +6763,7 @@
                       "12H",
                       "24H"
                     ],
-                    "description": "Preferred clock display used in account and scheduling surfaces."
-                  },
-                  "dateFormat": {
-                    "type": "string",
-                    "enum": [
-                      "MDY",
-                      "DMY",
-                      "YMD"
-                    ],
-                    "description": "Preferred date display format used in account and scheduling surfaces."
+                    "description": "12-hour or 24-hour clock for the times the member sees. Absent means the locale's own."
                   },
                   "createdAt": {
                     "type": "string",
@@ -64275,7 +64127,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.",
+        "description": "Updates the time zone, locale and 12- or 24-hour clock the member sees dates in. An omitted field is left unchanged; an explicit null clears it. An unknown time zone answers 400 TIME_ZONE_UNKNOWN, a malformed locale 400 LOCALE_UNKNOWN.",
         "requestBody": {
           "required": true,
           "content": {

@@ -12,6 +12,7 @@ import {
   Tile,
   formatDateTimeDisplay,
   toDateTimeLocalValue,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -48,6 +49,7 @@ export function SportEventProviderBrowse({
   onEditionChange: (edition: SportEventEdition) => void;
   sportLeagues: readonly SportLeagueDto[];
 }) {
+  const displayPreferences = useDisplayPreferences();
   const scopedSportLeague = sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId);
   const logger = getLogger().child({
     feature: 'root-admin-sport-event-create-page',
@@ -174,8 +176,8 @@ export function SportEventProviderBrowse({
                   <div className="min-w-0">
                     <div className="font-medium text-foreground">{event.name}</div>
                     <div className="mt-1 text-xs text-muted-foreground">
-                      {formatDateTimeDisplay(event.startDate)} &ndash;{' '}
-                      {formatDateTimeDisplay(event.endDate)} · {event.status}
+                      {formatDateTimeDisplay(event.startDate, displayPreferences)} &ndash;{' '}
+                      {formatDateTimeDisplay(event.endDate, displayPreferences)} · {event.status}
                     </div>
                   </div>
                   <Button
@@ -202,8 +204,8 @@ export function SportEventProviderBrowse({
                   {selectedEvent.name}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">
-                  {formatDateTimeDisplay(selectedEvent.startDate)} &ndash;{' '}
-                  {formatDateTimeDisplay(selectedEvent.endDate)}
+                  {formatDateTimeDisplay(selectedEvent.startDate, displayPreferences)} &ndash;{' '}
+                  {formatDateTimeDisplay(selectedEvent.endDate, displayPreferences)}
                 </div>
               </div>
               <Button

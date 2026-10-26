@@ -151,7 +151,7 @@ export function usersModule(fastify: FastifyInstance, opts: UsersModuleOptions):
       tags: ['Users'],
       summary: 'Update user preferences',
       description:
-        'Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.',
+        'Updates the time zone, locale and 12- or 24-hour clock the member sees dates in. An omitted field is left unchanged; an explicit null clears it. An unknown time zone answers 400 TIME_ZONE_UNKNOWN, a malformed locale 400 LOCALE_UNKNOWN.',
       operationId: 'updateUserPreferences',
       params: USER_ID_PARAMS,
       body: schemaRef('UserPreferencesUpdateRequest'),

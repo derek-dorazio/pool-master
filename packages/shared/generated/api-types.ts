@@ -291,7 +291,7 @@ export interface paths {
         get?: never;
         /**
          * Update user preferences
-         * @description Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.
+         * @description Updates the time zone, locale and 12- or 24-hour clock the member sees dates in. An omitted field is left unchanged; an explicit null clears it. An unknown time zone answers 400 TIME_ZONE_UNKNOWN, a malformed locale 400 LOCALE_UNKNOWN.
          */
         put: operations["updateUserPreferences"];
         post?: never;
@@ -3636,20 +3636,15 @@ export interface components {
              * @enum {string}
              */
             authProvider?: "email" | "google" | "apple";
-            /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+            /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
             timezone?: string;
-            /** @description Preferred locale for formatting and localized copy. */
+            /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
             locale?: string;
             /**
-             * @description Preferred clock display used in account and scheduling surfaces.
+             * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              * @enum {string}
              */
             timeFormat?: "12H" | "24H";
-            /**
-             * @description Preferred date display format used in account and scheduling surfaces.
-             * @enum {string}
-             */
-            dateFormat?: "MDY" | "DMY" | "YMD";
             /**
              * Format: date-time
              * @description Account creation timestamp in ISO 8601 format.
@@ -3679,20 +3674,15 @@ export interface components {
                  * @enum {string}
                  */
                 authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                 timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                 locale?: string;
                 /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -3722,20 +3712,15 @@ export interface components {
                  * @enum {string}
                  */
                 authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                 timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                 locale?: string;
                 /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -3771,11 +3756,6 @@ export interface components {
              * @enum {string|null}
              */
             timeFormat?: "12H" | "24H" | null;
-            /**
-             * @description Preferred date display format. Omit to leave unchanged; null to clear it.
-             * @enum {string|null}
-             */
-            dateFormat?: "MDY" | "DMY" | "YMD" | null;
         };
         /** @description Password-change payload. Self only, because it requires the current password (A6). */
         UserPasswordChangeRequest: {
@@ -3889,20 +3869,15 @@ export interface components {
                  * @enum {string}
                  */
                 authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                 timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                 locale?: string;
                 /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -4655,20 +4630,15 @@ export interface components {
                  * @enum {string}
                  */
                 authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                 timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                 locale?: string;
                 /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -4756,20 +4726,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -4860,20 +4825,15 @@ export interface components {
                          * @enum {string}
                          */
                         authProvider?: "email" | "google" | "apple";
-                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                         timezone?: string;
-                        /** @description Preferred locale for formatting and localized copy. */
+                        /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                         locale?: string;
                         /**
-                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                          * @enum {string}
                          */
                         timeFormat?: "12H" | "24H";
-                        /**
-                         * @description Preferred date display format used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        dateFormat?: "MDY" | "DMY" | "YMD";
                         /**
                          * Format: date-time
                          * @description Account creation timestamp in ISO 8601 format.
@@ -4964,20 +4924,15 @@ export interface components {
                          * @enum {string}
                          */
                         authProvider?: "email" | "google" | "apple";
-                        /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                        /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                         timezone?: string;
-                        /** @description Preferred locale for formatting and localized copy. */
+                        /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                         locale?: string;
                         /**
-                         * @description Preferred clock display used in account and scheduling surfaces.
+                         * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                          * @enum {string}
                          */
                         timeFormat?: "12H" | "24H";
-                        /**
-                         * @description Preferred date display format used in account and scheduling surfaces.
-                         * @enum {string}
-                         */
-                        dateFormat?: "MDY" | "DMY" | "YMD";
                         /**
                          * Format: date-time
                          * @description Account creation timestamp in ISO 8601 format.
@@ -5040,20 +4995,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5353,20 +5303,15 @@ export interface components {
                  * @enum {string}
                  */
                 authProvider?: "email" | "google" | "apple";
-                /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                 timezone?: string;
-                /** @description Preferred locale for formatting and localized copy. */
+                /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                 locale?: string;
                 /**
-                 * @description Preferred clock display used in account and scheduling surfaces.
+                 * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  * @enum {string}
                  */
                 timeFormat?: "12H" | "24H";
-                /**
-                 * @description Preferred date display format used in account and scheduling surfaces.
-                 * @enum {string}
-                 */
-                dateFormat?: "MDY" | "DMY" | "YMD";
                 /**
                  * Format: date-time
                  * @description Account creation timestamp in ISO 8601 format.
@@ -5662,20 +5607,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5714,20 +5654,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5880,20 +5815,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -5957,20 +5887,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.
@@ -6035,20 +5960,15 @@ export interface components {
                      * @enum {string}
                      */
                     authProvider?: "email" | "google" | "apple";
-                    /** @description Preferred IANA timezone for user-facing scheduling and reminders. */
+                    /** @description IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern. */
                     timezone?: string;
-                    /** @description Preferred locale for formatting and localized copy. */
+                    /** @description BCP 47 locale the member's dates are formatted in, e.g. en-US. */
                     locale?: string;
                     /**
-                     * @description Preferred clock display used in account and scheduling surfaces.
+                     * @description 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                      * @enum {string}
                      */
                     timeFormat?: "12H" | "24H";
-                    /**
-                     * @description Preferred date display format used in account and scheduling surfaces.
-                     * @enum {string}
-                     */
-                    dateFormat?: "MDY" | "DMY" | "YMD";
                     /**
                      * Format: date-time
                      * @description Account creation timestamp in ISO 8601 format.

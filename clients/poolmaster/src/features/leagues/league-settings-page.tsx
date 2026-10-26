@@ -10,6 +10,7 @@ import {
   SettingsRow,
   SettingsSection,
   SettingsSectionHeader,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { describePointsTable } from '@/features/championships/cup-settings-view';
 import { LeaguePaymentsSection } from '@/features/billing/payment-history-sections';
@@ -45,6 +46,7 @@ import { useLeagueMembersQuery } from './use-league-members-query';
  * danger zone.
  */
 export function LeagueSettingsPage() {
+  const displayPreferences = useDisplayPreferences();
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
   const { league } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
@@ -122,7 +124,7 @@ export function LeagueSettingsPage() {
           label="League code"
           value={<span className="font-mono">{league.leagueCode}</span>}
         />
-        <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, 'Unknown')} />
+        <SettingsRow label="Created" value={formatDateDisplay(league.createdAt, displayPreferences, 'Unknown')} />
         <SettingsRow
           action={(
             <LinkButton size="sm" to={buildLeagueAdminTeamsPath(league.leagueCode)} variant="ghost">
@@ -256,7 +258,7 @@ export function LeagueSettingsPage() {
         <SettingsRow
           label="Premium preview period ends"
           testId="league-settings-plan-renews"
-          value={formatDateDisplay(league.planRenewsAt)}
+          value={formatDateDisplay(league.planRenewsAt, displayPreferences)}
         />
         {Object.values(PlanCap).map((cap) => (
           <SettingsRow
