@@ -68,9 +68,12 @@ jobs:
       - name: Send the previews
         shell: bash
         run: |
-          PREVIEW_TO=$(jq -r '.inputs.to' "$GITHUB_EVENT_PATH")
+          # Trimmed here as the script trims it, so the masked string is the one SES sees.
+          PREVIEW_TO=$(jq -r '.inputs.to | gsub("^\\s+|\\s+$"; "")' "$GITHUB_EVENT_PATH")
           echo "::add-mask::$PREVIEW_TO"
-          npm run email:preview -- --to "$PREVIEW_TO" --category "$PREVIEW_CATEGORY" 2>&1 | tee preview.log
+          # Only stdout goes to preview.log, which the Summary step copies: an SES error names the
+          # recipient's identity and stays in the masked log.
+          npm run email:preview -- --to "$PREVIEW_TO" --category "$PREVIEW_CATEGORY" | tee preview.log
       - name: Summary
         if: always()
         shell: bash
