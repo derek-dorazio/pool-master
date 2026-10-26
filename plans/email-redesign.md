@@ -1,6 +1,7 @@
 # Email redesign: event first, one click per contest type
 
-**Tracking issue:** none yet. Tickets are written once Derek has answered *Questions for Derek*.
+**Tracking issue:** none yet. Every question below was answered 2026-10-26; tickets are written
+when the build is scheduled.
 
 Written 2026-10-26 for Derek's review. Design only: nothing here is built. Mockups (a canvas of
 nine emails: four commissioner, five member):
@@ -118,7 +119,7 @@ the event has one" (Q7).
 
 ## Questions for Derek
 
-Each has a recommendation; a one-word answer per number is enough.
+**Decided (Derek 2026-10-26): every recommendation accepted**, as written below.
 
 1. **Event pictures.** Recommend our own sport illustrations now (no licence, already drawn),
    and no photos for launch. If you want photos later, one generic licensed photo per sport,
