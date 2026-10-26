@@ -20,6 +20,11 @@ record its link before you use it.
 | Auto racing | auto-racing/stock-car-banking-pexels-11521138.jpg | Alfred GF, /photo/11521138/ | In use: auto racing header |
 | Auto racing | auto-racing/stock-car-pack-sponsor-logos.jpg | not known | Not usable as is: large Valvoline, Pontiac, Chevrolet, Kodiak and Mainstay logos |
 | Auto racing | auto-racing/stock-car-pit-lane.jpg | not known | Not usable as is: readable sponsor decals and car numbers |
+| Auto racing | auto-racing/f1-le-mans-grid-pexels-20895328.jpg | Mathias Dargnat, /photo/20895328/ | Usable only as the empty grid and blurred car, cropped below the grandstand and away from the sponsor wall |
+| Auto racing | auto-racing/f1-silver-car-blur-pexels-29360730.jpg | Jonathan Borba, /photo/29360730/ | Not usable: a real team's livery and sponsors |
+| Auto racing | auto-racing/f1-red-car-blur-pexels-29289483.jpg | Jonathan Borba, /photo/29289483/ | Not usable: a real team's livery and sponsors |
+| Auto racing | auto-racing/f1-red-car-crowd-pexels-14079603.jpg | Jann Cube, /photo/14079603/ | Not usable: a real team's livery and sponsors |
+| Auto racing | auto-racing/f1-orange-car-blur-pexels-31266786.jpg | Jonathan Borba, /photo/31266786/ | Not usable: a real team's livery and sponsors |
 | Horse racing | horse-racing/horse-racing-rail-pexels-20742501.jpg | coldbeer, /photo/20742501/ | In use: horse racing header |
 | Horse racing | horse-racing/horse-racing-pexels-13641980.jpg | Luis Negron, /photo/13641980/ | Backup, usable |
 | Horse racing | horse-racing/horse-racing-erie-track.jpg | not known | Not usable: names a real venue (Erie Race Track) |
