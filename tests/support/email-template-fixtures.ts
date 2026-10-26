@@ -13,6 +13,35 @@ import {
 } from '../../packages/core-api/src/modules/email';
 
 /**
+ * Pictures load from QA, where every merge to main deploys them, so a preview sent to a real
+ * inbox shows them; a local web app on localhost can't serve a mail client.
+ */
+const IMAGE_HOST = 'https://qa.ultimateofficepoolmanager.com';
+const GOLF_IMAGE_URL = `${IMAGE_HOST}/email/sports/golf.jpg`;
+const MASTERS_HEADER = {
+  sportLeagueName: 'PGA Tour',
+  eventName: 'The Masters',
+  startsAt: new Date('2027-04-08T12:00:00.000Z'),
+  imageUrl: GOLF_IMAGE_URL,
+};
+const MASTERS_SETUPS = [
+  {
+    formatName: 'Tiered',
+    name: 'Tiered: 1 golfer per tier, best 4 count',
+    description: 'Pick one golfer from each of 6 tiers. Your best 4 scores count.',
+    imageUrl: `${IMAGE_HOST}/email/formats/tiered.png`,
+    url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-1&event=event-1',
+  },
+  {
+    formatName: 'Survivor',
+    name: 'Survivor: pick a golfer to make the cut',
+    description: 'Pick one golfer each round. If yours misses the cut, you are out.',
+    imageUrl: `${IMAGE_HOST}/email/formats/survivor.png`,
+    url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-2&event=event-1',
+  },
+];
+
+/**
  * One filled-in example of every system email, for `npm run email:preview` and the template
  * tests. A template key without an example here doesn't compile.
  */
@@ -159,30 +188,30 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
   EVENT_COMING_UP: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
-    eventName: 'The Masters',
-    startsAt: new Date('2027-04-08T12:00:00.000Z'),
+    event: MASTERS_HEADER,
     released: false,
+    setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: 'http://localhost:5173/league/OFFICE24/contest-types' })),
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
     contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },
   EVENT_READY_FOR_CONTESTS: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
-    eventName: 'The Masters',
-    startsAt: new Date('2027-04-08T12:00:00.000Z'),
+    event: MASTERS_HEADER,
     field: '89 golfers',
-    setups: [{ name: 'Pick 6 Tiers', url: 'http://localhost:5173/league/OFFICE24/admin/contests/new?template=template-1' }],
-    createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new',
+    setups: MASTERS_SETUPS,
+    lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
+    contestTypesUrl: 'http://localhost:5173/league/OFFICE24/contest-types',
   },
   EVENT_WEEKLY_DIGEST: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
     thisWeek: [
-      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new' },
-      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), state: DigestEventState.CONTEST_SET_UP },
+      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new?event=event-1' },
+      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), imageUrl: `${IMAGE_HOST}/email/sports/horse-racing.jpg`, state: DigestEventState.CONTEST_SET_UP },
     ],
     nextWeek: [
-      { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), state: DigestEventState.NOT_READY },
+      { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, state: DigestEventState.NOT_READY },
     ],
     contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },

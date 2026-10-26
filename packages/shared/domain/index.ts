@@ -8,6 +8,7 @@ export * from './contest-rules';
 export * from './contest-rules-text';
 export * from './sport-event-lifecycle';
 export * from './email-delivery';
+export * from './email-images';
 export * from './providers';
 export * from './sport-catalog-types';
 export * from './sport-rows';
