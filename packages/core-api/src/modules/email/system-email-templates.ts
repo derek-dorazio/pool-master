@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { CupTrophy, EmailCategory, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
+import { CupTrophy, EmailCategory, PRODUCT_NAME, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -780,8 +780,8 @@ type EmailTemplateRegistry = {
   [Key in SystemEmailTemplateKey]: EmailTemplateDefinition<Key>;
 };
 
-const BRAND_NAME = 'Prime Time Commissioner';
-const BRAND_TAGLINE = 'Ultimate Office Pool Manager';
+const BRAND_NAME = PRODUCT_NAME;
+const BRAND_TAGLINE = PRODUCT_TAGLINE;
 /** System email has no Reply-To (#844), so a reply bounces; the footer says so. */
 const NOT_MONITORED = 'Replies to this email aren\'t read.';
 const STOP_THESE_EMAILS = 'Stop these emails';
@@ -1151,7 +1151,7 @@ function renderContestExpandedEmail(
   data: ContestExpandedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? 'Poolmaster'}.`;
+  const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? BRAND_NAME}.`;
   return buildMessage(context, {
     templateKey: 'CONTEST_EXPANDED',
     subject: `${data.contestName} now takes ${data.entriesPerContest} entries`,

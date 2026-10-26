@@ -1430,7 +1430,7 @@ describe('ContestService', () => {
       expect(sentMessage.text).toContain(
         'Review entry: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/entries/entry-1',
       );
-      expect(sentMessage.html).toContain('Prime Time Commissioner');
+      expect(sentMessage.html).toContain('Primetime Commissioner');
     });
 
     it('adds the salary a budget lineup spent to its confirmation, and no tiebreaker line where the sport has none', async () => {

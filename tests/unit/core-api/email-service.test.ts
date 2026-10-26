@@ -279,7 +279,7 @@ describe('email service: EMAIL_CONFIG switches', () => {
     expect(message).toMatchObject({
       templateKey: 'PASSWORD_RESET',
       status: 'QUEUED',
-      fromName: 'Prime Time Commissioner',
+      fromName: 'Primetime Commissioner',
       fromAddress: 'noreply@qa.example.com',
     });
   });

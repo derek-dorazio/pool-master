@@ -51,7 +51,7 @@ const RESET = {
   templateKey: 'PASSWORD_RESET' as const,
   leagueId: undefined,
   idempotencyKey: 'PASSWORD_RESET:reset-1:user-1',
-  fromName: 'Prime Time Commissioner',
+  fromName: 'Primetime Commissioner',
   fromAddress: 'noreply@qa.example.com',
 };
 
@@ -116,7 +116,7 @@ describe('email sender', () => {
   it('clears a password reset\'s content once it is sent or given up on, and keeps other emails\' content', async () => {
     const time = clock();
     const outbox = inMemoryEmailMessages(time.now);
-    const reset = { templateKey: 'PASSWORD_RESET' as const, leagueId: undefined, fromName: 'Prime Time Commissioner', fromAddress: 'noreply@qa.example.com' };
+    const reset = { templateKey: 'PASSWORD_RESET' as const, leagueId: undefined, fromName: 'Primetime Commissioner', fromAddress: 'noreply@qa.example.com' };
     await outbox.record(queued(1, { ...reset, idempotencyKey: 'PASSWORD_RESET:reset-1:user-1' }));
     await outbox.record(queued(2, { ...reset, idempotencyKey: 'PASSWORD_RESET:reset-2:user-2' }));
     await outbox.record(queued(3));

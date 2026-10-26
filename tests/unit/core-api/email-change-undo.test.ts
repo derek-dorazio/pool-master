@@ -31,13 +31,13 @@ describe('EMAIL_CHANGED email', () => {
     const message = renderSystemEmailTemplate('EMAIL_CHANGED', DATA, { timeZone: 'UTC' });
 
     expect(message.templateKey).toBe('EMAIL_CHANGED');
-    expect(message.subject).toBe('Your Prime Time Commissioner email address was changed');
+    expect(message.subject).toBe('Your Primetime Commissioner email address was changed');
     expect(message.text).toContain([
       'Hi Riley,',
       '',
-      'The email address for your Prime Time Commissioner account (riley) was changed to riley.new@example.test on Oct 22, 2026, 2:05 PM UTC.',
+      'The email address for your Primetime Commissioner account (riley) was changed to riley.new@example.test on Oct 22, 2026, 2:05 PM UTC.',
       '',
-      'Prime Time Commissioner sends everything to the new address now, so this is the last email to this one.',
+      'Primetime Commissioner sends everything to the new address now, so this is the last email to this one.',
       '',
       "If this was you, there's nothing else to do. If this wasn't you, put this address back. The link works for 7 days. It signs everyone out of your account and clears its password, and then you set a new one. Put your address back:",
       'https://app.example.test/undo-email-change#token=abc',
@@ -49,7 +49,7 @@ describe('EMAIL_CHANGED email', () => {
   it('says an admin made the change when a root admin changed the address', () => {
     const message = renderSystemEmailTemplate('EMAIL_CHANGED', { ...DATA, changedBy: EmailChangedBy.ROOT_ADMIN }, { timeZone: 'UTC' });
 
-    expect(message.text).toContain('A Prime Time Commissioner admin changed the email address for your account (riley) to riley.new@example.test on Oct 22, 2026, 2:05 PM UTC.');
+    expect(message.text).toContain('A Primetime Commissioner admin changed the email address for your account (riley) to riley.new@example.test on Oct 22, 2026, 2:05 PM UTC.');
   });
 
   it("shows the change time in the account's own time zone and escapes the names in the HTML", () => {

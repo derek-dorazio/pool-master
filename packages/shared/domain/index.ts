@@ -20,6 +20,7 @@ export * from './championship';
 export * from './league-plans';
 export * from './event-pages';
 export * from './time-zones';
+export * from './brand';
 export { assertNever } from './assert-never';
 export {
   compareScores,

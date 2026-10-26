@@ -15,7 +15,7 @@ import { EMAIL_TEMPLATE_FIXTURES } from '../../support/email-template-fixtures';
 const UTC = { timeZone: 'UTC' };
 
 describe('pool-master-98i system email templates', () => {
-  it('renders the league member invite with Prime Time Commissioner theme and fallback text', () => {
+  it('renders the league member invite with Primetime Commissioner theme and fallback text', () => {
     const message = renderSystemEmailTemplate('LEAGUE_MEMBER_INVITE', {
       recipientEmail: 'member@example.com',
       inviterName: 'Commissioner One',
@@ -27,11 +27,11 @@ describe('pool-master-98i system email templates', () => {
 
     expect(message.templateKey).toBe('LEAGUE_MEMBER_INVITE');
     expect(message.subject).toBe('Commissioner One invited you to Mathworks');
-    expect(message.text).toContain('Prime Time Commissioner');
-    expect(message.text).toContain('Ultimate Office Pool Manager');
+    expect(message.text).toContain('Primetime Commissioner');
+    expect(message.text).toContain('The ultimate office pool manager and other game-day contests');
     expect(message.text).toContain('Join league: https://app.primetimecommissioner.com/invite/abc123');
-    expect(message.html).toContain('Prime Time Commissioner');
-    expect(message.html).toContain('Ultimate Office Pool Manager');
+    expect(message.html).toContain('Primetime Commissioner');
+    expect(message.html).toContain('The ultimate office pool manager and other game-day contests');
     expect(message.html).toContain('background:#0b1e3f');
     expect(message.html).toContain('background:#f5b800');
   });
@@ -620,7 +620,7 @@ describe('the test email', () => {
   it('names the environment and the root admin who sent it, and says email from the site is working', () => {
     const message = renderSystemEmailTemplate('EMAIL_TEST', EMAIL_TEMPLATE_FIXTURES.EMAIL_TEST, UTC);
 
-    expect(message.subject).toBe('Prime Time Commissioner test email (qa)');
+    expect(message.subject).toBe('Primetime Commissioner test email (qa)');
     expect(message.text).toContain('poolmaster-admin sent this test from the qa Email settings on');
     expect(message.text).toContain('It reached you, so email from this site is working.');
     expect(message.html).toContain('It reached you, so email from this site is working.');
@@ -701,7 +701,7 @@ describe('contest expanded', () => {
     expect(message.html).toContain('href="http://localhost:5173/league/OFFICE24/admin/contests/contest-1"');
   });
 
-  it('names Poolmaster for a grant, and escapes the contest\'s name', () => {
+  it('names Primetime Commissioner for a grant, and escapes the contest\'s name', () => {
     const message = renderSystemEmailTemplate('CONTEST_EXPANDED', {
       ...EMAIL_TEMPLATE_FIXTURES.CONTEST_EXPANDED,
       contestName: 'Pool <b>One</b>',
@@ -709,8 +709,8 @@ describe('contest expanded', () => {
       expandedBy: null,
     }, UTC);
 
-    expect(message.text).toContain('Pool <b>One</b> was expanded to 500 entries by Poolmaster.');
-    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt; was expanded to 500 entries by Poolmaster.');
+    expect(message.text).toContain('Pool <b>One</b> was expanded to 500 entries by Primetime Commissioner.');
+    expect(message.html).toContain('Pool &lt;b&gt;One&lt;/b&gt; was expanded to 500 entries by Primetime Commissioner.');
     expect(message.html).not.toContain('<b>One</b>');
   });
 });
@@ -835,7 +835,7 @@ describe('the email template registry', () => {
 
       expect(message.templateKey).toBe(templateKey);
       expect(message.subject.length).toBeGreaterThan(0);
-      expect(message.text).toContain('Prime Time Commissioner');
+      expect(message.text).toContain('Primetime Commissioner');
       expect(message.text).toContain('Replies to this email aren\'t read.');
       expect(message.html).toMatch(/^<!doctype html>/);
       expect(message.html).toContain('Replies to this email aren&#39;t read.');

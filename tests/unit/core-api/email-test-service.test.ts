@@ -80,8 +80,8 @@ describe('the root admin test email', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]).toMatchObject({
       to: 'derek@gmail.com',
-      from: { name: 'Prime Time Commissioner', address: 'noreply@qa.example.com' },
-      subject: 'Prime Time Commissioner test email (qa)',
+      from: { name: 'Primetime Commissioner', address: 'noreply@qa.example.com' },
+      subject: 'Primetime Commissioner test email (qa)',
     });
     expect(sent[0].text).toContain('Testing Admin sent this test from the qa Email settings');
   });

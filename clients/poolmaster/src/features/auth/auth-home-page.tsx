@@ -38,6 +38,7 @@ import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { signUpWithDisplayPreferences } from "./signup-display-preferences";
 import { eventPageCopy } from "@/features/event-pages/event-page-copy";
 import { parseStartReturnPath } from "@/features/event-pages/start-path";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -358,7 +359,7 @@ export function AuthHomePage() {
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr]">
         <div className="space-y-5 lg:col-start-1 lg:row-start-1">
           <span className="hidden rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase text-muted-foreground sm:inline-flex">
-            Ultimate Office Pool Manager
+            {PRODUCT_TAGLINE}
           </span>
           <div className="space-y-3">
             <h2 className="max-w-xl font-display text-3xl font-black tracking-normal sm:text-4xl">
@@ -373,7 +374,7 @@ export function AuthHomePage() {
                 ? "Sign in to join with your existing account, or create a new account to accept the invitation."
                 : teamInviteContext
                   ? `Sign in to join ${teamInviteContext.team.name} as a co-owner, or create a new account to accept the invitation.`
-                  : "Prime Time Commissioner gives commissioners one place to create leagues, invite members, and run contests."}
+                  : `${PRODUCT_NAME} gives commissioners one place to create leagues, invite members, and run contests.`}
             </p>
           </div>
           {inviteContext ? (

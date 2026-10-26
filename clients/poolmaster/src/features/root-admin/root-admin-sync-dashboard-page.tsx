@@ -36,7 +36,7 @@ import {
 } from './root-admin-sync-utils';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { ProviderSyncRunStatus } from '@poolmaster/shared/domain';
+import { PRODUCT_NAME, ProviderSyncRunStatus } from '@poolmaster/shared/domain';
 import { MANAGE_LIST_PAGE_SIZE, SYNC_PATH, UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
 
 const syncRunColumnHelper = createColumnHelper<ProviderSyncRun>();
@@ -212,7 +212,7 @@ export function RootAdminSyncDashboardPage() {
   const providerPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'providerPayload') : null;
   const jobPayload = payloadRun ? getPayloadSection(payloadRun.payload, 'jobPayload') : null;
   const evidenceEmptyMessage = [
-    'No normalized PoolMaster write rows were captured for this sync.',
+    `No normalized ${PRODUCT_NAME} write rows were captured for this sync.`,
     providerPayload?.rawCaptured === true ? 'Use the Payloads tab to inspect the raw provider payload.' : null,
   ].filter(Boolean).join(' ');
 

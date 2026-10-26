@@ -1,12 +1,6 @@
-import { Sport } from '@poolmaster/shared/domain';
+import { PRODUCT_NAME, Sport } from '@poolmaster/shared/domain';
 import { EVENT_PAGE_COPY, type EventPageCopy } from './event-page-copy';
 import { buildEventPagePath } from './event-page-paths';
-
-/**
- * The name a shared link's card shows under its title: the marketing name, which may differ
- * from the app's own until that is decided.
- */
-export const LINK_PREVIEW_SITE_NAME = 'Primetime Commissioner';
 
 /** Where the preview images sit in `public/`, and so in each release. */
 export const LINK_PREVIEW_IMAGE_DIR = 'og';
@@ -70,11 +64,11 @@ function escapeHtml(text: string): string {
 export function withLinkPreview(indexHtml: string, preview: LinkPreview, appUrl: string, assetBase: string): string {
   const origin = appUrl.replace(/\/+$/, '');
   const base = assetBase.endsWith('/') ? assetBase : `${assetBase}/`;
-  const title = `${preview.title} | ${LINK_PREVIEW_SITE_NAME}`;
+  const title = `${preview.title} | ${PRODUCT_NAME}`;
   const tags: [string, string, string][] = [
     ['name', 'description', preview.description],
     ['property', 'og:type', 'website'],
-    ['property', 'og:site_name', LINK_PREVIEW_SITE_NAME],
+    ['property', 'og:site_name', PRODUCT_NAME],
     ['property', 'og:title', preview.title],
     ['property', 'og:description', preview.description],
     ['property', 'og:url', `${origin}${preview.path}`],
