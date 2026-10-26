@@ -299,8 +299,15 @@ Each has a recommendation; a one-word answer per number is enough.
   overrides the template's own starting round (the second-chance template starts at round 2; the
   page's bracket at 3). An offer's state comes from `contestOpening`, which asks Create contest's
   own checks as a question: past the cutoff leaves the offer out, and the next edition is tried.
-- **Slice (a), part 2:** the `/play` page, the Coming up rows, and an upcoming Championship Weekend
-  in the test data, so QA can click the whole path through.
+- **Slice (a), part 2:** the `/play/<sport>/<slug>` page and the Coming up rows on How to Play
+  (the chosen sport's pages, or the next three) and on the welcome page's no-leagues state; a
+  member with leagues lands on their league, so never sees that row. The page's words live in the
+  web app (`event-page-copy.ts`), keyed by sport and slug, falling back to the sport blurb and the
+  template's name for a page with no copy yet. Until #1008, Start goes to sign-up, or to the
+  member's leagues. The upcoming Championship Weekend on QA is the existing date-shifted
+  Championship Weekend test seed: loading it shows the Clutch Card OPEN. The NFL bracket and
+  squares stay hidden there, because the NFL Playoffs test seed is last season as played, its
+  games over; a test seed must carry results, so there is no upcoming-season one.
 
 ## Later
 
