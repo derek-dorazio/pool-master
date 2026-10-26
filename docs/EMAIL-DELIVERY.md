@@ -130,7 +130,7 @@ their 12-hour or 24-hour clock, or en-US with the locale's own clock when they h
 ### Layout and Pictures
 
 An event's page is the active event page with an offer showing that event now
-(`EventPageService.pagesByEvent`; the first page in display order when two do).
+(`EventPageService.pagesByEvent`, read once a run; the first page in display order when two do).
 
 Every email opens with a slim navy brand bar: the product name and tagline on the left, the
 league's name on the right when the email comes from a league. An email about one event (C1,
@@ -508,8 +508,8 @@ in the Commissioner updates category:
 - **Coming up soon** (`EVENT_COMING_UP`): an event of any sport league, released or still a
   draft, starts in 7 to 10 days. It gives the start, says when a draft event isn't open for
   contests yet, shows the default contest setups offered on the event as tiles linking to the
-  league's contest types page, links "See every way to play" to the event's page when an event
-  page offers it, names last year's winners of the league's own contests on the
+  event's page (the league's contest types page when no event page offers it), names last
+  year's winners of the league's own contests on the
   event's previous edition (same series, the year before), and links to the league's contests
   page.
 - **Ready for contests** (`EVENT_READY_FOR_CONTESTS`): a released event starts within 7 days, at

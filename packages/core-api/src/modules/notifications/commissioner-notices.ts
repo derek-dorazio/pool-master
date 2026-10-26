@@ -155,8 +155,11 @@ export class CommissionerNotices implements DueNotifications {
       return found;
     };
     const firstWeeks = new Map<string, Promise<string | undefined>>();
-    await this.queueEventNotices(now, commissionersOf, firstWeeks);
-    await this.queueWeeklyDigests(now, commissionersOf, firstWeeks);
+    // Read once a run, and only when an email is due.
+    let pages: Promise<Map<string, EventPage>> | undefined;
+    const eventPages = (): Promise<Map<string, EventPage>> => (pages ??= this.deps.eventPages.pagesByEvent());
+    await this.queueEventNotices(now, commissionersOf, firstWeeks, eventPages);
+    await this.queueWeeklyDigests(now, commissionersOf, firstWeeks, eventPages);
     await this.queueContestsNotOpen(now, commissionersOf);
   }
 
@@ -165,6 +168,7 @@ export class CommissionerNotices implements DueNotifications {
     now: Date,
     commissionersOf: (leagueId: string) => Promise<User[]>,
     firstWeeks: Map<string, Promise<string | undefined>>,
+    eventPages: () => Promise<Map<string, EventPage>>,
   ): Promise<void> {
     const sportEvents = await this.deps.sportEvents.findAll({
       startsFrom: now,
@@ -186,9 +190,9 @@ export class CommissionerNotices implements DueNotifications {
         }
         if (untold.length === 0) continue;
         if (templateKey === 'EVENT_COMING_UP') {
-          await this.sendComingUp(sportEvent, untold, commissionersOf);
+          await this.sendComingUp(sportEvent, untold, commissionersOf, await eventPages());
         } else {
-          await this.sendReadyForContests(sportEvent, untold, commissionersOf);
+          await this.sendReadyForContests(sportEvent, untold, commissionersOf, await eventPages());
         }
       } catch (error) {
         this.deps.logger?.error({
@@ -213,6 +217,7 @@ export class CommissionerNotices implements DueNotifications {
     now: Date,
     commissionersOf: (leagueId: string) => Promise<User[]>,
     firstWeeks: Map<string, Promise<string | undefined>>,
+    eventPages: () => Promise<Map<string, EventPage>>,
   ): Promise<void> {
     const monday = digestMondayOf(now, this.deps.readConfig().weeklyDigestHour);
     if (monday === null) return;
@@ -237,7 +242,7 @@ export class CommissionerNotices implements DueNotifications {
       }
     }
 
-    const pages = await this.deps.eventPages.pagesByEvent();
+    const pages = await eventPages();
     const nextWeekFrom = now.getTime() + DIGEST_WEEK_MS;
     for (const league of due) {
       try {
@@ -292,19 +297,20 @@ export class CommissionerNotices implements DueNotifications {
     sportEvent: SportEvent,
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
+    pages: Map<string, EventPage>,
   ): Promise<void> {
-    const [event, defaults, lastYear, pages] = await Promise.all([
+    const [event, defaults, lastYear] = await Promise.all([
       this.eventHeader(sportEvent),
       this.defaultSetupsOn(sportEvent),
       this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
-      this.deps.eventPages.pagesByEvent(),
     ]);
     const eventPageUrl = this.eventPageUrl(pages, sportEvent);
     for (const league of leagues) {
       const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
-      // The event may not be released yet, so a tile explains the way to play rather than starting one.
-      const contestTypesUrl = buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
-      const setups = defaults.map((template) => this.setupTile(template, contestTypesUrl));
+      // The event may not be released yet, so a tile explains the way to play rather than starting
+      // one: on the event's page when it has one, else on the league's contest types page.
+      const howItWorksUrl = eventPageUrl ?? buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
+      const setups = defaults.map((template) => this.setupTile(template, howItWorksUrl));
       for (const user of await commissionersOf(league.id)) {
         await this.deps.email.send('EVENT_COMING_UP', {
           to: emailRecipientOf(user),
@@ -317,7 +323,6 @@ export class CommissionerNotices implements DueNotifications {
             released: sportEvent.status !== SportEventStatus.DRAFT,
             setups,
             lastYear: lastYear.get(league.id) ?? [],
-            eventPageUrl,
             contestsUrl,
           },
         });
@@ -381,13 +386,13 @@ export class CommissionerNotices implements DueNotifications {
     sportEvent: SportEvent,
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
+    pages: Map<string, EventPage>,
   ): Promise<void> {
-    const [fieldSizes, event, defaults, lastYear, pages] = await Promise.all([
+    const [fieldSizes, event, defaults, lastYear] = await Promise.all([
       this.deps.sportEvents.countParticipants([sportEvent.id]),
       this.eventHeader(sportEvent),
       this.defaultSetupsOn(sportEvent),
       this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
-      this.deps.eventPages.pagesByEvent(),
     ]);
     const eventPageUrl = this.eventPageUrl(pages, sportEvent);
     const fieldSize = fieldSizes.get(sportEvent.id) ?? 0;

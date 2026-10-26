@@ -191,9 +191,8 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueName: 'Office League',
     event: MASTERS_HEADER,
     released: false,
-    setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: 'http://localhost:5173/league/OFFICE24/contest-types' })),
+    setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: MASTERS_PAGE_URL })),
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
-    eventPageUrl: MASTERS_PAGE_URL,
     contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },
   EVENT_READY_FOR_CONTESTS: {

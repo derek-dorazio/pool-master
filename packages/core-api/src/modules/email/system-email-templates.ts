@@ -478,12 +478,10 @@ export interface EventComingUpEmailData {
   event: EmailEventHeader;
   /** Whether the event is open for contests yet; a DRAFT one is not. */
   released: boolean;
-  /** The default setups offered on it, each linking to the league's contest types page (Q9). */
+  /** The default setups offered on it, each linking to the event's page, or to the league's contest types page when no page offers it (Q9). */
   setups: ContestSetupTile[];
   /** The league's contests on last year's edition, with their winners. */
   lastYear: PreviousContestWinners[];
-  /** The event page offering it, from buildEventPageUrl, or null when no page does. */
-  eventPageUrl: string | null;
   /** The league's contests page for its commissioners. */
   contestsUrl: string;
 }
@@ -1953,7 +1951,6 @@ function renderEventComingUpEmail(
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
       ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'How it works'))] : []),
-      ...(data.eventPageUrl === null ? [] : [arrowLink(SEE_EVERY_WAY_TO_PLAY, data.eventPageUrl)]),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
       button('Plan your contest', data.contestsUrl),
     ].join(''),
@@ -1962,7 +1959,6 @@ function renderEventComingUpEmail(
       '',
       ...sentences,
       ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map(contestTypeTileLine)] : []),
-      ...(data.eventPageUrl === null ? [] : ['', `${SEE_EVERY_WAY_TO_PLAY}: ${data.eventPageUrl}`]),
       ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
       '',
       `Plan your contest: ${data.contestsUrl}`,
@@ -2500,11 +2496,6 @@ function contestTypeTileLine(tile: ContestSetupTile): string {
 
 /** Where an event email sends a reader to see every contest offered on the event. */
 const SEE_EVERY_WAY_TO_PLAY = 'See every way to play';
-
-/** A bold text link with an arrow, for a second way on from a list: "See every way to play →". */
-function arrowLink(label: string, url: string): string {
-  return `<p style="margin:4px 0 16px;font-size:14px;font-weight:700;"><a href="${escapeAttribute(url)}" style="color:${EMAIL_THEME.navy};text-decoration:none;">${escapeHtml(label)} &rarr;</a></p>`;
-}
 
 /** A grey line under the button, for a fact that matters little: "Field: 89 golfers". */
 function smallPrint(content: string): string {

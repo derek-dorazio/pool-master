@@ -42,6 +42,7 @@ describe('CommissionerNotices', () => {
   let templates: ContestConfigTemplate[];
   let finals: Map<string, ContestFinalStandings>;
   let eventPages: Map<string, EventPage>;
+  let eventPageReads: number;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
@@ -49,6 +50,7 @@ describe('CommissionerNotices', () => {
     templates = [];
     finals = new Map();
     eventPages = new Map();
+    eventPageReads = 0;
   });
 
   function notices(): CommissionerNotices {
@@ -76,7 +78,7 @@ describe('CommissionerNotices', () => {
       sportLeagues: { findById: async (id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague) },
       memberships: world.membershipRepo(),
       users: world.userRepo(),
-      eventPages: { pagesByEvent: async () => eventPages },
+      eventPages: { pagesByEvent: () => { eventPageReads += 1; return Promise.resolve(eventPages); } },
       finalStandings: { finalStandingsOf: async (contest) => finals.get(contest.id) ?? { scoringDefinitionId: null, entries: [] } },
       email,
       appBaseUrl: 'https://app.example.test/',
@@ -235,7 +237,7 @@ describe('CommissionerNotices', () => {
       expect(text).toContain('See every way to play: https://app.example.test/league/OFFICE24/contest-types\nField: 40 golfers');
     });
 
-    it("sends \"See every way to play\" to the event's page when one offers it, in C1 and C2, and to the contest types page otherwise", async () => {
+    it("sends C2's \"See every way to play\" and C1's tiles to the event's page when one offers it, and to the contest types page otherwise, reading the pages once a run", async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const casey = person(office.id, 'Casey');
       const masters = event({ name: 'The Masters', startDate: inDays(6) });
@@ -244,12 +246,16 @@ describe('CommissionerNotices', () => {
       eventPages.set(masters.id, { id: 'page-masters', sport: Sport.GOLF, slug: 'the-masters', displayOrder: 1, isActive: true, redirectTo: null });
       eventPages.set(open.id, { id: 'page-open', sport: Sport.GOLF, slug: 'the-open', displayOrder: 2, isActive: true, redirectTo: null });
 
+      templates = [template({ id: 'pick-6', name: 'Tiered: Pick 6' })];
+
       await notices().queueDue(NOW);
 
       expect(textTo('EVENT_READY_FOR_CONTESTS', casey.id, office)).toContain('See every way to play: https://app.example.test/play/golf/the-masters');
       const comingUp = sent('EVENT_COMING_UP').map(({ text }) => text);
-      expect(comingUp.filter((text) => text.includes('See every way to play: https://app.example.test/play/golf/the-open'))).toHaveLength(1);
-      expect(comingUp.filter((text) => !text.includes('See every way to play'))).toHaveLength(1);
+      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/play/golf/the-open'))).toHaveLength(1);
+      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types'))).toHaveLength(1);
+      expect(comingUp.some((text) => text.includes('See every way to play'))).toBe(false);
+      expect(eventPageReads).toBe(1);
     });
 
     it("tells no commissioner of a league that muted the event's sport league, coming up or ready, while a league that muted another one is told", async () => {
