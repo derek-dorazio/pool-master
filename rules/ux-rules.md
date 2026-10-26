@@ -313,3 +313,39 @@ administration area (root admin included), reusing the same shared components.
     rewrites its sport's line in the same PR and reads both pages for that
     sport before review: every league and format it added appears, and the
     line still describes what the sport offers.
+
+## 13. Event Pages
+
+An event page (`/play/<sport>/<slug>`) is the public page for one event a fan would name
+(Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
+landing page that ads, emails and shared links point at.
+
+1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
+   offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
+   goes in a migration*). Each offer is one contest setup (a template, found by its key in its
+   own sport league) on one series of that league, with an optional bracket starting round. One
+   offer is the primary, whose edition dates the page.
+2. **Each offer opens on its own.** An offer shows open, or "opens soon" with when, from Create
+   contest's own checks on the series' next edition; one with no edition left is left out. A
+   page's words never claim an offer is open.
+3. **A stat pool covers one playoff round.** A Clutch Card offer is on a sport league whose
+   events are one round (Championship Weekend's two games, then the Super Bowl's one), never
+   several, so a round people pick separately gets its own page. A bracket offer is the
+   exception by nature: it runs from its starting round to the final.
+4. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
+   league named in its "not affiliated" footer, and each offer's card (contest type, one line,
+   two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by sport and the page's stored
+   slug. A page without copy still renders, its name from the slug, its hook from its sport's
+   How to Play line and each card from the selection type's name and the template's
+   description, but a page ships with copy.
+5. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
+   anywhere, ads included, never says "fantasy", "bet", "odds", "props", "win cash" or "prizes",
+   and never shows league or team logos or player photos.
+6. **Every page with copy has its link preview.** Its 1200 by 630 image is committed in the web
+   app's `public/og/`, drawn from the tile layout by `scripts/render-link-preview-images.mjs`
+   and kept small enough for WhatsApp (about 300 KB); a unit test fails while one is missing.
+   The deploy writes the page's shell with its Open Graph tags, and CloudFront serves it only
+   to link-preview crawlers. Search crawlers and people get the app.
+7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+   ads and other people's chats. A page that ends is made inactive, and may redirect to the
+   page that replaces it.
