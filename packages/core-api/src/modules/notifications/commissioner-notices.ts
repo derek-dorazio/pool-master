@@ -44,17 +44,20 @@ import {
   isTemplateOfferedOn,
   type Contest,
   type ContestConfigTemplate,
+  type EventPage,
   type League,
   type SportEvent,
   type User,
 } from '@poolmaster/shared/domain';
 import type { ContestService } from '../contests/service';
+import type { EventPageService } from '../event-pages/service';
 import {
   emailRecipientOf,
   buildContestAdminUrl,
   buildCreateContestUrl,
   buildEmailFormatImageUrl,
   buildEmailSportImageUrl,
+  buildEventPageUrl,
   buildLeagueAdminContestsUrl,
   buildLeagueContestTypesUrl,
   DigestEventState,
@@ -101,6 +104,8 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
   /** C1, C2 and the digest name each event's sport league. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
+  /** The event page offering each event, which C1, C2 and the digest link to. */
+  eventPages: Pick<EventPageService, 'pagesByEvent'>;
   /** Last year's contests' winners. */
   finalStandings: Pick<ContestService, 'finalStandingsOf'>;
   email: Pick<EmailService, 'send' | 'leaguesRecorded' | 'hasRecordedForContest'>;
@@ -232,6 +237,7 @@ export class CommissionerNotices implements DueNotifications {
       }
     }
 
+    const pages = await this.deps.eventPages.pagesByEvent();
     const nextWeekFrom = now.getTime() + DIGEST_WEEK_MS;
     for (const league of due) {
       try {
@@ -243,6 +249,7 @@ export class CommissionerNotices implements DueNotifications {
               sportLeagueName: sportLeagueNames.get(sportEvent.sportLeagueId) ?? '',
               startsAt: sportEvent.startDate,
               imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sport),
+              eventPageUrl: this.eventPageUrl(pages, sportEvent),
             };
             if (contestLeagues.get(sportEvent.id)?.has(league.id)) return { ...base, state: DigestEventState.CONTEST_SET_UP };
             return sportEvent.status === SportEventStatus.SCHEDULED
@@ -286,11 +293,13 @@ export class CommissionerNotices implements DueNotifications {
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
   ): Promise<void> {
-    const [event, defaults, lastYear] = await Promise.all([
+    const [event, defaults, lastYear, pages] = await Promise.all([
       this.eventHeader(sportEvent),
       this.defaultSetupsOn(sportEvent),
       this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
+      this.deps.eventPages.pagesByEvent(),
     ]);
+    const eventPageUrl = this.eventPageUrl(pages, sportEvent);
     for (const league of leagues) {
       const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
       // The event may not be released yet, so a tile explains the way to play rather than starting one.
@@ -308,6 +317,7 @@ export class CommissionerNotices implements DueNotifications {
             released: sportEvent.status !== SportEventStatus.DRAFT,
             setups,
             lastYear: lastYear.get(league.id) ?? [],
+            eventPageUrl,
             contestsUrl,
           },
         });
@@ -330,6 +340,11 @@ export class CommissionerNotices implements DueNotifications {
     return (await this.deps.templates.list({ sport: sportEvent.sport, active: true }))
       .filter((template) => template.isDefault && isTemplateOfferedOn(template, sportEvent))
       .sort((left, right) => left.sortOrder - right.sortOrder);
+  }
+
+  private eventPageUrl(pages: Map<string, EventPage>, sportEvent: SportEvent): string | null {
+    const page = pages.get(sportEvent.id);
+    return page ? buildEventPageUrl(this.deps.appBaseUrl, page) : null;
   }
 
   private setupTile(template: ContestConfigTemplate, url: string): ContestSetupTile {
@@ -367,12 +382,14 @@ export class CommissionerNotices implements DueNotifications {
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
   ): Promise<void> {
-    const [fieldSizes, event, defaults, lastYear] = await Promise.all([
+    const [fieldSizes, event, defaults, lastYear, pages] = await Promise.all([
       this.deps.sportEvents.countParticipants([sportEvent.id]),
       this.eventHeader(sportEvent),
       this.defaultSetupsOn(sportEvent),
       this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
+      this.deps.eventPages.pagesByEvent(),
     ]);
+    const eventPageUrl = this.eventPageUrl(pages, sportEvent);
     const fieldSize = fieldSizes.get(sportEvent.id) ?? 0;
     const field = fieldSize > 0 ? countParticipants(fieldSize, eventSportDefinition(sportEvent).vocabulary.participant) : null;
     for (const league of leagues) {
@@ -393,6 +410,7 @@ export class CommissionerNotices implements DueNotifications {
             field,
             setups,
             lastYear: lastYear.get(league.id) ?? [],
+            eventPageUrl,
             contestTypesUrl,
           },
         });

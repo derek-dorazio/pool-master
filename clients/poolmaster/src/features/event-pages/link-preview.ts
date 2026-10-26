@@ -1,6 +1,5 @@
-import { Sport } from '@poolmaster/shared/domain';
+import { buildEventPagePath, Sport } from '@poolmaster/shared/domain';
 import { EVENT_PAGE_COPY, type EventPageCopy } from './event-page-copy';
-import { buildEventPagePath } from './event-page-paths';
 
 /**
  * The name a shared link's card shows under its title: the marketing name, which may differ

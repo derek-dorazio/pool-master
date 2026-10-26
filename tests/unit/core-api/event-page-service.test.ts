@@ -193,4 +193,22 @@ describe('EventPageService', () => {
     expect(football.map((view) => [view.page.slug, view.offers.map((each) => each.offer.id)])).toEqual([['championship-weekend', ['squares']]]);
     expect(every.map((view) => view.page.slug)).toEqual(['championship-weekend', 'nba-finals']);
   });
+  it('finds the page offering each event, the first page in display order winning, and leaves out a retired page and an edition no offer shows', async () => {
+    const LATER: EventPage = { ...PAGE, id: 'page-later', slug: 'playoffs', displayOrder: 40 };
+    const { service } = build({
+      pages: [PAGE, LATER, { ...RETIRED, isActive: false }],
+      offers: [CLUTCH_CARD, SQUARES, { ...SQUARES, id: 'later-squares', eventPageId: LATER.id }, { ...SQUARES, id: 'retired-squares', eventPageId: RETIRED.id }],
+      editions: {
+        'cw/Conference Championships': [edition('cw-2027', '2027-01-24T20:00:00.000Z')],
+        'nfl/NFL Playoffs': [edition('playoffs-2027', '2027-01-09T18:00:00.000Z'), edition('playoffs-2028', '2028-01-08T18:00:00.000Z')],
+      },
+    });
+
+    const pages = await service.pagesByEvent();
+
+    expect([...pages].map(([sportEventId, page]) => [sportEventId, page.id])).toEqual([
+      ['cw-2027', PAGE.id],
+      ['playoffs-2027', PAGE.id],
+    ]);
+  });
 });

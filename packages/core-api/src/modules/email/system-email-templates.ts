@@ -482,6 +482,8 @@ export interface EventComingUpEmailData {
   setups: ContestSetupTile[];
   /** The league's contests on last year's edition, with their winners. */
   lastYear: PreviousContestWinners[];
+  /** The event page offering it, from buildEventPageUrl, or null when no page does. */
+  eventPageUrl: string | null;
   /** The league's contests page for its commissioners. */
   contestsUrl: string;
 }
@@ -497,7 +499,9 @@ export interface EventReadyForContestsEmailData {
   setups: ContestSetupTile[];
   /** The league's contests on last year's edition, with their winners. */
   lastYear: PreviousContestWinners[];
-  /** The league's contest types page. */
+  /** The event page offering it, from buildEventPageUrl, or null when no page does. */
+  eventPageUrl: string | null;
+  /** The league's contest types page, where "See every way to play" goes without an event page. */
   contestTypesUrl: string;
 }
 
@@ -581,6 +585,8 @@ export type WeeklyDigestEvent = {
   startsAt: Date;
   /** Its sport's picture, from buildEmailSportImageUrl, shown small beside it. */
   imageUrl: string;
+  /** The event page offering it, from buildEventPageUrl; its name links there. Null without one. */
+  eventPageUrl: string | null;
 } & (
   | { state: typeof DigestEventState.READY; createContestUrl: string }
   | { state: typeof DigestEventState.CONTEST_SET_UP | typeof DigestEventState.NOT_READY }
@@ -1947,6 +1953,7 @@ function renderEventComingUpEmail(
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
       ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'How it works'))] : []),
+      ...(data.eventPageUrl === null ? [] : [arrowLink(SEE_EVERY_WAY_TO_PLAY, data.eventPageUrl)]),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
       button('Plan your contest', data.contestsUrl),
     ].join(''),
@@ -1955,6 +1962,7 @@ function renderEventComingUpEmail(
       '',
       ...sentences,
       ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map(contestTypeTileLine)] : []),
+      ...(data.eventPageUrl === null ? [] : ['', `${SEE_EVERY_WAY_TO_PLAY}: ${data.eventPageUrl}`]),
       ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
       '',
       `Plan your contest: ${data.contestsUrl}`,
@@ -1985,7 +1993,7 @@ function renderEventReadyForContestsEmail(
       paragraph(escapeHtml(intro)),
       ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'Set up'))] : []),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
-      button('See every way to play', data.contestTypesUrl),
+      button(SEE_EVERY_WAY_TO_PLAY, data.eventPageUrl ?? data.contestTypesUrl),
       ...(field === null ? [] : [smallPrint(field)]),
     ].join(''),
     textLines: [
@@ -1995,7 +2003,7 @@ function renderEventReadyForContestsEmail(
       ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map(contestTypeTileLine)] : []),
       ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
       '',
-      `See every way to play: ${data.contestTypesUrl}`,
+      `${SEE_EVERY_WAY_TO_PLAY}: ${data.eventPageUrl ?? data.contestTypesUrl}`,
       ...(field === null ? [] : [field]),
     ],
   });
@@ -2020,16 +2028,25 @@ function digestEventBlock(event: WeeklyDigestEvent, dates: EmailDateStyle): stri
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 16px;">
     <tr>
       <td width="120" style="width:120px;padding:0 16px 0 0;vertical-align:top;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="120" height="48" style="display:block;width:120px;height:48px;border:0;border-radius:6px;"></td>
-      <td style="vertical-align:top;font-size:15px;line-height:1.5;color:${EMAIL_THEME.ink};">${strong(digestEventHeading(event, dates))}<br>${state}</td>
+      <td style="vertical-align:top;font-size:15px;line-height:1.5;color:${EMAIL_THEME.ink};">${digestEventTitle(event, dates)}<br>${state}</td>
     </tr>
   </table>`;
+}
+
+/** A digest event's heading in bold, a link to its event page when it has one. */
+function digestEventTitle(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
+  const heading = strong(digestEventHeading(event, dates));
+  return event.eventPageUrl === null
+    ? heading
+    : `<a href="${escapeAttribute(event.eventPageUrl)}" style="color:${EMAIL_THEME.navy};text-decoration:none;">${heading}</a>`;
 }
 
 function digestEventLines(event: WeeklyDigestEvent, dates: EmailDateStyle): string[] {
   const state = event.state === DigestEventState.READY
     ? `${DIGEST_EVENT_STATE_LINE.READY}. Create contest: ${event.createContestUrl}`
     : DIGEST_EVENT_STATE_LINE[event.state];
-  return [digestEventHeading(event, dates), state];
+  const page = event.eventPageUrl === null ? [] : [`${SEE_EVERY_WAY_TO_PLAY}: ${event.eventPageUrl}`];
+  return [digestEventHeading(event, dates), state, ...page];
 }
 
 function renderEventWeeklyDigestEmail(
@@ -2479,6 +2496,14 @@ function contestTypeTile(tile: ContestSetupTile, action: string): string {
 /** A tile's plain-text twin: its name and link. */
 function contestTypeTileLine(tile: ContestSetupTile): string {
   return `${tile.name}: ${tile.url}`;
+}
+
+/** Where an event email sends a reader to see every contest offered on the event. */
+const SEE_EVERY_WAY_TO_PLAY = 'See every way to play';
+
+/** A bold text link with an arrow, for a second way on from a list: "See every way to play →". */
+function arrowLink(label: string, url: string): string {
+  return `<p style="margin:4px 0 16px;font-size:14px;font-weight:700;"><a href="${escapeAttribute(url)}" style="color:${EMAIL_THEME.navy};text-decoration:none;">${escapeHtml(label)} &rarr;</a></p>`;
 }
 
 /** A grey line under the button, for a fact that matters little: "Field: 89 golfers". */

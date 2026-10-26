@@ -909,6 +909,27 @@ describe('the event emails\' header and contest type tiles', () => {
     expect(message.text).not.toContain('with  or');
   });
 
+  it("points C2's button and C1's link at the event page when there is one, and C2's button at the contest types page without one", () => {
+    const withPage = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+    const withoutPage = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', { ...data, eventPageUrl: null }, UTC);
+    const comingUp = renderSystemEmailTemplate('EVENT_COMING_UP', EMAIL_TEMPLATE_FIXTURES.EVENT_COMING_UP, UTC);
+    const comingUpWithoutPage = renderSystemEmailTemplate('EVENT_COMING_UP', { ...EMAIL_TEMPLATE_FIXTURES.EVENT_COMING_UP, eventPageUrl: null }, UTC);
+
+    expect(withPage.html).toContain(`href="${data.eventPageUrl}"`);
+    expect(withoutPage.html).toContain(`href="${data.contestTypesUrl}"`);
+    expect(withoutPage.text).toContain(`See every way to play: ${data.contestTypesUrl}`);
+    expect(comingUp.html).toContain(`href="${EMAIL_TEMPLATE_FIXTURES.EVENT_COMING_UP.eventPageUrl}"`);
+    expect(comingUpWithoutPage.text).not.toContain('See every way to play');
+  });
+
+  it("links a digest event's name to its event page when it has one, and leaves it plain otherwise", () => {
+    const digest = EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST;
+    const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', digest, UTC);
+
+    expect(message.html).toContain(`<a href="${digest.thisWeek[0].eventPageUrl}"`);
+    expect(message.html.match(/\/play\//g)).toHaveLength(1);
+  });
+
   it('names every sport league the email mentions in the footer, saying we are affiliated with none of them', () => {
     const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST, UTC);
 
