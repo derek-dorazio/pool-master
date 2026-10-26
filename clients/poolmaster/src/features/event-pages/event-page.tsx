@@ -4,12 +4,12 @@ import { EventPageOfferState, getSportDefinition } from '@poolmaster/shared/doma
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { useAuth } from '@/features/auth/auth-context';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
 import { eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildEventPagePath, buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
+import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
 
 /** The page's three steps to a running pool, as How to Play tells them. */
@@ -19,21 +19,19 @@ const READY_STEPS: readonly { title: string; body: string }[] = [
   { title: 'Watch it live', body: 'The leaderboard moves with every score, and the final standings settle themselves.' },
 ];
 
-/**
- * Where a page's buttons go until the start flow (#1008) does the deciding: a visitor signs up,
- * and a signed-in one goes to their leagues.
- */
-function StartButton({ testId, children, variant = 'primary' }: { testId: string; children: string; variant?: 'primary' | 'secondary' }) {
-  const auth = useAuth();
-  return auth.isAuthenticated ? (
-    <LinkButton data-testid={testId} to="/welcome" variant={variant}>Go to your leagues</LinkButton>
-  ) : (
-    <LinkButton data-testid={testId} state={{ authMode: 'register' }} to="/" variant={variant}>{children}</LinkButton>
-  );
+/** Every button on the page starts the same way (#1008): `/start` decides where the visitor belongs. */
+function StartButton({ request, testId, children, size, variant = 'primary' }: {
+  request: StartRequest;
+  testId: string;
+  children: string;
+  size?: 'sm';
+  variant?: 'primary' | 'secondary' | 'ghost';
+}) {
+  return <LinkButton data-testid={testId} size={size} to={buildStartPath(request)} variant={variant}>{children}</LinkButton>;
 }
 
-function OfferCard({ copy, offer, testId }: { copy: EventPageCopy; offer: EventPageOfferDto; testId: string }) {
-  const auth = useAuth();
+function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: EventPageOfferDto; page: EventPageDto; testId: string }) {
+  const request: StartRequest = { sport: page.sport, slug: page.slug, templateId: offer.template.id };
   const offerCopy = eventPageOfferCopy(copy, offer);
   const isOpen = offer.state === EventPageOfferState.OPEN;
   return (
@@ -49,15 +47,13 @@ function OfferCard({ copy, offer, testId }: { copy: EventPageCopy; offer: EventP
       ) : null}
       <div className="mt-auto flex flex-col items-start gap-2 pt-2">
         {isOpen ? (
-          <StartButton testId={`${testId}-start`} variant="secondary">{`Start with ${offerCopy.contestType}`}</StartButton>
+          <StartButton request={request} testId={`${testId}-start`} variant="secondary">{`Start with ${offerCopy.contestType}`}</StartButton>
         ) : (
           <>
             <Chip data-testid={`${testId}-opens`}>{`Opens ${offerCopy.opensWhen}`}</Chip>
-            {auth.isAuthenticated ? null : (
-              <LinkButton data-testid={`${testId}-start`} size="sm" state={{ authMode: 'register' }} to="/" variant="ghost">
-                Start your league now, we&apos;ll email you
-              </LinkButton>
-            )}
+            <StartButton request={request} size="sm" testId={`${testId}-start`} variant="ghost">
+              Start your league now, we&apos;ll email you
+            </StartButton>
           </>
         )}
       </div>
@@ -88,6 +84,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
   const sportPagesQuery = useEventPagesQuery(page.sport);
   const nextUp = upcomingEventPages((sportPagesQuery.data ?? []).filter((other) => other.id !== page.id))
     .find(({ primary: other }) => primary === undefined || other.edition.startDate > primary.edition.startDate);
+  const startRequest: StartRequest = { sport: page.sport, slug: page.slug, templateId: primary?.template.id ?? null };
   const hero = useRef<HTMLDivElement>(null);
   const showBar = useScrolledPast(hero);
 
@@ -109,7 +106,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
           </p>
         )}
         <div className="flex flex-wrap items-center gap-3" ref={hero}>
-          <StartButton testId="event-page-start">Start a free league</StartButton>
+          <StartButton request={startRequest} testId="event-page-start">Start a free league</StartButton>
         </div>
         {plansQuery.data ? (
           <Chip data-testid="event-page-gift" tone="active">
@@ -123,7 +120,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
           <SectionHeader description="Pick one, or run them all. Each starts with the setup below, and you can change any rule." title={`Ways to play ${copy.name}`} />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {page.offers.map((offer) => (
-              <OfferCard copy={copy} key={offer.id} offer={offer} testId={`event-page-offer-${offer.template.templateKey}`} />
+              <OfferCard copy={copy} key={offer.id} offer={offer} page={page} testId={`event-page-offer-${offer.template.templateKey}`} />
             ))}
           </div>
         </section>
@@ -158,7 +155,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
 
       {showBar ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card p-3 md:hidden" data-testid="event-page-bar">
-          <StartButton testId="event-page-bar-start">Start a free league</StartButton>
+          <StartButton request={startRequest} testId="event-page-bar-start">Start a free league</StartButton>
         </div>
       ) : null}
     </section>

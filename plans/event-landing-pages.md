@@ -308,6 +308,17 @@ Each has a recommendation; a one-word answer per number is enough.
   Championship Weekend test seed: loading it shows the Clutch Card OPEN. The NFL bracket and
   squares stay hidden there, because the NFL Playoffs test seed is last season as played, its
   games over; a test seed must carry results, so there is no upcoming-season one.
+- **Slice (b) (#1008):** every button on an event page goes to
+  `/start?sport=<path segment>&page=<slug>&template=<id>`. It names the page and the setup, not
+  the edition: `/start` reads the page again and takes the offer's current edition, state and
+  starting round, so a link from an old email starts on the edition that can still take the
+  contest. Create contest gets `?event=` and `?startRound=` from that. A signed-out visitor goes
+  to Create account with the start as the return path, and a banner, "You're starting a
+  Championship Weekend pool". One league run: straight on. Several: the picker (Set up, View,
+  See plans). None: Create league opens at once for someone with no league, saying what comes
+  next; a member of others gets "Start your own league" and "Share with your commissioner". An
+  offer not open yet lands on the league's home, whose card says when it opens and that an email
+  follows; it offers the setup once the offer is open.
 
 ## Later
 

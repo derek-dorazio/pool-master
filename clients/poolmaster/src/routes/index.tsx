@@ -17,6 +17,7 @@ import { PointsRacePage } from '@/features/championships/points-race-page';
 import { TrophyCasePage } from '@/features/championships/trophy-case-page';
 import { HowToPlayPage } from '@/features/contest-types/how-to-play-page';
 import { EventPage } from '@/features/event-pages/event-page';
+import { StartPage } from '@/features/event-pages/start-page';
 import { LeagueContestTypesPage } from '@/features/contest-types/league-contest-types-page';
 import { CreateContestPage } from '@/features/contests/create-contest-page';
 import { ContestDetailPage } from '@/features/contests/contest-detail-page';
@@ -112,6 +113,10 @@ export const router = createBrowserRouter([
       {
         path: 'play/:sport/:pageSlug',
         element: <EventPage />,
+      },
+      {
+        path: 'start',
+        element: <StartPage />,
       },
       {
         path: 'forgot-password',

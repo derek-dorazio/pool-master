@@ -76,20 +76,16 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-disclaimer')).toHaveTextContent('Not affiliated with the NFL or any sports league.');
   });
 
-  it('sends a signed-out visitor\'s buttons to sign-up, and a signed-in one\'s to their leagues', async () => {
+  it('sends every button to the start flow with its page and contest setup, the top one with the headline offer\'s', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
     listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
-    const { unmount } = renderPage();
-
-    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', '/');
-    expect(screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone-start')).toHaveTextContent('Start your league now');
-    unmount();
-
-    authState.isAuthenticated = true;
     renderPage();
-    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', '/welcome');
-    expect(screen.queryByTestId('event-page-offer-championship-weekend-tiered-redzone-start')).not.toBeInTheDocument();
+
+    const start = '/start?sport=american-football&page=championship-weekend&template=';
+    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', `${start}template-championship-weekend-tiered-redzone`);
+    expect(screen.getByTestId('event-page-offer-championship-weekend-tiered-redzone-start')).toHaveTextContent('Start your league now');
+    expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveAttribute('href', `${start}template-nfl-squares`);
   });
 
   it('links the sport\'s next event page after this one under Next up', async () => {
