@@ -982,3 +982,30 @@ one command and puts findings where the owner is already looking.
   the safety net for UI merges and any case where the flag is forgotten.
 - The local branch can be deleted with `git branch -d <branch>` once switched back to `main`.
 - Reopened stories spawn a new branch; do not reuse a merged one.
+
+### Applying Terraform
+
+A Terraform change merges like any other slice, but merging it changes nothing in AWS: an
+apply does, and only the repo owner runs one, from their own machine with their own AWS
+credentials. CI never applies, and an agent session cannot (it has no AWS credentials). An
+agent whose slice needs an apply hands the owner copy-paste steps; the `apply-terraform`
+skill is the sequence.
+
+- **Apply from an up-to-date `main` that contains the change.** State is shared, so an apply
+  makes AWS match the checkout it runs from. An apply from a PR branch that lacks another
+  branch's already-applied change reverts that change. When a change has to be applied before
+  its PR merges, rebase the branch onto current `main` first.
+- **The plan lists only the resources the change names.** Anything else (a replace, a
+  destroy, a resource the change never touched) means the checkout or the state is not what
+  the change assumed. Stop and investigate; never apply past it.
+- **Secrets are reused, never regenerated.** `jwt_secret` and `db_password` take the values
+  the environment already has. A new `jwt_secret` signs every member out; a new
+  `db_password` resets the RDS master password while `DATABASE_URL` still carries the old
+  one.
+- **Apply a saved plan file and delete it after.** `terraform apply <plan file>` applies what
+  was reviewed and nothing newer. The file holds every sensitive value in plain text, so it
+  is git-ignored and never kept.
+- **The change is done when its effect is observed**, not when the apply exits. IAM, DNS, SES
+  and security-group changes take effect at the apply; core-api environment changes reach the
+  running service only on the next deploy (`infrastructure/terraform/README.md`, *How
+  Terraform's Task Definition Env Reaches the Service*).
