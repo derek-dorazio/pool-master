@@ -36,7 +36,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
 
   useEffect(() => {
     if (checkError) {
-      logger.warn({ action: 'start.picker.check.failed', leagueId: league.id, err: checkError }, 'Start could not check a league against the offer');
+      logger.warn({ action: 'start.picker.check.failed', data: { leagueId: league.id }, err: checkError }, 'Start could not check a league against the offer');
     }
   }, [checkError, league.id, logger]);
 
