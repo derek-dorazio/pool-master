@@ -51,7 +51,7 @@ date and time formatting in `system-email-templates.ts`; this redesign only plac
 |---|---|---|---|
 | C2 Ready for contests | Full picture | Tiles for every default setup; last year's winners (new to C2, Q8) | See every way to play |
 | C1 Coming up soon | Full picture | Tiles as a preview (Q9); last year's winners | Plan your contest |
-| Weekly digest | Brand bar only | Each event a row with a small sport picture | Your league's contests |
+| Weekly digest | Brand bar only | Each event a row with a small crop of its sport photo | Your league's contests |
 | D1 New contest | Full picture | Contest card; "Picks close" band with days left | Make your picks |
 | D2 Picks close soon | Picture strip | Big countdown, contest card | Make your picks |
 | Contest is live | Full picture, "Live now" | Entries, format, scoring as three small stats | Watch the leaderboard |
@@ -87,8 +87,10 @@ floodlit pitch) chosen once per sport, never per event. Derek chose photos (Q1);
 checked for logos, sponsor decals, car numbers and faces before it is used, and its source and
 licence are recorded beside the file.
 
-Photos chosen so far (Derek 2026-10-26), all from Pexels under its free licence (commercial use,
-no attribution required). Each is cropped to a wide band at build time:
+Photos chosen so far (Derek 2026-10-26, downloaded 2026-10-26), all from Pexels under its free
+licence: commercial use and cropping allowed, no attribution required, but we must not suggest that
+a person or brand in a photo endorses us, and Pexels gives no model or property releases. That is
+why the logo and face check above is ours to do. Each is cropped to a wide band at build time:
 
 | Sport | Photo | Why this one |
 |---|---|---|
@@ -106,12 +108,16 @@ these emails should be part of that review.
 
 ## How it is built
 
-- **Pictures must be PNG files.** Gmail and Outlook do not show SVG, inline or linked. A script
-  renders each illustration from `illustrations.tsx` to a PNG at twice its size, and the PNGs are
-  checked in under the web app's public folder (`/email/sports/golf.png`,
-  `/email/formats/tiered.png`). Emails link to them by absolute URL on the environment's web
-  host. A test fails when an illustration changes and its PNG was not re-rendered, so the email
-  and How to Play never drift apart.
+- **No SVG in email.** Gmail and Outlook do not show SVG, inline or linked, so every picture is a
+  PNG or JPG, checked in under the web app's public folder. Emails link to them by absolute URL on
+  the environment's web host.
+- **Sport photos** are checked in already cropped, as JPG (`/email/sports/<sport>.jpg`), each with
+  a short source note beside it (`<sport>.source.md`: photographer, Pexels link, licence, download
+  date). A sport with no photo yet shows its How to Play scene, rendered to PNG like the contest
+  type pictures, so no email ever goes out without a header.
+- **Contest type pictures** are rendered: a script draws each one from `illustrations.tsx` to a PNG
+  at twice its size (`/email/formats/tiered.png`). A test fails when an illustration changes and
+  its PNG was not re-rendered, so the email and How to Play never drift apart.
 - **Images-off still reads.** Outlook desktop blocks images until the reader allows them. The
   event name and time sit in the navy band under the picture, not in the picture, and every
   image has empty alt text, so a blocked image leaves a coloured box, not a hole in the message.
@@ -148,7 +154,9 @@ name was settled the same day.
    move too. **Settled (Derek 2026-10-26): the app and every email say "Primetime
    Commissioner".** The display name moves into one shared constant (thread "Rename app to
    Primetime Commissioner"), and the email build reads that constant rather than its own
-   `BRAND_NAME` copy.
+   `BRAND_NAME` copy. Derek also wants a secondary tagline along the lines of "the ultimate
+   office pool manager and other ... games"; its wording is still open, and it sits in the
+   footer, not the brand bar.
 3. **What a tile click does.** Recommend it opens Create contest with the setup and event filled
    in, and the commissioner presses Create, as decided for event pages ("prefill, never
    create"). The alternative, creating the contest straight from the email, saves one press but
@@ -172,7 +180,7 @@ name was settled the same day.
 
 After Derek's answers, three slices:
 
-1. The PNG pipeline, the shared pieces and the brand bar, applied to C1, C2 and the digest.
+1. The sport photos with their source notes, the contest type PNG pipeline, the shared pieces and the brand bar, applied to C1, C2 and the digest.
    `&event=` needs both ends: today Create contest (`create-contest-page.tsx`) reads only
    `?template=` and picks the soonest event, so this slice also makes it read `?event=`, unless
    #1008 (which adds `?event=` for event pages) has landed first.
