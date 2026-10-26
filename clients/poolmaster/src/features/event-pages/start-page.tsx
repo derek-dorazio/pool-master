@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PlanCap } from '@poolmaster/shared/domain';
@@ -10,48 +11,67 @@ import { CreateLeagueModal } from '@/features/leagues/create-league-modal';
 import { LeagueIcon } from '@/features/leagues/league-icon';
 import { buildLeagueAdminContestPath, buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
-import { useSportLeaguesUsed } from '@/features/plans/use-sport-leagues-used';
+import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
 import { Button, EmptyState, ErrorState, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy } from './event-page-copy';
 import { buildEventPagePath } from './event-page-paths';
 import { buildStartDestination, parseStartRequest, type StartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
 
-/** What a league can do with the offer: start it, open the contest it already has, or not this year. */
+/**
+ * What a league can do with the offer: start it, open the contest it already has, or not this
+ * year. No action shows until both checks have answered, so Set up never shows on a guess.
+ */
 function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer: EventPageOfferDto | null; page: EventPageDto; request: StartRequest }) {
   const copy = eventPageCopy(page);
+  const logger = useMemo(() => getLogger().child({ feature: 'start-page' }), []);
   const contestsQuery = useLeagueContestsQuery(offer ? league.id : '');
   const cap = league.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
-  const year = offer?.edition.eventYear;
-  const used = useSportLeaguesUsed(league.id, year === undefined ? [] : [year], cap !== null && offer !== null).get(year ?? 0);
+  const year = offer?.edition.eventYear ?? 0;
+  const isCapCounted = offer !== null && cap !== null;
+  const usedQuery = useQuery({ ...sportLeaguesUsedQuery(league.id, year), enabled: isCapCounted });
+  const isChecking = (offer !== null && contestsQuery.isPending) || (isCapCounted && usedQuery.isPending);
+  const checkError = offer !== null ? contestsQuery.error ?? (isCapCounted ? usedQuery.error : null) : null;
+  const testId = `start-league-${league.leagueCode}`;
+
+  useEffect(() => {
+    if (checkError) {
+      logger.warn({ action: 'start.picker.check.failed', leagueId: league.id, err: checkError }, 'Start could not check a league against the offer');
+    }
+  }, [checkError, league.id, logger]);
+
   const existing = offer
     ? (contestsQuery.data ?? []).find((contest) => contest.selectionType === offer.template.selectionType
       && contest.sportEvents.some((event) => event.sportEventId === offer.edition.sportEventId))
     : undefined;
+  const used = usedQuery.data?.sportLeagueIds;
   const isCapped = offer !== null && cap !== null && used !== undefined && used.length >= cap && !used.includes(offer.sportLeagueId);
-  const testId = `start-league-${league.leagueCode}`;
 
-  const [description, action] = existing && offer
-    ? [
-      `Already has a ${eventPageOfferCopy(copy, offer).contestType} on ${copy.name}`,
-      <LinkButton data-testid={`${testId}-view`} key="view" size="sm" to={buildLeagueAdminContestPath(league.leagueCode, existing.id)} variant="secondary">View</LinkButton>,
-    ]
-    : isCapped
-      ? [
-        `Your plan's ${String(cap)} sports leagues for ${String(year)} are used`,
-        <LinkButton data-testid={`${testId}-plans`} key="plans" size="sm" to={buildLeagueAdminPlanPath(league.leagueCode)} variant="secondary">See plans</LinkButton>,
-      ]
-      : [
-        null,
-        <LinkButton data-testid={`${testId}-set-up`} key="set-up" size="sm" to={buildStartDestination(league.leagueCode, request, offer)}>Set up</LinkButton>,
-      ];
+  const [description, action] = checkError
+    ? ['We couldn\'t check this league. Try again in a moment.', null]
+    : isChecking
+      ? ['Checking this league...', null]
+      : existing && offer
+        ? [
+          `Already has a ${eventPageOfferCopy(copy, offer).contestType} on ${copy.name}`,
+          <LinkButton data-testid={`${testId}-view`} key="view" size="sm" to={buildLeagueAdminContestPath(league.leagueCode, existing.id)} variant="secondary">View</LinkButton>,
+        ]
+        : isCapped
+          ? [
+            `Your plan's ${String(cap)} sports leagues for ${String(year)} are used`,
+            <LinkButton data-testid={`${testId}-plans`} key="plans" size="sm" to={buildLeagueAdminPlanPath(league.leagueCode)} variant="secondary">See plans</LinkButton>,
+          ]
+          : [
+            null,
+            <LinkButton data-testid={`${testId}-set-up`} key="set-up" size="sm" to={buildStartDestination(league.leagueCode, request, offer)}>Set up</LinkButton>,
+          ];
 
   return (
     <li className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-background p-4" data-testid={testId}>
       <LeagueIcon iconKey={league.iconKey} />
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-foreground">{league.name}</p>
-        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+        {description ? <p className="text-sm text-muted-foreground" data-testid={`${testId}-status`}>{description}</p> : null}
       </div>
       {action}
     </li>
@@ -60,19 +80,26 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
 
 /** Copies the event page's link, for a member to send whoever runs their league. */
 function ShareWithCommissionerButton({ page }: { page: EventPageDto }) {
-  const [isCopied, setIsCopied] = useState(false);
+  const [copyState, setCopyState] = useState<'copied' | 'failed' | 'idle'>('idle');
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}${buildEventPagePath(page.sport, page.slug)}`);
-      setIsCopied(true);
+      setCopyState('copied');
     } catch {
-      // The page's own address stays one tap away from the event page.
+      setCopyState('failed');
     }
   }
   return (
-    <Button data-testid="start-share-with-commissioner" onClick={() => void copyLink()} type="button" variant="secondary">
-      {isCopied ? 'Link copied' : 'Share with your commissioner'}
-    </Button>
+    <div className="space-y-1">
+      <Button data-testid="start-share-with-commissioner" onClick={() => void copyLink()} type="button" variant="secondary">
+        {copyState === 'copied' ? 'Link copied' : 'Share with your commissioner'}
+      </Button>
+      {copyState === 'failed' ? (
+        <p className="text-sm text-destructive" data-testid="start-share-failed" role="alert">
+          {'Couldn\'t copy the link. Copy this page\'s address from your browser instead.'}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -116,6 +143,7 @@ function StartForUser({ request }: { request: StartRequest }) {
   }
 
   const runs = leagues.filter((league) => league.isActive && commissionerLeagueIds.has(league.id));
+  const runsOnlyInactive = !runs.length && leagues.some((league) => commissionerLeagueIds.has(league.id));
   if (runs.length === 1) {
     return <Navigate replace to={buildStartDestination(runs[0].leagueCode, request, offer)} />;
   }
@@ -138,9 +166,11 @@ function StartForUser({ request }: { request: StartRequest }) {
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
-            {leagues.length
-              ? 'Contests are started by a league\'s commissioner. Start a league of your own, or send this page to whoever runs yours.'
-              : 'Name your league, then set up the contest. Nothing is created until you press Create.'}
+            {runsOnlyInactive
+              ? 'The leagues you run are inactive. Reactivate one from its settings, or start a new league for this.'
+              : leagues.length
+                ? 'Contests are started by a league\'s commissioner. Start a league of your own, or send this page to whoever runs yours.'
+                : 'Name your league, then set up the contest. Nothing is created until you press Create.'}
           </p>
         )}
         <div className="flex flex-wrap gap-3">
@@ -191,7 +221,8 @@ export function StartPage() {
     return <LoadingState body="Getting your league ready..." testId="start-loading" />;
   }
   if (!auth.isAuthenticated) {
-    // The choice rides in the return path, so sign-up, a refresh or a second tab keeps it.
+    // The choice rides in the return path, held in this tab's history: sign-up and a refresh keep
+    // it, a second tab does not.
     return <Navigate replace state={{ authMode: 'register', from: `${location.pathname}${location.search}` }} to="/" />;
   }
   return <StartForUser request={request} />;

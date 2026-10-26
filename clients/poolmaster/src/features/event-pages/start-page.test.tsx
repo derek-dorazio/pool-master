@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LeagueRole } from '@poolmaster/shared/domain';
@@ -131,6 +131,40 @@ describe('Start from an event page', () => {
     expect(await screen.findByTestId('start-league-GOLF-plans')).toHaveAttribute('href', '/league/GOLF/admin/plan');
     expect(screen.getByTestId('start-league-GOLF')).toHaveTextContent('sports leagues for 2027 are used');
     expect(screen.getByTestId('start-new-league')).toHaveTextContent('Start a new league instead');
+  });
+
+  it('offers no Set up while a league is being checked, and none when the check fails', async () => {
+    primeLeagues([leagueRun('OFFICE'), leagueRun('FAMILY')]);
+    listContestsMock.mockImplementation(({ path }: { path: { id: string } }) => (path.id === 'league-FAMILY'
+      ? new Promise(() => undefined)
+      : Promise.resolve({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } }, response: { status: 500 } })));
+
+    renderStart(SQUARES);
+
+    expect(await screen.findByText(/We couldn't check this league/)).toHaveAttribute('data-testid', 'start-league-OFFICE-status');
+    expect(screen.getByTestId('start-league-FAMILY-status')).toHaveTextContent('Checking this league');
+    expect(screen.queryByTestId('start-league-OFFICE-set-up')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('start-league-FAMILY-set-up')).not.toBeInTheDocument();
+  });
+
+  it('tells a commissioner whose only leagues are inactive to reactivate one or start a new one', async () => {
+    primeLeagues([leagueRun('OFFICE', { isActive: false })]);
+
+    renderStart(SQUARES);
+
+    const page = await screen.findByTestId('start-page');
+    expect(page).toHaveTextContent('The leagues you run are inactive');
+    expect(page).not.toHaveTextContent('Contests are started by a league\'s commissioner');
+  });
+
+  it('says so when the page link cannot be copied, so the button does not look dead', async () => {
+    primeLeagues([leagueRun('OFFICE')], LeagueRole.MEMBER);
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockRejectedValue(new Error('denied')) } });
+
+    renderStart(SQUARES);
+    fireEvent.click(await screen.findByTestId('start-share-with-commissioner'));
+
+    expect(await screen.findByTestId('start-share-failed')).toHaveTextContent('Couldn\'t copy the link');
   });
 
   it('offers a member who runs no league their own league or the page to send their commissioner', async () => {

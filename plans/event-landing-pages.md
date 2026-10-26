@@ -175,8 +175,8 @@ route is the same for everyone (board 5).
 - **The picker says why a league can't**: a league that already has a contest of that type on
   the edition shows "View"; one whose plan has used its sports leagues for the year shows "See
   plans" (#947 caps), never a dead end.
-- **The choice survives sign-up** in the route's query string, not in storage, so a refresh or
-  a second tab keeps it.
+- **The choice survives sign-up** in the route's query string, not in storage. Sign-up holds
+  that address in the tab's history, so a refresh keeps it; a second tab does not.
 
 ## Ads and tiles
 

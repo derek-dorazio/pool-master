@@ -12,6 +12,22 @@ function bySeasonYear(results: SportLeaguesUsedResult[]): ReadonlyMap<number, re
   )));
 }
 
+/** One season year's sports leagues used, as a query: for a caller that needs its loading and error. */
+export function sportLeaguesUsedQuery(leagueId: string | undefined, seasonYear: number) {
+  return {
+    queryKey: QueryKeys.plans.sportLeaguesUsed(leagueId, seasonYear),
+    queryFn: async () => {
+      const response = await listSportLeaguesUsed({ path: { id: leagueId ?? '' }, query: { seasonYear } });
+      if (!response.data) {
+        throwApiError(response.error, 'Sports leagues used response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: Boolean(leagueId),
+    retry: false,
+  };
+}
+
 /**
  * The sports leagues a league's contests already use in each of `seasonYears` (#947), by year:
  * what a plan's sports-leagues-a-year cap counts. A year still loading is missing from the map.
@@ -24,18 +40,7 @@ export function useSportLeaguesUsed(
 ): ReadonlyMap<number, readonly string[]> {
   return useQueries({
     // Without the cap there is nothing to count, so no year is asked about.
-    queries: (enabled ? seasonYears : []).map((seasonYear) => ({
-      queryKey: QueryKeys.plans.sportLeaguesUsed(leagueId, seasonYear),
-      queryFn: async () => {
-        const response = await listSportLeaguesUsed({ path: { id: leagueId ?? '' }, query: { seasonYear } });
-        if (!response.data) {
-          throwApiError(response.error, 'Sports leagues used response is missing data.');
-        }
-        return response.data;
-      },
-      enabled: Boolean(leagueId),
-      retry: false,
-    })),
+    queries: (enabled ? seasonYears : []).map((seasonYear) => sportLeaguesUsedQuery(leagueId, seasonYear)),
     combine: bySeasonYear,
   });
 }
