@@ -59,3 +59,7 @@ record its link before you use it.
 | Cycling | cycling/cycling-switchbacks-pexels-28607386.jpg | Jose Rodriguez Ortega, /photo/28607386/ | In use: cycling header |
 | Cycling | cycling/cycling-hill-climb-pexels-9899547.jpg | Lumiere Studio MX, /photo/9899547/ | Not usable: faces, race numbers and a club's name on the jersey |
 | Cycling | cycling/cycling-triathlon-pack-pexels-5687480.jpg | /photo/5687480/ | Not usable: faces and a sponsor's name on the kits |
+| Running | running/running-silhouette-road-pexels-10168171.jpg | RUN 4 FFWPU, /photo/10168171/ | In use: running header, cropped below the race number |
+| Running | running/running-overpass-pack-pexels-28907576.jpg | Federico Abis, /photo/28907576/ | Usable only cropped to the runners' backs, away from the signs and the spectators' faces |
+| Running | running/running-city-marathon-pexels-28907540.jpg | Federico Abis, /photo/28907540/ | Not usable: faces, names and numbers on bibs, a city landmark |
+| Running | running/running-shoes-start-pexels-2526878.jpg | RUN 4 FFWPU, /photo/2526878/ | Not usable: Nike, Asics and adidas logos on the shoes |
