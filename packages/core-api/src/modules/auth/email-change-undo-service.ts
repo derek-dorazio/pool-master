@@ -24,7 +24,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { EmailMessageStatus, EmailTemplateKey, type User } from '@poolmaster/shared/domain';
-import type { EmailChangedBy, EmailService } from '../email';
+import { emailRecipientOf, type EmailChangedBy, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 import { BCRYPT_ROUNDS, hashResetToken, readPerMinuteLimit } from './password-reset-service';
@@ -102,7 +102,7 @@ export class EmailChangeUndoService {
         });
       });
       const email = await this.deps.email.send(EmailTemplateKey.EMAIL_CHANGED, {
-        to: { email: oldEmail, userId: user.id, timeZone: user.timezone },
+        to: { ...emailRecipientOf(user), email: oldEmail },
         about: issued.id,
         data: {
           firstName: user.firstName,

@@ -15,6 +15,7 @@ import { CupWeight, YearReviewStatus, championshipYear, trophyForPlace, type Use
 import { championshipName } from '../../mappers/championship.mapper';
 import { cupName } from '../../mappers/cups.mapper';
 import {
+  emailRecipientOf,
   buildSquadYearUrl,
   formatStandingPlace,
   formatTenthsOfPoints,
@@ -129,7 +130,7 @@ export class YearReviewService {
       const squad = squadsById.get(membership.squadId);
       if (user === undefined || squad === undefined) continue;
       await this.deps.email.send('YEAR_IN_REVIEW', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         about: `${league.id}:${String(year)}`,
         data: {
