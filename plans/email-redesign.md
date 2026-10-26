@@ -33,7 +33,7 @@ date and time formatting in `system-email-templates.ts`; this redesign only plac
 2. **An event header** wherever an email is about one event: a picture, the sport league as an
    eyebrow, the event name as the headline, and one line for when: the date, or a time only in
    the 3-hours-before reminder. This replaces the
-   Starts/Field table. The picture is the sport's How to Play scene (Q1).
+   Starts/Field table. The picture is one generic photo per sport (Q1).
 3. **Contest type tiles** wherever we offer setups: the type's How to Play picture, the type
    name, the setup in a few words, its one-line summary from How to Play, and a link. The whole
    tile is the link, and it opens Create contest in that league with the setup and the event
@@ -83,7 +83,9 @@ tie. Augusta National in particular enforces its marks hard.
 **Photos.** A licensed stock photo (Unsplash or a paid library) covers copyright only. It does
 not clear logos, signage or recognisable people in the frame, and a ticketed venue may restrict
 commercial use. So photos are possible, but only generic scenes (a fairway, an oval at speed, a
-floodlit pitch) chosen once per sport, never per event. Q1 asks whether that is worth doing.
+floodlit pitch) chosen once per sport, never per event. Derek chose photos (Q1); each one is
+checked for logos, sponsor decals, car numbers and faces before it is used, and its source and
+licence are recorded beside the file.
 
 **Disclaimer.** Every email whose content names an event says "Not affiliated with {league} or
 any sports league." in the footer, the same wording as the event pages.
@@ -123,9 +125,10 @@ the event has one" (Q7).
 **Decided (Derek 2026-10-26): every recommendation accepted**, as written below. Q2 leaves the
 in-app name open, as it says.
 
-1. **Event pictures.** Recommend our own sport illustrations now (no licence, already drawn),
-   and no photos for launch. If you want photos later, one generic licensed photo per sport,
-   never a named venue, logo or player.
+1. **Event pictures.** Recommended our own sport illustrations, with photos later.
+   **Changed (Derek 2026-10-26 19:26Z): photos now**, one generic free-licence photo per sport
+   (a golf hole, a stock car oval and so on), never a named venue, logo or player. The How to
+   Play contest type pictures stay on the tiles.
 2. **Brand name in emails.** The code spells it "Prime Time Commissioner" with the tagline
    "Ultimate Office Pool Manager"; marketing uses "Primetime Commissioner". Recommend
    "Primetime Commissioner" in the brand bar and the sender name, and dropping the tagline from
