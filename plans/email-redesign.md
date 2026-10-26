@@ -87,6 +87,17 @@ floodlit pitch) chosen once per sport, never per event. Derek chose photos (Q1);
 checked for logos, sponsor decals, car numbers and faces before it is used, and its source and
 licence are recorded beside the file.
 
+Photos chosen so far (Derek 2026-10-26), all from Pexels under its free licence (commercial use,
+no attribution required). Each is cropped to a wide band at build time:
+
+| Sport | Photo | Why this one |
+|---|---|---|
+| Golf | Edward Goeters, https://www.pexels.com/photo/5802951/ | A fairway, pond and green; no flag logo or signs; distant golfers are specks |
+| Stock car racing | Alfred GF, https://www.pexels.com/photo/11521138/ | A pack on the banking; sponsor decals unreadable at email size. A closer shot was turned down for its large car-maker and sponsor logos |
+| Horse racing | coldbeer, https://www.pexels.com/photo/20742501/ | No signage; jockeys' faces covered; generic saddle-cloth numbers |
+
+The other sports get theirs at build time under the same checks.
+
 **Disclaimer.** Every email whose content names an event says "Not affiliated with {league} or
 any sports league." in the footer, the same wording as the event pages.
 
