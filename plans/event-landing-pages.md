@@ -319,6 +319,15 @@ Each has a recommendation; a one-word answer per number is enough.
   next; a member of others gets "Start your own league" and "Share with your commissioner". An
   offer not open yet lands on the league's home, whose card says when it opens and that an email
   follows; it offers the setup once the offer is open.
+- **Slice (d) (#1010):** prerendered shells, no server route. The build writes
+  `dist/play/<sport>/<slug>/index.html` for every page in `event-page-copy.ts`: the app's own
+  `index.html` with the page's title and Open Graph tags. The deploy copies them to `/play/`,
+  and the CloudFront function serves one only to a link-preview crawler (by user agent); people
+  get `/index.html` as before. Each page has one committed 1200 by 630 image in `public/og/`, the
+  tile's layout, drawn by `scripts/render-link-preview-images.mjs`; a test fails while a page
+  with copy has none. Cards say "Primetime Commissioner", the marketing name. The function lives
+  in `infrastructure/terraform/cloudfront-functions/spa-rewrite.js`, so it takes a Terraform apply
+  on QA before previews show.
 
 ## Later
 

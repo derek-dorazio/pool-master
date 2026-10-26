@@ -24,6 +24,11 @@ npm run test:coverage --workspace=@poolmaster/poolmaster
 - The file records the deployed webapp version, generated client SDK version, service version, git SHAs, build number, build time, and release-prefix context.
 - App code can read the deployed metadata via `getVersionInfo()` from [src/lib/version-info.ts](./src/lib/version-info.ts).
 
+## Event Page Link Previews
+
+- With `POOLMASTER_WEBAPP_URL` set (the QA deploy sets it), the build also writes `dist/play/<sport>/<slug>/index.html` for each event page with copy: the app's `index.html` with that page's Open Graph tags. CloudFront serves these only to link-preview crawlers.
+- Each event page needs a preview image in `public/og/`. After adding or changing a page's copy, run `node scripts/render-link-preview-images.mjs` here and commit the image; a unit test fails while one is missing.
+
 ## Important
 
 - `clients/_archived/web` is archived reference material only.

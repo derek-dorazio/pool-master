@@ -8,29 +8,19 @@
 
 # --- CloudFront Function for SPA routing ---
 #
-# Rewrites requests to /index.html for client-side routing. Applied ONLY to
+# Rewrites requests to /index.html for client-side routing, and gives a
+# link-preview crawler an event page's own shell (#1010). Applied ONLY to
 # the S3 default behavior, so API responses (403, 404, etc.) pass through
 # untouched. This replaces the custom_error_response approach which was
-# global and intercepted API error responses.
+# global and intercepted API error responses. The code is its own file so
+# scripts/cloudfront-spa-rewrite.test.mjs can run it.
 
 resource "aws_cloudfront_function" "spa_rewrite" {
   name    = "${local.name_prefix}-spa-rewrite"
   runtime = "cloudfront-js-2.0"
-  comment = "SPA routing: rewrite non-file URIs to /index.html"
+  comment = "SPA routing, and event page shells for link-preview crawlers"
   publish = true
-
-  code = <<-EOF
-    function handler(event) {
-      var request = event.request;
-      var uri = request.uri;
-      // If the URI has a file extension (e.g. .js, .css, .png), serve it as-is.
-      // Otherwise, rewrite to /index.html for SPA client-side routing.
-      if (!uri.includes('.')) {
-        request.uri = '/index.html';
-      }
-      return request;
-    }
-  EOF
+  code    = file("${path.module}/cloudfront-functions/spa-rewrite.js")
 }
 
 # --- Provider alias for us-east-1 (CloudFront cert requirement) ---
