@@ -1,4 +1,4 @@
-import { LeaguePlan } from '@poolmaster/shared/domain';
+import { LeaguePlan, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 import { LeaguePlanService, type LeaguePlanServiceDeps } from '../../../packages/core-api/src/modules/plans/league-plan-service';
 import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
@@ -34,7 +34,7 @@ describe('LeaguePlanService', () => {
     expect(updated.plan).toBe(LeaguePlan.FREE);
     expect((await world.leagues.findById(league.id))?.plan).toBe(LeaguePlan.FREE);
     expect(world.planChanges).toEqual([
-      { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changedById: commissioner.userId },
+      { leagueId: league.id, fromPlan: LeaguePlan.PLATINUM, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.CHOSEN, changedById: commissioner.userId },
     ]);
   });
 
@@ -199,8 +199,8 @@ describe('LeaguePlanService', () => {
     expect((await world.leagues.findById(running.id))?.plan).toBe(LeaguePlan.PREMIUM);
     expect((await world.leagues.findById(alreadyFree.id))?.plan).toBe(LeaguePlan.FREE);
     expect(world.planChanges).toEqual([
-      { leagueId: ended.id, fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null },
-      { leagueId: endsNow.id, fromPlan: LeaguePlan.PRO, toPlan: LeaguePlan.FREE, changedById: null },
+      { leagueId: ended.id, fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null },
+      { leagueId: endsNow.id, fromPlan: LeaguePlan.PRO, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null },
     ]);
   });
 
@@ -223,7 +223,9 @@ describe('LeaguePlanService', () => {
     const updated = await service.extendRenewal(league.id, 3, rootAdmin.userId);
 
     expect(updated.plan).toBe(LeaguePlan.PREMIUM);
-    expect(world.planChanges.at(-1)).toEqual({ leagueId: league.id, fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changedById: rootAdmin.userId });
+    expect(world.planChanges.at(-1)).toEqual({
+      leagueId: league.id, fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: rootAdmin.userId,
+    });
   });
 
   it('leaves a league its commissioner moved to Free on Free when its gift is extended', async () => {
@@ -237,13 +239,15 @@ describe('LeaguePlanService', () => {
     expect(world.planChanges).toHaveLength(1);
   });
 
-  it('leaves a league on Free when its last move to Free, by someone whose account is gone, came before its date', async () => {
+  it('leaves a league on Free when a member chose Free after its date and their account was later deleted', async () => {
     const { world, rootAdmin } = setup();
-    const league = world.addLeague({ plan: LeaguePlan.FREE, planRenewsAt: new Date('2026-11-01T00:00:00.000Z') });
+    const league = world.addLeague({ plan: LeaguePlan.FREE, planRenewsAt: new Date('2026-10-01T00:00:00.000Z') });
     const leagues: LeaguePlanServiceDeps['leagues'] = {
       ...world.leagues,
       findLastPlanChange: async () => ({
-        fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null, changedAt: new Date('2026-10-01T00:00:00.000Z'),
+        fromPlan: LeaguePlan.PREMIUM,
+        toPlan: LeaguePlan.FREE,
+        changeReason: LeaguePlanChangeReason.CHOSEN,
       }),
     };
     const withDeletedChanger = new LeaguePlanService({ leagues, planEntitlements: planEntitlements(), now: () => NOW });

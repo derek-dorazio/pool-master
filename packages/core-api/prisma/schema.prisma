@@ -507,6 +507,13 @@ enum PrismaLeaguePlan {
   PLATINUM
 }
 
+/// Mirrors the domain `LeaguePlanChangeReason` (#1032).
+enum PrismaLeaguePlanChangeReason {
+  CHOSEN
+  PREVIEW_ENDED
+  GIFT_RESTORED
+}
+
 /// What a league payment row records (#980). Mirrors the domain `LeaguePaymentKind`.
 enum PrismaLeaguePaymentKind {
   CONTEST_EXPANSION_PAYMENTS_OFF
@@ -764,12 +771,14 @@ model ContestExpansion {
 /// One change to a league's plan (#944): who moved it from which plan to which, and when. Append-only.
 /// Deleting the user who made it keeps the row with nobody named, like platform_runtime_config_history.
 model LeaguePlanChange {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId    String           @map("league_id") @db.Uuid
-  fromPlan    PrismaLeaguePlan @map("from_plan")
-  toPlan      PrismaLeaguePlan @map("to_plan")
-  changedById String?          @map("changed_by_id") @db.Uuid
-  changedAt   DateTime         @default(now()) @map("changed_at") @db.Timestamptz
+  id           String                       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId     String                       @map("league_id") @db.Uuid
+  fromPlan     PrismaLeaguePlan             @map("from_plan")
+  toPlan       PrismaLeaguePlan             @map("to_plan")
+  /// Why it changed (#1032): picked by a person, the end of the preview period, or an ended gift put back.
+  changeReason PrismaLeaguePlanChangeReason @map("change_reason")
+  changedById  String?                      @map("changed_by_id") @db.Uuid
+  changedAt    DateTime                     @default(now()) @map("changed_at") @db.Timestamptz
 
   league    League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   changedBy User?  @relation("LeaguePlanChangedBy", fields: [changedById], references: [id], onDelete: SetNull)

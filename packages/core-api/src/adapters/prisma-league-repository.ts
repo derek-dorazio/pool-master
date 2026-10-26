@@ -5,7 +5,7 @@
 import type { League as PrismaLeague, Prisma, PrismaClient } from '@prisma/client';
 import type { LeaguePlanChange, LeagueRepository, LeagueSearchFilters } from '@poolmaster/shared/db';
 import type { League, LeagueIconKey, LeaguePlan } from '@poolmaster/shared/domain';
-import { LeagueMembershipStatus as MembershipStatus } from '@poolmaster/shared/domain';
+import { LeagueMembershipStatus as MembershipStatus, LeaguePlanChangeReason } from '@poolmaster/shared/domain';
 
 export class PrismaLeagueRepository implements LeagueRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -80,7 +80,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
         return null;
       }
       await tx.leaguePlanChange.create({
-        data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changedById: change.changedById },
+        data: { leagueId, fromPlan: change.fromPlan, toPlan: change.toPlan, changeReason: LeaguePlanChangeReason.CHOSEN, changedById: change.changedById },
       });
       return mapToLeague(await tx.league.findUniqueOrThrow({ where: { id: leagueId } }));
     });
@@ -88,7 +88,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
 
   async findLastPlanChange(leagueId: string): Promise<LeaguePlanChange | null> {
     const row = await this.prisma.leaguePlanChange.findFirst({ where: { leagueId }, orderBy: { changedAt: 'desc' } });
-    return row ? { fromPlan: row.fromPlan, toPlan: row.toPlan, changedById: row.changedById, changedAt: row.changedAt } : null;
+    return row ? { fromPlan: row.fromPlan, toPlan: row.toPlan, changeReason: row.changeReason } : null;
   }
 
   async extendPlanRenewal(
@@ -119,7 +119,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
       });
       if (restored !== null) {
         await tx.leaguePlanChange.create({
-          data: { leagueId, fromPlan: league.plan, toPlan: restored, changedById: change.changedById },
+          data: { leagueId, fromPlan: league.plan, toPlan: restored, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: change.changedById },
         });
       }
       return mapToLeague(moved);
@@ -181,7 +181,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
       await tx.league.updateMany({ where: { id: { in: ended.map((league) => league.id) } }, data: { plan: 'FREE' } });
       await tx.leaguePlanChange.createMany({
         // Stamped with the sweep's own time, the one the leagues were picked by.
-        data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changedById: null, changedAt: now })),
+        data: ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan, toPlan: 'FREE' as const, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null, changedAt: now })),
       });
       return ended.map((league) => ({ leagueId: league.id, fromPlan: league.plan }));
     });

@@ -5,7 +5,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { API_ROUTES } from '@poolmaster/shared/api-routes';
-import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
+import { LeaguePlan, LeaguePlanChangeReason, PlanFeature } from '@poolmaster/shared/domain';
 import {
   ErrorEnvelopeSchema,
   ExtendRunningPlanRenewalsResponseSchema,
@@ -76,7 +76,9 @@ describe('League plans', () => {
     expect(parsed.league.planEntitlements.features).not.toContain(PlanFeature.CHAMPIONSHIP);
     const changes = await getPrisma().leaguePlanChange.findMany({ where: { leagueId: league.id } });
     expect(changes).toEqual([
-      expect.objectContaining({ fromPlan: 'PREMIUM', toPlan: 'FREE', changedById: commissioner.user.id }),
+      expect.objectContaining({
+        fromPlan: 'PREMIUM', toPlan: 'FREE', changedById: commissioner.user.id, changeReason: LeaguePlanChangeReason.CHOSEN,
+      }),
     ]);
   });
 
@@ -232,8 +234,10 @@ describe('League plans', () => {
     expect(res.statusCode).toBe(200);
     expect(LeagueResponseSchema.parse(res.json()).league.planEntitlements.plan).toBe(LeaguePlan.PREMIUM);
     expect(await getPrisma().leaguePlanChange.findMany({ where: { leagueId: league.id }, orderBy: { changedAt: 'asc' } })).toEqual([
-      expect.objectContaining({ fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changedById: null }),
-      expect.objectContaining({ fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changedById: rootAdmin.user.id }),
+      expect.objectContaining({ fromPlan: LeaguePlan.PREMIUM, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null }),
+      expect.objectContaining({
+        fromPlan: LeaguePlan.FREE, toPlan: LeaguePlan.PREMIUM, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: rootAdmin.user.id,
+      }),
     ]);
   });
 
