@@ -18,7 +18,7 @@ import bcrypt from 'bcryptjs';
 import { UserService } from '../../../packages/core-api/src/modules/users/user-service';
 import { fakeUserRepo } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
-import { DateFormat, TimeFormat, type User } from '../../../packages/shared/domain';
+import { TimeFormat, type User } from '../../../packages/shared/domain';
 import { stubInstance } from '../../support/stub-instance';
 import { PasswordChangedNotifier } from '../../../packages/core-api/src/modules/auth/password-changed-notifier';
 import type { EmailChange } from '../../../packages/core-api/src/modules/auth/email-change-undo-service';
@@ -257,7 +257,7 @@ describe('profile, username and preferences', () => {
       timezone: '  America/New_York  ',
       timeFormat: TimeFormat.TWELVE_HOUR,
     });
-    // `locale` and `dateFormat` were not named, so they are absent rather than cleared.
+    // `locale` was not named, so it is absent rather than cleared.
     expect(users.update).toHaveBeenCalledWith('user-1', {
       timezone: 'America/New_York',
       timeFormat: TimeFormat.TWELVE_HOUR,
@@ -266,14 +266,14 @@ describe('profile, username and preferences', () => {
     await service.updatePreferences(self, 'user-1', {
       timezone: null,
       locale: '   ',
-      dateFormat: DateFormat.YMD,
+      timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
     });
     // Blank counts as cleared; a domain enum passes through unmapped, because the adapter owns
     // the row mapping.
     expect(users.update).toHaveBeenLastCalledWith('user-1', {
       timezone: null,
       locale: null,
-      dateFormat: DateFormat.YMD,
+      timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
     });
   });
 });

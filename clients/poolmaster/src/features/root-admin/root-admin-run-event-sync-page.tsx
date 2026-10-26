@@ -9,6 +9,9 @@ import {
   FormField,
   Select,
   Tile,
+  formatDateTimeDisplay,
+  useDisplayPreferences,
+  type DisplayPreferences,
 } from '@/features/shared/ui';
 import {
   EVENT_SYNC_PRESETS,
@@ -52,14 +55,7 @@ function getValidEventStatusesForPreset(
   }
 }
 
-function formatEventStartDate(startDate: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(startDate));
-}
-
-function formatEventOptionLabel(event: SportEventDto) {
+function formatEventOptionLabel(event: SportEventDto, displayPreferences: DisplayPreferences) {
   const participantText = typeof event.participantCount === 'number'
     ? `${event.participantCount} participants`
     : 'participants unknown';
@@ -68,13 +64,14 @@ function formatEventOptionLabel(event: SportEventDto) {
     event.name,
     event.status,
     event.readinessStatus,
-    formatEventStartDate(event.startDate),
+    formatDateTimeDisplay(event.startDate, displayPreferences),
     participantText,
     event.externalId,
   ].join(' · ');
 }
 
 export function RootAdminRunEventSyncPage() {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({
     feature: 'root-admin-run-event-sync-page',
   });
@@ -312,7 +309,7 @@ export function RootAdminRunEventSyncPage() {
               </option>
               {selectableEvents.map((event) => (
                 <option key={event.id} value={event.externalId}>
-                  {formatEventOptionLabel(event)}
+                  {formatEventOptionLabel(event, displayPreferences)}
                 </option>
               ))}
             </Select>

@@ -21,6 +21,7 @@ import {
   Tile,
   cn,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import {
@@ -277,6 +278,7 @@ function EntryBlock({
 }
 
 export function ContestLeaderboardPage() {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'contest-leaderboard' });
   const { contestId = '', leagueCode: routeLeagueCode } = useParams<{
     contestId: string;
@@ -498,7 +500,7 @@ export function ContestLeaderboardPage() {
             // score stays live, so a late correction can make the two disagree on this very
             // page. Say so rather than let it read as a bug.
             <p className="text-sm text-muted-foreground" data-testid="contest-leaderboard-settled-note">
-              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
+              {`Final result, settled ${formatDateTimeDisplay(contest.endsAt, displayPreferences, 'at the end of the event')}. Entry standings are frozen at settlement; ${participantNoun.one} scores show current event data and can differ after a late score correction.`}
             </p>
           ) : null}
         </div>

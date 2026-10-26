@@ -35,6 +35,10 @@ import {
   MutationActionToast,
   Select,
   Tile,
+  TimeZoneSelect,
+  DEFAULT_DISPLAY_PREFERENCES,
+  formatDateDisplay,
+  useDisplayPreferences,
   useMutationActionWorkflow,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
@@ -55,31 +59,6 @@ type UserPreferencesFormValues = z.infer<typeof UserPreferencesUpdateRequestSche
 type UserPasswordFormValues = z.infer<typeof UserPasswordChangeRequestSchema>;
 
 type ActiveDialog = 'profile' | 'username' | 'preferences' | 'email' | 'password' | 'lifecycle' | 'delete' | null;
-
-function formatMemberSince(createdAt?: string, dateFormat?: 'MDY' | 'DMY' | 'YMD') {
-  if (!createdAt) {
-    return 'Unknown';
-  }
-
-  const date = new Date(createdAt);
-  if (Number.isNaN(date.getTime())) {
-    return 'Unknown';
-  }
-
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const year = String(date.getFullYear());
-
-  if (dateFormat === 'DMY') {
-    return `${day}/${month}/${year}`;
-  }
-
-  if (dateFormat === 'YMD') {
-    return `${year}-${month}-${day}`;
-  }
-
-  return `${month}/${day}/${year}`;
-}
 
 function UserActionDialog({
   open,
@@ -112,6 +91,7 @@ function UserActionDialog({
 }
 
 export function UserPage() {
+  const displayPreferences = useDisplayPreferences();
   const auth = useAuth();
   const logger = getLogger().child({
     feature: 'user-page',
@@ -145,7 +125,6 @@ export function UserPage() {
       timezone: null,
       locale: null,
       timeFormat: null,
-      dateFormat: null,
     },
   });
   const passwordForm = useForm<UserPasswordFormValues>({
@@ -244,7 +223,6 @@ export function UserPage() {
           timezone: values.timezone?.trim() || undefined,
           locale: values.locale?.trim() || undefined,
           timeFormat: values.timeFormat ?? undefined,
-          dateFormat: values.dateFormat ?? undefined,
         },
       });
       if (!response.data?.user) {
@@ -393,7 +371,7 @@ export function UserPage() {
 
   const activeUser = user;
   const isInactive = !activeUser.isActive;
-  const memberSince = formatMemberSince(activeUser.createdAt, activeUser.dateFormat);
+  const memberSince = formatDateDisplay(activeUser.createdAt, displayPreferences, 'Unknown');
   // #202 — NOT gated on `isInactive`. An inactive account is filtered out of views but can
   // still sign in; its own details stay editable, which is the precondition for fixing them
   // and reactivating (access rule A9). The server dropped the matching 409 guard.
@@ -423,10 +401,9 @@ export function UserPage() {
 
   function openPreferencesDialog() {
     preferencesForm.reset({
-      timezone: activeUser.timezone ?? null,
+      timezone: activeUser.timezone ?? DEFAULT_DISPLAY_PREFERENCES.timeZone,
       locale: activeUser.locale ?? null,
       timeFormat: activeUser.timeFormat ?? null,
-      dateFormat: activeUser.dateFormat ?? null,
     });
     preferencesMutation.reset();
     setActiveDialog('preferences');
@@ -512,7 +489,7 @@ export function UserPage() {
             />
 
             <ActionTile
-              description="Manage timezone, locale, and date/time formatting."
+              description="Choose the time zone, locale and clock your dates and times are shown in."
               data-testid="user-page-open-preferences"
               label="Edit preferences"
               onClick={openPreferencesDialog}
@@ -727,24 +704,25 @@ export function UserPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField
             error={preferencesForm.formState.errors.timezone?.message}
-            label="Timezone"
+            id="user-page-timezone"
+            label="Time zone"
           >
             <Controller
               control={preferencesForm.control}
               name="timezone"
               render={({ field }) => (
-                <Input
+                <TimeZoneSelect
                   data-testid="user-page-timezone"
                   disabled={disablePreferencesEditing}
+                  id="user-page-timezone"
                   name={field.name}
                   onBlur={field.onBlur}
                   onChange={(event) => {
                     preferencesMutation.reset();
-                    field.onChange(event.target.value.trim() ? event.target.value : null);
+                    field.onChange(event.target.value);
                   }}
-                  placeholder="America/New_York"
                   ref={field.ref}
-                  value={field.value ?? ''}
+                  value={field.value ?? DEFAULT_DISPLAY_PREFERENCES.timeZone}
                 />
               )}
             />
@@ -796,34 +774,6 @@ export function UserPage() {
                   <option value="">System default</option>
                   <option value="12H">12-hour</option>
                   <option value="24H">24-hour</option>
-                </Select>
-              )}
-            />
-          </FormField>
-          <FormField
-            error={preferencesForm.formState.errors.dateFormat?.message}
-            label="Date format"
-          >
-            <Controller
-              control={preferencesForm.control}
-              name="dateFormat"
-              render={({ field }) => (
-                <Select
-                  data-testid="user-page-date-format"
-                  disabled={disablePreferencesEditing}
-                  name={field.name}
-                  onBlur={field.onBlur}
-                  onChange={(event) => {
-                    preferencesMutation.reset();
-                    field.onChange(event.target.value || null);
-                  }}
-                  ref={field.ref}
-                  value={field.value ?? ''}
-                >
-                  <option value="">System default</option>
-                  <option value="MDY">MM/DD/YYYY</option>
-                  <option value="DMY">DD/MM/YYYY</option>
-                  <option value="YMD">YYYY-MM-DD</option>
                 </Select>
               )}
             />

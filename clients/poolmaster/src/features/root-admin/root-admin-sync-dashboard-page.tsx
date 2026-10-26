@@ -18,6 +18,7 @@ import {
   TabsList,
   TabsTrigger,
   Tile,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   buildCompactStatsSummary,
@@ -157,6 +158,7 @@ function copyText(text: string): void {
 }
 
 export function RootAdminSyncDashboardPage() {
+  const displayPreferences = useDisplayPreferences();
   const [payloadRun, setPayloadRun] = useState<ProviderSyncRun | null>(null);
   const [jsonPayload, setJsonPayload] = useState<{
     title: string;
@@ -270,7 +272,7 @@ export function RootAdminSyncDashboardPage() {
   const syncHistoryColumns = useMemo(
     () => [
       syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt),
+        (run) => formatDateTimeDisplay(run.startedAt ?? run.createdAt, displayPreferences),
         {
           id: 'started',
           header: 'Started',
@@ -283,7 +285,7 @@ export function RootAdminSyncDashboardPage() {
         },
       ),
       syncRunColumnHelper.accessor(
-        (run) => formatDateTimeDisplay(run.completedAt),
+        (run) => formatDateTimeDisplay(run.completedAt, displayPreferences),
         {
           id: 'completed',
           header: 'Completed',
@@ -367,7 +369,7 @@ export function RootAdminSyncDashboardPage() {
         ),
       }),
     ],
-    [providersQuery.data],
+    [displayPreferences, providersQuery.data],
   );
 
   return (
@@ -406,7 +408,7 @@ export function RootAdminSyncDashboardPage() {
           <MetricTile label="Submitted" value={summary.submitted} />
           <MetricTile label="Completed" value={summary.completed} />
           <MetricTile label="In progress" value={summary.running} />
-          <MetricTile label="Latest start" value={formatDateTimeDisplay(summary.lastStartedAt)} />
+          <MetricTile label="Latest start" value={formatDateTimeDisplay(summary.lastStartedAt, displayPreferences)} />
         </MetricGrid>
 
         {providersQuery.data && providersQuery.data.length > 0 ? (

@@ -295,18 +295,16 @@ describe('ContestDetailPage (Contest Board)', () => {
         },
       },
     });
-    const format = (iso: string) =>
-      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
-
     renderContestBoard();
 
     expect(await screen.findByTestId('contest-detail-starts')).toHaveTextContent(
-      `Starts ${format('2026-04-09T12:00:00.000Z')}`,
+      // A visitor with no saved zone sees US Eastern, named.
+      'Starts Apr 9, 2026, 8:00 AM EDT',
     );
     // The start is the contest's first event's, which the contest read carries; the end is the
     // last event's, read from the event itself.
     expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent(
-      `Ends ${format('2026-04-12T23:00:00.000Z')}`,
+      'Ends Apr 12, 2026, 7:00 PM EDT',
     );
     expect(getEventMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
   });
@@ -318,13 +316,10 @@ describe('ContestDetailPage (Contest Board)', () => {
         event: { id: 'event-1', startDate: '2026-04-09T12:00:00.000Z', endDate: '2026-04-12T23:00:00.000Z' },
       },
     });
-    const format = (iso: string) =>
-      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(iso));
-
     renderContestBoard();
 
     expect(await screen.findByTestId('contest-detail-ends')).toHaveTextContent(
-      `Ends ${format('2026-04-14T18:00:00.000Z')}`,
+      'Ends Apr 14, 2026, 2:00 PM EDT',
     );
   });
 

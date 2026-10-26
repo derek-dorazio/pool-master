@@ -11,7 +11,7 @@ export const SPORT_BLURBS: Record<Sport, string> = {
   AUTO_RACING: 'Formula 1, NASCAR and IndyCar: pick drivers and score the points they finish in.',
   CYCLING: 'Pick riders for the WorldTour\'s races and score where they finish.',
   RUNNING: 'Pick runners for the World Marathon Majors and score where they finish.',
-  BASKETBALL: `March Madness and playoff brackets, survivor pools, and squares on the big games. An NBA Finals ${STAT_POOL_CONTEST_TYPE}: pick stars and score their points, rebounds and assists each game.`,
+  BASKETBALL: `March Madness and playoff brackets, survivor pools, and squares on the big games. A ${STAT_POOL_CONTEST_TYPE} on the NBA Finals or the men's Final Four's semifinals and title game: pick stars and score their points, rebounds and assists each game.`,
   AMERICAN_FOOTBALL: `Weekly pick'em and survivor, playoff brackets, and squares on the big game. A ${STAT_POOL_CONTEST_TYPE} on Championship Weekend, the Super Bowl or the College Football Playoff's semifinals and title game: pick stars and score their touchdowns, yards and catches.`,
   HOCKEY: `NHL, PWHL and college playoff brackets, survivor pools, and squares on the big games. A Stanley Cup Final ${STAT_POOL_CONTEST_TYPE}: pick stars and score their goals, assists and shots each game.`,
   BASEBALL: `MLB postseason brackets and survivor pools, from the Wild Card round to the World Series. A World Series ${STAT_POOL_CONTEST_TYPE}: pick stars and score their total bases, runs, RBI, walks and steals each game.`,

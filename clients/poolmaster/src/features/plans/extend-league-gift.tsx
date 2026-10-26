@@ -4,11 +4,12 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { syncLeagueCaches } from '@/features/leagues/league-cache';
-import { formatDateDisplay } from '@/features/shared/ui';
+import { formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { ExtendGiftForm } from './extend-gift-form';
 
 /** A root admin extends one league's gifted plan, on its settings page (#986). */
 export function ExtendLeagueGift({ league }: { league: LeagueDto }) {
+  const displayPreferences = useDisplayPreferences();
   const queryClient = useQueryClient();
   const extendMutation = useInvalidatingMutation({
     mutationFn: async (months: number) => {
@@ -31,7 +32,7 @@ export function ExtendLeagueGift({ league }: { league: LeagueDto }) {
       isPending={extendMutation.isPending}
       label="Extend the Premium preview period to"
       onExtend={(months) => extendMutation.mutate(months)}
-      result={extendMutation.data ? `The Premium preview period now ends on ${formatDateDisplay(extendMutation.data.planRenewsAt)}.` : undefined}
+      result={extendMutation.data ? `The Premium preview period now ends on ${formatDateDisplay(extendMutation.data.planRenewsAt, displayPreferences)}.` : undefined}
       testId="league-settings-plan-extend"
     />
   );

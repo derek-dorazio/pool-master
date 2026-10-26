@@ -775,7 +775,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await page.goto('/my-account');
       await expect(page.getByTestId('user-page')).toBeVisible();
       await page.getByTestId('user-page-open-preferences').click();
-      await page.getByTestId('user-page-date-format').selectOption('YMD');
+      await page.getByTestId('user-page-timezone').selectOption('America/Chicago');
       await submitAndRead(page, 'user-page-save-preferences', 'PUT', '/api/v1/users/me/preferences');
     });
 

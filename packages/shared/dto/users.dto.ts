@@ -17,7 +17,7 @@
  */
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
-import { AuthProvider, DateFormat, TimeFormat } from '@poolmaster/shared/domain';
+import { AuthProvider, TimeFormat } from '@poolmaster/shared/domain';
 import { EmailInputSchema, NewPasswordInputSchema } from './common.dto';
 
 export const UserDtoSchema = z.object({
@@ -34,16 +34,12 @@ export const UserDtoSchema = z.object({
     .enum([AuthProvider.EMAIL, AuthProvider.GOOGLE, AuthProvider.APPLE])
     .optional()
     .describe('Authentication provider used for the account when known.'),
-  timezone: z.string().optional().describe('Preferred IANA timezone for user-facing scheduling and reminders.'),
-  locale: z.string().optional().describe('Preferred locale for formatting and localized copy.'),
+  timezone: z.string().optional().describe('IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.'),
+  locale: z.string().optional().describe('BCP 47 locale the member\'s dates are formatted in, e.g. en-US.'),
   timeFormat: z
     .enum([TimeFormat.TWELVE_HOUR, TimeFormat.TWENTY_FOUR_HOUR])
     .optional()
-    .describe('Preferred clock display used in account and scheduling surfaces.'),
-  dateFormat: z
-    .enum([DateFormat.MDY, DateFormat.DMY, DateFormat.YMD])
-    .optional()
-    .describe('Preferred date display format used in account and scheduling surfaces.'),
+    .describe('12-hour or 24-hour clock for the times the member sees. Absent means the locale\'s own.'),
   createdAt: z.string().datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
 }).describe('A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.');
 export type UserDto = z.infer<typeof UserDtoSchema>;
@@ -117,11 +113,6 @@ export const UserPreferencesUpdateRequestSchema = z.object({
     .nullable()
     .optional()
     .describe('Preferred clock display format. Omit to leave unchanged; null to clear it.'),
-  dateFormat: z
-    .enum([DateFormat.MDY, DateFormat.DMY, DateFormat.YMD])
-    .nullable()
-    .optional()
-    .describe('Preferred date display format. Omit to leave unchanged; null to clear it.'),
 }).describe('Preferences update payload. Omitted fields are untouched; null clears a field.');
 export type UserPreferencesUpdateRequest = z.infer<typeof UserPreferencesUpdateRequestSchema>;
 

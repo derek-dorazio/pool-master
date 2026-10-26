@@ -8,7 +8,7 @@ import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
-import { DateDisplay, formatDateTimeDisplay, LinkButton } from '@/features/shared/ui';
+import { DateDisplay, formatDateTimeDisplay, LinkButton, useDisplayPreferences } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
@@ -210,6 +210,7 @@ function DrawOpenCard({
   event: SportEventDto;
   leagueCode: string;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const entryCount = useEntryCount(contest.id).data;
   const drawState = useContestDrawState(contest.id);
   const drawnAt = contest.drawnAt;
@@ -218,7 +219,7 @@ function DrawOpenCard({
     return (
       <StatusCardFrame eyebrow="Drawn · entries closed" title="The draw has run">
         <p className="text-sm text-on-inverse-muted" data-testid="contest-draw-ran">
-          {`Drawn ${formatDateTimeDisplay(drawnAt)}. Every entry has its ${getSportDefinition(event.sport).vocabulary.participant.many}, and everyone in the league can see who drew whom. `}
+          {`Drawn ${formatDateTimeDisplay(drawnAt, displayPreferences)}. Every entry has its ${getSportDefinition(event.sport).vocabulary.participant.many}, and everyone in the league can see who drew whom. `}
           The contest goes live at the {getSportDefinition(event.sport).vocabulary.eventStart}, <DateDisplay className="text-on-inverse-muted" value={event.startDate} />.
         </p>
         <ViewInLeagueLink contestId={contest.id} leagueCode={leagueCode} />

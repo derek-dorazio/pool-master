@@ -144,8 +144,10 @@ composite and formula. The CFP scores **Redzone** and the Final Four scores **Tr
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
 "College Football Playoff" was already the bracket league's name, so #991 built **CFP
-Semifinals** and **CFP National Championship**; the men's Final Four's two leagues get their names
-when #992 is built ("NCAA Division I Men" is the bracket league's).
+Semifinals** and **CFP National Championship**; #992 built
+**Men's Final Four** (the semifinals) and **Men's National Championship** (display 60 and 70, after the
+NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 90 are left for
+the women's two leagues (#1052).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

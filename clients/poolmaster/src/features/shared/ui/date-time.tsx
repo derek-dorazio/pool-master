@@ -1,6 +1,7 @@
 import type { InputHTMLAttributes } from "react";
 import { cn } from "./class-names";
-import { normalizeDate } from "./date-time-format";
+import { normalizeDate, timeZoneAbbreviation } from "./date-time-format";
+import { useDisplayPreferences } from "./display-preferences";
 import { Input } from "./form-field";
 
 type DateDisplayProps = {
@@ -19,18 +20,19 @@ export function DateDisplay({
   timeStyle = "short",
   value,
 }: DateDisplayProps) {
+  const preferences = useDisplayPreferences();
   const date = normalizeDate(value);
+  // dateStyle and timeStyle can't be combined with timeZoneName, so a time gets its zone appended.
+  const formatted = date
+    ? new Intl.DateTimeFormat(preferences.locale, {
+        dateStyle,
+        timeStyle: timeStyle ?? undefined,
+        hour12: timeStyle ? preferences.hour12 : undefined,
+        timeZone: preferences.timeZone,
+      }).format(date) + (timeStyle ? ` ${timeZoneAbbreviation(date, preferences)}` : "")
+    : emptyLabel;
 
-  return (
-    <span className={cn("text-foreground", className)}>
-      {date
-        ? new Intl.DateTimeFormat(undefined, {
-            dateStyle,
-            timeStyle: timeStyle ?? undefined,
-          }).format(date)
-        : emptyLabel}
-    </span>
-  );
+  return <span className={cn("text-foreground", className)}>{formatted}</span>;
 }
 
 type DateTimeFieldProps = Omit<

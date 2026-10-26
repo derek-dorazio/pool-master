@@ -202,7 +202,7 @@ export const updateUserUsername = <ThrowOnError extends boolean = false>(options
 /**
  * Update user preferences
  *
- * Updates locale, timezone and date/time formatting. An omitted field is left unchanged; an explicit null clears it.
+ * Updates the time zone, locale and 12- or 24-hour clock the member sees dates in. An omitted field is left unchanged; an explicit null clears it. An unknown time zone answers 400 TIME_ZONE_UNKNOWN, a malformed locale 400 LOCALE_UNKNOWN.
  */
 export const updateUserPreferences = <ThrowOnError extends boolean = false>(options: Options<UpdateUserPreferencesData, ThrowOnError>) => (options.client ?? client).put<UpdateUserPreferencesResponses, UpdateUserPreferencesErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

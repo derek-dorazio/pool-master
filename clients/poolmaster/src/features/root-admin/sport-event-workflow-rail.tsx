@@ -3,6 +3,7 @@ import {
   ProgressIndicator,
   StatusBadge,
   formatDateTimeDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   EVENT_LIFECYCLE_STAGES,
@@ -24,6 +25,7 @@ export function SportEventWorkflowRail({
   rounds: readonly SportEventRoundDto[];
   tournament: SportEventDto;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const stage = resolveEventLifecycleStage(tournament.status);
   const auto = deriveEventAutoTransition({
     status: tournament.status,
@@ -84,7 +86,7 @@ export function SportEventWorkflowRail({
           data-testid="root-admin-sport-event-auto-hint"
         >
           Will move to {formatSportEventStatus(auto.toStatus)} automatically around{' '}
-          {formatDateTimeDisplay(auto.at)} from the{' '}
+          {formatDateTimeDisplay(auto.at, displayPreferences)} from the{' '}
           {getSportDefinition(tournament.sport).vocabulary.round.one} schedule. Manual transitions stay
           available.
         </p>

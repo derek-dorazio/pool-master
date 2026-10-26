@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { getEventLiveSimulation, listProviders, startEventLiveSimulation } from '@/lib/api';
-import { Button, formatDateTimeDisplay } from '@/features/shared/ui';
+import { Button, formatDateTimeDisplay, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import type { SportEventDto, SportEventLiveSimulationResponse } from '@/lib/api';
 
-function describeSimulation(simulation: SportEventLiveSimulationResponse): string {
-  const finish = formatDateTimeDisplay(simulation.endsAt);
+function describeSimulation(simulation: SportEventLiveSimulationResponse, displayPreferences: DisplayPreferences): string {
+  const finish = formatDateTimeDisplay(simulation.endsAt, displayPreferences);
   if (simulation.phase === 'COMPLETED') {
     return `Simulation finished at ${finish}.`;
   }
@@ -26,6 +26,7 @@ const statusRefreshMs = 30_000;
  * real provider.
  */
 export function GolfTournamentLiveSimulation({ tournament }: { tournament: SportEventDto }) {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'root-admin-sport-event-home-page' });
   const providersQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.providers,
@@ -102,7 +103,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
       </div>
       {simulation ? (
         <p className="mt-2 text-sm text-foreground" data-testid="root-admin-golf-tournament-live-simulation-status">
-          {describeSimulation(simulation)}
+          {describeSimulation(simulation, displayPreferences)}
         </p>
       ) : null}
       {statusQuery.isError ? (

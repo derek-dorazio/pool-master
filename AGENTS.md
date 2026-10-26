@@ -36,6 +36,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Adds or changes a backend route, service, DTO, or mapper | `service-rules.md` — §4 *DTOs, Mappers, OpenAPI*, §7 *Error Handling*, §11 *Backend Logging*; `architecture-rules.md` §2 *Contract-First API Architecture* |
 | Changes the Prisma schema, a domain type, or an enum | `domain-model-concepts.md`, `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
 | Adds a sport, a sport league or a contest template (setup) | the `add-sport` skill; `ux-rules.md` §12 *League Pages and Commissioner Tools* item 12 (setup names, defaults, the How to Play and Contest types pages); `architecture-rules.md` §4 *Sport extension*, §6 *Manual-testing seed data goes through the admin API* (each league's last-season test data file) |
+| Adds or changes an event page (`/play/...`) or its link preview | the `add-event-page` skill; `ux-rules.md` §13 *Event Pages* |
 | Touches domain entities, or the ask uses domain words (squad, team, entry, pick, field, release, submit, settle) | `domain-model-concepts.md` — what each entity is, what it is called on screen, and what the verb means in the model |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
 | Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
@@ -71,6 +72,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `model-change` | Changing the Prisma schema, a domain type, or an enum. Classify the blast radius first |
 | `add-frontend-feature` | Building anything in `clients/poolmaster` |
 | `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
+| `add-event-page` | Adding an event page and its link preview: settle the offers, seed them by migration, write the copy, draw the preview image, check it on QA |
 | `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
 | `release-check` | Before a push or PR, and when a gate fails |
 

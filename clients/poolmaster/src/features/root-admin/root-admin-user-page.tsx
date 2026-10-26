@@ -20,6 +20,7 @@ import {
   SettingsRow,
   SettingsSection,
   StatusBadge,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { QueryKeys } from '@/lib/query-keys';
@@ -46,6 +47,7 @@ function extractAdminError(error: Error | null, fallback: string) {
  * here; they belong to each league's Commissioner tools.
  */
 export function RootAdminUserPage() {
+  const displayPreferences = useDisplayPreferences();
   const { userId = '' } = useParams<{ userId: string }>();
   const logger = getLogger().child({
     feature: 'root-admin-user-page',
@@ -262,7 +264,7 @@ export function RootAdminUserPage() {
             </StatusBadge>
           )}
         />
-        <SettingsRow label="Member since" value={formatDateDisplay(viewedUser.createdAt, 'Unknown')} />
+        <SettingsRow label="Member since" value={formatDateDisplay(viewedUser.createdAt, displayPreferences, 'Unknown')} />
         <SettingsRow label="Sign-in method" value={viewedUser.authProvider ?? 'EMAIL'} />
       </SettingsSection>
 

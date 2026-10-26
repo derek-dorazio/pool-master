@@ -3,7 +3,7 @@ import { MatchEnding, MatchSide, MatchStatus, formatSpread, type SportMatchPerio
 import { cancelEventMatch, clearEventMatchResult, recordEventMatchResult, updateEventBracketMatch } from '@/lib/api';
 import type { SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { tieWord } from '@/features/contests/contest-sport';
-import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge } from '@/features/shared/ui';
+import { Button, ConfirmDialog, formatDateTimeDisplay, Input, Select, StatusBadge, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -84,6 +84,7 @@ function bracketInvalidates(eventId: string) {
  * stopped early, in any sport (#704), is entered under "Ended early".
  */
 export function BracketMatchRow({ match, released, context }: { match: SportEventMatchDto; released: boolean; context: BracketContext }) {
+  const displayPreferences = useDisplayPreferences();
   const [editing, setEditing] = useState(false);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const noun = matchNoun(context.vocabulary);
@@ -153,7 +154,7 @@ export function BracketMatchRow({ match, released, context }: { match: SportEven
             <SpreadCell context={context} match={match} released={released} />
           </td>
         ) : null}
-        <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, 'To be announced')}</td>
+        <td className="px-4 py-2 text-muted-foreground">{formatDateTimeDisplay(match.scheduledDate, displayPreferences, 'To be announced')}</td>
         <td className="px-4 py-2">
           <StatusBadge tone={MATCH_STATUS_TONE[match.status]}>{MATCH_STATUS_LABEL[match.status]}</StatusBadge>
         </td>

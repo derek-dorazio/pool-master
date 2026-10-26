@@ -512,12 +512,6 @@ export const TimeFormat = {
 } as const;
 export type TimeFormat = (typeof TimeFormat)[keyof typeof TimeFormat];
 
-export const DateFormat = {
-  MDY: 'MDY',
-  DMY: 'DMY',
-  YMD: 'YMD',
-} as const;
-export type DateFormat = (typeof DateFormat)[keyof typeof DateFormat];
 
 /** What auto-assignment orders a field by when it fills an event's tiers. Cross-sport (#236; was GolfTierSource). */
 export const TierSource = {

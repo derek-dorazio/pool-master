@@ -83,7 +83,6 @@ function buildViewedUser({
     timezone: 'America/New_York',
     locale: 'en-US',
     timeFormat: '12H',
-    dateFormat: 'MDY',
     createdAt: '2026-04-13T00:00:00.000Z',
   };
 }

@@ -25,6 +25,7 @@ import {
   FormPage,
   Input,
   LoadingState,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { bracketRoundCount, bracketStartRoundOptions } from './bracket-start-round';
 import { firstContestEvent } from './contest-events';
@@ -93,6 +94,7 @@ function EditContestForm({
   leagueId: string;
   managedContest: ContestManagementDetailDto;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({ feature: 'edit-contest-page' });
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
@@ -205,7 +207,7 @@ function EditContestForm({
         />
       </FormField>
       <div className="grid gap-4 md:grid-cols-2">
-        <FixedValue label={contest.sportEvents.length > 1 ? 'First event' : 'Event'}>{`${event.name} · ${formatDateDisplay(event.startDate)}`}</FixedValue>
+        <FixedValue label={contest.sportEvents.length > 1 ? 'First event' : 'Event'}>{`${event.name} · ${formatDateDisplay(event.startDate, displayPreferences)}`}</FixedValue>
         <FixedValue label="Format">{formatSelectionTypeName(contest.selectionType)}</FixedValue>
       </div>
       <div className="space-y-3">

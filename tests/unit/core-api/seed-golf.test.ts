@@ -354,6 +354,33 @@ describe('american-football-2026-cfp-semifinals-and-championship-test.json', () 
   });
 });
 
+describe('basketball-2026-mens-final-four-test.json', () => {
+  const file = readDataFile('basketball-2026-mens-final-four-test.json', true);
+  const [semifinals, championship] = file.sportLeagues;
+
+  it('is a stat pool seed of the 2026 men\'s Final Four\'s semifinals and National Championship, each one round of players\' box scores', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.BASKETBALL, 2026, ['Men\'s Final Four', 'Men\'s National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['Men\'s Final Four', '2026-04-04', '2026-04-04', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['Men\'s National Championship', '2026-04-06', '2026-04-06', 1, null]]);
+  });
+
+  it('fields the four semifinalists\' players for the semifinals and only the two finalists\' for the title game', () => {
+    expect(new Set(semifinals.players.map((player) => player.team))).toEqual(
+      new Set(['UConn Huskies', 'Illinois Fighting Illini', 'Michigan Wolverines', 'Arizona Wildcats']),
+    );
+    expect(new Set(championship.players.map((player) => player.team))).toEqual(new Set(['Michigan Wolverines', 'UConn Huskies']));
+  });
+
+  it('carries both rounds as played: Aday Mara\'s 26 points in the semifinal, Alex Karaban\'s 17 points and 11 rebounds in the title game', () => {
+    const semifinalLines = new Map((semifinals.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    const titleLines = new Map((championship.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    expect(semifinalLines.get('mbb-aday-mara')).toEqual({ POINTS: 26, REBOUNDS: 9, ASSISTS: 3 });
+    expect(titleLines.get('mbb-alex-karaban')).toEqual({ POINTS: 17, REBOUNDS: 11, ASSISTS: 2 });
+  });
+});
+
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);

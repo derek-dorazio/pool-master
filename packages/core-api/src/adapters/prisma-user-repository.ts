@@ -3,11 +3,10 @@ import type {
   Prisma,
   User as PrismaUser,
   UserAuthProvider as PrismaUserAuthProvider,
-  UserDateFormat as PrismaUserDateFormat,
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
 import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, DateFormat, TimeFormat, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, TimeFormat, type User } from '@poolmaster/shared/domain';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -108,9 +107,6 @@ export class PrismaUserRepository implements UserRepository {
         ...(user.timeFormat !== undefined
           ? { timeFormat: toPrismaTimeFormat(user.timeFormat) }
           : {}),
-        ...(user.dateFormat !== undefined
-          ? { dateFormat: toPrismaDateFormat(user.dateFormat) }
-          : {}),
       },
     });
     return mapToUser(row);
@@ -137,9 +133,6 @@ export class PrismaUserRepository implements UserRepository {
         ...(updates.locale !== undefined && { locale: updates.locale }),
         ...(updates.timeFormat !== undefined && {
           timeFormat: updates.timeFormat === null ? null : toPrismaTimeFormat(updates.timeFormat),
-        }),
-        ...(updates.dateFormat !== undefined && {
-          dateFormat: updates.dateFormat === null ? null : toPrismaDateFormat(updates.dateFormat),
         }),
       },
     });
@@ -185,7 +178,6 @@ function mapToUser(row: PrismaUser): User {
     timezone: row.timezone ?? undefined,
     locale: row.locale ?? undefined,
     timeFormat: fromPrismaTimeFormat(row.timeFormat),
-    dateFormat: fromPrismaDateFormat(row.dateFormat),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -216,18 +208,6 @@ const TIME_FORMAT_TO_PRISMA: Record<TimeFormat, PrismaUserTimeFormat> = {
   [TimeFormat.TWENTY_FOUR_HOUR]: 'TWENTY_FOUR_HOUR',
 };
 
-const DATE_FORMAT_FROM_PRISMA: Record<PrismaUserDateFormat, DateFormat> = {
-  MDY: DateFormat.MDY,
-  DMY: DateFormat.DMY,
-  YMD: DateFormat.YMD,
-};
-
-const DATE_FORMAT_TO_PRISMA: Record<DateFormat, PrismaUserDateFormat> = {
-  [DateFormat.MDY]: 'MDY',
-  [DateFormat.DMY]: 'DMY',
-  [DateFormat.YMD]: 'YMD',
-};
-
 function fromPrismaAuthProvider(value: PrismaUserAuthProvider | null): AuthProvider | undefined {
   return value === null ? undefined : AUTH_PROVIDER_FROM_PRISMA[value];
 }
@@ -242,12 +222,4 @@ function fromPrismaTimeFormat(value: PrismaUserTimeFormat | null): TimeFormat | 
 
 function toPrismaTimeFormat(value: TimeFormat): PrismaUserTimeFormat {
   return TIME_FORMAT_TO_PRISMA[value];
-}
-
-function fromPrismaDateFormat(value: PrismaUserDateFormat | null): DateFormat | undefined {
-  return value === null ? undefined : DATE_FORMAT_FROM_PRISMA[value];
-}
-
-function toPrismaDateFormat(value: DateFormat): PrismaUserDateFormat {
-  return DATE_FORMAT_TO_PRISMA[value];
 }

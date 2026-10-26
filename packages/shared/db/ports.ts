@@ -22,7 +22,7 @@ import type {
   Squad,
   SquadMembership,
   SquadOwnerInvitation,
-  User, DateFormat, ParticipantStatus, TimeFormat
+  User, ParticipantStatus, TimeFormat
 } from '../domain';
 
 import type { ParticipantMatchQuery } from './sport-catalog-ports';
@@ -62,8 +62,6 @@ export interface UserUpdate {
   locale?: string | null;
   /** `null` clears it. */
   timeFormat?: TimeFormat | null;
-  /** `null` clears it. */
-  dateFormat?: DateFormat | null;
 }
 
 export interface UserRepository {
