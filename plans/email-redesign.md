@@ -85,8 +85,8 @@ not clear logos, signage or recognisable people in the frame, and a ticketed ven
 commercial use. So photos are possible, but only generic scenes (a fairway, an oval at speed, a
 floodlit pitch) chosen once per sport, never per event. Q1 asks whether that is worth doing.
 
-**Disclaimer.** Every email whose content names an event says "Not affiliated with any sports
-league" in the footer, as the event pages do.
+**Disclaimer.** Every email whose content names an event says "Not affiliated with {league} or
+any sports league." in the footer, the same wording as the event pages.
 
 A trademark lawyer's look before production is already on the list from the event pages design;
 these emails should be part of that review.
@@ -104,9 +104,10 @@ these emails should be part of that review.
   image has empty alt text, so a blocked image leaves a coloured box, not a hole in the message.
 - **Tables, not flex.** The real templates stay table-based with inline styles, as today. Tiles
   stack one per row, which reads well on a phone and in Outlook without media queries (Q4).
-- **One renderer per piece.** `eventHeader`, `contestTypeTile`, `contestCard`, `placeCallout` and
-  a new `standingsTable` join `paragraph` and `button` in `system-email-templates.ts`, so every
-  email draws them the same way.
+- **One renderer per piece.** `eventHeader`, `contestTypeTile`, `contestCard` and `placeCallout`
+  join `paragraph` and `button` in `system-email-templates.ts`, so every email draws them the same
+  way. The existing `standingsTable` is restyled: the reader's rows get the gold tint and "YOU"
+  instead of today's bold "(yours)".
 - **The plain-text part** keeps its current lines; the tiles become one line each with their link.
 
 ## Overlap with the event pages work
@@ -119,7 +120,8 @@ the event has one" (Q7).
 
 ## Questions for Derek
 
-**Decided (Derek 2026-10-26): every recommendation accepted**, as written below.
+**Decided (Derek 2026-10-26): every recommendation accepted**, as written below. Q2 leaves the
+in-app name open, as it says.
 
 1. **Event pictures.** Recommend our own sport illustrations now (no licence, already drawn),
    and no photos for launch. If you want photos later, one generic licensed photo per sport,
@@ -127,7 +129,13 @@ the event has one" (Q7).
 2. **Brand name in emails.** The code spells it "Prime Time Commissioner" with the tagline
    "Ultimate Office Pool Manager"; marketing uses "Primetime Commissioner". Recommend
    "Primetime Commissioner" in the brand bar and the sender name, and dropping the tagline from
-   the header.
+   the header. `BRAND_NAME` feeds every email, not only the bar and sender: the invite and
+   welcome preheaders and the password reset subject and body change with it, and their tests
+   move too. **Still open:** Derek accepted this for emails, but has not decided whether the
+   in-app name changes from Poolmaster (asked in the "Remove agent notes from UI copy" thread).
+   If the app keeps "Poolmaster", the invite, welcome and password reset copy would name a
+   brand the reader doesn't see when they click through, so settle the app name before the
+   build changes `BRAND_NAME`.
 3. **What a tile click does.** Recommend it opens Create contest with the setup and event filled
    in, and the commissioner presses Create, as decided for event pages ("prefill, never
    create"). The alternative, creating the contest straight from the email, saves one press but
@@ -152,6 +160,9 @@ the event has one" (Q7).
 After Derek's answers, three slices:
 
 1. The PNG pipeline, the shared pieces and the brand bar, applied to C1, C2 and the digest.
+   `&event=` needs both ends: today Create contest (`create-contest-page.tsx`) reads only
+   `?template=` and picks the soonest event, so this slice also makes it read `?event=`, unless
+   #1008 (which adds `?event=` for event pages) has landed first.
 2. The member contest emails: new contest, reminders, live, standings, results, receipts and
    event changes.
 3. The brand bar on the remaining emails.
