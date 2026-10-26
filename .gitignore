@@ -53,6 +53,8 @@ clients/mobile/.expo/
 !infrastructure/terraform/.terraform.lock.hcl
 *.tfvars
 !terraform.tfvars.example
+# Saved terraform plans hold every sensitive value in plain text
+*.plan
 
 # Docker
 docker-compose.override.yml
