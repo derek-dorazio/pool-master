@@ -868,6 +868,32 @@ describe('the event emails\' header and contest type tiles', () => {
     expect(message.text).toContain(`Survivor: pick a golfer to make the cut: ${survivor.url}`);
   });
 
+  it("labels C2's tiles \"Set up\" and C1's \"How it works\", since C1's open the contest types page rather than Create contest", () => {
+    const ready = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+    const comingUp = renderSystemEmailTemplate('EVENT_COMING_UP', EMAIL_TEMPLATE_FIXTURES.EVENT_COMING_UP, UTC);
+
+    expect(ready.html).toContain('Set up &rarr;');
+    expect(ready.html).not.toContain('How it works');
+    expect(comingUp.html).toContain('How it works &rarr;');
+    expect(comingUp.html).not.toContain('Set up &rarr;');
+  });
+
+  it('names the event once in the Ready for contests intro', () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+
+    expect(message.text).toContain("The Masters is ready. Pick a way to play and set up Office League's contest with it already chosen.");
+  });
+
+  it('leaves out an event without a sport league name from the eyebrow, the heading line and the footer instead of showing an empty name', () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', { ...data, event: { ...data.event, sportLeagueName: '' } }, UTC);
+
+    expect(message.html).toContain('>Ready for contests<');
+    expect(message.html).not.toContain(' · Ready for contests');
+    expect(message.text).toContain('Ready for contests\nThe Masters, Thu, Apr 8, 2027');
+    expect(message.text).toContain('Not affiliated with any sports league.');
+    expect(message.text).not.toContain('with  or');
+  });
+
   it('names every sport league the email mentions in the footer, saying we are affiliated with none of them', () => {
     const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST, UTC);
 

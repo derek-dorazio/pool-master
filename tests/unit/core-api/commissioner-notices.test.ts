@@ -220,7 +220,7 @@ describe('CommissionerNotices', () => {
       expect(sent('EVENT_COMING_UP')).toEqual([]);
       const text = textTo('EVENT_READY_FOR_CONTESTS', casey.id, office);
       expect(text).toContain('Ready for contests\nThe Masters (PGA Tour), Wed, Apr 8, 2026');
-      expect(text).toContain("The Masters is ready. Pick a way to play and set up Office League's contest with The Masters already chosen.");
+      expect(text).toContain("The Masters is ready. Pick a way to play and set up Office League's contest with it already chosen.");
       expect(text).toContain([
         'Choose a way to play:',
         `Budget Pick: Tour Salary Cap: https://app.example.test/league/OFFICE24/admin/contests/new?template=tour-salary&event=${masters.id}`,

@@ -1939,7 +1939,7 @@ function renderEventComingUpEmail(
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
-      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map(contestTypeTile)] : []),
+      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'How it works'))] : []),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
       button('Plan your contest', data.contestsUrl),
     ].join(''),
@@ -1960,7 +1960,7 @@ function renderEventReadyForContestsEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const { event } = data;
-  const intro = `${event.eventName} is ready. Pick a way to play and set up ${data.leagueName}'s contest with ${event.eventName} already chosen.`;
+  const intro = `${event.eventName} is ready. Pick a way to play and set up ${data.leagueName}'s contest with it already chosen.`;
   const setupsTitle = 'Choose a way to play';
   const lastYear = data.lastYear.map(previousWinnersSentence);
   const lastYearTitle = `Last year in ${data.leagueName}`;
@@ -1976,7 +1976,7 @@ function renderEventReadyForContestsEmail(
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       paragraph(escapeHtml(intro)),
-      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map(contestTypeTile)] : []),
+      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'Set up'))] : []),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
       button('See every way to play', data.contestTypesUrl),
       ...(field === null ? [] : [smallPrint(field)]),
@@ -2002,7 +2002,7 @@ const DIGEST_EVENT_STATE_LINE: Record<DigestEventState, string> = {
 
 /** "Masters Tournament (PGA Tour), Apr 9, 2026, 8:00 AM EDT" */
 function digestEventHeading(event: WeeklyDigestEvent, timeZone: string): string {
-  return `${event.eventName} (${event.sportLeagueName}), ${formatDay(event.startsAt, timeZone)}`;
+  return `${eventWithSportLeague(event.eventName, event.sportLeagueName)}, ${formatDay(event.startsAt, timeZone)}`;
 }
 
 /** One digest event as a row: a small crop of its sport's picture, then its heading and state. */
@@ -2314,8 +2314,8 @@ function buildMessage(context: EmailRenderContext, input: {
   /** The sport leagues an email names, for the footer's "Not affiliated with" line. */
   notAffiliatedWith?: string[];
 }): SystemEmailMessage {
-  const notAffiliated = input.notAffiliatedWith && input.notAffiliatedWith.length > 0
-    ? `Not affiliated with ${[...input.notAffiliatedWith, 'any sports league'].join(', ').replace(/, ([^,]*)$/, ' or $1')}.`
+  const notAffiliated = input.notAffiliatedWith
+    ? `Not affiliated with ${[...input.notAffiliatedWith.filter((name) => name !== ''), 'any sports league'].join(', ').replace(/, ([^,]*)$/, ' or $1')}.`
     : undefined;
   return {
     templateKey: input.templateKey,
@@ -2407,7 +2407,12 @@ function documentShell(input: {
 
 /** "PGA Tour · Ready for contests": the band's eyebrow, the email's title after the sport league. */
 function eventEyebrow(event: EmailEventHeader, title: string): string {
-  return `${event.sportLeagueName} · ${title}`;
+  return event.sportLeagueName === '' ? title : `${event.sportLeagueName} · ${title}`;
+}
+
+/** "The Masters (PGA Tour)", or the event alone when its sport league has no name. */
+function eventWithSportLeague(eventName: string, sportLeagueName: string): string {
+  return sportLeagueName === '' ? eventName : `${eventName} (${sportLeagueName})`;
 }
 
 /**
@@ -2430,7 +2435,7 @@ function eventHeader(event: EmailEventHeader, title: string, timeZone: string): 
 
 /** The header's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */
 function eventHeaderLine(event: EmailEventHeader, timeZone: string): string {
-  return `${event.eventName} (${event.sportLeagueName}), ${formatDay(event.startsAt, timeZone)}`;
+  return `${eventWithSportLeague(event.eventName, event.sportLeagueName)}, ${formatDay(event.startsAt, timeZone)}`;
 }
 
 /** The setup's name without its leading format, which the tile shows above it. */
@@ -2442,8 +2447,12 @@ function setupNameAfterFormat(tile: ContestSetupTile): string {
   return `${rest.charAt(0).toUpperCase()}${rest.slice(1)}`;
 }
 
-/** A contest setup as a tile: its way to play's picture, format, name and description, all one link. */
-function contestTypeTile(tile: ContestSetupTile): string {
+/**
+ * A contest setup as a tile: its way to play's picture, format, name and description, all one
+ * link. `action` names where it goes: "Set up" for Create contest, "How it works" for the
+ * contest types page.
+ */
+function contestTypeTile(tile: ContestSetupTile, action: string): string {
   const href = escapeAttribute(tile.url);
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 12px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">
     <tr>
@@ -2455,7 +2464,7 @@ function contestTypeTile(tile: ContestSetupTile): string {
           <span style="display:block;margin-top:4px;font-size:13px;line-height:1.45;color:${EMAIL_THEME.ink};">${escapeHtml(tile.description)}</span>
         </a>
       </td>
-      <td width="80" style="width:80px;padding:0 16px 0 0;vertical-align:middle;white-space:nowrap;"><a href="${href}" style="font-size:14px;font-weight:700;color:${EMAIL_THEME.navy};text-decoration:none;">Set up &rarr;</a></td>
+      <td width="80" style="width:80px;padding:0 16px 0 0;vertical-align:middle;white-space:nowrap;"><a href="${href}" style="font-size:14px;font-weight:700;color:${EMAIL_THEME.navy};text-decoration:none;">${escapeHtml(action)} &rarr;</a></td>
     </tr>
   </table>`;
 }
