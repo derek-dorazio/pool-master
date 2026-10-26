@@ -155,8 +155,7 @@ name was settled the same day.
    Commissioner".** The display name moves into one shared constant (thread "Rename app to
    Primetime Commissioner"), and the email build reads that constant rather than its own
    `BRAND_NAME` copy. Derek also wants a secondary tagline along the lines of "the ultimate
-   office pool manager and other ... games"; its wording is still open, and it sits in the
-   footer, not the brand bar.
+   office pool manager and other ... games"; its wording and where it sits are still open.
 3. **What a tile click does.** Recommend it opens Create contest with the setup and event filled
    in, and the commissioner presses Create, as decided for event pages ("prefill, never
    create"). The alternative, creating the contest straight from the email, saves one press but
