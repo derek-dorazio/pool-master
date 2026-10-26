@@ -153,6 +153,10 @@ In order:
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
    sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
+   A new championship stat pool league also belongs on the Clutch Card page's calendar
+   (`/play/clutch-card`): its round's entry in the page's copy names the league exactly as its
+   migration does, in the right sport, or the round stays "Coming soon"
+   (`rules/ux-rules.md` §13 *Event Pages*).
 9. **Tests.** The registry conformance suite covers the new definition automatically; make
    sure it runs. Add the sport's row to the sport x selection-type scenario suite
    (`tests/functional/sport-selection-scenarios.functional.ts`): one played event from its

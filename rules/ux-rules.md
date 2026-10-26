@@ -320,6 +320,11 @@ An event page (`/play/<sport>/<slug>`) is the public page for one event a fan wo
 (Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
 landing page that ads, emails and shared links point at.
 
+`/play/clutch-card` sits beside them: the Clutch Card's own page, one contest type across
+every title round. It follows the same copy and button rules, and shows a round as available
+only while that round's stat pool sport league is active, linking it to the event page that
+offers it.
+
 1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
    offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
    goes in a migration*). Each offer is one contest setup (a template, found by its key in its
