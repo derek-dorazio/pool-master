@@ -34,6 +34,7 @@ import {
   type User,
 } from '@poolmaster/shared/domain';
 import {
+  emailRecipientOf,
   EntryReceiptKind,
   buildEntryUrl,
   formatUserName,
@@ -178,7 +179,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     for (const user of await this.activeOwners(entry.squadId)) {
       try {
         await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           about: input.about,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           refs: { contestId: contest.id, entryId: entry.id },

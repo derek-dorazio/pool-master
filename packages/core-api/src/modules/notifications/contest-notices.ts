@@ -28,6 +28,7 @@ import {
 import { areEventPicksOpen } from '../contests/entry-window';
 import type { ContestService } from '../contests/service';
 import {
+  emailRecipientOf,
   ContestEventChangeKind,
   ContestResultsKind,
   buildContestUrl,
@@ -107,7 +108,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     }
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     await this.sendEach('CONTEST_OPENED', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_OPENED', {
-      to: { email: user.email, userId: user.id, timeZone: user.timezone },
+      to: emailRecipientOf(user),
       about: contest.id,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
@@ -144,7 +145,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     const eventFormat = await describeEventFormat(this.deps, sportEvent);
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_STARTED_SUMMARY', {
-      to: { email: user.email, userId: user.id, timeZone: user.timezone },
+      to: emailRecipientOf(user),
       about: `${contest.id}:${sportEvent.id}`,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
@@ -180,7 +181,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     const send = (user: User, outcome: ContestResultsOutcome) => this.deps.email.send('CONTEST_RESULTS', {
-      to: { email: user.email, userId: user.id, timeZone: user.timezone },
+      to: emailRecipientOf(user),
       about: contest.id,
       league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
       refs: { contestId: contest.id },
@@ -274,7 +275,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         .filter(({ user, role }) => role === LeagueRole.COMMISSIONER || entrants.has(user.id))
         .map(({ user }) => user);
       await this.sendEach('CONTEST_EVENT_CHANGED', contest, league, recipients, (user) => this.deps.email.send('CONTEST_EVENT_CHANGED', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about: `${contest.id}:${about}`,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },

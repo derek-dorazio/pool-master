@@ -48,6 +48,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { ContestService } from '../contests/service';
 import {
+  emailRecipientOf,
   buildContestAdminUrl,
   buildCreateContestUrl,
   buildLeagueAdminContestsUrl,
@@ -244,7 +245,7 @@ export class CommissionerNotices implements DueNotifications {
         const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
         for (const user of await commissionersOf(league.id)) {
           await this.deps.email.send('EVENT_WEEKLY_DIGEST', {
-            to: { email: user.email, userId: user.id, timeZone: user.timezone },
+            to: emailRecipientOf(user),
             about: `${monday}:${league.id}`,
             league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
             data: { userName: formatUserName(user), leagueName: league.name, thisWeek, nextWeek, contestsUrl },
@@ -280,7 +281,7 @@ export class CommissionerNotices implements DueNotifications {
       const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
       for (const user of await commissionersOf(league.id)) {
         await this.deps.email.send('EVENT_COMING_UP', {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
@@ -337,7 +338,7 @@ export class CommissionerNotices implements DueNotifications {
       const createContestUrl = buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode);
       for (const user of await commissionersOf(league.id)) {
         await this.deps.email.send('EVENT_READY_FOR_CONTESTS', {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           about: `${sportEvent.id}:${league.id}`,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {
@@ -395,7 +396,7 @@ export class CommissionerNotices implements DueNotifications {
     const contestAdminUrl = buildContestAdminUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     for (const user of await commissionersOf(league.id)) {
       await this.deps.email.send('CONTEST_NOT_OPEN', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about: contest.id,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },

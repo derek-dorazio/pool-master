@@ -29,6 +29,8 @@ import { randomUUID } from 'node:crypto';
 import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { LeagueNotFoundError } from './service';
 import {
+  emailRecipientOf,
+  type EmailRecipient,
   buildContestUrl,
   buildLeagueHomeUrl,
   buildLeagueInviteUrl,
@@ -605,7 +607,7 @@ export class InvitationService {
     const templateKey = 'LEAGUE_JOIN_SUCCESS';
     try {
       await this.deps.email.send(templateKey, {
-        to: { email: recipient.email, userId: input.userId, timeZone: recipient.timeZone },
+        to: recipient.to,
         about: input.invitationId,
         league: input.league,
         refs: { invitationId: input.invitationId },
@@ -658,7 +660,7 @@ export class InvitationService {
 
   private async resolveRecipientUser(
     userId: string,
-  ): Promise<{ email: string; name: string; timeZone?: string } | null> {
+  ): Promise<{ to: EmailRecipient; name: string } | null> {
     const user = await this.deps.users.findById(userId);
     if (!user) return null;
     const fullName = [user.firstName, user.lastName]
@@ -666,9 +668,8 @@ export class InvitationService {
       .filter(Boolean)
       .join(' ');
     return {
-      email: user.email,
+      to: emailRecipientOf(user),
       name: fullName || user.username || user.email,
-      timeZone: user.timezone,
     };
   }
 
