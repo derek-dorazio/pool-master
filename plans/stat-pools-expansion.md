@@ -62,7 +62,7 @@ The 2026 men's World Cup is over; its knockouts would make a good test data file
 | Event | When | Composite | Data source | Fit | Effort |
 |---|---|---|---|---|---|
 | **College Football Playoff**, semis + National Championship | Jan 2027 | Redzone (QB/RB/WR/TE) | ESPN `football/college-football` (bracket feed checked 2026-10-18); nflverse has no college data | High: same week as the NFL's Championship Weekend | S |
-| **NCAA men's and women's Final Four** | Apr 2027 | Triple Threat | ESPN college basketball summaries; ESPN bracket checked 2026-10-18 | High: two rounds, four teams, a player on a losing semifinalist scores one game only | S |
+| **NCAA men's and women's Final Four** | Apr 2027 | Triple Threat | ESPN college basketball summaries; ESPN bracket checked 2026-10-18 | High: two contests, the semifinals and the national championship, as the CFP and the NFL have | S |
 | **WNBA Finals** | Sep–Oct 2027 | Triple Threat | ESPN `basketball/wnba` (bracket checked) | Medium-high, growing audience | XS (reverses Q8) |
 | **March Madness**, whole tournament | Mar–Apr 2027 | Triple Threat | ESPN, 67 games | High interest, but ~900 players and 67 box scores | L before the provider |
 | **Full MLB/NBA/NHL/NFL playoffs** | each postseason | the sport's own | MLB Stats API, ESPN, `api-web.nhle.com`, nflverse (all worked in #935) | High: picks from 12 to 16 teams, deep runs matter | L before the provider; S after |
@@ -93,8 +93,8 @@ through the `add-sport` skill first.
 
 1. **College Football Playoff semis + National Championship** (Jan 2027). Reuses Redzone, sits
    beside the NFL's first real load (#937), ESPN feed already checked.
-2. **NCAA men's and women's Final Four** (Apr 2027). Reuses Triple Threat; two rounds show off
-   the "your player's team lost" twist.
+2. **NCAA men's and women's Final Four** (Apr 2027). Reuses Triple Threat, as two contests:
+   the semifinals, then the national championship (Q5).
 3. **Hat Trick + Champions League semis and final** (Apr–May 2027). One new composite opens
    all of soccer.
 4. **Women's World Cup knockouts** (Jun–Jul 2027). Hat Trick reused.
@@ -120,6 +120,12 @@ Answered by Derek on 2026-10-24.
   the live provider.
 - **Q4. WNBA Finals. Decided:** yes, added in parallel with the NBA Finals, scored on Triple
   Threat.
+- **Q5. One round per contest. Decided (Derek 2026-10-26):** a Clutch Card contest never spans
+  playoff rounds. Each round is its own sport league and contest, the way Championship Weekend
+  and the Super Bowl are: the CFP's semifinals and National Championship (#991, built that way),
+  and the Final Four's semifinals and national championship (#992). The same team's players are
+  in both leagues' fields; nothing in the model minds. Soccer's knockouts (#994) follow the same
+  rule, so their rounds are split the same way when that ticket is designed.
 
 ---
 
@@ -129,6 +135,9 @@ Answered by Derek on 2026-10-24.
 composite and formula. The CFP scores **Redzone** and the Final Four scores **Triple Threat**,
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
+"College Football Playoff" was already the bracket league's name, so #991 built **CFP
+Semifinals** and **CFP National Championship**; the Final Four's two leagues get their names
+when #992 is built ("NCAA Division I Men" is the bracket league's).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).
