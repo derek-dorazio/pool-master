@@ -329,6 +329,31 @@ describe('american-football-2025-cfp-test.json', () => {
   });
 });
 
+describe('american-football-2026-cfp-semifinals-and-championship-test.json', () => {
+  const file = readDataFile('american-football-2026-cfp-semifinals-and-championship-test.json', true);
+  const [semifinals, championship] = file.sportLeagues;
+
+  it('is a stat pool seed of the 2025-26 College Football Playoff\'s semifinals and National Championship, each one round of players\' box scores', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.AMERICAN_FOOTBALL, 2026, ['CFP Semifinals', 'CFP National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['CFP Semifinals', '2026-01-08', '2026-01-09', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['CFP National Championship', '2026-01-19', '2026-01-19', 1, null]]);
+  });
+
+  it('fields only the four semifinalists\' players for the semifinals and the two finalists\' for the title game, each a quarterback, running back, receiver or tight end', () => {
+    expect(new Set(semifinals.players.map((player) => player.team))).toEqual(new Set(['Indiana Hoosiers', 'Oregon Ducks', 'Miami Hurricanes', 'Ole Miss Rebels']));
+    expect(new Set(championship.players.map((player) => player.team))).toEqual(new Set(['Indiana Hoosiers', 'Miami Hurricanes']));
+    expect(new Set([...semifinals.players, ...championship.players].map((player) => player.position))).toEqual(new Set(['QB', 'RB', 'WR', 'TE']));
+  });
+
+  it('carries the title game as played: Fernando Mendoza\'s 186 passing yards and 12-yard touchdown run, Mark Fletcher Jr.\'s two touchdowns', () => {
+    const lines = new Map((championship.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    expect(lines.get('cfb-fernando-mendoza')).toEqual({ PASSING_YARDS: 186, RUSHING_YARDS: -8, RUSHING_TOUCHDOWNS: 1 });
+    expect(lines.get('cfb-mark-fletcher-jr')).toEqual({ RUSHING_YARDS: 112, RUSHING_TOUCHDOWNS: 2, RECEPTIONS: 1, RECEIVING_YARDS: 8 });
+  });
+});
+
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);

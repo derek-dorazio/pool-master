@@ -1,0 +1,1992 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "AMERICAN_FOOTBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "CFP Semifinals",
+      "CFP National Championship"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-25",
+    "gatheredBy": "load-sport-data, the 2025-26 College Football Playoff semifinals (Miami beat Ole Miss 31-27 at the Fiesta Bowl, Indiana beat Oregon 56-22 at the Peach Bowl) and National Championship (Indiana beat Miami 27-21) as played. Each event is one round, so one game for each team. The field is every quarterback, running back, receiver and tight end of the teams who had a pass, carry or catch in the 2025 regular season (conference championships included) or in the game, positions and birth countries from ESPN's athlete records; ranking is the player's regular-season Redzone total, from ESPN's box scores of each team's regular-season games. Each playoff box score (passing, rushing and receiving yards and touchdowns, receptions) is from ESPN, cross-checked player by player against CBS Sports, which agree on every stat. A player with no catch, carry or pass has no line; Indiana cornerback D'Angelo Ponds, who caught one 6-yard pass in his semifinal (so Indiana's receiving lines total 171 yards to Mendoza's 177 passing), is not in the field, as the field is quarterbacks, running backs, receivers and tight ends only.",
+    "sources": [
+      {
+        "name": "ESPN college football, CFP Semifinal at the Fiesta Bowl box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=401769075"
+      },
+      {
+        "name": "ESPN college football, CFP Semifinal at the Peach Bowl box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=401769074"
+      },
+      {
+        "name": "ESPN college football, CFP National Championship box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=401769076"
+      },
+      {
+        "name": "CBS Sports, Miami at Ole Miss box score",
+        "url": "https://www.cbssports.com/college-football/gametracker/boxscore/NCAAF_20260108_MIAMI@MISS/"
+      },
+      {
+        "name": "CBS Sports, Oregon at Indiana box score",
+        "url": "https://www.cbssports.com/college-football/gametracker/boxscore/NCAAF_20260109_OREG@IND/"
+      },
+      {
+        "name": "CBS Sports, Miami at Indiana box score",
+        "url": "https://www.cbssports.com/college-football/gametracker/boxscore/NCAAF_20260119_MIAMI@IND/"
+      },
+      {
+        "name": "ESPN college football, Indiana Hoosiers 2025 schedule",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/84/schedule?season=2025"
+      },
+      {
+        "name": "ESPN college football, Oregon Ducks 2025 schedule",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/2483/schedule?season=2025"
+      },
+      {
+        "name": "ESPN college football, Miami Hurricanes 2025 schedule",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/2390/schedule?season=2025"
+      },
+      {
+        "name": "ESPN college football, Ole Miss Rebels 2025 schedule",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/teams/145/schedule?season=2025"
+      },
+      {
+        "name": "ESPN college football, 2025 regular-season box scores of the four teams (summary?event=<id>, the ids in each team schedule)",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=401752806"
+      },
+      {
+        "name": "ESPN college football athletes, 2025 season (position and birth country, athletes/<id>)",
+        "url": "https://sports.core.api.espn.com/v2/sports/football/leagues/college-football/seasons/2025/athletes/4837248"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "CFP Semifinals",
+      "players": [
+        {
+          "key": "cfb-fernando-mendoza",
+          "name": "Fernando Mendoza",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-trinidad-chambliss",
+          "name": "Trinidad Chambliss",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Ole Miss Rebels",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-carson-beck",
+          "name": "Carson Beck",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-dante-moore",
+          "name": "Dante Moore",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Oregon Ducks",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-kewan-lacy",
+          "name": "Kewan Lacy",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Ole Miss Rebels",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-malachi-toney",
+          "name": "Malachi Toney",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-omar-cooper-jr",
+          "name": "Omar Cooper Jr.",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-elijah-sarratt",
+          "name": "Elijah Sarratt",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-mark-fletcher-jr",
+          "name": "Mark Fletcher Jr.",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-roman-hemby",
+          "name": "Roman Hemby",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-jordon-davison",
+          "name": "Jordon Davison",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-noah-whittington",
+          "name": "Noah Whittington",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-kenyon-sadiq",
+          "name": "Kenyon Sadiq",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Oregon Ducks",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-harrison-wallace-iii",
+          "name": "Harrison Wallace III",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-kaelon-black",
+          "name": "Kaelon Black",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-de-zhaun-stribling",
+          "name": "De'Zhaun Stribling",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-cj-daniels",
+          "name": "CJ Daniels",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-deuce-alexander",
+          "name": "Deuce Alexander",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-austin-simmons",
+          "name": "Austin Simmons",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Ole Miss Rebels",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-malik-benson",
+          "name": "Malik Benson",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-charmar-brown",
+          "name": "CharMar Brown",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-cayden-lee",
+          "name": "Cayden Lee",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-dae-quan-wright",
+          "name": "Dae'Quan Wright",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Ole Miss Rebels",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-e-j-williams-jr",
+          "name": "E.J. Williams Jr.",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-keelan-marion",
+          "name": "Keelan Marion",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-dakorien-moore",
+          "name": "Dakorien Moore",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-dierre-hill-jr",
+          "name": "Dierre Hill Jr.",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-charlie-becker",
+          "name": "Charlie Becker",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-khobie-martin",
+          "name": "Khobie Martin",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-alberto-mendoza",
+          "name": "Alberto Mendoza",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-gary-bryant-jr",
+          "name": "Gary Bryant Jr.",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-girard-pringle-jr",
+          "name": "Girard Pringle Jr.",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-jeremiah-mcclellan",
+          "name": "Jeremiah McClellan",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-riley-nowakowski",
+          "name": "Riley Nowakowski",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Indiana Hoosiers",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-winston-watkins-jr",
+          "name": "Winston Watkins Jr.",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jamari-johnson",
+          "name": "Jamari Johnson",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Oregon Ducks",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-elija-lofton",
+          "name": "Elija Lofton",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-jayden-limar",
+          "name": "Jayden Limar",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-caleb-odom",
+          "name": "Caleb Odom",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Ole Miss Rebels",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-joshua-moore",
+          "name": "Joshua Moore",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jonathan-brady",
+          "name": "Jonathan Brady",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-logan-diggs",
+          "name": "Logan Diggs",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Ole Miss Rebels",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-joshisa-trader",
+          "name": "Joshisa Trader",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-alex-bauman",
+          "name": "Alex Bauman",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-lee-beebe-jr",
+          "name": "Lee Beebe Jr.",
+          "countryCode": "US",
+          "ranking": 45,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-holden-staes",
+          "name": "Holden Staes",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Indiana Hoosiers",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-jay-harris",
+          "name": "Jay Harris",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-damien-taylor",
+          "name": "Damien Taylor",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "Ole Miss Rebels",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-tony-johnson",
+          "name": "Tony Johnson",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jordan-lyle",
+          "name": "Jordan Lyle",
+          "countryCode": "US",
+          "ranking": 50,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-brock-thomas",
+          "name": "Brock Thomas",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Oregon Ducks",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-emory-williams",
+          "name": "Emory Williams",
+          "countryCode": "US",
+          "ranking": 52,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-daylyn-upshaw",
+          "name": "Daylyn Upshaw",
+          "countryCode": "US",
+          "ranking": 53,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-trace-bruckler",
+          "name": "Trace Bruckler",
+          "countryCode": "US",
+          "ranking": 54,
+          "team": "Ole Miss Rebels",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-davion-chandler",
+          "name": "Davion Chandler",
+          "countryCode": "US",
+          "ranking": 55,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-justius-lowe",
+          "name": "Justius Lowe",
+          "countryCode": "US",
+          "ranking": 56,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-makhi-hughes",
+          "name": "Makhi Hughes",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-chris-wheatley-humphrey",
+          "name": "Chris Wheatley-Humphrey",
+          "countryCode": "US",
+          "ranking": 58,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-cooper-perry",
+          "name": "Cooper Perry",
+          "countryCode": "US",
+          "ranking": 59,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-izaiah-hartrup",
+          "name": "Izaiah Hartrup",
+          "countryCode": "US",
+          "ranking": 60,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-luke-moga",
+          "name": "Luke Moga",
+          "countryCode": "US",
+          "ranking": 61,
+          "team": "Oregon Ducks",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-lebron-bond",
+          "name": "Lebron Bond",
+          "countryCode": "US",
+          "ranking": 62,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-da-jaun-riggs",
+          "name": "Da'Jaun Riggs",
+          "countryCode": "US",
+          "ranking": 63,
+          "team": "Oregon Ducks",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-kyler-kasper",
+          "name": "Kyler Kasper",
+          "countryCode": "US",
+          "ranking": 64,
+          "team": "Oregon Ducks",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-ny-carr",
+          "name": "Ny Carr",
+          "countryCode": "US",
+          "ranking": 65,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-luka-gilbert",
+          "name": "Luka Gilbert",
+          "countryCode": "US",
+          "ranking": 66,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-austin-novosad",
+          "name": "Austin Novosad",
+          "countryCode": "US",
+          "ranking": 67,
+          "team": "Oregon Ducks",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-brock-schott",
+          "name": "Brock Schott",
+          "countryCode": "US",
+          "ranking": 68,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-luke-hasz",
+          "name": "Luke Hasz",
+          "countryCode": "US",
+          "ranking": 69,
+          "team": "Ole Miss Rebels",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-makai-jackson",
+          "name": "Makai Jackson",
+          "countryCode": "US",
+          "ranking": 70,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-ray-ray-joseph-jr",
+          "name": "Ray Ray Joseph Jr.",
+          "countryCode": "US",
+          "ranking": 71,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-roger-saleapaga-ii",
+          "name": "Roger Saleapaga II",
+          "countryCode": "US",
+          "ranking": 72,
+          "team": "Oregon Ducks",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-dillon-alfred",
+          "name": "Dillon Alfred",
+          "countryCode": "US",
+          "ranking": 73,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jackson-wasserstrom",
+          "name": "Jackson Wasserstrom",
+          "countryCode": "US",
+          "ranking": 74,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-solomon-vanhorse",
+          "name": "Solomon Vanhorse",
+          "countryCode": "US",
+          "ranking": 75,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-aj-maddox",
+          "name": "AJ Maddox",
+          "countryCode": "US",
+          "ranking": 76,
+          "team": "Ole Miss Rebels",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-caleb-cunningham",
+          "name": "Caleb Cunningham",
+          "countryCode": "US",
+          "ranking": 77,
+          "team": "Ole Miss Rebels",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-sean-cuono",
+          "name": "Sean Cuono",
+          "countryCode": "US",
+          "ranking": 78,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-shekai-mills-knight",
+          "name": "Shekai Mills-Knight",
+          "countryCode": "CA",
+          "ranking": 79,
+          "team": "Ole Miss Rebels",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-grant-wilson",
+          "name": "Grant Wilson",
+          "countryCode": "US",
+          "ranking": 80,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-luke-nickel",
+          "name": "Luke Nickel",
+          "countryCode": "US",
+          "ranking": 81,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        }
+      ],
+      "events": [
+        {
+          "key": "cfp-semifinals-2026",
+          "name": "CFP Semifinals",
+          "startDate": "2026-01-08",
+          "endDate": "2026-01-09",
+          "venue": null,
+          "location": "Glendale and Atlanta",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "cfb-fernando-mendoza",
+              "ranking": 1
+            },
+            {
+              "player": "cfb-trinidad-chambliss",
+              "ranking": 2
+            },
+            {
+              "player": "cfb-carson-beck",
+              "ranking": 3
+            },
+            {
+              "player": "cfb-dante-moore",
+              "ranking": 4
+            },
+            {
+              "player": "cfb-kewan-lacy",
+              "ranking": 5
+            },
+            {
+              "player": "cfb-malachi-toney",
+              "ranking": 6
+            },
+            {
+              "player": "cfb-omar-cooper-jr",
+              "ranking": 7
+            },
+            {
+              "player": "cfb-elijah-sarratt",
+              "ranking": 8
+            },
+            {
+              "player": "cfb-mark-fletcher-jr",
+              "ranking": 9
+            },
+            {
+              "player": "cfb-roman-hemby",
+              "ranking": 10
+            },
+            {
+              "player": "cfb-jordon-davison",
+              "ranking": 11
+            },
+            {
+              "player": "cfb-noah-whittington",
+              "ranking": 12
+            },
+            {
+              "player": "cfb-kenyon-sadiq",
+              "ranking": 13
+            },
+            {
+              "player": "cfb-harrison-wallace-iii",
+              "ranking": 14
+            },
+            {
+              "player": "cfb-kaelon-black",
+              "ranking": 15
+            },
+            {
+              "player": "cfb-de-zhaun-stribling",
+              "ranking": 16
+            },
+            {
+              "player": "cfb-cj-daniels",
+              "ranking": 17
+            },
+            {
+              "player": "cfb-deuce-alexander",
+              "ranking": 18
+            },
+            {
+              "player": "cfb-austin-simmons",
+              "ranking": 19
+            },
+            {
+              "player": "cfb-malik-benson",
+              "ranking": 20
+            },
+            {
+              "player": "cfb-charmar-brown",
+              "ranking": 21
+            },
+            {
+              "player": "cfb-cayden-lee",
+              "ranking": 22
+            },
+            {
+              "player": "cfb-dae-quan-wright",
+              "ranking": 23
+            },
+            {
+              "player": "cfb-e-j-williams-jr",
+              "ranking": 24
+            },
+            {
+              "player": "cfb-keelan-marion",
+              "ranking": 25
+            },
+            {
+              "player": "cfb-dakorien-moore",
+              "ranking": 26
+            },
+            {
+              "player": "cfb-dierre-hill-jr",
+              "ranking": 27
+            },
+            {
+              "player": "cfb-charlie-becker",
+              "ranking": 28
+            },
+            {
+              "player": "cfb-khobie-martin",
+              "ranking": 29
+            },
+            {
+              "player": "cfb-alberto-mendoza",
+              "ranking": 30
+            },
+            {
+              "player": "cfb-gary-bryant-jr",
+              "ranking": 31
+            },
+            {
+              "player": "cfb-girard-pringle-jr",
+              "ranking": 32
+            },
+            {
+              "player": "cfb-jeremiah-mcclellan",
+              "ranking": 33
+            },
+            {
+              "player": "cfb-riley-nowakowski",
+              "ranking": 34
+            },
+            {
+              "player": "cfb-winston-watkins-jr",
+              "ranking": 35
+            },
+            {
+              "player": "cfb-jamari-johnson",
+              "ranking": 36
+            },
+            {
+              "player": "cfb-elija-lofton",
+              "ranking": 37
+            },
+            {
+              "player": "cfb-jayden-limar",
+              "ranking": 38
+            },
+            {
+              "player": "cfb-caleb-odom",
+              "ranking": 39
+            },
+            {
+              "player": "cfb-joshua-moore",
+              "ranking": 40
+            },
+            {
+              "player": "cfb-jonathan-brady",
+              "ranking": 41
+            },
+            {
+              "player": "cfb-logan-diggs",
+              "ranking": 42
+            },
+            {
+              "player": "cfb-joshisa-trader",
+              "ranking": 43
+            },
+            {
+              "player": "cfb-alex-bauman",
+              "ranking": 44
+            },
+            {
+              "player": "cfb-lee-beebe-jr",
+              "ranking": 45
+            },
+            {
+              "player": "cfb-holden-staes",
+              "ranking": 46
+            },
+            {
+              "player": "cfb-jay-harris",
+              "ranking": 47
+            },
+            {
+              "player": "cfb-damien-taylor",
+              "ranking": 48
+            },
+            {
+              "player": "cfb-tony-johnson",
+              "ranking": 49
+            },
+            {
+              "player": "cfb-jordan-lyle",
+              "ranking": 50
+            },
+            {
+              "player": "cfb-brock-thomas",
+              "ranking": 51
+            },
+            {
+              "player": "cfb-emory-williams",
+              "ranking": 52
+            },
+            {
+              "player": "cfb-daylyn-upshaw",
+              "ranking": 53
+            },
+            {
+              "player": "cfb-trace-bruckler",
+              "ranking": 54
+            },
+            {
+              "player": "cfb-davion-chandler",
+              "ranking": 55
+            },
+            {
+              "player": "cfb-justius-lowe",
+              "ranking": 56
+            },
+            {
+              "player": "cfb-makhi-hughes",
+              "ranking": 57
+            },
+            {
+              "player": "cfb-chris-wheatley-humphrey",
+              "ranking": 58
+            },
+            {
+              "player": "cfb-cooper-perry",
+              "ranking": 59
+            },
+            {
+              "player": "cfb-izaiah-hartrup",
+              "ranking": 60
+            },
+            {
+              "player": "cfb-luke-moga",
+              "ranking": 61
+            },
+            {
+              "player": "cfb-lebron-bond",
+              "ranking": 62
+            },
+            {
+              "player": "cfb-da-jaun-riggs",
+              "ranking": 63
+            },
+            {
+              "player": "cfb-kyler-kasper",
+              "ranking": 64
+            },
+            {
+              "player": "cfb-ny-carr",
+              "ranking": 65
+            },
+            {
+              "player": "cfb-luka-gilbert",
+              "ranking": 66
+            },
+            {
+              "player": "cfb-austin-novosad",
+              "ranking": 67
+            },
+            {
+              "player": "cfb-brock-schott",
+              "ranking": 68
+            },
+            {
+              "player": "cfb-luke-hasz",
+              "ranking": 69
+            },
+            {
+              "player": "cfb-makai-jackson",
+              "ranking": 70
+            },
+            {
+              "player": "cfb-ray-ray-joseph-jr",
+              "ranking": 71
+            },
+            {
+              "player": "cfb-roger-saleapaga-ii",
+              "ranking": 72
+            },
+            {
+              "player": "cfb-dillon-alfred",
+              "ranking": 73
+            },
+            {
+              "player": "cfb-jackson-wasserstrom",
+              "ranking": 74
+            },
+            {
+              "player": "cfb-solomon-vanhorse",
+              "ranking": 75
+            },
+            {
+              "player": "cfb-aj-maddox",
+              "ranking": 76
+            },
+            {
+              "player": "cfb-caleb-cunningham",
+              "ranking": 77
+            },
+            {
+              "player": "cfb-sean-cuono",
+              "ranking": 78
+            },
+            {
+              "player": "cfb-shekai-mills-knight",
+              "ranking": 79
+            },
+            {
+              "player": "cfb-grant-wilson",
+              "ranking": 80
+            },
+            {
+              "player": "cfb-luke-nickel",
+              "ranking": 81
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "cfb-alex-bauman",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 11
+                  }
+                },
+                {
+                  "player": "cfb-caleb-odom",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 4
+                  }
+                },
+                {
+                  "player": "cfb-carson-beck",
+                  "stats": {
+                    "PASSING_YARDS": 268,
+                    "PASSING_TOUCHDOWNS": 2,
+                    "RUSHING_YARDS": -6,
+                    "RUSHING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-cayden-lee",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 67
+                  }
+                },
+                {
+                  "player": "cfb-charlie-becker",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 48,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-charmar-brown",
+                  "stats": {
+                    "RUSHING_YARDS": 54,
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 7
+                  }
+                },
+                {
+                  "player": "cfb-cj-daniels",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 26
+                  }
+                },
+                {
+                  "player": "cfb-dae-quan-wright",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 64,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-dakorien-moore",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 28
+                  }
+                },
+                {
+                  "player": "cfb-dante-moore",
+                  "stats": {
+                    "PASSING_YARDS": 285,
+                    "PASSING_TOUCHDOWNS": 2,
+                    "RUSHING_YARDS": -28
+                  }
+                },
+                {
+                  "player": "cfb-de-zhaun-stribling",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 77
+                  }
+                },
+                {
+                  "player": "cfb-deuce-alexander",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 7
+                  }
+                },
+                {
+                  "player": "cfb-dierre-hill-jr",
+                  "stats": {
+                    "RUSHING_YARDS": 86,
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 25
+                  }
+                },
+                {
+                  "player": "cfb-e-j-williams-jr",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 13,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-elija-lofton",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 15
+                  }
+                },
+                {
+                  "player": "cfb-elijah-sarratt",
+                  "stats": {
+                    "RECEPTIONS": 7,
+                    "RECEIVING_YARDS": 75,
+                    "RECEIVING_TOUCHDOWNS": 2
+                  }
+                },
+                {
+                  "player": "cfb-fernando-mendoza",
+                  "stats": {
+                    "PASSING_YARDS": 177,
+                    "PASSING_TOUCHDOWNS": 5,
+                    "RUSHING_YARDS": 28
+                  }
+                },
+                {
+                  "player": "cfb-harrison-wallace-iii",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 40
+                  }
+                },
+                {
+                  "player": "cfb-jamari-johnson",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 83,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-jay-harris",
+                  "stats": {
+                    "RUSHING_YARDS": 35,
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 32
+                  }
+                },
+                {
+                  "player": "cfb-jeremiah-mcclellan",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 64
+                  }
+                },
+                {
+                  "player": "cfb-joshisa-trader",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 3
+                  }
+                },
+                {
+                  "player": "cfb-joshua-moore",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 11
+                  }
+                },
+                {
+                  "player": "cfb-kaelon-black",
+                  "stats": {
+                    "RUSHING_YARDS": 63,
+                    "RUSHING_TOUCHDOWNS": 2
+                  }
+                },
+                {
+                  "player": "cfb-keelan-marion",
+                  "stats": {
+                    "RECEPTIONS": 7,
+                    "RECEIVING_YARDS": 114,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-kenyon-sadiq",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 29
+                  }
+                },
+                {
+                  "player": "cfb-kewan-lacy",
+                  "stats": {
+                    "RUSHING_YARDS": 103,
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 4
+                  }
+                },
+                {
+                  "player": "cfb-khobie-martin",
+                  "stats": {
+                    "RUSHING_YARDS": 42
+                  }
+                },
+                {
+                  "player": "cfb-logan-diggs",
+                  "stats": {
+                    "RUSHING_YARDS": 10,
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 11
+                  }
+                },
+                {
+                  "player": "cfb-malachi-toney",
+                  "stats": {
+                    "RUSHING_YARDS": 11,
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 81,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-malik-benson",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 23
+                  }
+                },
+                {
+                  "player": "cfb-mark-fletcher-jr",
+                  "stats": {
+                    "RUSHING_YARDS": 133
+                  }
+                },
+                {
+                  "player": "cfb-omar-cooper-jr",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 17,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-riley-nowakowski",
+                  "stats": {
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 18
+                  }
+                },
+                {
+                  "player": "cfb-roger-saleapaga-ii",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 1,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-roman-hemby",
+                  "stats": {
+                    "RUSHING_YARDS": 53,
+                    "RECEPTIONS": 1
+                  }
+                },
+                {
+                  "player": "cfb-trinidad-chambliss",
+                  "stats": {
+                    "PASSING_YARDS": 277,
+                    "PASSING_TOUCHDOWNS": 1,
+                    "RUSHING_YARDS": 7
+                  }
+                },
+                {
+                  "player": "cfb-winston-watkins-jr",
+                  "stats": {
+                    "RUSHING_YARDS": 1,
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 3
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CFP National Championship",
+      "players": [
+        {
+          "key": "cfb-fernando-mendoza",
+          "name": "Fernando Mendoza",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-carson-beck",
+          "name": "Carson Beck",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-malachi-toney",
+          "name": "Malachi Toney",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-omar-cooper-jr",
+          "name": "Omar Cooper Jr.",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-elijah-sarratt",
+          "name": "Elijah Sarratt",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-mark-fletcher-jr",
+          "name": "Mark Fletcher Jr.",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-roman-hemby",
+          "name": "Roman Hemby",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-kaelon-black",
+          "name": "Kaelon Black",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-cj-daniels",
+          "name": "CJ Daniels",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-charmar-brown",
+          "name": "CharMar Brown",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-e-j-williams-jr",
+          "name": "E.J. Williams Jr.",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-keelan-marion",
+          "name": "Keelan Marion",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-charlie-becker",
+          "name": "Charlie Becker",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-khobie-martin",
+          "name": "Khobie Martin",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-alberto-mendoza",
+          "name": "Alberto Mendoza",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-girard-pringle-jr",
+          "name": "Girard Pringle Jr.",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-riley-nowakowski",
+          "name": "Riley Nowakowski",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Indiana Hoosiers",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-elija-lofton",
+          "name": "Elija Lofton",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-joshua-moore",
+          "name": "Joshua Moore",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jonathan-brady",
+          "name": "Jonathan Brady",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-joshisa-trader",
+          "name": "Joshisa Trader",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-alex-bauman",
+          "name": "Alex Bauman",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-lee-beebe-jr",
+          "name": "Lee Beebe Jr.",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-holden-staes",
+          "name": "Holden Staes",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Indiana Hoosiers",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-tony-johnson",
+          "name": "Tony Johnson",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jordan-lyle",
+          "name": "Jordan Lyle",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-emory-williams",
+          "name": "Emory Williams",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-daylyn-upshaw",
+          "name": "Daylyn Upshaw",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-davion-chandler",
+          "name": "Davion Chandler",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-chris-wheatley-humphrey",
+          "name": "Chris Wheatley-Humphrey",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Miami Hurricanes",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-lebron-bond",
+          "name": "Lebron Bond",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-ny-carr",
+          "name": "Ny Carr",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-luka-gilbert",
+          "name": "Luka Gilbert",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-brock-schott",
+          "name": "Brock Schott",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Miami Hurricanes",
+          "position": "TE"
+        },
+        {
+          "key": "cfb-makai-jackson",
+          "name": "Makai Jackson",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-ray-ray-joseph-jr",
+          "name": "Ray Ray Joseph Jr.",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Miami Hurricanes",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-jackson-wasserstrom",
+          "name": "Jackson Wasserstrom",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Indiana Hoosiers",
+          "position": "WR"
+        },
+        {
+          "key": "cfb-solomon-vanhorse",
+          "name": "Solomon Vanhorse",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-sean-cuono",
+          "name": "Sean Cuono",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Indiana Hoosiers",
+          "position": "RB"
+        },
+        {
+          "key": "cfb-grant-wilson",
+          "name": "Grant Wilson",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Indiana Hoosiers",
+          "position": "QB"
+        },
+        {
+          "key": "cfb-luke-nickel",
+          "name": "Luke Nickel",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Miami Hurricanes",
+          "position": "QB"
+        }
+      ],
+      "events": [
+        {
+          "key": "cfp-national-championship-2026",
+          "name": "CFP National Championship",
+          "startDate": "2026-01-19",
+          "endDate": "2026-01-19",
+          "venue": "Hard Rock Stadium",
+          "location": "Miami Gardens, Florida",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "cfb-fernando-mendoza",
+              "ranking": 1
+            },
+            {
+              "player": "cfb-carson-beck",
+              "ranking": 2
+            },
+            {
+              "player": "cfb-malachi-toney",
+              "ranking": 3
+            },
+            {
+              "player": "cfb-omar-cooper-jr",
+              "ranking": 4
+            },
+            {
+              "player": "cfb-elijah-sarratt",
+              "ranking": 5
+            },
+            {
+              "player": "cfb-mark-fletcher-jr",
+              "ranking": 6
+            },
+            {
+              "player": "cfb-roman-hemby",
+              "ranking": 7
+            },
+            {
+              "player": "cfb-kaelon-black",
+              "ranking": 8
+            },
+            {
+              "player": "cfb-cj-daniels",
+              "ranking": 9
+            },
+            {
+              "player": "cfb-charmar-brown",
+              "ranking": 10
+            },
+            {
+              "player": "cfb-e-j-williams-jr",
+              "ranking": 11
+            },
+            {
+              "player": "cfb-keelan-marion",
+              "ranking": 12
+            },
+            {
+              "player": "cfb-charlie-becker",
+              "ranking": 13
+            },
+            {
+              "player": "cfb-khobie-martin",
+              "ranking": 14
+            },
+            {
+              "player": "cfb-alberto-mendoza",
+              "ranking": 15
+            },
+            {
+              "player": "cfb-girard-pringle-jr",
+              "ranking": 16
+            },
+            {
+              "player": "cfb-riley-nowakowski",
+              "ranking": 17
+            },
+            {
+              "player": "cfb-elija-lofton",
+              "ranking": 18
+            },
+            {
+              "player": "cfb-joshua-moore",
+              "ranking": 19
+            },
+            {
+              "player": "cfb-jonathan-brady",
+              "ranking": 20
+            },
+            {
+              "player": "cfb-joshisa-trader",
+              "ranking": 21
+            },
+            {
+              "player": "cfb-alex-bauman",
+              "ranking": 22
+            },
+            {
+              "player": "cfb-lee-beebe-jr",
+              "ranking": 23
+            },
+            {
+              "player": "cfb-holden-staes",
+              "ranking": 24
+            },
+            {
+              "player": "cfb-tony-johnson",
+              "ranking": 25
+            },
+            {
+              "player": "cfb-jordan-lyle",
+              "ranking": 26
+            },
+            {
+              "player": "cfb-emory-williams",
+              "ranking": 27
+            },
+            {
+              "player": "cfb-daylyn-upshaw",
+              "ranking": 28
+            },
+            {
+              "player": "cfb-davion-chandler",
+              "ranking": 29
+            },
+            {
+              "player": "cfb-chris-wheatley-humphrey",
+              "ranking": 30
+            },
+            {
+              "player": "cfb-lebron-bond",
+              "ranking": 31
+            },
+            {
+              "player": "cfb-ny-carr",
+              "ranking": 32
+            },
+            {
+              "player": "cfb-luka-gilbert",
+              "ranking": 33
+            },
+            {
+              "player": "cfb-brock-schott",
+              "ranking": 34
+            },
+            {
+              "player": "cfb-makai-jackson",
+              "ranking": 35
+            },
+            {
+              "player": "cfb-ray-ray-joseph-jr",
+              "ranking": 36
+            },
+            {
+              "player": "cfb-jackson-wasserstrom",
+              "ranking": 37
+            },
+            {
+              "player": "cfb-solomon-vanhorse",
+              "ranking": 38
+            },
+            {
+              "player": "cfb-sean-cuono",
+              "ranking": 39
+            },
+            {
+              "player": "cfb-grant-wilson",
+              "ranking": 40
+            },
+            {
+              "player": "cfb-luke-nickel",
+              "ranking": 41
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "cfb-alex-bauman",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 22
+                  }
+                },
+                {
+                  "player": "cfb-carson-beck",
+                  "stats": {
+                    "PASSING_YARDS": 232,
+                    "PASSING_TOUCHDOWNS": 1,
+                    "RUSHING_YARDS": -7
+                  }
+                },
+                {
+                  "player": "cfb-charlie-becker",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 65
+                  }
+                },
+                {
+                  "player": "cfb-charmar-brown",
+                  "stats": {
+                    "RUSHING_YARDS": 5,
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 11
+                  }
+                },
+                {
+                  "player": "cfb-cj-daniels",
+                  "stats": {
+                    "RECEPTIONS": 4,
+                    "RECEIVING_YARDS": 62
+                  }
+                },
+                {
+                  "player": "cfb-elijah-sarratt",
+                  "stats": {
+                    "RECEPTIONS": 3,
+                    "RECEIVING_YARDS": 28
+                  }
+                },
+                {
+                  "player": "cfb-fernando-mendoza",
+                  "stats": {
+                    "PASSING_YARDS": 186,
+                    "RUSHING_YARDS": -8,
+                    "RUSHING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-joshua-moore",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 1
+                  }
+                },
+                {
+                  "player": "cfb-kaelon-black",
+                  "stats": {
+                    "RUSHING_YARDS": 79
+                  }
+                },
+                {
+                  "player": "cfb-keelan-marion",
+                  "stats": {
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 6
+                  }
+                },
+                {
+                  "player": "cfb-malachi-toney",
+                  "stats": {
+                    "RECEPTIONS": 10,
+                    "RECEIVING_YARDS": 122,
+                    "RECEIVING_TOUCHDOWNS": 1
+                  }
+                },
+                {
+                  "player": "cfb-mark-fletcher-jr",
+                  "stats": {
+                    "RUSHING_YARDS": 112,
+                    "RUSHING_TOUCHDOWNS": 2,
+                    "RECEPTIONS": 1,
+                    "RECEIVING_YARDS": 8
+                  }
+                },
+                {
+                  "player": "cfb-omar-cooper-jr",
+                  "stats": {
+                    "RECEPTIONS": 5,
+                    "RECEIVING_YARDS": 71
+                  }
+                },
+                {
+                  "player": "cfb-riley-nowakowski",
+                  "stats": {
+                    "RUSHING_YARDS": 1,
+                    "RUSHING_TOUCHDOWNS": 1,
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 17
+                  }
+                },
+                {
+                  "player": "cfb-roman-hemby",
+                  "stats": {
+                    "RUSHING_YARDS": 60,
+                    "RECEPTIONS": 2,
+                    "RECEIVING_YARDS": 5
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
