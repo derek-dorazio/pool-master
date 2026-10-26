@@ -3835,6 +3835,10 @@ export interface components {
             firstName: string;
             /** @description Last name captured for the account profile. */
             lastName: string;
+            /** @description IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN. */
+            timezone?: string;
+            /** @description BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN. */
+            locale?: string;
         };
         /** @description Login payload for an existing username-or-email/password account. */
         LoginRequest: {
@@ -6354,6 +6358,10 @@ export interface components {
             firstName: string;
             /** @description Last name captured for the account profile. */
             lastName: string;
+            /** @description IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN. */
+            timezone?: string;
+            /** @description BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN. */
+            locale?: string;
         };
         /** @description Pending or historical team-owner invitation record. */
         TeamOwnerInvitationDto: {

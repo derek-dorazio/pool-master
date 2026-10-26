@@ -95,6 +95,34 @@ describe('AuthService', () => {
       await expect(bcrypt.compare('Password123!', stored as string)).resolves.toBe(true);
     });
 
+    it('keeps the time zone and locale the signup form read from the browser', async () => {
+      const users = fakeUserRepo({
+        create: jest.fn().mockImplementation(async (input: Omit<User, 'id' | 'createdAt' | 'updatedAt'>) =>
+          buildUser({ ...input })),
+      });
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
+
+      await service.register('newuser', 'new@example.com', 'Password123!', 'New', 'User', { timezone: 'America/Chicago', locale: 'en-GB' });
+
+      expect(users.create).toHaveBeenCalledWith(
+        expect.objectContaining({ timezone: 'America/Chicago', locale: 'en-GB' }),
+        expect.anything(),
+      );
+    });
+
+    it('refuses a time zone or locale the server does not know, and creates no account', async () => {
+      const users = fakeUserRepo();
+      const service = new AuthService(users, asPrismaClient(createPrismaMock()));
+
+      await expect(
+        service.register('newuser', 'new@example.com', 'Password123!', 'New', 'User', { timezone: 'Mars/Olympus' }),
+      ).rejects.toMatchObject({ code: 'TIME_ZONE_UNKNOWN', statusCode: 400 } satisfies Partial<AuthError>);
+      await expect(
+        service.register('newuser', 'new@example.com', 'Password123!', 'New', 'User', { locale: 'not a locale' }),
+      ).rejects.toMatchObject({ code: 'LOCALE_UNKNOWN', statusCode: 400 } satisfies Partial<AuthError>);
+      expect(users.create).not.toHaveBeenCalled();
+    });
+
     it('rejects a normalized email somebody already holds', async () => {
       const users = fakeUserRepo({
         findByIdentifier: jest.fn().mockResolvedValue(buildUser()),

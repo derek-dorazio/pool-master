@@ -1,6 +1,7 @@
 import { EmailCategory, EmailTemplateKey, PLAN_FEATURE_GROUP, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
+  ContestEventChangeKind,
   EMAIL_TEMPLATES,
   EntryReceiptKind,
   EntryReminderKind,
@@ -76,7 +77,7 @@ describe('pool-master-98i system email templates', () => {
     }, UTC);
 
     expect(message.templateKey).toBe('CONTEST_ENTRY_COMPLETED');
-    expect(message.text).toContain('You can change your picks until Apr 9, 2026, 11:40 AM UTC.');
+    expect(message.text).toContain('You can change your picks until Thu, Apr 9, 2026.');
     expect(message.subject).toBe('Entry submitted: Masters Pick 6');
     expect(message.text).toContain('- Tier A: Rory McIlroy, Ludvig Aberg');
     expect(message.text).toContain('Tiebreaker: -12');
@@ -141,7 +142,7 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('NCAA Tournament bracket:');
     expect(message.text).toContain('- Championship: Duke');
     expect(message.text).toContain('- Final Four: Duke, Houston');
-    expect(message.text).toContain('You can change your bracket until Mar 19, 2026, 4:15 PM UTC.');
+    expect(message.text).toContain('You can change your bracket until Thu, Mar 19, 2026.');
   });
 
   it('renders a survivor receipt with the team, its game and when the pick locks', () => {
@@ -156,8 +157,8 @@ describe('pool-master-98i system email templates', () => {
     }, UTC);
 
     expect(message.text).toContain('Week 3 pick:');
-    expect(message.text).toContain('- Lions: Bears at Lions, Sep 20, 2026, 5:00 PM UTC');
-    expect(message.text).toContain('You can change your pick until Sep 20, 2026, 5:00 PM UTC.');
+    expect(message.text).toContain('- Lions: Bears at Lions, Sun, Sep 20, 2026');
+    expect(message.text).toContain('You can change your pick until Sun, Sep 20, 2026.');
   });
 
   it('renders a quick pick receipt with the dealt picks, saying the draw made them and leaving out a submit time', () => {
@@ -213,7 +214,7 @@ describe('pool-master-98i system email templates', () => {
     expect(message.subject).toBe('Masters Pick 6 is live');
     expect(message.text).toContain('Good luck, everyone.');
     expect(message.text).toContain('Venue: Augusta National Golf Club');
-    expect(message.text).toContain('Starts: Apr 9, 2026, 11:40 AM UTC');
+    expect(message.text).toContain('Starts: Thu, Apr 9, 2026');
     expect(message.text).toContain('Format: 4 rounds');
     expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
     expect(message.text).toContain('Entries: 2');
@@ -258,7 +259,7 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('Event: The Masters');
     expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
     expect(message.text).toContain('Entries: 1 entry per member');
-    expect(message.text).toContain('Picks close: Apr 9, 2026, 11:40 AM UTC');
+    expect(message.text).toContain('Picks close: Thu, Apr 9, 2026');
     expect(message.text).toContain('Enter contest: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1');
     expect(message.html).toContain('New contest open');
   });
@@ -278,17 +279,18 @@ describe('pool-master-98i system email templates', () => {
       contestUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-3',
     }, UTC);
 
-    expect(message.text).toContain('Events: The Masters (Apr 9, 2026, 11:40 AM UTC), PGA Championship (May 14, 2026, 11:40 AM UTC)');
-    expect(message.text).toContain('First picks close: Apr 9, 2026, 11:40 AM UTC');
+    expect(message.text).toContain('Events: The Masters (Thu, Apr 9, 2026), PGA Championship (Thu, May 14, 2026)');
+    expect(message.text).toContain('First picks close: Thu, Apr 9, 2026');
   });
 
-  it('renders the entry reminder with when picks close in the reader\'s time zone and a Make your picks button', () => {
+  it('renders the 3-hour entry reminder with the time picks close, in the reader\'s time zone, and a Make your picks button', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'Masters Pick 6',
       eventName: 'The Masters',
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hoursBefore: 3,
       standing: { kind: EntryReminderKind.NOT_ENTERED },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
     }, { timeZone: 'America/New_York' });
@@ -300,6 +302,41 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Make your picks');
   });
 
+  it('gives an entry reminder sent a day or more ahead the date picks close, without a time', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'Masters Pick 6',
+      eventName: 'The Masters',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hoursBefore: 24,
+      standing: { kind: EntryReminderKind.NOT_ENTERED },
+      contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
+    }, { timeZone: 'America/New_York' });
+
+    expect(message.text).toContain('Picks close: Thu, Apr 9, 2026\n');
+    expect(message.text).not.toContain('7:40 AM');
+  });
+
+  it('gives a moved event\'s old and new days, and their times when it moved within the same day', () => {
+    const moved = EMAIL_TEMPLATE_FIXTURES.CONTEST_EVENT_CHANGED;
+    const eastern = { timeZone: 'America/New_York' };
+    const sameDay = {
+      ...moved,
+      change: {
+        kind: ContestEventChangeKind.RESCHEDULED,
+        previousStart: new Date('2027-04-08T12:00:00.000Z'),
+        newStart: new Date('2027-04-08T15:30:00.000Z'),
+        picksOpen: true,
+      },
+    };
+
+    expect(renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', moved, eastern).text)
+      .toContain('The Masters has moved from Thu, Apr 8, 2027 to Thu, Apr 15, 2027.');
+    expect(renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', sameDay, eastern).text)
+      .toContain('The Masters has moved from Apr 8, 2027, 8:00 AM EDT to Apr 8, 2027, 11:30 AM EDT.');
+  });
+
   it('tells a reader with a draft entry that it won\'t count until submitted', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
       userName: 'Morgan Member',
@@ -307,6 +344,7 @@ describe('pool-master-98i system email templates', () => {
       contestName: 'NFL Pick\'em',
       eventName: 'Week 7',
       closesAt: new Date('2026-10-22T00:15:00.000Z'),
+      hoursBefore: 3,
       standing: { kind: EntryReminderKind.DRAFT, drafts: 1 },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-2',
     }, UTC);
@@ -372,8 +410,8 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('The Masters results');
       expect(message.text).toContain('The Masters is done. Here\'s where Masters Pick 6 stands.');
       expect(message.text).toContain('1. Amen Corner (Casey & Co), -20, this event T2, -9');
-      expect(message.text).toContain('Next event: PGA Championship, May 14, 2026, 7:00 AM EDT');
-      expect(message.text).toContain('Picks close: May 14, 2026, 7:00 AM EDT');
+      expect(message.text).toContain('Next event: PGA Championship, Thu, May 14, 2026');
+      expect(message.text).toContain('Picks close: Thu, May 14, 2026');
     });
 
     it('reports a settled pick\'em week with its winners, its leaders by the week\'s points, the season by points, next week\'s first kickoff and a picks button', () => {
@@ -402,7 +440,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Week 3 is done. Upset City (Casey & Co) and Chalk (Pat) tied for the week. Here\'s where NFL Pick\'em stands.');
       expect(message.text).toContain('Week 3, top 2 of 9:\nT1. Upset City (Casey & Co), 13\nT1. Chalk (Pat), 13');
       expect(message.text).toContain('Season top 1 of 9, by points:\n1. Chalk (Pat), 38, up 1');
-      expect(message.text).toContain('Next week: Week 4, first kickoff Sep 24, 2026, 8:15 PM EDT');
+      expect(message.text).toContain('Next week: Week 4, first kickoff Thu, Sep 24, 2026');
       expect(message.text).toContain('Make picks for next week: http://localhost:5173/league/OFFICE24/contests/contest-1');
       expect(message.html).toContain('Make picks for next week');
     });
@@ -467,7 +505,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('Blue Devils: your champion, Duke, is still alive, with 280 points possible.');
       expect(message.text).toContain('Long Shot: your champion, Saint Peter\'s, is out, with 90 points possible.');
       expect(message.text).toContain('Standings, by points:\n1. Chalk (Pat), 120, up 2');
-      expect(message.text).toContain('Next round: Elite Eight, Mar 28, 2026, 6:09 PM EDT');
+      expect(message.text).toContain('Next round: Elite Eight, Sat, Mar 28, 2026');
     });
 
     it('names the round a survivor entry went out in when the event is a playoff of several rounds', () => {
@@ -489,6 +527,7 @@ describe('pool-master-98i system email templates', () => {
       contestName: 'Office Pool',
       eventName: 'The Masters',
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hoursBefore: 3,
       contestUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1',
     };
 
@@ -681,7 +720,7 @@ describe('Premium preview period ending', () => {
     const message = renderSystemEmailTemplate('LEAGUE_PLAN_PREVIEW_ENDING', EMAIL_TEMPLATE_FIXTURES.LEAGUE_PLAN_PREVIEW_ENDING, { timeZone: 'America/New_York' });
 
     expect(message.subject).toBe('Office League\'s Premium preview period ends in 7 days');
-    expect(message.text).toContain('Office League was gifted Premium for its preview period. The preview period ends in 7 days, on Apr 24, 2027, 2:30 PM EDT.');
+    expect(message.text).toContain('Office League was gifted Premium for its preview period. The preview period ends in 7 days, on Sat, Apr 24, 2027.');
     expect(message.text).toContain('After that, Office League moves to the Free plan: up to 20 entries per contest and 5 sports leagues a year.');
     expect(message.text).toContain('Nothing is deleted: contests keep the entries they have, and Premium features are hidden, not removed.');
     expect(message.text).toContain('See your plan: http://localhost:5173/league/OFFICE24/admin/plan');
@@ -697,7 +736,7 @@ describe('Premium preview period ending', () => {
     }, UTC);
 
     expect(message.subject).toBe('Office League\'s Premium preview period ends tomorrow');
-    expect(message.text).toContain('The preview period ends tomorrow, on Apr 24, 2027, 6:30 PM UTC.');
+    expect(message.text).toContain('The preview period ends tomorrow, on Sat, Apr 24, 2027.');
     expect(message.text).toContain('After that, Office League moves to the Free plan: up to 20 entries per contest.');
   });
 
