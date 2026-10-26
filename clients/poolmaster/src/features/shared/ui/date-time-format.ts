@@ -11,7 +11,7 @@
  * ones on their account, or US Eastern, en-US and the locale's clock when they have
  * none. Components read them with `useDisplayPreferences`.
  */
-import { DEFAULT_DISPLAY_TIME_ZONE, TimeFormat } from "@poolmaster/shared/domain";
+import { DEFAULT_DISPLAY_LOCALE, DEFAULT_DISPLAY_TIME_ZONE, TimeFormat } from "@poolmaster/shared/domain";
 import type { UserDto } from "@/lib/api";
 
 export type DisplayPreferences = {
@@ -25,7 +25,7 @@ export type DisplayPreferences = {
 
 export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   timeZone: DEFAULT_DISPLAY_TIME_ZONE,
-  locale: "en-US",
+  locale: DEFAULT_DISPLAY_LOCALE,
   hour12: undefined,
 };
 
