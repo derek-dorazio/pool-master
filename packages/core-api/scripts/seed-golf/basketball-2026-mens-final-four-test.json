@@ -1,0 +1,1610 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASKETBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "Men's Final Four",
+      "Men's National Championship"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-26",
+    "gatheredBy": "load-sport-data, the 2026 men's Final Four at Lucas Oil Stadium as played: the national semifinals on 4 April (UConn beat Illinois 71-62, Michigan beat Arizona 91-73) and the National Championship on 6 April (Michigan beat UConn 69-63). Each event is one round, one game for each team. The field is every player in the game's box score, positions and birth countries from ESPN's athlete records; ranking is the player's 2025-26 regular-season Triple Threat total (points + rebounds + assists) from ESPN, 0 for a player with no regular-season record there. Each box score (points, rebounds, assists) is from ESPN, cross-checked player by player against CBS Sports, which agree on every line; CBS also lists Illinois's Tomislav Bilic as not playing in his semifinal, where ESPN does not list him, so he is not in the field. A player who did not play, or scored no point, rebound or assist, has no line.",
+    "sources": [
+      {
+        "name": "ESPN men's college basketball, Final Four semifinal UConn v Illinois box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/summary?event=401856598"
+      },
+      {
+        "name": "ESPN men's college basketball, Final Four semifinal Michigan v Arizona box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/summary?event=401856599"
+      },
+      {
+        "name": "ESPN men's college basketball, National Championship Michigan v UConn box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/summary?event=401856600"
+      },
+      {
+        "name": "CBS Sports, Illinois at UConn box score",
+        "url": "https://www.cbssports.com/college-basketball/gametracker/boxscore/NCAAB_20260404_ILL@UCONN/"
+      },
+      {
+        "name": "CBS Sports, Michigan at Arizona box score",
+        "url": "https://www.cbssports.com/college-basketball/gametracker/boxscore/NCAAB_20260404_MICH@ARIZ/"
+      },
+      {
+        "name": "CBS Sports, UConn at Michigan box score",
+        "url": "https://www.cbssports.com/college-basketball/gametracker/boxscore/NCAAB_20260406_UCONN@MICH/"
+      },
+      {
+        "name": "ESPN men's college basketball scoreboard, 4 April 2026 (the semifinals)",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260404&groups=100"
+      },
+      {
+        "name": "ESPN men's college basketball scoreboard, 6 April 2026 (the National Championship)",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=20260406&groups=100"
+      },
+      {
+        "name": "ESPN men's college basketball athletes, 2025-26 regular-season totals (seasons/2026/types/2/athletes/<id>/statistics)",
+        "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/2026/types/2/athletes/5311832/statistics"
+      },
+      {
+        "name": "ESPN men's college basketball athletes, 2025-26 season (position and birth country, seasons/2026/athletes/<id>)",
+        "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/2026/athletes/5311832"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Men's Final Four",
+      "players": [
+        {
+          "key": "mbb-keaton-wagler",
+          "name": "Keaton Wagler",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-yaxel-lendeborg",
+          "name": "Yaxel Lendeborg",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-brayden-burries",
+          "name": "Brayden Burries",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-david-mirkovic",
+          "name": "David Mirkovic",
+          "countryCode": "ME",
+          "ranking": 4,
+          "team": "Illinois Fighting Illini",
+          "position": "F"
+        },
+        {
+          "key": "mbb-silas-demary-jr",
+          "name": "Silas Demary Jr.",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-morez-johnson-jr",
+          "name": "Morez Johnson Jr.",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jaden-bradley",
+          "name": "Jaden Bradley",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-aday-mara",
+          "name": "Aday Mara",
+          "countryCode": "ES",
+          "ranking": 8,
+          "team": "Michigan Wolverines",
+          "position": "C"
+        },
+        {
+          "key": "mbb-tarris-reed-jr",
+          "name": "Tarris Reed Jr.",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-alex-karaban",
+          "name": "Alex Karaban",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-koa-peat",
+          "name": "Koa Peat",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Arizona Wildcats",
+          "position": "F"
+        },
+        {
+          "key": "mbb-tobe-awaka",
+          "name": "Tobe Awaka",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Arizona Wildcats",
+          "position": "F"
+        },
+        {
+          "key": "mbb-motiejus-krivas",
+          "name": "Motiejus Krivas",
+          "countryCode": "LT",
+          "ranking": 13,
+          "team": "Arizona Wildcats",
+          "position": "C"
+        },
+        {
+          "key": "mbb-elliot-cadeau",
+          "name": "Elliot Cadeau",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-solo-ball",
+          "name": "Solo Ball",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-ivan-kharchenkov",
+          "name": "Ivan Kharchenkov",
+          "countryCode": "DE",
+          "ranking": 16,
+          "team": "Arizona Wildcats",
+          "position": "F"
+        },
+        {
+          "key": "mbb-andrej-stojakovic",
+          "name": "Andrej Stojakovic",
+          "countryCode": "GR",
+          "ranking": 17,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-kylan-boswell",
+          "name": "Kylan Boswell",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-tomislav-ivisic",
+          "name": "Tomislav Ivisic",
+          "countryCode": "HR",
+          "ranking": 19,
+          "team": "Illinois Fighting Illini",
+          "position": "C"
+        },
+        {
+          "key": "mbb-braylon-mullins",
+          "name": "Braylon Mullins",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-trey-mckenney",
+          "name": "Trey McKenney",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-anthony-dell-orso",
+          "name": "Anthony Dell'Orso",
+          "countryCode": "AU",
+          "ranking": 22,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-nimari-burnett",
+          "name": "Nimari Burnett",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-zvonimir-ivisic",
+          "name": "Zvonimir Ivisic",
+          "countryCode": "HR",
+          "ranking": 24,
+          "team": "Illinois Fighting Illini",
+          "position": "F"
+        },
+        {
+          "key": "mbb-roddy-gayle-jr",
+          "name": "Roddy Gayle Jr.",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-eric-reibe",
+          "name": "Eric Reibe",
+          "countryCode": "DE",
+          "ranking": 26,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-l-j-cason",
+          "name": "L.J. Cason",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-ben-humrichous",
+          "name": "Ben Humrichous",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Illinois Fighting Illini",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jake-davis",
+          "name": "Jake Davis",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Illinois Fighting Illini",
+          "position": "F"
+        },
+        {
+          "key": "mbb-malachi-smith",
+          "name": "Malachi Smith",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jayden-ross",
+          "name": "Jayden Ross",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jaylin-stewart",
+          "name": "Jaylin Stewart",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-will-tschetter",
+          "name": "Will Tschetter",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-dwayne-aristode",
+          "name": "Dwayne Aristode",
+          "countryCode": "NL",
+          "ranking": 34,
+          "team": "Arizona Wildcats",
+          "position": "F"
+        },
+        {
+          "key": "mbb-mihailo-petrovic",
+          "name": "Mihailo Petrovic",
+          "countryCode": "RS",
+          "ranking": 35,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-sidi-gueye",
+          "name": "Sidi Gueye",
+          "countryCode": "SN",
+          "ranking": 36,
+          "team": "Arizona Wildcats",
+          "position": "C"
+        },
+        {
+          "key": "mbb-dwayne-koroma",
+          "name": "Dwayne Koroma",
+          "countryCode": "DE",
+          "ranking": 37,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-oscar-goodman",
+          "name": "Oscar Goodman",
+          "countryCode": "NZ",
+          "ranking": 38,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-winters-grady",
+          "name": "Winters Grady",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-malick-kordel",
+          "name": "Malick Kordel",
+          "countryCode": "DE",
+          "ranking": 40,
+          "team": "Michigan Wolverines",
+          "position": "C"
+        },
+        {
+          "key": "mbb-brandon-lee",
+          "name": "Brandon Lee",
+          "countryCode": "PR",
+          "ranking": 41,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-evan-nelson",
+          "name": "Evan Nelson",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jason-jakstys",
+          "name": "Jason Jakstys",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Illinois Fighting Illini",
+          "position": "C"
+        },
+        {
+          "key": "mbb-alec-millender",
+          "name": "Alec Millender",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-addison-arnold",
+          "name": "Addison Arnold",
+          "countryCode": "US",
+          "ranking": 45,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-aj-redd",
+          "name": "AJ Redd",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-blake-fagbemi",
+          "name": "Blake Fagbemi",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        },
+        {
+          "key": "mbb-sven-djopmo",
+          "name": "Sven Djopmo",
+          "countryCode": "FR",
+          "ranking": 48,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jackson-francois",
+          "name": "Jackson Francois",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jacob-furphy",
+          "name": "Jacob Furphy",
+          "countryCode": "AU",
+          "ranking": 50,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-charlie-may",
+          "name": "Charlie May",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-uros-paunovic",
+          "name": "Uros Paunovic",
+          "countryCode": "RS",
+          "ranking": 52,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-howard-eisley-jr",
+          "name": "Howard Eisley Jr.",
+          "countryCode": "US",
+          "ranking": 53,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-rrezon-elezaj",
+          "name": "Rrezon Elezaj",
+          "countryCode": "XK",
+          "ranking": 54,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-jackson-cook",
+          "name": "Jackson Cook",
+          "countryCode": "GB",
+          "ranking": 55,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-bryce-james",
+          "name": "Bryce James",
+          "countryCode": "US",
+          "ranking": 56,
+          "team": "Arizona Wildcats",
+          "position": "G"
+        },
+        {
+          "key": "mbb-harrison-hochberg",
+          "name": "Harrison Hochberg",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jacob-ross",
+          "name": "Jacob Ross",
+          "countryCode": "US",
+          "ranking": 58,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-mabil-mawut",
+          "name": "Mabil Mawut",
+          "countryCode": "SS",
+          "ranking": 59,
+          "team": "Arizona Wildcats",
+          "position": "F"
+        },
+        {
+          "key": "mbb-ricky-liburd",
+          "name": "Ricky Liburd",
+          "countryCode": "US",
+          "ranking": 60,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-ty-rodgers",
+          "name": "Ty Rodgers",
+          "countryCode": "US",
+          "ranking": 61,
+          "team": "Illinois Fighting Illini",
+          "position": "G"
+        }
+      ],
+      "events": [
+        {
+          "key": "mens-final-four-2026",
+          "name": "Men's Final Four",
+          "startDate": "2026-04-04",
+          "endDate": "2026-04-04",
+          "venue": "Lucas Oil Stadium",
+          "location": "Indianapolis, Indiana",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mbb-keaton-wagler",
+              "ranking": 1
+            },
+            {
+              "player": "mbb-yaxel-lendeborg",
+              "ranking": 2
+            },
+            {
+              "player": "mbb-brayden-burries",
+              "ranking": 3
+            },
+            {
+              "player": "mbb-david-mirkovic",
+              "ranking": 4
+            },
+            {
+              "player": "mbb-silas-demary-jr",
+              "ranking": 5
+            },
+            {
+              "player": "mbb-morez-johnson-jr",
+              "ranking": 6
+            },
+            {
+              "player": "mbb-jaden-bradley",
+              "ranking": 7
+            },
+            {
+              "player": "mbb-aday-mara",
+              "ranking": 8
+            },
+            {
+              "player": "mbb-tarris-reed-jr",
+              "ranking": 9
+            },
+            {
+              "player": "mbb-alex-karaban",
+              "ranking": 10
+            },
+            {
+              "player": "mbb-koa-peat",
+              "ranking": 11
+            },
+            {
+              "player": "mbb-tobe-awaka",
+              "ranking": 12
+            },
+            {
+              "player": "mbb-motiejus-krivas",
+              "ranking": 13
+            },
+            {
+              "player": "mbb-elliot-cadeau",
+              "ranking": 14
+            },
+            {
+              "player": "mbb-solo-ball",
+              "ranking": 15
+            },
+            {
+              "player": "mbb-ivan-kharchenkov",
+              "ranking": 16
+            },
+            {
+              "player": "mbb-andrej-stojakovic",
+              "ranking": 17
+            },
+            {
+              "player": "mbb-kylan-boswell",
+              "ranking": 18
+            },
+            {
+              "player": "mbb-tomislav-ivisic",
+              "ranking": 19
+            },
+            {
+              "player": "mbb-braylon-mullins",
+              "ranking": 20
+            },
+            {
+              "player": "mbb-trey-mckenney",
+              "ranking": 21
+            },
+            {
+              "player": "mbb-anthony-dell-orso",
+              "ranking": 22
+            },
+            {
+              "player": "mbb-nimari-burnett",
+              "ranking": 23
+            },
+            {
+              "player": "mbb-zvonimir-ivisic",
+              "ranking": 24
+            },
+            {
+              "player": "mbb-roddy-gayle-jr",
+              "ranking": 25
+            },
+            {
+              "player": "mbb-eric-reibe",
+              "ranking": 26
+            },
+            {
+              "player": "mbb-l-j-cason",
+              "ranking": 27
+            },
+            {
+              "player": "mbb-ben-humrichous",
+              "ranking": 28
+            },
+            {
+              "player": "mbb-jake-davis",
+              "ranking": 29
+            },
+            {
+              "player": "mbb-malachi-smith",
+              "ranking": 30
+            },
+            {
+              "player": "mbb-jayden-ross",
+              "ranking": 31
+            },
+            {
+              "player": "mbb-jaylin-stewart",
+              "ranking": 32
+            },
+            {
+              "player": "mbb-will-tschetter",
+              "ranking": 33
+            },
+            {
+              "player": "mbb-dwayne-aristode",
+              "ranking": 34
+            },
+            {
+              "player": "mbb-mihailo-petrovic",
+              "ranking": 35
+            },
+            {
+              "player": "mbb-sidi-gueye",
+              "ranking": 36
+            },
+            {
+              "player": "mbb-dwayne-koroma",
+              "ranking": 37
+            },
+            {
+              "player": "mbb-oscar-goodman",
+              "ranking": 38
+            },
+            {
+              "player": "mbb-winters-grady",
+              "ranking": 39
+            },
+            {
+              "player": "mbb-malick-kordel",
+              "ranking": 40
+            },
+            {
+              "player": "mbb-brandon-lee",
+              "ranking": 41
+            },
+            {
+              "player": "mbb-evan-nelson",
+              "ranking": 42
+            },
+            {
+              "player": "mbb-jason-jakstys",
+              "ranking": 43
+            },
+            {
+              "player": "mbb-alec-millender",
+              "ranking": 44
+            },
+            {
+              "player": "mbb-addison-arnold",
+              "ranking": 45
+            },
+            {
+              "player": "mbb-aj-redd",
+              "ranking": 46
+            },
+            {
+              "player": "mbb-blake-fagbemi",
+              "ranking": 47
+            },
+            {
+              "player": "mbb-sven-djopmo",
+              "ranking": 48
+            },
+            {
+              "player": "mbb-jackson-francois",
+              "ranking": 49
+            },
+            {
+              "player": "mbb-jacob-furphy",
+              "ranking": 50
+            },
+            {
+              "player": "mbb-charlie-may",
+              "ranking": 51
+            },
+            {
+              "player": "mbb-uros-paunovic",
+              "ranking": 52
+            },
+            {
+              "player": "mbb-howard-eisley-jr",
+              "ranking": 53
+            },
+            {
+              "player": "mbb-rrezon-elezaj",
+              "ranking": 54
+            },
+            {
+              "player": "mbb-jackson-cook",
+              "ranking": 55
+            },
+            {
+              "player": "mbb-bryce-james",
+              "ranking": 56
+            },
+            {
+              "player": "mbb-harrison-hochberg",
+              "ranking": 57
+            },
+            {
+              "player": "mbb-jacob-ross",
+              "ranking": 58
+            },
+            {
+              "player": "mbb-mabil-mawut",
+              "ranking": 59
+            },
+            {
+              "player": "mbb-ricky-liburd",
+              "ranking": 60
+            },
+            {
+              "player": "mbb-ty-rodgers",
+              "ranking": 61
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mbb-aday-mara",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "mbb-alex-karaban",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "mbb-andrej-stojakovic",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-anthony-dell-orso",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-ben-humrichous",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "mbb-brayden-burries",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-braylon-mullins",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "mbb-charlie-may",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-david-mirkovic",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "mbb-dwayne-aristode",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-elliot-cadeau",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "mbb-eric-reibe",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-ivan-kharchenkov",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-jackson-cook",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-jaden-bradley",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-jake-davis",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "mbb-jayden-ross",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "mbb-jaylin-stewart",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-keaton-wagler",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-koa-peat",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 11
+                  }
+                },
+                {
+                  "player": "mbb-kylan-boswell",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 6
+                  }
+                },
+                {
+                  "player": "mbb-malachi-smith",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-morez-johnson-jr",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "mbb-motiejus-krivas",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-nimari-burnett",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-oscar-goodman",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-roddy-gayle-jr",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-silas-demary-jr",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "mbb-solo-ball",
+                  "stats": {
+                    "POINTS": 13,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-sven-djopmo",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-tarris-reed-jr",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 11
+                  }
+                },
+                {
+                  "player": "mbb-tobe-awaka",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 9
+                  }
+                },
+                {
+                  "player": "mbb-tomislav-ivisic",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 7
+                  }
+                },
+                {
+                  "player": "mbb-trey-mckenney",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-will-tschetter",
+                  "stats": {
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-yaxel-lendeborg",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-zvonimir-ivisic",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Men's National Championship",
+      "players": [
+        {
+          "key": "mbb-yaxel-lendeborg",
+          "name": "Yaxel Lendeborg",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-silas-demary-jr",
+          "name": "Silas Demary Jr.",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-morez-johnson-jr",
+          "name": "Morez Johnson Jr.",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-aday-mara",
+          "name": "Aday Mara",
+          "countryCode": "ES",
+          "ranking": 4,
+          "team": "Michigan Wolverines",
+          "position": "C"
+        },
+        {
+          "key": "mbb-tarris-reed-jr",
+          "name": "Tarris Reed Jr.",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-alex-karaban",
+          "name": "Alex Karaban",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-elliot-cadeau",
+          "name": "Elliot Cadeau",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-solo-ball",
+          "name": "Solo Ball",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-braylon-mullins",
+          "name": "Braylon Mullins",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-trey-mckenney",
+          "name": "Trey McKenney",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-nimari-burnett",
+          "name": "Nimari Burnett",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-roddy-gayle-jr",
+          "name": "Roddy Gayle Jr.",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-eric-reibe",
+          "name": "Eric Reibe",
+          "countryCode": "DE",
+          "ranking": 13,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-l-j-cason",
+          "name": "L.J. Cason",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-malachi-smith",
+          "name": "Malachi Smith",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jayden-ross",
+          "name": "Jayden Ross",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jaylin-stewart",
+          "name": "Jaylin Stewart",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-will-tschetter",
+          "name": "Will Tschetter",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-dwayne-koroma",
+          "name": "Dwayne Koroma",
+          "countryCode": "DE",
+          "ranking": 19,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-oscar-goodman",
+          "name": "Oscar Goodman",
+          "countryCode": "NZ",
+          "ranking": 20,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-winters-grady",
+          "name": "Winters Grady",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-malick-kordel",
+          "name": "Malick Kordel",
+          "countryCode": "DE",
+          "ranking": 22,
+          "team": "Michigan Wolverines",
+          "position": "C"
+        },
+        {
+          "key": "mbb-alec-millender",
+          "name": "Alec Millender",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-jacob-furphy",
+          "name": "Jacob Furphy",
+          "countryCode": "AU",
+          "ranking": 24,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-charlie-may",
+          "name": "Charlie May",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-uros-paunovic",
+          "name": "Uros Paunovic",
+          "countryCode": "RS",
+          "ranking": 26,
+          "team": "UConn Huskies",
+          "position": "G"
+        },
+        {
+          "key": "mbb-howard-eisley-jr",
+          "name": "Howard Eisley Jr.",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        },
+        {
+          "key": "mbb-rrezon-elezaj",
+          "name": "Rrezon Elezaj",
+          "countryCode": "XK",
+          "ranking": 28,
+          "team": "UConn Huskies",
+          "position": "C"
+        },
+        {
+          "key": "mbb-harrison-hochberg",
+          "name": "Harrison Hochberg",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mbb-jacob-ross",
+          "name": "Jacob Ross",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "UConn Huskies",
+          "position": "F"
+        },
+        {
+          "key": "mbb-ricky-liburd",
+          "name": "Ricky Liburd",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Michigan Wolverines",
+          "position": "G"
+        }
+      ],
+      "events": [
+        {
+          "key": "mens-national-championship-2026",
+          "name": "Men's National Championship",
+          "startDate": "2026-04-06",
+          "endDate": "2026-04-06",
+          "venue": "Lucas Oil Stadium",
+          "location": "Indianapolis, Indiana",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mbb-yaxel-lendeborg",
+              "ranking": 1
+            },
+            {
+              "player": "mbb-silas-demary-jr",
+              "ranking": 2
+            },
+            {
+              "player": "mbb-morez-johnson-jr",
+              "ranking": 3
+            },
+            {
+              "player": "mbb-aday-mara",
+              "ranking": 4
+            },
+            {
+              "player": "mbb-tarris-reed-jr",
+              "ranking": 5
+            },
+            {
+              "player": "mbb-alex-karaban",
+              "ranking": 6
+            },
+            {
+              "player": "mbb-elliot-cadeau",
+              "ranking": 7
+            },
+            {
+              "player": "mbb-solo-ball",
+              "ranking": 8
+            },
+            {
+              "player": "mbb-braylon-mullins",
+              "ranking": 9
+            },
+            {
+              "player": "mbb-trey-mckenney",
+              "ranking": 10
+            },
+            {
+              "player": "mbb-nimari-burnett",
+              "ranking": 11
+            },
+            {
+              "player": "mbb-roddy-gayle-jr",
+              "ranking": 12
+            },
+            {
+              "player": "mbb-eric-reibe",
+              "ranking": 13
+            },
+            {
+              "player": "mbb-l-j-cason",
+              "ranking": 14
+            },
+            {
+              "player": "mbb-malachi-smith",
+              "ranking": 15
+            },
+            {
+              "player": "mbb-jayden-ross",
+              "ranking": 16
+            },
+            {
+              "player": "mbb-jaylin-stewart",
+              "ranking": 17
+            },
+            {
+              "player": "mbb-will-tschetter",
+              "ranking": 18
+            },
+            {
+              "player": "mbb-dwayne-koroma",
+              "ranking": 19
+            },
+            {
+              "player": "mbb-oscar-goodman",
+              "ranking": 20
+            },
+            {
+              "player": "mbb-winters-grady",
+              "ranking": 21
+            },
+            {
+              "player": "mbb-malick-kordel",
+              "ranking": 22
+            },
+            {
+              "player": "mbb-alec-millender",
+              "ranking": 23
+            },
+            {
+              "player": "mbb-jacob-furphy",
+              "ranking": 24
+            },
+            {
+              "player": "mbb-charlie-may",
+              "ranking": 25
+            },
+            {
+              "player": "mbb-uros-paunovic",
+              "ranking": 26
+            },
+            {
+              "player": "mbb-howard-eisley-jr",
+              "ranking": 27
+            },
+            {
+              "player": "mbb-rrezon-elezaj",
+              "ranking": 28
+            },
+            {
+              "player": "mbb-harrison-hochberg",
+              "ranking": 29
+            },
+            {
+              "player": "mbb-jacob-ross",
+              "ranking": 30
+            },
+            {
+              "player": "mbb-ricky-liburd",
+              "ranking": 31
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mbb-aday-mara",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-alex-karaban",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-braylon-mullins",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-elliot-cadeau",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-jayden-ross",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "mbb-jaylin-stewart",
+                  "stats": {
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "mbb-malachi-smith",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "mbb-morez-johnson-jr",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 10
+                  }
+                },
+                {
+                  "player": "mbb-nimari-burnett",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "mbb-roddy-gayle-jr",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-silas-demary-jr",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "mbb-solo-ball",
+                  "stats": {
+                    "POINTS": 11
+                  }
+                },
+                {
+                  "player": "mbb-tarris-reed-jr",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 14
+                  }
+                },
+                {
+                  "player": "mbb-trey-mckenney",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mbb-will-tschetter",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "mbb-yaxel-lendeborg",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
