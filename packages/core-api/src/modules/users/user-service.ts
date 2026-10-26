@@ -23,7 +23,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
-import { isKnownLocale, isKnownTimeZone, type DateFormat, type TimeFormat, type User } from '@poolmaster/shared/domain';
+import { isKnownLocale, isKnownTimeZone, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
@@ -55,7 +55,6 @@ export interface UserPreferencesUpdate {
   timezone?: string | null;
   locale?: string | null;
   timeFormat?: TimeFormat | null;
-  dateFormat?: DateFormat | null;
 }
 
 export interface PasswordChangeRequest {
@@ -167,7 +166,6 @@ export class UserService {
       ...(updates.timezone !== undefined && { timezone: normalizeOptional(updates.timezone) }),
       ...(updates.locale !== undefined && { locale: normalizeOptional(updates.locale) }),
       ...(updates.timeFormat !== undefined && { timeFormat: updates.timeFormat }),
-      ...(updates.dateFormat !== undefined && { dateFormat: updates.dateFormat }),
     });
     this.logger?.info({
       action: 'userService.updatePreferences.success',

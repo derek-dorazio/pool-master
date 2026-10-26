@@ -18,12 +18,6 @@ enum UserTimeFormat {
   TWENTY_FOUR_HOUR @map("24H")
 }
 
-enum UserDateFormat {
-  MDY
-  DMY
-  YMD
-}
-
 enum PrismaLeagueIconKey {
   GOLF_FLAG
   GOLF_BALL
@@ -591,7 +585,6 @@ model User {
   timezone     String?           @db.VarChar(50)
   locale       String?           @default("en-US") @db.VarChar(10)
   timeFormat   UserTimeFormat?   @default(TWELVE_HOUR) @map("time_format")
-  dateFormat   UserDateFormat?   @default(MDY) @map("date_format")
   createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 

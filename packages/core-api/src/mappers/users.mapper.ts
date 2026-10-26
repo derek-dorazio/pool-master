@@ -28,7 +28,6 @@ export function toUserDto(user: User): UserDto {
     timezone: user.timezone,
     locale: user.locale,
     timeFormat: user.timeFormat,
-    dateFormat: user.dateFormat,
     createdAt: user.createdAt.toISOString(),
   };
 }

@@ -1,7 +1,7 @@
 import type { SportNoun } from '@poolmaster/shared/domain';
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo } from 'react';
-import { DataGrid, StatusBadge, formatDateTimeDisplay } from '@/features/shared/ui';
+import { DataGrid, StatusBadge, formatDateTimeDisplay, useDisplayPreferences, type DisplayPreferences } from '@/features/shared/ui';
 import type { SportEventDto } from '@/lib/api';
 import {
   deriveSportEventReadiness,
@@ -14,7 +14,7 @@ import { useManagedSport } from './use-managed-sport';
 const columnHelper = createColumnHelper<SportEventDto>();
 
 /** The calendar's columns, the first named for the sport's event ("Tournament", "Race"). */
-const buildCalendarColumns = (eventLabel: string) => [
+const buildCalendarColumns = (eventLabel: string, displayPreferences: DisplayPreferences) => [
   columnHelper.accessor('name', {
     header: eventLabel,
     cell: ({ row }) => (
@@ -28,7 +28,7 @@ const buildCalendarColumns = (eventLabel: string) => [
   }),
   columnHelper.accessor('startDate', {
     header: 'Starts',
-    cell: ({ getValue }) => formatDateTimeDisplay(getValue()),
+    cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
   }),
   columnHelper.accessor('status', {
     header: 'Status',
@@ -75,7 +75,8 @@ export function SportLeagueEventCalendar({
 }) {
   const { sport, definition } = useManagedSport();
   const { event } = definition.vocabulary;
-  const columns = useMemo(() => buildCalendarColumns(capitalize(event.one)), [event.one]);
+  const displayPreferences = useDisplayPreferences();
+  const columns = useMemo(() => buildCalendarColumns(capitalize(event.one), displayPreferences), [event.one, displayPreferences]);
   return (
     <DataGrid
       columns={columns}

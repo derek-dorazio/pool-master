@@ -125,21 +125,17 @@ export type UserDto = {
      */
     authProvider?: 'email' | 'google' | 'apple';
     /**
-     * Preferred IANA timezone for user-facing scheduling and reminders.
+     * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
      */
     timezone?: string;
     /**
-     * Preferred locale for formatting and localized copy.
+     * BCP 47 locale the member's dates are formatted in, e.g. en-US.
      */
     locale?: string;
     /**
-     * Preferred clock display used in account and scheduling surfaces.
+     * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
      */
     timeFormat?: '12H' | '24H';
-    /**
-     * Preferred date display format used in account and scheduling surfaces.
-     */
-    dateFormat?: 'MDY' | 'DMY' | 'YMD';
     /**
      * Account creation timestamp in ISO 8601 format.
      */
@@ -187,21 +183,17 @@ export type UserResponse = {
          */
         authProvider?: 'email' | 'google' | 'apple';
         /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
          */
         timezone?: string;
         /**
-         * Preferred locale for formatting and localized copy.
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
          */
         locale?: string;
         /**
-         * Preferred clock display used in account and scheduling surfaces.
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -247,21 +239,17 @@ export type UserListResponse = {
          */
         authProvider?: 'email' | 'google' | 'apple';
         /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
          */
         timezone?: string;
         /**
-         * Preferred locale for formatting and localized copy.
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
          */
         locale?: string;
         /**
-         * Preferred clock display used in account and scheduling surfaces.
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -313,10 +301,6 @@ export type UserPreferencesUpdateRequest = {
      * Preferred clock display format. Omit to leave unchanged; null to clear it.
      */
     timeFormat?: '12H' | '24H' | null;
-    /**
-     * Preferred date display format. Omit to leave unchanged; null to clear it.
-     */
-    dateFormat?: 'MDY' | 'DMY' | 'YMD' | null;
 };
 
 /**
@@ -526,21 +510,17 @@ export type AuthResponse = {
          */
         authProvider?: 'email' | 'google' | 'apple';
         /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
          */
         timezone?: string;
         /**
-         * Preferred locale for formatting and localized copy.
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
          */
         locale?: string;
         /**
-         * Preferred clock display used in account and scheduling surfaces.
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -1730,21 +1710,17 @@ export type SquadMembershipDto = {
          */
         authProvider?: 'email' | 'google' | 'apple';
         /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
          */
         timezone?: string;
         /**
-         * Preferred locale for formatting and localized copy.
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
          */
         locale?: string;
         /**
-         * Preferred clock display used in account and scheduling surfaces.
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -1844,21 +1820,17 @@ export type SquadDto = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -1963,21 +1935,17 @@ export type SquadResponse = {
                  */
                 authProvider?: 'email' | 'google' | 'apple';
                 /**
-                 * Preferred IANA timezone for user-facing scheduling and reminders.
+                 * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
                  */
                 timezone?: string;
                 /**
-                 * Preferred locale for formatting and localized copy.
+                 * BCP 47 locale the member's dates are formatted in, e.g. en-US.
                  */
                 locale?: string;
                 /**
-                 * Preferred clock display used in account and scheduling surfaces.
+                 * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  */
                 timeFormat?: '12H' | '24H';
-                /**
-                 * Preferred date display format used in account and scheduling surfaces.
-                 */
-                dateFormat?: 'MDY' | 'DMY' | 'YMD';
                 /**
                  * Account creation timestamp in ISO 8601 format.
                  */
@@ -2080,21 +2048,17 @@ export type SquadListResponse = {
                  */
                 authProvider?: 'email' | 'google' | 'apple';
                 /**
-                 * Preferred IANA timezone for user-facing scheduling and reminders.
+                 * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
                  */
                 timezone?: string;
                 /**
-                 * Preferred locale for formatting and localized copy.
+                 * BCP 47 locale the member's dates are formatted in, e.g. en-US.
                  */
                 locale?: string;
                 /**
-                 * Preferred clock display used in account and scheduling surfaces.
+                 * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
                  */
                 timeFormat?: '12H' | '24H';
-                /**
-                 * Preferred date display format used in account and scheduling surfaces.
-                 */
-                dateFormat?: 'MDY' | 'DMY' | 'YMD';
                 /**
                  * Account creation timestamp in ISO 8601 format.
                  */
@@ -2169,21 +2133,17 @@ export type SquadMembershipResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -2616,21 +2576,17 @@ export type LeagueMembershipDto = {
          */
         authProvider?: 'email' | 'google' | 'apple';
         /**
-         * Preferred IANA timezone for user-facing scheduling and reminders.
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
          */
         timezone?: string;
         /**
-         * Preferred locale for formatting and localized copy.
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
          */
         locale?: string;
         /**
-         * Preferred clock display used in account and scheduling surfaces.
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
          */
         timeFormat?: '12H' | '24H';
-        /**
-         * Preferred date display format used in account and scheduling surfaces.
-         */
-        dateFormat?: 'MDY' | 'DMY' | 'YMD';
         /**
          * Account creation timestamp in ISO 8601 format.
          */
@@ -3035,21 +2991,17 @@ export type LeagueContextResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3101,21 +3053,17 @@ export type LeagueContextResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3313,21 +3261,17 @@ export type LeagueListResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3410,21 +3354,17 @@ export type LeagueMembersResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */
@@ -3510,21 +3450,17 @@ export type LeagueMembershipResponse = {
              */
             authProvider?: 'email' | 'google' | 'apple';
             /**
-             * Preferred IANA timezone for user-facing scheduling and reminders.
+             * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
              */
             timezone?: string;
             /**
-             * Preferred locale for formatting and localized copy.
+             * BCP 47 locale the member's dates are formatted in, e.g. en-US.
              */
             locale?: string;
             /**
-             * Preferred clock display used in account and scheduling surfaces.
+             * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
              */
             timeFormat?: '12H' | '24H';
-            /**
-             * Preferred date display format used in account and scheduling surfaces.
-             */
-            dateFormat?: 'MDY' | 'DMY' | 'YMD';
             /**
              * Account creation timestamp in ISO 8601 format.
              */

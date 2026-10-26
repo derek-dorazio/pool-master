@@ -1,4 +1,4 @@
-import { FormField, formatDateDisplay, Select } from '@/features/shared/ui';
+import { FormField, formatDateDisplay, Select, useDisplayPreferences } from '@/features/shared/ui';
 import type { ContestSportEvent } from './contest-events';
 
 /**
@@ -23,6 +23,7 @@ export function ContestEventSwitcher({
   testId: string;
   value: string;
 }) {
+  const displayPreferences = useDisplayPreferences();
   if (events.length < 2) {
     return null;
   }
@@ -34,7 +35,7 @@ export function ContestEventSwitcher({
           const note = describe?.(sportEvent) ?? null;
           return (
             <option key={sportEvent.sportEventId} value={sportEvent.sportEventId}>
-              {`${sportEvent.name} · ${formatDateDisplay(sportEvent.startDate)}${note ? ` · ${note}` : ''}`}
+              {`${sportEvent.name} · ${formatDateDisplay(sportEvent.startDate, displayPreferences)}${note ? ` · ${note}` : ''}`}
             </option>
           );
         })}

@@ -23,6 +23,7 @@ import {
   MetricTile,
   StatusBadge,
   Tile,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   EditableSelectionGroup,
@@ -145,6 +146,7 @@ function contestDetailQueryOptions(contestId: string) {
 
 /** A roster contest's entry: its lineup, picked in the selection room for each of its events. */
 function RosterContestEntryPage() {
+  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({
     feature: 'contest-entry-page',
   });
@@ -780,8 +782,8 @@ function RosterContestEntryPage() {
               items={[
                 { id: 'entry-status', label: 'Entry status', value: CONTEST_ENTRY_STATUS_LABELS[entryStatus] },
                 { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest, isEditable) },
-                { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt) },
-                { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt) },
+                { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt, displayPreferences) },
+                { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt, displayPreferences) },
               ]}
             />
 

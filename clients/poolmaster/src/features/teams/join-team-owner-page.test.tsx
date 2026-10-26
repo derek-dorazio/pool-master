@@ -196,6 +196,9 @@ describe('JoinTeamOwnerPage', () => {
           password: 'stranger-pass-1',
           firstName: 'Sam',
           lastName: 'Stranger',
+          // The browser's own, which the form starts from.
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          locale: Intl.DateTimeFormat().resolvedOptions().locale,
         },
       }),
     );
@@ -574,6 +577,8 @@ describe('Joining a team as a co-owner from an invite link', () => {
         password: 'correct-horse-battery-1',
         firstName: 'Jordan',
         lastName: 'Rivers',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        locale: Intl.DateTimeFormat().resolvedOptions().locale,
       },
     });
   });

@@ -125,7 +125,6 @@ function buildCurrentUser({
     timezone: 'America/New_York',
     locale: 'en-US',
     timeFormat: '12H',
-    dateFormat: 'MDY',
     createdAt: '2026-04-13T00:00:00.000Z',
     ...overrides,
   };
@@ -380,11 +379,10 @@ describe('UserPage', () => {
     );
   });
 
-  it('pool-master-rop.78.11 updates preferences in the auth query cache', async () => {
+  it('saves the time zone picked from the list and the clock, and updates the signed-in session', async () => {
     primeCurrentUserThenRefetches(buildCurrentUser({
       timezone: 'America/Chicago',
       timeFormat: '24H',
-      dateFormat: 'YMD',
     }));
     updateUserPreferencesMock.mockResolvedValue({
       data: {
@@ -399,7 +397,6 @@ describe('UserPage', () => {
           timezone: 'America/Chicago',
           locale: 'en-US',
           timeFormat: '24H',
-          dateFormat: 'YMD',
           createdAt: '2026-04-13T00:00:00.000Z',
         },
       },
@@ -416,9 +413,6 @@ describe('UserPage', () => {
     fireEvent.change(screen.getByTestId('user-page-time-format'), {
       target: { value: '24H' },
     });
-    fireEvent.change(screen.getByTestId('user-page-date-format'), {
-      target: { value: 'YMD' },
-    });
     fireEvent.click(screen.getByTestId('user-page-save-preferences'));
 
     await waitFor(() =>
@@ -428,7 +422,6 @@ describe('UserPage', () => {
           timezone: 'America/Chicago',
           locale: 'en-US',
           timeFormat: '24H',
-          dateFormat: 'YMD',
         },
       }),
     );
@@ -437,7 +430,6 @@ describe('UserPage', () => {
       expect(queryClient.getQueryData<AuthSessionUser>(AUTH_ME_QUERY_KEY)).toMatchObject({
         timezone: 'America/Chicago',
         timeFormat: '24H',
-        dateFormat: 'YMD',
       }),
     );
   });

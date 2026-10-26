@@ -17,6 +17,7 @@ import {
   formatDateTimeDisplay,
   Modal,
   StatusBadge,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -65,6 +66,7 @@ function formatFieldCount(event: AdminEvent) {
 }
 
 export function RootAdminEventsPage() {
+  const displayPreferences = useDisplayPreferences();
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   const eventsQuery = useQuery({
@@ -145,7 +147,7 @@ export function RootAdminEventsPage() {
       }),
       eventColumnHelper.accessor('startDate', {
         header: 'Starts',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue()),
+        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
       }),
       eventColumnHelper.accessor('status', {
         header: 'Status',
@@ -200,7 +202,7 @@ export function RootAdminEventsPage() {
         enableSorting: false,
       }),
     ],
-    [],
+    [displayPreferences],
   );
 
   const participantColumns = useMemo(
@@ -269,10 +271,10 @@ export function RootAdminEventsPage() {
       }),
       participantColumnHelper.accessor('updatedAt', {
         header: 'Updated',
-        cell: ({ getValue }) => formatDateTimeDisplay(getValue()),
+        cell: ({ getValue }) => formatDateTimeDisplay(getValue(), displayPreferences),
       }),
     ],
-    [selectedSport, tierLabelById],
+    [displayPreferences, selectedSport, tierLabelById],
   );
 
   const selectedEvent = eventsQuery.data?.find((event) => event.id === selectedEventId);

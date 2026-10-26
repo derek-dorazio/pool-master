@@ -10,6 +10,7 @@ import {
   StatusBadge,
   Tile,
   formatDateDisplay,
+  useDisplayPreferences,
 } from "@/features/shared/ui";
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -18,6 +19,7 @@ import { MANAGE_LIST_PAGE_SIZE } from './manage-navigation';
 const columnHelper = createColumnHelper<LeagueDto>();
 
 export function RootAdminManageLeaguesPage() {
+  const displayPreferences = useDisplayPreferences();
   const leaguesQuery = useQuery({
     queryKey: QueryKeys.rootAdmin.manageLeagues,
     queryFn: async (): Promise<LeagueDto[]> => {
@@ -81,7 +83,7 @@ export function RootAdminManageLeaguesPage() {
           <span className="font-medium text-foreground">{getValue()}</span>
         ),
       }),
-      columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt), {
+      columnHelper.accessor((league) => formatDateDisplay(league.planRenewsAt, displayPreferences), {
         id: "planRenewsAt",
         header: "Preview ends",
         cell: ({ getValue }) => (
@@ -107,7 +109,7 @@ export function RootAdminManageLeaguesPage() {
         ),
       }),
     ],
-    [],
+    [displayPreferences],
   );
 
   return (

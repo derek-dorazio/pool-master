@@ -13,6 +13,7 @@ import {
   MetricGrid,
   MetricTile,
   Tile,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
@@ -60,6 +61,7 @@ function CupChips({ cups, leagueCode, selectedId, year }: { cups: CupDto[]; leag
 
 /** Leader or champion, the viewer's place, and while the cup's season runs the contest that counts next. */
 function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonOver: boolean; mySquadId: string | null }) {
+  const displayPreferences = useDisplayPreferences();
   const leaders = cupLeaders(cup);
   const leaderPoints = leaders[0]?.points ?? 0;
   const mine = cup.standings.find((row) => row.squadId === mySquadId);
@@ -85,7 +87,7 @@ function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonO
       {isCrowned || isSeasonOver ? null : (
         <MetricTile
           helperText={next
-            ? next.status === ContestStatus.ACTIVE ? 'Live now' : `Starts ${formatDateDisplay(next.firstEventStartsAt)}`
+            ? next.status === ContestStatus.ACTIVE ? 'Live now' : `Starts ${formatDateDisplay(next.firstEventStartsAt, displayPreferences)}`
             : undefined}
           label="Next to count"
           value={next?.name ?? 'Every contest is final'}
@@ -104,6 +106,7 @@ function CupStatTiles({ cup, isSeasonOver, mySquadId }: { cup: CupDto; isSeasonO
  * crowning no podium (#948).
  */
 export function PointsRacePage() {
+  const displayPreferences = useDisplayPreferences();
   const { sportLeagueId } = useParams<{ sportLeagueId: string }>();
   const { league, leagueCode, leagueId, viewer, year } = useChampionshipsRoute();
   const isInPlan = hasPlanFeature(league, PlanFeature.CUP_STANDINGS);
@@ -160,7 +163,7 @@ export function PointsRacePage() {
           <h2 className="text-xl font-semibold text-foreground">{cup.name}</h2>
           <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
-              ? `Crowned ${formatDateDisplay(cup.crownedAt)}`
+              ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
               : isSeasonOver ? 'Not crowned' : `${progress.final} of ${progress.total} contests final`}
           </p>
         </div>

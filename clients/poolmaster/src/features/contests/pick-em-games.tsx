@@ -1,7 +1,7 @@
 import { Check, Lock } from 'lucide-react';
 import { PickEmMode, type PickOutcome } from '@poolmaster/shared/domain';
 import { GAME_PICKS_TIEBREAKER_MAX } from '@poolmaster/shared/dto';
-import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay } from '@/features/shared/ui';
+import { Button, Chip, FormField, Input, Select, cn, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import type { GamePicksResponse } from '@/lib/api';
 import { describePickOutcome, parseBracketTiebreaker } from './bracket-layout';
 import { confidenceOptions, describeMatchup, gameTeams, isSurvivorWeek, isTeamUsed, isTiePicked, teamSpread, type PickEmGame, type PickEmTeam } from './pick-em-week';
@@ -279,6 +279,7 @@ function GameCard({
   tie: PickEmTie;
   tiebreaker: PickEmTiebreaker;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const choosable = canChange && !game.locked;
   // Another entry's pick stays hidden until the game kicks off.
   const isHidden = !gamePicks.ownEntry && !game.revealed;
@@ -290,7 +291,7 @@ function GameCard({
   return (
     <li className="space-y-3 rounded-2xl border border-border bg-background p-4" data-testid={`pick-em-game-${game.matchNumber}`}>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-        <span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff)}</span>
+        <span data-testid={`pick-em-game-${game.matchNumber}-kickoff`}>{formatDateTimeDisplay(game.kickoff, displayPreferences)}</span>
         <span className="flex flex-wrap items-center gap-2">
           {isTiebreakerGame ? <Chip tone="info">Tiebreaker game</Chip> : null}
           {game.locked ? (

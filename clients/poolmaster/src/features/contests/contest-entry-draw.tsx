@@ -1,6 +1,6 @@
 import { countParticipants, type SportNoun } from '@poolmaster/shared/domain';
 import type { SelectionStateResponse } from '@/lib/api';
-import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
+import { Alert, formatDateTimeDisplay, MetricGrid, MetricTile, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { participantAffiliation, selectionParticipantLabel } from './contest-sport';
 import type { SelectionGroup } from './contest-entry-selection';
 
@@ -26,13 +26,14 @@ export function DrawEntryMetrics({
   noun: SportNoun;
   selectionState: SelectionStateResponse;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const { drawnAt, rosterSize } = selectionState;
   const dealtCount = getDealtGolfers(selectionState.selectionGroups ?? []).length;
   return (
     <Tile>
       <MetricGrid className="md:grid-cols-3">
         <MetricTile
-          helperText={drawnAt ? formatDateTimeDisplay(drawnAt) : 'The commissioner runs it once entries are in'}
+          helperText={drawnAt ? formatDateTimeDisplay(drawnAt, displayPreferences) : 'The commissioner runs it once entries are in'}
           label="Draw"
           value={<span data-testid="contest-entry-draw-status">{drawnAt ? 'Done' : 'Not yet run'}</span>}
         />
@@ -56,6 +57,7 @@ export function DrawEntryMetrics({
  * it: the dealt golfers, read-only.
  */
 export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectionState: SelectionStateResponse }) {
+  const displayPreferences = useDisplayPreferences();
   const { drawnAt, rosterSize } = selectionState;
   const dealtGolfers = getDealtGolfers(selectionState.selectionGroups ?? []);
 
@@ -71,7 +73,7 @@ export function DrawLineup({ noun, selectionState }: { noun: SportNoun; selectio
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground" data-testid="contest-entry-draw-done">
-        {`Dealt by the commissioner’s draw on ${formatDateTimeDisplay(drawnAt)}. The draw is final.`}
+        {`Dealt by the commissioner’s draw on ${formatDateTimeDisplay(drawnAt, displayPreferences)}. The draw is final.`}
       </p>
       <Tile padding="none" radius="lg">
         <ul aria-label={`Dealt ${noun.many}`} className="divide-y divide-border">

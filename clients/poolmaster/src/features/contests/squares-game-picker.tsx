@@ -1,5 +1,5 @@
 import type { SportEventDto } from '@/lib/api';
-import { Alert, FormField, Select, formatDateTimeDisplay } from '@/features/shared/ui';
+import { Alert, FormField, Select, formatDateTimeDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { bracketRoundCount } from './bracket-start-round';
 import { formatSquaresGameTeams } from './squares-board';
 import { useSportLeagueRoundLabel } from './use-bracket-round-label';
@@ -17,6 +17,7 @@ export function SquaresGamePicker({
   onChange: (sportEventMatchId: string) => void;
   value: string;
 }) {
+  const displayPreferences = useDisplayPreferences();
   const roundLabel = useSportLeagueRoundLabel(event.sport, event.sportLeagueId);
   const roundCount = bracketRoundCount(event);
   if (choices.isLoading) {
@@ -40,7 +41,7 @@ export function SquaresGamePicker({
             {[
               roundLabel(game.roundNumber, roundCount),
               formatSquaresGameTeams(game, choices.namesById),
-              formatDateTimeDisplay(game.scheduledDate, 'Kickoff to be announced'),
+              formatDateTimeDisplay(game.scheduledDate, displayPreferences, 'Kickoff to be announced'),
             ].join(' · ')}
           </option>
         ))}

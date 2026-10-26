@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -17,6 +17,8 @@ import {
   Input,
   SegmentedControl,
   Tile,
+  TimeZoneSelect,
+  browserTimeZone,
 } from "@/features/shared/ui";
 import {
   fetchInvitationPreview,
@@ -33,6 +35,7 @@ import { getLogger } from "@/lib/logger";
 import { setAuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
+import { signUpWithDisplayPreferences } from "./signup-display-preferences";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -54,6 +57,7 @@ const registerFormSchema = z
     email: RegisterRequestSchema.shape.email,
     password: RegisterRequestSchema.shape.password,
     confirmPassword: z.string().min(8, "Please confirm your password"),
+    timezone: z.string().min(1, "Time zone is required"),
   })
   .refine((values) => values.password === values.confirmPassword, {
     path: ["confirmPassword"],
@@ -144,6 +148,7 @@ export function AuthHomePage() {
       firstName: "",
       lastName: "",
       confirmPassword: "",
+      timezone: browserTimeZone(),
     },
   });
   const isSubmitting =
@@ -283,15 +288,17 @@ export function AuthHomePage() {
     );
 
     try {
-      const response = await registerUser({
-        body: {
-          username: values.username.trim().toLowerCase(),
-          email: values.email,
-          password: values.password,
-          firstName: values.firstName.trim(),
-          lastName: values.lastName.trim(),
-        },
-      });
+      const response = await signUpWithDisplayPreferences(values.timezone, (preferences) =>
+        registerUser({
+          body: {
+            username: values.username.trim().toLowerCase(),
+            email: values.email,
+            password: values.password,
+            firstName: values.firstName.trim(),
+            lastName: values.lastName.trim(),
+            ...preferences,
+          },
+        }));
 
       if (!response.data) {
         throwApiError(response.error, "Registration response is missing data.");
@@ -537,6 +544,29 @@ export function AuthHomePage() {
                   data-testid="auth-register-confirm-password"
                   placeholder="Re-enter your password"
                   type="password"
+                />
+              </FormField>
+
+              <FormField
+                error={registerForm.formState.errors.timezone?.message}
+                helperText="Dates and times are shown in this zone. You can change it later in your account."
+                id="auth-register-time-zone"
+                label="Time zone"
+              >
+                <Controller
+                  control={registerForm.control}
+                  name="timezone"
+                  render={({ field }) => (
+                    <TimeZoneSelect
+                      data-testid="auth-register-time-zone"
+                      id="auth-register-time-zone"
+                      name={field.name}
+                      onBlur={field.onBlur}
+                      onChange={(event) => field.onChange(event.target.value)}
+                      ref={field.ref}
+                      value={field.value}
+                    />
+                  )}
                 />
               </FormField>
 

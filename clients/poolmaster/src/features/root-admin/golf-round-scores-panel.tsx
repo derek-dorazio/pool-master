@@ -6,6 +6,7 @@ import {
   Alert,
   SegmentedControl,
   formatDateDisplay,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -24,6 +25,7 @@ import { useSportEventFieldQuery } from './use-sport-event';
  * component. The event's Results page shows it for a stroke-play event.
  */
 export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventDto }) {
+  const displayPreferences = useDisplayPreferences();
   const eventId = tournament.id;
   const [round, setRound] = useState(1);
   const { roundLabel } = getSportDefinition(tournament.sport);
@@ -56,10 +58,10 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
       const label = roundLabel(number, total);
       return {
         value: String(number),
-        label: scheduled ? `${label} — ${formatDateDisplay(scheduled)}` : label,
+        label: scheduled ? `${label} — ${formatDateDisplay(scheduled, displayPreferences)}` : label,
       };
     });
-  }, [roundLabel, roundsQuery.data, tournament.rounds]);
+  }, [displayPreferences, roundLabel, roundsQuery.data, tournament.rounds]);
 
   const fieldPlayers = useMemo(
     () => (fieldQuery.data ?? []).map((entry) => ({
