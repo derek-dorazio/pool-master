@@ -55,7 +55,7 @@ export const CLUTCH_CARD_PAGE = {
     modes: [
       { title: 'Tiered', body: 'One star from each tier, from the headliners down to the role players.' },
       { title: 'Budget', body: 'Every star has a price. Build the best card that fits under the cap.' },
-      { title: 'Quick pick', body: 'Don\'t follow every roster? Get a random card in one tap and still have a shot.' },
+      { title: 'Quick pick', body: 'Don\'t follow every roster? The commissioner deals everyone a random card in one tap, and every card still has a shot.' },
     ],
   },
   cardTypes: {
@@ -113,7 +113,7 @@ export const CLUTCH_CARD_PAGE = {
     title: 'Built for the games everybody watches',
     points: [
       { title: 'Live to the last whistle', body: 'A blowout doesn\'t end your night. Your stars keep piling up points in garbage time, and the card behind you is one big quarter away.' },
-      { title: 'Easy for the casual fan', body: 'Quick pick fills a card in one tap. Nobody needs to study a season of box scores to join in.' },
+      { title: 'Easy for the casual fan', body: 'With quick pick, the commissioner deals every card in one tap. Nobody needs to study a season of box scores to join in.' },
       { title: 'Deep for the diehard', body: 'Tiers and budgets reward knowing who gets the minutes, the touches and the power-play time.' },
       { title: 'A pool type you won\'t find anywhere else', body: 'Run it next to your bracket or squares. It\'s a second way into the same game, for the same group.' },
     ],

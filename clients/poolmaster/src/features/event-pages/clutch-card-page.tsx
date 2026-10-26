@@ -1,6 +1,6 @@
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { EventPageOfferState, getSportDefinition, Sport } from '@poolmaster/shared/domain';
+import { EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
@@ -10,8 +10,6 @@ import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type Clutc
 import { buildEventPagePath } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
-
-const COMPOSITE = 'COMPOSITE';
 
 /** The built stat lines, in the order the copy tells them: each sport's composite name and formula. */
 const BUILT_STAT_LINE_SPORTS: readonly Sport[] = [Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.AMERICAN_FOOTBALL];
@@ -32,7 +30,7 @@ function Section({ id, eyebrow, title, intro, testId, children }: {
 }) {
   return (
     <section className="scroll-mt-6 space-y-4" data-testid={testId} id={id}>
-      <p className="text-xs font-semibold uppercase text-primary">{eyebrow}</p>
+      <p className="text-xs font-semibold uppercase text-muted-foreground">{eyebrow}</p>
       <div className="space-y-2">
         <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">{title}</h2>
         {intro ? <p className="max-w-2xl text-base text-muted-foreground">{intro}</p> : null}
@@ -49,10 +47,15 @@ interface CalendarRound {
   eventPage: EventPageDto | null;
 }
 
-function statPoolLeagueByName(sportLeagues: readonly SportLeagueDto[]): Map<string, SportLeagueDto> {
+/** A stat pool sport league's key: its sport and name, so a same-named league in another sport never matches. */
+function roundKey(sport: string, name: string): string {
+  return `${sport}:${name}`;
+}
+
+function statPoolLeagueByRound(sportLeagues: readonly SportLeagueDto[]): Map<string, SportLeagueDto> {
   return new Map(sportLeagues
-    .filter((league) => league.isActive && league.scoringFamily === COMPOSITE)
-    .map((league) => [league.name, league]));
+    .filter((league) => league.isActive && league.scoringFamily === ScoringFamily.COMPOSITE)
+    .map((league) => [roundKey(league.sport, league.name), league]));
 }
 
 function eventPageFor(league: SportLeagueDto | undefined, pages: readonly EventPageDto[]): EventPageDto | null {
@@ -263,7 +266,7 @@ function HowItPlays() {
         {copy.steps.map((step, index) => (
           <li className="list-none" key={step.title}>
             <Tile className="h-full" padding="md" radius="md">
-              <p className="font-display text-2xl font-bold text-primary">{index + 1}</p>
+              <p className="font-display text-2xl font-bold text-muted-foreground">{index + 1}</p>
               <h3 className="font-semibold text-foreground">{step.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
             </Tile>
@@ -328,7 +331,7 @@ export function ClutchCardPage() {
     }
   }, [eventPagesQuery.error, eventPagesQuery.isError, logger, sportLeaguesQuery.error, sportLeaguesQuery.isError]);
 
-  const statPoolLeagues = useMemo(() => statPoolLeagueByName(sportLeaguesQuery.data ?? []), [sportLeaguesQuery.data]);
+  const statPoolLeagues = useMemo(() => statPoolLeagueByRound(sportLeaguesQuery.data ?? []), [sportLeaguesQuery.data]);
   const pages = useMemo(() => eventPagesQuery.data ?? [], [eventPagesQuery.data]);
   const startRequest = useMemo(() => startRequestFor(statPoolLeagues, pages), [pages, statPoolLeagues]);
   const rounds = useMemo((): ReadonlyMap<string, CalendarRound> | null => {
@@ -336,7 +339,7 @@ export function ClutchCardPage() {
       return null;
     }
     return new Map(CLUTCH_CARD_PAGE.calendar.months.flatMap((month) => month.rounds).map((round) => {
-      const league = statPoolLeagues.get(round.sportLeague);
+      const league = statPoolLeagues.get(roundKey(round.sport, round.sportLeague));
       return [round.sportLeague, { round, isAvailable: league !== undefined, eventPage: eventPageFor(league, pages) }];
     }));
   }, [eventPagesQuery.isError, pages, sportLeaguesQuery.isError, statPoolLeagues]);

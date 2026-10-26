@@ -26,6 +26,7 @@ const STAT_POOL_LEAGUES = [
   sportLeagueFixture({ id: 'nba-finals', sport: 'BASKETBALL', name: 'NBA Finals', scoringFamily: 'COMPOSITE' }),
   sportLeagueFixture({ id: 'retired', sport: 'HOCKEY', name: 'Stanley Cup Final', scoringFamily: 'COMPOSITE', isActive: false }),
   sportLeagueFixture({ id: 'nfl', sport: 'AMERICAN_FOOTBALL', name: 'NFL', scoringFamily: 'HEAD_TO_HEAD' }),
+  sportLeagueFixture({ id: 'other-world-series', sport: 'SOCCER', name: 'World Series', scoringFamily: 'COMPOSITE' }),
 ];
 
 /** Championship Weekend's page with its Clutch Card offer played on the stat pool sport league `cw`. */
@@ -101,7 +102,7 @@ describe('Clutch Card page', () => {
     expect(soccer).toHaveTextContent('Coming soon');
   });
 
-  it('marks a title round available only while its stat pool sport league is active, linking it to the event page that offers it', async () => {
+  it('marks a title round available only while its own sport\'s stat pool league of that name is active, linking it to the event page that offers it', async () => {
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: STAT_POOL_LEAGUES } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendPage('NOT_YET')] } });
     renderPage();
@@ -114,6 +115,7 @@ describe('Clutch Card page', () => {
     expect(nbaFinals).toHaveClass('border-primary');
     expect(screen.getByTestId('clutch-card-round-Stanley Cup Final')).toHaveClass('border-dashed');
     expect(screen.getByTestId('clutch-card-round-WNBA Finals')).toHaveClass('border-dashed');
+    expect(screen.getByTestId('clutch-card-round-World Series')).toHaveClass('border-dashed');
   });
 
   it('starts a pool on the open Clutch Card offer before one that opens later', async () => {
