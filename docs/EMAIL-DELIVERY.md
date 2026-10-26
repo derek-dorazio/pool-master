@@ -137,7 +137,12 @@ The **Send email previews** workflow (Actions, manual) runs it with `--to` throu
 the previews land in a real inbox. It sends straight through SES with the repository's AWS
 credentials: the "Send system email" switch and "Only send to" don't apply, and nothing goes
 into QA's outbox. While the account is in the SES sandbox, the address must be verified in SES.
-The credentials' IAM user needs `ses:SendEmail` on the QA identity.
+The credentials' IAM user (`poolmaster-github-deploy`, created by hand, not in Terraform) needs
+`ses:SendEmail` on `identity/*` with the condition `ses:FromAddress` like
+`*@qa.ultimateofficepoolmanager.com`, plus on the `poolmaster-qa` configuration set. `identity/*`
+matters while in the sandbox: SES also checks the send against the recipient's identity, so a
+grant on the sending domain alone fails with AccessDenied on `identity/<recipient>`. It is the
+same grant the ECS task role gets in `infrastructure/terraform/main.tf`.
 
 ## Sender
 
