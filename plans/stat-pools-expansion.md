@@ -114,8 +114,9 @@ Answered by Derek on 2026-10-24.
 
 - **Q1. Soccer composite. Decided:** yes to the Hat Trick formula. The name is open: Derek
   asked for other term ideas (section 6).
-- **Q2. College events. Decided:** yes to the College Football Playoff and the Final Four, men's
-  and women's (Derek 2026-10-26; on 2026-10-24 it was men's only). Derek wants their names to match the NFL's and the NBA's (section 6).
+- **Q2. College events. Decided:** yes to the College Football Playoff and the Final Four. Men's
+  college football, basketball and hockey come first; the women's college rounds are deferred
+  (#1052, Derek 2026-10-26). Derek wants their names to match the NFL's and the NBA's (section 6).
 - **Q3. Full playoffs. Decided:** scope stays big tournaments and playoffs; full playoffs follow
   the live provider.
 - **Q4. WNBA Finals. Decided:** yes, added in parallel with the NBA Finals, scored on Triple
@@ -123,16 +124,16 @@ Answered by Derek on 2026-10-24.
 - **Q5. One round per contest. Decided (Derek 2026-10-26):** a Clutch Card contest never spans
   playoff rounds. Each round is its own sport league and contest, the way Championship Weekend
   and the Super Bowl are: the CFP's semifinals and National Championship (#991, built that way),
-  and each Final Four's semifinals and national championship, men's and women's (#992). The same team's players are
+  and the men's Final Four's semifinals and national championship (#992). The same team's players are
   in both leagues' fields; nothing in the model minds. Soccer's knockouts (#994) follow the same
   rule, so their rounds are split the same way when that ticket is designed.
 - **Q6. Every semifinal and final round. Decided (Derek 2026-10-26):** each league with a bracket
-  in a sport that has its composite gets Clutch Cards on its semifinal and final rounds, men's and
-  women's, pro and college. Tickets: #1043 NBA Conference Finals, #1044 WNBA Semifinals (with
-  #993), #1045 NHL Conference Finals, #1046 PWHL Semifinals and Walter Cup Final, #1047 men's and
-  women's Frozen Four, #1048 MLB League Championship Series, plus #992 for the Final Fours. Each is
-  data only. Earlier rounds are deferred (#1049), best after the live provider. College baseball
-  and softball have no leagues on the site yet, so they are not included.
+  in a sport that has its composite gets Clutch Cards on its semifinal and final rounds. Tickets:
+  #1043 NBA Conference Finals, #1044 WNBA Semifinals (with #993), #1045 NHL Conference Finals,
+  #1047 men's Frozen Four, #1048 MLB League Championship Series, plus #992 for the men's Final
+  Four. Each is data only. Deferred: earlier rounds (#1049, best after the live provider), the
+  PWHL (#1046, smaller audience and not on ESPN), the women's Final Four and Frozen Four (#1052),
+  and full college baseball (#1050) and softball (#1051) support, neither on the site yet.
 
 ---
 
@@ -143,8 +144,8 @@ composite and formula. The CFP scores **Redzone** and the Final Four scores **Tr
 which matches the NFL and the NBA as Derek asked. The sport leagues are named for the event, as
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
 "College Football Playoff" was already the bracket league's name, so #991 built **CFP
-Semifinals** and **CFP National Championship**; the Final Fours' four leagues get their names
-when #992 is built ("NCAA Division I Men" and "NCAA Division I Women" are the bracket leagues').
+Semifinals** and **CFP National Championship**; the men's Final Four's two leagues get their names
+when #992 is built ("NCAA Division I Men" is the bracket league's).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).
