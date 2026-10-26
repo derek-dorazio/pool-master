@@ -57,12 +57,15 @@ type CreateLeagueModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onCreated: (leagueCode: string) => void;
+  /** What comes once the league exists, when the league is a step on the way to it (#1008). */
+  nextStep?: string;
 };
 
 export function CreateLeagueModal({
   isOpen,
   onClose,
   onCreated,
+  nextStep,
 }: CreateLeagueModalProps) {
   const logger = getLogger().child({
     feature: "create-league-modal",
@@ -273,6 +276,11 @@ export function CreateLeagueModal({
             2 Review
           </span>
         </div>
+        {nextStep ? (
+          <p className="rounded-lg bg-muted px-3 py-2 text-sm text-foreground" data-testid="create-league-next-step">
+            {`Next: ${nextStep}`}
+          </p>
+        ) : null}
       </div>
 
       <form

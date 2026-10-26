@@ -793,7 +793,7 @@ describe('The seeded NFL league and its knockout templates', () => {
       expect(new Set(orders).size).toBe(orders.length);
     }
     expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Finals']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
   });
 });
@@ -1165,9 +1165,11 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.AMERICAN_FOOTBALL, league: 'Super Bowl', prefix: 'super-bowl', composite: 'redzone' },
     { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP Semifinals', prefix: 'cfp-semifinals', composite: 'redzone' },
     { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP National Championship', prefix: 'cfp-national-championship', composite: 'redzone' },
+    { sport: Sport.BASKETBALL, league: 'Men\'s Final Four', prefix: 'mens-final-four', composite: 'triple-threat' },
+    { sport: Sport.BASKETBALL, league: 'Men\'s National Championship', prefix: 'mens-national-championship', composite: 'triple-threat' },
   ];
 
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s semifinals and title game among them', async () => {
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games among them', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(

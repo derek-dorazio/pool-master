@@ -254,6 +254,11 @@ export function CreateContestPage() {
   const requestedTemplate = requestedTemplateQuery.data?.find((template) => template.id === requestedTemplateId
     && isCreatableSelectionType(template.selectionType)) ?? null;
   const requestedTemplateProgress = useRef<'sport' | 'event' | 'settled'>('sport');
+  // An event page's start (#1008) also names the edition, `?event=<id>`, and a later-round
+  // bracket's first round, `?startRound=<n>`: chosen once, with the template.
+  const requestedEventId = searchParams.get('event');
+  const requestedStartRound = searchParams.get('startRound');
+  const requestedEventChosen = useRef(false);
 
   const eventsQuery = useQuery(sportEventsQueryOptions(sport, auth.isAuthenticated));
 
@@ -445,6 +450,16 @@ export function CreateContestPage() {
   useEffect(() => {
     const pendingEvents = requestedTemplateProgress.current === 'event' ? requestedEvents : [];
     const current = selectableEvents.find((event) => event.id === sportEventId);
+    const requestedEvent = requestedEventChosen.current
+      ? undefined
+      : pendingEvents.find((event) => event.id === requestedEventId && selectableEvents.includes(event));
+    if (requestedEvent) {
+      requestedEventChosen.current = true;
+      if (current !== requestedEvent) {
+        chooseEvent(requestedEvent);
+      }
+      return;
+    }
     if (current && (!pendingEvents.length || pendingEvents.includes(current))) {
       return;
     }
@@ -453,7 +468,7 @@ export function CreateContestPage() {
     if (soonest) {
       chooseEvent(soonest);
     }
-  }, [chooseEvent, requestedEvents, selectableEvents, sportEventId]);
+  }, [chooseEvent, requestedEventId, requestedEvents, selectableEvents, sportEventId]);
 
   // A newly chosen sport, sport league or kind of event starts on its default preset; while all
   // three stay, Custom stays Custom. A sport league starts on the format its defaults sort first
@@ -502,8 +517,13 @@ export function CreateContestPage() {
       return;
     }
     defaultPresetAppliedFor.current = `${sport}/${sportLeagueId ?? ''}/${eventType ?? ''}`;
-    setFormValues({ selectionType: requestedTemplate.selectionType, selectedTemplateId: preset.id, ...presetValues(preset.configuration) });
-  }, [eventType, eventsQuery.data, presetValues, presetsFor, requestedEvents, requestedTemplate, selectedEvent, setFormValues, sport, sportLeagueId, templatesQuery.data]);
+    setFormValues({
+      selectionType: requestedTemplate.selectionType,
+      selectedTemplateId: preset.id,
+      ...presetValues(preset.configuration),
+      ...(requestedStartRound && requestedTemplate.selectionType === SelectionType.BRACKET ? { startsAtRound: requestedStartRound } : {}),
+    });
+  }, [eventType, eventsQuery.data, presetValues, presetsFor, requestedEvents, requestedStartRound, requestedTemplate, selectedEvent, setFormValues, sport, sportLeagueId, templatesQuery.data]);
 
   // A preset the chosen event cannot start, such as a full bracket once the event is under way,
   // gives way to the format's default among the presets it can (#802), or to Custom.

@@ -36,6 +36,8 @@ import { setAuthSessionUser } from "./auth-session-cache";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 import { signUpWithDisplayPreferences } from "./signup-display-preferences";
+import { eventPageCopy } from "@/features/event-pages/event-page-copy";
+import { parseStartReturnPath } from "@/features/event-pages/start-path";
 
 const loginFormSchema = LoginRequestSchema.extend({
   password: z.string().min(1, "Password is required"),
@@ -128,6 +130,8 @@ export function AuthHomePage() {
     enabled: Boolean(teamInviteCode),
     retry: false,
   });
+  // An event page's start (#1008) waits behind sign-up; the banner says what it is starting.
+  const startRequest = useMemo(() => parseStartReturnPath(destination), [destination]);
   const inviteContext = invitePreviewQuery.data ?? null;
   const teamInviteContext = teamInvitePreviewQuery.data ?? null;
 
@@ -388,6 +392,10 @@ export function AuthHomePage() {
               message={`This invitation adds you as a co-owner of ${teamInviteContext.team.name}. After you sign in or create your account, you can review the invitation and accept it.`}
               title="Co-owner invite"
             />
+          ) : startRequest ? (
+            <Alert data-testid="auth-start-banner" tone="info">
+              {`You're starting a ${eventPageCopy(startRequest).name} pool`}
+            </Alert>
           ) : null}
           {(inviteCode && invitePreviewQuery.isError) ||
           (teamInviteCode && teamInvitePreviewQuery.isError) ? (
