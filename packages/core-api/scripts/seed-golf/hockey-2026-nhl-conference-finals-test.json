@@ -1,0 +1,3036 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HOCKEY",
+    "season": 2026,
+    "sportLeagues": [
+      "NHL Conference Finals"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-26",
+    "gatheredBy": "load-sport-data, the 2026 NHL Conference Finals as played: in the East the Carolina Hurricanes beat the Montreal Canadiens in five (21-29 May), in the West the Vegas Golden Knights swept the Colorado Avalanche (20-26 May). Both series are one event; game N holds both series' Game N, so Game 5 is the East's alone. The field is every skater who dressed in either series, named and placed by birth country from the NHL's rosters and player pages; ranking is the skater's 2025-26 regular-season Power Play total with the club (2 per goal + assists + shots on goal). Each game's box score (goals, assists, shots on goal) is from the NHL's gamecenter boxscores, cross-checked skater by skater against ESPN's box scores, which agree on every line (ESPN names Zachary Bolduc and Joseph Veleno Zack and Joe). A skater with no goal, assist or shot in a game has an empty line.",
+    "sources": [
+      {
+        "name": "NHL, Eastern Conference Final Game 1 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030311/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Eastern Conference Final Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401873383"
+      },
+      {
+        "name": "NHL, Eastern Conference Final Game 2 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030312/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Eastern Conference Final Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401873384"
+      },
+      {
+        "name": "NHL, Eastern Conference Final Game 3 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030313/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Eastern Conference Final Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401873385"
+      },
+      {
+        "name": "NHL, Eastern Conference Final Game 4 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030314/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Eastern Conference Final Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401873386"
+      },
+      {
+        "name": "NHL, Eastern Conference Final Game 5 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030315/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Eastern Conference Final Game 5 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401873387"
+      },
+      {
+        "name": "NHL, Western Conference Final Game 1 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030321/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Western Conference Final Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401872903"
+      },
+      {
+        "name": "NHL, Western Conference Final Game 2 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030322/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Western Conference Final Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401872904"
+      },
+      {
+        "name": "NHL, Western Conference Final Game 3 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030323/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Western Conference Final Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401872905"
+      },
+      {
+        "name": "NHL, Western Conference Final Game 4 boxscore",
+        "url": "https://api-web.nhle.com/v1/gamecenter/2025030324/boxscore"
+      },
+      {
+        "name": "ESPN NHL, Western Conference Final Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=401872906"
+      },
+      {
+        "name": "NHL, CAR 2025-26 roster",
+        "url": "https://api-web.nhle.com/v1/roster/CAR/20252026"
+      },
+      {
+        "name": "NHL, MTL 2025-26 roster",
+        "url": "https://api-web.nhle.com/v1/roster/MTL/20252026"
+      },
+      {
+        "name": "NHL, VGK 2025-26 roster",
+        "url": "https://api-web.nhle.com/v1/roster/VGK/20252026"
+      },
+      {
+        "name": "NHL, COL 2025-26 roster",
+        "url": "https://api-web.nhle.com/v1/roster/COL/20252026"
+      },
+      {
+        "name": "NHL, CAR 2025-26 regular-season skater stats",
+        "url": "https://api-web.nhle.com/v1/club-stats/CAR/20252026/2"
+      },
+      {
+        "name": "NHL, MTL 2025-26 regular-season skater stats",
+        "url": "https://api-web.nhle.com/v1/club-stats/MTL/20252026/2"
+      },
+      {
+        "name": "NHL, VGK 2025-26 regular-season skater stats",
+        "url": "https://api-web.nhle.com/v1/club-stats/VGK/20252026/2"
+      },
+      {
+        "name": "NHL, COL 2025-26 regular-season skater stats",
+        "url": "https://api-web.nhle.com/v1/club-stats/COL/20252026/2"
+      },
+      {
+        "name": "NHL player pages (birth countries of skaters no longer on the rosters)",
+        "url": "https://api-web.nhle.com/v1/player/8476925/landing"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NHL Conference Finals",
+      "players": [
+        {
+          "key": "nhl-nathan-mackinnon",
+          "name": "Nathan MacKinnon",
+          "countryCode": "CA",
+          "ranking": 1,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-cole-caufield",
+          "name": "Cole Caufield",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Montreal Canadiens",
+          "position": "R"
+        },
+        {
+          "key": "nhl-jack-eichel",
+          "name": "Jack Eichel",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-martin-necas",
+          "name": "Martin Necas",
+          "countryCode": "CZ",
+          "ranking": 4,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-pavel-dorofeyev",
+          "name": "Pavel Dorofeyev",
+          "countryCode": "RU",
+          "ranking": 5,
+          "team": "Vegas Golden Knights",
+          "position": "R"
+        },
+        {
+          "key": "nhl-seth-jarvis",
+          "name": "Seth Jarvis",
+          "countryCode": "CA",
+          "ranking": 6,
+          "team": "Carolina Hurricanes",
+          "position": "R"
+        },
+        {
+          "key": "nhl-nick-suzuki",
+          "name": "Nick Suzuki",
+          "countryCode": "CA",
+          "ranking": 7,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-andrei-svechnikov",
+          "name": "Andrei Svechnikov",
+          "countryCode": "RU",
+          "ranking": 8,
+          "team": "Carolina Hurricanes",
+          "position": "R"
+        },
+        {
+          "key": "nhl-nikolaj-ehlers",
+          "name": "Nikolaj Ehlers",
+          "countryCode": "DK",
+          "ranking": 9,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-sebastian-aho",
+          "name": "Sebastian Aho",
+          "countryCode": "FI",
+          "ranking": 10,
+          "team": "Carolina Hurricanes",
+          "position": "C"
+        },
+        {
+          "key": "nhl-cale-makar",
+          "name": "Cale Makar",
+          "countryCode": "CA",
+          "ranking": 11,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-brock-nelson",
+          "name": "Brock Nelson",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-tomas-hertl",
+          "name": "Tomas Hertl",
+          "countryCode": "CZ",
+          "ranking": 13,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-juraj-slafkovsky",
+          "name": "Juraj Slafkovský",
+          "countryCode": "SK",
+          "ranking": 14,
+          "team": "Montreal Canadiens",
+          "position": "L"
+        },
+        {
+          "key": "nhl-mitch-marner",
+          "name": "Mitch Marner",
+          "countryCode": "CA",
+          "ranking": 15,
+          "team": "Vegas Golden Knights",
+          "position": "R"
+        },
+        {
+          "key": "nhl-jackson-blake",
+          "name": "Jackson Blake",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Carolina Hurricanes",
+          "position": "R"
+        },
+        {
+          "key": "nhl-logan-stankoven",
+          "name": "Logan Stankoven",
+          "countryCode": "CA",
+          "ranking": 17,
+          "team": "Carolina Hurricanes",
+          "position": "C"
+        },
+        {
+          "key": "nhl-mark-stone",
+          "name": "Mark Stone",
+          "countryCode": "CA",
+          "ranking": 18,
+          "team": "Vegas Golden Knights",
+          "position": "R"
+        },
+        {
+          "key": "nhl-valeri-nichushkin",
+          "name": "Valeri Nichushkin",
+          "countryCode": "RU",
+          "ranking": 19,
+          "team": "Colorado Avalanche",
+          "position": "R"
+        },
+        {
+          "key": "nhl-artturi-lehkonen",
+          "name": "Artturi Lehkonen",
+          "countryCode": "FI",
+          "ranking": 20,
+          "team": "Colorado Avalanche",
+          "position": "L"
+        },
+        {
+          "key": "nhl-brent-burns",
+          "name": "Brent Burns",
+          "countryCode": "CA",
+          "ranking": 21,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-sean-walker",
+          "name": "Sean Walker",
+          "countryCode": "CA",
+          "ranking": 22,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-ivan-barbashev",
+          "name": "Ivan Barbashev",
+          "countryCode": "RU",
+          "ranking": 23,
+          "team": "Vegas Golden Knights",
+          "position": "L"
+        },
+        {
+          "key": "nhl-noah-dobson",
+          "name": "Noah Dobson",
+          "countryCode": "CA",
+          "ranking": 24,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-lane-hutson",
+          "name": "Lane Hutson",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-sam-malinski",
+          "name": "Sam Malinski",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-ivan-demidov",
+          "name": "Ivan Demidov",
+          "countryCode": "RU",
+          "ranking": 27,
+          "team": "Montreal Canadiens",
+          "position": "R"
+        },
+        {
+          "key": "nhl-taylor-hall",
+          "name": "Taylor Hall",
+          "countryCode": "CA",
+          "ranking": 28,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-oliver-kapanen",
+          "name": "Oliver Kapanen",
+          "countryCode": "SE",
+          "ranking": 29,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-ross-colton",
+          "name": "Ross Colton",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-gabriel-landeskog",
+          "name": "Gabriel Landeskog",
+          "countryCode": "SE",
+          "ranking": 31,
+          "team": "Colorado Avalanche",
+          "position": "L"
+        },
+        {
+          "key": "nhl-shayne-gostisbehere",
+          "name": "Shayne Gostisbehere",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-shea-theodore",
+          "name": "Shea Theodore",
+          "countryCode": "CA",
+          "ranking": 33,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-k-andre-miller",
+          "name": "K'Andre Miller",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-alexander-nikishin",
+          "name": "Alexander Nikishin",
+          "countryCode": "RU",
+          "ranking": 35,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-noah-hanifin",
+          "name": "Noah Hanifin",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-josh-manson",
+          "name": "Josh Manson",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-jordan-staal",
+          "name": "Jordan Staal",
+          "countryCode": "CA",
+          "ranking": 38,
+          "team": "Carolina Hurricanes",
+          "position": "C"
+        },
+        {
+          "key": "nhl-parker-kelly",
+          "name": "Parker Kelly",
+          "countryCode": "CA",
+          "ranking": 39,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-mike-matheson",
+          "name": "Mike Matheson",
+          "countryCode": "CA",
+          "ranking": 40,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-jordan-martinook",
+          "name": "Jordan Martinook",
+          "countryCode": "CA",
+          "ranking": 41,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-zachary-bolduc",
+          "name": "Zachary Bolduc",
+          "countryCode": "CA",
+          "ranking": 42,
+          "team": "Montreal Canadiens",
+          "position": "R"
+        },
+        {
+          "key": "nhl-devon-toews",
+          "name": "Devon Toews",
+          "countryCode": "CA",
+          "ranking": 43,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-jack-drury",
+          "name": "Jack Drury",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-josh-anderson",
+          "name": "Josh Anderson",
+          "countryCode": "CA",
+          "ranking": 45,
+          "team": "Montreal Canadiens",
+          "position": "R"
+        },
+        {
+          "key": "nhl-jalen-chatfield",
+          "name": "Jalen Chatfield",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-eric-robinson",
+          "name": "Eric Robinson",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-jake-evans",
+          "name": "Jake Evans",
+          "countryCode": "CA",
+          "ranking": 48,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-william-carrier",
+          "name": "William Carrier",
+          "countryCode": "CA",
+          "ranking": 49,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-brett-howden",
+          "name": "Brett Howden",
+          "countryCode": "CA",
+          "ranking": 50,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-alex-newhook",
+          "name": "Alex Newhook",
+          "countryCode": "CA",
+          "ranking": 51,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-brayden-mcnabb",
+          "name": "Brayden McNabb",
+          "countryCode": "CA",
+          "ranking": 52,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-alexandre-texier",
+          "name": "Alexandre Texier",
+          "countryCode": "FR",
+          "ranking": 53,
+          "team": "Montreal Canadiens",
+          "position": "L"
+        },
+        {
+          "key": "nhl-mark-jankowski",
+          "name": "Mark Jankowski",
+          "countryCode": "CA",
+          "ranking": 54,
+          "team": "Carolina Hurricanes",
+          "position": "L"
+        },
+        {
+          "key": "nhl-ben-hutton",
+          "name": "Ben Hutton",
+          "countryCode": "CA",
+          "ranking": 55,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-colton-sissons",
+          "name": "Colton Sissons",
+          "countryCode": "CA",
+          "ranking": 56,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-brandon-saad",
+          "name": "Brandon Saad",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "Vegas Golden Knights",
+          "position": "L"
+        },
+        {
+          "key": "nhl-keegan-kolesar",
+          "name": "Keegan Kolesar",
+          "countryCode": "CA",
+          "ranking": 58,
+          "team": "Vegas Golden Knights",
+          "position": "R"
+        },
+        {
+          "key": "nhl-rasmus-andersson",
+          "name": "Rasmus Andersson",
+          "countryCode": "SE",
+          "ranking": 59,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-alexandre-carrier",
+          "name": "Alexandre Carrier",
+          "countryCode": "CA",
+          "ranking": 60,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-kaedan-korczak",
+          "name": "Kaedan Korczak",
+          "countryCode": "CA",
+          "ranking": 61,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        },
+        {
+          "key": "nhl-jaccob-slavin",
+          "name": "Jaccob Slavin",
+          "countryCode": "US",
+          "ranking": 62,
+          "team": "Carolina Hurricanes",
+          "position": "D"
+        },
+        {
+          "key": "nhl-kirby-dach",
+          "name": "Kirby Dach",
+          "countryCode": "CA",
+          "ranking": 63,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-phillip-danault",
+          "name": "Phillip Danault",
+          "countryCode": "CA",
+          "ranking": 64,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-joel-kiviranta",
+          "name": "Joel Kiviranta",
+          "countryCode": "FI",
+          "ranking": 65,
+          "team": "Colorado Avalanche",
+          "position": "L"
+        },
+        {
+          "key": "nhl-joseph-veleno",
+          "name": "Joseph Veleno",
+          "countryCode": "CA",
+          "ranking": 66,
+          "team": "Montreal Canadiens",
+          "position": "C"
+        },
+        {
+          "key": "nhl-kaiden-guhle",
+          "name": "Kaiden Guhle",
+          "countryCode": "CA",
+          "ranking": 67,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-nazem-kadri",
+          "name": "Nazem Kadri",
+          "countryCode": "CA",
+          "ranking": 68,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-william-karlsson",
+          "name": "William Karlsson",
+          "countryCode": "SE",
+          "ranking": 69,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-jayden-struble",
+          "name": "Jayden Struble",
+          "countryCode": "US",
+          "ranking": 70,
+          "team": "Montreal Canadiens",
+          "position": "D"
+        },
+        {
+          "key": "nhl-brett-kulak",
+          "name": "Brett Kulak",
+          "countryCode": "CA",
+          "ranking": 71,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-nicolas-roy",
+          "name": "Nicolas Roy",
+          "countryCode": "CA",
+          "ranking": 72,
+          "team": "Colorado Avalanche",
+          "position": "C"
+        },
+        {
+          "key": "nhl-nic-dowd",
+          "name": "Nic Dowd",
+          "countryCode": "US",
+          "ranking": 73,
+          "team": "Vegas Golden Knights",
+          "position": "C"
+        },
+        {
+          "key": "nhl-cole-smith",
+          "name": "Cole Smith",
+          "countryCode": "US",
+          "ranking": 74,
+          "team": "Vegas Golden Knights",
+          "position": "R"
+        },
+        {
+          "key": "nhl-nick-blankenburg",
+          "name": "Nick Blankenburg",
+          "countryCode": "US",
+          "ranking": 75,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-logan-o-connor",
+          "name": "Logan O'Connor",
+          "countryCode": "US",
+          "ranking": 76,
+          "team": "Colorado Avalanche",
+          "position": "R"
+        },
+        {
+          "key": "nhl-jack-ahcan",
+          "name": "Jack Ahcan",
+          "countryCode": "US",
+          "ranking": 77,
+          "team": "Colorado Avalanche",
+          "position": "D"
+        },
+        {
+          "key": "nhl-dylan-coghlan",
+          "name": "Dylan Coghlan",
+          "countryCode": "CA",
+          "ranking": 78,
+          "team": "Vegas Golden Knights",
+          "position": "D"
+        }
+      ],
+      "events": [
+        {
+          "key": "nhl-conference-finals-2026",
+          "name": "NHL Conference Finals",
+          "startDate": "2026-05-20",
+          "endDate": "2026-05-29",
+          "venue": null,
+          "location": "Raleigh, Montreal, Denver and Las Vegas",
+          "rounds": 5,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nhl-nathan-mackinnon",
+              "ranking": 1
+            },
+            {
+              "player": "nhl-cole-caufield",
+              "ranking": 2
+            },
+            {
+              "player": "nhl-jack-eichel",
+              "ranking": 3
+            },
+            {
+              "player": "nhl-martin-necas",
+              "ranking": 4
+            },
+            {
+              "player": "nhl-pavel-dorofeyev",
+              "ranking": 5
+            },
+            {
+              "player": "nhl-seth-jarvis",
+              "ranking": 6
+            },
+            {
+              "player": "nhl-nick-suzuki",
+              "ranking": 7
+            },
+            {
+              "player": "nhl-andrei-svechnikov",
+              "ranking": 8
+            },
+            {
+              "player": "nhl-nikolaj-ehlers",
+              "ranking": 9
+            },
+            {
+              "player": "nhl-sebastian-aho",
+              "ranking": 10
+            },
+            {
+              "player": "nhl-cale-makar",
+              "ranking": 11
+            },
+            {
+              "player": "nhl-brock-nelson",
+              "ranking": 12
+            },
+            {
+              "player": "nhl-tomas-hertl",
+              "ranking": 13
+            },
+            {
+              "player": "nhl-juraj-slafkovsky",
+              "ranking": 14
+            },
+            {
+              "player": "nhl-mitch-marner",
+              "ranking": 15
+            },
+            {
+              "player": "nhl-jackson-blake",
+              "ranking": 16
+            },
+            {
+              "player": "nhl-logan-stankoven",
+              "ranking": 17
+            },
+            {
+              "player": "nhl-mark-stone",
+              "ranking": 18
+            },
+            {
+              "player": "nhl-valeri-nichushkin",
+              "ranking": 19
+            },
+            {
+              "player": "nhl-artturi-lehkonen",
+              "ranking": 20
+            },
+            {
+              "player": "nhl-brent-burns",
+              "ranking": 21
+            },
+            {
+              "player": "nhl-sean-walker",
+              "ranking": 22
+            },
+            {
+              "player": "nhl-ivan-barbashev",
+              "ranking": 23
+            },
+            {
+              "player": "nhl-noah-dobson",
+              "ranking": 24
+            },
+            {
+              "player": "nhl-lane-hutson",
+              "ranking": 25
+            },
+            {
+              "player": "nhl-sam-malinski",
+              "ranking": 26
+            },
+            {
+              "player": "nhl-ivan-demidov",
+              "ranking": 27
+            },
+            {
+              "player": "nhl-taylor-hall",
+              "ranking": 28
+            },
+            {
+              "player": "nhl-oliver-kapanen",
+              "ranking": 29
+            },
+            {
+              "player": "nhl-ross-colton",
+              "ranking": 30
+            },
+            {
+              "player": "nhl-gabriel-landeskog",
+              "ranking": 31
+            },
+            {
+              "player": "nhl-shayne-gostisbehere",
+              "ranking": 32
+            },
+            {
+              "player": "nhl-shea-theodore",
+              "ranking": 33
+            },
+            {
+              "player": "nhl-k-andre-miller",
+              "ranking": 34
+            },
+            {
+              "player": "nhl-alexander-nikishin",
+              "ranking": 35
+            },
+            {
+              "player": "nhl-noah-hanifin",
+              "ranking": 36
+            },
+            {
+              "player": "nhl-josh-manson",
+              "ranking": 37
+            },
+            {
+              "player": "nhl-jordan-staal",
+              "ranking": 38
+            },
+            {
+              "player": "nhl-parker-kelly",
+              "ranking": 39
+            },
+            {
+              "player": "nhl-mike-matheson",
+              "ranking": 40
+            },
+            {
+              "player": "nhl-jordan-martinook",
+              "ranking": 41
+            },
+            {
+              "player": "nhl-zachary-bolduc",
+              "ranking": 42
+            },
+            {
+              "player": "nhl-devon-toews",
+              "ranking": 43
+            },
+            {
+              "player": "nhl-jack-drury",
+              "ranking": 44
+            },
+            {
+              "player": "nhl-josh-anderson",
+              "ranking": 45
+            },
+            {
+              "player": "nhl-jalen-chatfield",
+              "ranking": 46
+            },
+            {
+              "player": "nhl-eric-robinson",
+              "ranking": 47
+            },
+            {
+              "player": "nhl-jake-evans",
+              "ranking": 48
+            },
+            {
+              "player": "nhl-william-carrier",
+              "ranking": 49
+            },
+            {
+              "player": "nhl-brett-howden",
+              "ranking": 50
+            },
+            {
+              "player": "nhl-alex-newhook",
+              "ranking": 51
+            },
+            {
+              "player": "nhl-brayden-mcnabb",
+              "ranking": 52
+            },
+            {
+              "player": "nhl-alexandre-texier",
+              "ranking": 53
+            },
+            {
+              "player": "nhl-mark-jankowski",
+              "ranking": 54
+            },
+            {
+              "player": "nhl-ben-hutton",
+              "ranking": 55
+            },
+            {
+              "player": "nhl-colton-sissons",
+              "ranking": 56
+            },
+            {
+              "player": "nhl-brandon-saad",
+              "ranking": 57
+            },
+            {
+              "player": "nhl-keegan-kolesar",
+              "ranking": 58
+            },
+            {
+              "player": "nhl-rasmus-andersson",
+              "ranking": 59
+            },
+            {
+              "player": "nhl-alexandre-carrier",
+              "ranking": 60
+            },
+            {
+              "player": "nhl-kaedan-korczak",
+              "ranking": 61
+            },
+            {
+              "player": "nhl-jaccob-slavin",
+              "ranking": 62
+            },
+            {
+              "player": "nhl-kirby-dach",
+              "ranking": 63
+            },
+            {
+              "player": "nhl-phillip-danault",
+              "ranking": 64
+            },
+            {
+              "player": "nhl-joel-kiviranta",
+              "ranking": 65
+            },
+            {
+              "player": "nhl-joseph-veleno",
+              "ranking": 66
+            },
+            {
+              "player": "nhl-kaiden-guhle",
+              "ranking": 67
+            },
+            {
+              "player": "nhl-nazem-kadri",
+              "ranking": 68
+            },
+            {
+              "player": "nhl-william-karlsson",
+              "ranking": 69
+            },
+            {
+              "player": "nhl-jayden-struble",
+              "ranking": 70
+            },
+            {
+              "player": "nhl-brett-kulak",
+              "ranking": 71
+            },
+            {
+              "player": "nhl-nicolas-roy",
+              "ranking": 72
+            },
+            {
+              "player": "nhl-nic-dowd",
+              "ranking": 73
+            },
+            {
+              "player": "nhl-cole-smith",
+              "ranking": 74
+            },
+            {
+              "player": "nhl-nick-blankenburg",
+              "ranking": 75
+            },
+            {
+              "player": "nhl-logan-o-connor",
+              "ranking": 76
+            },
+            {
+              "player": "nhl-jack-ahcan",
+              "ranking": 77
+            },
+            {
+              "player": "nhl-dylan-coghlan",
+              "ranking": 78
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "nhl-alex-newhook",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexander-nikishin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-carrier",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-texier",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-andrei-svechnikov",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-artturi-lehkonen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-ben-hutton",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brandon-saad",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-brayden-mcnabb",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brent-burns",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-brett-howden",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-brett-kulak",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brock-nelson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-cole-caufield",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-cole-smith",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-colton-sissons",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-devon-toews",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-dylan-coghlan",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-eric-robinson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-gabriel-landeskog",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-ivan-barbashev",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-ivan-demidov",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-jaccob-slavin",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jack-ahcan",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jack-drury",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jack-eichel",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-jackson-blake",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-jake-evans",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-jalen-chatfield",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jayden-struble",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jordan-martinook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jordan-staal",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-anderson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-manson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-juraj-slafkovsky",
+                  "stats": {
+                    "GOALS": 2,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-k-andre-miller",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-kaiden-guhle",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-keegan-kolesar",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-kirby-dach",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-lane-hutson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-logan-o-connor",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-logan-stankoven",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mark-jankowski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-martin-necas",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-mike-matheson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-mitch-marner",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nathan-mackinnon",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-nazem-kadri",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-nic-dowd",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nick-suzuki",
+                  "stats": {
+                    "ASSISTS": 3,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-nicolas-roy",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nikolaj-ehlers",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-noah-dobson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-noah-hanifin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-oliver-kapanen",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-parker-kelly",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-pavel-dorofeyev",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-phillip-danault",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-rasmus-andersson",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-ross-colton",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-sam-malinski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sean-walker",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sebastian-aho",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-seth-jarvis",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-shayne-gostisbehere",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-shea-theodore",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-taylor-hall",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-tomas-hertl",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-valeri-nichushkin",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-william-carrier",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-william-karlsson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-zachary-bolduc",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "nhl-alex-newhook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexander-nikishin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-carrier",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-texier",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-andrei-svechnikov",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-artturi-lehkonen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-brandon-saad",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-brayden-mcnabb",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brent-burns",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-brett-howden",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brett-kulak",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brock-nelson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-cole-caufield",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-cole-smith",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-colton-sissons",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-devon-toews",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-dylan-coghlan",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-eric-robinson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-gabriel-landeskog",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-ivan-barbashev",
+                  "stats": {
+                    "GOALS": 2,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-ivan-demidov",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jaccob-slavin",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-jack-drury",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jack-eichel",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jackson-blake",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jake-evans",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jalen-chatfield",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jayden-struble",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jordan-martinook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jordan-staal",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-anderson",
+                  "stats": {
+                    "GOALS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-josh-manson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-juraj-slafkovsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-k-andre-miller",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kaedan-korczak",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kaiden-guhle",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-keegan-kolesar",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kirby-dach",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-lane-hutson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-logan-o-connor",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-logan-stankoven",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-mark-jankowski",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-martin-necas",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mike-matheson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-mitch-marner",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-nathan-mackinnon",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nazem-kadri",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nic-dowd",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nick-blankenburg",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-nick-suzuki",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nicolas-roy",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nikolaj-ehlers",
+                  "stats": {
+                    "GOALS": 2,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-noah-dobson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-noah-hanifin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-oliver-kapanen",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-parker-kelly",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-pavel-dorofeyev",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-phillip-danault",
+                  "stats": {
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nhl-rasmus-andersson",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-ross-colton",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sam-malinski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-sean-walker",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sebastian-aho",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-seth-jarvis",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-shayne-gostisbehere",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-shea-theodore",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-taylor-hall",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-tomas-hertl",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-valeri-nichushkin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-william-carrier",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-william-karlsson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-zachary-bolduc",
+                  "stats": {}
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "nhl-alex-newhook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexander-nikishin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-carrier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-alexandre-texier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-andrei-svechnikov",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-artturi-lehkonen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brayden-mcnabb",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-brent-burns",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-brett-howden",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-brett-kulak",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-brock-nelson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-cale-makar",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-cole-caufield",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-cole-smith",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-colton-sissons",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-devon-toews",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-dylan-coghlan",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-eric-robinson",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-gabriel-landeskog",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 6
+                  }
+                },
+                {
+                  "player": "nhl-ivan-barbashev",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-ivan-demidov",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-jaccob-slavin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-jack-drury",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jack-eichel",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jackson-blake",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-jake-evans",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-jalen-chatfield",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jayden-struble",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jordan-martinook",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jordan-staal",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-joseph-veleno",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-anderson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-manson",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-juraj-slafkovsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-k-andre-miller",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-kaedan-korczak",
+                  "stats": {
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nhl-kaiden-guhle",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-keegan-kolesar",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-kirby-dach",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-lane-hutson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-logan-o-connor",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-logan-stankoven",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-mark-jankowski",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-mark-stone",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-martin-necas",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mike-matheson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-mitch-marner",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nathan-mackinnon",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-nazem-kadri",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-nic-dowd",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-nick-suzuki",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nicolas-roy",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nikolaj-ehlers",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-noah-dobson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-noah-hanifin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-parker-kelly",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-pavel-dorofeyev",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-phillip-danault",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-rasmus-andersson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-ross-colton",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sam-malinski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-sean-walker",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-sebastian-aho",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-seth-jarvis",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-shayne-gostisbehere",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-shea-theodore",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-taylor-hall",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 7
+                  }
+                },
+                {
+                  "player": "nhl-tomas-hertl",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-valeri-nichushkin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-william-carrier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-william-karlsson",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-zachary-bolduc",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "nhl-alex-newhook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexander-nikishin",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-alexandre-carrier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-alexandre-texier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-andrei-svechnikov",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 6
+                  }
+                },
+                {
+                  "player": "nhl-artturi-lehkonen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brayden-mcnabb",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-brent-burns",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-brett-howden",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-brett-kulak",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-brock-nelson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-cale-makar",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-cole-caufield",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-cole-smith",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-colton-sissons",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-devon-toews",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-dylan-coghlan",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-eric-robinson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-gabriel-landeskog",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-ivan-barbashev",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-ivan-demidov",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jaccob-slavin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jack-drury",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jack-eichel",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jackson-blake",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-jake-evans",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jalen-chatfield",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jayden-struble",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-joel-kiviranta",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jordan-martinook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jordan-staal",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-joseph-veleno",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-anderson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-josh-manson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-juraj-slafkovsky",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-k-andre-miller",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-kaedan-korczak",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kaiden-guhle",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-keegan-kolesar",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kirby-dach",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-lane-hutson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-logan-o-connor",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-logan-stankoven",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 7
+                  }
+                },
+                {
+                  "player": "nhl-mark-jankowski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mark-stone",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-martin-necas",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-mike-matheson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mitch-marner",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nathan-mackinnon",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nazem-kadri",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-nic-dowd",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nick-suzuki",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-nicolas-roy",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-nikolaj-ehlers",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-noah-dobson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-noah-hanifin",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-parker-kelly",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-pavel-dorofeyev",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-phillip-danault",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-rasmus-andersson",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-ross-colton",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-sam-malinski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-sean-walker",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-sebastian-aho",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-seth-jarvis",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-shayne-gostisbehere",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-shea-theodore",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-taylor-hall",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-tomas-hertl",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-william-carrier",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "nhl-william-karlsson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-zachary-bolduc",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 5,
+              "lines": [
+                {
+                  "player": "nhl-alex-newhook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexander-nikishin",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-carrier",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-alexandre-texier",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-andrei-svechnikov",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-cole-caufield",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-eric-robinson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-ivan-demidov",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jaccob-slavin",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-jackson-blake",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jake-evans",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-jalen-chatfield",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jayden-struble",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-jordan-martinook",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-jordan-staal",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-joseph-veleno",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-josh-anderson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-juraj-slafkovsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-k-andre-miller",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kaiden-guhle",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-kirby-dach",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-lane-hutson",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-logan-stankoven",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "nhl-mark-jankowski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-mike-matheson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-nick-suzuki",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-nikolaj-ehlers",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-noah-dobson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-phillip-danault",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-sean-walker",
+                  "stats": {}
+                },
+                {
+                  "player": "nhl-sebastian-aho",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "nhl-seth-jarvis",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-shayne-gostisbehere",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "nhl-taylor-hall",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "nhl-william-carrier",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nhl-zachary-bolduc",
+                  "stats": {}
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

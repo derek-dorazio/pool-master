@@ -418,6 +418,32 @@ describe('basketball-2026-nba-conference-finals-test.json', () => {
   });
 });
 
+describe('hockey-2026-nhl-conference-finals-test.json', () => {
+  const file = readDataFile('hockey-2026-nhl-conference-finals-test.json', true);
+  const [conferenceFinals] = file.sportLeagues;
+  const games = conferenceFinals.events[0].games ?? [];
+  const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2026 NHL Conference Finals, both series one event of five games, the East going five and the West four', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.HOCKEY, 2026, ['NHL Conference Finals'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['NHL Conference Finals', '2026-05-20', '2026-05-29', 5, null]]);
+    expect(games.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('fields the skaters of all four conference finalists, and only the East\'s two teams play Game 5', () => {
+    const teamOf = new Map(conferenceFinals.players.map((player) => [player.key, player.team]));
+    expect(new Set(teamOf.values())).toEqual(new Set(['Carolina Hurricanes', 'Montreal Canadiens', 'Vegas Golden Knights', 'Colorado Avalanche']));
+    expect(new Set(games[4].lines.map((line) => teamOf.get(line.player)))).toEqual(new Set(['Carolina Hurricanes', 'Montreal Canadiens']));
+  });
+
+  it('carries both series as played: Jack Eichel\'s goal and assist in the West\'s Game 2, Seth Jarvis\'s goal and assist in the East\'s Game 5', () => {
+    expect(lineIn(2, 'nhl-jack-eichel')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_GOAL: 2 });
+    expect(lineIn(5, 'nhl-seth-jarvis')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_GOAL: 2 });
+  });
+});
+
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
