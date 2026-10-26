@@ -124,8 +124,64 @@
         "url": "https://api-web.nhle.com/v1/club-stats/COL/20252026/2"
       },
       {
-        "name": "NHL player pages (birth countries of skaters no longer on the rosters)",
+        "name": "NHL player page, Brandon Saad (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8476438/landing"
+      },
+      {
+        "name": "NHL player page, Colton Sissons (no longer on the roster)",
         "url": "https://api-web.nhle.com/v1/player/8476925/landing"
+      },
+      {
+        "name": "NHL player page, Ben Hutton (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8477018/landing"
+      },
+      {
+        "name": "NHL player page, Valeri Nichushkin (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8477501/landing"
+      },
+      {
+        "name": "NHL player page, Rasmus Andersson (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8478397/landing"
+      },
+      {
+        "name": "NHL player page, Ross Colton (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8479525/landing"
+      },
+      {
+        "name": "NHL player page, Dylan Coghlan (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8479639/landing"
+      },
+      {
+        "name": "NHL player page, Joseph Veleno (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8480813/landing"
+      },
+      {
+        "name": "NHL player page, Jack Drury (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8480835/landing"
+      },
+      {
+        "name": "NHL player page, Kaedan Korczak (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8481527/landing"
+      },
+      {
+        "name": "NHL player page, Pavel Dorofeyev (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8481604/landing"
+      },
+      {
+        "name": "NHL player page, Joel Kiviranta (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8481641/landing"
+      },
+      {
+        "name": "NHL player page, Cole Smith (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8482062/landing"
+      },
+      {
+        "name": "NHL player page, Jack Ahcan (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8482072/landing"
+      },
+      {
+        "name": "NHL player page, Nick Blankenburg (no longer on the roster)",
+        "url": "https://api-web.nhle.com/v1/player/8483565/landing"
       }
     ]
   },
