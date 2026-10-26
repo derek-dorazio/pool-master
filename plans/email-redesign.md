@@ -133,8 +133,8 @@ the event has one" (Q7).
 
 ## Questions for Derek
 
-**Decided (Derek 2026-10-26): every recommendation accepted**, as written below. Q2 leaves the
-in-app name open, as it says.
+**Decided (Derek 2026-10-26): every recommendation accepted**, as written below. Q2's in-app
+name was settled the same day.
 
 1. **Event pictures.** Recommended our own sport illustrations, with photos later.
    **Changed (Derek 2026-10-26 19:26Z): photos now**, one generic free-licence photo per sport
@@ -145,11 +145,10 @@ in-app name open, as it says.
    "Primetime Commissioner" in the brand bar and the sender name, and dropping the tagline from
    the header. `BRAND_NAME` feeds every email, not only the bar and sender: the invite and
    welcome preheaders and the password reset subject and body change with it, and their tests
-   move too. **Still open:** Derek accepted this for emails, but has not decided whether the
-   in-app name changes from Poolmaster (asked in the "Remove agent notes from UI copy" thread).
-   If the app keeps "Poolmaster", the invite, welcome and password reset copy would name a
-   brand the reader doesn't see when they click through, so settle the app name before the
-   build changes `BRAND_NAME`.
+   move too. **Settled (Derek 2026-10-26): the app and every email say "Primetime
+   Commissioner".** The display name moves into one shared constant (thread "Rename app to
+   Primetime Commissioner"), and the email build reads that constant rather than its own
+   `BRAND_NAME` copy.
 3. **What a tile click does.** Recommend it opens Create contest with the setup and event filled
    in, and the commissioner presses Create, as decided for event pages ("prefill, never
    create"). The alternative, creating the contest straight from the email, saves one press but
