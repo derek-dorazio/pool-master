@@ -49,6 +49,13 @@ terraform init -reconfigure -backend-config=envs/qa.backend.hcl
 export TF_VAR_jwt_secret="$(aws secretsmanager get-secret-value --region us-east-2 \
   --secret-id poolmaster-qa-jwt-secret --query SecretString --output text)"
 
+# 3b. Only when envs/<env>.tfvars does not set db_password (staging, prod):
+#     reuse the password already in core-api's DATABASE_URL
+export TF_VAR_db_password="$(aws ecs describe-task-definition --region us-east-2 \
+  --task-definition poolmaster-qa-core-api \
+  --query "taskDefinition.containerDefinitions[?name=='core-api'] | [0].environment[?name=='DATABASE_URL'] | [0].value" \
+  --output text | sed -E 's#^postgresql://[^:]*:(.*)@[^@]*$#\1#')"
+
 # 4. Plan into a file, and read it
 terraform plan -var-file=envs/qa.tfvars -out=qa.plan
 
@@ -57,8 +64,10 @@ terraform apply qa.plan
 rm qa.plan
 ```
 
-`-reconfigure` matters: the `.terraform/` directory remembers the last backend, and without
-it an init after working on another environment can point the plan at the wrong state.
+`-reconfigure` switches cleanly to this environment's state. Without it, an init after
+working on another environment stops with "Backend configuration changed" and offers to
+migrate state; migrating would copy one environment's state over another's, so the answer
+there is always no.
 
 ## Step 3 — secrets
 
@@ -68,9 +77,16 @@ Both secrets keep the values the environment already has (`rules/workflow-rules.
 - **`jwt_secret`** — read from Secrets Manager, `poolmaster-<env>-jwt-secret`, as in step 3
   of the hand-over.
 - **`db_password`** — the owner's local, git-ignored `envs/<env>.tfvars` holds it for QA. A
-  value there beats `TF_VAR_db_password`, so do not also export one. If the file does not
-  set it, the current value is the password in `DATABASE_URL` in the latest
-  `poolmaster-<env>-core-api` task definition; export it as `TF_VAR_db_password`.
+  value there beats `TF_VAR_db_password`, so do not also export one. Staging and prod follow
+  their `*.tfvars.example` and keep it out of tfvars, so their hand-over includes step 3b,
+  which reads it from `DATABASE_URL` in the latest `poolmaster-<env>-core-api` task
+  definition.
+
+The one exception is an environment's very first apply (prod, when it is first built): no
+secret exists yet, so that apply creates both. Generate `jwt_secret` with
+`openssl rand -base64 48 | tr -d '\n'`, choose `db_password`, export both as `TF_VAR_*`,
+and store them in the owner's password manager before applying. Every later apply reuses
+them.
 
 If `terraform plan` stops to prompt for a variable, a secret is missing: cancel with
 Ctrl-C, never type a new value at the prompt.
@@ -100,7 +116,7 @@ A new core-api task definition revision is expected whenever core-api's environm
    - IAM policy: `aws iam get-role-policy --role-name poolmaster-<env>-ecs-task --policy-name poolmaster-<env>-ses-send`
      shows the new statement, or the feature that needed it now works;
    - core-api environment: after the next deploy, the running task's definition carries the
-     variable (`aws ecs describe-task-definition --task-definition poolmaster-<env>-core-api`);
+     variable (`aws ecs describe-task-definition --region us-east-2 --task-definition poolmaster-<env>-core-api`);
    - DNS or SES: the record resolves (`dig`), or the SES identity shows the expected status;
    - a second `terraform plan -var-file=envs/<env>.tfvars` says `No changes.`
 3. Close the loop on the issue or PR: what was applied, when, to which environment, and the
