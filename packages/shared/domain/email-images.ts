@@ -8,11 +8,12 @@ import type { SelectionType, Sport } from './enums';
 import { sportPathSegment } from './sports/registry';
 
 /**
- * A sport's picture at the top of an email about one of its events, 1200 by 480: a generic
- * licensed photo where the sport has one (its source note sits beside it), otherwise its How to
- * Play scene rendered to JPG, so no email goes out without a header.
+ * A sport's picture at the top of an email about one of its events, and of its event pages, 1200
+ * by 480: a generic licensed photo where the sport has one (its source note sits beside it),
+ * otherwise its How to Play scene rendered to JPG, so no email or event page goes without one.
+ * The path stays under `/email/` because emails already sent link to it.
  */
-export function emailSportImagePath(sport: Sport): string {
+export function sportHeaderImagePath(sport: Sport): string {
   return `/email/sports/${sportPathSegment(sport)}.jpg`;
 }
 

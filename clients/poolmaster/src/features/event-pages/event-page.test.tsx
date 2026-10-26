@@ -76,6 +76,17 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-disclaimer')).toHaveTextContent('Not affiliated with the NFL or any sports league.');
   });
 
+  it('heads the page with its sport\'s photo, the same file as the email header, as decoration the screen reader skips', async () => {
+    getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendFixture()] } });
+    listLeaguePlansMock.mockResolvedValue({ data: { plans: [], previewPeriodMonths: 6, paymentsEnabled: false, expansionPrices: {} } });
+    renderPage();
+
+    const photo = await screen.findByTestId('event-page-photo');
+    expect(photo).toHaveAttribute('src', '/email/sports/american-football.jpg');
+    expect(photo).toHaveAttribute('alt', '');
+  });
+
   it('sends every button to the start flow with its page and contest setup, the top one with the headline offer\'s', async () => {
     getEventPageMock.mockResolvedValue({ data: { eventPage: championshipWeekendFixture() } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });

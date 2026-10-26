@@ -346,6 +346,10 @@ landing page that ads, emails and shared links point at.
    and kept small enough for WhatsApp (about 300 KB); a unit test fails while one is missing.
    The deploy writes the page's shell with its Open Graph tags, and CloudFront serves it only
    to link-preview crawlers. Search crawlers and people get the app.
-7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+7. **The hero shows the sport's photo.** A page opens with its sport's 1200 by 480 header
+   image, the same file the email about its events uses (`sportHeaderImagePath`), so one photo
+   per sport serves both and a new sport's photo arrives with its email header. No other
+   in-app page carries these photos: setup and league pages stay compact.
+8. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.
