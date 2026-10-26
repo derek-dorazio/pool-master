@@ -31,10 +31,11 @@ contest: Championship Weekend and the Super Bowl, the CFP semifinals and the Nat
 Championship, a conference final and the final. A round of several series or games (both
 conference finals, both semifinals) is one event whose field is every team's stars.
 
-The event's rounds are its games: Game 1 to Game 7 for a best-of-seven series, one round for a
-single game, as the stat pool sport league's existing test data file shows. Read that file
-(`packages/core-api/scripts/seed-golf/`, the league's name in its `scope`) before writing a
-real one: it is the shape to copy, and `docs/SPORT-DATA-LOADING.md` *Seeded championship stat
+The event's rounds are its games. A real file gives the most games the round can take (seven
+for a best-of-seven series, one for a single game); a test file, written after the round was
+played, gives the games as played (five for a Finals won in five). Read the stat pool sport
+league's test data file (`packages/core-api/scripts/seed-golf/`, the league's name in its
+`scope`) before writing a real one: it is the shape to copy, and `docs/SPORT-DATA-LOADING.md` *Seeded championship stat
 pools* says what it holds.
 
 ## Part 1 — set up the round
@@ -75,8 +76,10 @@ and `FIELDS`. The event:
 
 - its name as the league uses it, its start date the first game's, and `startsAt` the first
   game's start with its UTC offset, since that is when picks close;
-- its end date the last date the round can end, not the expected one (see *Where this goes
-  wrong*);
+- its end date the UTC date on which the last possible game ends, not its local date and not
+  the expected last game. The loader ends the event at 23:00 UTC on that date, so a game in a
+  US evening (8:30 PM Eastern is 00:30 UTC) needs the day after its local date (see *Where
+  this goes wrong*);
 - its rounds the most games the round can take.
 
 A cloud session cannot reach the sport sites, so source pages come through the "Fetch sport
@@ -118,17 +121,20 @@ event's Results page.
 
 ### Step 7 — the round ends
 
-When the last game's box score is loaded, the event completes at its end date and its contests
-settle. A series that ends early leaves its later games unplayed, and they score nothing for
-anyone. Open a PR for the data file, so next year's round starts from it, and add the round's
+Completion runs on the clock, not on the last box score: the event completes, and its
+contests settle, at 23:00 UTC on its end date, whatever is loaded by then. A series that ends
+early leaves its later games unplayed, and they score nothing for anyone; the event stays in
+progress until its end date, unless an admin completes it from the event's Manage page once
+the last box score is in. Open a PR for the data file, so next year's round starts from it, and add the round's
 sources to `docs/SPORT-DATA-SOURCES.md` if they changed.
 
 ## Where this goes wrong
 
-- **An end date that comes too soon.** The event completes on its own at its end date and
-  its contests settle on whatever box scores are in. Use the latest date the round can end, and
-  if a game is postponed past it, ask an admin to turn off the event's automatic lifecycle
-  before it passes.
+- **An end date that comes too soon.** The event completes on its own at 23:00 UTC on its end
+  date and its contests settle on whatever box scores are in. An end date on the last game's
+  local date settles a US evening Game 7 before tip-off. Use the UTC date the last possible
+  game ends, and if a game is postponed past it, ask an admin to turn off the event's automatic
+  lifecycle before it passes.
 - **A field built from the current roster.** It misses the player traded at the deadline and
   keeps the injured one released last week. Use the roster for the round.
 - **Ranking by something other than the regular-season composite.** Points per game, salary or
