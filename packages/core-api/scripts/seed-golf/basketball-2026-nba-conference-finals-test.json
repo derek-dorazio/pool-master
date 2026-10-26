@@ -1,0 +1,3045 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASKETBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "NBA Conference Finals"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-26",
+    "gatheredBy": "load-sport-data, the 2026 NBA Conference Finals as played: in the West the San Antonio Spurs beat the Oklahoma City Thunder in seven (18-30 May), in the East the New York Knicks swept the Cleveland Cavaliers (19-25 May). Both series are one event; game N holds both series' Game N, so Games 5 to 7 are the West's alone. The field is all four teams' rosters with their birth countries, from Basketball-Reference; ranking is the player's 2025-26 regular-season Triple Threat total (points + rebounds + assists) with these teams, both teams' for Jeremy Sochan (San Antonio and New York) and Riley Minix (San Antonio and Cleveland). Each game's box score (points, rebounds, assists) is from ESPN, cross-checked player by player against Basketball-Reference, which agree on every line; ESPN has no box score for the East's Game 3, so that game is from Basketball-Reference, cross-checked against CBS Sports, which agree on every line. Basketball-Reference also lists Oklahoma City's Isaiah Joe (Game 1) and Aaron Wiggins (Game 2) scoreless, where ESPN gives them no minutes, so neither has a line. A player who did not play a game, or scored no point, rebound or assist, has no line.",
+    "sources": [
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873197"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 1 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605180OKC.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873198"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 2 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605200OKC.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873199"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 3 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605220SAS.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873200"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 4 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605240SAS.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 5 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873201"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 5 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605260OKC.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 6 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873202"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 6 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605280SAS.html"
+      },
+      {
+        "name": "ESPN NBA, Western Conference Finals Game 7 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873203"
+      },
+      {
+        "name": "Basketball-Reference, Western Conference Finals Game 7 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605300OKC.html"
+      },
+      {
+        "name": "ESPN NBA, Eastern Conference Finals Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873341"
+      },
+      {
+        "name": "Basketball-Reference, Eastern Conference Finals Game 1 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605190NYK.html"
+      },
+      {
+        "name": "ESPN NBA, Eastern Conference Finals Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873342"
+      },
+      {
+        "name": "Basketball-Reference, Eastern Conference Finals Game 2 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605210NYK.html"
+      },
+      {
+        "name": "Basketball-Reference, Eastern Conference Finals Game 3 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605230CLE.html"
+      },
+      {
+        "name": "ESPN NBA, Eastern Conference Finals Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=401873344"
+      },
+      {
+        "name": "Basketball-Reference, Eastern Conference Finals Game 4 box score",
+        "url": "https://www.basketball-reference.com/boxscores/202605250CLE.html"
+      },
+      {
+        "name": "CBS Sports, Eastern Conference Finals Game 3 box score",
+        "url": "https://www.cbssports.com/nba/gametracker/boxscore/NBA_20260523_NY@CLE/"
+      },
+      {
+        "name": "Basketball-Reference, Knicks 2025-26 roster and stats",
+        "url": "https://www.basketball-reference.com/teams/NYK/2026.html"
+      },
+      {
+        "name": "Basketball-Reference, Cavaliers 2025-26 roster and stats",
+        "url": "https://www.basketball-reference.com/teams/CLE/2026.html"
+      },
+      {
+        "name": "Basketball-Reference, Spurs 2025-26 roster and stats",
+        "url": "https://www.basketball-reference.com/teams/SAS/2026.html"
+      },
+      {
+        "name": "Basketball-Reference, Thunder 2025-26 roster and stats",
+        "url": "https://www.basketball-reference.com/teams/OKC/2026.html"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "NBA Conference Finals",
+      "players": [
+        {
+          "key": "nba-shai-gilgeous-alexander",
+          "name": "Shai Gilgeous-Alexander",
+          "countryCode": "CA",
+          "ranking": 1,
+          "team": "Oklahoma City Thunder",
+          "position": "PG"
+        },
+        {
+          "key": "nba-jalen-brunson",
+          "name": "Jalen Brunson",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "New York Knicks",
+          "position": "PG"
+        },
+        {
+          "key": "nba-donovan-mitchell",
+          "name": "Donovan Mitchell",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        },
+        {
+          "key": "nba-karl-anthony-towns",
+          "name": "Karl-Anthony Towns",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "New York Knicks",
+          "position": "C"
+        },
+        {
+          "key": "nba-victor-wembanyama",
+          "name": "Victor Wembanyama",
+          "countryCode": "FR",
+          "ranking": 5,
+          "team": "San Antonio Spurs",
+          "position": "C"
+        },
+        {
+          "key": "nba-de-aaron-fox",
+          "name": "De'Aaron Fox",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "San Antonio Spurs",
+          "position": "PG"
+        },
+        {
+          "key": "nba-evan-mobley",
+          "name": "Evan Mobley",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Cleveland Cavaliers",
+          "position": "PF"
+        },
+        {
+          "key": "nba-stephon-castle",
+          "name": "Stephon Castle",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "San Antonio Spurs",
+          "position": "PG"
+        },
+        {
+          "key": "nba-chet-holmgren",
+          "name": "Chet Holmgren",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Oklahoma City Thunder",
+          "position": "PF"
+        },
+        {
+          "key": "nba-mikal-bridges",
+          "name": "Mikal Bridges",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-keldon-johnson",
+          "name": "Keldon Johnson",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "San Antonio Spurs",
+          "position": "SF"
+        },
+        {
+          "key": "nba-og-anunoby",
+          "name": "OG Anunoby",
+          "countryCode": "GB",
+          "ranking": 12,
+          "team": "New York Knicks",
+          "position": "PF"
+        },
+        {
+          "key": "nba-josh-hart",
+          "name": "Josh Hart",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-julian-champagnie",
+          "name": "Julian Champagnie",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "San Antonio Spurs",
+          "position": "SF"
+        },
+        {
+          "key": "nba-jarrett-allen",
+          "name": "Jarrett Allen",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Cleveland Cavaliers",
+          "position": "C"
+        },
+        {
+          "key": "nba-devin-vassell",
+          "name": "Devin Vassell",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "San Antonio Spurs",
+          "position": "SG"
+        },
+        {
+          "key": "nba-jaylon-tyson",
+          "name": "Jaylon Tyson",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        },
+        {
+          "key": "nba-dylan-harper",
+          "name": "Dylan Harper",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "San Antonio Spurs",
+          "position": "SG"
+        },
+        {
+          "key": "nba-ajay-mitchell",
+          "name": "Ajay Mitchell",
+          "countryCode": "BE",
+          "ranking": 19,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-harrison-barnes",
+          "name": "Harrison Barnes",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "San Antonio Spurs",
+          "position": "PF"
+        },
+        {
+          "key": "nba-cason-wallace",
+          "name": "Cason Wallace",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-isaiah-joe",
+          "name": "Isaiah Joe",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-isaiah-hartenstein",
+          "name": "Isaiah Hartenstein",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Oklahoma City Thunder",
+          "position": "C"
+        },
+        {
+          "key": "nba-jaylin-williams",
+          "name": "Jaylin Williams",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Oklahoma City Thunder",
+          "position": "PF"
+        },
+        {
+          "key": "nba-luke-kornet",
+          "name": "Luke Kornet",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "San Antonio Spurs",
+          "position": "C"
+        },
+        {
+          "key": "nba-sam-merrill",
+          "name": "Sam Merrill",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        },
+        {
+          "key": "nba-aaron-wiggins",
+          "name": "Aaron Wiggins",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-mitchell-robinson",
+          "name": "Mitchell Robinson",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "New York Knicks",
+          "position": "C"
+        },
+        {
+          "key": "nba-luguentz-dort",
+          "name": "Luguentz Dort",
+          "countryCode": "CA",
+          "ranking": 29,
+          "team": "Oklahoma City Thunder",
+          "position": "SF"
+        },
+        {
+          "key": "nba-jalen-williams",
+          "name": "Jalen Williams",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-de-andre-hunter",
+          "name": "De'Andre Hunter",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Cleveland Cavaliers",
+          "position": "SF"
+        },
+        {
+          "key": "nba-james-harden",
+          "name": "James Harden",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-jordan-clarkson",
+          "name": "Jordan Clarkson",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "New York Knicks",
+          "position": "SG"
+        },
+        {
+          "key": "nba-craig-porter-jr",
+          "name": "Craig Porter Jr.",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-darius-garland",
+          "name": "Darius Garland",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-miles-mcbride",
+          "name": "Miles McBride",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "New York Knicks",
+          "position": "SG"
+        },
+        {
+          "key": "nba-dean-wade",
+          "name": "Dean Wade",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Cleveland Cavaliers",
+          "position": "PF"
+        },
+        {
+          "key": "nba-landry-shamet",
+          "name": "Landry Shamet",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "New York Knicks",
+          "position": "SG"
+        },
+        {
+          "key": "nba-kenrich-williams",
+          "name": "Kenrich Williams",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Oklahoma City Thunder",
+          "position": "PF"
+        },
+        {
+          "key": "nba-alex-caruso",
+          "name": "Alex Caruso",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-nae-qwan-tomlin",
+          "name": "Nae'Qwan Tomlin",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Cleveland Cavaliers",
+          "position": "PF"
+        },
+        {
+          "key": "nba-thomas-bryant",
+          "name": "Thomas Bryant",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Cleveland Cavaliers",
+          "position": "C"
+        },
+        {
+          "key": "nba-tyler-kolek",
+          "name": "Tyler Kolek",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "New York Knicks",
+          "position": "PG"
+        },
+        {
+          "key": "nba-carter-bryant",
+          "name": "Carter Bryant",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "San Antonio Spurs",
+          "position": "PF"
+        },
+        {
+          "key": "nba-dennis-schroder",
+          "name": "Dennis Schröder",
+          "countryCode": "DE",
+          "ranking": 45,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-lonzo-ball",
+          "name": "Lonzo Ball",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-tyrese-proctor",
+          "name": "Tyrese Proctor",
+          "countryCode": "AU",
+          "ranking": 47,
+          "team": "Cleveland Cavaliers",
+          "position": "PG"
+        },
+        {
+          "key": "nba-jared-mccain",
+          "name": "Jared McCain",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-branden-carlson",
+          "name": "Branden Carlson",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Oklahoma City Thunder",
+          "position": "C"
+        },
+        {
+          "key": "nba-mohamed-diawara",
+          "name": "Mohamed Diawara",
+          "countryCode": "FR",
+          "ranking": 50,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-keon-ellis",
+          "name": "Keon Ellis",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        },
+        {
+          "key": "nba-jose-alvarado",
+          "name": "Jose Alvarado",
+          "countryCode": "US",
+          "ranking": 52,
+          "team": "New York Knicks",
+          "position": "PG"
+        },
+        {
+          "key": "nba-ariel-hukporti",
+          "name": "Ariel Hukporti",
+          "countryCode": "DE",
+          "ranking": 53,
+          "team": "New York Knicks",
+          "position": "C"
+        },
+        {
+          "key": "nba-jeremy-sochan",
+          "name": "Jeremy Sochan",
+          "countryCode": "US",
+          "ranking": 54,
+          "team": "New York Knicks",
+          "position": "PF"
+        },
+        {
+          "key": "nba-kelly-olynyk",
+          "name": "Kelly Olynyk",
+          "countryCode": "CA",
+          "ranking": 55,
+          "team": "San Antonio Spurs",
+          "position": "C"
+        },
+        {
+          "key": "nba-larry-nance-jr",
+          "name": "Larry Nance Jr.",
+          "countryCode": "US",
+          "ranking": 56,
+          "team": "Cleveland Cavaliers",
+          "position": "PF"
+        },
+        {
+          "key": "nba-max-strus",
+          "name": "Max Strus",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "Cleveland Cavaliers",
+          "position": "SF"
+        },
+        {
+          "key": "nba-guerschon-yabusele",
+          "name": "Guerschon Yabusele",
+          "countryCode": "FR",
+          "ranking": 58,
+          "team": "New York Knicks",
+          "position": "C"
+        },
+        {
+          "key": "nba-ousmane-dieng",
+          "name": "Ousmane Dieng",
+          "countryCode": "FR",
+          "ranking": 59,
+          "team": "Oklahoma City Thunder",
+          "position": "C"
+        },
+        {
+          "key": "nba-brooks-barnhizer",
+          "name": "Brooks Barnhizer",
+          "countryCode": "US",
+          "ranking": 60,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-jordan-mclaughlin",
+          "name": "Jordan McLaughlin",
+          "countryCode": "US",
+          "ranking": 61,
+          "team": "San Antonio Spurs",
+          "position": "PG"
+        },
+        {
+          "key": "nba-lindy-waters-iii",
+          "name": "Lindy Waters III",
+          "countryCode": "US",
+          "ranking": 62,
+          "team": "San Antonio Spurs",
+          "position": "SG"
+        },
+        {
+          "key": "nba-nikola-topic",
+          "name": "Nikola Topić",
+          "countryCode": "RS",
+          "ranking": 63,
+          "team": "Oklahoma City Thunder",
+          "position": "PG"
+        },
+        {
+          "key": "nba-chris-youngblood",
+          "name": "Chris Youngblood",
+          "countryCode": "US",
+          "ranking": 64,
+          "team": "Oklahoma City Thunder",
+          "position": "SG"
+        },
+        {
+          "key": "nba-kevin-mccullar-jr",
+          "name": "Kevin McCullar Jr.",
+          "countryCode": "US",
+          "ranking": 65,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-pacome-dadiet",
+          "name": "Pacôme Dadiet",
+          "countryCode": "FR",
+          "ranking": 66,
+          "team": "New York Knicks",
+          "position": "SG"
+        },
+        {
+          "key": "nba-david-jones-garcia",
+          "name": "David Jones García",
+          "countryCode": "DO",
+          "ranking": 67,
+          "team": "San Antonio Spurs",
+          "position": "SF"
+        },
+        {
+          "key": "nba-luke-travers",
+          "name": "Luke Travers",
+          "countryCode": "AU",
+          "ranking": 68,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        },
+        {
+          "key": "nba-tristan-enaruna",
+          "name": "Tristan Enaruna",
+          "countryCode": "NL",
+          "ranking": 69,
+          "team": "Cleveland Cavaliers",
+          "position": "SF"
+        },
+        {
+          "key": "nba-bismack-biyombo",
+          "name": "Bismack Biyombo",
+          "countryCode": "CD",
+          "ranking": 70,
+          "team": "San Antonio Spurs",
+          "position": "C"
+        },
+        {
+          "key": "nba-riley-minix",
+          "name": "Riley Minix",
+          "countryCode": "US",
+          "ranking": 71,
+          "team": "Cleveland Cavaliers",
+          "position": "SF"
+        },
+        {
+          "key": "nba-payton-sandfort",
+          "name": "Payton Sandfort",
+          "countryCode": "US",
+          "ranking": 72,
+          "team": "Oklahoma City Thunder",
+          "position": "SF"
+        },
+        {
+          "key": "nba-trey-jemison",
+          "name": "Trey Jemison",
+          "countryCode": "US",
+          "ranking": 73,
+          "team": "New York Knicks",
+          "position": "C"
+        },
+        {
+          "key": "nba-olivier-sarr",
+          "name": "Olivier Sarr",
+          "countryCode": "FR",
+          "ranking": 74,
+          "team": "Cleveland Cavaliers",
+          "position": "C"
+        },
+        {
+          "key": "nba-mason-plumlee",
+          "name": "Mason Plumlee",
+          "countryCode": "US",
+          "ranking": 75,
+          "team": "San Antonio Spurs",
+          "position": "C"
+        },
+        {
+          "key": "nba-dillon-jones",
+          "name": "Dillon Jones",
+          "countryCode": "US",
+          "ranking": 76,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-harrison-ingram",
+          "name": "Harrison Ingram",
+          "countryCode": "US",
+          "ranking": 77,
+          "team": "San Antonio Spurs",
+          "position": "SF"
+        },
+        {
+          "key": "nba-chris-livingston",
+          "name": "Chris Livingston",
+          "countryCode": "US",
+          "ranking": 78,
+          "team": "Cleveland Cavaliers",
+          "position": "SF"
+        },
+        {
+          "key": "nba-buddy-boeheim",
+          "name": "Buddy Boeheim",
+          "countryCode": "US",
+          "ranking": 79,
+          "team": "Oklahoma City Thunder",
+          "position": "SF"
+        },
+        {
+          "key": "nba-stanley-umude",
+          "name": "Stanley Umude",
+          "countryCode": "US",
+          "ranking": 80,
+          "team": "San Antonio Spurs",
+          "position": "SG"
+        },
+        {
+          "key": "nba-tosan-evbuomwan",
+          "name": "Tosan Evbuomwan",
+          "countryCode": "GB",
+          "ranking": 81,
+          "team": "New York Knicks",
+          "position": "SF"
+        },
+        {
+          "key": "nba-darius-brown-ii",
+          "name": "Darius Brown II",
+          "countryCode": "US",
+          "ranking": 82,
+          "team": "Cleveland Cavaliers",
+          "position": "SG"
+        }
+      ],
+      "events": [
+        {
+          "key": "nba-conference-finals-2026",
+          "name": "NBA Conference Finals",
+          "startDate": "2026-05-18",
+          "endDate": "2026-05-30",
+          "venue": null,
+          "location": "Oklahoma City, San Antonio, New York and Cleveland",
+          "rounds": 7,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "nba-shai-gilgeous-alexander",
+              "ranking": 1
+            },
+            {
+              "player": "nba-jalen-brunson",
+              "ranking": 2
+            },
+            {
+              "player": "nba-donovan-mitchell",
+              "ranking": 3
+            },
+            {
+              "player": "nba-karl-anthony-towns",
+              "ranking": 4
+            },
+            {
+              "player": "nba-victor-wembanyama",
+              "ranking": 5
+            },
+            {
+              "player": "nba-de-aaron-fox",
+              "ranking": 6
+            },
+            {
+              "player": "nba-evan-mobley",
+              "ranking": 7
+            },
+            {
+              "player": "nba-stephon-castle",
+              "ranking": 8
+            },
+            {
+              "player": "nba-chet-holmgren",
+              "ranking": 9
+            },
+            {
+              "player": "nba-mikal-bridges",
+              "ranking": 10
+            },
+            {
+              "player": "nba-keldon-johnson",
+              "ranking": 11
+            },
+            {
+              "player": "nba-og-anunoby",
+              "ranking": 12
+            },
+            {
+              "player": "nba-josh-hart",
+              "ranking": 13
+            },
+            {
+              "player": "nba-julian-champagnie",
+              "ranking": 14
+            },
+            {
+              "player": "nba-jarrett-allen",
+              "ranking": 15
+            },
+            {
+              "player": "nba-devin-vassell",
+              "ranking": 16
+            },
+            {
+              "player": "nba-jaylon-tyson",
+              "ranking": 17
+            },
+            {
+              "player": "nba-dylan-harper",
+              "ranking": 18
+            },
+            {
+              "player": "nba-ajay-mitchell",
+              "ranking": 19
+            },
+            {
+              "player": "nba-harrison-barnes",
+              "ranking": 20
+            },
+            {
+              "player": "nba-cason-wallace",
+              "ranking": 21
+            },
+            {
+              "player": "nba-isaiah-joe",
+              "ranking": 22
+            },
+            {
+              "player": "nba-isaiah-hartenstein",
+              "ranking": 23
+            },
+            {
+              "player": "nba-jaylin-williams",
+              "ranking": 24
+            },
+            {
+              "player": "nba-luke-kornet",
+              "ranking": 25
+            },
+            {
+              "player": "nba-sam-merrill",
+              "ranking": 26
+            },
+            {
+              "player": "nba-aaron-wiggins",
+              "ranking": 27
+            },
+            {
+              "player": "nba-mitchell-robinson",
+              "ranking": 28
+            },
+            {
+              "player": "nba-luguentz-dort",
+              "ranking": 29
+            },
+            {
+              "player": "nba-jalen-williams",
+              "ranking": 30
+            },
+            {
+              "player": "nba-de-andre-hunter",
+              "ranking": 31
+            },
+            {
+              "player": "nba-james-harden",
+              "ranking": 32
+            },
+            {
+              "player": "nba-jordan-clarkson",
+              "ranking": 33
+            },
+            {
+              "player": "nba-craig-porter-jr",
+              "ranking": 34
+            },
+            {
+              "player": "nba-darius-garland",
+              "ranking": 35
+            },
+            {
+              "player": "nba-miles-mcbride",
+              "ranking": 36
+            },
+            {
+              "player": "nba-dean-wade",
+              "ranking": 37
+            },
+            {
+              "player": "nba-landry-shamet",
+              "ranking": 38
+            },
+            {
+              "player": "nba-kenrich-williams",
+              "ranking": 39
+            },
+            {
+              "player": "nba-alex-caruso",
+              "ranking": 40
+            },
+            {
+              "player": "nba-nae-qwan-tomlin",
+              "ranking": 41
+            },
+            {
+              "player": "nba-thomas-bryant",
+              "ranking": 42
+            },
+            {
+              "player": "nba-tyler-kolek",
+              "ranking": 43
+            },
+            {
+              "player": "nba-carter-bryant",
+              "ranking": 44
+            },
+            {
+              "player": "nba-dennis-schroder",
+              "ranking": 45
+            },
+            {
+              "player": "nba-lonzo-ball",
+              "ranking": 46
+            },
+            {
+              "player": "nba-tyrese-proctor",
+              "ranking": 47
+            },
+            {
+              "player": "nba-jared-mccain",
+              "ranking": 48
+            },
+            {
+              "player": "nba-branden-carlson",
+              "ranking": 49
+            },
+            {
+              "player": "nba-mohamed-diawara",
+              "ranking": 50
+            },
+            {
+              "player": "nba-keon-ellis",
+              "ranking": 51
+            },
+            {
+              "player": "nba-jose-alvarado",
+              "ranking": 52
+            },
+            {
+              "player": "nba-ariel-hukporti",
+              "ranking": 53
+            },
+            {
+              "player": "nba-jeremy-sochan",
+              "ranking": 54
+            },
+            {
+              "player": "nba-kelly-olynyk",
+              "ranking": 55
+            },
+            {
+              "player": "nba-larry-nance-jr",
+              "ranking": 56
+            },
+            {
+              "player": "nba-max-strus",
+              "ranking": 57
+            },
+            {
+              "player": "nba-guerschon-yabusele",
+              "ranking": 58
+            },
+            {
+              "player": "nba-ousmane-dieng",
+              "ranking": 59
+            },
+            {
+              "player": "nba-brooks-barnhizer",
+              "ranking": 60
+            },
+            {
+              "player": "nba-jordan-mclaughlin",
+              "ranking": 61
+            },
+            {
+              "player": "nba-lindy-waters-iii",
+              "ranking": 62
+            },
+            {
+              "player": "nba-nikola-topic",
+              "ranking": 63
+            },
+            {
+              "player": "nba-chris-youngblood",
+              "ranking": 64
+            },
+            {
+              "player": "nba-kevin-mccullar-jr",
+              "ranking": 65
+            },
+            {
+              "player": "nba-pacome-dadiet",
+              "ranking": 66
+            },
+            {
+              "player": "nba-david-jones-garcia",
+              "ranking": 67
+            },
+            {
+              "player": "nba-luke-travers",
+              "ranking": 68
+            },
+            {
+              "player": "nba-tristan-enaruna",
+              "ranking": 69
+            },
+            {
+              "player": "nba-bismack-biyombo",
+              "ranking": 70
+            },
+            {
+              "player": "nba-riley-minix",
+              "ranking": 71
+            },
+            {
+              "player": "nba-payton-sandfort",
+              "ranking": 72
+            },
+            {
+              "player": "nba-trey-jemison",
+              "ranking": 73
+            },
+            {
+              "player": "nba-olivier-sarr",
+              "ranking": 74
+            },
+            {
+              "player": "nba-mason-plumlee",
+              "ranking": 75
+            },
+            {
+              "player": "nba-dillon-jones",
+              "ranking": 76
+            },
+            {
+              "player": "nba-harrison-ingram",
+              "ranking": 77
+            },
+            {
+              "player": "nba-chris-livingston",
+              "ranking": 78
+            },
+            {
+              "player": "nba-buddy-boeheim",
+              "ranking": 79
+            },
+            {
+              "player": "nba-stanley-umude",
+              "ranking": 80
+            },
+            {
+              "player": "nba-tosan-evbuomwan",
+              "ranking": 81
+            },
+            {
+              "player": "nba-darius-brown-ii",
+              "ranking": 82
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "nba-aaron-wiggins",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-ajay-mitchell",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 31,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 6
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 8
+                  }
+                },
+                {
+                  "player": "nba-dean-wade",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-dennis-schroder",
+                  "stats": {
+                    "POINTS": 3,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-donovan-mitchell",
+                  "stats": {
+                    "POINTS": 29,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-evan-mobley",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 14,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jalen-brunson",
+                  "stats": {
+                    "POINTS": 38,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-jalen-williams",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-james-harden",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jarrett-allen",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-jordan-clarkson",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "nba-jose-alvarado",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-josh-hart",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-karl-anthony-towns",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 13,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 13
+                  }
+                },
+                {
+                  "player": "nba-keon-ellis",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "nba-landry-shamet",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-max-strus",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-mikal-bridges",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-miles-mcbride",
+                  "stats": {
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-mitchell-robinson",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-og-anunoby",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-sam-merrill",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 12
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 11
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 41,
+                    "REBOUNDS": 24,
+                    "ASSISTS": 3
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "nba-ajay-mitchell",
+                  "stats": {
+                    "POINTS": 10,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-craig-porter-jr",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-dean-wade",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-dennis-schroder",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-donovan-mitchell",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-evan-mobley",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 13,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-isaiah-joe",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jalen-brunson",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 14
+                  }
+                },
+                {
+                  "player": "nba-jalen-williams",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-james-harden",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-jarrett-allen",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 10
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jaylon-tyson",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-jordan-clarkson",
+                  "stats": {
+                    "POINTS": 4
+                  }
+                },
+                {
+                  "player": "nba-jordan-mclaughlin",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jose-alvarado",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-josh-hart",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-karl-anthony-towns",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 13,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-keon-ellis",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-landry-shamet",
+                  "stats": {
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "nba-max-strus",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-mikal-bridges",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-miles-mcbride",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-mitchell-robinson",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-nae-qwan-tomlin",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-og-anunoby",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-pacome-dadiet",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-sam-merrill",
+                  "stats": {
+                    "POINTS": 4
+                  }
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 30,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 25,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 8
+                  }
+                },
+                {
+                  "player": "nba-thomas-bryant",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-tyler-kolek",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-tyrese-proctor",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 17,
+                    "ASSISTS": 6
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "nba-aaron-wiggins",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-ajay-mitchell",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-bismack-biyombo",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-de-aaron-fox",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-dean-wade",
+                  "stats": {
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-dennis-schroder",
+                  "stats": {
+                    "POINTS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-donovan-mitchell",
+                  "stats": {
+                    "POINTS": 23,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-evan-mobley",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-isaiah-joe",
+                  "stats": {
+                    "POINTS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jalen-brunson",
+                  "stats": {
+                    "POINTS": 30,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-james-harden",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jarrett-allen",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 7
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jaylon-tyson",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jordan-clarkson",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-jordan-mclaughlin",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jose-alvarado",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "nba-josh-hart",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-karl-anthony-towns",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "nba-kelly-olynyk",
+                  "stats": {
+                    "POINTS": 3
+                  }
+                },
+                {
+                  "player": "nba-kenrich-williams",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-landry-shamet",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-lindy-waters-iii",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-mason-plumlee",
+                  "stats": {
+                    "POINTS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-max-strus",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-mikal-bridges",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-miles-mcbride",
+                  "stats": {
+                    "POINTS": 5
+                  }
+                },
+                {
+                  "player": "nba-mitchell-robinson",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-nikola-topic",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-og-anunoby",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-sam-merrill",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 12
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 26,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "nba-aaron-wiggins",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-ariel-hukporti",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-craig-porter-jr",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-de-aaron-fox",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-dean-wade",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-donovan-mitchell",
+                  "stats": {
+                    "POINTS": 31,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-evan-mobley",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-isaiah-joe",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jalen-brunson",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-james-harden",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "nba-jarrett-allen",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jaylon-tyson",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jordan-clarkson",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-jordan-mclaughlin",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-jose-alvarado",
+                  "stats": {
+                    "POINTS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-josh-hart",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-karl-anthony-towns",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 14,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-kelly-olynyk",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-kenrich-williams",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-keon-ellis",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-landry-shamet",
+                  "stats": {
+                    "POINTS": 16,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-lindy-waters-iii",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 7
+                  }
+                },
+                {
+                  "player": "nba-max-strus",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-mikal-bridges",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-miles-mcbride",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-mitchell-robinson",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 10
+                  }
+                },
+                {
+                  "player": "nba-mohamed-diawara",
+                  "stats": {
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-nae-qwan-tomlin",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-nikola-topic",
+                  "stats": {
+                    "POINTS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-og-anunoby",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-pacome-dadiet",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-sam-merrill",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-thomas-bryant",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-tyler-kolek",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-tyrese-proctor",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 33,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 5
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 5,
+              "lines": [
+                {
+                  "player": "nba-aaron-wiggins",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-bismack-biyombo",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-de-aaron-fox",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 8
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 15,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-isaiah-joe",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jordan-mclaughlin",
+                  "stats": {
+                    "POINTS": 4
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-kelly-olynyk",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "nba-kenrich-williams",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-mason-plumlee",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-nikola-topic",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 32,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 6,
+              "lines": [
+                {
+                  "player": "nba-aaron-wiggins",
+                  "stats": {
+                    "POINTS": 5
+                  }
+                },
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 7
+                  }
+                },
+                {
+                  "player": "nba-bismack-biyombo",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-de-aaron-fox",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-isaiah-joe",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jalen-williams",
+                  "stats": {
+                    "POINTS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-jordan-mclaughlin",
+                  "stats": {
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "nba-kelly-olynyk",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-kenrich-williams",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-lindy-waters-iii",
+                  "stats": {
+                    "POINTS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-mason-plumlee",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-nikola-topic",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 28,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 7,
+              "lines": [
+                {
+                  "player": "nba-alex-caruso",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-carter-bryant",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-cason-wallace",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-chet-holmgren",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-de-aaron-fox",
+                  "stats": {
+                    "POINTS": 15,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "nba-devin-vassell",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-dylan-harper",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "nba-harrison-barnes",
+                  "stats": {}
+                },
+                {
+                  "player": "nba-isaiah-hartenstein",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "nba-jared-mccain",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-jaylin-williams",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "nba-julian-champagnie",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-keldon-johnson",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "nba-kenrich-williams",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "nba-luguentz-dort",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "nba-luke-kornet",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "nba-shai-gilgeous-alexander",
+                  "stats": {
+                    "POINTS": 35,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "nba-stephon-castle",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "nba-victor-wembanyama",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
