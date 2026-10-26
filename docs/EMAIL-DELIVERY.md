@@ -125,11 +125,38 @@ matters that day: the entry reminder sent less than a day before picks close, th
 "contest isn't open yet" email, an event moved within its own day, and account emails that
 record when something happened.
 
+### Layout and Pictures
+
+Every email opens with a slim navy brand bar: the product name and tagline on the left, the
+league's name on the right when the email comes from a league. An email about one event (C1,
+C2) replaces its title heading with the event header: the sport's picture, then a navy band
+with the sport league and the email's title, the event's name and its day. The name is in the
+band, not the picture, so it still reads when a mail client blocks images. A default contest
+setup is a tile: its way to play's How to Play picture, the format, the rest of the setup's name
+and its description, the whole tile one link. An email that names a sport league says in its
+footer that we are not affiliated with it or any sports league.
+
+Gmail and Outlook show no SVG, so every picture is a JPG or PNG in
+`clients/poolmaster/public/email/`, served by the web app and linked by absolute URL on
+`appBaseUrl` (`emailSportImagePath` and `emailFormatImagePath` in `@poolmaster/shared/domain`):
+
+- `sports/<sport>.jpg`, 1200 by 480: a generic licensed photo, with a `<sport>.source.md` note
+  beside it naming the photographer, the source, the licence and what was checked (no logos,
+  named venues, recognisable faces or readable numbers). The photos Derek gathered, used or not,
+  are kept full size under `brand/photos/<sport>/` with a README saying why each was or wasn't
+  used. A sport without a photo gets its How to Play scene drawn instead.
+- `formats/<type>.png`, 320 by 200: each way to play's How to Play picture.
+
+The drawn pictures come from the app's illustrations: `node scripts/render-email-images.mjs`
+from `clients/poolmaster` draws each one in Chromium and records a fingerprint of what it drew in
+`public/email/drawn.json`. A web app test fails when an illustration or its colours change and
+the file wasn't drawn again, or when a sport has neither a photo nor a drawing.
+
 ### Previewing Emails
 
 `npm run email:preview` renders every template with the examples in
 `tests/support/email-template-fixtures.ts` into `tmp/email-preview/` (HTML and plain text).
-Options:
+The examples' pictures load from QA, so a preview sent to a real inbox shows them. Options:
 
 - `-- --send` also sends each one to local Mailpit.
 - `-- --to you@example.com` sends each one to that address through the provider the
@@ -475,12 +502,15 @@ in the Commissioner updates category:
 
 - **Coming up soon** (`EVENT_COMING_UP`): an event of any sport league, released or still a
   draft, starts in 7 to 10 days. It gives the start, says when a draft event isn't open for
-  contests yet, names last year's winners of the league's own contests on the event's previous
-  edition (same series, the year before), and links to the league's contests page.
+  contests yet, shows the default contest setups offered on the event as tiles linking to the
+  league's contest types page, names last year's winners of the league's own contests on the
+  event's previous edition (same series, the year before), and links to the league's contests
+  page.
 - **Ready for contests** (`EVENT_READY_FOR_CONTESTS`): a released event starts within 7 days, at
   the later of its release and 7 days before it starts, and the league has no contest on it. It
-  gives the start, the field size and the default contest setups offered on the event, each
-  linking to Create contest started on it.
+  gives the default contest setups offered on the event as tiles in their sort order, each
+  opening Create contest with that setup and the event chosen (`?template=…&event=…`), last
+  year's winners as in C1, a link to the league's contest types page, and the field size.
 - **Your contest isn't open yet** (`CONTEST_NOT_OPEN`): a draft contest's picks close within 48
   hours. Not for a contest created in the last 6 hours. It goes to the contest's league's
   commissioners and links to the contest's commissioner page.
@@ -500,8 +530,8 @@ The same settings choose the delivery (`eventEmailDelivery`): `PER_EVENT`, C1 an
 **Coming up** (`EVENT_WEEKLY_DIGEST`, category Commissioner updates) on Monday from
 `weeklyDigestHour` US Eastern, every league at the same moment. It lists the events of the
 league's heard sport leagues starting in the next 14 days, under This week (the first 7 days)
-and Next week, with the same first-week rule for weeks: "Contest set up" when the league has a
-contest on it, "Ready for contests" with a Create contest link when released, "Not ready for
+and Next week, each beside a small crop of its sport's picture, with the same first-week rule for weeks: "Contest set up" when the league has a
+contest on it, "Ready for contests" with a Create contest link (the event chosen) when released, "Not ready for
 contests yet" while a draft. A league with nothing coming up gets no digest that week. It starts
 on the plan of `EMAIL_EVENT_COMING_UP`, which it replaces, so the Event emails page offers it
 only on that plan. The idempotency key (Monday's date, league, person) sends one a week.

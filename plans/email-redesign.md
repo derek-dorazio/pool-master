@@ -87,7 +87,7 @@ floodlit pitch) chosen once per sport, never per event. Derek chose photos (Q1);
 checked for logos, sponsor decals, car numbers and faces before it is used, and its source and
 licence are recorded beside the file.
 
-Photos chosen so far (Derek 2026-10-26, downloaded 2026-10-26), all from Pexels under its free
+Photos chosen (Derek sent them 2026-10-26; every sport now has one), all from Pexels under its free
 licence: commercial use and cropping allowed, no attribution required, but we must not suggest that
 a person or brand in a photo endorses us, and Pexels gives no model or property releases. That is
 why the logo and face check above is ours to do. Each is cropped to a wide band at build time:
@@ -97,6 +97,10 @@ why the logo and face check above is ours to do. Each is cropped to a wide band 
 | Golf | Edward Goeters, https://www.pexels.com/photo/5802951/ | A fairway, pond and green; no flag logo or signs; distant golfers are specks |
 | Stock car racing | Alfred GF, https://www.pexels.com/photo/11521138/ | A pack on the banking; sponsor decals unreadable at email size. A closer shot was turned down for its large car-maker and sponsor logos |
 | Horse racing | coldbeer, https://www.pexels.com/photo/20742501/ | No signage; jockeys' faces covered; generic saddle-cloth numbers |
+
+Football, basketball, hockey, baseball, soccer, tennis, cycling and running followed the same
+day. Each choice and every photo turned down, with the reason, is in `brand/photos/README.md`,
+where all of them are kept full size for later use.
 
 The other sports get theirs at build time under the same checks.
 
@@ -113,7 +117,7 @@ these emails should be part of that review.
   the environment's web host.
 - **Sport photos** are checked in already cropped, as JPG (`/email/sports/<sport>.jpg`), each with
   a short source note beside it (`<sport>.source.md`: photographer, Pexels link, licence, download
-  date). A sport with no photo yet shows its How to Play scene, rendered to PNG like the contest
+  date). A sport with no photo yet shows its How to Play scene, rendered to JPG like the contest
   type pictures, so no email ever goes out without a header.
 - **Contest type pictures** are rendered: a script draws each one from `illustrations.tsx` to a PNG
   at twice its size (`/email/formats/tiered.png`). A test fails when an illustration changes and
@@ -154,8 +158,9 @@ name was settled the same day.
    move too. **Settled (Derek 2026-10-26): the app and every email say "Primetime
    Commissioner".** The display name moves into one shared constant (thread "Rename app to
    Primetime Commissioner"), and the email build reads that constant rather than its own
-   `BRAND_NAME` copy. Derek also wants a secondary tagline along the lines of "the ultimate
-   office pool manager and other ... games"; its wording and where it sits are still open.
+   `BRAND_NAME` copy. **Tagline settled (Derek 2026-10-26 21:34Z):** "The ultimate office pool
+   manager and other game-day contests", shared from the same place, shown small under the name
+   in the brand bar.
 3. **What a tile click does.** Recommend it opens Create contest with the setup and event filled
    in, and the commissioner presses Create, as decided for event pages ("prefill, never
    create"). The alternative, creating the contest straight from the email, saves one press but
