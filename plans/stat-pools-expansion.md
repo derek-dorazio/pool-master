@@ -126,6 +126,13 @@ Answered by Derek on 2026-10-24.
   and each Final Four's semifinals and national championship, men's and women's (#992). The same team's players are
   in both leagues' fields; nothing in the model minds. Soccer's knockouts (#994) follow the same
   rule, so their rounds are split the same way when that ticket is designed.
+- **Q6. Every semifinal and final round. Decided (Derek 2026-10-26):** each league with a bracket
+  in a sport that has its composite gets Clutch Cards on its semifinal and final rounds, men's and
+  women's, pro and college. Tickets: #1043 NBA Conference Finals, #1044 WNBA Semifinals (with
+  #993), #1045 NHL Conference Finals, #1046 PWHL Semifinals and Walter Cup Final, #1047 men's and
+  women's Frozen Four, #1048 MLB League Championship Series, plus #992 for the Final Fours. Each is
+  data only. Earlier rounds are deferred (#1049), best after the live provider. College baseball
+  and softball have no leagues on the site yet, so they are not included.
 
 ---
 
