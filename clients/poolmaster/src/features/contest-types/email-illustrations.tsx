@@ -1,4 +1,4 @@
-import { SUPPORTED_SPORTS, SelectionType, emailFormatImagePath, emailSportImagePath } from '@poolmaster/shared/domain';
+import { SUPPORTED_SPORTS, SelectionType, emailFormatImagePath, sportHeaderImagePath } from '@poolmaster/shared/domain';
 import { renderToStaticMarkup } from 'react-dom/server';
 import themeCss from '@/styles/globals.css?raw';
 import { FormatIllustration, SportIllustration } from './illustrations';
@@ -10,7 +10,7 @@ import { FormatIllustration, SportIllustration } from './illustrations';
  * bundle: only that script and its test load it.
  */
 export interface EmailIllustration {
-  /** Where it is served, from `emailSportImagePath` or `emailFormatImagePath`. */
+  /** Where it is served, from `sportHeaderImagePath` or `emailFormatImagePath`. */
   path: string;
   width: number;
   height: number;
@@ -40,7 +40,7 @@ export function emailIllustrations(): EmailIllustration[] {
     source: `<style>${colours}</style>${svg}`,
   });
   return [
-    ...SUPPORTED_SPORTS.map((sport) => draw(emailSportImagePath(sport), 1200, 480, renderToStaticMarkup(<SportIllustration decorative sport={sport} />))),
+    ...SUPPORTED_SPORTS.map((sport) => draw(sportHeaderImagePath(sport), 1200, 480, renderToStaticMarkup(<SportIllustration decorative sport={sport} />))),
     ...Object.values(SelectionType).map((selectionType) => draw(emailFormatImagePath(selectionType), 320, 200, renderToStaticMarkup(<FormatIllustration selectionType={selectionType} />))),
   ];
 }
