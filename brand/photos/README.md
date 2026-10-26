@@ -56,3 +56,6 @@ record its link before you use it.
 | Tennis | tennis/tennis-racket-clay-pexels-27152935.jpg | Omer Derinyar, /photo/27152935/ | Not usable as is: the racket maker's name on the frame |
 | Tennis | tennis/tennis-rackets-bw-pexels-34015711.jpg | Sylvester Abigail, /photo/34015711/ | Not usable: Wilson, Prince and Penn marks |
 | Tennis | tennis/tennis-stadium-crowd-pexels-171568.jpg | Raj Tatavarthy, /photo/171568/ | Not usable: a named tournament, sponsors, player names and faces |
+| Cycling | cycling/cycling-switchbacks-pexels-28607386.jpg | Jose Rodriguez Ortega, /photo/28607386/ | In use: cycling header |
+| Cycling | cycling/cycling-hill-climb-pexels-9899547.jpg | Lumiere Studio MX, /photo/9899547/ | Not usable: faces, race numbers and a club's name on the jersey |
+| Cycling | cycling/cycling-triathlon-pack-pexels-5687480.jpg | /photo/5687480/ | Not usable: faces and a sponsor's name on the kits |
