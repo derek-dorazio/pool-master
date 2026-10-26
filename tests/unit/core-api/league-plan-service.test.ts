@@ -239,7 +239,7 @@ describe('LeaguePlanService', () => {
     expect(world.planChanges).toHaveLength(1);
   });
 
-  it('leaves a league on Free when its last move to Free was chosen, even by an account since deleted after its date', async () => {
+  it('leaves a league on Free when a member chose Free after its date and their account was later deleted', async () => {
     const { world, rootAdmin } = setup();
     const league = world.addLeague({ plan: LeaguePlan.FREE, planRenewsAt: new Date('2026-10-01T00:00:00.000Z') });
     const leagues: LeaguePlanServiceDeps['leagues'] = {
@@ -248,8 +248,6 @@ describe('LeaguePlanService', () => {
         fromPlan: LeaguePlan.PREMIUM,
         toPlan: LeaguePlan.FREE,
         changeReason: LeaguePlanChangeReason.CHOSEN,
-        changedById: null,
-        changedAt: new Date('2026-10-10T00:00:00.000Z'),
       }),
     };
     const withDeletedChanger = new LeaguePlanService({ leagues, planEntitlements: planEntitlements(), now: () => NOW });

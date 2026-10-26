@@ -161,8 +161,6 @@ export interface LeaguePlanChange {
   fromPlan: LeaguePlan;
   toPlan: LeaguePlan;
   changeReason: LeaguePlanChangeReason;
-  changedById: string | null;
-  changedAt: Date;
 }
 
 export interface LeagueRepository {

@@ -88,7 +88,7 @@ export class PrismaLeagueRepository implements LeagueRepository {
 
   async findLastPlanChange(leagueId: string): Promise<LeaguePlanChange | null> {
     const row = await this.prisma.leaguePlanChange.findFirst({ where: { leagueId }, orderBy: { changedAt: 'desc' } });
-    return row ? { fromPlan: row.fromPlan, toPlan: row.toPlan, changeReason: row.changeReason, changedById: row.changedById, changedAt: row.changedAt } : null;
+    return row ? { fromPlan: row.fromPlan, toPlan: row.toPlan, changeReason: row.changeReason } : null;
   }
 
   async extendPlanRenewal(

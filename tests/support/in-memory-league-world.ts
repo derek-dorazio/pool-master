@@ -161,12 +161,6 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
   /** Every plan change, in the order made, as league_plan_changes keeps them. */
   const planChanges: InMemoryLeagueWorld['planChanges'] = [];
   const planRenewalChanges: InMemoryLeagueWorld['planRenewalChanges'] = [];
-  /** When each plan change was made, by its place in `planChanges`. */
-  const planChangeTimes: Date[] = [];
-  const logPlanChange = (planChange: InMemoryLeagueWorld['planChanges'][number], at: Date) => {
-    planChanges.push(planChange);
-    planChangeTimes.push(at);
-  };
   const memberships = new Table<LeagueMembership>('membership');
   const squads = new Table<Squad>('squad');
   const squadMemberships = new Table<SquadMembership>('squad-membership');
@@ -230,7 +224,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       if (leagues.get(leagueId)?.plan !== change.fromPlan) {
         return null;
       }
-      logPlanChange({ leagueId, ...change, changeReason: LeaguePlanChangeReason.CHOSEN }, new Date());
+      planChanges.push({ leagueId, ...change, changeReason: LeaguePlanChangeReason.CHOSEN });
       return leagues.patch(leagueId, { plan: change.toPlan });
     },
     extendPlanRenewal: async (leagueId, change) => {
@@ -243,7 +237,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
       }
       planRenewalChanges.push({ leagueId, fromRenewsAt: league.planRenewsAt, toRenewsAt: change.renewsAt, changedById: change.changedById });
       if (change.restorePlan !== undefined && league.plan === change.restorePlan.fromPlan) {
-        logPlanChange({ leagueId, ...change.restorePlan, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: change.changedById }, new Date());
+        planChanges.push({ leagueId, ...change.restorePlan, changeReason: LeaguePlanChangeReason.GIFT_RESTORED, changedById: change.changedById });
         return leagues.patch(leagueId, { planRenewsAt: change.renewsAt, plan: change.restorePlan.toPlan });
       }
       return leagues.patch(leagueId, { planRenewsAt: change.renewsAt });
@@ -258,8 +252,8 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     },
     findLastPlanChange: async (leagueId) => {
       for (let index = planChanges.length - 1; index >= 0; index -= 1) {
-        const { leagueId: changedLeagueId, ...change } = planChanges[index];
-        if (changedLeagueId === leagueId) return { ...change, changedAt: planChangeTimes[index] };
+        const { fromPlan, toPlan, changeReason, leagueId: changedLeagueId } = planChanges[index];
+        if (changedLeagueId === leagueId) return { fromPlan, toPlan, changeReason };
       }
       return null;
     },
@@ -269,7 +263,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     moveEndedPlansToFree: async (now) => leagues
       .where((row) => row.plan !== LeaguePlan.FREE && row.planRenewsAt <= now)
       .map((league) => {
-        logPlanChange({ leagueId: league.id, fromPlan: league.plan, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null }, now);
+        planChanges.push({ leagueId: league.id, fromPlan: league.plan, toPlan: LeaguePlan.FREE, changeReason: LeaguePlanChangeReason.PREVIEW_ENDED, changedById: null });
         leagues.patch(league.id, { plan: LeaguePlan.FREE });
         return { leagueId: league.id, fromPlan: league.plan };
       }),
