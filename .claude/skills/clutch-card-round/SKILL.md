@@ -121,11 +121,12 @@ event's Results page.
 ### Step 7 — the round ends
 
 Completion runs on the clock, not on the last box score: the event completes, and its
-contests settle, at noon UTC the day after its end date, whatever is loaded by then. A series that ends
-early leaves its later games unplayed, and they score nothing for anyone; the event stays in
-progress until its end date, unless an admin completes it from the event's Manage page once
-the last box score is in. Open a PR for the data file, so next year's round starts from it, and add the round's
-sources to `docs/SPORT-DATA-SOURCES.md` if they changed.
+contests settle, at noon UTC the day after its end date, whatever is loaded by then. A series
+that ends early leaves its later games unplayed, and they score nothing for anyone; the event
+stays in progress until noon UTC the day after its end date, unless an admin completes it
+from the event's Manage page once the last box score is in. Open a PR for the data file, so
+next year's round starts from it, and add the round's sources to `docs/SPORT-DATA-SOURCES.md`
+if they changed.
 
 ## Where this goes wrong
 
