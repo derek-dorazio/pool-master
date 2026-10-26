@@ -335,8 +335,9 @@ landing page that ads, emails and shared links point at.
 4. **Words live in the web app.** A page's name, eyebrow, hook line, when picks close, the
    league named in its "not affiliated" footer, and each offer's card (contest type, one line,
    two facts, when it opens) are in `EVENT_PAGE_COPY`, keyed by sport and the page's stored
-   slug. A page without copy still renders, from its sport's How to Play line and its
-   templates' names, but ships with copy.
+   slug. A page without copy still renders, its name from the slug, its hook from its sport's
+   How to Play line and each card from the selection type's name and the template's
+   description, but a page ships with copy.
 5. **Real names on our pages, generic names in ads.** Our pages name the real event. Copy
    anywhere, ads included, never says "fantasy", "bet", "odds", "props", "win cash" or "prizes",
    and never shows league or team logos or player photos.

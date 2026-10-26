@@ -27,8 +27,9 @@ Write this table in the ticket, each open point a question with a recommendation
 
 Check each offer before writing anything:
 
-- The template exists, is active, and belongs to that sport league (or to no league). Find it in
-  the contest template reference migrations by its key.
+- The template exists, is active, and belongs to that sport league. Find it in the contest
+  template reference migrations by its key. The offers insert joins the template to its league,
+  so a template with no league seeds no offer.
 - The series name is exactly what the sport league's data files load its editions as. An offer
   on a series with no upcoming edition is simply not shown, so a typo fails silently.
 - A stat pool offer covers one round (`rules/ux-rules.md` §13 *Event Pages* item 3). An event
@@ -58,16 +59,20 @@ round, so a league or template the joins did not find (and so silently seeded no
 ## Step 4 — the copy
 
 Add the page to `EVENT_PAGE_COPY` in `clients/poolmaster/src/features/event-pages/event-page-copy.ts`,
-under its sport and slug, with every offer's card keyed by its template key. Follow
+under its sport and slug, with every offer's card keyed by its template key. Write the cards in
+the offers' `sort_order`: the preview image's chips follow the copy's order, so the image and
+the page then agree. Follow
 `rules/ux-rules.md` §13 *Event Pages* items 4 and 5 for what the words may say. Read the
 page on a local build with the API running to see the cards in order.
 
 ## Step 5 — the preview image
 
-From `clients/poolmaster`, run `node scripts/render-link-preview-images.mjs`. It draws every
-page's 1200 by 630 JPEG into `public/og/` from the copy. Open the new image and read it: name,
-hook and chips must fit without wrapping off the card. Keep it under about 300 KB. Commit it;
-`link-preview.test.ts` fails while a page with copy has none.
+From `clients/poolmaster`, run `node scripts/render-link-preview-images.mjs`. It redraws every
+page's 1200 by 630 JPEG into `public/og/` from the copy; commit only the new or changed page's.
+Open the image and read it: name, hook and chips must fit without wrapping off the card. The
+script loads its fonts from Google Fonts, and without them it draws in fallback fonts, so look
+before committing. Keep it under about 300 KB. `link-preview.test.ts` fails while a page with
+copy has none.
 
 ## Step 6 — gates, PR, QA
 
@@ -78,8 +83,9 @@ own; no Terraform apply is needed. Then check:
 curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport>/<slug> | grep og:title
 ```
 
-and paste the link into Slack or iMessage. The offers show only once their series has an
-upcoming edition on QA, which the `load-sport-data` skill puts there.
+and paste the link into Slack or iMessage. An offer shows only while its series has an edition
+on QA that is not over: load that series' test seed or its real schedule with the
+`load-sport-data` skill, then read the page.
 
 ## Traps
 
@@ -95,6 +101,6 @@ upcoming edition on QA, which the `load-sport-data` skill puts there.
   break main once both merge. Check the open PRs' migrations, and trial-merge main before merge.
 - **Testing a card in a chat that saw the link before.** Chat apps cache a link's card. Add
   `?t=1` to see the new one.
-- **Offers missing on QA.** A test seed carries results, so it has no upcoming edition; an
-  offer on a series with only last season's test data shows nothing. Load the real upcoming
-  schedule, or accept that the offer appears later.
+- **Offers missing on QA.** An offer is left out while its series has no edition that is not
+  over. A test seed's dates are moved forward when it loads, so loading the series' test seed
+  (or its real schedule) brings the offer back; an old load whose dates have passed does not.
