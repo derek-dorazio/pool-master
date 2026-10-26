@@ -20,13 +20,19 @@ import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
-import { AuthProvider, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, isKnownLocale, isKnownTimeZone, type User } from '@poolmaster/shared/domain';
 import { readJwtSecret } from '../../core/config';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
+
+/** What the signup form read from the browser (#1039); either may be missing. */
+export interface SignupDisplayPreferences {
+  timezone?: string;
+  locale?: string;
+}
 
 export interface TokenPair {
   accessToken: string;
@@ -76,7 +82,9 @@ export class AuthService {
   }
 
   /**
-   * Registers a new user with username/email/password and returns a token pair.
+   * Registers a new user with username/email/password and returns a token pair. The time zone
+   * and locale the signup form read from the browser are kept, when given; with none the member
+   * sees US Eastern and en-US.
    */
   async register(
     username: string,
@@ -84,9 +92,16 @@ export class AuthService {
     password: string,
     firstName: string,
     lastName: string,
+    preferences: SignupDisplayPreferences = {},
   ): Promise<{ user: User; tokens: TokenPair }> {
     const normalizedUsername = normalizeUsername(username);
     const normalizedEmail = normalizeEmail(email);
+    if (preferences.timezone !== undefined && !isKnownTimeZone(preferences.timezone)) {
+      throw new AuthError(`Unknown time zone: ${preferences.timezone}.`, 'TIME_ZONE_UNKNOWN', 400);
+    }
+    if (preferences.locale !== undefined && !isKnownLocale(preferences.locale)) {
+      throw new AuthError(`Unknown locale: ${preferences.locale}.`, 'LOCALE_UNKNOWN', 400);
+    }
     this.logger?.debug({
       action: 'authService.register.start',
       data: {
@@ -107,6 +122,8 @@ export class AuthService {
       isActive: true,
       isRootAdmin: false,
       authProvider: AuthProvider.EMAIL,
+      ...(preferences.timezone !== undefined && { timezone: preferences.timezone }),
+      ...(preferences.locale !== undefined && { locale: preferences.locale }),
     }, { passwordHash });
 
     const tokens = await this.issueTokens(user.id, user.email, user.isRootAdmin === true);

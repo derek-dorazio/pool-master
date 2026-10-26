@@ -15,9 +15,11 @@ import type {
   EmailSuppressionRepository,
 } from '@poolmaster/shared/db';
 import {
+  DEFAULT_DISPLAY_TIME_ZONE,
   EmailMessageStatus,
   EmailSkipReason,
   EmailTemplateKey,
+  isKnownTimeZone,
   isOptionalEmailCategory,
   type EmailMessage,
   type LeaguePlan,
@@ -42,7 +44,7 @@ export interface EmailRecipient {
   email: string;
   /** Their account, when they have one; an invite goes to an address with none yet. */
   userId?: string;
-  /** The recipient's IANA time zone, when they have one; dates are shown in UTC otherwise. */
+  /** The recipient's IANA time zone, when they have one; dates are shown in US Eastern otherwise. */
   timeZone?: string | null;
 }
 
@@ -103,8 +105,6 @@ export const RESERVED_LEAGUE_CODES: ReadonlySet<string> = new Set([
  */
 const RESERVED_TOP_LEVEL_DOMAINS = ['invalid', 'test', 'example', 'localhost'];
 const RESERVED_DOMAINS = ['example.com', 'example.net', 'example.org'];
-
-const DEFAULT_TIME_ZONE = 'UTC';
 
 const SKIP_LOG_MESSAGES: Record<EmailSkipReason, string> = {
   [EmailSkipReason.EMAIL_DISABLED]: 'Email is switched off in settings; skipped sending email',
@@ -296,21 +296,18 @@ export class EmailService {
   }
 
   /**
-   * The recipient's time zone, or UTC when they have none. A stored zone the runtime doesn't
-   * know is logged and shown as UTC rather than failing the email.
+   * The recipient's time zone, or US Eastern when they have none. A stored zone the runtime
+   * doesn't know (saved before signup and preferences checked zones) is logged and shown as US
+   * Eastern rather than failing the email.
    */
   private resolveTimeZone(timeZone: string | null | undefined, metadata: Parameters<typeof logRefs>[0]): string {
-    if (!timeZone) return DEFAULT_TIME_ZONE;
-    try {
-      new Intl.DateTimeFormat('en-US', { timeZone });
-      return timeZone;
-    } catch (err) {
-      this.options.logger?.warn({
-        action: 'email.send.unknownTimeZone',
-        data: { timeZone, ...logRefs(metadata), error: err instanceof Error ? err.message : String(err) },
-      }, 'Recipient time zone is unknown; showing dates in UTC');
-      return DEFAULT_TIME_ZONE;
-    }
+    if (!timeZone) return DEFAULT_DISPLAY_TIME_ZONE;
+    if (isKnownTimeZone(timeZone)) return timeZone;
+    this.options.logger?.warn({
+      action: 'email.send.unknownTimeZone',
+      data: { timeZone, ...logRefs(metadata) },
+    }, 'Recipient time zone is unknown; showing dates in US Eastern');
+    return DEFAULT_DISPLAY_TIME_ZONE;
   }
 
   /**

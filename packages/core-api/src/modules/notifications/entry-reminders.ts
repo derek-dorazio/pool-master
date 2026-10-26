@@ -217,6 +217,7 @@ export class EntryReminders implements DueNotifications {
           contestName: contest.name,
           eventName: sportEvent.name,
           closesAt: due.closesAt,
+          hoursBefore: due.hours,
           standing,
           contestUrl,
         },

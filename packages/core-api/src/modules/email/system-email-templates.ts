@@ -227,6 +227,11 @@ export interface ContestEntryReminderEmailData {
   eventName: string;
   /** When the event's picks, the draw's entries or the grid's boxes close. */
   closesAt: Date;
+  /**
+   * How long before closesAt this reminder goes (one of EMAIL_CONFIG.entryReminderHours). One
+   * sent less than a day ahead gives the closing time; one sent further ahead, the date only.
+   */
+  hoursBefore: number;
   standing: EntryReminderStanding;
   contestUrl: string;
 }
@@ -690,7 +695,7 @@ export interface SystemEmailTemplateDataByKey {
 
 /** What a renderer knows about the person it renders for, beyond the template's own data. */
 export interface EmailRenderContext {
-  /** IANA time zone dates are shown in: the recipient's, or UTC when they have none. */
+  /** IANA time zone dates are shown in: the recipient's, or US Eastern when they have none. */
   timeZone: string;
   /**
    * The recipient's "Stop these emails" page for this email's category (#844 slice 5), on an
@@ -1021,7 +1026,7 @@ function renderLeagueMemberInviteEmail(
   data: LeagueMemberInviteEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const expiresLine = formatDateTime(data.expiresAt, context.timeZone);
+  const expiresLine = formatOptionalDay(data.expiresAt, context.timeZone);
   const subject = `${data.inviterName} invited you to ${data.leagueName}`;
   const bodyBlocks = [
     paragraph(`${escapeHtml(data.inviterName)} invited you to join ${strong(data.leagueName)}.`),
@@ -1172,7 +1177,7 @@ function renderLeaguePlanPreviewEndingEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const when = data.daysLeft === 1 ? 'tomorrow' : `in ${String(data.daysLeft)} days`;
-  const lead = `${data.leagueName} was gifted Premium for its preview period. The preview period ends ${when}, on ${formatInstant(data.endsAt, context.timeZone)}.`;
+  const lead = `${data.leagueName} was gifted Premium for its preview period. The preview period ends ${when}, on ${formatDay(data.endsAt, context.timeZone)}.`;
   const limits = [
     ...(data.freeEntriesPerContest === null ? [] : [`up to ${data.freeEntriesPerContest.toLocaleString('en-US')} entries per contest`]),
     ...(data.freeSportsLeaguesPerYear === null ? [] : [`${data.freeSportsLeaguesPerYear.toLocaleString('en-US')} sports leagues a year`]),
@@ -1213,7 +1218,7 @@ function renderSquadOwnerInviteEmail(
   data: SquadOwnerInviteEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const expiresLine = formatDateTime(data.expiresAt, context.timeZone);
+  const expiresLine = formatOptionalDay(data.expiresAt, context.timeZone);
   const own = data.soleOwner ? 'own' : 'co-own';
   const intro = `${data.inviterName} invited you to ${own} ${data.squadName} in ${data.leagueName}.`;
   const shared = data.soleOwner ? [] : ['Co-owners share the squad: its entries, picks and results.'];
@@ -1297,7 +1302,7 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
               : [['Salary', `${formatDollars(receipt.budget.spent)} of ${formatDollars(receipt.budget.salaryCap)}`] as [string, string]]),
           ],
         }],
-        changeLine: `You can change your picks until ${formatInstant(receipt.changeUntil, timeZone)}.`,
+        changeLine: `You can change your picks until ${formatDay(receipt.changeUntil, timeZone)}.`,
       };
     case EntryReceiptKind.GAME_PICKS:
       return {
@@ -1316,16 +1321,16 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
           title: `${receipt.eventName} bracket`,
           rows: receipt.rounds.map((round): [string, string] => [round.name, round.picks.join(', ')]),
         }],
-        changeLine: `You can change your bracket until ${formatInstant(receipt.changeUntil, timeZone)}.`,
+        changeLine: `You can change your bracket until ${formatDay(receipt.changeUntil, timeZone)}.`,
       };
     case EntryReceiptKind.SURVIVOR:
       return {
         sections: [{
           title: `${receipt.eventName} ${receipt.picks.length === 1 ? 'pick' : 'picks'}`,
-          rows: receipt.picks.map((pick): [string, string] => [pick.team, `${pick.matchup}, ${formatInstant(pick.kickoff, timeZone)}`]),
+          rows: receipt.picks.map((pick): [string, string] => [pick.team, `${pick.matchup}, ${formatDay(pick.kickoff, timeZone)}`]),
         }],
         changeLine: receipt.picks.length === 1
-          ? `You can change your pick until ${formatInstant(receipt.picks[0].kickoff, timeZone)}.`
+          ? `You can change your pick until ${formatDay(receipt.picks[0].kickoff, timeZone)}.`
           : 'You can change each pick until its game starts.',
       };
     case EntryReceiptKind.QUICK_PICK:
@@ -1404,7 +1409,7 @@ function renderContestStartedSummaryEmail(
     ['League', data.leagueName],
     ['Event', data.event.name],
     ...(data.event.venue ? ([['Venue', data.event.venue]] as Array<[string, string]>) : []),
-    ['Starts', formatInstant(data.event.startsAt, context.timeZone)],
+    ['Starts', formatDay(data.event.startsAt, context.timeZone)],
     ...(data.eventFormat ? ([['Format', data.eventFormat]] as Array<[string, string]>) : []),
     ['Rules', data.rules],
     ['Entries', String(data.entryCount)],
@@ -1440,15 +1445,15 @@ function renderContestOpenedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `New contest: ${data.contestName}`;
-  const closesLine = formatInstant(data.closesAt, context.timeZone);
+  const closesLine = formatDay(data.closesAt, context.timeZone);
   const onlyEvent = data.events.length === 1 ? data.events[0] : undefined;
   const eventRows: Array<[string, string]> = onlyEvent
     ? [
       ['Event', onlyEvent.name],
       ...(onlyEvent.venue ? ([['Venue', onlyEvent.venue]] as Array<[string, string]>) : []),
-      ['Starts', formatInstant(onlyEvent.startsAt, context.timeZone)],
+      ['Starts', formatDay(onlyEvent.startsAt, context.timeZone)],
     ]
-    : [['Events', data.events.map((event) => `${event.name} (${formatInstant(event.startsAt, context.timeZone)})`).join(', ')]];
+    : [['Events', data.events.map((event) => `${event.name} (${formatDay(event.startsAt, context.timeZone)})`).join(', ')]];
   const rows: Array<[string, string]> = [
     ['League', data.leagueName],
     ...eventRows,
@@ -1530,11 +1535,19 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
   }
 }
 
+/**
+ * Emails sent less than this long before a moment give its time; ones sent further ahead give
+ * only its date (Derek, #1039).
+ */
+const SAME_DAY_HOURS = 24;
+
 function renderContestEntryReminderEmail(
   data: ContestEntryReminderEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const closesLine = formatInstant(data.closesAt, context.timeZone);
+  const closesLine = data.hoursBefore < SAME_DAY_HOURS
+    ? formatInstant(data.closesAt, context.timeZone)
+    : formatDay(data.closesAt, context.timeZone);
   const wording = entryReminderWording(data);
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
@@ -1692,14 +1705,14 @@ function renderContestStandingsEmail(
   const nextRows: Array<[string, string]> = [];
   if (moment.kind === StandingsMomentKind.EVENT && moment.nextEvent) {
     const next = moment.nextEvent;
-    nextRows.push(['Next event', `${next.name}, ${formatInstant(next.startsAt, context.timeZone)}`]);
-    if (next.picksCloseAt) nextRows.push(['Picks close', formatInstant(next.picksCloseAt, context.timeZone)]);
+    nextRows.push(['Next event', `${next.name}, ${formatDay(next.startsAt, context.timeZone)}`]);
+    if (next.picksCloseAt) nextRows.push(['Picks close', formatDay(next.picksCloseAt, context.timeZone)]);
   }
   if (moment.kind === StandingsMomentKind.BRACKET_ROUND && moment.nextRound) {
-    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatInstant(moment.nextRound.startsAt, context.timeZone)}`]);
+    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context.timeZone)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
-    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatInstant(moment.nextWeek.firstKickoffAt, context.timeZone)}`]);
+    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context.timeZone)}`]);
   }
   const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
   const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK
@@ -1834,7 +1847,7 @@ function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone:
         subject: `New date: ${data.eventName}`,
         title: 'Event moved',
         sentences: [
-          `${data.eventName} has moved from ${formatInstant(change.previousStart, timeZone)} to ${formatInstant(change.newStart, timeZone)}.`,
+          `${data.eventName} has moved from ${formatMove(change.previousStart, change.newStart, timeZone)}.`,
           ...(change.picksOpen ? [`Picks for ${data.contestName} stay open until the new start.`] : []),
         ],
       };
@@ -1878,7 +1891,7 @@ function renderEventComingUpEmail(
   data: EventComingUpEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const startsLine = formatInstant(data.startsAt, context.timeZone);
+  const startsLine = formatDay(data.startsAt, context.timeZone);
   const sentences = [
     `${data.eventName} starts ${startsLine}. Get ready to set up ${data.leagueName}'s contest.`,
     ...(data.released ? [] : ["It isn't open for contests yet. We'll email you when it is."]),
@@ -1913,7 +1926,7 @@ function renderEventReadyForContestsEmail(
 ): SystemEmailMessage {
   const intro = `${data.eventName} is ready. Set up ${data.leagueName}'s contest.`;
   const rows: Array<[string, string]> = [
-    ['Starts', formatInstant(data.startsAt, context.timeZone)],
+    ['Starts', formatDay(data.startsAt, context.timeZone)],
     ...(data.field === null ? [] : [['Field', data.field] as [string, string]]),
   ];
   const setupsTitle = 'Contest setups for it';
@@ -1952,7 +1965,7 @@ const DIGEST_EVENT_STATE_LINE: Record<DigestEventState, string> = {
 
 /** "Masters Tournament (PGA Tour), Apr 9, 2026, 8:00 AM EDT" */
 function digestEventHeading(event: WeeklyDigestEvent, timeZone: string): string {
-  return `${event.eventName} (${event.sportLeagueName}), ${formatInstant(event.startsAt, timeZone)}`;
+  return `${event.eventName} (${event.sportLeagueName}), ${formatDay(event.startsAt, timeZone)}`;
 }
 
 function digestEventBlock(event: WeeklyDigestEvent, timeZone: string): string {
@@ -2028,7 +2041,7 @@ function renderEventStillDraftEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const startsIn = data.daysLeft === 1 ? 'within a day' : `in ${data.daysLeft} days`;
-  const intro = `${data.eventName} starts ${startsIn} (${formatInstant(data.startsAt, context.timeZone)}) and is still a draft, so no league can set up a contest on it.`;
+  const intro = `${data.eventName} starts ${startsIn} (${formatDay(data.startsAt, context.timeZone)}) and is still a draft, so no league can set up a contest on it.`;
   const neededTitle = 'Still needed before release';
   const ready = 'It has everything it needs: release it.';
   return buildMessage(context, {
@@ -2354,15 +2367,36 @@ function strong(value: string): string {
   return `<strong style="color:${EMAIL_THEME.navy};">${escapeHtml(value)}</strong>`;
 }
 
-/** A date in the recipient's time zone, with the zone named, e.g. "Oct 22, 2026, 2:30 PM EDT". */
-function formatDateTime(value: Date | string | undefined, timeZone: string): string | null {
-  if (!value) return null;
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return formatInstant(date, timeZone);
+/** A day in the recipient's time zone, e.g. "Thu, Oct 22, 2026": an email sent days ahead needs no time. */
+function formatDay(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone,
+  }).format(date);
 }
 
-/** A date that is always present, formatted as formatDateTime does. */
+/** formatDay for a date that may be missing or unparseable. */
+function formatOptionalDay(value: Date | string | undefined, timeZone: string): string | null {
+  const date = parseDate(value);
+  return date ? formatDay(date, timeZone) : null;
+}
+
+/** A date in the recipient's time zone, with the zone named, e.g. "Oct 22, 2026, 2:30 PM EDT". */
+function formatDateTime(value: Date | string | undefined, timeZone: string): string | null {
+  const date = parseDate(value);
+  return date ? formatInstant(date, timeZone) : null;
+}
+
+function parseDate(value: Date | string | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+/** A moment that is always present, with its time: formatDateTime's format. */
 function formatInstant(date: Date, timeZone: string): string {
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
@@ -2373,6 +2407,13 @@ function formatInstant(date: Date, timeZone: string): string {
     timeZone,
     timeZoneName: 'short',
   }).format(date);
+}
+
+/** "<old> to <new>" for a moved start: the days, or the times when it moved within one day. */
+function formatMove(previousStart: Date, newStart: Date, timeZone: string): string {
+  const sameDay = formatDay(previousStart, timeZone) === formatDay(newStart, timeZone);
+  const format = sameDay ? formatInstant : formatDay;
+  return `${format(previousStart, timeZone)} to ${format(newStart, timeZone)}`;
 }
 
 function escapeHtml(value: string): string {

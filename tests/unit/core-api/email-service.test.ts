@@ -36,7 +36,8 @@ function invite(to: string, overrides: Partial<EmailSendInput<'LEAGUE_MEMBER_INV
       leagueName: LEAGUE.name,
       leagueCode: LEAGUE.leagueCode,
       inviteUrl: 'https://qa.example.com/invite/abc',
-      expiresAt: new Date('2026-10-29T18:30:00.000Z'),
+      // 10:30 PM on Thursday in US Eastern, already Friday in UTC and Tokyo.
+      expiresAt: new Date('2026-10-30T02:30:00.000Z'),
     },
     ...overrides,
   };
@@ -163,25 +164,25 @@ describe('email service: what it queues', () => {
     expect(outbox.rows[0]).toMatchObject({ fromName: 'Office League', fromAddress: 'noreply@qa.example.com' });
   });
 
-  it('shows dates in the recipient\'s time zone, named, and in UTC when they have none', async () => {
+  it('shows dates in the recipient\'s time zone, and in US Eastern when they have none', async () => {
     const outbox = inMemoryEmailMessages();
     const email = service({ outbox });
 
-    await email.send('LEAGUE_MEMBER_INVITE', invite('east@gmail.com', { to: { email: 'east@gmail.com', timeZone: 'America/New_York' } }));
+    await email.send('LEAGUE_MEMBER_INVITE', invite('tokyo@gmail.com', { to: { email: 'tokyo@gmail.com', timeZone: 'Asia/Tokyo' } }));
     await email.send('LEAGUE_MEMBER_INVITE', invite('nozone@gmail.com'));
 
-    expect(outbox.rows[0].textBody).toContain('Expires: Oct 29, 2026, 2:30 PM EDT');
-    expect(outbox.rows[1].textBody).toContain('Expires: Oct 29, 2026, 6:30 PM UTC');
+    expect(outbox.rows[0].textBody).toContain('Expires: Fri, Oct 30, 2026');
+    expect(outbox.rows[1].textBody).toContain('Expires: Thu, Oct 29, 2026');
   });
 
-  it('shows dates in UTC, and logs it, when the recipient\'s stored time zone is unknown', async () => {
+  it('shows dates in US Eastern, and logs it, when the recipient\'s stored time zone is unknown', async () => {
     const outbox = inMemoryEmailMessages();
     const logger = fakeLogger();
 
     await service({ outbox, logger })
       .send('LEAGUE_MEMBER_INVITE', invite('member@gmail.com', { to: { email: 'member@gmail.com', timeZone: 'Mars/Olympus' } }));
 
-    expect(outbox.rows[0].textBody).toContain('Expires: Oct 29, 2026, 6:30 PM UTC');
+    expect(outbox.rows[0].textBody).toContain('Expires: Thu, Oct 29, 2026');
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'email.send.unknownTimeZone' }),
       expect.any(String),

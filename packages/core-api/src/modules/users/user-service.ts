@@ -23,7 +23,7 @@ import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository, UserSearchFilters } from '@poolmaster/shared/db';
-import type { DateFormat, TimeFormat, User } from '@poolmaster/shared/domain';
+import { isKnownLocale, isKnownTimeZone, type DateFormat, type TimeFormat, type User } from '@poolmaster/shared/domain';
 import { UserOperationError } from './user-errors';
 import type { PasswordChangedNotifier } from '../auth/password-changed-notifier';
 import type { EmailChangeUndoService } from '../auth/email-change-undo-service';
@@ -159,6 +159,7 @@ export class UserService {
     updates: UserPreferencesUpdate,
   ): Promise<User> {
     const user = await this.requireWritableUser(actor, targetUserId);
+    assertKnownDisplayPreferences(updates);
 
     // `undefined` means "leave it"; `null` means "clear it". The port keeps that distinction,
     // so this passes the caller's intent straight through.
@@ -594,6 +595,21 @@ export class UserService {
     return credentials;
   }
 
+}
+
+/**
+ * A time zone or locale the runtime can't format with would only be ignored when the member's
+ * dates are shown (#1039), so it is refused here instead.
+ */
+function assertKnownDisplayPreferences(preferences: { timezone?: string | null; locale?: string | null }): void {
+  const timezone = preferences.timezone?.trim();
+  if (timezone && !isKnownTimeZone(timezone)) {
+    throw new UserOperationError(`Unknown time zone: ${timezone}.`, 'TIME_ZONE_UNKNOWN', 400);
+  }
+  const locale = preferences.locale?.trim();
+  if (locale && !isKnownLocale(locale)) {
+    throw new UserOperationError(`Unknown locale: ${locale}.`, 'LOCALE_UNKNOWN', 400);
+  }
 }
 
 function normalizeOptional(value: string | null): string | null {

@@ -568,12 +568,9 @@ enum PrismaProviderSyncRunStatus {
 //
 // - Every DateTime column uses @db.Timestamptz (PostgreSQL `timestamptz`).
 // - Application code MUST write UTC values — never local times.
-// - Timezone conversion is a **display concern** handled by the client using
-//   the user's persisted account timezone or the league default timezone when
-//   it exists.
-// - Resolution order: user timezone > league timezone.
-//
-// See plans/14-poolmaster-localisation-i18n.md for the full timezone strategy.
+// - Time zone conversion is a **display concern**: the app and emails show an
+//   instant in the user's saved time zone (captured from the browser at
+//   signup), or in US Eastern when they have none (#1039).
 // =============================================================================
 
 // =============================================================================

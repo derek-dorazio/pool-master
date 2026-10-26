@@ -235,7 +235,7 @@ describe('EntryReceipts', () => {
     expect(text).toContain('- Elite Eight: Duke, Houston');
     expect(text).not.toContain('First Round');
     expect(text.indexOf('Championship')).toBeLessThan(text.indexOf('Elite Eight'));
-    expect(text).toContain('You can change your bracket until Mar 19, 2026');
+    expect(text).toContain('You can change your bracket until Thu, Mar 19, 2026');
   });
 
   it('says a second-chance bracket locks at its starting round, not at the event start its untimed later games fall back to', async () => {
@@ -256,7 +256,7 @@ describe('EntryReceipts', () => {
       ],
     }));
 
-    expect(textTo(owners[0].id)).toContain('You can change your bracket until Mar 26, 2026, 11:10 PM UTC.');
+    expect(textTo(owners[0].id)).toContain('You can change your bracket until Thu, Mar 26, 2026.');
   });
 
   it('sends a survivor receipt with the team, its game and when the pick locks', async () => {
@@ -272,8 +272,8 @@ describe('EntryReceipts', () => {
 
     const text = textTo(owners[0].id);
     expect(text).toContain('Week 3 pick:');
-    expect(text).toContain('- Lions: Bears at Lions, Sep 13, 2026');
-    expect(text).toContain('You can change your pick until Sep 13, 2026');
+    expect(text).toContain('- Lions: Bears at Lions, Sun, Sep 13, 2026');
+    expect(text).toContain('You can change your pick until Sun, Sep 13, 2026');
     expect(text).not.toContain('Bills at Chiefs');
   });
 

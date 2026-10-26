@@ -19,6 +19,7 @@ export * from './cup-points';
 export * from './championship';
 export * from './league-plans';
 export * from './event-pages';
+export * from './time-zones';
 export { assertNever } from './assert-never';
 export {
   compareScores,

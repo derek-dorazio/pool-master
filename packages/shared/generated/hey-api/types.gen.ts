@@ -423,6 +423,14 @@ export type RegisterRequest = {
      * Last name captured for the account profile.
      */
     lastName: string;
+    /**
+     * IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN.
+     */
+    timezone?: string;
+    /**
+     * BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN.
+     */
+    locale?: string;
 };
 
 /**
@@ -3918,6 +3926,14 @@ export type RegisterWithTeamOwnerInvitationRequest = {
      * Last name captured for the account profile.
      */
     lastName: string;
+    /**
+     * IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN.
+     */
+    timezone?: string;
+    /**
+     * BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN.
+     */
+    locale?: string;
 };
 
 /**

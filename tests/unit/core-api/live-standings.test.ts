@@ -761,7 +761,7 @@ describe('LiveStandings.queueDue', () => {
     expect(toBen.textBody).toContain('Entry e2: your champion, Kansas, is out, with 120 points possible.');
     expect(toBen.textBody).not.toContain('Duke');
     expect(toBen.textBody).toContain('Standings, by points:\n1. Entry e1 (Ana\'s Squad), 30\n2. Entry e2 (Ben\'s Squad), yours, 20');
-    expect(toBen.textBody).toContain('Next round: Second Round, Mar 21, 2026, 4:10 PM UTC');
+    expect(toBen.textBody).toContain('Next round: Second Round, Sat, Mar 21, 2026');
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.textBody).toContain('Entry e1: your champion, Duke, is still alive, with 190 points possible.');
     expect(positions).toEqual(new Map([['e1', 1], ['e2', 2]]));

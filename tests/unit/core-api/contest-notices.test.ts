@@ -128,7 +128,7 @@ describe('ContestNotices', () => {
       expect(text).toContain('Venue: Augusta National');
       expect(text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
       expect(text).toContain('Entries: 2 entries per member');
-      expect(text).toContain('Picks close: Apr 9, 2026');
+      expect(text).toContain('Picks close: Thu, Apr 9, 2026');
       expect(text).toContain(`Enter contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
@@ -159,7 +159,7 @@ describe('ContestNotices', () => {
       await notices().contestOpened(contest.id);
 
       expect(textTo(nora.user.id)).toContain('Rules: Second-chance bracket from the Sweet 16');
-      expect(textTo(nora.user.id)).toContain('Picks close: Apr 9, 2026');
+      expect(textTo(nora.user.id)).toContain('Picks close: Thu, Apr 9, 2026');
     });
 
     it('sends nothing, and says why, for a contest whose rules are gone', async () => {
@@ -562,14 +562,14 @@ describe('ContestNotices', () => {
 
       expect(outbox.rows).toHaveLength(1);
       expect(outbox.rows[0]?.subject).toBe('New date: The Masters');
-      expect(textTo(commissioner.user.id)).toContain('The Masters has moved from Apr 9, 2026');
-      expect(textTo(commissioner.user.id)).toContain('to Apr 16, 2026');
+      expect(textTo(commissioner.user.id)).toContain('The Masters has moved from Thu, Apr 9, 2026');
+      expect(textTo(commissioner.user.id)).toContain('to Thu, Apr 16, 2026');
       expect(textTo(commissioner.user.id)).toContain('Picks for Masters Pick 6 stay open until the new start.');
 
       await notices().sportEventChanged({ ...masters, startDate: new Date('2026-04-23T11:40:00.000Z') }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: newStart });
 
       expect(outbox.rows).toHaveLength(2);
-      expect(outbox.rows[1]?.textBody).toContain('to Apr 23, 2026');
+      expect(outbox.rows[1]?.textBody).toContain('to Thu, Apr 23, 2026');
     });
   });
 });

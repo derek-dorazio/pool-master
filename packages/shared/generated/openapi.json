@@ -707,6 +707,24 @@
             "minLength": 1,
             "maxLength": 100,
             "description": "Last name captured for the account profile."
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "x-transform": [
+              "trim"
+            ],
+            "description": "IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN."
+          },
+          "locale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "x-transform": [
+              "trim"
+            ],
+            "description": "BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN."
           }
         },
         "required": [
@@ -7687,6 +7705,24 @@
             "minLength": 1,
             "maxLength": 100,
             "description": "Last name captured for the account profile."
+          },
+          "timezone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "x-transform": [
+              "trim"
+            ],
+            "description": "IANA time zone the member sees dates and times in, e.g. America/Chicago, filled from the browser. Omitted means US Eastern. A zone the server does not know is refused with 400 TIME_ZONE_UNKNOWN."
+          },
+          "locale": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10,
+            "x-transform": [
+              "trim"
+            ],
+            "description": "BCP 47 locale for formatting the member's dates, e.g. en-US, filled from the browser. Omitted means en-US. A malformed one is refused with 400 LOCALE_UNKNOWN."
           }
         },
         "required": [

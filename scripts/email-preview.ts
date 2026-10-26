@@ -12,7 +12,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { EmailCategory } from '@poolmaster/shared/domain';
+import { DEFAULT_DISPLAY_TIME_ZONE, EmailCategory } from '@poolmaster/shared/domain';
 import {
   EMAIL_TEMPLATES,
   SmtpMailDeliveryProvider,
@@ -25,7 +25,6 @@ import {
 import { EMAIL_TEMPLATE_FIXTURES } from '../tests/support/email-template-fixtures';
 
 const OUTPUT_DIR = path.resolve('tmp/email-preview');
-const PREVIEW_TIME_ZONE = 'America/New_York';
 const CATEGORIES = Object.values(EmailCategory);
 
 interface PreviewTarget {
@@ -93,7 +92,7 @@ async function main(): Promise<void> {
 
   for (const templateKey of templateKeys) {
     const message = renderSystemEmailTemplate(templateKey, EMAIL_TEMPLATE_FIXTURES[templateKey], {
-      timeZone: PREVIEW_TIME_ZONE,
+      timeZone: DEFAULT_DISPLAY_TIME_ZONE,
     });
     await writeFile(path.join(OUTPUT_DIR, `${templateKey}.html`), message.html);
     await writeFile(path.join(OUTPUT_DIR, `${templateKey}.txt`), `${message.subject}\n\n${message.text}\n`);
