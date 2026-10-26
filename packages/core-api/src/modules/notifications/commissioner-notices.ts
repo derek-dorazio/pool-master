@@ -40,8 +40,10 @@ import {
   contestTemplateEventTypeOf,
   countParticipants,
   eventSportDefinition,
+  formatSelectionTypeName,
   isTemplateOfferedOn,
   type Contest,
+  type ContestConfigTemplate,
   type League,
   type SportEvent,
   type User,
@@ -51,10 +53,14 @@ import {
   emailRecipientOf,
   buildContestAdminUrl,
   buildCreateContestUrl,
+  buildEmailFormatImageUrl,
+  buildEmailSportImageUrl,
   buildLeagueAdminContestsUrl,
+  buildLeagueContestTypesUrl,
   DigestEventState,
   formatUserName,
-  type ContestSetupLink,
+  type ContestSetupTile,
+  type EmailEventHeader,
   type EmailService,
   type PreviousContestWinners,
   type WeeklyDigestEvent,
@@ -92,7 +98,7 @@ export interface CommissionerNoticeDeps extends LeagueMemberDeps, Pick<ContestSu
   /** The default contest setups offered on an event. */
   templates: Pick<ContestConfigTemplateRepository, 'list'>;
   leagues: Pick<LeagueRepository, 'findById' | 'findAll'>;
-  /** The digest names each event's sport league. */
+  /** C1, C2 and the digest name each event's sport league. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   readConfig: () => Pick<EmailConfig, 'weeklyDigestHour'>;
   /** Last year's contests' winners. */
@@ -229,14 +235,18 @@ export class CommissionerNotices implements DueNotifications {
     const nextWeekFrom = now.getTime() + DIGEST_WEEK_MS;
     for (const league of due) {
       try {
-        const createContestUrl = buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode);
         const listed = upcoming
           .filter((sportEvent) => !league.mutedSportLeagueIds.includes(sportEvent.sportLeagueId))
           .map((sportEvent): WeeklyDigestEvent => {
-            const base = { eventName: sportEvent.name, sportLeagueName: sportLeagueNames.get(sportEvent.sportLeagueId) ?? '', startsAt: sportEvent.startDate };
+            const base = {
+              eventName: sportEvent.name,
+              sportLeagueName: sportLeagueNames.get(sportEvent.sportLeagueId) ?? '',
+              startsAt: sportEvent.startDate,
+              imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sport),
+            };
             if (contestLeagues.get(sportEvent.id)?.has(league.id)) return { ...base, state: DigestEventState.CONTEST_SET_UP };
             return sportEvent.status === SportEventStatus.SCHEDULED
-              ? { ...base, state: DigestEventState.READY, createContestUrl }
+              ? { ...base, state: DigestEventState.READY, createContestUrl: buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode, { sportEventId: sportEvent.id }) }
               : { ...base, state: DigestEventState.NOT_READY };
           });
         if (listed.length === 0) continue;
@@ -270,15 +280,22 @@ export class CommissionerNotices implements DueNotifications {
       ?.id;
   }
 
-  /** C1: the event's dates, and each league's contests on last year's edition with their winners. */
+  /** C1: the event, the ways to play it, and each league's contests on last year's edition with their winners. */
   private async sendComingUp(
     sportEvent: SportEvent,
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
   ): Promise<void> {
-    const lastYear = await this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id)));
+    const [event, defaults, lastYear] = await Promise.all([
+      this.eventHeader(sportEvent),
+      this.defaultSetupsOn(sportEvent),
+      this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
+    ]);
     for (const league of leagues) {
       const contestsUrl = buildLeagueAdminContestsUrl(this.deps.appBaseUrl, league.leagueCode);
+      // The event may not be released yet, so a tile explains the way to play rather than starting one.
+      const contestTypesUrl = buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
+      const setups = defaults.map((template) => this.setupTile(template, contestTypesUrl));
       for (const user of await commissionersOf(league.id)) {
         await this.deps.email.send('EVENT_COMING_UP', {
           to: emailRecipientOf(user),
@@ -287,15 +304,42 @@ export class CommissionerNotices implements DueNotifications {
           data: {
             userName: formatUserName(user),
             leagueName: league.name,
-            eventName: sportEvent.name,
-            startsAt: sportEvent.startDate,
+            event,
             released: sportEvent.status !== SportEventStatus.DRAFT,
+            setups,
             lastYear: lastYear.get(league.id) ?? [],
             contestsUrl,
           },
         });
       }
     }
+  }
+
+  /** The top of an email about `sportEvent`: its sport's picture, sport league, name and start. */
+  private async eventHeader(sportEvent: SportEvent): Promise<EmailEventHeader> {
+    return {
+      sportLeagueName: (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '',
+      eventName: sportEvent.name,
+      startsAt: sportEvent.startDate,
+      imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sport),
+    };
+  }
+
+  /** The default contest setups offered on `sportEvent`, in the order the contest types page shows them. */
+  private async defaultSetupsOn(sportEvent: SportEvent): Promise<ContestConfigTemplate[]> {
+    return (await this.deps.templates.list({ sport: sportEvent.sport, active: true }))
+      .filter((template) => template.isDefault && isTemplateOfferedOn(template, sportEvent))
+      .sort((left, right) => left.sortOrder - right.sortOrder);
+  }
+
+  private setupTile(template: ContestConfigTemplate, url: string): ContestSetupTile {
+    return {
+      formatName: formatSelectionTypeName(template.selectionType),
+      name: template.name,
+      description: template.description,
+      imageUrl: buildEmailFormatImageUrl(this.deps.appBaseUrl, template.selectionType),
+      url,
+    };
   }
 
   /** Each of `leagueIds`' settled one-event contests on the event's previous edition, with their winners. */
@@ -317,25 +361,26 @@ export class CommissionerNotices implements DueNotifications {
     return byLeague;
   }
 
-  /** C2: the start, the field and the default contest setups offered on the event. */
+  /** C2: the event, its field, the default contest setups offered on it and last year's winners. */
   private async sendReadyForContests(
     sportEvent: SportEvent,
     leagues: League[],
     commissionersOf: (leagueId: string) => Promise<User[]>,
   ): Promise<void> {
-    const [fieldSizes, templates] = await Promise.all([
+    const [fieldSizes, event, defaults, lastYear] = await Promise.all([
       this.deps.sportEvents.countParticipants([sportEvent.id]),
-      this.deps.templates.list({ sport: sportEvent.sport, active: true }),
+      this.eventHeader(sportEvent),
+      this.defaultSetupsOn(sportEvent),
+      this.lastYearWinners(sportEvent, new Set(leagues.map((league) => league.id))),
     ]);
     const fieldSize = fieldSizes.get(sportEvent.id) ?? 0;
     const field = fieldSize > 0 ? countParticipants(fieldSize, eventSportDefinition(sportEvent).vocabulary.participant) : null;
-    const defaults = templates.filter((template) => template.isDefault && isTemplateOfferedOn(template, sportEvent));
     for (const league of leagues) {
-      const setups: ContestSetupLink[] = defaults.map((template) => ({
-        name: template.name,
-        url: buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode, template.id),
-      }));
-      const createContestUrl = buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode);
+      const setups = defaults.map((template) => this.setupTile(
+        template,
+        buildCreateContestUrl(this.deps.appBaseUrl, league.leagueCode, { templateId: template.id, sportEventId: sportEvent.id }),
+      ));
+      const contestTypesUrl = buildLeagueContestTypesUrl(this.deps.appBaseUrl, league.leagueCode);
       for (const user of await commissionersOf(league.id)) {
         await this.deps.email.send('EVENT_READY_FOR_CONTESTS', {
           to: emailRecipientOf(user),
@@ -344,11 +389,11 @@ export class CommissionerNotices implements DueNotifications {
           data: {
             userName: formatUserName(user),
             leagueName: league.name,
-            eventName: sportEvent.name,
-            startsAt: sportEvent.startDate,
+            event,
             field,
             setups,
-            createContestUrl,
+            lastYear: lastYear.get(league.id) ?? [],
+            contestTypesUrl,
           },
         });
       }

@@ -106,7 +106,7 @@ describe('CommissionerNotices', () => {
   }
 
   describe('Coming up soon (C1)', () => {
-    it('tells every active commissioner of every active league once, each league its own, 10 days before an event that is still a draft', async () => {
+    it("tells every active commissioner of every active league once, each league its own, 10 days before an event that is still a draft, with the ways to play it linking to the league's contest types page", async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const family = world.addLeague({ name: 'Family League' });
       const closed = world.addLeague({ isActive: false });
@@ -116,6 +116,7 @@ describe('CommissionerNotices', () => {
       person(office.id, 'Morgan', LeagueRole.MEMBER);
       person(closed.id, 'Gone');
       event({ name: 'The Masters', status: SportEventStatus.DRAFT, startDate: inDays(9.5) });
+      templates = [template({ id: 'pick-6', name: 'Tiered: Pick 6' })];
 
       await notices().queueDue(NOW);
       await notices().queueDue(new Date(NOW.getTime() + HOUR));
@@ -125,8 +126,14 @@ describe('CommissionerNotices', () => {
       const text = textTo('EVENT_COMING_UP', casey.id, office);
       expect(text).toContain("The Masters starts Sat, Apr 11, 2026. Get ready to set up Office League's contest.");
       expect(text).toContain("It isn't open for contests yet. We'll email you when it is.");
-      expect(text).toContain("Your league's contests: https://app.example.test/league/OFFICE24/admin/contests");
+      expect(text).toContain('Coming up soon\nThe Masters (PGA Tour), Sat, Apr 11, 2026');
+      expect(text).toContain('Ways to play:\nTiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types');
+      expect(text).toContain('Plan your contest: https://app.example.test/league/OFFICE24/admin/contests');
+      expect(text).toContain('Not affiliated with PGA Tour or any sports league.');
       expect(text).not.toContain('Last year');
+      const html = outbox.rows.find((row) => row.templateKey === 'EVENT_COMING_UP' && row.leagueId === office.id)?.htmlBody ?? '';
+      expect(html).toContain('src="https://app.example.test/email/sports/golf.jpg"');
+      expect(html).toContain('src="https://app.example.test/email/formats/tiered.png"');
     });
 
     it("names last year's winners of each league's own one-event contests on the event's previous edition, not a season contest that included it, and nothing for a league that had none", async () => {
@@ -148,7 +155,7 @@ describe('CommissionerNotices', () => {
       await notices().queueDue(NOW);
 
       const text = textTo('EVENT_COMING_UP', casey.id, office);
-      expect(text).toContain('Last year:\nGreen Jackets won Masters Pick 6.\nAzalea and Magnolia tied for Masters Salary Cap.');
+      expect(text).toContain('Last year in Office League:\nGreen Jackets won Masters Pick 6.\nAzalea and Magnolia tied for Masters Salary Cap.');
       expect(text).not.toContain('Majors Pool');
       expect(text).not.toContain("It isn't open for contests yet");
       expect(textTo('EVENT_COMING_UP', jordan.id, family)).not.toContain('Last year');
@@ -191,7 +198,7 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Ready for contests (C2)', () => {
-    it('tells commissioners of leagues with no contest on a released event within 7 days, with its field and the default setups offered on it', async () => {
+    it('tells commissioners of leagues with no contest on a released event within 7 days, with its field and the default setups offered on it in their order, each opening Create contest with the setup and the event chosen', async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const busy = world.addLeague({ name: 'Busy League' });
       const casey = person(office.id, 'Casey');
@@ -199,8 +206,8 @@ describe('CommissionerNotices', () => {
       const masters = event({ name: 'The Masters', startDate: inDays(6) });
       world.addContest(busy.id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] });
       templates = [
-        template({ id: 'pick-6', name: 'Pick 6 Tiers' }),
-        template({ id: 'tour-salary', name: 'Tour Salary Cap', sportLeagueId: 'pga-tour' }),
+        template({ id: 'pick-6', name: 'Tiered: Pick 6', sortOrder: 2 }),
+        template({ id: 'tour-salary', name: 'Budget Pick: Tour Salary Cap', sportLeagueId: 'pga-tour', selectionType: SelectionType.BUDGET_PICK, sortOrder: 1 }),
         template({ id: 'variation', name: 'Pick 4 Tiers', isDefault: false }),
         template({ id: 'other-tour', name: 'LPGA Pick 6', sportLeagueId: 'lpga' }),
         template({ id: 'football', name: 'Weekly Pick\'em', sport: Sport.AMERICAN_FOOTBALL }),
@@ -212,16 +219,15 @@ describe('CommissionerNotices', () => {
       expect(sent('EVENT_READY_FOR_CONTESTS').map(({ userId }) => userId)).toEqual([casey.id]);
       expect(sent('EVENT_COMING_UP')).toEqual([]);
       const text = textTo('EVENT_READY_FOR_CONTESTS', casey.id, office);
-      expect(text).toContain("The Masters is ready. Set up Office League's contest.");
-      expect(text).toContain('Starts: Wed, Apr 8, 2026');
-      expect(text).toContain('Field: 40 golfers');
+      expect(text).toContain('Ready for contests\nThe Masters (PGA Tour), Wed, Apr 8, 2026');
+      expect(text).toContain("The Masters is ready. Pick a way to play and set up Office League's contest with it already chosen.");
       expect(text).toContain([
-        'Contest setups for it:',
-        'Pick 6 Tiers: https://app.example.test/league/OFFICE24/admin/contests/new?template=pick-6',
-        'Tour Salary Cap: https://app.example.test/league/OFFICE24/admin/contests/new?template=tour-salary',
+        'Choose a way to play:',
+        `Budget Pick: Tour Salary Cap: https://app.example.test/league/OFFICE24/admin/contests/new?template=tour-salary&event=${masters.id}`,
+        `Tiered: Pick 6: https://app.example.test/league/OFFICE24/admin/contests/new?template=pick-6&event=${masters.id}`,
         '',
       ].join('\n'));
-      expect(text).toContain('Create contest: https://app.example.test/league/OFFICE24/admin/contests/new');
+      expect(text).toContain('See every way to play: https://app.example.test/league/OFFICE24/contest-types\nField: 40 golfers');
     });
 
     it("tells no commissioner of a league that muted the event's sport league, coming up or ready, while a league that muted another one is told", async () => {
@@ -279,7 +285,7 @@ describe('CommissionerNotices', () => {
       const casey = person(office.id, 'Casey');
       person(office.id, 'Morgan', LeagueRole.MEMBER);
       const riley = person(perEvent.id, 'Riley');
-      event({ name: 'The Masters', startDate: mondayPlus(2) });
+      const masters = event({ name: 'The Masters', startDate: mondayPlus(2) });
       const heritage = event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
       world.addContest(office.id, { status: ContestStatus.DRAFT, sportEventIds: [heritage.id] });
       event({ name: 'Valero Texas Open', status: SportEventStatus.DRAFT, startDate: mondayPlus(9) });
@@ -299,7 +305,7 @@ describe('CommissionerNotices', () => {
         'This week:',
         '',
         'The Masters (PGA Tour), Wed, Apr 8, 2026',
-        'Ready for contests. Create contest: https://app.example.test/league/OFFICE24/admin/contests/new',
+        `Ready for contests. Create contest: https://app.example.test/league/OFFICE24/admin/contests/new?event=${masters.id}`,
         '',
         'RBC Heritage (PGA Tour), Fri, Apr 10, 2026',
         'Contest set up',
@@ -430,6 +436,8 @@ describe('CommissionerNotices', () => {
       sportLeagueId: null,
       eventType: null as ContestTemplateEventType | null,
       selectionType: SelectionType.TIERED,
+      description: 'Pick a golfer from each tier.',
+      sortOrder: 0,
       isDefault: true,
       active: true,
       ...overrides,
