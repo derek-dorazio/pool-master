@@ -62,13 +62,13 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      # The repo is public, so its logs are too: the address is set on this step alone and
-      # masked before anything runs, and the script never prints it.
+      # The repo is public, so its logs are too. The address is read from the event payload
+      # inside the script and masked before anything prints it: a step's env block and its
+      # script text are both echoed into the log before any mask applies.
       - name: Send the previews
         shell: bash
-        env:
-          PREVIEW_TO: ${{ inputs.to }}
         run: |
+          PREVIEW_TO=$(jq -r '.inputs.to' "$GITHUB_EVENT_PATH")
           echo "::add-mask::$PREVIEW_TO"
           npm run email:preview -- --to "$PREVIEW_TO" --category "$PREVIEW_CATEGORY" 2>&1 | tee preview.log
       - name: Summary
