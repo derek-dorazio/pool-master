@@ -3,7 +3,7 @@
  * web app. One copy, so every email names people and links to a contest the same way.
  */
 
-import { emailFormatImagePath, emailSportImagePath, sportPathSegment, type SelectionType, type Sport, type User } from '@poolmaster/shared/domain';
+import { emailFormatImagePath, sportHeaderImagePath, sportPathSegment, type SelectionType, type Sport, type User } from '@poolmaster/shared/domain';
 
 /** The reader's full name, else their username, else their address. */
 export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'username' | 'email'>): string {
@@ -80,7 +80,7 @@ export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: strin
 
 /** A sport's picture at the top of an email about one of its events. */
 export function buildEmailSportImageUrl(appBaseUrl: string, sport: Sport): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}${emailSportImagePath(sport)}`;
+  return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sport)}`;
 }
 
 /** A way to play's How to Play picture, on its contest type tile. */
