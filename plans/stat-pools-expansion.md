@@ -147,7 +147,8 @@ Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (
 Semifinals** and **CFP National Championship**; #992 built
 **Men's Final Four** (the semifinals) and **Men's National Championship** (display 60 and 70, after the
 NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 90 are left for
-the women's two leagues (#1052).
+the women's two leagues (#1052). #1043 built **NBA Conference Finals** (display 45, just before the
+NBA Finals): both conference finals series are one event, game N holding each series' Game N.
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

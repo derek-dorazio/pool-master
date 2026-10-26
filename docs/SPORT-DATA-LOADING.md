@@ -63,8 +63,8 @@ write.
   place an admin has filled with its winner is found by its bracket place and left alone.
 
 **Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
-sport league of players scored by the composite family (the World Series, NBA Finals, Stanley
-Cup Final, NFL Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's
+sport league of players scored by the composite family (the World Series, NBA Conference Finals,
+NBA Finals, Stanley Cup Final, NFL Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's
 Final Four and Men's National Championship leagues the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
 and its box score, one `lines` row per field player who played, with that player's count of each
@@ -314,7 +314,9 @@ hockey seeds do.
 
 Each championship stat pool league the migrations create has a test file of its last
 championship as played, with every game's real box score: `baseball-2025-world-series-test.json`
-(the Dodgers over the Blue Jays in seven), `basketball-2026-nba-finals-test.json` (the Knicks
+(the Dodgers over the Blue Jays in seven), `basketball-2026-nba-conference-finals-test.json`
+(both 2026 conference finals as one event, game N holding each series' Game N: the Spurs over the
+Thunder in seven, the Knicks over the Cavaliers in four), `basketball-2026-nba-finals-test.json` (the Knicks
 over the Spurs in five), `hockey-2026-stanley-cup-final-test.json` (Carolina over Vegas in six)
 and `american-football-2026-nfl-championships-test.json` (the 2025 season's Conference
 Championship weekend and Super Bowl LX, one game each) and

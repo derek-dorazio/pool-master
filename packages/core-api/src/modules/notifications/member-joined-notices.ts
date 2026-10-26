@@ -18,6 +18,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueMembershipRepository, LeagueRepository, SquadMembershipRepository, SquadRepository } from '@poolmaster/shared/db';
 import { LeagueRole, type League, type LeagueMembership } from '@poolmaster/shared/domain';
 import {
+  emailRecipientOf,
   buildLeagueMembersAdminUrl,
   formatUserName,
   MemberJoinedTiming,
@@ -145,7 +146,7 @@ export class MemberJoinedNotices implements DueNotifications {
     const membersUrl = buildLeagueMembersAdminUrl(this.deps.appBaseUrl, league.leagueCode);
     for (const { user } of members.filter(({ role }) => role === LeagueRole.COMMISSIONER)) {
       await this.deps.email.send('LEAGUE_MEMBER_JOINED', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         data: {

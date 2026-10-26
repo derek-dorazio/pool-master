@@ -10,7 +10,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { EmailMessageStatus, EmailTemplateKey } from '@poolmaster/shared/domain';
-import type { EmailService } from '../email';
+import { emailRecipientOf, type EmailService } from '../email';
 
 export class PasswordChangedNotifier {
   constructor(
@@ -25,7 +25,7 @@ export class PasswordChangedNotifier {
       const user = await this.users.findById(userId);
       if (!user) return;
       const email = await this.email.send(EmailTemplateKey.PASSWORD_CHANGED, {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         // One email per change: the outbox records an email once per template, about and recipient.
         about: changedAt.toISOString(),
         data: {

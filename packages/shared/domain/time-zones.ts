@@ -6,6 +6,9 @@
 /** The zone a member with no saved time zone sees dates and times in. */
 export const DEFAULT_DISPLAY_TIME_ZONE = 'America/New_York';
 
+/** The locale a member with no saved locale sees dates and times written in. */
+export const DEFAULT_DISPLAY_LOCALE = 'en-US';
+
 /** Whether the runtime knows `timeZone` as an IANA zone, e.g. "America/Chicago". */
 export function isKnownTimeZone(timeZone: string): boolean {
   try {
