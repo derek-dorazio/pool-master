@@ -18,6 +18,7 @@ import type { LeagueRepository } from '@poolmaster/shared/db';
 import { LeaguePlan, LeagueRole, PlanCap, type League } from '@poolmaster/shared/domain';
 import type { EmailConfig } from '@poolmaster/shared/dto';
 import {
+  emailRecipientOf,
   buildLeaguePlanUrl,
   formatUserName,
   PLAN_PREVIEW_REMINDER_DAYS,
@@ -108,7 +109,7 @@ export class PlanPreviewNotices implements DueNotifications {
     const members = await activeLeagueMembersWithRoles(this.deps, league.id);
     for (const { user } of members.filter(({ role }) => role === LeagueRole.COMMISSIONER)) {
       await this.deps.email.send('LEAGUE_PLAN_PREVIEW_ENDING', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         data: {

@@ -389,6 +389,35 @@ describe('basketball-2026-mens-final-four-test.json', () => {
   });
 });
 
+describe('basketball-2026-nba-conference-finals-test.json', () => {
+  const file = readDataFile('basketball-2026-nba-conference-finals-test.json', true);
+  const [conferenceFinals] = file.sportLeagues;
+  const games = conferenceFinals.events[0].games ?? [];
+  const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2026 NBA Conference Finals, both series one event of seven games, the West going seven and the East four', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.BASKETBALL, 2026, ['NBA Conference Finals'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['NBA Conference Finals', '2026-05-18', '2026-05-30', 7, null]]);
+    expect(games.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+  });
+
+  it('fields all four conference finalists\' rosters, and only the West\'s two teams play Games 5 to 7', () => {
+    const teamOf = new Map(conferenceFinals.players.map((player) => [player.key, player.team]));
+    expect(new Set(teamOf.values())).toEqual(new Set(['New York Knicks', 'Cleveland Cavaliers', 'San Antonio Spurs', 'Oklahoma City Thunder']));
+    expect(new Set(games.slice(4).flatMap((game) => game.lines.map((line) => teamOf.get(line.player))))).toEqual(
+      new Set(['San Antonio Spurs', 'Oklahoma City Thunder']),
+    );
+  });
+
+  it('carries both series as played: Victor Wembanyama\'s 41 points and 24 rebounds in the West\'s Game 1, Jalen Brunson\'s 30 points in the East\'s Game 3', () => {
+    expect(lineIn(1, 'nba-victor-wembanyama')).toEqual({ POINTS: 41, REBOUNDS: 24, ASSISTS: 3 });
+    expect(lineIn(3, 'nba-jalen-brunson')).toEqual({ POINTS: 30, REBOUNDS: 3, ASSISTS: 6 });
+    expect(lineIn(7, 'nba-shai-gilgeous-alexander')).toEqual({ POINTS: 35, REBOUNDS: 4, ASSISTS: 9 });
+  });
+});
+
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);

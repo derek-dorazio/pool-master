@@ -62,6 +62,7 @@ import {
 } from '../contests/entry-window';
 import { loadSurvivorWeeks, survivorPicksByEntry, survivorWeeksOf, type SurvivorSeasonPick } from '../contests/survivor-standings';
 import {
+  emailRecipientOf,
   EntryReminderKind,
   buildContestUrl,
   formatUserName,
@@ -207,7 +208,7 @@ export class EntryReminders implements DueNotifications {
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     for (const { user, standing } of recipients) {
       await this.deps.email.send('CONTEST_ENTRY_REMINDER', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about: `${contest.id}:${sportEvent.id}:${due.hours}h`,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },

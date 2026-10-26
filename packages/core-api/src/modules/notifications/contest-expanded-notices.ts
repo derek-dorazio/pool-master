@@ -10,7 +10,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { LeagueRepository } from '@poolmaster/shared/db';
 import { LeagueRole, type Contest } from '@poolmaster/shared/domain';
-import { buildContestAdminUrl, formatUserName, type EmailService } from '../email';
+import { emailRecipientOf, buildContestAdminUrl, formatUserName, type EmailService } from '../email';
 import { activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 
 /** One expansion, as the email tells it. */
@@ -48,7 +48,7 @@ export class ContestExpandedNotices {
       const commissioners = members.filter(({ user, role }) => role === LeagueRole.COMMISSIONER && user.id !== expandedById);
       for (const { user } of commissioners) {
         await this.deps.email.send('CONTEST_EXPANDED', {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           about: `${contest.id}:${String(entriesPerContest)}`,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           data: {

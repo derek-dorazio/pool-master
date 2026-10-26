@@ -34,6 +34,7 @@ import {
   requireAnotherActiveCommissioner,
 } from '../leagues/member-lifecycle';
 import {
+  emailRecipientOf,
   buildLeagueHomeUrl,
   buildSquadOwnerInviteUrl,
   formatUserName,
@@ -305,7 +306,7 @@ export class SquadOwnerInvitationService {
       const soleOwner = owners.every((owner) => owner.userId === addedUser?.id);
       if (addedUser) {
         await this.email.send('SQUAD_OWNER_ADDED', {
-          to: { email: addedUser.email, userId: addedUser.id, timeZone: addedUser.timezone },
+          to: emailRecipientOf(addedUser),
           about: invitation.id,
           league: emailLeague,
           data: {
