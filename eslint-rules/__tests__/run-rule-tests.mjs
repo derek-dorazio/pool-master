@@ -196,6 +196,7 @@ ruleTester.run('no-arbitrary-type-sizes', noArbitraryTypeSizes, {
     'const a = <div className="text-xs tracking-eyebrow uppercase" />;',
     // An arbitrary colour in text-[…] is a colour, not a size.
     "const b = 'text-[color:var(--status-warning-text)]';",
+    "const b2 = 'text-[var(--status-warning-text)]';",
     // Other arbitrary values are not this rule's.
     "const c = 'aspect-[5/2] rounded-[inherit]';",
     // A comment is never a class.
@@ -208,6 +209,10 @@ ruleTester.run('no-arbitrary-type-sizes', noArbitraryTypeSizes, {
     },
     { code: "const b = cn('p-2', 'sm:text-[0.7rem]');", errors: [{ messageId: 'arbitraryTypeSize' }] },
     { code: 'const c = `tracking-[.06em] ${extra}`;', errors: [{ messageId: 'arbitraryTypeSize' }] },
+    // Every size form, not only a bare length.
+    { code: "const d = 'text-[length:12px]';", errors: [{ messageId: 'arbitraryTypeSize' }] },
+    { code: "const e = 'text-[clamp(1rem,2vw,2rem)]';", errors: [{ messageId: 'arbitraryTypeSize' }] },
+    { code: "const f = 'text-[2vw]';", errors: [{ messageId: 'arbitraryTypeSize' }] },
   ],
 });
 

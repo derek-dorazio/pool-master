@@ -5,10 +5,11 @@
  * size steps (`text-xs`), or a shared UI primitive such as `Eyebrow`.
  *
  * Like `no-raw-theme-colors`, it reads string literals, template-literal chunks and JSX text from
- * the AST, so a comment never matches. `text-[…]` is reported only with a length inside the
- * brackets; `text-[color:var(--x)]` is a colour, not a size.
+ * the AST, so a comment never matches. Every `text-[…]` is reported except a colour
+ * (`text-[color:…]`, `text-[var(--x)]`), so `text-[length:12px]`, `text-[clamp(…)]` and
+ * `text-[2vw]` are caught too.
  */
-const ARBITRARY_TYPE_SIZE = /(?<![\w-])(?:[\w-]+:)*(?:tracking-\[[^\]\s]+\]|text-\[\d*\.?\d+(?:px|rem|em)\])/g;
+const ARBITRARY_TYPE_SIZE = /(?<![\w-])(?:[\w-]+:)*(?:tracking-\[[^\]\s]+\]|text-\[(?!color:|var\()[^\]\s]+\])/g;
 
 export default {
   meta: {

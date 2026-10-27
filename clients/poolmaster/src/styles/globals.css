@@ -37,10 +37,10 @@
     --color-red-600: #5e0f17;
     --color-paper: #f5f5f2;
     --color-paper-warm: #fafaf7;
-    /* Greys warmed toward the paper: quiet fills and, on navy, quiet text. */
-    --color-paper-200: #eaeae6;
-    --color-paper-300: #e5e5e1;
-    --color-paper-500: #c8c8b7;
+    /* The brand's warm neutral steps (brand/theme/tokens.css): quiet fills and, on navy, quiet text. */
+    --color-neutral-150: #eaeae6;
+    --color-neutral-200: #e5e5e1;
+    --color-neutral-350: #c8c8b7;
     --color-ink: #0b0b0b;
     --color-ink-soft: #2b2b2b;
 
@@ -128,9 +128,9 @@
     --popover-foreground: var(--color-navy-600);
     --primary: var(--color-gold-400);
     --primary-foreground: var(--color-navy-600);
-    --secondary: var(--color-paper-300);
+    --secondary: var(--color-neutral-200);
     --secondary-foreground: var(--color-navy-600);
-    --muted: var(--color-paper-200);
+    --muted: var(--color-neutral-150);
     --muted-foreground: var(--text-muted);
     --accent: var(--color-gold-400);
     --accent-foreground: var(--color-navy-600);
@@ -199,7 +199,7 @@
     --secondary: var(--color-navy-550);
     --secondary-foreground: var(--color-paper);
     --muted: var(--color-navy-550);
-    --muted-foreground: var(--color-paper-500);
+    --muted-foreground: var(--color-neutral-350);
     --accent: var(--color-gold-400);
     --accent-foreground: var(--color-navy-800);
     --destructive: var(--color-red-400);
