@@ -6,6 +6,7 @@ import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { buildLeaguePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
+import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
 /**
  * Waits for auth state, sends a signed-out visitor to sign-in, and otherwise renders the
@@ -62,7 +63,7 @@ export function MemberRouteGuard() {
   if (auth.isLoading) {
     return (
       <div className="rounded-[2rem] border border-border bg-card p-8 text-sm text-muted-foreground">
-        Loading your Prime Time Commissioner session...
+        Loading your {PRODUCT_NAME} session...
       </div>
     );
   }

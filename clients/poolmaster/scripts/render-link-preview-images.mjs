@@ -9,7 +9,8 @@ import { loadAppModule } from './load-app-module.mjs';
  * The layout is the tile's (board 9): eyebrow, name, hook line, the ways to play.
  */
 const appRoot = path.resolve(import.meta.dirname, '..');
-const { eventPageLinkPreviews, LINK_PREVIEW_IMAGE_DIR, LINK_PREVIEW_SITE_NAME } = await loadAppModule('/src/features/event-pages/link-preview.ts');
+const { eventPageLinkPreviews, LINK_PREVIEW_IMAGE_DIR } = await loadAppModule('/src/features/event-pages/link-preview.ts');
+const { PRODUCT_NAME } = await loadAppModule('@poolmaster/shared/domain');
 
 function escapeHtml(text) {
   return text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -39,7 +40,7 @@ function tileHtml(preview) {
   <p class="eyebrow">${escapeHtml(preview.eyebrow)}</p>
   <h1>${escapeHtml(preview.title)}</h1>
   <p class="hook">${escapeHtml(preview.description)}</p>
-  <div class="foot"><div class="chips">${chips}</div><p class="brand">${escapeHtml(LINK_PREVIEW_SITE_NAME)}</p></div>
+  <div class="foot"><div class="chips">${chips}</div><p class="brand">${escapeHtml(PRODUCT_NAME)}</p></div>
 </div></body></html>`;
 }
 

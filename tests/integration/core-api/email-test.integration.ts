@@ -52,7 +52,7 @@ describe('the root admin test email', () => {
     expect(response.statusCode).toBe(200);
     expect(expectMatchesSchema(EmailTestResponseSchema, response.json())).toEqual({ status: 'SENT', skipReason: null, error: null });
     const [mail] = mailTo(address);
-    expect(mail.subject).toMatch(/^Prime Time Commissioner test email \(/);
+    expect(mail.subject).toMatch(/^Primetime Commissioner test email \(/);
     expect(mail.text).toContain('Testing Admin sent this test');
   });
 

@@ -121,7 +121,7 @@ describe('ContestExpansionService', () => {
     await service.grant(league.id, contest.id, 333, '  Dispute settled  ', 'admin-1');
 
     expect(writes[0]).toMatchObject({ entriesPerContest: 333, payerId: 'admin-1', kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0 });
-    expect(writes[0].describe(null)).toBe('Masters Pool: up to 333 entries, given free by Poolmaster: Dispute settled');
+    expect(writes[0].describe(null)).toBe('Masters Pool: up to 333 entries, given free by Primetime Commissioner: Dispute settled');
     expect(told).toEqual([{ contest, entriesPerContest: 333, expandedById: 'admin-1', granted: true }]);
   });
 

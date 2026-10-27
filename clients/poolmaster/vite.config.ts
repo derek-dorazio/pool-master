@@ -1,7 +1,20 @@
 import react from '@vitejs/plugin-react';
 import fs from 'fs';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import { PRODUCT_NAME } from '../../packages/shared/domain/brand';
+
+/** The browser tab reads the product name from the shared constant, like every other screen. */
+const PRODUCT_NAME_TOKEN = '__PRODUCT_NAME__';
+const productNameInIndexHtml: Plugin = {
+  name: 'product-name-in-index-html',
+  transformIndexHtml(html) {
+    if (!html.includes(PRODUCT_NAME_TOKEN)) {
+      throw new Error(`index.html has no ${PRODUCT_NAME_TOKEN} for the product name`);
+    }
+    return html.replaceAll(PRODUCT_NAME_TOKEN, PRODUCT_NAME);
+  },
+};
 
 export default defineConfig(() => {
   const assetBase = process.env.APP_ASSET_BASE ?? '/';
@@ -63,7 +76,7 @@ export default defineConfig(() => {
     define: {
       __POOLMASTER_VERSION_INFO_FALLBACK__: JSON.stringify(versionInfoFallback),
     },
-    plugins: [react()],
+    plugins: [react(), productNameInIndexHtml],
     resolve: {
       alias: [
         {

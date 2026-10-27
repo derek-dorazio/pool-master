@@ -280,9 +280,9 @@ describe('PASSWORD_RESET email', () => {
     }, { timeZone: 'UTC' });
 
     expect(message.templateKey).toBe('PASSWORD_RESET');
-    expect(message.subject).toBe('Reset your Prime Time Commissioner password');
+    expect(message.subject).toBe('Reset your Primetime Commissioner password');
     expect(message.text).toContain('Hi Riley,');
-    expect(message.text).toContain('your Prime Time Commissioner account (riley)');
+    expect(message.text).toContain('your Primetime Commissioner account (riley)');
     expect(message.text).toContain('Choose a new password: https://app.example.test/reset-password#token=abc');
     expect(message.text).toContain('This link works once and expires in 10 minutes.');
     expect(message.text).toContain("If you didn't ask for this, you can ignore this email. Your password won't change.");
@@ -313,7 +313,7 @@ describe('PASSWORD_CHANGED email', () => {
     }, { timeZone: 'UTC' });
 
     expect(message.templateKey).toBe('PASSWORD_CHANGED');
-    expect(message.subject).toBe('Your Prime Time Commissioner password was changed');
+    expect(message.subject).toBe('Your Primetime Commissioner password was changed');
     expect(message.text).toContain('Hi Riley,');
     expect(message.text).toContain('account (riley) was changed on Oct 22, 2026, 2:05 PM UTC.');
     expect(message.text).toContain("If this wasn't you, reset your password now");

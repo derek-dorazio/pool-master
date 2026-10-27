@@ -27,7 +27,7 @@ import type {
 
 const APP_BASE_URL = 'https://app.example.test';
 const DAY_MS = 24 * 60 * 60_000;
-const CHANGED_SUBJECT = 'Your Prime Time Commissioner email address was changed';
+const CHANGED_SUBJECT = 'Your Primetime Commissioner email address was changed';
 
 class RecordingMailDelivery implements MailDeliveryProvider {
   readonly providerName = 'smtp' as const;
@@ -110,7 +110,7 @@ describe('the email-changed email (#903 A5)', () => {
       .toEqual([['SENT', null, null, null]]);
   });
 
-  it('says a Prime Time Commissioner admin made the change when a root admin changed the address', async () => {
+  it('says a Primetime Commissioner admin made the change when a root admin changed the address', async () => {
     const { userService, mail } = build();
     const { user } = await createTestUser();
     const { user: admin } = await createTestUser({ isRootAdmin: true });
@@ -118,7 +118,7 @@ describe('the email-changed email (#903 A5)', () => {
 
     await changeEmail(userService, user.id, newEmail, { userId: admin.id, isRootAdmin: true });
 
-    expect(expectDefined(mail.to(user.email)[0]).text).toContain(`A Prime Time Commissioner admin changed the email address for your account (${user.username}) to ${newEmail}`);
+    expect(expectDefined(mail.to(user.email)[0]).text).toContain(`A Primetime Commissioner admin changed the email address for your account (${user.username}) to ${newEmail}`);
   });
 
   it('sends nothing when a profile save keeps the same address', async () => {
@@ -160,7 +160,7 @@ describe('undoing an email change (#903 A5)', () => {
     await expect(bcrypt.compare('Known-Pass1', expectDefined(passwordHash))).resolves.toBe(false);
     await resets.requestReset(user.email);
     await deliverQueuedEmail();
-    expect(mail.to(user.email).map((message) => message.subject)).toContain('Reset your Prime Time Commissioner password');
+    expect(mail.to(user.email).map((message) => message.subject)).toContain('Reset your Primetime Commissioner password');
   });
 
   it('cancels the open reset links, which went to the address being replaced', async () => {

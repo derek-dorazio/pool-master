@@ -18,6 +18,7 @@ import { buildLeagueAdminPath } from "@/features/leagues/league-routing";
 import { LeagueMenuBar } from "@/features/leagues/league-menu-bar";
 import { useLeaguesQuery } from "@/features/leagues/use-leagues-query";
 import { LeagueSelector } from "./league-selector";
+import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@poolmaster/shared/domain";
 
 /** The public How to Play page (#803): linked from the signed-out header and from every page's footer. */
 const HOW_TO_PLAY_PATH = "/how-to-play";
@@ -139,10 +140,10 @@ export function AppShell() {
           <div className="flex min-w-0 items-center gap-4 max-lg:contents">
             <div className="min-w-0 space-y-1">
               <span className="hidden rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary sm:inline-flex">
-                Ultimate Office Pool Manager
+                {PRODUCT_TAGLINE}
               </span>
               <h1 className="font-display text-xl font-black tracking-normal text-on-inverse sm:text-2xl">
-                Prime Time Commissioner
+                {PRODUCT_NAME}
               </h1>
             </div>
 

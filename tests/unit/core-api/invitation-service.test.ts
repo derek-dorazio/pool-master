@@ -218,8 +218,8 @@ describe('InvitationService', () => {
       const sentMessage = mailDelivery.send.mock.calls[0][0];
       expect(sentMessage.text).toContain('Join league: https://app.primetimecommissioner.com/invite/');
       expect(sentMessage.text).toContain('Message from User One: Join us for the office pool.');
-      expect(sentMessage.html).toContain('Prime Time Commissioner');
-      expect(sentMessage.html).toContain('Ultimate Office Pool Manager');
+      expect(sentMessage.html).toContain('Primetime Commissioner');
+      expect(sentMessage.html).toContain('The ultimate office pool manager and other game-day contests');
     });
 
     it('still creates the invitation when the transport refuses its email, leaving the email queued for a retry', async () => {
@@ -666,7 +666,7 @@ describe('InvitationService', () => {
       expect(sentMessage.text).toContain('League code: MATHWORKS');
       expect(sentMessage.text).toContain("Playing as: User One");
       expect(sentMessage.text).toContain('Open league: https://app.primetimecommissioner.com/league/MATHWORKS');
-      expect(sentMessage.html).toContain('Prime Time Commissioner');
+      expect(sentMessage.html).toContain('Primetime Commissioner');
     });
 
     it('pool-master-d9x does not send duplicate success email for already-active members', async () => {

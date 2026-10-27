@@ -208,8 +208,8 @@ describe('AppShell', () => {
     renderAppShell();
 
     await screen.findByTestId('mock-outlet');
-    expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
-    expect(screen.getByText('Ultimate Office Pool Manager')).toBeInTheDocument();
+    expect(screen.getByText('Primetime Commissioner')).toBeInTheDocument();
+    expect(screen.getByText('The ultimate office pool manager and other game-day contests')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Help' })).not.toBeInTheDocument();
     // #260 — the disabled notifications button is gone with the feature it stood in for.
     expect(screen.queryByTestId('app-shell-notifications')).not.toBeInTheDocument();
@@ -361,8 +361,8 @@ describe('AppShell', () => {
 
     renderAppShell(['/']);
 
-    expect(screen.getByText('Prime Time Commissioner')).toBeInTheDocument();
-    expect(screen.getByText('Ultimate Office Pool Manager')).toBeInTheDocument();
+    expect(screen.getByText('Primetime Commissioner')).toBeInTheDocument();
+    expect(screen.getByText('The ultimate office pool manager and other game-day contests')).toBeInTheDocument();
     expect(screen.queryByText(/Current route/i)).not.toBeInTheDocument();
     expect(listLeaguesMock).not.toHaveBeenCalled();
   });

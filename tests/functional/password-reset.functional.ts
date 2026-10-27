@@ -24,8 +24,8 @@ import { expectDefined } from '../support/expect-defined';
 // the email the server sent, set a new password with it, and prove the old session and the old
 // password are both dead. The request answers before the email is sent, so the inbox is polled.
 
-const RESET_SUBJECT = 'Reset your Prime Time Commissioner password';
-const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
+const RESET_SUBJECT = 'Reset your Primetime Commissioner password';
+const CHANGED_SUBJECT = 'Your Primetime Commissioner password was changed';
 
 afterEach(async () => {
   await cleanupFunctionalData();

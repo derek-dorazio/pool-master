@@ -142,7 +142,7 @@ describe('pool-master-rop.23: WelcomePage generated DTO fixtures', () => {
         body: expect.stringContaining("Once you create leagues"),
         testId: 'authenticated-landing-empty',
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- Vitest asymmetric-matcher sentinel, typed any by design.
-        title: expect.stringContaining('Welcome to Ultimate Office Pool Manager'),
+        title: expect.stringContaining('Welcome to Primetime Commissioner'),
       }),
     );
     fireEvent.click(screen.getByTestId('welcome-create-league'));

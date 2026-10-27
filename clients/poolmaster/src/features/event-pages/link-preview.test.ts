@@ -8,7 +8,7 @@ const INDEX_HTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Prime Time Commissioner</title>
+    <title>Primetime Commissioner</title>
     <script type="module" crossorigin src="/releases/abc/assets/index-1.js"></script>
   </head>
   <body><div id="root"></div></body>

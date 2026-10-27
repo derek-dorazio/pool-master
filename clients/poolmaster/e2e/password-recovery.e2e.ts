@@ -13,8 +13,8 @@ import { generatePassword, registerFreshUser } from './helpers/user-session';
  * against QA.
  */
 
-const RESET_SUBJECT = 'Reset your Prime Time Commissioner password';
-const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
+const RESET_SUBJECT = 'Reset your Primetime Commissioner password';
+const CHANGED_SUBJECT = 'Your Primetime Commissioner password was changed';
 
 test.use({ actionTimeout: 20_000 });
 

@@ -17,7 +17,7 @@ import { expectDefined } from '../support/expect-defined';
 // #903 A5 — an account's email changes, the old address gets an email with a link, and the link
 // puts the old address back and signs every session out, end to end through the generated SDK.
 
-const CHANGED_SUBJECT = 'Your Prime Time Commissioner email address was changed';
+const CHANGED_SUBJECT = 'Your Primetime Commissioner email address was changed';
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -65,7 +65,7 @@ describe('SDK Functional: undoing an email change (#903 A5)', () => {
       { status: 401, code: 'INVALID_CREDENTIALS' },
     );
     await requestPasswordReset({ client: getSdkClient(), body: { identifier: user.email } });
-    expect(await awaitSentMailTo(user.email, 1, 'Reset your Prime Time Commissioner password')).toHaveLength(1);
+    expect(await awaitSentMailTo(user.email, 1, 'Reset your Primetime Commissioner password')).toHaveLength(1);
   });
 
   it('refuses a used link with EMAIL_CHANGE_UNDO_LINK_INVALID in the error envelope', async () => {
