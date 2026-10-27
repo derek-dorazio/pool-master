@@ -115,8 +115,9 @@ same major as `upload-artifact`. It lists the jobs that the PR's CI cannot run (
 that run only on a push to `main`, and the workflows that run only on dispatch); the first
 `main` run after the merge is their test, and the run watches it (Step 5).
 
-A review finding that needs a change is not pushed to the Dependabot branch for a nit: a push
-stops Dependabot rebasing it (Step 3). Note it in a PR comment, or carry it to a follow-up.
+A review nit is not pushed to the Dependabot branch: a push stops Dependabot rebasing it
+(Step 3). Note it in a PR comment, or carry it to a follow-up. A finding that would break
+something once merged is fixed on the branch as in Step 3.
 
 ## Step 5 — merge
 
