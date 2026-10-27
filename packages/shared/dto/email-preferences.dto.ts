@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { EmailSuppressionReason, OptionalEmailCategory } from '../domain/enums';
 import { registerSchema } from './schema-registry';
 
-export const OptionalEmailCategorySchema = z.nativeEnum(OptionalEmailCategory).describe(
+export const OptionalEmailCategorySchema = z.enum(OptionalEmailCategory).describe(
   'A category of email a member can turn off: COMMISSIONER_UPDATES, CONTEST_UPDATES, LIVE_STANDINGS, '
   + 'RESULTS or RECEIPTS. Account and membership emails are always sent.',
 );
@@ -19,7 +19,7 @@ export type EmailPreferenceDto = z.infer<typeof EmailPreferenceDtoSchema>;
 
 export const EmailPreferencesResponseSchema = z.object({
   preferences: z.array(EmailPreferenceDtoSchema).describe('Every category a member can turn off, in a fixed order.'),
-  emailSuppression: z.nativeEnum(EmailSuppressionReason).nullable().describe(
+  emailSuppression: z.enum(EmailSuppressionReason).nullable().describe(
     'Why no email reaches the account\'s address any more, or null: BOUNCE when mail to it bounced for good, '
     + 'COMPLAINT when an email was marked as spam. Changing the account\'s email fixes it.',
   ),

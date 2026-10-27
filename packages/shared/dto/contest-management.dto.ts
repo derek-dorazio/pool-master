@@ -8,6 +8,7 @@ import {
   ContestFormat,
   ContestTemplateEventType,
   CupWeight,
+  extendRules,
   GolfCategoryKey,
   GolfCutRuleType,
   RandomDrawContestRulesSchema,
@@ -204,24 +205,24 @@ const persistedConfigurationFields = {
 };
 
 export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType', [
-  TieredContestRulesSchema.extend(persistedConfigurationFields),
-  BudgetContestConfigSchema.extend(persistedConfigurationFields),
-  RandomDrawContestRulesSchema.extend(persistedConfigurationFields),
-  PickEmContestRulesSchema.extend(persistedConfigurationFields),
-  BracketContestRulesSchema.extend(persistedConfigurationFields),
-  SquaresContestRulesSchema.extend(persistedConfigurationFields),
+  extendRules(TieredContestRulesSchema, persistedConfigurationFields),
+  extendRules(BudgetContestConfigSchema, persistedConfigurationFields),
+  extendRules(RandomDrawContestRulesSchema, persistedConfigurationFields),
+  extendRules(PickEmContestRulesSchema, persistedConfigurationFields),
+  extendRules(BracketContestRulesSchema, persistedConfigurationFields),
+  extendRules(SquaresContestRulesSchema, persistedConfigurationFields),
   // Last, as in every rules union: see the note above `ContestRulesSchema`.
-  SurvivorContestRulesSchema.extend(persistedConfigurationFields),
+  extendRules(SurvivorContestRulesSchema, persistedConfigurationFields),
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
 export const ContestConfigTemplateDtoSchema = z.object({
-  id: z.string().uuid().describe('Seeded contest template identifier.'),
+  id: z.uuid().describe('Seeded contest template identifier.'),
   sport: z.enum(sportValues).describe('Sport this template applies to.'),
-  sportLeagueId: z.string().uuid().nullable().describe(
+  sportLeagueId: z.uuid().nullable().describe(
     "Sport league this template is offered for: a league's own official preset. Null means the template is offered for every league of its sport.",
   ),
-  eventType: z.nativeEnum(ContestTemplateEventType).nullable().optional().describe('The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season\'s games), for a sport played as matches. Null: every event of its sport.'),
+  eventType: z.enum(ContestTemplateEventType).nullable().optional().describe('The kind of event the template is offered for: KNOCKOUT (the playoffs, a tournament bracket) or WEEK (a week of a season\'s games), for a sport played as matches. Null: every event of its sport.'),
   contestFormat: z.enum(contestFormatValues).describe('Contest type that may use the template.'),
   selectionType: z.enum(selectionTypeValues).describe('How an entry picks in a contest created from this template.'),
   templateKey: z.string().describe('Stable machine key for the template.'),
@@ -237,10 +238,10 @@ export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSc
 
 export const ListContestConfigTemplatesQuerySchema = z.object({
   sport: z.enum(sportValues).optional().describe('Only templates for this sport.'),
-  sportLeagueId: z.string().uuid().optional().describe(
+  sportLeagueId: z.uuid().optional().describe(
     "Templates for this sport league plus the sport-wide ones (null sportLeagueId); never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.",
   ),
-  eventType: z.nativeEnum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
+  eventType: z.enum(ContestTemplateEventType).optional().describe('Templates for this kind of event, plus the ones offered for every event of their sport. The create flow passes the chosen event\'s kind for a sport played as matches.'),
   active: z.boolean().optional().describe('Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones.'),
 }).describe('Filters for listing contest configuration templates. Every filter is optional.');
 export type ListContestConfigTemplatesQuery = z.infer<
@@ -319,10 +320,10 @@ export const ContestManagementDetailDtoSchema = z.object({
     ContestStatus.COMPLETED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
-  cupWeight: z.nativeEnum(CupWeight).describe('How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.'),
-  createdAt: z.string().datetime().describe('When the contest was created.'),
-  updatedAt: z.string().datetime().describe('When the contest was last updated.'),
-  templateId: z.string().uuid().nullable().optional().describe('Seeded template chosen when the contest was created, if any.'),
+  cupWeight: z.enum(CupWeight).describe('How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.'),
+  createdAt: z.iso.datetime().describe('When the contest was created.'),
+  updatedAt: z.iso.datetime().describe('When the contest was last updated.'),
+  templateId: z.uuid().nullable().optional().describe('Seeded template chosen when the contest was created, if any.'),
   templateVersion: z.number().int().nullable().optional().describe('Schema/template version captured when the contest was created, if any.'),
 }).describe('Golf-first contest-management detail returned to commissioner tooling.');
 export type ContestManagementDetailDto = z.infer<

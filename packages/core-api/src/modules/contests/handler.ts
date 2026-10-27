@@ -41,8 +41,8 @@ import {
 
 const UpdateContestBodySchema = zod.object({
   name: zod.string().min(1).max(100).optional(),
-  startsAt: zod.string().datetime().optional(),
-  endsAt: zod.string().datetime().optional(),
+  startsAt: zod.iso.datetime().optional(),
+  endsAt: zod.iso.datetime().optional(),
 });
 
 /** The signed-in reader of a contest read. Both reads sit behind a membership gate, so there is one. */

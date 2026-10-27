@@ -41,18 +41,18 @@ export const GrantContestExpansionRequestSchema = z.object({
 }).describe('A root admin gives a contest an expansion free, with a reason.');
 export type GrantContestExpansionRequest = z.infer<typeof GrantContestExpansionRequestSchema>;
 
-const PaidAtSchema = z.string().datetime().describe('When it was paid, or given.');
+const PaidAtSchema = z.iso.datetime().describe('When it was paid, or given.');
 const AmountCentsSchema = z.number().int().min(0).describe('In US cents; 0 for an expansion that was free.');
 const PaymentDescriptionSchema = z.string().describe('What it was for, as written when it was paid: "Masters Pool: up to 200 entries, free while payments are off".');
 
 export const LeaguePaymentSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   paidAt: PaidAtSchema,
   amountCents: AmountCentsSchema,
   description: PaymentDescriptionSchema,
-  contestId: z.string().uuid().nullable().describe('The contest it was for; null when that contest was deleted.'),
+  contestId: z.uuid().nullable().describe('The contest it was for; null when that contest was deleted.'),
   payer: z.object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     name: z.string().describe('Their name, for display.'),
   }).nullable().describe('Who paid; null for a Poolmaster grant or when that account was deleted.'),
 }).describe('One line of a league\'s payment history. No card data is ever kept.');
@@ -64,12 +64,12 @@ export const LeaguePaymentListResponseSchema = z.object({
 export type LeaguePaymentListResponse = z.infer<typeof LeaguePaymentListResponseSchema>;
 
 export const UserPaymentSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   paidAt: PaidAtSchema,
   amountCents: AmountCentsSchema,
   description: PaymentDescriptionSchema,
   league: z.object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     name: z.string(),
     leagueCode: z.string(),
   }).describe('The league it was paid in.'),

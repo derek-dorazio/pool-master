@@ -14,7 +14,7 @@ import {
   type SwitchableEmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
-const SportSchema = z.nativeEnum(Sport);
+const SportSchema = z.enum(Sport);
 
 export const IngestionFeedSchedulePolicySchema = z.object({
   enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
@@ -64,7 +64,7 @@ export const IngestionScheduleConfigOverrideSchema = z.object({
 export type IngestionScheduleConfigOverride = z.infer<typeof IngestionScheduleConfigOverrideSchema>;
 
 export const IngestionScheduleConfigSchema = IngestionScheduleConfigBodySchema.extend({
-  perSportOverrides: z.record(IngestionScheduleConfigOverrideSchema).describe(
+  perSportOverrides: z.record(z.string(), IngestionScheduleConfigOverrideSchema).describe(
     'Per-sport scheduling overrides applied on top of the global feed policies.',
   ),
 }).describe('Feed-aware ingestion scheduling configuration exposed to root-admin tooling.');
@@ -74,7 +74,7 @@ export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSche
 // Served by the platform module (platform/routes.ts). IngestionFeedSchedulePolicy is not registered directly: it appears only
 // nested inside IngestionScheduleConfig, and no route serves it on its own (check 2).
 /** The system emails core-api can send, one per template. */
-export const EmailTemplateKeySchema = z.nativeEnum(EmailTemplateKey).describe('A system email template.');
+export const EmailTemplateKeySchema = z.enum(EmailTemplateKey).describe('A system email template.');
 
 const templateSwitch = z.boolean().describe('Whether this email is sent.');
 
@@ -164,7 +164,7 @@ const PlanCapRowSchema = z.object({
 );
 export type PlanCapRow = z.infer<typeof PlanCapRowSchema>;
 
-const featureStartsAt = z.nativeEnum(LeaguePlan).describe('The first plan that has the feature; every plan above it has it too.');
+const featureStartsAt = z.enum(LeaguePlan).describe('The first plan that has the feature; every plan above it has it too.');
 
 /**
  * PLAN_CONFIG (#944): what each league plan allows. Two caps per plan, Platinum's included

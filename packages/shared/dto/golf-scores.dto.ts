@@ -20,7 +20,7 @@ export const GolfRoundScoreRowSchema = z.object({
   scoreToPar: z.number().int(),
   thru: z.number().int().min(0).max(18).optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored.'),
   status: GolfRoundStatusDtoSchema,
-  completedAt: z.string().datetime().optional(),
+  completedAt: z.iso.datetime().optional(),
 }).describe('One golfer\'s result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event\'s field.');
 export type GolfRoundScoreRow = z.infer<typeof GolfRoundScoreRowSchema>;
 
@@ -42,7 +42,7 @@ export const GolfRoundScoreValuesDtoSchema = z.object({
 export const GolfRoundScorePreviewRowDtoSchema = z.object({
   row: GolfRoundScoreRowSchema,
   resolution: UploadRowResolutionDtoSchema,
-  sportEventParticipantId: z.string().uuid().nullable().describe('The field row it resolved to; set only when MATCHED.'),
+  sportEventParticipantId: z.uuid().nullable().describe('The field row it resolved to; set only when MATCHED.'),
   participantName: z.string().nullable(),
   change: GolfRoundScoreChangeDtoSchema,
   before: GolfRoundScoreValuesDtoSchema.nullable().describe('What is stored now; null when nothing is.'),
@@ -66,7 +66,7 @@ export const UpdateGolfRoundScoreRequestSchema = z.object({
   scoreToPar: z.number().int().optional(),
   thru: z.number().int().min(0).max(18).nullable().optional().describe('Holes completed in the round. A round is 18 holes; playoff holes are never scored. Null clears it, for a golfer who has not started.'),
   status: GolfRoundStatusDtoSchema.optional(),
-  completedAt: z.string().datetime().nullable().optional().describe('Null clears it.'),
+  completedAt: z.iso.datetime().nullable().optional().describe('Null clears it.'),
 }).describe('A correction to one golfer\'s round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.');
 export type UpdateGolfRoundScoreRequest = z.infer<typeof UpdateGolfRoundScoreRequestSchema>;
 

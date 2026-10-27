@@ -30,10 +30,10 @@ export type AcceptTeamOwnerInvitationRequest = z.infer<
 >;
 
 export const TeamOwnerInvitationDtoSchema = z.object({
-  id: z.string().uuid(),
-  leagueId: z.string().uuid(),
-  squadId: z.string().uuid(),
-  email: z.string().email(),
+  id: z.uuid(),
+  leagueId: z.uuid(),
+  squadId: z.uuid(),
+  email: z.email(),
   inviteCode: z.string(),
   status: z.enum([
     SquadOwnerInvitationStatus.PENDING,
@@ -41,15 +41,15 @@ export const TeamOwnerInvitationDtoSchema = z.object({
     SquadOwnerInvitationStatus.EXPIRED,
     SquadOwnerInvitationStatus.REVOKED,
   ]),
-  invitedBy: z.string().uuid(),
-  acceptedBy: z.string().uuid().optional().nullable(),
+  invitedBy: z.uuid(),
+  acceptedBy: z.uuid().optional().nullable(),
   acceptedAt: DateTimeSchema.optional().nullable(),
   expiresAt: DateTimeSchema.optional().nullable(),
-  replacementForUserId: z.string().uuid().optional().nullable(),
+  replacementForUserId: z.uuid().optional().nullable(),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
   team: z.object({
-    id: z.string().uuid(),
+    id: z.uuid(),
     name: z.string(),
     iconKey: z.enum(TeamIconKeyValues),
   }),
@@ -78,12 +78,12 @@ export const TeamOwnerInvitationPreviewResponseSchema = z.object({
       SquadOwnerInvitationStatus.REVOKED,
     ]),
     league: z.object({
-      id: z.string().uuid(),
+      id: z.uuid(),
       leagueCode: z.string(),
       name: z.string(),
     }),
     team: z.object({
-      id: z.string().uuid(),
+      id: z.uuid(),
       name: z.string(),
       iconKey: z.enum(TeamIconKeyValues),
     }),

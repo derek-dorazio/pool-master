@@ -48,9 +48,7 @@ const resultStatusSchema = z.preprocess(
     const status = value.trim().toUpperCase().replace(/[\s-]+/g, '_');
     return RESULT_STATUS_ALIASES[status] ?? status;
   },
-  z.nativeEnum(RaceResultStatus, {
-    errorMap: () => ({ message: 'must be FINISHED, DNF, DQ or DNS' }),
-  }),
+  z.enum(RaceResultStatus, { error: 'must be FINISHED, DNF, DQ or DNS' }),
 );
 
 const uploadRowSchema = z

@@ -13,13 +13,13 @@ export const EmailTestRequestSchema = z.object({
 export type EmailTestRequest = z.infer<typeof EmailTestRequestSchema>;
 
 export const EmailTestResponseSchema = z.object({
-  status: z.nativeEnum(EmailMessageStatus).describe(
+  status: z.enum(EmailMessageStatus).describe(
     'Where the test email stands after a few seconds: SENT when the provider took it, SENDING when '
     + 'a sender is handing it over, SKIPPED when the settings or the address stopped it (see skipReason), '
     + 'QUEUED when the first try failed and a retry is due (see error) or no sender has reached it yet, '
     + 'or FAILED.',
   ),
-  skipReason: z.nativeEnum(EmailSkipReason).nullable().describe(
+  skipReason: z.enum(EmailSkipReason).nullable().describe(
     'Why it was skipped, or null: EMAIL_DISABLED when "Send system email" is off, '
     + 'NOT_ALLOWED_IN_ENVIRONMENT when the address is not in "Only send to" or is a reserved domain, '
     + 'SUPPRESSED when the address bounced or complained before.',

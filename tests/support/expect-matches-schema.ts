@@ -1,4 +1,4 @@
-import type { ZodType, ZodTypeDef } from 'zod';
+import type { ZodType } from 'zod';
 
 /**
  * `expectMatchesSchema(Schema, body)` — checks a live response body against its shared DTO
@@ -14,7 +14,7 @@ import type { ZodType, ZodTypeDef } from 'zod';
  *
  * `scripts/check-contract-verification.mjs` counts a call to this helper as the schema's check.
  */
-export function expectMatchesSchema<T>(schema: ZodType<T, ZodTypeDef, unknown>, body: unknown): T {
+export function expectMatchesSchema<T>(schema: ZodType<T>, body: unknown): T {
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
     const issues = parsed.error.issues

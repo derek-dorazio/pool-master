@@ -39,6 +39,7 @@ const manualFormSchema = z.object({
   autoLifecycleEnabled: z.boolean(),
 });
 
+type ManualFormInput = z.input<typeof manualFormSchema>;
 type ManualFormValues = z.infer<typeof manualFormSchema>;
 
 export function SportEventManualCreateForm({
@@ -59,7 +60,7 @@ export function SportEventManualCreateForm({
   const { event, participant, round } = definition.vocabulary;
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
 
-  const form = useForm<ManualFormValues>({
+  const form = useForm<ManualFormInput, unknown, ManualFormValues>({
     resolver: zodResolver(manualFormSchema),
     defaultValues: {
       name: '',

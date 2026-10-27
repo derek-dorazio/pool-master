@@ -41,6 +41,7 @@ const editFormSchema = z.object({
   }, `Par is a whole number from ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}, or blank`),
 });
 
+type EditFormInput = z.input<typeof editFormSchema>;
 type EditFormValues = z.infer<typeof editFormSchema>;
 
 function toDefaults(tournament: SportEventDto, timeZone: string): EditFormValues {
@@ -85,7 +86,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
   const { timeZone } = useDisplayPreferences();
 
-  const form = useForm<EditFormValues>({
+  const form = useForm<EditFormInput, unknown, EditFormValues>({
     resolver: zodResolver(editFormSchema),
     defaultValues: toDefaults(tournament, timeZone),
     mode: 'onChange',

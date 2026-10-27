@@ -6,16 +6,16 @@ import { registerSchema } from './schema-registry';
 
 // --- Primitives ---
 
-export const UuidSchema = z.string().uuid().describe('UUID string.');
-export const DateTimeSchema = z.string().datetime().describe('ISO 8601 datetime string.');
-export const JsonObjectSchema = z.record(z.unknown()).describe('Arbitrary JSON object payload.');
-export const StringRecordSchema = z.record(z.string()).describe('String-keyed record of string values.');
+export const UuidSchema = z.uuid().describe('UUID string.');
+export const DateTimeSchema = z.iso.datetime().describe('ISO 8601 datetime string.');
+export const JsonObjectSchema = z.record(z.string(), z.unknown()).describe('Arbitrary JSON object payload.');
+export const StringRecordSchema = z.record(z.string(), z.string()).describe('String-keyed record of string values.');
 /**
  * An email address a person typed. Stray spaces are trimmed and the address lowercased before it
  * is checked, so " Derek@X.com " is accepted as "derek@x.com" and can't make a near-duplicate
  * account (#500). Use it for every email a request carries.
  */
-export const EmailInputSchema = z.string().trim().toLowerCase().email();
+export const EmailInputSchema = z.string().trim().toLowerCase().check(z.email());
 /**
  * A new password a person chooses: 8 to 128 characters. One rule for register, change password
  * and the reset link, so the three cannot drift apart (#847).

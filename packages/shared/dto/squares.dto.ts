@@ -26,7 +26,7 @@ const gridIndex = z.number().int().min(0).max(SQUARES_GRID_SIZE - 1);
 export const SquaresBoxDtoSchema = z.object({
   rowIndex: gridIndex.describe('The row position, 0 at the top. Rows are the away team\'s.'),
   columnIndex: gridIndex.describe('The column position, 0 at the left. Columns are the home team\'s.'),
-  contestEntryId: z.string().uuid().describe('The entry holding the box.'),
+  contestEntryId: z.uuid().describe('The entry holding the box.'),
   entryName: z.string().describe('The entry\'s name, which is its squad\'s.'),
 }).describe('A claimed box of the grid. A box not listed is empty.');
 export type SquaresBoxDto = z.infer<typeof SquaresBoxDtoSchema>;
@@ -34,7 +34,7 @@ export type SquaresBoxDto = z.infer<typeof SquaresBoxDtoSchema>;
 export const SquaresDigitsDtoSchema = z.object({
   rowDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('The away team\'s last digit at each row position, top first.'),
   columnDigits: z.array(z.number().int().min(0).max(9)).length(SQUARES_GRID_SIZE).describe('The home team\'s last digit at each column position, left first.'),
-  drawnAt: z.string().datetime().describe('When the digits were drawn: claiming closed then.'),
+  drawnAt: z.iso.datetime().describe('When the digits were drawn: claiming closed then.'),
 }).describe('The digits drawn along the two sides of the grid.');
 export type SquaresDigitsDto = z.infer<typeof SquaresDigitsDtoSchema>;
 
@@ -44,13 +44,13 @@ export const SquaresWinnerDtoSchema = z.object({
   awayScore: z.number().int().min(0),
   rowIndex: gridIndex.describe('The winning box\'s row: where the away score\'s last digit is.'),
   columnIndex: gridIndex.describe('The winning box\'s column: where the home score\'s last digit is.'),
-  contestEntryId: z.string().uuid().nullable().describe('The entry holding the winning box; null when nobody claimed it ("No winner").'),
+  contestEntryId: z.uuid().nullable().describe('The entry holding the winning box; null when nobody claimed it ("No winner").'),
   entryName: z.string().nullable().describe('That entry\'s name; null with no entry.'),
 }).describe('One scoring moment\'s winning box.');
 export type SquaresWinnerDto = z.infer<typeof SquaresWinnerDtoSchema>;
 
 export const SquaresEntryDtoSchema = z.object({
-  contestEntryId: z.string().uuid(),
+  contestEntryId: z.uuid(),
   entryName: z.string(),
   boxCount: z.number().int().min(0).describe('How many boxes the entry holds.'),
   periodsWon: z.number().int().min(0).describe('How many scoring moments its boxes won so far.'),
@@ -59,10 +59,10 @@ export const SquaresEntryDtoSchema = z.object({
 export type SquaresEntryDto = z.infer<typeof SquaresEntryDtoSchema>;
 
 export const SquaresBoardResponseSchema = z.object({
-  contestId: z.string().uuid(),
-  contestStatus: z.nativeEnum(ContestStatus),
+  contestId: z.uuid(),
+  contestStatus: z.enum(ContestStatus),
   maxSquaresPerEntry: z.number().int().min(1).max(SQUARES_PER_ENTRY_MAX).describe('How many boxes one entry may claim.'),
-  periodLayout: z.nativeEnum(MatchPeriodLayout).describe('The periods the game is played in, its sport league\'s (QUARTERS, or HALVES for men\'s college basketball): a scoring moment ends each period, the last being the final score.'),
+  periodLayout: z.enum(MatchPeriodLayout).describe('The periods the game is played in, its sport league\'s (QUARTERS, or HALVES for men\'s college basketball): a scoring moment ends each period, the last being the final score.'),
   game: SportEventMatchDtoSchema.describe('The game the contest is played on, with its score at the end of each period and its final result.'),
   homeTeamName: z.string().nullable().describe('The home team, across the top; null until it is known.'),
   awayTeamName: z.string().nullable().describe('The away team, down the side; null until it is known.'),
@@ -76,7 +76,7 @@ export const SquaresBoardResponseSchema = z.object({
 export type SquaresBoardResponse = z.infer<typeof SquaresBoardResponseSchema>;
 
 export const ClaimSquaresBoxRequestSchema = z.object({
-  contestEntryId: z.string().uuid().describe('The entry the box is claimed for: the caller\'s own, or any entry when the caller is the commissioner.'),
+  contestEntryId: z.uuid().describe('The entry the box is claimed for: the caller\'s own, or any entry when the caller is the commissioner.'),
 }).describe('Claim one box of the grid.');
 export type ClaimSquaresBoxRequest = z.infer<typeof ClaimSquaresBoxRequestSchema>;
 

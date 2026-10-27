@@ -10,7 +10,7 @@ import Fastify from 'fastify';
 import { z } from 'zod';
 import { zodToJsonSchema } from '../../../packages/shared/dto/json-schema';
 
-const Stamp = z.string().datetime();
+const Stamp = z.iso.datetime();
 
 const RunSchema = z.object({
   startedAt: Stamp.nullable(),

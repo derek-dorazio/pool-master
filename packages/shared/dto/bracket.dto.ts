@@ -10,9 +10,9 @@ import { registerSchema } from './schema-registry';
 /** The most matches one bracket holds: a 128-place draw has 127. */
 export const BRACKET_MATCHES_MAX = 127;
 
-export const MatchStatusDtoSchema = z.nativeEnum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
-export const MatchSideDtoSchema = z.nativeEnum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
-export const MatchEndingDtoSchema = z.nativeEnum(MatchEnding).describe('How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.');
+export const MatchStatusDtoSchema = z.enum(MatchStatus).describe('Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played.');
+export const MatchSideDtoSchema = z.enum(MatchSide).describe('One side of a match. On a neutral site HOME is the upper line of the bracket.');
+export const MatchEndingDtoSchema = z.enum(MatchEnding).describe('How a match with a result ended: PLAYED to its end; RETIREMENT, the loser stopped part way; WALKOVER, the loser never started; DEFAULT, the loser was disqualified. The winner wins in full every way.');
 
 export const SportEventMatchPeriodScoreDtoSchema = z.object({
   periodNumber: z.number().int().min(1).describe('1 for the first period (quarter, in American football); never the last, whose score is the match\'s final result.'),
@@ -22,14 +22,14 @@ export const SportEventMatchPeriodScoreDtoSchema = z.object({
 export type SportEventMatchPeriodScoreDto = z.infer<typeof SportEventMatchPeriodScoreDtoSchema>;
 
 export const SportEventMatchDtoSchema = z.object({
-  id: z.string().uuid(),
-  sportEventId: z.string().uuid(),
+  id: z.uuid(),
+  sportEventId: z.uuid(),
   roundNumber: z.number().int().describe('The round the match is played in; its label comes from the sport definition\'s round labels.'),
   matchNumber: z.number().int().describe('Unique within the event: the bracket slot and the display order.'),
-  homeSportEventParticipantId: z.string().uuid().nullable().describe('The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.'),
-  awaySportEventParticipantId: z.string().uuid().nullable().describe('The field row on the away side; null until it is decided.'),
+  homeSportEventParticipantId: z.uuid().nullable().describe('The field row on the home side; null until it is decided, such as a later round waiting on its feeder match.'),
+  awaySportEventParticipantId: z.uuid().nullable().describe('The field row on the away side; null until it is decided.'),
   isNeutralSite: z.boolean().describe('True when neither side is at home: screens then say "vs" rather than "@".'),
-  scheduledDate: z.string().datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
+  scheduledDate: z.iso.datetime().nullable().describe('Tip-off or kickoff; null until it is announced.'),
   status: MatchStatusDtoSchema,
   winnerSide: MatchSideDtoSchema.nullable().describe('Who won; null until the match is COMPLETED. A COMPLETED match with none is a tie (#792), which only a game of a week, never a bracket match, can be.'),
   homeScore: z.number().int().nullable().describe('The home side\'s score; in a series, games won.'),
@@ -37,7 +37,7 @@ export const SportEventMatchDtoSchema = z.object({
   homeShootoutScore: z.number().int().nullable().describe('The home side\'s kicks scored in the shoot-out that settled a knockout match level after extra time; null with the away side\'s when there was none. Not part of the match score.'),
   awayShootoutScore: z.number().int().nullable().describe('The away side\'s kicks scored in the shoot-out; null with the home side\'s.'),
   ending: MatchEndingDtoSchema.describe('How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.'),
-  advancesToMatchId: z.string().uuid().nullable().describe('The match the winner moves on to; null for the final.'),
+  advancesToMatchId: z.uuid().nullable().describe('The match the winner moves on to; null for the final.'),
   advancesToSide: MatchSideDtoSchema.nullable().describe('The side of that match the winner fills; null for the final.'),
   regionLabel: z.string().nullable().describe('The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.'),
   homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5, +3.5 has it getting 3.5. Null until set. A pick\'em contest scored against the spread reads it.'),
@@ -58,10 +58,10 @@ export type SportEventMatchResponse = z.infer<typeof SportEventMatchResponseSche
 export const LoadSportEventBracketMatchSchema = z.object({
   matchNumber: z.number().int().min(1).describe('Unique within the bracket: the slot and the display order.'),
   roundNumber: z.number().int().min(1).describe('A round the event has.'),
-  homeSportEventParticipantId: z.string().uuid().nullable().describe('A field row of the event, or null when an earlier match\'s winner fills the side (or its team is not known yet).'),
-  awaySportEventParticipantId: z.string().uuid().nullable().describe('A field row of the event, or null as for the home side.'),
+  homeSportEventParticipantId: z.uuid().nullable().describe('A field row of the event, or null when an earlier match\'s winner fills the side (or its team is not known yet).'),
+  awaySportEventParticipantId: z.uuid().nullable().describe('A field row of the event, or null as for the home side.'),
   isNeutralSite: z.boolean(),
-  scheduledDate: z.string().datetime().nullable(),
+  scheduledDate: z.iso.datetime().nullable(),
   advancesTo: z.object({
     matchNumber: z.number().int().min(1).describe('A match of this bracket in a later round.'),
     side: MatchSideDtoSchema.describe('The side of that match the winner fills, which must not name a team.'),
@@ -75,22 +75,22 @@ export const LoadSportEventBracketRequestSchema = z.object({
 export type LoadSportEventBracketRequest = z.infer<typeof LoadSportEventBracketRequestSchema>;
 
 export const UpdateSportEventMatchRequestSchema = z.object({
-  homeSportEventParticipantId: z.string().uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
-  awaySportEventParticipantId: z.string().uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
+  homeSportEventParticipantId: z.uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
+  awaySportEventParticipantId: z.uuid().nullable().optional().describe('Omitted keeps it; null empties the side. Only until the event is released.'),
   isNeutralSite: z.boolean().optional(),
-  scheduledDate: z.string().datetime().nullable().optional().describe('Omitted keeps it; null clears it.'),
+  scheduledDate: z.iso.datetime().nullable().optional().describe('Omitted keeps it; null clears it.'),
   homeSpread: z.number().min(-99.5).max(99.5).multipleOf(0.5).nullable().optional()
     .describe('The points spread from the home team\'s side, in half points (-3.5: the home team favoured by 3.5). Omitted keeps it; null clears it. Once the event is released, only while nobody has picked the game.'),
 }).describe('One match edit. Its time and site can change at any point; its sides only until the event is released; its spread until someone picks the game.');
 export type UpdateSportEventMatchRequest = z.infer<typeof UpdateSportEventMatchRequestSchema>;
 
 export const FillPlayInSlotRequestSchema = z.object({
-  participantId: z.string().uuid().describe('The team that won the play-in game: an active participant of the event\'s sport not yet on the field.'),
+  participantId: z.uuid().describe('The team that won the play-in game: an active participant of the event\'s sport not yet on the field.'),
 }).describe('The play-in winner for a field row that stands for a play-in pairing ("Texas / Xavier"). The row then names the winner and keeps its seed, tier, price and picks; the pairing\'s participant is inactivated.');
 export type FillPlayInSlotRequest = z.infer<typeof FillPlayInSlotRequestSchema>;
 
 export const ReplaceWithdrawnParticipantRequestSchema = z.object({
-  participantId: z.string().uuid().describe('Who takes the place: an active participant of the event\'s sport not yet on the field, such as a tennis lucky loser.'),
+  participantId: z.uuid().describe('Who takes the place: an active participant of the event\'s sport not yet on the field, such as a tennis lucky loser.'),
 }).describe('A replacement for a field row that withdrew before its first match. The replacement gets its own field row in the withdrawn row\'s bracket place, unseeded, last in the event\'s last tier and at its lowest price. The withdrawn row stays on the field, inactive as WITHDRAWN, and every pick of it scores as a first-round loss.');
 export type ReplaceWithdrawnParticipantRequest = z.infer<typeof ReplaceWithdrawnParticipantRequestSchema>;
 
@@ -112,8 +112,8 @@ export type RecordSportEventMatchPeriodScoreRequest = z.infer<typeof RecordSport
 
 export const RoundMatchupDtoSchema = z.object({
   matchNumber: z.number().int().min(1).describe('A match of the round.'),
-  homeSportEventParticipantId: z.string().uuid().describe('The field row on the home side.'),
-  awaySportEventParticipantId: z.string().uuid().describe('The field row on the away side.'),
+  homeSportEventParticipantId: z.uuid().describe('The field row on the home side.'),
+  awaySportEventParticipantId: z.uuid().describe('The field row on the away side.'),
 }).describe('Both sides of one match of a reseeded round.');
 export type RoundMatchupDto = z.infer<typeof RoundMatchupDtoSchema>;
 

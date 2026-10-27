@@ -13,7 +13,7 @@ import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/stri
 
 describe('zodToJsonSchema string transforms', () => {
   it('records trim and lowercase on a string, in the order Zod applies them', () => {
-    const schema = zodToJsonSchema(z.object({ email: z.string().trim().toLowerCase().email() }));
+    const schema = zodToJsonSchema(z.object({ email: z.string().trim().toLowerCase().check(z.email()) }));
 
     expect(schema).toMatchObject({
       properties: { email: { format: 'email', [STRING_TRANSFORM_KEYWORD]: ['trim', 'toLowerCase'] } },
@@ -33,9 +33,9 @@ describe('Fastify validation with the string-transform plugin', () => {
     app.post('/echo', {
       schema: {
         body: zodToJsonSchema(z.object({
-          email: z.string().trim().toLowerCase().email(),
+          email: z.string().trim().toLowerCase().check(z.email()),
           username: z.string().trim().min(3).regex(/^\S+$/),
-          emails: z.array(z.string().trim().email()).optional(),
+          emails: z.array(z.string().trim().check(z.email())).optional(),
           note: z.string().trim().nullable().optional(),
         })),
         querystring: zodToJsonSchema(z.object({ search: z.string().trim().optional() })),

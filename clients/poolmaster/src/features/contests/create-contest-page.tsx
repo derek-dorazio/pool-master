@@ -151,7 +151,7 @@ const createContestFormSchema = z.object({
   maxSquaresPerEntry: z.string(),
   pickEmAgainstTheSpread: z.boolean(),
   survivorReuseTeams: z.boolean(),
-  pickEmMode: z.nativeEnum(PickEmMode),
+  pickEmMode: z.enum(PickEmMode),
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
   pointsTable: z.string(),

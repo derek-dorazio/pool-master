@@ -25,7 +25,7 @@ import {
 
 const championshipSettingsFormSchema = z.object({
   cupName: z.string().trim().min(1, 'Championship name is required').max(100, 'Championship name must be 100 characters or fewer'),
-  cupPointsScale: z.nativeEnum(CupPointsScale),
+  cupPointsScale: z.enum(CupPointsScale),
   customPoints: z.string(),
   hallOfLameVisible: z.boolean(),
 }).superRefine((values, context) => {
@@ -34,7 +34,7 @@ const championshipSettingsFormSchema = z.object({
   }
   const parsed = parseCustomPoints(values.customPoints);
   if (parsed.error !== null) {
-    context.addIssue({ code: z.ZodIssueCode.custom, message: parsed.error, path: ['customPoints'] });
+    context.addIssue({ code: 'custom', message: parsed.error, path: ['customPoints'] });
   }
 });
 

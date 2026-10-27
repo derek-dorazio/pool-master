@@ -16,8 +16,8 @@ type BillingSettingsGroup = Extract<SettingsGroup, { key: 'BILLING_CONFIG' }>;
 const MAX_BANDS = 10;
 
 const BandSchema = z.object({
-  entriesPerContest: z.number({ invalid_type_error: 'Enter a number of entries.' }).int('Whole entries only.').min(1).max(100_000),
-  dollars: z.number({ invalid_type_error: 'Enter a price.' }).min(0).max(10_000).multipleOf(0.01, 'Dollars and cents only.'),
+  entriesPerContest: z.number({ error: 'Enter a number of entries.' }).int('Whole entries only.').min(1).max(100_000),
+  dollars: z.number({ error: 'Enter a price.' }).min(0).max(10_000).multipleOf(0.01, 'Dollars and cents only.'),
 });
 
 /** The price lists in dollars, as the admin types them; saved in cents. */

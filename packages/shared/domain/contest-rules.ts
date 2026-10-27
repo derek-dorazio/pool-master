@@ -66,7 +66,7 @@ export type RandomDrawContestRules = z.infer<typeof RandomDrawContestRulesSchema
 
 export const PickEmContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.PICK_EM),
-  mode: z.nativeEnum(PickEmMode)
+  mode: z.enum(PickEmMode)
     .describe('STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.'),
   againstTheSpread: z.boolean()
     .describe('Picks are scored against each game\'s spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released.'),
@@ -99,6 +99,19 @@ export const SquaresContestRulesSchema = z.object({
 export type SquaresContestRules = z.infer<typeof SquaresContestRulesSchema>;
 
 /**
+ * A selection type's rules with more fields, keeping the rules' own description. Zod's
+ * `.extend()` builds a new schema, and a description set with `.describe()` stays on the old
+ * one, so the API document would lose the text that says what each rules shape is.
+ */
+export function extendRules<RulesShape extends z.ZodRawShape, Shape extends z.ZodRawShape>(
+  rules: z.ZodObject<RulesShape>,
+  shape: Shape,
+) {
+  const extended = rules.extend(shape);
+  return rules.description === undefined ? extended : extended.describe(rules.description);
+}
+
+/**
  * Every union of the selection types' rules lists survivor last. Survivor's rules require nothing
  * but `selectionType`, and the API validates a union as an `anyOf` with Fastify's
  * `removeAdditional`: a branch whose required fields all match goes on to strip every field it
@@ -118,7 +131,7 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
-export const BudgetContestConfigSchema = BudgetContestRulesSchema.extend({
+export const BudgetContestConfigSchema = extendRules(BudgetContestRulesSchema, {
   salaryCap: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
     .describe("Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."),
 });
@@ -151,14 +164,14 @@ const withEntryLimit = { maxEntriesPerSquad: maxEntriesPerSquadSchema, scoring: 
  * scoring settings are stored as the contest's participant scoring rule, not in its rules.
  */
 export const ContestRulesWithEntryLimitSchema = z.discriminatedUnion('selectionType', [
-  TieredContestRulesSchema.extend(withEntryLimit),
-  BudgetContestRulesSchema.extend(withEntryLimit),
-  RandomDrawContestRulesSchema.extend(withEntryLimit),
-  PickEmContestRulesSchema.extend(withEntryLimit),
-  BracketContestRulesSchema.extend(withEntryLimit),
-  SquaresContestRulesSchema.extend(withEntryLimit),
+  extendRules(TieredContestRulesSchema, withEntryLimit),
+  extendRules(BudgetContestRulesSchema, withEntryLimit),
+  extendRules(RandomDrawContestRulesSchema, withEntryLimit),
+  extendRules(PickEmContestRulesSchema, withEntryLimit),
+  extendRules(BracketContestRulesSchema, withEntryLimit),
+  extendRules(SquaresContestRulesSchema, withEntryLimit),
   // Last: see the note above `ContestRulesSchema`.
-  SurvivorContestRulesSchema.extend(withEntryLimit),
+  extendRules(SurvivorContestRulesSchema, withEntryLimit),
 ]);
 export type ContestRulesWithEntryLimit = z.infer<typeof ContestRulesWithEntryLimitSchema>;
 
