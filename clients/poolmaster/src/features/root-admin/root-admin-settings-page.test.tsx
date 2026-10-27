@@ -534,6 +534,21 @@ describe('RootAdminSettingsPage payments card', () => {
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
+  it('says a size or price is out of range, rather than asking for a number the admin did enter', async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-billing-PREMIUM-add'));
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-entries-0'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-price-0'), { target: { value: '20000' } });
+    fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
+
+    expect(await screen.findByText('At least 1 entry.')).toBeInTheDocument();
+    expect(screen.getByText('At most $10,000.')).toBeInTheDocument();
+    expect(screen.queryByText('Enter a number of entries.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enter a price.')).not.toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
   it('shows the server\'s reason when the sizes do not rise down a list', async () => {
     updateSettingsGroupMock.mockResolvedValue({
       error: { error: { code: 'VALIDATION_ERROR', message: 'Each Free size must be larger than the one above it.' } },

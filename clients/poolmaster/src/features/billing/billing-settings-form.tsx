@@ -16,8 +16,12 @@ type BillingSettingsGroup = Extract<SettingsGroup, { key: 'BILLING_CONFIG' }>;
 const MAX_BANDS = 10;
 
 const BandSchema = z.object({
-  entriesPerContest: z.number({ error: 'Enter a number of entries.' }).int('Whole entries only.').min(1).max(100_000),
-  dollars: z.number({ error: 'Enter a price.' }).min(0).max(10_000).multipleOf(0.01, 'Dollars and cents only.'),
+  // Zod 4 uses a schema's `error` for every issue without its own message, so each check
+  // names its own; the schema's message is left for a blank or non-numeric cell.
+  entriesPerContest: z.number({ error: 'Enter a number of entries.' }).int('Whole entries only.')
+    .min(1, 'At least 1 entry.').max(100_000, 'At most 100,000 entries.'),
+  dollars: z.number({ error: 'Enter a price.' }).min(0, 'Not below $0.').max(10_000, 'At most $10,000.')
+    .multipleOf(0.01, 'Dollars and cents only.'),
 });
 
 /** The price lists in dollars, as the admin types them; saved in cents. */
