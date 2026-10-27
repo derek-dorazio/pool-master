@@ -50,12 +50,18 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
     expect(screen.getByText("PT")).toBeInTheDocument();
   });
 
-  it("reads an entry box as the wall clock in the member's zone, whatever the computer's zone, on each side of a daylight saving change", () => {
+  it("reads an entry box as the wall clock in the member's zone, whatever the computer's zone, on each side of a daylight saving change and in the hours it repeats or skips", () => {
     expect(dateTimeLocalValueToIso("2026-04-30T20:00", "America/New_York")).toBe("2026-05-01T00:00:00.000Z");
     expect(dateTimeLocalValueToIso("2026-01-15T20:00", "America/New_York")).toBe("2026-01-16T01:00:00.000Z");
     expect(dateTimeLocalValueToIso("2026-04-30T20:00", "Asia/Tokyo")).toBe("2026-04-30T11:00:00.000Z");
     expect(toDateTimeLocalValue("2026-05-01T00:00:00.000Z", "America/New_York")).toBe("2026-04-30T20:00");
     expect(toDateTimeLocalValue(null, "America/New_York")).toBe("");
+    // An hour the clocks repeat is its first occurrence; one they skip moves forward by the gap.
+    expect(dateTimeLocalValueToIso("2026-11-01T01:30", "America/New_York")).toBe("2026-11-01T05:30:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-03-08T02:30", "America/New_York")).toBe("2026-03-08T07:30:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-03-29T01:30", "Europe/London")).toBe("2026-03-29T01:30:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-10-04T02:30", "Australia/Sydney")).toBe("2026-10-03T16:30:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-07-01T09:15", "Asia/Kathmandu")).toBe("2026-07-01T03:30:00.000Z");
     expect(dateTimeLocalValueToIso("", "America/New_York")).toBeUndefined();
     expect(dateTimeLocalValueToIso("not-a-date", "America/New_York")).toBeUndefined();
   });

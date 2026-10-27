@@ -47,6 +47,8 @@ export function normalizeDate(value: Date | string | null | undefined) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
 /** The wall clock in `timeZone` at `date`, field by field. */
@@ -101,13 +103,13 @@ export function toDateTimeLocalValue(value: Date | string | null | undefined, ti
 
 /**
  * A `datetime-local` value, read as the wall clock in the member's zone (#1061), as the ISO
- * instant the API takes; undefined when blank or not a date and time. The zone's offset is
- * taken at the instant itself, so a time on the far side of a daylight saving change converts
- * with that side's offset.
+ * instant the API takes; undefined when blank or not a date and time. A time a daylight saving
+ * change repeats is its first occurrence, and one the change skips moves forward by the gap
+ * (2:30 on a spring-forward night is 3:30), as the browser's own entry box does.
  */
 export function dateTimeLocalValueToIso(value: string | null | undefined, timeZone: string): string | undefined {
   const match = value ? WALL_CLOCK.exec(value) : null;
-  if (!match) {
+  if (!value || !match) {
     return undefined;
   }
   const [, year, month, day, hour, minute, second = "0"] = match;
@@ -115,8 +117,14 @@ export function dateTimeLocalValueToIso(value: string | null | undefined, timeZo
   if (Number.isNaN(wallAsUtc)) {
     return undefined;
   }
-  const firstGuess = wallAsUtc - zoneOffsetMs(new Date(wallAsUtc), timeZone);
-  return new Date(wallAsUtc - zoneOffsetMs(new Date(firstGuess), timeZone)).toISOString();
+  // The offsets a day either side are the zone's before and after any change near this time.
+  const before = new Date(wallAsUtc - zoneOffsetMs(new Date(wallAsUtc - DAY_MS), timeZone));
+  const after = new Date(wallAsUtc - zoneOffsetMs(new Date(wallAsUtc + DAY_MS), timeZone));
+  const wall = value.slice(0, 16);
+  const instant = toDateTimeLocalValue(before, timeZone) === wall || toDateTimeLocalValue(after, timeZone) !== wall
+    ? before
+    : after;
+  return instant.toISOString();
 }
 
 /** The zone's everyday name in the member's locale, e.g. "ET" or "Germany Time", for an entry box. */
