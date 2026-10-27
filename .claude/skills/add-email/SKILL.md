@@ -98,10 +98,35 @@ Patterns*). Wire new dependencies in the module's `wiring.ts`.
    at phone width (390 px) and desktop, and check long names do not wrap badly.
 2. Update `docs/EMAIL-DELIVERY.md` where it lists emails, times or categories, in the same PR
    (`rules/workflow-rules.md` §6 *Docs ride with code*).
-3. After the PR merges, the **Send email previews** workflow (Actions, manual, ref `main`)
-   sends every template to one address through QA's SES; pass `to` and a `category` or `ALL`.
-   Tell the user when it has run. The root admin's *Send a test email* on QA checks the sending
-   setup, not templates.
+3. After the PR merges and QA has deployed (about 20 minutes, so the pictures are there), run the
+   **Send email previews** workflow (Actions, manual, ref `main`), which sends every template to
+   one address through QA's SES. A thread can dispatch it through the GitHub tools' workflow
+   trigger, with inputs `to` and `category`. Send only the category the email is in; `ALL` sends
+   every template, and `ROOT_ADMIN` (two emails) is the cheap way to check the workflow itself
+   works. Tell the user when it has run. The root admin's *Send a test email* on QA checks the
+   sending setup, not templates.
+
+## When an email does not arrive
+
+Work down this list; each step is in `docs/EMAIL-DELIVERY.md` under the section named.
+
+1. **A preview from the workflow.** It sends straight through SES, so the app's switches and
+   "Only send to" do not apply. An AccessDenied on `identity/<recipient>` is the hand-made IAM
+   grant on the deploy user, not the code (*Previewing Emails*). In the SES sandbox the address
+   must also be verified.
+2. **A real send on QA.** Ask the user to press *Send a test email* on `/manage/settings`: its
+   answer names the skip reason or the provider's error (*Sending a Test Email*). Settings
+   changes take up to 30 seconds to reach every task.
+3. **The outbox row.** Every email is a row with a status: `SKIPPED` with its reason (switched
+   off, not on "Only send to", `SUPPRESSED`, the member's category switch), `FAILED` with its
+   last error after the retries, or `SENT` and then a delivery status (*Outbox*, *Bounces and
+   Complaints*).
+4. **No row at all.** The notice never queued it: check the logs for `email.send.skip` and for
+   the notice's own skip warning, then the idempotency key (a second send of the same key is
+   dropped by design).
+
+This container cannot reach QA or its logs, so ask the user for what the screen or the logs say
+rather than guessing.
 
 ## Traps
 
@@ -109,5 +134,5 @@ Patterns*). Wire new dependencies in the module's `wiring.ts`.
 - An email with no `leagueName` shows an empty right side of the brand bar; a unit test checks
   every league email names its league.
 - The previews' pictures load from QA, so a new sport's photo shows in previews only after the
-  deploy that carries it.
+  deploy that carries it. Adding or changing a picture is the `update-pictures` skill.
 - Curly apostrophes come from shared names such as "Pick’em"; match them in expectations.

@@ -111,7 +111,11 @@ announced. The envelope:
   `isPlayInPlace`; its game is not a match. The rules are `docs/SPORT-DATA-LOADING.md`
   *Loading sport data*.
 - Leave a game time out until it is announced, rather than writing a placeholder. A time the
-  file leaves out keeps the site's.
+  file leaves out keeps the site's. An event loaded with only its date sits at a noon UTC
+  placeholder; when its real start time is published, give the event its `startsAt` and load
+  the file again. The loader fills it in as a correction (`tellMembers: false`), so the leagues
+  get no "event moved" email, and the run reports it as "time filled in, leagues not told".
+  Any other start change is a move they are told about (`docs/SPORT-DATA-LOADING.md`).
 - Name the file for people: sport and season, plus a word for a narrower file
   (`golf-2027.json`, `horse-racing-2027.json`, `auto-racing-2027-formula-1.json`). Nothing
   reads the name.

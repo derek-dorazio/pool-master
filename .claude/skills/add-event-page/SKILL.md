@@ -37,7 +37,7 @@ Check each offer before writing anything:
   scene; a better photo is a separate change, with its source note beside it, and can show the
   old one for up to a day while caches expire.
 - A stat pool offer covers one round (`rules/ux-rules.md` §13 *Event Pages* item 3). An event
-  whose stat pool league does not exist yet needs that league first (the `add-sport` skill).
+  whose stat pool league does not exist yet needs that league first (the `add-clutch-card-league` skill).
 
 ## Step 2 — the migration
 
@@ -76,7 +76,7 @@ page's 1200 by 630 JPEG into `public/og/` from the copy; commit only the new or 
 Open the image and read it: name, hook and chips must fit without wrapping off the card. The
 script loads its fonts from Google Fonts, and without them it draws in fallback fonts, so look
 before committing. Keep it under about 300 KB. `link-preview.test.ts` fails while a page with
-copy has none.
+copy has none. Redrawing it later, and the other pictures, is the `update-pictures` skill.
 
 ## Step 6 — gates, PR, QA
 

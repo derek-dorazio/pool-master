@@ -35,8 +35,9 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 |---|---|
 | Adds or changes a backend route, service, DTO, or mapper | `service-rules.md` — §4 *DTOs, Mappers, OpenAPI*, §7 *Error Handling*, §11 *Backend Logging*; `architecture-rules.md` §2 *Contract-First API Architecture* |
 | Changes the Prisma schema, a domain type, or an enum | `domain-model-concepts.md`, `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
-| Adds a sport, a sport league or a contest template (setup) | the `add-sport` skill; `ux-rules.md` §12 *League Pages and Commissioner Tools* item 12 (setup names, defaults, the How to Play and Contest types pages); `architecture-rules.md` §4 *Sport extension*, §6 *Manual-testing seed data goes through the admin API* (each league's last-season test data file) |
+| Adds a sport, a sport league or a contest template (setup) | the `add-sport` skill (a Clutch Card round: `add-clutch-card-league`); `ux-rules.md` §12 *League Pages and Commissioner Tools* item 12 (setup names, defaults, the How to Play and Contest types pages); `architecture-rules.md` §4 *Sport extension*, §6 *Manual-testing seed data goes through the admin API* (each league's last-season test data file) |
 | Adds or changes an event page (`/play/...`) or its link preview | the `add-event-page` skill; `ux-rules.md` §13 *Event Pages* |
+| Adds or changes a sport photo, a contest type picture or a link preview image | the `update-pictures` skill; `ux-rules.md` §14 *System Email* item 5, §13 *Event Pages* items 6 and 7 |
 | Adds or changes a system email | the `add-email` skill; `ux-rules.md` §14 *System Email*; `docs/EMAIL-DELIVERY.md` |
 | Touches domain entities, or the ask uses domain words (squad, team, entry, pick, field, release, submit, settle) | `domain-model-concepts.md` — what each entity is, what it is called on screen, and what the verb means in the model |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
@@ -75,8 +76,10 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
 | `add-event-page` | Adding an event page and its link preview: settle the offers, seed them by migration, write the copy, draw the preview image, check it on QA |
 | `add-email` | Adding or redesigning a system email: settle audience and timing, the key and migration, the renderer from the shared pieces, the notice that queues it, tests, and a preview in a real inbox |
+| `update-pictures` | Adding or changing a sport photo, a contest type picture or a link preview image: check, crop, note the source, redraw, and see it live on QA |
 | `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
 | `load-new-season` | Next season's schedules for every sport league at once: take stock of what has published, one file per sport, dry-run together, apply on the user's yes |
+| `add-clutch-card-league` | A Clutch Card on a new playoff round: the stat pool league and its three setups by migration, last season's box scores as test data, and the lists that name every round |
 | `clutch-card-round` | One playoff round's Clutch Card: load the event and both teams' stars when the matchups are announced, then each game's box score so standings settle |
 | `release-check` | Before a push or PR, and when a gate fails |
 | `fix-broken-ci` | CI is red: find the run that matters, match the known causes, fix the cause |
