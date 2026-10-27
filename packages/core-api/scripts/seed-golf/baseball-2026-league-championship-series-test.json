@@ -1,0 +1,2052 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASEBALL",
+    "season": 2026,
+    "sportLeagues": [
+      "League Championship Series"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-27",
+    "gatheredBy": "load-sport-data, the 2026 League Championship Series as played: in the ALCS the Tampa Bay Rays beat the Cleveland Guardians in six (12-19 October, Game 4 postponed a day), in the NLCS the Milwaukee Brewers swept the Los Angeles Dodgers (11-15 October). Both series are one event; game N holds both series' Game N, so Games 5 and 6 are the ALCS's alone. The field is the four clubs' position players on their League Championship Series active rosters, from the MLB Stats API; ranking is the player's 2026 regular-season Box Score total (total bases + runs + RBI + walks + stolen bases), all clubs' for a player traded during the season. Each game's box score (total bases, runs, RBI, walks, stolen bases) is from the MLB Stats API, cross-checked player by player against ESPN's box scores on runs, hits, RBI, home runs and walks, and on each side's total bases and stolen bases, which agree in every game. A player with no plate appearance in a game has no line; one who batted and recorded none of the five has an empty line.",
+    "sources": [
+      {
+        "name": "MLB Stats API, ALCS Game 1 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849820/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908023"
+      },
+      {
+        "name": "MLB Stats API, ALCS Game 2 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849813/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908024"
+      },
+      {
+        "name": "MLB Stats API, ALCS Game 3 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849818/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908025"
+      },
+      {
+        "name": "MLB Stats API, ALCS Game 4 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849816/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908027"
+      },
+      {
+        "name": "MLB Stats API, ALCS Game 5 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849817/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 5 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401930515"
+      },
+      {
+        "name": "MLB Stats API, ALCS Game 6 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849815/boxscore"
+      },
+      {
+        "name": "ESPN MLB, ALCS Game 6 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908028"
+      },
+      {
+        "name": "MLB Stats API, NLCS Game 1 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849809/boxscore"
+      },
+      {
+        "name": "ESPN MLB, NLCS Game 1 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908030"
+      },
+      {
+        "name": "MLB Stats API, NLCS Game 2 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849812/boxscore"
+      },
+      {
+        "name": "ESPN MLB, NLCS Game 2 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908031"
+      },
+      {
+        "name": "MLB Stats API, NLCS Game 3 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849811/boxscore"
+      },
+      {
+        "name": "ESPN MLB, NLCS Game 3 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908032"
+      },
+      {
+        "name": "MLB Stats API, NLCS Game 4 box score",
+        "url": "https://statsapi.mlb.com/api/v1/game/849810/boxscore"
+      },
+      {
+        "name": "ESPN MLB, NLCS Game 4 box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/summary?event=401908033"
+      },
+      {
+        "name": "MLB Stats API, Dodgers League Championship Series roster with 2026 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/119/roster?rosterType=active&date=2026-10-11&hydrate=person(stats(type=season,season=2026,group=hitting))"
+      },
+      {
+        "name": "MLB Stats API, Brewers League Championship Series roster with 2026 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/158/roster?rosterType=active&date=2026-10-11&hydrate=person(stats(type=season,season=2026,group=hitting))"
+      },
+      {
+        "name": "MLB Stats API, Guardians League Championship Series roster with 2026 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/114/roster?rosterType=active&date=2026-10-12&hydrate=person(stats(type=season,season=2026,group=hitting))"
+      },
+      {
+        "name": "MLB Stats API, Rays League Championship Series roster with 2026 hitting",
+        "url": "https://statsapi.mlb.com/api/v1/teams/139/roster?rosterType=active&date=2026-10-12&hydrate=person(stats(type=season,season=2026,group=hitting))"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "League Championship Series",
+      "players": [
+        {
+          "key": "mlb-junior-caminero",
+          "name": "Junior Caminero",
+          "countryCode": "DO",
+          "ranking": 1,
+          "team": "Tampa Bay Rays",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-brice-turang",
+          "name": "Brice Turang",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Milwaukee Brewers",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-shohei-ohtani",
+          "name": "Shohei Ohtani",
+          "countryCode": "JP",
+          "ranking": 3,
+          "team": "Los Angeles Dodgers",
+          "position": "TWP"
+        },
+        {
+          "key": "mlb-jake-bauers",
+          "name": "Jake Bauers",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Milwaukee Brewers",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-yandy-diaz",
+          "name": "Yandy Díaz",
+          "countryCode": "CU",
+          "ranking": 5,
+          "team": "Tampa Bay Rays",
+          "position": "DH"
+        },
+        {
+          "key": "mlb-jackson-chourio",
+          "name": "Jackson Chourio",
+          "countryCode": "VE",
+          "ranking": 6,
+          "team": "Milwaukee Brewers",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-jonathan-aranda",
+          "name": "Jonathan Aranda",
+          "countryCode": "MX",
+          "ranking": 7,
+          "team": "Tampa Bay Rays",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-william-contreras",
+          "name": "William Contreras",
+          "countryCode": "VE",
+          "ranking": 8,
+          "team": "Milwaukee Brewers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-freddie-freeman",
+          "name": "Freddie Freeman",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Los Angeles Dodgers",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-max-muncy",
+          "name": "Max Muncy",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Los Angeles Dodgers",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-andy-pages",
+          "name": "Andy Pages",
+          "countryCode": "CU",
+          "ranking": 11,
+          "team": "Los Angeles Dodgers",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-kyle-tucker",
+          "name": "Kyle Tucker",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Los Angeles Dodgers",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-jo-adell",
+          "name": "Jo Adell",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Cleveland Guardians",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-chase-delauter",
+          "name": "Chase DeLauter",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Cleveland Guardians",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-liam-hicks",
+          "name": "Liam Hicks",
+          "countryCode": "CA",
+          "ranking": 15,
+          "team": "Tampa Bay Rays",
+          "position": "C"
+        },
+        {
+          "key": "mlb-brayan-rocchio",
+          "name": "Brayan Rocchio",
+          "countryCode": "VE",
+          "ranking": 16,
+          "team": "Cleveland Guardians",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-mookie-betts",
+          "name": "Mookie Betts",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Los Angeles Dodgers",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-garrett-mitchell",
+          "name": "Garrett Mitchell",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Milwaukee Brewers",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-jose-ramirez",
+          "name": "José Ramírez",
+          "countryCode": "DO",
+          "ranking": 19,
+          "team": "Cleveland Guardians",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-steven-kwan",
+          "name": "Steven Kwan",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Cleveland Guardians",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-chandler-simpson",
+          "name": "Chandler Simpson",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Tampa Bay Rays",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-travis-bazzana",
+          "name": "Travis Bazzana",
+          "countryCode": "AU",
+          "ranking": 22,
+          "team": "Cleveland Guardians",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-teoscar-hernandez",
+          "name": "Teoscar Hernández",
+          "countryCode": "DO",
+          "ranking": 23,
+          "team": "Los Angeles Dodgers",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-christian-yelich",
+          "name": "Christian Yelich",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Milwaukee Brewers",
+          "position": "DH"
+        },
+        {
+          "key": "mlb-cedric-mullins",
+          "name": "Cedric Mullins",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Tampa Bay Rays",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-angel-martinez",
+          "name": "Angel Martínez",
+          "countryCode": "DO",
+          "ranking": 26,
+          "team": "Cleveland Guardians",
+          "position": "LF"
+        },
+        {
+          "key": "mlb-nathaniel-lowe",
+          "name": "Nathaniel Lowe",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Cleveland Guardians",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-richie-palacios",
+          "name": "Richie Palacios",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Tampa Bay Rays",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-joey-ortiz",
+          "name": "Joey Ortiz",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "Milwaukee Brewers",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-jonny-deluca",
+          "name": "Jonny DeLuca",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Tampa Bay Rays",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-taylor-walls",
+          "name": "Taylor Walls",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Tampa Bay Rays",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-david-hamilton",
+          "name": "David Hamilton",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Milwaukee Brewers",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-andrew-vaughn",
+          "name": "Andrew Vaughn",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "Milwaukee Brewers",
+          "position": "1B"
+        },
+        {
+          "key": "mlb-tommy-edman",
+          "name": "Tommy Edman",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Los Angeles Dodgers",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-sal-frelick",
+          "name": "Sal Frelick",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Milwaukee Brewers",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-victor-mesa-jr",
+          "name": "Victor Mesa Jr.",
+          "countryCode": "CU",
+          "ranking": 36,
+          "team": "Tampa Bay Rays",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-gary-sanchez",
+          "name": "Gary Sánchez",
+          "countryCode": "DO",
+          "ranking": 37,
+          "team": "Milwaukee Brewers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-ryan-vilade",
+          "name": "Ryan Vilade",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Tampa Bay Rays",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-patrick-bailey",
+          "name": "Patrick Bailey",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Cleveland Guardians",
+          "position": "C"
+        },
+        {
+          "key": "mlb-will-smith",
+          "name": "Will Smith",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Los Angeles Dodgers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-cooper-pratt",
+          "name": "Cooper Pratt",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Milwaukee Brewers",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-nick-fortes",
+          "name": "Nick Fortes",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Tampa Bay Rays",
+          "position": "C"
+        },
+        {
+          "key": "mlb-ben-williamson",
+          "name": "Ben Williamson",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Tampa Bay Rays",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-austin-hedges",
+          "name": "Austin Hedges",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Cleveland Guardians",
+          "position": "C"
+        },
+        {
+          "key": "mlb-jorge-mateo",
+          "name": "Jorge Mateo",
+          "countryCode": "DO",
+          "ranking": 45,
+          "team": "Tampa Bay Rays",
+          "position": "SS"
+        },
+        {
+          "key": "mlb-miguel-rojas",
+          "name": "Miguel Rojas",
+          "countryCode": "VE",
+          "ranking": 46,
+          "team": "Los Angeles Dodgers",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-david-fry",
+          "name": "David Fry",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "Cleveland Guardians",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-hunter-feduccia",
+          "name": "Hunter Feduccia",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "Los Angeles Dodgers",
+          "position": "C"
+        },
+        {
+          "key": "mlb-luis-lara",
+          "name": "Luis Lara",
+          "countryCode": "VE",
+          "ranking": 49,
+          "team": "Milwaukee Brewers",
+          "position": "RF"
+        },
+        {
+          "key": "mlb-petey-halpin",
+          "name": "Petey Halpin",
+          "countryCode": "US",
+          "ranking": 50,
+          "team": "Cleveland Guardians",
+          "position": "CF"
+        },
+        {
+          "key": "mlb-angel-genao",
+          "name": "Angel Genao",
+          "countryCode": "DO",
+          "ranking": 51,
+          "team": "Cleveland Guardians",
+          "position": "2B"
+        },
+        {
+          "key": "mlb-enrique-hernandez",
+          "name": "Enrique Hernández",
+          "countryCode": "PR",
+          "ranking": 52,
+          "team": "Los Angeles Dodgers",
+          "position": "3B"
+        },
+        {
+          "key": "mlb-josue-de-paula",
+          "name": "Josue De Paula",
+          "countryCode": "US",
+          "ranking": 53,
+          "team": "Los Angeles Dodgers",
+          "position": "DH"
+        }
+      ],
+      "events": [
+        {
+          "key": "league-championship-series-2026",
+          "name": "League Championship Series",
+          "startDate": "2026-10-11",
+          "endDate": "2026-10-19",
+          "venue": null,
+          "location": "Milwaukee, Los Angeles, St. Petersburg and Cleveland",
+          "rounds": 6,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mlb-junior-caminero",
+              "ranking": 1
+            },
+            {
+              "player": "mlb-brice-turang",
+              "ranking": 2
+            },
+            {
+              "player": "mlb-shohei-ohtani",
+              "ranking": 3
+            },
+            {
+              "player": "mlb-jake-bauers",
+              "ranking": 4
+            },
+            {
+              "player": "mlb-yandy-diaz",
+              "ranking": 5
+            },
+            {
+              "player": "mlb-jackson-chourio",
+              "ranking": 6
+            },
+            {
+              "player": "mlb-jonathan-aranda",
+              "ranking": 7
+            },
+            {
+              "player": "mlb-william-contreras",
+              "ranking": 8
+            },
+            {
+              "player": "mlb-freddie-freeman",
+              "ranking": 9
+            },
+            {
+              "player": "mlb-max-muncy",
+              "ranking": 10
+            },
+            {
+              "player": "mlb-andy-pages",
+              "ranking": 11
+            },
+            {
+              "player": "mlb-kyle-tucker",
+              "ranking": 12
+            },
+            {
+              "player": "mlb-jo-adell",
+              "ranking": 13
+            },
+            {
+              "player": "mlb-chase-delauter",
+              "ranking": 14
+            },
+            {
+              "player": "mlb-liam-hicks",
+              "ranking": 15
+            },
+            {
+              "player": "mlb-brayan-rocchio",
+              "ranking": 16
+            },
+            {
+              "player": "mlb-mookie-betts",
+              "ranking": 17
+            },
+            {
+              "player": "mlb-garrett-mitchell",
+              "ranking": 18
+            },
+            {
+              "player": "mlb-jose-ramirez",
+              "ranking": 19
+            },
+            {
+              "player": "mlb-steven-kwan",
+              "ranking": 20
+            },
+            {
+              "player": "mlb-chandler-simpson",
+              "ranking": 21
+            },
+            {
+              "player": "mlb-travis-bazzana",
+              "ranking": 22
+            },
+            {
+              "player": "mlb-teoscar-hernandez",
+              "ranking": 23
+            },
+            {
+              "player": "mlb-christian-yelich",
+              "ranking": 24
+            },
+            {
+              "player": "mlb-cedric-mullins",
+              "ranking": 25
+            },
+            {
+              "player": "mlb-angel-martinez",
+              "ranking": 26
+            },
+            {
+              "player": "mlb-nathaniel-lowe",
+              "ranking": 27
+            },
+            {
+              "player": "mlb-richie-palacios",
+              "ranking": 28
+            },
+            {
+              "player": "mlb-joey-ortiz",
+              "ranking": 29
+            },
+            {
+              "player": "mlb-jonny-deluca",
+              "ranking": 30
+            },
+            {
+              "player": "mlb-taylor-walls",
+              "ranking": 31
+            },
+            {
+              "player": "mlb-david-hamilton",
+              "ranking": 32
+            },
+            {
+              "player": "mlb-andrew-vaughn",
+              "ranking": 33
+            },
+            {
+              "player": "mlb-tommy-edman",
+              "ranking": 34
+            },
+            {
+              "player": "mlb-sal-frelick",
+              "ranking": 35
+            },
+            {
+              "player": "mlb-victor-mesa-jr",
+              "ranking": 36
+            },
+            {
+              "player": "mlb-gary-sanchez",
+              "ranking": 37
+            },
+            {
+              "player": "mlb-ryan-vilade",
+              "ranking": 38
+            },
+            {
+              "player": "mlb-patrick-bailey",
+              "ranking": 39
+            },
+            {
+              "player": "mlb-will-smith",
+              "ranking": 40
+            },
+            {
+              "player": "mlb-cooper-pratt",
+              "ranking": 41
+            },
+            {
+              "player": "mlb-nick-fortes",
+              "ranking": 42
+            },
+            {
+              "player": "mlb-ben-williamson",
+              "ranking": 43
+            },
+            {
+              "player": "mlb-austin-hedges",
+              "ranking": 44
+            },
+            {
+              "player": "mlb-jorge-mateo",
+              "ranking": 45
+            },
+            {
+              "player": "mlb-miguel-rojas",
+              "ranking": 46
+            },
+            {
+              "player": "mlb-david-fry",
+              "ranking": 47
+            },
+            {
+              "player": "mlb-hunter-feduccia",
+              "ranking": 48
+            },
+            {
+              "player": "mlb-luis-lara",
+              "ranking": 49
+            },
+            {
+              "player": "mlb-petey-halpin",
+              "ranking": 50
+            },
+            {
+              "player": "mlb-angel-genao",
+              "ranking": 51
+            },
+            {
+              "player": "mlb-enrique-hernandez",
+              "ranking": 52
+            },
+            {
+              "player": "mlb-josue-de-paula",
+              "ranking": 53
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mlb-andrew-vaughn",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-angel-martinez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-ben-williamson",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-brice-turang",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-cedric-mullins",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {
+                    "TOTAL_BASES": 7,
+                    "RUNS": 3,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-cooper-pratt",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-garrett-mitchell",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jackson-chourio",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-jake-bauers",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-joey-ortiz",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-josue-de-paula",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-kyle-tucker",
+                  "stats": {
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-luis-lara",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-nick-fortes",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ryan-vilade",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-william-contreras",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-angel-martinez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-austin-hedges",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ben-williamson",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-brice-turang",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 3,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-christian-yelich",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-cooper-pratt",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-david-hamilton",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 3,
+                    "STOLEN_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-garrett-mitchell",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jackson-chourio",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jake-bauers",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-kyle-tucker",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-miguel-rojas",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-richie-palacios",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-sal-frelick",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 2
+                  }
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-william-contreras",
+                  "stats": {
+                    "TOTAL_BASES": 6,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 3,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {}
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "mlb-andrew-vaughn",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-brice-turang",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-christian-yelich",
+                  "stats": {
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-cooper-pratt",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-garrett-mitchell",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jackson-chourio",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-jake-bauers",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-joey-ortiz",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "WALKS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-kyle-tucker",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-luis-lara",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-miguel-rojas",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-richie-palacios",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-william-contreras",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "mlb-andy-pages",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-angel-martinez",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-ben-williamson",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-brice-turang",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 2
+                  }
+                },
+                {
+                  "player": "mlb-cedric-mullins",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-christian-yelich",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-cooper-pratt",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-david-fry",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-david-hamilton",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-enrique-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-freddie-freeman",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-garrett-mitchell",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-jackson-chourio",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jake-bauers",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 3,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-kyle-tucker",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-max-muncy",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-mookie-betts",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-nick-fortes",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-richie-palacios",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 2,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-sal-frelick",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-shohei-ohtani",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 3
+                  }
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-teoscar-hernandez",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-tommy-edman",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-will-smith",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-william-contreras",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {
+                    "TOTAL_BASES": 6,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 5,
+              "lines": [
+                {
+                  "player": "mlb-angel-martinez",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ben-williamson",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-ryan-vilade",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1
+                  }
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 6,
+              "lines": [
+                {
+                  "player": "mlb-angel-martinez",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-brayan-rocchio",
+                  "stats": {
+                    "TOTAL_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-chandler-simpson",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-chase-delauter",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS": 2
+                  }
+                },
+                {
+                  "player": "mlb-david-fry",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jo-adell",
+                  "stats": {
+                    "TOTAL_BASES": 2
+                  }
+                },
+                {
+                  "player": "mlb-jonathan-aranda",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-jonny-deluca",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1
+                  }
+                },
+                {
+                  "player": "mlb-jose-ramirez",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-junior-caminero",
+                  "stats": {
+                    "TOTAL_BASES": 5,
+                    "RUNS": 2,
+                    "RUNS_BATTED_IN": 2,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-liam-hicks",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "RUNS": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-nathaniel-lowe",
+                  "stats": {
+                    "TOTAL_BASES": 2,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-patrick-bailey",
+                  "stats": {
+                    "RUNS_BATTED_IN": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-petey-halpin",
+                  "stats": {}
+                },
+                {
+                  "player": "mlb-richie-palacios",
+                  "stats": {
+                    "TOTAL_BASES": 3,
+                    "RUNS_BATTED_IN": 2
+                  }
+                },
+                {
+                  "player": "mlb-steven-kwan",
+                  "stats": {
+                    "TOTAL_BASES": 1,
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-taylor-walls",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 3
+                  }
+                },
+                {
+                  "player": "mlb-travis-bazzana",
+                  "stats": {
+                    "WALKS": 1
+                  }
+                },
+                {
+                  "player": "mlb-victor-mesa-jr",
+                  "stats": {
+                    "RUNS": 1,
+                    "WALKS": 1,
+                    "STOLEN_BASES": 1
+                  }
+                },
+                {
+                  "player": "mlb-yandy-diaz",
+                  "stats": {
+                    "TOTAL_BASES": 4,
+                    "RUNS": 1,
+                    "RUNS_BATTED_IN": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

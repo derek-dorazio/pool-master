@@ -444,6 +444,35 @@ describe('hockey-2026-nhl-conference-finals-test.json', () => {
   });
 });
 
+describe('baseball-2026-league-championship-series-test.json', () => {
+  const file = readDataFile('baseball-2026-league-championship-series-test.json', true);
+  const [championshipSeries] = file.sportLeagues;
+  const games = championshipSeries.events[0].games ?? [];
+  const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2026 League Championship Series, both series one event of six games, the ALCS going six and the NLCS four', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.BASEBALL, 2026, ['League Championship Series'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['League Championship Series', '2026-10-11', '2026-10-19', 6, null]]);
+    expect(games.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4, 5, 6]);
+  });
+
+  it('fields the four clubs\' position players and no pitchers, and only the ALCS clubs play Games 5 and 6', () => {
+    const teamOf = new Map(championshipSeries.players.map((player) => [player.key, player.team]));
+    expect(new Set(teamOf.values())).toEqual(new Set(['Los Angeles Dodgers', 'Milwaukee Brewers', 'Cleveland Guardians', 'Tampa Bay Rays']));
+    expect(championshipSeries.players.some((player) => player.position === 'P')).toBe(false);
+    expect(new Set(games.slice(4).flatMap((game) => game.lines.map((line) => teamOf.get(line.player))))).toEqual(
+      new Set(['Cleveland Guardians', 'Tampa Bay Rays']),
+    );
+  });
+
+  it('carries both series as played: Junior Caminero\'s five total bases in the ALCS clincher, Shohei Ohtani\'s three RBI in the NLCS\'s Game 4', () => {
+    expect(lineIn(6, 'mlb-junior-caminero')).toEqual({ TOTAL_BASES: 5, RUNS: 2, RUNS_BATTED_IN: 2, WALKS: 1 });
+    expect(lineIn(4, 'mlb-shohei-ohtani')).toEqual({ TOTAL_BASES: 4, RUNS: 1, RUNS_BATTED_IN: 3 });
+  });
+});
+
 describe('basketball-2026-ncaa-tournaments-test.json', () => {
   const file = readDataFile('basketball-2026-ncaa-tournaments-test.json', true);
   const [men, women] = file.sportLeagues.map((league) => league.events[0]);
