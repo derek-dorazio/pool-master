@@ -61,7 +61,7 @@ jobs:
       service: ${{ steps.classify.outputs.service }}
       client: ${{ steps.classify.outputs.client }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # The merge base needs history on both sides; a shallow clone has neither.
           fetch-depth: 0
@@ -106,12 +106,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           # #266 — the migration timestamp check compares against HEAD^1 (the base tip for a
           # PR's merge ref, the previous main for a push), so the job needs one parent.
           fetch-depth: 2
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -158,8 +158,8 @@ jobs:
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
         && needs.changes.outputs.code != 'false' }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -222,8 +222,8 @@ jobs:
       POOLMASTER_ENVIRONMENT: ci
       POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -285,8 +285,8 @@ jobs:
       POOLMASTER_ENVIRONMENT: ci
       POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -360,8 +360,8 @@ jobs:
       # history and nothing a previous step happened to leave behind.
       DATABASE_URL: postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_test
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -413,8 +413,8 @@ jobs:
       POOLMASTER_ENVIRONMENT: ci
       POOLMASTER_SERVICE_VERSION: ${{ github.sha }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -460,8 +460,8 @@ jobs:
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
         && needs.changes.outputs.client != 'false' }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -515,7 +515,7 @@ jobs:
 
       - name: Upload PoolMaster unit coverage artifact
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-poolmaster-unit
           path: |
@@ -531,8 +531,8 @@ jobs:
     timeout-minutes: 10
     needs: service-lint-typecheck
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -566,13 +566,13 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: Build, run and probe the core-api image
         shell: bash
         run: scripts/smoke-core-api-image.sh "${{ github.sha }}" postgresql://poolmaster:poolmaster@localhost:5432/poolmaster_smoke 2>&1
       - name: Upload core-api container log
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: core-api-smoke-log
           path: core-api-smoke.log
@@ -584,8 +584,8 @@ jobs:
     timeout-minutes: 10
     needs: service-lint-typecheck
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -611,8 +611,8 @@ jobs:
     if: ${{ !cancelled() && needs.all-contract-gates.result == 'success'
         && needs.changes.outputs.code != 'false' }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -687,8 +687,8 @@ jobs:
       APP_BASE_URL: http://localhost:4175
       POOLMASTER_E2E_MAILPIT_URL: http://localhost:8025
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -761,7 +761,7 @@ jobs:
           VERSION=$(node -p "require('@playwright/test/package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -775,7 +775,7 @@ jobs:
         run: cp "$RUNNER_TEMP/core-api.log" "$RUNNER_TEMP/preview.log" clients/poolmaster/ || true
       - name: Upload PoolMaster browser E2E artifacts
         if: failure()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: poolmaster-browser-e2e-local
           path: |
@@ -814,7 +814,7 @@ jobs:
       qa_migrate_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_migrate_task_definition }}
       qa_mock_contest_feed_provider_task_definition: ${{ steps.register-qa-task-defs.outputs.qa_mock_contest_feed_provider_task_definition }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -1158,8 +1158,8 @@ jobs:
     needs: deploy-publish-images
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
 
@@ -1238,8 +1238,8 @@ jobs:
     needs: [deploy-publish-images, deploy-migrate-qa]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -1641,8 +1641,8 @@ jobs:
       POOLMASTER_E2E_ADMIN_IDENTIFIER: ${{ secrets.POOLMASTER_E2E_ADMIN_IDENTIFIER }}
       POOLMASTER_E2E_ADMIN_PASSWORD: ${{ secrets.POOLMASTER_E2E_ADMIN_PASSWORD }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'
@@ -1673,7 +1673,7 @@ jobs:
           VERSION=$(node -p "require('@playwright/test/package.json').version")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Cache Playwright browsers
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -1690,7 +1690,7 @@ jobs:
         run: npm run test:poolmaster:browser-e2e:smoke
       - name: Upload PoolMaster browser E2E artifacts
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: poolmaster-browser-e2e
           path: |
@@ -1732,8 +1732,8 @@ jobs:
       # Reading the failed jobs' logs through the Actions API.
       actions: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
       - name: Open, update, or close the QA deploy failure issue
@@ -1780,8 +1780,8 @@ jobs:
       issues: write
       actions: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
       - name: Open, update, or close the main build failure issue
