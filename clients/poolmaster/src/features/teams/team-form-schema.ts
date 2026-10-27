@@ -4,7 +4,7 @@ import { z } from 'zod';
 /** A team's name and icon, as Create team and Edit team both submit them. */
 export const teamFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
-  iconKey: z.nativeEnum(TeamIconKey),
+  iconKey: z.enum(TeamIconKey),
 });
 
 export type TeamFormValues = z.infer<typeof teamFormSchema>;

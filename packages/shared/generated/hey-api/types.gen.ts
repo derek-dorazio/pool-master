@@ -1074,7 +1074,7 @@ export type IngestionScheduleConfig = {
     /**
      * Sports that scheduled ingestion is allowed to run automatically.
      */
-    scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+    scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
     /**
      * Scheduling policy for provider health checks.
      */
@@ -3896,11 +3896,11 @@ export type TeamOwnerInvitationDto = {
     /**
      * ISO 8601 datetime string.
      */
-    createdAt: string | null;
+    createdAt: string;
     /**
      * ISO 8601 datetime string.
      */
-    updatedAt: string | null;
+    updatedAt: string;
     team: {
         id: string;
         name: string;
@@ -3936,11 +3936,11 @@ export type TeamOwnerInvitationResponse = {
         /**
          * ISO 8601 datetime string.
          */
-        createdAt: string | null;
+        createdAt: string;
         /**
          * ISO 8601 datetime string.
          */
-        updatedAt: string | null;
+        updatedAt: string;
         team: {
             id: string;
             name: string;
@@ -3974,11 +3974,11 @@ export type TeamOwnerInvitationListResponse = {
         /**
          * ISO 8601 datetime string.
          */
-        createdAt: string | null;
+        createdAt: string;
         /**
          * ISO 8601 datetime string.
          */
-        updatedAt: string | null;
+        updatedAt: string;
         team: {
             id: string;
             name: string;
@@ -7256,7 +7256,7 @@ export type ParticipantDto = {
          */
         expectedReturn?: string;
         /**
-         * Expected return timestamp when known.
+         * When the injury-status record was last updated.
          */
         updatedAt?: string;
         /**
@@ -7269,7 +7269,7 @@ export type ParticipantDto = {
      */
     photoUrl?: string | null;
     /**
-     * Expected return timestamp when known.
+     * When the participant image metadata was last refreshed.
      */
     photoLastUpdated?: string;
     /**
@@ -7379,7 +7379,7 @@ export type ParticipantListResponse = {
              */
             expectedReturn?: string;
             /**
-             * Expected return timestamp when known.
+             * When the injury-status record was last updated.
              */
             updatedAt?: string;
             /**
@@ -7392,7 +7392,7 @@ export type ParticipantListResponse = {
          */
         photoUrl?: string | null;
         /**
-         * Expected return timestamp when known.
+         * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
         /**
@@ -7485,7 +7485,7 @@ export type ParticipantResponse = {
              */
             expectedReturn?: string;
             /**
-             * Expected return timestamp when known.
+             * When the injury-status record was last updated.
              */
             updatedAt?: string;
             /**
@@ -7498,7 +7498,7 @@ export type ParticipantResponse = {
          */
         photoUrl?: string | null;
         /**
-         * Expected return timestamp when known.
+         * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
         /**
@@ -7623,7 +7623,7 @@ export type UpdateParticipantRequest = {
          */
         expectedReturn?: string;
         /**
-         * Expected return timestamp when known.
+         * When the injury-status record was last updated.
          */
         updatedAt?: string;
         /**
@@ -8119,7 +8119,7 @@ export type ParticipantLeagueAffiliationDto = {
              */
             expectedReturn?: string;
             /**
-             * Expected return timestamp when known.
+             * When the injury-status record was last updated.
              */
             updatedAt?: string;
             /**
@@ -8132,7 +8132,7 @@ export type ParticipantLeagueAffiliationDto = {
          */
         photoUrl?: string | null;
         /**
-         * Expected return timestamp when known.
+         * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
         /**
@@ -8151,11 +8151,11 @@ export type ParticipantLeagueAffiliationDto = {
         updatedAt: string;
     };
     /**
-     * Expected return timestamp when known.
+     * ISO 8601 datetime string.
      */
     createdAt: string;
     /**
-     * Expected return timestamp when known.
+     * ISO 8601 datetime string.
      */
     updatedAt: string;
 };
@@ -8247,7 +8247,7 @@ export type ParticipantLeagueAffiliationListResponse = {
                  */
                 expectedReturn?: string;
                 /**
-                 * Expected return timestamp when known.
+                 * When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /**
@@ -8260,7 +8260,7 @@ export type ParticipantLeagueAffiliationListResponse = {
              */
             photoUrl?: string | null;
             /**
-             * Expected return timestamp when known.
+             * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /**
@@ -8279,11 +8279,11 @@ export type ParticipantLeagueAffiliationListResponse = {
             updatedAt: string;
         };
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         createdAt: string;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         updatedAt: string;
     }>;
@@ -8376,7 +8376,7 @@ export type ParticipantLeagueAffiliationResponse = {
                  */
                 expectedReturn?: string;
                 /**
-                 * Expected return timestamp when known.
+                 * When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /**
@@ -8389,7 +8389,7 @@ export type ParticipantLeagueAffiliationResponse = {
              */
             photoUrl?: string | null;
             /**
-             * Expected return timestamp when known.
+             * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /**
@@ -8408,11 +8408,11 @@ export type ParticipantLeagueAffiliationResponse = {
             updatedAt: string;
         };
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         createdAt: string;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         updatedAt: string;
     };
@@ -9774,7 +9774,7 @@ export type SportEventParticipantDto = {
              */
             expectedReturn?: string;
             /**
-             * Expected return timestamp when known.
+             * When the injury-status record was last updated.
              */
             updatedAt?: string;
             /**
@@ -9787,7 +9787,7 @@ export type SportEventParticipantDto = {
          */
         photoUrl?: string | null;
         /**
-         * Expected return timestamp when known.
+         * When the participant image metadata was last refreshed.
          */
         photoLastUpdated?: string;
         /**
@@ -9926,11 +9926,11 @@ export type SportEventParticipantDto = {
      */
     affiliatedWithSportLeague: boolean;
     /**
-     * Expected return timestamp when known.
+     * ISO 8601 datetime string.
      */
     createdAt: string;
     /**
-     * Expected return timestamp when known.
+     * ISO 8601 datetime string.
      */
     updatedAt: string;
 };
@@ -10036,7 +10036,7 @@ export type SportEventParticipantListResponse = {
                  */
                 expectedReturn?: string;
                 /**
-                 * Expected return timestamp when known.
+                 * When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /**
@@ -10049,7 +10049,7 @@ export type SportEventParticipantListResponse = {
              */
             photoUrl?: string | null;
             /**
-             * Expected return timestamp when known.
+             * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /**
@@ -10188,11 +10188,11 @@ export type SportEventParticipantListResponse = {
          */
         affiliatedWithSportLeague: boolean;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         createdAt: string;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         updatedAt: string;
     }>;
@@ -10363,7 +10363,7 @@ export type SportEventParticipantResponse = {
                  */
                 expectedReturn?: string;
                 /**
-                 * Expected return timestamp when known.
+                 * When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /**
@@ -10376,7 +10376,7 @@ export type SportEventParticipantResponse = {
              */
             photoUrl?: string | null;
             /**
-             * Expected return timestamp when known.
+             * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /**
@@ -10515,11 +10515,11 @@ export type SportEventParticipantResponse = {
          */
         affiliatedWithSportLeague: boolean;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         createdAt: string;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         updatedAt: string;
     };
@@ -11886,7 +11886,7 @@ export type ContestLeaderboardResponse = {
                  */
                 expectedReturn?: string;
                 /**
-                 * Expected return timestamp when known.
+                 * When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /**
@@ -11899,7 +11899,7 @@ export type ContestLeaderboardResponse = {
              */
             photoUrl?: string | null;
             /**
-             * Expected return timestamp when known.
+             * When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /**
@@ -12038,11 +12038,11 @@ export type ContestLeaderboardResponse = {
          */
         affiliatedWithSportLeague: boolean;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         createdAt: string;
         /**
-         * Expected return timestamp when known.
+         * ISO 8601 datetime string.
          */
         updatedAt: string;
     }>;
@@ -13577,7 +13577,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -13720,7 +13720,7 @@ export type SettingsGroup = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -14729,7 +14729,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -14872,7 +14872,7 @@ export type SettingsGroupList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -16396,7 +16396,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -16539,7 +16539,7 @@ export type SettingsChange = {
         /**
          * Sports that scheduled ingestion is allowed to run automatically.
          */
-        scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+        scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
         /**
          * Scheduling policy for provider health checks.
          */
@@ -17493,7 +17493,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -17636,7 +17636,7 @@ export type SettingsChangeList = {
             /**
              * Sports that scheduled ingestion is allowed to run automatically.
              */
-            scheduledSports?: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
+            scheduledSports: Array<'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS'>;
             /**
              * Scheduling policy for provider health checks.
              */
@@ -18629,14 +18629,14 @@ export type GolfRoundScorePreviewResponse = {
             status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
         } | null;
         /**
-         * What is stored now; null when nothing is.
+         * A golfer's round values.
          */
         after: {
             strokes: number | null;
             scoreToPar: number;
             thru: number | null;
             status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
-        } | null;
+        };
     }>;
     /**
      * Counts by resolution.
@@ -18757,7 +18757,7 @@ export type RaceResultPreviewResponse = {
             isOfficial: boolean;
         } | null;
         /**
-         * What is stored now; null when nothing is.
+         * A runner's result values.
          */
         after: {
             resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
@@ -18765,7 +18765,7 @@ export type RaceResultPreviewResponse = {
             startPosition: number | null;
             riderName: string | null;
             isOfficial: boolean;
-        } | null;
+        };
     }>;
     /**
      * Problems with the race's result as a whole; empty when it can be applied as far as the order goes.
@@ -25261,7 +25261,7 @@ export type ProviderSyncRunDto = {
          */
         requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
         /**
-         * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+         * Single feed represented by this sync run row.
          */
         requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
         /**
@@ -25430,7 +25430,7 @@ export type ProviderSyncRunDto = {
                     [key: string]: unknown;
                 };
                 /**
-                 * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
+                 * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
                  */
                 after?: {
                     [key: string]: unknown;
@@ -25501,7 +25501,7 @@ export type ProviderSyncRunListQuery = {
      */
     from?: string;
     /**
-     * Earliest submission time to include. Defaults to 6 hours before `to`.
+     * Latest submission time to include. Defaults to now.
      */
     to?: string;
 };
@@ -25544,7 +25544,7 @@ export type ProviderSyncRunListResponse = {
              */
             requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
             /**
-             * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+             * Single feed represented by this sync run row.
              */
             requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
             /**
@@ -25713,7 +25713,7 @@ export type ProviderSyncRunListResponse = {
                         [key: string]: unknown;
                     };
                     /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
+                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
                      */
                     after?: {
                         [key: string]: unknown;
@@ -25821,7 +25821,7 @@ export type ProviderManualSyncSubmissionResponse = {
              */
             requestedFeeds?: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
             /**
-             * Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+             * Single feed represented by this sync run row.
              */
             requestedFeed?: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
             /**
@@ -25990,7 +25990,7 @@ export type ProviderManualSyncSubmissionResponse = {
                         [key: string]: unknown;
                     };
                     /**
-                     * Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff.
+                     * Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff.
                      */
                     after?: {
                         [key: string]: unknown;
@@ -26133,7 +26133,7 @@ export type ProviderCatalogEventListQuery = {
      */
     from?: string;
     /**
-     * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
+     * Only events starting at or before this.
      */
     to?: string;
     search?: string;
@@ -33209,7 +33209,7 @@ export type ListProviderSyncRunsData = {
          */
         from?: string;
         /**
-         * Earliest submission time to include. Defaults to 6 hours before `to`.
+         * Latest submission time to include. Defaults to now.
          */
         to?: string;
     };
@@ -33327,7 +33327,7 @@ export type ListProviderCatalogEventsData = {
          */
         from?: string;
         /**
-         * Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
+         * Only events starting at or before this.
          */
         to?: string;
         search?: string;

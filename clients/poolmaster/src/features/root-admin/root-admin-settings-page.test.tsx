@@ -225,7 +225,7 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '0' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
-    expect(await screen.findByText(/greater than or equal to 1/)).toBeInTheDocument();
+    expect(await screen.findByText(/expected number to be >=1/)).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
@@ -251,7 +251,7 @@ describe('RootAdminSettingsPage email card', () => {
     expect(field).toHaveValue(3);
     fireEvent.change(field, { target: { value: '24' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-    expect(await screen.findByText(/less than or equal to 23/)).toBeInTheDocument();
+    expect(await screen.findByText(/expected number to be <=23/)).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
 
     fireEvent.change(field, { target: { value: '5' } });
@@ -267,7 +267,7 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.change(await screen.findByTestId('root-admin-email-settings-standings-buffer'), { target: { value: '300' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
-    expect(await screen.findByText(/less than or equal to 240/)).toBeInTheDocument();
+    expect(await screen.findByText(/expected number to be <=240/)).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
@@ -531,6 +531,21 @@ describe('RootAdminSettingsPage payments card', () => {
     fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
 
     expect(await screen.findByText('Enter a number of entries.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('says a size or price is out of range, rather than asking for a number the admin did enter', async () => {
+    renderPage();
+
+    fireEvent.click(await screen.findByTestId('root-admin-billing-PREMIUM-add'));
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-entries-0'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('root-admin-billing-PREMIUM-price-0'), { target: { value: '20000' } });
+    fireEvent.click(screen.getByTestId('root-admin-billing-settings-save'));
+
+    expect(await screen.findByText('At least 1 entry.')).toBeInTheDocument();
+    expect(screen.getByText('At most $10,000.')).toBeInTheDocument();
+    expect(screen.queryByText('Enter a number of entries.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Enter a price.')).not.toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 

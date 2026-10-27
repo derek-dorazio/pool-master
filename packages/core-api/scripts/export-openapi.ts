@@ -107,7 +107,7 @@ async function main() {
     }
   }
 
-  // @fastify/swagger + zod-to-json-schema emit 3.0-style `nullable: true`, but
+  // @fastify/swagger + z.toJSONSchema (target openapi-3.0) emit 3.0-style `nullable: true`, but
   // the document declares `openapi: 3.1.0` (below / in plugins/swagger.ts). 3.1
   // removed `nullable`, so @hey-api/openapi-ts drops every `| null` union unless
   // nullability is encoded the 3.1 way. See plans/131-hey-api-nullable-generation-fix.md.

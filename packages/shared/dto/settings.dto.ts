@@ -22,7 +22,7 @@ export const SettingsGroupKeySchema = z.enum([
 export type SettingsGroupKey = z.infer<typeof SettingsGroupKeySchema>;
 
 export const SettingsActorSchema = z.object({
-  id: z.string().uuid().describe('The user id of the root admin who made the change.'),
+  id: z.uuid().describe('The user id of the root admin who made the change.'),
   name: z.string().describe('The admin\'s full name, for display.'),
 }).describe('The root admin who saved a settings change.');
 export type SettingsActor = z.infer<typeof SettingsActorSchema>;
@@ -84,7 +84,7 @@ export type SettingsGroupList = z.infer<typeof SettingsGroupListSchema>;
  * it), so a save must send the field: a save is a whole value anyway.
  */
 const IngestionScheduleConfigValueSchema = IngestionScheduleConfigSchema.extend({
-  scheduledSports: IngestionScheduleConfigSchema.shape.scheduledSports.removeDefault().describe(
+  scheduledSports: IngestionScheduleConfigSchema.shape.scheduledSports.unwrap().describe(
     'Sports that scheduled ingestion is allowed to run automatically.',
   ),
 });
@@ -123,7 +123,7 @@ export const SettingsGroupUpdateRequestSchema = z.discriminatedUnion('key', [
 export type SettingsGroupUpdateRequest = z.infer<typeof SettingsGroupUpdateRequestSchema>;
 
 const changeFields = {
-  id: z.string().uuid(),
+  id: z.uuid(),
   changedAt: DateTimeSchema,
   changedBy: SettingsActorSchema.nullable().describe('Who saved it, when known.'),
 };

@@ -40,7 +40,7 @@ export const UserDtoSchema = z.object({
     .enum([TimeFormat.TWELVE_HOUR, TimeFormat.TWENTY_FOUR_HOUR])
     .optional()
     .describe('12-hour or 24-hour clock for the times the member sees. Absent means the locale\'s own.'),
-  createdAt: z.string().datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
+  createdAt: z.iso.datetime().optional().describe('Account creation timestamp in ISO 8601 format.'),
 }).describe('A user account. The canonical User shape, returned wherever a user is read — the authenticated caller, a league or squad peer, or a root-admin management row.');
 export type UserDto = z.infer<typeof UserDtoSchema>;
 

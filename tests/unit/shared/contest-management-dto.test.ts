@@ -12,7 +12,7 @@ describe('contest-management dto schemas', () => {
   it('accepts a create carrying a configuration and no template', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Pick 6',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportEventIds: ['11111111-1111-4111-8111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       configuration: {
@@ -35,7 +35,7 @@ describe('contest-management dto schemas', () => {
   it('accepts a PREDICTION create with confidence pick\'em rules, keeping the mode and the spread option', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Week 1 confidence',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportEventIds: ['11111111-1111-4111-8111-111111111111'],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
       configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: true },
@@ -47,7 +47,7 @@ describe('contest-management dto schemas', () => {
   it('refuses pick\'em rules that do not say whether the pool scores against the spread', () => {
     expect(CreateContestRequestSchema.safeParse({
       name: 'Week 1 confidence',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportEventIds: ['11111111-1111-4111-8111-111111111111'],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
       configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE' },
@@ -57,7 +57,7 @@ describe('contest-management dto schemas', () => {
   it('accepts a create naming a template and no configuration', () => {
     const parsed = CreateContestRequestSchema.parse({
       name: 'Masters Template Contest',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportEventIds: ['11111111-1111-4111-8111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
       templateId: '11111111-1111-4111-8111-111111111111',
@@ -70,7 +70,7 @@ describe('contest-management dto schemas', () => {
   it('refuses a create naming neither a template nor a configuration, with the documented code', () => {
     const result = CreateContestRequestSchema.safeParse({
       name: 'Empty',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportEventIds: ['11111111-1111-4111-8111-111111111111'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
     });
@@ -88,7 +88,7 @@ describe('contest-management dto schemas', () => {
     expect(
       CreateContestRequestSchema.safeParse({
         name: 'Last man standing',
-        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        sportEventIds: ['11111111-1111-4111-8111-111111111111'],
         contestFormat: 'PREDICTION',
         selectionType: 'LAST_MAN_STANDING',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -100,7 +100,7 @@ describe('contest-management dto schemas', () => {
     expect(
       CreateContestRequestSchema.safeParse({
         name: 'Bracket',
-        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        sportEventIds: ['11111111-1111-4111-8111-111111111111'],
         contestFormat: 'BRACKET',
         selectionType: 'TIERED',
         templateId: '11111111-1111-4111-8111-111111111111',
@@ -198,7 +198,7 @@ describe('contest-management dto schemas', () => {
           countedScores: 4,
         },
         sportEvents: [{
-          sportEventId: '11111111-1111-1111-1111-111111111111',
+          sportEventId: '11111111-1111-4111-8111-111111111111',
           effectiveTiers: [
           {
             tierKey: 'tier-1',
@@ -230,7 +230,7 @@ describe('contest-management dto schemas', () => {
         contest: {
           id: 'contest-1',
           leagueId: 'league-1',
-          sportEvents: [{ sportEventId: '11111111-1111-1111-1111-111111111111' }],
+          sportEvents: [{ sportEventId: '11111111-1111-4111-8111-111111111111' }],
           name: 'Masters Pick 6',
           status: 'OPEN',
           configuration: {

@@ -21,7 +21,7 @@ export const RaceResultRowSchema = z.object({
   participantId: z.string().optional(),
   externalId: z.string().optional(),
   playerName: z.string().optional(),
-  resultStatus: z.nativeEnum(RaceResultStatus).describe('How the race ended for this runner.'),
+  resultStatus: z.enum(RaceResultStatus).describe('How the race ended for this runner.'),
   finishPosition: z.number().int().min(1).nullable().describe('Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official.'),
   startPosition: z.number().int().min(1).nullable().describe('Post position (or grid slot); null when not known.'),
   riderName: z.string().trim().min(1).max(255).nullable().describe('The jockey (or rider) for this start; null when not known.'),
@@ -34,17 +34,17 @@ export const RaceResultUploadRequestSchema = z.object({
 }).describe('A race\'s finishing order, or a correction to it: one row per runner named. Runners not named keep the result already stored.');
 export type RaceResultUploadRequest = z.infer<typeof RaceResultUploadRequestSchema>;
 
-export const RaceResultRowErrorDtoSchema = z.nativeEnum(RaceResultRowError).describe('Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.');
+export const RaceResultRowErrorDtoSchema = z.enum(RaceResultRowError).describe('Why a resolved row cannot be applied. DUPLICATE_PARTICIPANT: another row names the same runner. POSITION_WITHOUT_FINISH: a finishing place on a runner that did not finish. FINISH_WITHOUT_POSITION: an official result for a FINISHED runner with no place.');
 export type RaceResultRowErrorDto = z.infer<typeof RaceResultRowErrorDtoSchema>;
 
-export const RaceResultOrderErrorDtoSchema = z.nativeEnum(RaceResultOrderError).describe('Why the race\'s result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result, or a FINISHED runner with no place.');
+export const RaceResultOrderErrorDtoSchema = z.enum(RaceResultOrderError).describe('Why the race\'s result as a whole cannot be applied. POSITIONS_INVALID: the finishing places, with the ones already stored for runners not named, do not run 1, 2, 3 ... with only a dead heat repeating a place and skipping the next. FIELD_INCOMPLETE: an official result leaves an active runner on the field with no result, or a FINISHED runner with no place.');
 export type RaceResultOrderErrorDto = z.infer<typeof RaceResultOrderErrorDtoSchema>;
 
-export const RaceResultChangeDtoSchema = z.nativeEnum(RaceResultChange)
+export const RaceResultChangeDtoSchema = z.enum(RaceResultChange)
   .describe('What applying the row would do to the runner\'s stored result.');
 
 export const RaceResultValuesDtoSchema = z.object({
-  resultStatus: z.nativeEnum(RaceResultStatus),
+  resultStatus: z.enum(RaceResultStatus),
   finishPosition: z.number().int().nullable(),
   startPosition: z.number().int().nullable(),
   riderName: z.string().nullable(),
@@ -54,7 +54,7 @@ export const RaceResultValuesDtoSchema = z.object({
 export const RaceResultPreviewRowDtoSchema = z.object({
   row: RaceResultRowSchema,
   resolution: UploadRowResolutionDtoSchema,
-  sportEventParticipantId: z.string().uuid().nullable().describe('The field row it resolved to; set only when MATCHED.'),
+  sportEventParticipantId: z.uuid().nullable().describe('The field row it resolved to; set only when MATCHED.'),
   participantName: z.string().nullable(),
   rowError: RaceResultRowErrorDtoSchema.nullable(),
   change: RaceResultChangeDtoSchema.nullable().describe('Null when the row cannot be applied: not MATCHED, or a row error.'),

@@ -18,7 +18,7 @@ const SKIP_REASON_TEXT: Record<EmailSkipReason, string> = {
 };
 
 const emailTestFormSchema = EmailTestRequestSchema.extend({
-  to: z.string().trim().email('Enter an email address.'),
+  to: z.string().trim().check(z.email('Enter an email address.')),
 });
 
 /** What happened to the test email, in the admin's words. */

@@ -11,7 +11,7 @@ import { zodToJsonSchema } from '../../../packages/shared/dto/json-schema';
 import { ParticipantInactiveReason } from '../../../packages/shared/domain/enums';
 
 const BodySchema = z.object({
-  reason: z.nativeEnum(ParticipantInactiveReason).nullable().optional(),
+  reason: z.enum(ParticipantInactiveReason).nullable().optional(),
   kind: z.enum(['A', 'B']).nullable(),
 });
 

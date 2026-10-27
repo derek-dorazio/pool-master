@@ -23,7 +23,7 @@ import { useLeagueContext } from './use-league-context';
 const editLeagueFormSchema = z.object({
   name: z.string().trim().min(1, 'League name is required').max(100, 'League name must be 100 characters or fewer'),
   description: z.string().trim().max(500, 'Description must be 500 characters or fewer'),
-  iconKey: z.nativeEnum(LeagueIconKey),
+  iconKey: z.enum(LeagueIconKey),
 });
 
 type EditLeagueFormValues = z.infer<typeof editLeagueFormSchema>;

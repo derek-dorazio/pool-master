@@ -13,7 +13,7 @@ import { registerSchema } from './schema-registry';
 
 export const ListContestResultsQuerySchema = z.object({
   year: z.number().int().min(2000).max(9999).describe('The championship year, US Eastern, the contests went final in, such as 2026.'),
-  squadId: z.string().uuid().optional().describe('Only the counted contests this squad placed in: its Played count.'),
+  squadId: z.uuid().optional().describe('Only the counted contests this squad placed in: its Played count.'),
   place: z.number().int().min(1).max(CHAMPIONSHIP_MATRIX_PLACES).optional().describe('With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).'),
 }).describe('Which year\'s contests to list, and for which squad or matrix cell.');
 export type ListContestResultsQuery = z.infer<typeof ListContestResultsQuerySchema>;
@@ -26,13 +26,13 @@ export const ContestResultSquadFinishDtoSchema = z.object({
 export type ContestResultSquadFinishDto = z.infer<typeof ContestResultSquadFinishDtoSchema>;
 
 export const ContestResultSummaryDtoSchema = z.object({
-  contestId: z.string().uuid(),
+  contestId: z.uuid(),
   name: z.string(),
   sportLeagueName: z.string().describe('The sports league its events are in, such as "PGA Tour".'),
-  selectionType: z.nativeEnum(SelectionType),
+  selectionType: z.enum(SelectionType),
   completedAt: DateTimeSchema.describe('When it went final (instant).'),
   rankedEntryCount: z.number().int().describe('Entries ranked in it; 0 when nobody placed.'),
-  count: z.nativeEnum(ContestResultCount).describe('COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.'),
+  count: z.enum(ContestResultCount).describe('COUNTED: squads placed and earned championship points. NOT_COUNTED: its weight is not counted, so its places earn nothing. NO_RESULT: nobody placed, every event cancelled.'),
   winners: z.array(ChampionshipSquadDtoSchema).describe('The squads that finished 1st, several on a tie, in name order; empty when nobody placed.'),
   squadFinish: ContestResultSquadFinishDtoSchema.nullable().describe('With a squadId filter, that squad\'s finish; null otherwise.'),
 }).describe('One contest that went final in the year, with who won it.');
@@ -44,17 +44,17 @@ export const ContestResultListResponseSchema = z.object({
 export type ContestResultListResponse = z.infer<typeof ContestResultListResponseSchema>;
 
 export const HistorySummaryTileDtoSchema = z.object({
-  tile: z.nativeEnum(SummaryTile).describe('MOST_CHAMPIONSHIPS: league championships won, years over only. MOST_CUPS: crowned cups won.'),
+  tile: z.enum(SummaryTile).describe('MOST_CHAMPIONSHIPS: league championships won, years over only. MOST_CUPS: crowned cups won.'),
   count: z.number().int().describe('The most any squad has; 0 while nobody has any.'),
   squads: z.array(ChampionshipSquadDtoSchema).describe('Every squad holding the most, in name order; empty while nobody has any.'),
 }).describe('One All years tile.');
 export type HistorySummaryTileDto = z.infer<typeof HistorySummaryTileDtoSchema>;
 
 export const HistoryCupDtoSchema = z.object({
-  cupId: z.string().uuid(),
-  sportLeagueId: z.string().uuid(),
+  cupId: z.uuid(),
+  sportLeagueId: z.uuid(),
   name: z.string().describe('The cup\'s name: "2026 PGA Tour Cup".'),
-  status: z.nativeEnum(CupStatus),
+  status: z.enum(CupStatus),
   contestsCounted: z.number().int().describe('Its contests that counted, so the client can leave off a cup not yet on show.'),
   winners: z.array(ChampionshipSquadDtoSchema).describe('A crowned cup\'s champions; an open cup\'s leaders (1st, with points). Several on a tie, in name order.'),
 }).describe('One cup of a season, with who won or leads it.');
@@ -96,10 +96,10 @@ export const SquadChampionshipDtoSchema = z.object({
 export type SquadChampionshipDto = z.infer<typeof SquadChampionshipDtoSchema>;
 
 export const SquadCupDtoSchema = z.object({
-  cupId: z.string().uuid(),
-  sportLeagueId: z.string().uuid(),
+  cupId: z.uuid(),
+  sportLeagueId: z.uuid(),
   name: z.string().describe('The cup\'s name: "2026 PGA Tour Cup".'),
-  status: z.nativeEnum(CupStatus),
+  status: z.enum(CupStatus),
   contestsCounted: z.number().int().describe('The cup\'s contests that counted, so the client can leave off a cup not yet on show.'),
   squadCount: z.number().int().describe('Squads in the cup\'s standings.'),
   standing: CupStandingRowDtoSchema.describe('The squad\'s row of the cup\'s standings, as the Points race shows it.'),
@@ -107,7 +107,7 @@ export const SquadCupDtoSchema = z.object({
 export type SquadCupDto = z.infer<typeof SquadCupDtoSchema>;
 
 export const SquadYearDtoSchema = z.object({
-  squadId: z.string().uuid(),
+  squadId: z.uuid(),
   year: z.number().int(),
   championship: SquadChampionshipDtoSchema.nullable().describe('Its championship row; null for an inactive squad that placed in nothing that year.'),
   cups: z.array(SquadCupDtoSchema).describe('Every cup of the season the squad has a row in, by sports league name.'),
@@ -127,17 +127,17 @@ export const SquadMedalsDtoSchema = z.object({
 export type SquadMedalsDto = z.infer<typeof SquadMedalsDtoSchema>;
 
 export const SquadTrophyDtoSchema = z.object({
-  kind: z.nativeEnum(TrophyKind).describe('CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.'),
+  kind: z.enum(TrophyKind).describe('CHAMPIONSHIP for a league championship year that is over, CUP for a crowned cup.'),
   year: z.number().int(),
-  trophy: z.nativeEnum(CupTrophy).describe('The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.'),
+  trophy: z.enum(CupTrophy).describe('The place it was won for: CHAMPION, RUNNER_UP or THIRD, shared on a tie.'),
   name: z.string().describe('What it was won in: "2025 Derek\'s Pool Cup" or "2025 NFL Cup".'),
-  cupId: z.string().uuid().nullable().describe('The cup, for a cup trophy; null for a championship.'),
-  sportLeagueId: z.string().uuid().nullable().describe('The cup\'s sports league, for a cup trophy; null for a championship.'),
+  cupId: z.uuid().nullable().describe('The cup, for a cup trophy; null for a championship.'),
+  sportLeagueId: z.uuid().nullable().describe('The cup\'s sports league, for a cup trophy; null for a championship.'),
 }).describe('One trophy on a squad\'s shelf.');
 export type SquadTrophyDto = z.infer<typeof SquadTrophyDtoSchema>;
 
 export const SquadHistoryDtoSchema = z.object({
-  squadId: z.string().uuid(),
+  squadId: z.uuid(),
   medals: SquadMedalsDtoSchema,
   trophies: z.array(SquadTrophyDtoSchema).describe('Newest year first; within a year the championship first, then cups by sports league name.'),
   years: z.array(SquadYearDtoSchema).describe('The squad\'s year for every year the league has a championship or a cup season in, newest first.'),
@@ -151,7 +151,7 @@ export type SquadHistoryResponse = z.infer<typeof SquadHistoryResponseSchema>;
 
 export const YearReviewDtoSchema = z.object({
   year: z.number().int().describe('Last year, US Eastern: the only year whose review can be sent.'),
-  status: z.nativeEnum(YearReviewStatus).describe('NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.'),
+  status: z.enum(YearReviewStatus).describe('NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.'),
   sentAt: DateTimeSchema.nullable().describe('When it was sent; null until then.'),
   sentByName: z.string().nullable().describe('Who sent it; null until then, or once their account is gone.'),
 }).describe('Where the league\'s year in review for last year stands.');
@@ -165,7 +165,7 @@ export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
 export const RecordHolderDtoSchema = z.object({
   squad: ChampionshipSquadDtoSchema,
   year: z.number().int().nullable().describe('The year it was set in, for MOST_WINS_IN_A_YEAR, BIGGEST_FIELD_WON and the year a run ended (BACK_TO_BACK_CHAMPIONS, LONGEST_PODIUM_RUN, REPEAT_WINNER); null for an all-time count.'),
-  contestId: z.string().uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON, or the last year\'s contest of a REPEAT_WINNER run; null otherwise.'),
+  contestId: z.uuid().nullable().describe('The contest won, for BIGGEST_FIELD_WON, or the last year\'s contest of a REPEAT_WINNER run; null otherwise.'),
   contestName: z.string().nullable().describe('That contest\'s name; null otherwise.'),
 }).describe('One holder of a record value.');
 export type RecordHolderDto = z.infer<typeof RecordHolderDtoSchema>;
@@ -177,7 +177,7 @@ export const RecordStandDtoSchema = z.object({
 export type RecordStandDto = z.infer<typeof RecordStandDtoSchema>;
 
 export const RecordDtoSchema = z.object({
-  type: z.nativeEnum(RecordType).describe('MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).'),
+  type: z.enum(RecordType).describe('MOST_CHAMPIONSHIPS (years over only), BACK_TO_BACK_CHAMPIONS (two or more in consecutive years), MOST_WINS_IN_A_YEAR, MOST_WINS_ALL_TIME, LONGEST_PODIUM_RUN (contests in a row in 1st to 3rd, of those the squad placed in, in settlement order) or BIGGEST_FIELD_WON (the win with the most ranked entries); then the Hall of Lame, left out when the league hides it: MOST_RUNNER_UPS (2nd places), MOST_FOURTHS (4th places), MOST_LAST_PLACES (the worst place among the squads, in contests of three or more squads) or LONGEST_DROUGHT (contests in a row placed in without a win, past or still running).'),
   best: RecordStandDtoSchema,
   nextBest: RecordStandDtoSchema.nullable().describe('The next value down and its holders; null when nobody else has one.'),
 }).describe('One record of the league\'s record book.');
@@ -190,16 +190,16 @@ export type RecordListResponse = z.infer<typeof RecordListResponseSchema>;
 
 export const PerpetualTrophyPlateDtoSchema = z.object({
   year: z.number().int().describe('The year of the event the contest was on: the 2026 Masters.'),
-  contestId: z.string().uuid(),
+  contestId: z.uuid(),
   winners: z.array(ChampionshipSquadDtoSchema).describe('The contest\'s 1st place squads, every one on a tie, in name order; empty when the contest went final with nobody placed.'),
 }).describe('One plate of a perpetual trophy: a year\'s contest and its winners.');
 export type PerpetualTrophyPlateDto = z.infer<typeof PerpetualTrophyPlateDtoSchema>;
 
 export const PerpetualTrophyDtoSchema = z.object({
-  eventSeriesId: z.string().uuid(),
+  eventSeriesId: z.uuid(),
   seriesName: z.string().describe('The event series the contest is run on every year, such as "Masters Tournament".'),
   sportLeagueName: z.string(),
-  selectionType: z.nativeEnum(SelectionType).describe('How the contest is picked: a series run as two ways of picking is two trophies.'),
+  selectionType: z.enum(SelectionType).describe('How the contest is picked: a series run as two ways of picking is two trophies.'),
   plates: z.array(PerpetualTrophyPlateDtoSchema).describe('Newest year first; a year the league did not run it has no plate.'),
 }).describe('A perpetual trophy: a contest of one event the league has run in two or more years.');
 export type PerpetualTrophyDto = z.infer<typeof PerpetualTrophyDtoSchema>;

@@ -9,7 +9,7 @@ import { ContestEntryStatus, SelectionStatus, SelectionType } from '../domain/en
 
 export const SelectionStateQuerySchema = z.object({
   entryId: z.string().optional().describe('Specific contest entry to view within roster-based selection flows.'),
-  sportEventId: z.string().uuid().optional().describe('The contest event whose picks to show (#713). Defaults to the contest\'s next event that has not started, else its last event.'),
+  sportEventId: z.uuid().optional().describe('The contest event whose picks to show (#713). Defaults to the contest\'s next event that has not started, else its last event.'),
 }).describe('Optional query parameters for loading selection state.');
 export type SelectionStateQuery = z.infer<typeof SelectionStateQuerySchema>;
 
@@ -36,7 +36,7 @@ export const PickHistoryDtoSchema = z.object({
   tierName: z.string().optional(),
   autoPicked: z.boolean(),
   isSkipped: z.boolean().optional(),
-  pickedAt: z.string().datetime().describe('When the pick was made or skipped.'),
+  pickedAt: z.iso.datetime().describe('When the pick was made or skipped.'),
 }).describe('Historical pick row shown in selection-room history.');
 export type PickHistoryDto = z.infer<typeof PickHistoryDtoSchema>;
 
@@ -44,7 +44,7 @@ export const SelectionEntryDtoSchema = z.object({
   id: z.string().describe('Entry identifier.'),
   userId: z.string().describe('User that owns the entry.'),
   name: z.string().describe('Entry display name.'),
-  status: z.nativeEnum(ContestEntryStatus).describe('The entry\'s status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
+  status: z.enum(ContestEntryStatus).describe('The entry\'s status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).'),
 }).describe('Entry summary shown in the selection room.');
 export type SelectionEntryDto = z.infer<typeof SelectionEntryDtoSchema>;
 
@@ -92,8 +92,8 @@ export const SelectionStateResponseSchema = z.object({
   contestName: z.string(),
   sportEventId: z.string().describe('The contest event the room shows (#713): its field, its picks, and each entry\'s status in it.'),
   acceptsPicks: z.boolean().describe('Whether this event\'s picks can still change: the contest is open or live, it has not been drawn, and the event has not started.'),
-  selectionType: z.nativeEnum(SelectionType),
-  drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
+  selectionType: z.enum(SelectionType),
+  drawnAt: z.iso.datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([
@@ -120,8 +120,8 @@ export const SelectionPickResponseSchema = z.object({
   contestName: z.string(),
   sportEventId: z.string().describe('The contest event the room shows (#713): its field, its picks, and each entry\'s status in it.'),
   acceptsPicks: z.boolean().describe('Whether this event\'s picks can still change: the contest is open or live, it has not been drawn, and the event has not started.'),
-  selectionType: z.nativeEnum(SelectionType),
-  drawnAt: z.string().datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
+  selectionType: z.enum(SelectionType),
+  drawnAt: z.iso.datetime().nullable().describe('When a random-draw contest\'s draw dealt its picks, closing its entries and revealing every entry\'s picks. Null until then, and always for other selection types.'),
   isCommissioner: z.boolean().optional(),
   rosterSize: z.number(),
   status: z.enum([

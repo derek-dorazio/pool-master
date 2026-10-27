@@ -14,14 +14,14 @@ import { registerSchema } from './schema-registry';
 const TeamIconKeyValues = Object.values(TeamIconKey) as [TeamIconKeyValue, ...TeamIconKeyValue[]];
 
 export const ChampionshipSquadDtoSchema = z.object({
-  squadId: z.string().uuid(),
+  squadId: z.uuid(),
   squadName: z.string().describe('The squad\'s current name.'),
   squadIconKey: z.enum(TeamIconKeyValues).describe('The squad\'s built-in team icon.'),
 }).describe('A squad named on the championship: a leader, a champion or a tile holder.');
 export type ChampionshipSquadDto = z.infer<typeof ChampionshipSquadDtoSchema>;
 
 export const ChampionshipStandingRowDtoSchema = z.object({
-  squadId: z.string().uuid(),
+  squadId: z.uuid(),
   squadName: z.string().describe('The squad\'s current name.'),
   squadIconKey: z.enum(TeamIconKeyValues).describe('The squad\'s built-in team icon.'),
   squadIsActive: z.boolean().describe('False for an inactive squad, shown because it placed in a counted contest of the year.'),
@@ -37,14 +37,14 @@ export const ChampionshipStandingRowDtoSchema = z.object({
 export type ChampionshipStandingRowDto = z.infer<typeof ChampionshipStandingRowDtoSchema>;
 
 export const ChampionshipTileDtoSchema = z.object({
-  tile: z.nativeEnum(ChampionshipTile).describe('Which count the tile leads on: 1sts, 2nds, 3rds, podiums (1st to 3rd), top-ten finishes or contests played.'),
+  tile: z.enum(ChampionshipTile).describe('Which count the tile leads on: 1sts, 2nds, 3rds, podiums (1st to 3rd), top-ten finishes or contests played.'),
   count: z.number().int().describe('The most any squad has; 0 while nobody has any.'),
   squads: z.array(ChampionshipSquadDtoSchema).describe('Every squad holding the most, in standings order; empty while nobody has any.'),
 }).describe('One medal tile.');
 export type ChampionshipTileDto = z.infer<typeof ChampionshipTileDtoSchema>;
 
 export const ChampionshipDtoSchema = z.object({
-  leagueId: z.string().uuid(),
+  leagueId: z.uuid(),
   year: z.number().int().describe('The calendar year, US Eastern, its contests went final in.'),
   cupName: z.string().describe('The league\'s cup name, such as "Derek\'s Pool Cup".'),
   name: z.string().describe('The championship\'s name: the year and the cup name, "2026 Derek\'s Pool Cup".'),

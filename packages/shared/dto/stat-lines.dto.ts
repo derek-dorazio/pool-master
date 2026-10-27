@@ -13,14 +13,14 @@ import { registerSchema } from './schema-registry';
 export const GAME_STAT_LINE_ROWS_MAX = 200;
 
 export const GameStatLineRowSchema = z.object({
-  participantId: z.string().uuid().describe('The player, by participant id; must be in the event\'s field.'),
+  participantId: z.uuid().describe('The player, by participant id; must be in the event\'s field.'),
   stats: z.array(z.object({
-    stat: z.nativeEnum(SportStat).describe('One of the stats the sport\'s composite counts.'),
+    stat: z.enum(SportStat).describe('One of the stats the sport\'s composite counts.'),
     value: z.number().int().min(-SPORT_STAT_VALUE_MAX).max(SPORT_STAT_VALUE_MAX).describe('The player\'s count of it in the game; below 0 only for yards.'),
-  }).refine((line) => line.value >= sportStatValueMin(line.stat), (line) => ({
-    message: `${line.stat} cannot be below 0; only yards go below 0.`,
-    path: ['value'],
-  })).describe('One stat of the line.')).max(Object.keys(SportStat).length)
+  }).superRefine((line, ctx) => {
+    if (line.value >= sportStatValueMin(line.stat)) return;
+    ctx.addIssue({ code: 'custom', message: `${line.stat} cannot be below 0; only yards go below 0.`, path: ['value'] });
+  }).describe('One stat of the line.')).max(Object.keys(SportStat).length)
     .describe('The player\'s whole line for the game, each stat once; a stat left out counts 0. Empty clears the line: the player did not play the game.'),
 }).describe('One player\'s line for the game. It replaces the line stored for the player in the game.');
 export type GameStatLineRow = z.infer<typeof GameStatLineRowSchema>;

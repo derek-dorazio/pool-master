@@ -93,7 +93,7 @@ export const UpdateLeagueCupSettingsRequestSchema = z.object({
     .min(1)
     .max(100)
     .describe('The league championship\'s name, shown after its year.'),
-  cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on.'),
+  cupPointsScale: z.enum(CupPointsScale).describe('The points table every cup and the championship score on.'),
   cupCustomPoints: z
     .array(z.number().int().min(0).max(CUP_CUSTOM_POINTS_MAX))
     .max(CUP_CUSTOM_POINTS_MAX_PLACES)
@@ -104,10 +104,10 @@ export type UpdateLeagueCupSettingsRequest = z.infer<typeof UpdateLeagueCupSetti
 
 export const UpdateLeagueEventEmailSettingsRequestSchema = z.object({
   mutedSportLeagueIds: z
-    .array(z.string().uuid())
+    .array(z.uuid())
     .max(200)
     .describe('The sport leagues whose upcoming events the league\'s commissioners are not emailed about; [] for every sport league. A repeated id counts once. 400 SPORT_LEAGUE_NOT_FOUND for an id that is not a sport league.'),
-  eventEmailDelivery: z.nativeEnum(EventEmailDelivery).describe('PER_EVENT for a "Coming up soon" and a "Ready for contests" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks\' events instead.'),
+  eventEmailDelivery: z.enum(EventEmailDelivery).describe('PER_EVENT for a "Coming up soon" and a "Ready for contests" email about each event; WEEKLY_DIGEST for one Monday email listing the next two weeks\' events instead.'),
 }).describe('Commissioner request payload for how the league\'s commissioners hear about upcoming events (#851): which sport leagues, and one email per event or a weekly digest, replaced together.');
 export type UpdateLeagueEventEmailSettingsRequest = z.infer<typeof UpdateLeagueEventEmailSettingsRequestSchema>;
 
@@ -183,17 +183,17 @@ export const LeagueDtoSchema = z.object({
     .describe('Selected built-in league icon key from the curated PoolMaster icon catalog.'),
   memberCount: z.number().describe('Current number of memberships in the league.'),
   activeContestCount: z.number().describe('Number of currently active contests associated with the league.'),
-  createdAt: z.string().datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
+  createdAt: z.iso.datetime().optional().describe('League creation timestamp in ISO 8601 format.'),
   cupName: z.string().describe('The league championship\'s name, shown after its year: "2026 Big Dawgs Cup".'),
-  cupPointsScale: z.nativeEnum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
+  cupPointsScale: z.enum(CupPointsScale).describe('The points table every cup and the championship score on: STANDARD 100, 80, 65 ... and 5 for every place after 20th; TOP_TEN 25, 18, 15 ... 1; FIELD_BEATEN one point per entry finished behind, plus one; CUSTOM the commissioner\'s list.'),
   cupCustomPoints: z.array(z.number().int()).describe('CUSTOM\'s whole points for 1st, 2nd ...; places past the list score 0. Empty for every other scale.'),
   hallOfLameVisible: z.boolean().describe('Whether the record book shows its Hall of Lame rows: most 2nds, 4ths and last places, and the longest drought. On at creation.'),
   planEntitlements: PlanEntitlementsDtoSchema.describe(
     'The league\'s plan and what it allows now: its caps and features. Premium at creation. The app shows the plan\'s name to commissioners only; members only meet its effects.',
   ),
-  planRenewsAt: z.string().datetime().describe('When the league\'s gifted plan ends: six months after signup, unless a root admin extended it.'),
-  mutedSportLeagueIds: z.array(z.string().uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
-  eventEmailDelivery: z.nativeEnum(EventEmailDelivery).describe('How the league\'s commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks\' events instead.'),
+  planRenewsAt: z.iso.datetime().describe('When the league\'s gifted plan ends: six months after signup, unless a root admin extended it.'),
+  mutedSportLeagueIds: z.array(z.uuid()).describe('Sport leagues whose upcoming events the league\'s commissioners are not emailed about ("Coming up soon", "Ready for contests"). Empty, the default: every sport league.'),
+  eventEmailDelivery: z.enum(EventEmailDelivery).describe('How the league\'s commissioners hear about upcoming events: PER_EVENT, a "Coming up soon" and a "Ready for contests" email for each event (the default); WEEKLY_DIGEST, one Monday email listing the next two weeks\' events instead.'),
 }).describe('A league. Returned wherever a league is read — the selector, league home, and root-admin management rows are the same object.');
 export type LeagueDto = z.infer<typeof LeagueDtoSchema>;
 
@@ -227,14 +227,14 @@ export const LeagueMembershipDtoSchema = z.object({
 }).describe('A membership of a user in a league, with the member embedded.');
 export type LeagueMembershipDto = z.infer<typeof LeagueMembershipDtoSchema>;
 
-export const EmailMessageStatusSchema = z.nativeEnum(EmailMessageStatus).describe(
+export const EmailMessageStatusSchema = z.enum(EmailMessageStatus).describe(
   'Where one email stands: QUEUED waiting to be sent, SENDING being sent, SENT accepted by the mail '
   + 'service, DELIVERED reached the recipient\'s mail server, BOUNCED refused for good by that server, '
   + 'COMPLAINED marked as spam by the recipient, FAILED not sent after every try or rejected by the mail '
   + 'service, SKIPPED not sent (see the skip reason).',
 );
 
-export const EmailSkipReasonSchema = z.nativeEnum(EmailSkipReason).describe(
+export const EmailSkipReasonSchema = z.enum(EmailSkipReason).describe(
   'Why an email was not sent: EMAIL_DISABLED email is switched off, TEMPLATE_DISABLED this kind of '
   + 'email is switched off, NOT_ALLOWED_IN_ENVIRONMENT the address may not be emailed here, SUPPRESSED '
   + 'the address bounced for good or marked an earlier email as spam, OPTED_OUT the recipient turned '
