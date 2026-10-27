@@ -85,6 +85,18 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
     expect(formatDateTimeDisplay("2026-07-01T18:05:00.000Z", london)).toBe("01/07/2026, 19:05 BST");
   });
 
+  it("writes a German member's dates in English words with their region's day order and clock", () => {
+    const berlin = displayPreferencesOf({ ...user, timezone: "Europe/Berlin", locale: "de-DE" });
+
+    render(
+      <DisplayPreferencesContext.Provider value={berlin}>
+        <DateDisplay value="2026-04-09T11:40:00.000Z" />
+      </DisplayPreferencesContext.Provider>,
+    );
+
+    expect(screen.getByText("9 Apr 2026, 13:40 CEST")).toBeInTheDocument();
+  });
+
   it("shows DateDisplay in the signed-in member's zone, named", () => {
     render(
       <DisplayPreferencesContext.Provider value={displayPreferencesOf({ ...user, timezone: "America/Los_Angeles" })}>

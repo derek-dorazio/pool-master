@@ -20,6 +20,7 @@ import {
   EmailMessageStatus,
   EmailSkipReason,
   EmailTemplateKey,
+  englishLocaleFor,
   isKnownLocale,
   isKnownTimeZone,
   isOptionalEmailCategory,
@@ -332,12 +333,13 @@ export class EmailService {
   }
 
   /**
-   * The recipient's locale, or en-US when they have none. A stored locale that isn't a language
-   * tag is logged and shown as en-US rather than failing the email.
+   * The locale the recipient's dates are written in: English in their locale's region (#1088), or
+   * en-US when they have none. A stored locale that isn't a language tag is logged and shown as
+   * en-US rather than failing the email.
    */
   private resolveLocale(locale: string | null | undefined, metadata: Parameters<typeof logRefs>[0]): string {
     if (!locale) return DEFAULT_DISPLAY_LOCALE;
-    if (isKnownLocale(locale)) return locale;
+    if (isKnownLocale(locale)) return englishLocaleFor(locale);
     this.options.logger?.warn({
       action: 'email.send.unknownLocale',
       data: { locale, ...logRefs(metadata) },

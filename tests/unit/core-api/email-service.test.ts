@@ -226,6 +226,23 @@ describe('email service: what it queues', () => {
     expect(outbox.rows[2].textBody).toContain('changed on Apr 9, 2026, 7:40 AM EDT');
   });
 
+  it('writes a German member\'s times in English words with their region\'s day order and clock, and their 12-hour choice over it', async () => {
+    const outbox = inMemoryEmailMessages();
+    const email = service({ outbox });
+
+    await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'berlin@gmail.com', userId: 'user-berlin', timeZone: 'Europe/Berlin', locale: 'de-DE' }));
+    await email.send('PASSWORD_CHANGED', passwordChanged({
+      email: 'berlin12@gmail.com',
+      userId: 'user-berlin-12',
+      timeZone: 'Europe/Berlin',
+      locale: 'de-DE',
+      timeFormat: TimeFormat.TWELVE_HOUR,
+    }));
+
+    expect(outbox.rows[0].textBody).toContain('changed on 9 Apr 2026, 13:40 CEST');
+    expect(outbox.rows[1].textBody).toContain('changed on 9 Apr 2026, 1:40 pm CEST');
+  });
+
   it('writes dates in en-US, and logs it, when the recipient\'s stored locale is not a language tag', async () => {
     const outbox = inMemoryEmailMessages();
     const logger = fakeLogger();
