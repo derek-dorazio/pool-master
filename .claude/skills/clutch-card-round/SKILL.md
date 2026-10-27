@@ -9,8 +9,8 @@ allowed-tools: [Read, Grep, Glob, Edit, Write, Bash, WebSearch]
 
 A Clutch Card is a contest on a championship stat pool: members pick the stars (players) of the
 teams in one playoff round, and each star scores their sport's composite in every game they
-play (Triple Threat, Power Play, Box Score, Redzone). The stat pool sport league already exists,
-created by a migration (`add-sport` makes a new one). This skill runs one round of it, in two
+play (Triple Threat, Power Play, Box Score, Redzone, Hat Trick). The stat pool sport league already exists,
+created by a migration (`add-clutch-card-league` makes a new one). This skill runs one round of it, in two
 parts that use one data file:
 
 1. **Set up**, as soon as the round's matchups are announced: the event, its field of stars

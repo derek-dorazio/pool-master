@@ -153,7 +153,8 @@ In order:
    line for a new sport, and rewrite it when a slice adds a sport league or a format to a
    sport already there. Then open both pages and read the sport's section
    (`rules/ux-rules.md` §12 *League Pages and Commissioner Tools*, item 12).
-   A new championship stat pool league also belongs on the Clutch Card page's calendar
+   A new championship stat pool league (the `add-clutch-card-league` skill has the whole recipe)
+   also belongs on the Clutch Card page's calendar
    (`/play/clutch-card`): its round's entry in the page's copy names the league exactly as its
    migration does, in the right sport, or the round stays "Coming soon"
    (`rules/ux-rules.md` §13 *Event Pages*).
