@@ -3,7 +3,7 @@ import { Check } from 'lucide-react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
 import type { LeaguePlanListResponse } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
-import { Tile } from '@/features/shared/ui';
+import { Eyebrow, Tile } from '@/features/shared/ui';
 import type { ComparedPlan } from './plan-comparison';
 import { buildPlanHighlights } from './plan-highlights';
 import { LEAGUE_PLAN_LABEL, LEAGUE_PLAN_TAGLINE } from './plan-labels';
@@ -46,9 +46,9 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
             </div>
           ) : null}
           <div className="space-y-2 border-t border-border pt-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <Eyebrow tone="muted">
               {card.adds === null ? 'Included' : `Everything in ${LEAGUE_PLAN_LABEL[card.adds]}, plus`}
-            </p>
+            </Eyebrow>
             <ul className="space-y-2 text-sm" data-testid={`plan-card-${card.plan}-highlights`}>
               {card.lines.map((line) => (
                 <li className="flex gap-2" key={line}>

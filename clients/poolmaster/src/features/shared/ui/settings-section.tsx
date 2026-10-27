@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./class-names";
+import { Tile } from "./tile";
 
 type SettingsSectionProps = {
   action?: ReactNode;
@@ -14,7 +15,7 @@ export function SettingsSection({ action, children, description, testId, title }
   return (
     <section className="space-y-3" data-testid={testId}>
       <SettingsSectionHeader action={action} description={description} title={title} />
-      <div className="divide-y divide-border rounded-2xl border border-border bg-card">{children}</div>
+      <Tile className="divide-y divide-border" padding="none" radius="md">{children}</Tile>
     </section>
   );
 }

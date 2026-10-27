@@ -336,7 +336,7 @@ export default tseslint.config(
     files: ['clients/poolmaster/src/features/**/*.{ts,tsx}'],
     ignores: ['clients/poolmaster/src/features/shared/ui/**'],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-raw-theme-colors': 'error' },
+    rules: { 'poolmaster/no-raw-theme-colors': 'error', 'poolmaster/no-arbitrary-type-sizes': 'error' },
   },
   {
     // Matches the scanner: all of clients/poolmaster/src, tests excluded, because
