@@ -164,15 +164,16 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
   onToggle: () => void;
   createLeagues: readonly LeagueDto[];
 }) {
-  const statPoolLeagues = leagues.filter((league) => statPoolScoringLine(league.definition) !== null);
+  // A stat pool league scores its sport's composite, whose name is its stat line.
+  const statPoolLeagues = leagues.flatMap((league) => {
+    const name = league.definition.composite?.name;
+    return name && statPoolScoringLine(league.definition) !== null ? [{ league, name }] : [];
+  });
   if (statPoolLeagues.length === 0) {
     return null;
   }
   // One tile a sport: its stat line is the same in every one of its stat pool leagues.
-  const statLines = [...new Map(statPoolLeagues.flatMap((league) => {
-    const name = league.definition.composite?.name;
-    return name ? [[league.definition.sport, { sport: league.definition.sport, name }] as const] : [];
-  })).values()];
+  const statLines = [...new Map(statPoolLeagues.map(({ league, name }) => [league.definition.sport, { sport: league.definition.sport, name }] as const)).values()];
   return (
     <Tile
       className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
@@ -188,7 +189,8 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
         size="auto"
         variant="ghost"
       >
-        <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48' : null)} />
+        {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}
+        <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48 w-auto self-center' : null)} />
         <span className="px-1 font-display text-base font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</span>
         <span className="px-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</span>
       </Button>
@@ -211,7 +213,7 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
           <LinkButton data-testid="how-to-play-clutch-card-more" size="sm" to={CLUTCH_CARD_PAGE_PATH} variant="secondary">
             {`More about the ${STAT_POOL_CONTEST_TYPE}`}
           </LinkButton>
-          <CreateContestAction leagues={createLeagues} template={statPoolLeagues[0]?.groups[0]?.featured} testId="how-to-play-clutch-card" />
+          <CreateContestAction leagues={createLeagues} template={statPoolLeagues[0]?.league.groups[0]?.featured} testId="how-to-play-clutch-card" />
         </div>
       ) : null}
     </Tile>
