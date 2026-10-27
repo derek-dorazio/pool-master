@@ -2,7 +2,7 @@ import { useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { EmailMessageStatus, EmailSkipReason, InvitationStatus, InviteType } from '@poolmaster/shared/domain';
 import { Check, Copy } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type SubmitEvent } from 'react';
 import {
   generateInviteLink,
   listLeagueInvitations,
@@ -225,7 +225,7 @@ function InvitePeople({ invitationsKey, isInactiveLeague, joinLink, leagueId }: 
     invalidates: [invitationsKey],
   });
 
-  async function handleSendInvite(event: FormEvent<HTMLFormElement>) {
+  async function handleSendInvite(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const email = inviteEmail.trim();
     if (!email || isInactiveLeague) {

@@ -1,4 +1,4 @@
-import type { FormEventHandler, ReactNode } from "react";
+import type { ReactNode, SubmitEventHandler } from "react";
 import { Alert } from "./alert";
 import { Button, LinkButton } from "./button";
 
@@ -10,7 +10,7 @@ type FormPageProps = {
   description?: ReactNode;
   isPending: boolean;
   isSubmitDisabled?: boolean;
-  onSubmit: FormEventHandler<HTMLFormElement>;
+  onSubmit: SubmitEventHandler<HTMLFormElement>;
   pendingLabel: string;
   submitLabel: string;
   submitTestId?: string;
