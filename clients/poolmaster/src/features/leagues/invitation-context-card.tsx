@@ -15,7 +15,7 @@ export function InvitationContextCard({
 }: InvitationContextCardProps) {
   return (
     <div
-      className="rounded-[1.5rem] border border-border bg-background p-5"
+      className="rounded-3xl border border-border bg-background p-5"
       data-testid="invitation-context-card"
     >
       <div className="flex items-center gap-3">

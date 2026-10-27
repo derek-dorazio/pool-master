@@ -109,7 +109,7 @@ const FieldEntrySchema = z.object({
    * order: a place for a finisher (a dead heat repeats it), none for any other status.
    */
   raceResult: z.object({
-    status: z.nativeEnum(RaceResultStatus),
+    status: z.enum(RaceResultStatus),
     finishPosition: z.number().int().min(1).nullable(),
     /** Post position or grid slot. */
     startPosition: z.number().int().min(1).nullable().optional(),
@@ -127,12 +127,12 @@ const MatchSchema = z.object({
   away: z.string().min(1).nullable(),
   isNeutralSite: z.boolean(),
   /** Tip-off or kickoff, with its UTC offset, once it is announced. A time left out keeps the site's. */
-  scheduledAt: z.string().datetime({ offset: true }).optional(),
+  scheduledAt: z.iso.datetime({ offset: true }).optional(),
   /**
    * Where the winner moves on to; null for the final. In a league that reseeds, also null for
    * each match of a round whose winners are placed by seed (the NFL's Wild Card games).
    */
-  advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.nativeEnum(MatchSide) }).strict().nullable(),
+  advancesTo: z.object({ matchNumber: z.number().int().min(1), side: z.enum(MatchSide) }).strict().nullable(),
   /** The region or conference the match is played in ("AFC", "East"); left out for none. */
   regionLabel: z.string().min(1).max(40).optional(),
   /**
@@ -143,7 +143,7 @@ const MatchSchema = z.object({
    * ended (#704; left out is played to its end): a walkover's scores are null.
    */
   result: z.object({
-    winner: z.nativeEnum(MatchSide).nullable(),
+    winner: z.enum(MatchSide).nullable(),
     homeScore: z.number().int().min(0).nullable(),
     awayScore: z.number().int().min(0).nullable(),
     /**
@@ -152,7 +152,7 @@ const MatchSchema = z.object({
      */
     homeShootoutScore: z.number().int().min(0).optional(),
     awayShootoutScore: z.number().int().min(0).optional(),
-    ending: z.nativeEnum(MatchEnding).optional(),
+    ending: z.enum(MatchEnding).optional(),
   }).strict().optional(),
   /**
    * Test data only (RESULTS), for a sport with periods (#772): the score at the end of each period
@@ -177,7 +177,7 @@ const EventSchema = z.object({
    * entry cutoff, so a file gives it once the track or organiser announces it. Without it the
    * event starts at noon UTC on its start date.
    */
-  startsAt: z.string().datetime({ offset: true }).optional(),
+  startsAt: z.iso.datetime({ offset: true }).optional(),
   venue: z.string().min(1).nullable(),
   location: z.string().min(1).nullable(),
   /** Seven at most: a tennis Grand Slam's 128-player draw (#704). */
@@ -196,7 +196,7 @@ const EventSchema = z.object({
 const SportLeagueSchema = z.object({
   name: z.string().min(1),
   /** How its brackets fill later rounds; left out keeps the site's (FIXED for a new league). */
-  bracketAdvancement: z.nativeEnum(BracketAdvancement).optional(),
+  bracketAdvancement: z.enum(BracketAdvancement).optional(),
   players: z.array(PlayerSchema),
   events: z.array(EventSchema),
 }).strict();
@@ -207,7 +207,7 @@ const SportDataFileSchema = z.object({
     sport: z.string(),
     season: z.number().int().min(2000).max(2100),
     sportLeagues: z.array(z.string().min(1)).min(1),
-    contents: z.array(z.nativeEnum(SportDataContent)).min(1),
+    contents: z.array(z.enum(SportDataContent)).min(1),
   }).strict(),
   /** Turns on the made-up parts of a test seed. Refused outside local and QA. */
   testData: z.boolean(),

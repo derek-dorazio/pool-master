@@ -19,9 +19,9 @@ export const PlanCapsDtoSchema = z.object({
 export type PlanCapsDto = z.infer<typeof PlanCapsDtoSchema>;
 
 export const PlanEntitlementsDtoSchema = z.object({
-  plan: z.nativeEnum(LeaguePlan).describe('The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.'),
+  plan: z.enum(LeaguePlan).describe('The plan, lowest first: FREE, PRO, PREMIUM, PLATINUM.'),
   caps: PlanCapsDtoSchema,
-  features: z.array(z.nativeEnum(PlanFeature)).describe(
+  features: z.array(z.enum(PlanFeature)).describe(
     'Every feature the plan has, in `PlanFeature` order. A feature a plan lacks is hidden, never deleted.',
   ),
   commissionerSelectable: z.boolean().describe(
@@ -47,12 +47,12 @@ export type ExtendPlanRenewalRequest = z.infer<typeof ExtendPlanRenewalRequestSc
 
 export const ExtendRunningPlanRenewalsResponseSchema = z.object({
   extendedCount: z.number().int().describe('How many leagues\' renewal dates moved: every league whose gift still runs and ended sooner.'),
-  renewsAt: z.string().datetime().describe('The renewal date they moved to.'),
+  renewsAt: z.iso.datetime().describe('The renewal date they moved to.'),
 }).describe('What extending every running gifted plan did.');
 export type ExtendRunningPlanRenewalsResponse = z.infer<typeof ExtendRunningPlanRenewalsResponseSchema>;
 
 export const UpdateLeaguePlanRequestSchema = z.object({
-  plan: z.nativeEnum(LeaguePlan).describe('The plan to move the league to. It applies at once and costs nothing.'),
+  plan: z.enum(LeaguePlan).describe('The plan to move the league to. It applies at once and costs nothing.'),
 }).describe('A league\'s new plan.');
 export type UpdateLeaguePlanRequest = z.infer<typeof UpdateLeaguePlanRequestSchema>;
 
@@ -63,12 +63,12 @@ export type ListSportLeaguesUsedQuery = z.infer<typeof ListSportLeaguesUsedQuery
 
 export const SportLeaguesUsedResponseSchema = z.object({
   seasonYear: z.number().int().describe('The season counted.'),
-  sportLeagueIds: z.array(z.string().uuid()).describe('The different sports leagues of the league\'s contests that season, drafts included. Against the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.'),
+  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests that season, drafts included. Against the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.'),
 }).describe('The sports leagues a league\'s contests use in one season (#947): what its plan\'s sports leagues a year counts.');
 export type SportLeaguesUsedResponse = z.infer<typeof SportLeaguesUsedResponseSchema>;
 
 export const OpenContestUsageDtoSchema = z.object({
-  contestId: z.string().uuid(),
+  contestId: z.uuid(),
   name: z.string().describe('The contest\'s name.'),
   entryCount: z.number().int().min(0).describe('Its entries, drafts included: what the plan\'s `ENTRIES_PER_CONTEST` cap counts.'),
 }).describe('One contest still taking entries, with its entries as the entry cap counts them.');
@@ -76,7 +76,7 @@ export type OpenContestUsageDto = z.infer<typeof OpenContestUsageDtoSchema>;
 
 export const LeaguePlanUsageResponseSchema = z.object({
   seasonYear: z.number().int().describe('This year, in UTC: the season whose sports leagues are listed.'),
-  sportLeagueIds: z.array(z.string().uuid()).describe('The different sports leagues of the league\'s contests this season, drafts included: what the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap counts.'),
+  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests this season, drafts included: what the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap counts.'),
   openContests: z.array(OpenContestUsageDtoSchema).describe('Every contest still taking entries, newest first.'),
 }).describe('What a league uses of its plan\'s caps now (#972), for the commissioner Plan page.');
 export type LeaguePlanUsageResponse = z.infer<typeof LeaguePlanUsageResponseSchema>;

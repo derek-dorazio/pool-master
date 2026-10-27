@@ -2,14 +2,10 @@
  * Utility to convert Zod schemas to JSON Schema for Fastify route validation
  * and OpenAPI spec generation.
  *
- * Resolves local $ref pointers that zod-to-json-schema creates when a Zod
- * sub-schema is reused (e.g. MetricValueDtoSchema appearing twice in
- * PlatformMetricsResponseSchema).  openapi-typescript and @hey-api cannot
- * follow those local refs once Fastify embeds the schema inside the OpenAPI
- * spec's paths, so we inline them here.
+ * Converts with Zod's own `z.toJSONSchema`, adjusted so the API validates what it always
+ * has: see `adjustNode` and `applyAjvFixes`.
  */
-import { zodToJsonSchema as convert, type PostProcessCallback } from 'zod-to-json-schema';
-import type { ZodType, ZodTypeDef } from 'zod';
+import { z } from 'zod';
 
 /**
  * The string normalisations a Zod schema can declare (`.trim()`, `.toLowerCase()`,
@@ -31,63 +27,74 @@ export type StringTransform = (typeof StringTransform)[keyof typeof StringTransf
  */
 export const STRING_TRANSFORM_KEYWORD = 'x-transform';
 
-const STRING_TRANSFORMS: ReadonlySet<string> = new Set(Object.values(StringTransform));
+/**
+ * Zod 4 builds `.trim()`, `.toLowerCase()` and `.toUpperCase()` as one kind of check, an
+ * `overwrite` holding a bare function, so nothing on the check names which one it is. Running
+ * the function on a probe tells them apart: each changes a different part of it. A string
+ * overwrite that matches none of them throws, because the request validator could not apply
+ * it and the value would be checked un-normalised, the bug #500 fixed.
+ */
+const PROBE = ' aB ';
+const PROBE_RESULTS: ReadonlyMap<string, StringTransform> = new Map([
+  [PROBE.trim(), StringTransform.TRIM],
+  [PROBE.toLowerCase(), StringTransform.TO_LOWER_CASE],
+  [PROBE.toUpperCase(), StringTransform.TO_UPPER_CASE],
+]);
 
-interface ZodStringDefShape extends ZodTypeDef {
-  typeName?: string;
-  checks?: readonly { kind: string }[];
+function stringTransformOf(check: z.core.$ZodCheck): StringTransform | undefined {
+  const { def } = check._zod;
+  if (def.check !== 'overwrite') return undefined;
+  const result = (def as z.core.$ZodCheckOverwriteDef<string>).tx(PROBE);
+  const transform = PROBE_RESULTS.get(result);
+  if (transform === undefined) {
+    throw new Error(`A string overwrite turned "${PROBE}" into "${result}": not trim, toLowerCase or toUpperCase, so the request validator cannot apply it.`);
+  }
+  return transform;
 }
 
-const recordStringTransforms: PostProcessCallback = (jsonSchema, def) => {
-  const stringDef = def as ZodStringDefShape;
-  if (jsonSchema === undefined || stringDef.typeName !== 'ZodString') return jsonSchema;
-  const transforms = (stringDef.checks ?? [])
-    .map((check) => check.kind)
-    .filter((kind) => STRING_TRANSFORMS.has(kind));
-  if (transforms.length === 0) return jsonSchema;
-  return Object.assign({}, jsonSchema, { [STRING_TRANSFORM_KEYWORD]: transforms });
-};
+interface ConvertedNode {
+  readonly zodSchema: z.core.$ZodTypes;
+  readonly jsonSchema: z.core.JSONSchema.BaseSchema;
+}
 
-// zod-to-json-schema's own signature makes TypeScript instantiate a type that is
-// excessively deep, and ts-jest fails compilation with TS2589 at the call site
-// below. `npx turbo typecheck` does NOT surface it -- the package tsconfigs and
-// the ts-jest config resolve it differently -- so removing this assertion looks
-// safe right up until the backend suite fails to compile. It is a third-party
-// type escape hatch, narrowed to the one shape this module actually calls.
-// eslint-disable-next-line no-restricted-syntax -- see above; TS2589 without it
-const convertToJsonSchema = convert as unknown as (
-  schema: ZodType<unknown>,
-  options: { target: 'openApi3'; postProcess: PostProcessCallback }
-) => unknown;
+function recordStringTransforms({ zodSchema, jsonSchema }: ConvertedNode): void {
+  if (zodSchema._zod.def.type !== 'string') return;
+  const transforms = (zodSchema._zod.def.checks ?? [])
+    .map(stringTransformOf)
+    .filter((transform) => transform !== undefined);
+  if (transforms.length > 0) jsonSchema[STRING_TRANSFORM_KEYWORD] = transforms;
+}
 
 /**
- * Resolve every `{ $ref: "#/..." }` in a JSON-Schema-like tree by
- * looking up the pointer within `root` and replacing the node in-place.
+ * Zod 4 publishes its own regex beside a string `format` (`uuid`, `date-time`, `email`). Those
+ * regexes are stricter than the Ajv formats the API has always validated with: a `uuid` must
+ * carry an RFC 9562 version and variant, and a `date-time` must end in `Z`. Keeping only the
+ * `format` leaves what the API accepts as it was. A `pattern` the DTO declared itself with
+ * `.regex()` stays.
  */
-function resolveLocalRefs(node: unknown, root: Record<string, unknown>): unknown {
-  if (node === null || typeof node !== 'object') return node;
+function dropBuiltInFormatPatterns({ zodSchema, jsonSchema }: ConvertedNode): void {
+  if (zodSchema._zod.def.type !== 'string' || jsonSchema.format === undefined) return;
+  const declaresRegex = [zodSchema, ...(zodSchema._zod.def.checks ?? [])]
+    .some((node) => (node._zod.def as { format?: string }).format === 'regex');
+  if (!declaresRegex) delete jsonSchema.pattern;
+}
 
-  if (Array.isArray(node)) {
-    return node.map((item) => resolveLocalRefs(item, root));
-  }
+/**
+ * Zod 4 publishes a discriminated union as `oneOf`. Ajv checks every `oneOf` member, and with
+ * Fastify's `removeAdditional` a member that does not match strips the properties it does not
+ * know from the request body the matching member already passed. `anyOf` stops at the first
+ * match, which is how the API has always validated these unions.
+ */
+function publishUnionsAsAnyOf({ jsonSchema }: ConvertedNode): void {
+  if (jsonSchema.oneOf === undefined) return;
+  jsonSchema.anyOf = jsonSchema.oneOf;
+  delete jsonSchema.oneOf;
+}
 
-  const obj = node as { $ref?: unknown; [keyword: string]: unknown };
-
-  if (typeof obj.$ref === 'string' && obj.$ref.startsWith('#/')) {
-    const pointer = obj.$ref.slice(2).split('/');
-    let target: unknown = root;
-    for (const segment of pointer) {
-      if (target === null || typeof target !== 'object') return obj;
-      target = (target as Record<string, unknown>)[segment];
-    }
-    return resolveLocalRefs(target, root);
-  }
-
-  const resolved: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    resolved[key] = resolveLocalRefs(value, root);
-  }
-  return permitNullInNullableEnum(distributeNullableOverAnyOf(collapseSingleAllOf(resolved)));
+function adjustNode(node: ConvertedNode): void {
+  recordStringTransforms(node);
+  dropBuiltInFormatPatterns(node);
+  publishUnionsAsAnyOf(node);
 }
 
 /**
@@ -136,7 +143,26 @@ function collapseSingleAllOf(node: Record<string, unknown>): Record<string, unkn
   return { ...(member as Record<string, unknown>), ...rest };
 }
 
-export function zodToJsonSchema(schema: ZodType<unknown>): Record<string, unknown> {
-  const raw = convertToJsonSchema(schema, { target: 'openApi3', postProcess: recordStringTransforms }) as Record<string, unknown>;
-  return resolveLocalRefs(raw, raw) as Record<string, unknown>;
+/** Apply the fixes above to every node of a converted schema, innermost first. */
+function applyAjvFixes(node: unknown): unknown {
+  if (node === null || typeof node !== 'object') return node;
+  if (Array.isArray(node)) return node.map(applyAjvFixes);
+  const converted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(node)) {
+    converted[key] = applyAjvFixes(value);
+  }
+  return permitNullInNullableEnum(distributeNullableOverAnyOf(collapseSingleAllOf(converted)));
+}
+
+export function zodToJsonSchema(schema: z.ZodType): Record<string, unknown> {
+  // `cycles: 'throw'`: a recursive schema would come out as a local `$ref`, which the API
+  // generators cannot follow once Fastify embeds the schema under `paths`. Zod 4 inlines a
+  // reused sub-schema, so without a cycle the output holds no local ref at all.
+  const converted = z.toJSONSchema(schema, {
+    target: 'openapi-3.0',
+    io: 'output',
+    cycles: 'throw',
+    override: adjustNode,
+  });
+  return applyAjvFixes(converted) as Record<string, unknown>;
 }

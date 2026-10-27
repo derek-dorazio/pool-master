@@ -47,7 +47,7 @@ export function Toast({
   return (
     <ToastPrimitive.Root
       className={cn(
-        "rounded-[1.25rem] border p-4 text-sm shadow-xl",
+        "rounded-2xl border p-4 text-sm shadow-xl",
         toastToneClassName(tone),
         className,
       )}

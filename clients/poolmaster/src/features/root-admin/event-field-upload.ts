@@ -40,7 +40,7 @@ function isClear(value: unknown): boolean {
 }
 
 /** A nullable value cell: `null` (or the word) clears it, anything else must parse. */
-function clearable<T extends z.ZodTypeAny>(schema: T) {
+function clearable<T extends z.ZodType>(schema: T) {
   return z.preprocess((value) => (isClear(value) ? null : value), schema.nullable()).optional();
 }
 
@@ -64,7 +64,7 @@ const eventFieldUploadRowSchema = z
     isActive: z
       .preprocess(
         (value) => (typeof value === 'string' ? BOOLEAN_WORDS[value.trim().toLowerCase()] ?? value : value),
-        z.boolean({ invalid_type_error: 'isActive must be true or false' }),
+        z.boolean({ error: 'isActive must be true or false' }),
       )
       .optional(),
     inactiveReason: clearable(

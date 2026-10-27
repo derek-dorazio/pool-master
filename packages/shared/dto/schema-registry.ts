@@ -12,22 +12,21 @@
  * and those derivations were copy-pasted until they drifted. See #192 and
  * `rules/service-rules.md` §4 *DTOs, Mappers, and OpenAPI*.
  *
- * WHAT THIS IS NOT. `dto/json-schema.ts` inlines local `$ref`s on purpose: refs that
- * zod-to-json-schema emits INSIDE a path's schema cannot be followed by the
- * generators once Fastify embeds them under `paths`. That remains true and that
- * helper keeps doing it. A ref to a TOP-LEVEL `components.schemas` entry is a
- * different thing and is followed correctly — which is the whole reason this registry
- * hoists schemas up rather than leaving them nested.
+ * WHAT THIS IS NOT. A nested `$ref` inside a path's schema cannot be followed by the
+ * generators once Fastify embeds it under `paths`, so `dto/json-schema.ts` emits none: it
+ * inlines every reused sub-schema and refuses a recursive one. A ref to a TOP-LEVEL
+ * `components.schemas` entry is a different thing and is followed correctly — which is the
+ * whole reason this registry hoists schemas up rather than leaving them nested.
  */
 import type { ZodType } from 'zod';
 
 export interface NamedSchema {
   /** The name published as `components.schemas.<name>` and generated as a type. */
   readonly name: string;
-  readonly schema: ZodType<unknown>;
+  readonly schema: ZodType;
 }
 
-const registry = new Map<string, ZodType<unknown>>();
+const registry = new Map<string, ZodType>();
 
 /**
  * Register a Zod schema under a published component name.
@@ -36,7 +35,7 @@ const registry = new Map<string, ZodType<unknown>>();
  * publishing different shapes under one name is the exact drift this epic removes,
  * and it must fail at startup rather than silently letting the last registration win.
  */
-export function registerSchema<T extends ZodType<unknown>>(name: string, schema: T): T {
+export function registerSchema<T extends ZodType>(name: string, schema: T): T {
   const existing = registry.get(name);
   if (existing !== undefined && existing !== schema) {
     throw new Error(

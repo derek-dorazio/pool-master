@@ -3,12 +3,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { BudgetPricingProfileSchema, findBudgetPricingProblem } from '@poolmaster/shared/domain';
+import { BudgetPricingProfileSchema, findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
 import { updateSettingsGroup, type BudgetPricingConfig, type SettingsGroup } from '@/lib/api';
 import { Alert, Button, FormField, Input } from '@/features/shared/ui';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
+import { numberFieldErrors } from '@/lib/number-field-errors';
 
 type BudgetPricingSettingsGroup = Extract<SettingsGroup, { key: 'BUDGET_PRICING_CONFIG' }>;
 
@@ -41,6 +42,18 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
+const dollarsRange = (min: number, max: number) => `From ${formatDollars(min)} to ${formatDollars(max)}.`;
+const shareRange = (min: number, max: number) => `From ${min}% to ${max}% of the cap.`;
+const { shape } = BudgetPricingProfileSchema;
+
+const pricingErrors = numberFieldErrors({
+  salaryCap: { schema: shape.salaryCap, range: dollarsRange, blank: 'Enter a salary cap.', whole: 'Whole dollars only.' },
+  unit: { schema: shape.unit, range: dollarsRange, blank: 'Enter a rounding unit.', whole: 'Whole dollars only.' },
+  topSharePercent: { schema: shape.topSharePercent, range: shareRange, blank: 'Enter a share of the cap.' },
+  floorSharePercent: { schema: shape.floorSharePercent, range: shareRange, blank: 'Enter a share of the cap.' },
+  steepness: { schema: shape.steepness, range: (min, max) => `From ${min} to ${max}.`, blank: 'Enter a steepness.' },
+});
+
 /**
  * The BUDGET_PRICING_CONFIG card's form (#93): the pricing profiles an admin prices a
  * tournament's field with. The first profile is the one the price dialog starts on. Changing a
@@ -51,7 +64,7 @@ export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSetti
   const queryClient = useQueryClient();
   const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
   const form = useForm<BudgetPricingConfig>({
-    resolver: zodResolver(BudgetPricingFormSchema),
+    resolver: zodResolver(BudgetPricingFormSchema, { error: pricingErrors }),
     defaultValues: group.value,
   });
   const profiles = useFieldArray({ control: form.control, name: 'profiles' });

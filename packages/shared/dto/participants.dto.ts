@@ -12,7 +12,7 @@ import {
 import { DateTimeSchema, StringRecordSchema } from './common.dto';
 
 /** An admin-managed roster state: RETIRED and SUSPENDED are set by hand on the player page. */
-const ParticipantStatusDtoSchema = z.nativeEnum(ParticipantStatus);
+const ParticipantStatusDtoSchema = z.enum(ParticipantStatus);
 
 // --- Response Sub-schemas ---
 
@@ -114,11 +114,11 @@ export const UpdateParticipantRequestSchema = z.object({
 export type UpdateParticipantRequest = z.infer<typeof UpdateParticipantRequestSchema>;
 
 export const ParticipantProviderMappingDtoSchema = z.object({
-  id: z.string().uuid(),
-  participantId: z.string().uuid(),
+  id: z.uuid(),
+  participantId: z.uuid(),
   providerId: z.string().describe('The provider that knows the participant by externalId.'),
   externalId: z.string(),
-  confidence: z.nativeEnum(MappingConfidence).describe('How the identity was matched.'),
+  confidence: z.enum(MappingConfidence).describe('How the identity was matched.'),
   mappedAt: DateTimeSchema,
 }).describe('A provider\'s identifier for a participant — how synced data finds them.');
 export type ParticipantProviderMappingDto = z.infer<typeof ParticipantProviderMappingDtoSchema>;

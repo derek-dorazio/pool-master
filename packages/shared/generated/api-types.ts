@@ -6316,12 +6316,12 @@ export interface components {
              * Format: date-time
              * @description ISO 8601 datetime string.
              */
-            createdAt: string | null;
+            createdAt: string;
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
              */
-            updatedAt: string | null;
+            updatedAt: string;
             team: {
                 /** Format: uuid */
                 id: string;
@@ -6365,12 +6365,12 @@ export interface components {
                  * Format: date-time
                  * @description ISO 8601 datetime string.
                  */
-                createdAt: string | null;
+                createdAt: string;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
                  */
-                updatedAt: string | null;
+                updatedAt: string;
                 team: {
                     /** Format: uuid */
                     id: string;
@@ -6414,12 +6414,12 @@ export interface components {
                  * Format: date-time
                  * @description ISO 8601 datetime string.
                  */
-                createdAt: string | null;
+                createdAt: string;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
                  */
-                updatedAt: string | null;
+                updatedAt: string;
                 team: {
                     /** Format: uuid */
                     id: string;
@@ -8756,7 +8756,7 @@ export interface components {
                 expectedReturn?: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /** @description Source that provided the injury-status update. */
@@ -8766,7 +8766,7 @@ export interface components {
             photoUrl?: string | null;
             /**
              * Format: date-time
-             * @description Expected return timestamp when known.
+             * @description When the participant image metadata was last refreshed.
              */
             photoLastUpdated?: string;
             /** @description Map of provider identifiers keyed by provider code. */
@@ -8846,7 +8846,7 @@ export interface components {
                     expectedReturn?: string;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the injury-status record was last updated.
                      */
                     updatedAt?: string;
                     /** @description Source that provided the injury-status update. */
@@ -8856,7 +8856,7 @@ export interface components {
                 photoUrl?: string | null;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
                 /** @description Map of provider identifiers keyed by provider code. */
@@ -8925,7 +8925,7 @@ export interface components {
                     expectedReturn?: string;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the injury-status record was last updated.
                      */
                     updatedAt?: string;
                     /** @description Source that provided the injury-status update. */
@@ -8935,7 +8935,7 @@ export interface components {
                 photoUrl?: string | null;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
                 /** @description Map of provider identifiers keyed by provider code. */
@@ -9021,7 +9021,7 @@ export interface components {
                 expectedReturn?: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the injury-status record was last updated.
                  */
                 updatedAt?: string;
                 /** @description Source that provided the injury-status update. */
@@ -9432,7 +9432,7 @@ export interface components {
                     expectedReturn?: string;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the injury-status record was last updated.
                      */
                     updatedAt?: string;
                     /** @description Source that provided the injury-status update. */
@@ -9442,7 +9442,7 @@ export interface components {
                 photoUrl?: string | null;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
                 /** @description Map of provider identifiers keyed by provider code. */
@@ -9462,12 +9462,12 @@ export interface components {
             };
             /**
              * Format: date-time
-             * @description Expected return timestamp when known.
+             * @description ISO 8601 datetime string.
              */
             createdAt: string;
             /**
              * Format: date-time
-             * @description Expected return timestamp when known.
+             * @description ISO 8601 datetime string.
              */
             updatedAt: string;
         };
@@ -9534,7 +9534,7 @@ export interface components {
                         expectedReturn?: string;
                         /**
                          * Format: date-time
-                         * @description Expected return timestamp when known.
+                         * @description When the injury-status record was last updated.
                          */
                         updatedAt?: string;
                         /** @description Source that provided the injury-status update. */
@@ -9544,7 +9544,7 @@ export interface components {
                     photoUrl?: string | null;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
                     /** @description Map of provider identifiers keyed by provider code. */
@@ -9564,12 +9564,12 @@ export interface components {
                 };
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 createdAt: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
             }[];
@@ -9637,7 +9637,7 @@ export interface components {
                         expectedReturn?: string;
                         /**
                          * Format: date-time
-                         * @description Expected return timestamp when known.
+                         * @description When the injury-status record was last updated.
                          */
                         updatedAt?: string;
                         /** @description Source that provided the injury-status update. */
@@ -9647,7 +9647,7 @@ export interface components {
                     photoUrl?: string | null;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
                     /** @description Map of provider identifiers keyed by provider code. */
@@ -9667,12 +9667,12 @@ export interface components {
                 };
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 createdAt: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
             };
@@ -10690,7 +10690,7 @@ export interface components {
                     expectedReturn?: string;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the injury-status record was last updated.
                      */
                     updatedAt?: string;
                     /** @description Source that provided the injury-status update. */
@@ -10700,7 +10700,7 @@ export interface components {
                 photoUrl?: string | null;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description When the participant image metadata was last refreshed.
                  */
                 photoLastUpdated?: string;
                 /** @description Map of provider identifiers keyed by provider code. */
@@ -10817,12 +10817,12 @@ export interface components {
             affiliatedWithSportLeague: boolean;
             /**
              * Format: date-time
-             * @description Expected return timestamp when known.
+             * @description ISO 8601 datetime string.
              */
             createdAt: string;
             /**
              * Format: date-time
-             * @description Expected return timestamp when known.
+             * @description ISO 8601 datetime string.
              */
             updatedAt: string;
         };
@@ -10900,7 +10900,7 @@ export interface components {
                         expectedReturn?: string;
                         /**
                          * Format: date-time
-                         * @description Expected return timestamp when known.
+                         * @description When the injury-status record was last updated.
                          */
                         updatedAt?: string;
                         /** @description Source that provided the injury-status update. */
@@ -10910,7 +10910,7 @@ export interface components {
                     photoUrl?: string | null;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
                     /** @description Map of provider identifiers keyed by provider code. */
@@ -11027,12 +11027,12 @@ export interface components {
                 affiliatedWithSportLeague: boolean;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 createdAt: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
             }[];
@@ -11151,7 +11151,7 @@ export interface components {
                         expectedReturn?: string;
                         /**
                          * Format: date-time
-                         * @description Expected return timestamp when known.
+                         * @description When the injury-status record was last updated.
                          */
                         updatedAt?: string;
                         /** @description Source that provided the injury-status update. */
@@ -11161,7 +11161,7 @@ export interface components {
                     photoUrl?: string | null;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
                     /** @description Map of provider identifiers keyed by provider code. */
@@ -11278,12 +11278,12 @@ export interface components {
                 affiliatedWithSportLeague: boolean;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 createdAt: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
             };
@@ -12267,7 +12267,7 @@ export interface components {
                         expectedReturn?: string;
                         /**
                          * Format: date-time
-                         * @description Expected return timestamp when known.
+                         * @description When the injury-status record was last updated.
                          */
                         updatedAt?: string;
                         /** @description Source that provided the injury-status update. */
@@ -12277,7 +12277,7 @@ export interface components {
                     photoUrl?: string | null;
                     /**
                      * Format: date-time
-                     * @description Expected return timestamp when known.
+                     * @description When the participant image metadata was last refreshed.
                      */
                     photoLastUpdated?: string;
                     /** @description Map of provider identifiers keyed by provider code. */
@@ -12394,12 +12394,12 @@ export interface components {
                 affiliatedWithSportLeague: boolean;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 createdAt: string;
                 /**
                  * Format: date-time
-                 * @description Expected return timestamp when known.
+                 * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
             }[];
@@ -17106,14 +17106,14 @@ export interface components {
                     /** @enum {string} */
                     status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
                 } | null;
-                /** @description What is stored now; null when nothing is. */
+                /** @description A golfer's round values. */
                 after: {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
                     /** @enum {string} */
                     status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
-                } | null;
+                };
             }[];
             /** @description Counts by resolution. */
             rollup: {
@@ -17209,7 +17209,7 @@ export interface components {
                     riderName: string | null;
                     isOfficial: boolean;
                 } | null;
-                /** @description What is stored now; null when nothing is. */
+                /** @description A runner's result values. */
                 after: {
                     /** @enum {string} */
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
@@ -17217,7 +17217,7 @@ export interface components {
                     startPosition: number | null;
                     riderName: string | null;
                     isOfficial: boolean;
-                } | null;
+                };
             }[];
             /** @description Problems with the race's result as a whole; empty when it can be applied as far as the order goes. */
             orderErrors: ("POSITIONS_INVALID" | "FIELD_INCOMPLETE")[];
@@ -21854,7 +21854,7 @@ export interface components {
                 /** @description Feeds represented by the originating manual or scheduled sync request. */
                 requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
                 /**
-                 * @description Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+                 * @description Single feed represented by this sync run row.
                  * @enum {string}
                  */
                 requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
@@ -21984,7 +21984,7 @@ export interface components {
                         before?: {
                             [key: string]: unknown;
                         };
-                        /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
+                        /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
                         after?: {
                             [key: string]: unknown;
                         };
@@ -22037,7 +22037,7 @@ export interface components {
             from?: string;
             /**
              * Format: date-time
-             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
+             * @description Latest submission time to include. Defaults to now.
              */
             to?: string;
         };
@@ -22074,7 +22074,7 @@ export interface components {
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
                     /**
-                     * @description Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+                     * @description Single feed represented by this sync run row.
                      * @enum {string}
                      */
                     requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
@@ -22204,7 +22204,7 @@ export interface components {
                             before?: {
                                 [key: string]: unknown;
                             };
-                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
+                            /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
                             after?: {
                                 [key: string]: unknown;
                             };
@@ -22287,7 +22287,7 @@ export interface components {
                     /** @description Feeds represented by the originating manual or scheduled sync request. */
                     requestedFeeds?: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
                     /**
-                     * @description Explicit ingestion feed type requested by the caller. Every feed is event-scoped.
+                     * @description Single feed represented by this sync run row.
                      * @enum {string}
                      */
                     requestedFeed?: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
@@ -22417,7 +22417,7 @@ export interface components {
                             before?: {
                                 [key: string]: unknown;
                             };
-                            /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
+                            /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
                             after?: {
                                 [key: string]: unknown;
                             };
@@ -22522,7 +22522,7 @@ export interface components {
             from?: string;
             /**
              * Format: date-time
-             * @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today.
+             * @description Only events starting at or before this.
              */
             to?: string;
             search?: string;
@@ -32832,7 +32832,7 @@ export interface operations {
                 status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
                 /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
                 from?: string;
-                /** @description Earliest submission time to include. Defaults to 6 hours before `to`. */
+                /** @description Latest submission time to include. Defaults to now. */
                 to?: string;
             };
             header?: never;
@@ -32988,7 +32988,7 @@ export interface operations {
                 sportLeagueId?: string;
                 /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
                 from?: string;
-                /** @description Only events starting at or after this. Omit both from and to for every event the provider has; there is no default window around today. */
+                /** @description Only events starting at or before this. */
                 to?: string;
                 search?: string;
             };

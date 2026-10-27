@@ -19,7 +19,7 @@ export const UpdateSquadRequestSchema = z.object({
 export type UpdateSquadRequest = z.infer<typeof UpdateSquadRequestSchema>;
 
 export const AddSquadMemberRequestSchema = z.object({
-  userId: z.string().uuid().describe('User to add as an owner of the team.'),
+  userId: z.uuid().describe('User to add as an owner of the team.'),
 }).describe('Request payload for adding a user to a squad.');
 export type AddSquadMemberRequest = z.infer<typeof AddSquadMemberRequestSchema>;
 
@@ -31,10 +31,10 @@ export type AddSquadMemberRequest = z.infer<typeof AddSquadMemberRequestSchema>;
  * name was missing, and which could not answer anything else about the member.
  */
 export const SquadMembershipDtoSchema = z.object({
-  id: z.string().uuid(),
-  squadId: z.string().uuid(),
-  leagueId: z.string().uuid(),
-  userId: z.string().uuid(),
+  id: z.uuid(),
+  squadId: z.uuid(),
+  leagueId: z.uuid(),
+  userId: z.uuid(),
   user: UserDtoSchema.describe('The member, as the canonical UserDto.'),
   status: z.enum(['ACTIVE', 'INACTIVE']).describe('Squad membership status.'),
   joinedAt: DateTimeSchema.describe('When the user joined the squad.'),
@@ -56,9 +56,9 @@ export type SquadMembershipDto = z.infer<typeof SquadMembershipDtoSchema>;
  * per-row viewer flag, where the viewer's own `SquadMembership` answers it directly.
  */
 export const SquadDtoSchema = z.object({
-  id: z.string().uuid(),
-  leagueId: z.string().uuid(),
-  createdBy: z.string().uuid(),
+  id: z.uuid(),
+  leagueId: z.uuid(),
+  createdBy: z.uuid(),
   name: z.string().describe('Squad display name.'),
   iconKey: z.enum(TeamIconKeyValues).describe('Selected built-in team icon key from the curated PoolMaster team icon catalog.'),
   isActive: z

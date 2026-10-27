@@ -9,6 +9,7 @@ import { Alert, Button, Checkbox, FormField, Input, Textarea } from '@/features/
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { hasErrorCode, throwApiError, extractErrorMessage } from '@/lib/errors';
+import { numberFieldErrors } from '@/lib/number-field-errors';
 import { EMAIL_TEMPLATE_LABELS } from './root-admin-settings-utils';
 
 type EmailSettingsGroup = Extract<SettingsGroup, { key: 'EMAIL_CONFIG' }>;
@@ -48,6 +49,27 @@ const EmailSettingsFormSchema = EmailConfigSchema.extend({
 });
 type EmailSettingsFormValues = z.infer<typeof EmailSettingsFormSchema>;
 
+const emailErrors = numberFieldErrors({
+  sendRatePerSecond: {
+    schema: EmailConfigSchema.shape.sendRatePerSecond,
+    range: (min, max) => `From ${min} to ${max} emails a second.`,
+    blank: 'Enter a number of emails a second.',
+    whole: 'Whole emails a second only.',
+  },
+  standingsBufferMinutes: {
+    schema: EmailConfigSchema.shape.standingsBufferMinutes,
+    range: (min, max) => `From ${min} to ${max} minutes.`,
+    blank: 'Enter a number of minutes.',
+    whole: 'Whole minutes only.',
+  },
+  weeklyDigestHour: {
+    schema: EmailConfigSchema.shape.weeklyDigestHour,
+    range: (min, max) => `An hour from ${min} to ${max}.`,
+    blank: 'Enter an hour.',
+    whole: 'A whole hour only.',
+  },
+});
+
 function toFormValues(config: EmailConfig): EmailSettingsFormValues {
   return {
     ...config,
@@ -75,7 +97,7 @@ export function EmailSettingsForm({ group }: { group: EmailSettingsGroup }) {
   const queryClient = useQueryClient();
   const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);
   const form = useForm<EmailSettingsFormValues>({
-    resolver: zodResolver(EmailSettingsFormSchema),
+    resolver: zodResolver(EmailSettingsFormSchema, { error: emailErrors }),
     defaultValues: toFormValues(group.value),
   });
 

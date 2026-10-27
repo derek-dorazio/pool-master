@@ -1,6 +1,13 @@
 import type { Config } from "tailwindcss";
 import tailwindcssAnimate from "tailwindcss-animate";
 
+/**
+ * A theme colour that takes Tailwind's opacity modifier (`bg-primary/10`): the token is a whole
+ * colour, so the modifier mixes it with transparent.
+ */
+const themeColor = (token: string) =>
+  `color-mix(in srgb, var(--${token}) calc(<alpha-value> * 100%), transparent)`;
+
 const config: Config = {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{ts,tsx}"],
@@ -71,38 +78,38 @@ const config: Config = {
         "on-inverse-subtle": "var(--surface-on-inverse-subtle)",
         "on-inverse-hover": "var(--surface-on-inverse-hover)",
         "inverse-border": "var(--border-on-inverse)",
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: themeColor("border"),
+        input: themeColor("input"),
+        ring: themeColor("ring"),
+        background: themeColor("background"),
+        foreground: themeColor("foreground"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: themeColor("primary"),
+          foreground: themeColor("primary-foreground"),
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: themeColor("secondary"),
+          foreground: themeColor("secondary-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: themeColor("destructive"),
+          foreground: themeColor("destructive-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: themeColor("muted"),
+          foreground: themeColor("muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: themeColor("accent"),
+          foreground: themeColor("accent-foreground"),
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
+          DEFAULT: themeColor("popover"),
+          foreground: themeColor("popover-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: themeColor("card"),
+          foreground: themeColor("card-foreground"),
         },
       },
       fontFamily: {
@@ -118,9 +125,11 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-        xl: "0.75rem",
-        "2xl": "1rem",
-        "3xl": "1.5rem",
+        // Every size follows --radius (0.5rem), so a sharper or softer theme is one setting.
+        xl: "calc(var(--radius) * 1.5)",
+        "2xl": "calc(var(--radius) * 2)",
+        "3xl": "calc(var(--radius) * 3)",
+        "4xl": "calc(var(--radius) * 4)",
         pill: "9999px",
       },
       boxShadow: {
@@ -128,6 +137,7 @@ const config: Config = {
         md: "var(--shadow-md)",
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
+        "2xl": "var(--shadow-2xl)",
         focus: "var(--shadow-focus)",
         "gold-glow": "var(--shadow-gold-glow)",
         "red-pulse": "var(--shadow-red-pulse)",

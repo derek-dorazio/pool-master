@@ -2,7 +2,7 @@
  * Rewrite OpenAPI 3.0-style nullability (`{ "type": "string", "nullable": true }`)
  * into OpenAPI 3.1 / JSON-Schema-2020-12 style (`{ "type": ["string", "null"] }`).
  *
- * WHY: `zod-to-json-schema` (target `openApi3`, see `dto/json-schema.ts`) and
+ * WHY: Zod's `z.toJSONSchema` (target `openapi-3.0`, see `dto/json-schema.ts`) and
  * `@fastify/swagger` both emit 3.0-style `nullable: true`, but our exported spec
  * declares `openapi: 3.1.0`. 3.1 *removed* the `nullable` keyword, so
  * `@hey-api/openapi-ts` trusts that version string, runs its 3.1 schema parser,
@@ -96,7 +96,7 @@ export function rewriteNullableToOpenApi31(node: unknown): void {
   // No own `type`: the node is a composition/ref wrapper.
   const structuralKeys = STRUCTURAL_KEYS.filter((key) => key in node);
 
-  // Common case from zod-to-json-schema: `{ allOf: [ <base> ], nullable: true,
+  // Common case from the Zod converter: `{ allOf: [ <base> ], nullable: true,
   // description?: string }` with no other schema keywords. Flatten to the base
   // schema, made nullable, keeping this node's description if it has one.
   if (

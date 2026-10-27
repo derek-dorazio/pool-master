@@ -26,7 +26,7 @@ function feedSummary(policy: { enabled: boolean; intervalMinutes?: number; inter
 export function summarizeIngestionSchedule(config: IngestionScheduleConfig): SettingsSummaryItem[] {
   const overrideSports = Object.keys(config.perSportOverrides);
   return [
-    { id: 'scheduledSports', label: 'Scheduled sports', value: config.scheduledSports?.join(', ') ?? 'None' },
+    { id: 'scheduledSports', label: 'Scheduled sports', value: config.scheduledSports.join(', ') },
     { id: 'eventLiveScores', label: 'Live scores', value: feedSummary(config.eventLiveScores) },
     { id: 'eventParticipants', label: 'Field sync', value: feedSummary(config.eventParticipants) },
     { id: 'healthCheck', label: 'Provider health check', value: feedSummary(config.healthCheck) },

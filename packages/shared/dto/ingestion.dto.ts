@@ -9,7 +9,7 @@ import { DateTimeSchema, JsonObjectSchema } from './common.dto';
 import { EventStatusDtoSchema } from './events.dto';
 import { registerSchema } from './schema-registry';
 
-const SportDtoSchema = z.nativeEnum(Sport);
+const SportDtoSchema = z.enum(Sport);
 
 export const IngestionFeedTypeSchema = z.enum([
   'EVENTPARTICIPANTS',
@@ -71,7 +71,7 @@ export type ProviderListResponse = z.infer<typeof ProviderListResponseSchema>;
 
 // --- Sync runs ---
 
-export const ProviderSyncRunStatusSchema = z.nativeEnum(ProviderSyncRunStatus);
+export const ProviderSyncRunStatusSchema = z.enum(ProviderSyncRunStatus);
 
 export const ProviderSyncOutcomeSeveritySchema = z.enum(['SUCCESS', 'WARNING', 'ERROR']);
 export type ProviderSyncOutcomeSeverity = z.infer<typeof ProviderSyncOutcomeSeveritySchema>;
@@ -95,12 +95,12 @@ export const ProviderSyncProviderPayloadDtoSchema = z.object({
   rawCaptured: z.boolean().describe('Whether raw provider response JSON was captured for this run.'),
   rawTruncated: z.boolean().describe('Whether the captured raw provider payload was truncated before storage.'),
   raw: z.unknown().optional().describe('Raw provider response JSON retained for debugging when capture is available.'),
-}).passthrough().describe('Raw/debug provider payload captured for a provider sync run.');
+}).loose().describe('Raw/debug provider payload captured for a provider sync run.');
 export type ProviderSyncProviderPayloadDto = z.infer<typeof ProviderSyncProviderPayloadDtoSchema>;
 
 export const IngestionErrorLogEntryDtoSchema = z.object({
   error: z.string().describe('Failure message the ingestion job recorded.'),
-  at: z.string().datetime().describe('When the failure was recorded.'),
+  at: z.iso.datetime().describe('When the failure was recorded.'),
 }).describe('One ingestion job error-log entry.');
 export type IngestionErrorLogEntryDto = z.infer<typeof IngestionErrorLogEntryDtoSchema>;
 
@@ -109,9 +109,9 @@ export const ProviderSyncJobPayloadDtoSchema = z.object({
   providerId: z.string().describe('Provider that executed the ingestion job.'),
   sport: SportDtoSchema,
   eventExternalId: z.string().optional().describe('External event id for event-scoped jobs, when applicable.'),
-  status: z.nativeEnum(IngestionJobStatus).describe('Internal ingestion job status.'),
-  startedAt: z.string().datetime().optional().describe('When the ingestion job started.'),
-  completedAt: z.string().datetime().optional().describe('When the ingestion job completed.'),
+  status: z.enum(IngestionJobStatus).describe('Internal ingestion job status.'),
+  startedAt: z.iso.datetime().optional().describe('When the ingestion job started.'),
+  completedAt: z.iso.datetime().optional().describe('When the ingestion job completed.'),
   recordsProcessed: z.number().int().min(0).describe('Canonical records processed by the ingestion job.'),
   errors: z.number().int().min(0).describe('Error count captured by the ingestion job.'),
   errorLog: z.array(IngestionErrorLogEntryDtoSchema).describe('Ingestion error-log entries for root-admin investigation.'),
@@ -188,11 +188,11 @@ export const ProviderSyncRunPayloadDtoSchema = z.object({
   jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
   writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.'),
   outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
-  stats: z.record(z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
+  stats: z.record(z.string(), z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
   recordsProcessed: z.number().optional().describe('Legacy top-level processed-record count retained for summary compatibility.'),
   errors: z.number().optional().describe('Legacy top-level error count retained for summary compatibility.'),
   detail: z.string().optional().describe('Legacy human-readable detail retained for summary compatibility.'),
-}).passthrough().describe('Provider sync run diagnostic payload.');
+}).loose().describe('Provider sync run diagnostic payload.');
 export type ProviderSyncRunPayloadDto = z.infer<typeof ProviderSyncRunPayloadDtoSchema>;
 
 export const ProviderSyncRunDtoSchema = z.object({

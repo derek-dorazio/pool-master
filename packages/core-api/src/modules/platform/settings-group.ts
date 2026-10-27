@@ -17,7 +17,7 @@ export interface SettingsGroup<T> {
   readonly title: string;
   readonly description: string;
   /** Validates a whole payload. Unknown keys are dropped, so a field can be retired freely. */
-  readonly schema: z.ZodType<T, z.ZodTypeDef, unknown>;
+  readonly schema: z.ZodType<T>;
   /** The value in use while nothing is stored. Must pass `schema`. */
   readonly defaults: (env: SettingsEnvironment) => T;
   /**
