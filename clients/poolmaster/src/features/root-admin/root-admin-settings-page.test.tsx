@@ -229,6 +229,16 @@ describe('RootAdminSettingsPage email card', () => {
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
+  it('says a send rate must be whole when it is a fraction inside the range', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '2.5' } });
+    fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
+
+    expect(await screen.findByText('Whole emails a second only.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
   it('saves the standings email delay as a number of minutes', async () => {
     updateSettingsGroupMock.mockResolvedValue({ data: DEFAULT_EMAIL });
     renderPage();

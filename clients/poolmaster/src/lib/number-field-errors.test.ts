@@ -22,6 +22,11 @@ describe('numberFieldErrors', () => {
     expect(messages([{ cap: 1, other: 0 }])).toEqual(['Too small: expected number to be >=5']);
   });
 
+  it('refuses a whole-number field with no whole-number wording, which would answer a fraction with its range', () => {
+    expect(() => numberFieldErrors({ count: { schema: Cap, range: () => '', blank: '' } }))
+      .toThrow('The count field takes whole numbers; give it whole-number wording.');
+  });
+
   it('refuses a field whose schema sets no range, so the wording never names a missing limit', () => {
     expect(() => numberFieldErrors({ open: { schema: z.number(), range: () => '', blank: '' } }))
       .toThrow('The open field\'s schema sets no range to describe.');

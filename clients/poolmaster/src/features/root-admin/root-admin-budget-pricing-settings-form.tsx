@@ -42,12 +42,6 @@ const NUMBER_FIELDS = [
   { key: 'steepness', label: 'Steepness', step: 'any' },
 ] as const;
 
-/**
- * The BUDGET_PRICING_CONFIG card's form (#93): the pricing profiles an admin prices a
- * tournament's field with. The first profile is the one the price dialog starts on. Changing a
- * profile never re-prices an event; each event keeps the values it was priced with. The draft is
- * taken from the group once, like the Email form, and a 409 offers to load the newer value.
- */
 const dollarsRange = (min: number, max: number) => `From ${formatDollars(min)} to ${formatDollars(max)}.`;
 const shareRange = (min: number, max: number) => `From ${min}% to ${max}% of the cap.`;
 const { shape } = BudgetPricingProfileSchema;
@@ -60,6 +54,12 @@ const pricingErrors = numberFieldErrors({
   steepness: { schema: shape.steepness, range: (min, max) => `From ${min} to ${max}.`, blank: 'Enter a steepness.' },
 });
 
+/**
+ * The BUDGET_PRICING_CONFIG card's form (#93): the pricing profiles an admin prices a
+ * tournament's field with. The first profile is the one the price dialog starts on. Changing a
+ * profile never re-prices an event; each event keeps the values it was priced with. The draft is
+ * taken from the group once, like the Email form, and a 409 offers to load the newer value.
+ */
 export function BudgetPricingSettingsForm({ group }: { group: BudgetPricingSettingsGroup }) {
   const queryClient = useQueryClient();
   const [baseUpdatedAt, setBaseUpdatedAt] = useState(group.updatedAt);

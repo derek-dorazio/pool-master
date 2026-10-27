@@ -54,16 +54,19 @@ const emailErrors = numberFieldErrors({
     schema: EmailConfigSchema.shape.sendRatePerSecond,
     range: (min, max) => `From ${min} to ${max} emails a second.`,
     blank: 'Enter a number of emails a second.',
+    whole: 'Whole emails a second only.',
   },
   standingsBufferMinutes: {
     schema: EmailConfigSchema.shape.standingsBufferMinutes,
     range: (min, max) => `From ${min} to ${max} minutes.`,
     blank: 'Enter a number of minutes.',
+    whole: 'Whole minutes only.',
   },
   weeklyDigestHour: {
     schema: EmailConfigSchema.shape.weeklyDigestHour,
     range: (min, max) => `An hour from ${min} to ${max}.`,
     blank: 'Enter an hour.',
+    whole: 'A whole hour only.',
   },
 });
 
