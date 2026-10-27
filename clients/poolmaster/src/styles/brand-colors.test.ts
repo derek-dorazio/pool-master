@@ -4,9 +4,11 @@ import faviconSvg from '../../public/favicon.svg?raw';
 import indexHtml from '../../index.html?raw';
 import themeCss from './globals.css?raw';
 
-const themeTokens = new Map(
-  [...themeCss.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map(([, name, value]) => [name, value.trim()]),
-);
+/** Each token's first definition: the light theme, before `.dark` redefines any. */
+const themeTokens = new Map<string, string>();
+for (const [, name, value] of themeCss.matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+  if (!themeTokens.has(name)) themeTokens.set(name, value.trim());
+}
 
 /** A token's raw value, following `var(--…)` until it reaches one. */
 function resolveToken(name: string): string | undefined {

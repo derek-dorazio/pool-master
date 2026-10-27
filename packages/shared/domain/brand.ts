@@ -12,10 +12,11 @@ export const PRODUCT_TAGLINE = 'The ultimate office pool manager and other game-
 
 /**
  * The brand colours that live outside the web app's theme file: system email, link preview
- * images and the browser's tab colour read them from here. The browser icon (`favicon.svg`,
- * and `apple-touch-icon.png` drawn from it) uses navy and gold, checked by the same test. The theme file
- * (`clients/poolmaster/src/styles/globals.css`) holds the same values for the app, and a test
- * fails when the two disagree, so a palette change is made in both or neither.
+ * images and the browser's tab colour read them from here. The browser icon uses navy and
+ * gold: the test checks `favicon.svg`, and `apple-touch-icon.png` is redrawn from it when
+ * they change. The theme file (`clients/poolmaster/src/styles/globals.css`) holds the same
+ * values for the app, and a test fails when the two disagree, so a palette change is made in
+ * both or neither.
  */
 export const BRAND_COLORS = {
   /** `--color-navy-600`: headers, bands, headings. */
