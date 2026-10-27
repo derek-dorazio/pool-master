@@ -1,4 +1,4 @@
-FROM node:24.21.0-bookworm-slim AS base
+FROM node:24.22.1-bookworm-slim AS base
 WORKDIR /app
 
 COPY package.json package-lock.json tsconfig.base.json ./
@@ -41,7 +41,7 @@ RUN cd packages/core-api \
        node scripts/write-version-info.mjs
 
 # --- Runtime ---
-FROM node:24.21.0-bookworm-slim
+FROM node:24.22.1-bookworm-slim
 WORKDIR /app
 
 COPY --from=base /app/packages/core-api/dist ./dist
