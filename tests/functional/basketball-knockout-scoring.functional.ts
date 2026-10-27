@@ -140,8 +140,8 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       path: { eventId },
       body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;
@@ -158,7 +158,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
         ],
       },
     });
-    expect(loaded.response.status).toBe(200);
+    expect(loaded.response?.status).toBe(200);
     expect(expectMatchesSchema(SportEventBracketResponseSchema, loaded.data).matches).toHaveLength(3);
     // A draft takes no results: its pairings can still change.
     expectFunctionalError(
@@ -192,7 +192,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       { status: 422, code: 'CONTEST_SCORING_ROUNDS_MISMATCH' },
     );
     const contest = await createContest({ client: commissioner.client, path: { id: league.id }, body: contestBody([1, 2]) });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -200,11 +200,11 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       const entryId = expectMatchesSchema(ContestEntryResponseSchema, (await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const team of lineup) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: rowOf(team) } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
         expectMatchesSchema(SelectionPickResponseSchema, pick.data);
       }
       const submitted = await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } });
-      expect(submitted.response.status).toBe(200);
+      expect(submitted.response?.status).toBe(200);
       expectMatchesSchema(SelectionStateResponseSchema, submitted.data);
       return entryId;
     };

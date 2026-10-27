@@ -97,7 +97,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       client: a,
       body: { sportLeagueId: nascar.id, eventYear: 2099, name: `Harbour 400 ${RUN}`, startDate: '2099-02-15T19:30:00.000Z', autoLifecycleEnabled: false },
     });
-    expect(race.response.status).toBe(201);
+    expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A race is one round, with the sport's five tiers.
@@ -118,9 +118,9 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       path: { eventId },
       body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 4 + index * 2 })) },
     });
-    expect(upload.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(upload.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -159,7 +159,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
         templateId: tieredTemplate.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     // The template's NASCAR points table is the contest's scoring rule.
     const scoringRule = await getFunctionalPrisma().participantContestScoringRule.findFirstOrThrow({
@@ -175,9 +175,9 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const driver of lineup) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver) } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Larson', 'Byron', 'Bell', 'Blaney', 'Elliott']);
@@ -193,7 +193,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       riderName: null,
     }));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
-    expect(official.response.status).toBe(200);
+    expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [driverOf(row.id), row.race?.finishPosition ?? null])))
       .toEqual(FINISH);
 
@@ -240,7 +240,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       client: a,
       body: { sportLeagueId: formula1.id, eventYear: 2099, name: `Harbour Grand Prix ${RUN}`, startDate: '2099-05-24T13:00:00.000Z', autoLifecycleEnabled: false },
     });
-    expect(race.response.status).toBe(201);
+    expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
 
@@ -256,7 +256,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       client: a,
       path: { eventId },
       body: { rows: F1_DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, oddsToWin: 2 + index * 3 })) },
-    })).response.status).toBe(200);
+    })).response?.status).toBe(200);
 
     // A Formula 1 race is set to four tiers on the event's Tiers card, over the sport's five.
     const fourTiers = await replaceEventTiers({
@@ -264,10 +264,10 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       path: { eventId },
       body: { tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, label: `Tier ${n}`, tierNumber: n })) },
     });
-    expect(fourTiers.response.status).toBe(200);
+    expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -302,7 +302,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
         templateId: budgetTemplate.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     const scoringRule = await getFunctionalPrisma().participantContestScoringRule.findFirstOrThrow({
       where: { contestConfiguration: { contestId } },
@@ -315,9 +315,9 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const driver of lineup) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(driver).id } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       return entryId;
     };
     // The five cheapest, and the favourite in place of Piastri.
@@ -340,7 +340,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
         })),
       },
     });
-    expect(official.response.status).toBe(200);
+    expect(official.response?.status).toBe(200);
 
     // Commissioner: 18 + 6 + 10 + 0 + 8 = 42. Member: Verstappen third for 15, so 39.
     const expected = {

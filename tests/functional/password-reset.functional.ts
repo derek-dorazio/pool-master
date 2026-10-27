@@ -51,7 +51,7 @@ describe('SDK Functional: password recovery (#847)', () => {
       client: getSdkClient(),
       body: { identifier: ` ${user.email.toUpperCase()} ` },
     });
-    expect(requested.response.status).toBe(202);
+    expect(requested.response?.status).toBe(202);
     expect(SuccessResponseSchema.safeParse(requested.data).success).toBe(true);
 
     const mail = expectDefined((await awaitSentMailTo(user.email, 1, RESET_SUBJECT))[0]);
@@ -59,7 +59,7 @@ describe('SDK Functional: password recovery (#847)', () => {
       client: getSdkClient(),
       body: { token: resetTokenIn(mail), newPassword: 'Recovered-Pass2', confirmNewPassword: 'Recovered-Pass2' },
     });
-    expect(confirmed.response.status).toBe(200);
+    expect(confirmed.response?.status).toBe(200);
     expect(SuccessResponseSchema.safeParse(confirmed.data).success).toBe(true);
 
     expectFunctionalError(
@@ -105,7 +105,7 @@ describe('SDK Functional: password recovery (#847)', () => {
       body: { identifier: known.email },
     });
 
-    expect(unknownAnswer.response.status).toBe(202);
+    expect(unknownAnswer.response?.status).toBe(202);
     expect(unknownAnswer.data).toEqual(knownAnswer.data);
     // The known account's email is the control: once it has arrived, the earlier unknown
     // request has long finished its single lookup.
@@ -137,7 +137,7 @@ describe('SDK Functional: password recovery (#847)', () => {
       body: { token: 'any-token', newPassword: 'short', confirmNewPassword: 'short' },
     });
 
-    expect(result.response.status).toBe(400);
+    expect(result.response?.status).toBe(400);
     expect(ErrorEnvelopeSchema.safeParse(result.error).success).toBe(true);
   });
 });

@@ -376,6 +376,11 @@ state, stale actions, and unthemeable markup accumulate.
   classes and literal colours in feature code outside `features/shared/ui/`.
 - The `poolmaster/no-inline-theme-styles` ESLint rule guards literal inline theme
   styles for color, border, shadow, and typography properties.
+- The brand's colours have one home per medium, kept in step by a test:
+  `clients/poolmaster/src/styles/globals.css` for the app, and `BRAND_COLORS` in
+  `packages/shared/domain/brand.ts` for everything outside it (system email, link preview
+  images, the browser's tab colour). Those read `BRAND_COLORS`, never a hex of their own, and
+  a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
 
 ### Frontend Logging Discipline
 

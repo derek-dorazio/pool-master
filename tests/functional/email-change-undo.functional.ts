@@ -52,7 +52,7 @@ describe('SDK Functional: undoing an email change (#903 A5)', () => {
     expect(await sentMailWithSubject(newEmail, CHANGED_SUBJECT)).toHaveLength(0);
 
     const undone = await undoEmailChange({ client: getSdkClient(), body: { token: undoTokenIn(mail) } });
-    expect(undone.response.status).toBe(200);
+    expect(undone.response?.status).toBe(200);
     expect(SuccessResponseSchema.safeParse(undone.data).success).toBe(true);
 
     expectFunctionalError(

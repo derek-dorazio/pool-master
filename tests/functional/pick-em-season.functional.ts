@@ -135,9 +135,9 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     client: a,
     path: { eventId },
     body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
-  })).response.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+  })).response?.status).toBe(200);
+  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
 
@@ -163,7 +163,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
       ],
     },
   });
-  expect([loaded.error, loaded.response.status]).toEqual([undefined, 200]);
+  expect([loaded.error, loaded.response?.status]).toEqual([undefined, 200]);
   const released = await releaseEvent({ client: a, path: { eventId } });
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
   // The later rounds are called off, so they are not among the week's games.
@@ -183,7 +183,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     const winnerSide = side === 'home' ? MatchSide.HOME : MatchSide.AWAY;
     const [homeScore, awayScore] = side === 'home' ? [winnerScore, loserScore] : [loserScore, winnerScore];
     const recorded = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
-    expect([recorded.error, recorded.response.status]).toEqual([undefined, 200]);
+    expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };
   return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result };
 }
@@ -248,7 +248,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
         },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: alice.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const entryOf = async (client: Client) => expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
@@ -258,7 +258,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
 
     const leaderboard = async (): Promise<PickEmLeaderboardResponse> => {
       const read = await getPickEmLeaderboard({ client: cara.client, path: { contestId } });
-      expect([read.error, read.response.status]).toEqual([undefined, 200]);
+      expect([read.error, read.response?.status]).toEqual([undefined, 200]);
       return expectMatchesSchema(PickEmLeaderboardResponseSchema, read.data);
     };
     /**

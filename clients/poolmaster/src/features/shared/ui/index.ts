@@ -9,6 +9,7 @@ export { ChoiceCard } from "./choice-card";
 export { cn } from "./class-names";
 export { ConfirmDialog } from "./confirm-dialog";
 export { DataGrid } from "./data-grid";
+export { Eyebrow } from "./eyebrow";
 export { Pager } from "./pager";
 export { DateDisplay, DateTimeField } from "./date-time";
 export {

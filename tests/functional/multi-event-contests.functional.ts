@@ -121,7 +121,7 @@ async function buildTwoTournamentContest(
 
   // --- A tour, its two tournaments, and the same seven golfers in each -----------------------
   const tour = await createSportLeague({ client: a, body: { sport: 'GOLF', name: `Two Majors Tour ${RUN}${tag}` } });
-  expect(tour.response.status).toBe(201);
+  expect(tour.response?.status).toBe(201);
   const sportLeagueId = expectDefined(tour.data).sportLeague.id;
   created.sportLeagueIds.add(sportLeagueId);
 
@@ -138,7 +138,7 @@ async function buildTwoTournamentContest(
       client: a,
       body: { sportLeagueId, eventYear: 2099, name: `${name} ${RUN}${tag}`, startDate, rounds: 1, autoLifecycleEnabled: false },
     });
-    expect(event.response.status).toBe(201);
+    expect(event.response?.status).toBe(201);
     const eventId = expectDefined(event.data).event.id;
     created.sportEventIds.add(eventId);
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: golferIds } })).data?.added).toBe(7);
@@ -147,9 +147,9 @@ async function buildTwoTournamentContest(
       path: { eventId },
       body: { rows: GOLFERS.map((golfer, index) => ({ playerName: `${golfer} ${RUN}${tag}`, ranking: index + 1, seedNumber: index + 1 })) },
     });
-    expect(upload.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(upload.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const fieldRowOf = (golfer: string) => expectDefined(field.find((row) => row.participant.name === `${golfer} ${RUN}${tag}`)).id;
@@ -200,7 +200,7 @@ async function buildTwoTournamentContest(
       templateId: tieredTemplate.id,
     },
   });
-  expect(contest.response.status).toBe(201);
+  expect(contest.response?.status).toBe(201);
   const contestId = expectDefined(contest.data).contest.id;
 
   const classic = await buildTournament('Lakeside Classic', '2099-05-14T12:00:00.000Z');
@@ -211,7 +211,7 @@ async function buildTwoTournamentContest(
       path: { id: league.id, contestId },
       body: { sportEventIds: [classic.eventId, open.eventId] },
     });
-    expect(replaced.response.status).toBe(200);
+    expect(replaced.response?.status).toBe(200);
     expect(expectMatchesSchema(ContestManagementResponseSchema, replaced.data).contest.sportEvents.map((event) => event.sportEventId)).toEqual([open.eventId, classic.eventId]);
   }
   expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
@@ -226,10 +226,10 @@ async function buildTwoTournamentContest(
     for (const [tournament, lastTier] of skipsOpen ? played.slice(1) : played) {
       for (const golfer of [...SHARED, lastTier]) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId: entry.id, participantId: tournament.fieldRowOf(golfer) } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
       }
       const submitted = await submitContestEntry({ client, path: { contestId, entryId: entry.id, sportEventId: tournament.eventId } });
-      expect(submitted.response.status).toBe(200);
+      expect(submitted.response?.status).toBe(200);
       expectMatchesSchema(SelectionStateResponseSchema, submitted.data);
     }
     return entry.id;
@@ -255,7 +255,7 @@ async function buildTwoTournamentContest(
       thru: 18,
       status: 'COMPLETED' as const,
     }));
-    expect((await applyEventGolfRoundScores({ client: a, path: { eventId, roundNumber: 1 }, body: { rows } })).response.status).toBe(200);
+    expect((await applyEventGolfRoundScores({ client: a, path: { eventId, roundNumber: 1 }, body: { rows } })).response?.status).toBe(200);
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: endStatus } })).data?.event.status).toBe(endStatus);
   };
   type BoardEntry = {

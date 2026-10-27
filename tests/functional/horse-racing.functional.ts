@@ -95,7 +95,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     // --- The race and its field ------------------------------------------------------------
     const circuit = await createSportLeague({ client: a, body: { sport: Sport.HORSE_RACING, name: `Harbour Racing ${RUN}` } });
-    expect(circuit.response.status).toBe(201);
+    expect(circuit.response?.status).toBe(201);
     const sportLeagueId = expectDefined(circuit.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
@@ -103,7 +103,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       client: a,
       body: { sportLeagueId, eventYear: 2099, name: `Harbour Stakes ${RUN}`, startDate: '2099-05-02T22:00:00.000Z', autoLifecycleEnabled: false },
     });
-    expect(race.response.status).toBe(201);
+    expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A race is one round by the sport's default.
@@ -130,8 +130,8 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       path: { eventId },
       body: { participants: field.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 3 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS' } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS' } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     // --- A Win/Place/Show contest from the sport's template, entered and drawn ------------------
@@ -170,12 +170,12 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
         templateId: drawTemplate.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const commissionerEntryId = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
     const memberEntryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
-    expect((await runContestDraw({ client: commissioner.client, path: { contestId } })).response.status).toBe(200);
+    expect((await runContestDraw({ client: commissioner.client, path: { contestId } })).response?.status).toBe(200);
     const picks = expectDefined((await getSelectionState({ client: commissioner.client, path: { contestId }, query: { entryId: commissionerEntryId } })).data).pickHistories;
     const horseOfEntry = new Map(picks.map((pick) => [pick.entryId, expectDefined(horseByFieldRow.get(expectDefined(pick.participantId)))]));
     expect(horseOfEntry.size).toBe(2);
@@ -201,13 +201,13 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     );
 
     const provisional = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: false, rows } });
-    expect(provisional.response.status).toBe(200);
+    expect(provisional.response?.status).toBe(200);
     expect(expectDefined(provisional.data).participants.map((row) => row.race?.isOfficial)).toEqual([false, false, false, false]);
     const provisionalBoard = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(provisionalBoard.entries.map((entry) => entry.totalScore)).toEqual([null, null]);
 
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
-    expect(official.response.status).toBe(200);
+    expect(official.response?.status).toBe(200);
     const officialField = expectDefined(official.data).participants;
     expect(Object.fromEntries(officialField.map((row) => [horseByFieldRow.get(row.id), row.standing?.displayPosition ?? null]))).toEqual({
       Arrow: '1', Bolt: 'T2', Comet: 'T2', Drift: null,

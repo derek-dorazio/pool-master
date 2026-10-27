@@ -183,7 +183,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       path: { id: league.id },
       body: { name: `Slam Pool ${RUN}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tiered.id },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -192,9 +192,9 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     const lineup = ['Alexander Zverev', 'Frances Tiafoe', 'Luciano Darderi', 'Alexander Blockx', 'Botic van de Zandschulp', 'Dane Sweeny'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const player of lineup) {
-      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(player) } })).response.status).toBe(200);
+      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(player) } })).response?.status).toBe(200);
     }
-    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response.status).toBe(200);
+    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response?.status).toBe(200);
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);

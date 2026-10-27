@@ -40,7 +40,7 @@ describe('SDK Functional: league event email settings (#851)', () => {
       path: { id: league.id },
       body: { mutedSportLeagueIds: [muteFirst, muteSecond, muteFirst], eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST },
     });
-    expect(saved.response.status).toBe(200);
+    expect(saved.response?.status).toBe(200);
     const savedLeague = LeagueResponseSchema.parse(expectDefined(saved.data)).league;
     expect(savedLeague.mutedSportLeagueIds).toEqual([muteFirst, muteSecond]);
     expect(savedLeague.eventEmailDelivery).toBe(EventEmailDelivery.WEEKLY_DIGEST);
@@ -52,7 +52,7 @@ describe('SDK Functional: league event email settings (#851)', () => {
       path: { id: league.id },
       body: { mutedSportLeagueIds: [randomUUID()], eventEmailDelivery: EventEmailDelivery.PER_EVENT },
     });
-    expect(unknown.response.status).toBe(400);
+    expect(unknown.response?.status).toBe(400);
     expect(unknown.error?.error.code).toBe('SPORT_LEAGUE_NOT_FOUND');
 
     const byMember = await updateLeagueEventEmailSettings({
@@ -60,7 +60,7 @@ describe('SDK Functional: league event email settings (#851)', () => {
       path: { id: league.id },
       body: { mutedSportLeagueIds: [], eventEmailDelivery: EventEmailDelivery.PER_EVENT },
     });
-    expect(byMember.response.status).toBe(403);
+    expect(byMember.response?.status).toBe(403);
     const unchanged = await getFunctionalPrisma().league.findUniqueOrThrow({ where: { id: league.id }, select: { mutedSportLeagueIds: true, eventEmailDelivery: true } });
     expect(unchanged).toEqual({ mutedSportLeagueIds: [muteFirst, muteSecond], eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
   });

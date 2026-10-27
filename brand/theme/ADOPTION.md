@@ -1,5 +1,11 @@
 # Theme Adoption — Overview
 
+> **Historical (May 2026).** Sunday Prime was adopted. The live theme is
+> `clients/poolmaster/src/styles/globals.css`; the colours email, link preview images and the
+> browser tab use are `BRAND_COLORS` in `packages/shared/domain/brand.ts`, and a test keeps the
+> two in step. `tokens.css` and `tokens.md` here are the May draft: nothing reads them, and
+> where they differ from the theme file, the theme file wins.
+
 This is a **seed for planning**, not a plan. Sunday Prime is the elected brand
 direction; this doc sketches what it takes to move the theme from
 `brand/theme/` into the live app. A real plan goes through the Product Design
