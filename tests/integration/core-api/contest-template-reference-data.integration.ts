@@ -1174,7 +1174,7 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.BASEBALL, league: 'League Championship Series', prefix: 'league-championship-series', composite: 'box-score' },
   ];
 
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(
