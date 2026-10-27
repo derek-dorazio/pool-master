@@ -21,7 +21,7 @@ type ListCardBaseProps = {
 };
 
 const listCardClassName =
-  "block w-full rounded-[1.5rem] border border-border bg-background p-4 text-left text-foreground transition sm:p-5";
+  "block w-full rounded-3xl border border-border bg-background p-4 text-left text-foreground transition sm:p-5";
 
 const interactiveListCardClassName = "hover:border-primary/40 hover:bg-card";
 

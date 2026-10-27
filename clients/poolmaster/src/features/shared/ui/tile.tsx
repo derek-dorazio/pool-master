@@ -25,8 +25,8 @@ const tileVariants = cva("border", {
     },
     radius: {
       md: "rounded-2xl",
-      lg: "rounded-[1.5rem]",
-      xl: "rounded-3xl sm:rounded-[2rem]",
+      lg: "rounded-3xl",
+      xl: "rounded-3xl sm:rounded-4xl",
     },
   },
   defaultVariants: {

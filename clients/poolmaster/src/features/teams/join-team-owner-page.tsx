@@ -268,10 +268,10 @@ export function JoinTeamOwnerPage() {
               message={`This invitation adds you as a co-owner of ${invitationQuery.data.team.name}. Create your account below to join straight away, or sign in if you already have one.`}
               title="Co-owner invite"
             />
-            <div className="rounded-[1.5rem] border border-border bg-background p-5">
+            <div className="rounded-3xl border border-border bg-background p-5">
               <div className="flex items-center gap-4">
                 {selectedIcon ? (
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.themeClass}`}>
+                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
                     <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
                   </div>
                 ) : null}
@@ -288,7 +288,7 @@ export function JoinTeamOwnerPage() {
         ) : null}
         {inviteCode && invitationQuery.data && !unusableInvitationMessage ? (
           <form
-            className="mt-5 space-y-4 rounded-[1.5rem] border border-border bg-background p-5"
+            className="mt-5 space-y-4 rounded-3xl border border-border bg-background p-5"
             data-testid="team-invite-register-form"
             onSubmit={(event) => {
               event.preventDefault();
@@ -408,7 +408,7 @@ export function JoinTeamOwnerPage() {
         This invitation makes you a co-owner alongside the people already playing under this name.
       </p>
 
-      <div className="mt-6 rounded-[1.5rem] border border-border bg-background p-5 text-sm text-muted-foreground">
+      <div className="mt-6 rounded-3xl border border-border bg-background p-5 text-sm text-muted-foreground">
         {invitationQuery.isLoading ? 'Loading invitation...' : null}
         {invitationQuery.isError ? 'We could not load this co-owner invitation.' : null}
         {invitationQuery.data ? (
@@ -420,8 +420,8 @@ export function JoinTeamOwnerPage() {
               title="Ready to join"
             />
             {selectedIcon ? (
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card p-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-[1.1rem] ${selectedIcon.themeClass}`}>
+              <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
                 </div>
                 <div className="min-w-0">

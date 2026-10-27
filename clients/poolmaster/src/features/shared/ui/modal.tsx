@@ -93,7 +93,7 @@ export function Modal({
           className={cn(
             // dvh, not vh: on iOS Safari 100vh counts the area under the toolbar, so a tall dialog's
             // buttons would sit behind it.
-            "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-card p-5 shadow-2xl sm:rounded-[2rem] sm:p-6",
+            "fixed left-1/2 top-1/2 z-50 max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border border-border bg-card p-5 shadow-2xl sm:rounded-4xl sm:p-6",
             modalSizeClassNames[size],
             className,
           )}

@@ -62,7 +62,7 @@ export function MemberRouteGuard() {
 
   if (auth.isLoading) {
     return (
-      <div className="rounded-[2rem] border border-border bg-card p-8 text-sm text-muted-foreground">
+      <div className="rounded-4xl border border-border bg-card p-8 text-sm text-muted-foreground">
         Loading your {PRODUCT_NAME} session...
       </div>
     );
