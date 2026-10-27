@@ -1,0 +1,33 @@
+{
+  "fetchedAt": "2026-10-27T17:54:45.261Z",
+  "results": [
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20261024",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20261026",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20261029",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/scoreboard?dates=20261031",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.api.espn.com.txt"
+    }
+  ]
+}
