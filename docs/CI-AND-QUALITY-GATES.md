@@ -852,6 +852,20 @@ hardening epic.
 - The `all-contract-gates` job also runs `npm run test:scripts`: the
   `node --test` suites for the deploy and migration scripts.
 
+## Dependency updates (Dependabot)
+
+`.github/dependabot.yml` has Dependabot open grouped pull requests into `main` every Monday
+at 04:00 Eastern: one for npm minor and patch updates (one lockfile at the root covers every
+workspace), one for the Docker base images in `infrastructure/docker/`, and one for GitHub
+Actions. Majors of npm packages and Docker images are ignored there and planned as their own
+tickets; Actions majors are allowed, since workflows pin actions by major tag. Security
+updates arrive whenever an advisory lands, grouped per ecosystem.
+
+Dependabot PRs run the same CI as any other PR. Its jobs need nothing but `GITHUB_TOKEN`,
+so no Dependabot secrets are configured; the deploy jobs that use AWS secrets run only on
+`main`. Dependabot does not update `.nvmrc`, so a Docker PR that moves Node needs it set by
+hand. How the PRs are landed is the `dependency-updates` skill.
+
 ## Resetting the QA database
 
 `deploy-migrate-qa` gates the rollout, so a migration that refuses on QA data stops the
@@ -1032,6 +1046,7 @@ Both configured thresholds are intentionally **regression floors**, not targets,
 
 ```
 .github/workflows/ci.yml             — workflow definition
+.github/dependabot.yml               — weekly dependency update PRs
 package.json                         — npm script wiring (rules:check chain, api:check)
 scripts/rule-check-utils.mjs         — shared file-walk + reporting helpers
 eslint-rules/no-mocked-api.mjs       — gate 1 (migrated from scripts/)
