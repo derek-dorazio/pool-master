@@ -2,24 +2,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { LeagueRole } from '@poolmaster/shared/domain';
+import { buildLeague, buildLeagueMembership, listLeaguesData } from '@/features/leagues/test/fixtures';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { bindApiMocks } from '@/test/msw-api';
 import { championshipWeekendFixture } from '@/features/event-pages/event-page-test-fixtures';
 import { HowToPlayPage } from './how-to-play-page';
 
-const { authState, listContestConfigTemplatesMock, listEventPagesMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
+const { authState, listContestConfigTemplatesMock, listEventPagesMock, listLeaguesMock, listSportLeaguesMock, mockLogger } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockImplementation(() => logger);
   return {
     authState: { isAuthenticated: false, isLoading: false, isRootAdmin: false, user: null },
     listContestConfigTemplatesMock: vi.fn(),
     listEventPagesMock: vi.fn(),
+    listLeaguesMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     mockLogger: logger,
   };
 });
 
-bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock, listEventPages: listEventPagesMock, listSportLeagues: listSportLeaguesMock });
+bindApiMocks({ listContestConfigTemplates: listContestConfigTemplatesMock, listEventPages: listEventPagesMock, listLeagues: listLeaguesMock, listSportLeagues: listSportLeaguesMock });
 
 vi.mock('@/features/auth/auth-context', () => ({ useAuth: () => authState }));
 
@@ -90,8 +93,17 @@ afterEach(() => {
   listContestConfigTemplatesMock.mockReset();
   listSportLeaguesMock.mockReset();
   listEventPagesMock.mockReset();
+  listLeaguesMock.mockReset();
   authState.isAuthenticated = false;
 });
+
+/** Signs the viewer in to these leagues, in `role` in each. */
+function signInTo(leagues: ReturnType<typeof buildLeague>[], role: LeagueRole = LeagueRole.COMMISSIONER) {
+  authState.isAuthenticated = true;
+  listLeaguesMock.mockResolvedValue({
+    data: listLeaguesData(leagues, leagues.map((league) => buildLeagueMembership({ id: `m-${league.id}`, leagueId: league.id, role }))),
+  });
+}
 
 describe('How to Play', () => {
   it('zooms in on a chosen sport\'s coming events: a Coming up card per event page, linking to it', async () => {
@@ -233,17 +245,36 @@ describe('How to Play', () => {
       sportLeagueFixture({ id: 'world-series', sport: 'BASEBALL', name: 'World Series', displayOrder: 20, participantType: 'INDIVIDUAL', scoringFamily: 'COMPOSITE' }),
     ];
 
-    it('explains the Clutch Card with Box Score\'s formula, and offers only the stat pool\'s formats, not baseball\'s bracket', async () => {
+    it('shows the Clutch Card as one tile after the other ways to play, opening to its steps, Box Score as a stat line tile and a link to the Clutch Card page', async () => {
       listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
       listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
       renderPage('/how-to-play?sport=baseball&league=world-series');
 
-      const guide = await screen.findByTestId('how-to-play-clutch-card');
-      expect(guide).toHaveTextContent('Clutch Card');
-      expect(within(guide).getByTestId('how-to-play-clutch-card-world-series'))
-        .toHaveTextContent('World Series. Box Score: total bases + runs + RBI + walks + stolen bases, each game.');
-      expect(screen.getByTestId('how-to-play-format-TIERED')).toBeInTheDocument();
+      const tile = await screen.findByTestId('how-to-play-clutch-card');
+      expect(screen.getByTestId('how-to-play-format-TIERED').compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(tile).toHaveTextContent('Clutch Card');
+      expect(screen.queryByTestId('how-to-play-clutch-card-details')).not.toBeInTheDocument();
       expect(screen.queryByTestId('how-to-play-format-BRACKET')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('how-to-play-clutch-card-toggle'));
+      const details = screen.getByTestId('how-to-play-clutch-card-details');
+      expect(within(details).getAllByRole('listitem')).toHaveLength(4);
+      expect(within(details).getByTestId('how-to-play-clutch-card-stat-BASEBALL')).toHaveTextContent('Box ScoreBaseball');
+      expect(within(details).getByTestId('how-to-play-clutch-card-more')).toHaveAttribute('href', '/play/clutch-card');
+      expect(details).not.toHaveTextContent('total bases');
+    });
+
+    it('shows the Clutch Card with every sport shown, and opening another way to play closes it', async () => {
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('how-to-play-clutch-card-toggle'));
+      expect(screen.getByTestId('how-to-play-clutch-card-details')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('how-to-play-format-BRACKET-toggle'));
+      expect(screen.queryByTestId('how-to-play-clutch-card-details')).not.toBeInTheDocument();
+      expect(screen.getByTestId('how-to-play-format-BRACKET-details')).toBeInTheDocument();
     });
 
     it('shows no Clutch Card on a league that plays its sport\'s own way', async () => {
@@ -253,6 +284,76 @@ describe('How to Play', () => {
 
       expect(await screen.findByTestId('how-to-play-format-BRACKET')).toBeInTheDocument();
       expect(screen.queryByTestId('how-to-play-clutch-card')).not.toBeInTheDocument();
+    });
+
+    it('opens Create contest on the stat pool league\'s Clutch Card setup for a commissioner', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: BASEBALL } });
+      listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: BASEBALL_LEAGUES } });
+      renderPage('/how-to-play?sport=baseball');
+
+      fireEvent.click(await screen.findByTestId('how-to-play-clutch-card-toggle'));
+      expect(await screen.findByTestId('how-to-play-clutch-card-create'))
+        .toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-world-series-tiered');
+    });
+  });
+
+  describe('Create contest inside a way to play', () => {
+    it('opens Create contest in the one league a commissioner runs, on the chosen league\'s template', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage('/how-to-play?sport=american-football&league=college-football-playoff');
+
+      fireEvent.click(await screen.findByTestId('how-to-play-format-TIERED-toggle'));
+      expect(await screen.findByTestId('how-to-play-format-TIERED-create'))
+        .toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-cfp-tiered');
+    });
+
+    it('starts on the most popular sport\'s first league\'s template while every sport is shown', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('how-to-play-format-TIERED-toggle'));
+      expect(await screen.findByTestId('how-to-play-format-TIERED-create'))
+        .toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-nfl-tiered');
+    });
+
+    it('asks a commissioner of several active leagues which one, leaving out an inactive league', async () => {
+      signInTo([
+        buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' }),
+        buildLeague({ id: 'family', leagueCode: 'FAMILY', name: 'Family pool' }),
+        buildLeague({ id: 'old', leagueCode: 'OLD', name: 'Old pool', isActive: false }),
+      ]);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage('/how-to-play?sport=american-football&league=nfl');
+
+      fireEvent.click(await screen.findByTestId('how-to-play-format-SQUARES-toggle'));
+      const create = await screen.findByTestId('how-to-play-format-SQUARES-create');
+      expect(create).toHaveTextContent('Create contest in');
+      expect(within(create).getByTestId('how-to-play-format-SQUARES-create-OFFICE')).toHaveAttribute('href', '/league/OFFICE/admin/contests/new?template=id-nfl-squares');
+      expect(within(create).getByTestId('how-to-play-format-SQUARES-create-FAMILY')).toHaveAttribute('href', '/league/FAMILY/admin/contests/new?template=id-nfl-squares');
+      expect(within(create).queryByTestId('how-to-play-format-SQUARES-create-OLD')).not.toBeInTheDocument();
+    });
+
+    it('offers no Create contest to a member who runs no league, nor to a signed-out visitor', async () => {
+      signInTo([buildLeague({ id: 'office', leagueCode: 'OFFICE', name: 'Office pool' })], LeagueRole.MEMBER);
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage('/how-to-play?sport=golf');
+
+      fireEvent.click(await screen.findByTestId('how-to-play-format-TIERED-toggle'));
+      await vi.waitFor(() => expect(listLeaguesMock).toHaveBeenCalled());
+      expect(screen.getByTestId('how-to-play-format-TIERED-details')).toBeInTheDocument();
+      expect(screen.queryByTestId('how-to-play-format-TIERED-create')).not.toBeInTheDocument();
+    });
+
+    it('never reads leagues for a signed-out visitor', async () => {
+      listContestConfigTemplatesMock.mockResolvedValue({ data: { templates: GOLF_AND_FOOTBALL } });
+      renderPage();
+
+      fireEvent.click(await screen.findByTestId('how-to-play-format-TIERED-toggle'));
+      expect(screen.queryByTestId('how-to-play-format-TIERED-create')).not.toBeInTheDocument();
+      expect(listLeaguesMock).not.toHaveBeenCalled();
     });
   });
 
