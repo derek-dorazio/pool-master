@@ -34,7 +34,8 @@ Check each offer before writing anything:
   on a series with no upcoming edition is simply not shown, so a typo fails silently.
 - The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 7), already
   in `clients/poolmaster/public/email/sports/`. A sport without one shows its drawn How to Play
-  scene; a better photo is a separate change, with its source note beside it.
+  scene; a better photo is a separate change, with its source note beside it, and can show the
+  old one for up to a day while caches expire.
 - A stat pool offer covers one round (`rules/ux-rules.md` §13 *Event Pages* item 3). An event
   whose stat pool league does not exist yet needs that league first (the `add-sport` skill).
 
