@@ -794,10 +794,10 @@ describe('The seeded NFL league and its knockout templates', () => {
       expect(new Set(orders).size).toBe(orders.length);
     }
     expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship', 'WNBA Semifinals', 'WNBA Finals']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s Basketball National Championship', 'WNBA Semifinals', 'WNBA Finals']);
     expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
-    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s National Championship']);
+    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s Hockey National Championship']);
     expect(namesBySport.get(Sport.SOCCER)?.slice(-4)).toEqual(['Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final']);
   });
 });
@@ -1170,12 +1170,12 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP Semifinals', prefix: 'cfp-semifinals', composite: 'redzone' },
     { sport: Sport.AMERICAN_FOOTBALL, league: 'CFP National Championship', prefix: 'cfp-national-championship', composite: 'redzone' },
     { sport: Sport.BASKETBALL, league: 'Men\'s Final Four', prefix: 'mens-final-four', composite: 'triple-threat' },
-    { sport: Sport.BASKETBALL, league: 'Men\'s National Championship', prefix: 'mens-national-championship', composite: 'triple-threat' },
+    { sport: Sport.BASKETBALL, league: 'Men\'s Basketball National Championship', prefix: 'mens-national-championship', composite: 'triple-threat' },
     { sport: Sport.BASKETBALL, league: 'NBA Conference Finals', prefix: 'nba-conference-finals', composite: 'triple-threat' },
     { sport: Sport.HOCKEY, league: 'NHL Conference Finals', prefix: 'nhl-conference-finals', composite: 'power-play' },
     { sport: Sport.BASEBALL, league: 'League Championship Series', prefix: 'league-championship-series', composite: 'box-score' },
     { sport: Sport.HOCKEY, league: 'Men\'s Frozen Four', prefix: 'mens-frozen-four', composite: 'power-play' },
-    { sport: Sport.HOCKEY, league: 'Men\'s National Championship', prefix: 'mens-hockey-national-championship', composite: 'power-play' },
+    { sport: Sport.HOCKEY, league: 'Men\'s Hockey National Championship', prefix: 'mens-hockey-national-championship', composite: 'power-play' },
     { sport: Sport.SOCCER, league: 'Champions League Semifinals', prefix: 'champions-league-semifinals', composite: 'hat-trick' },
     { sport: Sport.SOCCER, league: 'Champions League Final', prefix: 'champions-league-final', composite: 'hat-trick' },
     { sport: Sport.SOCCER, league: 'Women\'s World Cup Semifinals', prefix: 'womens-world-cup-semifinals', composite: 'hat-trick' },
@@ -1183,7 +1183,7 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.BASKETBALL, league: 'WNBA Semifinals', prefix: 'wnba-semifinals', composite: 'triple-threat' },
     { sport: Sport.BASKETBALL, league: 'WNBA Finals', prefix: 'wnba-finals', composite: 'triple-threat' },
   ];
-  // Basketball and hockey each have a "Men's National Championship", so a league is its sport and its name.
+  // A league's name is unique only within its sport, so a league is its sport and its name.
   const bySportAndName = (left: { sport: string; league: string }, right: { sport: string; league: string }) =>
     left.league.localeCompare(right.league) || left.sport.localeCompare(right.sport);
 

@@ -119,20 +119,22 @@ describe('Clutch Card page', () => {
     expect(screen.getByTestId('clutch-card-round-BASEBALL:World Series')).toHaveClass('border-dashed');
   });
 
-  it('keeps two sports\' title rounds of the same name apart: basketball\'s Men\'s National Championship available, hockey\'s still coming', async () => {
+  it('names April\'s two men\'s title games by their sport, so no two chips read alike: basketball\'s available, hockey\'s still coming', async () => {
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
       ...STAT_POOL_LEAGUES,
-      sportLeagueFixture({ id: 'mbb-title', sport: 'BASKETBALL', name: 'Men\'s National Championship', scoringFamily: 'COMPOSITE' }),
+      sportLeagueFixture({ id: 'mbb-title', sport: 'BASKETBALL', name: 'Men\'s Basketball National Championship', scoringFamily: 'COMPOSITE' }),
     ] } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
     renderPage();
 
-    const basketball = await screen.findByTestId('clutch-card-round-BASKETBALL:Men\'s National Championship');
+    const basketball = await screen.findByTestId('clutch-card-round-BASKETBALL:Men\'s Basketball National Championship');
     expect(basketball).toHaveClass('border-primary');
     expect(basketball).toHaveTextContent('Triple Threat');
-    const hockey = screen.getByTestId('clutch-card-round-HOCKEY:Men\'s National Championship');
+    const hockey = screen.getByTestId('clutch-card-round-HOCKEY:Men\'s Hockey National Championship');
     expect(hockey).toHaveClass('border-dashed');
     expect(hockey).toHaveTextContent('Power Play');
+    const roundNames = screen.getAllByTestId(/^clutch-card-round-/).map((chip) => chip.firstChild?.textContent);
+    expect(new Set(roundNames).size).toBe(roundNames.length);
   });
 
   it('starts a pool on the open Clutch Card offer before one that opens later', async () => {

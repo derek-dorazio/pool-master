@@ -5,7 +5,7 @@
     "season": 2026,
     "sportLeagues": [
       "Men's Final Four",
-      "Men's National Championship"
+      "Men's Basketball National Championship"
     ],
     "contents": [
       "SCHEDULE",
@@ -1091,7 +1091,7 @@
       ]
     },
     {
-      "name": "Men's National Championship",
+      "name": "Men's Basketball National Championship",
       "players": [
         {
           "key": "mbb-yaxel-lendeborg",
@@ -1345,7 +1345,7 @@
       "events": [
         {
           "key": "mens-national-championship-2026",
-          "name": "Men's National Championship",
+          "name": "Men's Basketball National Championship",
           "startDate": "2026-04-06",
           "endDate": "2026-04-06",
           "venue": "Lucas Oil Stadium",

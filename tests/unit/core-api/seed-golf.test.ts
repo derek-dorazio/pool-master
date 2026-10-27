@@ -368,10 +368,10 @@ describe('basketball-2026-mens-final-four-test.json', () => {
 
   it('is a stat pool seed of the 2026 men\'s Final Four\'s semifinals and National Championship, each one round of players\' box scores', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
-      Sport.BASKETBALL, 2026, ['Men\'s Final Four', 'Men\'s National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+      Sport.BASKETBALL, 2026, ['Men\'s Final Four', 'Men\'s Basketball National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
     ]);
     expect(eventRows(file, 0)).toEqual([['Men\'s Final Four', '2026-04-04', '2026-04-04', 1, null]]);
-    expect(eventRows(file, 1)).toEqual([['Men\'s National Championship', '2026-04-06', '2026-04-06', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['Men\'s Basketball National Championship', '2026-04-06', '2026-04-06', 1, null]]);
   });
 
   it('fields the four semifinalists\' players for the semifinals and only the two finalists\' for the title game', () => {
@@ -481,10 +481,10 @@ describe('hockey-2026-mens-frozen-four-test.json', () => {
 
   it('is a stat pool seed of the 2026 men\'s Frozen Four\'s semifinals and National Championship, each one round of skaters\' box scores', () => {
     expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
-      Sport.HOCKEY, 2026, ['Men\'s Frozen Four', 'Men\'s National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+      Sport.HOCKEY, 2026, ['Men\'s Frozen Four', 'Men\'s Hockey National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
     ]);
     expect(eventRows(file, 0)).toEqual([['Men\'s Frozen Four', '2026-04-09', '2026-04-09', 1, null]]);
-    expect(eventRows(file, 1)).toEqual([['Men\'s National Championship', '2026-04-11', '2026-04-11', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['Men\'s Hockey National Championship', '2026-04-11', '2026-04-11', 1, null]]);
   });
 
   it('fields the four semifinalists\' skaters for the semifinals and only the two finalists\' for the title game, forwards and defensemen and no goalies', () => {
