@@ -64,8 +64,9 @@ write.
 
 **Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
 sport league of players scored by the composite family (the World Series, NBA Conference Finals,
-NBA Finals, Stanley Cup Final, NFL Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's
-Final Four and Men's National Championship leagues the migrations create). Its players
+NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL Championship Weekend, Super Bowl, CFP
+Semifinals, CFP National Championship, Men's Final Four and Men's National Championship leagues
+the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
 and its box score, one `lines` row per field player who played, with that player's count of each
 stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
@@ -320,8 +321,10 @@ championship as played, with every game's real box score: `baseball-2025-world-s
 (the Dodgers over the Blue Jays in seven), `basketball-2026-nba-conference-finals-test.json`
 (both 2026 conference finals as one event, game N holding each series' Game N: the Spurs over the
 Thunder in seven, the Knicks over the Cavaliers in four), `basketball-2026-nba-finals-test.json` (the Knicks
-over the Spurs in five), `hockey-2026-stanley-cup-final-test.json` (Carolina over Vegas in six)
-and `american-football-2026-nfl-championships-test.json` (the 2025 season's Conference
+over the Spurs in five), `hockey-2026-nhl-conference-finals-test.json`
+(both 2026 conference finals as one event, game N holding each series' Game N: Carolina over
+Montreal in five, Vegas over Colorado in four), `hockey-2026-stanley-cup-final-test.json`
+(Carolina over Vegas in six) and `american-football-2026-nfl-championships-test.json` (the 2025 season's Conference
 Championship weekend and Super Bowl LX, one game each) and
 `american-football-2026-cfp-semifinals-and-championship-test.json` (the 2025-26 College Football
 Playoff's semifinals, both played as one event of one game, and Indiana over Miami in the
