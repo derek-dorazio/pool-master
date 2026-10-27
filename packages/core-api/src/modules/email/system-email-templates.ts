@@ -147,6 +147,8 @@ export type EntryReceipt = LineupReceipt | GamePicksReceipt | BracketReceipt | S
 export interface ContestEntryCompletedEmailData {
   userName: string;
   leagueName: string;
+  /** The event the picks are for, as a strip across the top. */
+  event: EmailEventHeader;
   contestName: string;
   teamName: string;
   entryName: string;
@@ -161,14 +163,15 @@ export interface ContestEntryCompletedEmailData {
 export interface ContestEmailEvent {
   name: string;
   startsAt: Date;
-  venue?: string;
 }
 
 export interface ContestStartedSummaryEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
-  event: ContestEmailEvent;
+  event: EmailEventHeader;
+  /** The contest's way to play. */
+  format: EmailContestFormat;
   /** How the event plays, such as "4 rounds" or "16 games", when known. */
   eventFormat?: string;
   /** The contest's rules in a sentence, as its page states them. */
@@ -183,8 +186,12 @@ export interface ContestOpenedEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
+  /** The contest's first event, across the top. */
+  event: EmailEventHeader;
   /** The contest's events in sequence order: one for most contests, several for a season. */
   events: ContestEmailEvent[];
+  /** The contest's way to play, on its card. */
+  format: EmailContestFormat;
   /** The contest's rules in a sentence, as its page states them. */
   rules: string;
   /** "1 entry per member". */
@@ -224,7 +231,13 @@ export interface ContestEntryReminderEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
-  eventName: string;
+  /** The event whose picks close, as a strip across the top. */
+  event: EmailEventHeader;
+  /** The contest's way to play and its rules in a sentence, on its card. */
+  format: EmailContestFormat;
+  rules: string;
+  /** Entries submitted for the event so far: "14 entries so far". */
+  entryCount: number;
   /** When the event's picks, the draw's entries or the grid's boxes close. */
   closesAt: Date;
   /**
@@ -348,6 +361,8 @@ export interface ContestStandingsEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
+  /** The event the moment is in, as a strip across the top. */
+  event: EmailEventHeader;
   moment: StandingsMoment;
   /** The leaders, at most 10, best first. */
   top: StandingsLine[];
@@ -434,7 +449,8 @@ export interface ContestEventChangedEmailData {
   userName: string;
   leagueName: string;
   contestName: string;
-  eventName: string;
+  /** The event that changed, as a strip across the top; its start is the new one. */
+  event: EmailEventHeader;
   change: ContestEventChange;
   contestUrl: string;
 }
@@ -455,6 +471,14 @@ export interface EmailEventHeader {
   eventName: string;
   startsAt: Date;
   /** The sport's picture, from buildEmailSportImageUrl. */
+  imageUrl: string;
+}
+
+/** A contest's way to play, on its card: "Tiered" and its How to Play picture. */
+export interface EmailContestFormat {
+  /** As formatSelectionTypeName names it. */
+  name: string;
+  /** From buildEmailFormatImageUrl. */
   imageUrl: string;
 }
 
@@ -823,6 +847,10 @@ const STOP_THESE_EMAILS = 'Stop these emails';
 /** The email's width; the event picture is drawn at twice it. */
 const EMAIL_WIDTH = 640;
 
+/** An event strip's picture, at the sport photos' 5:2. */
+const STRIP_IMAGE_WIDTH = 200;
+const STRIP_IMAGE_HEIGHT = 80;
+
 const EMAIL_THEME = {
   canvas: '#f5f5f2',
   raised: '#ffffff',
@@ -831,6 +859,11 @@ const EMAIL_THEME = {
   gold: '#f5b800',
   goldHover: '#ffc82e',
   goldLight: '#ffd86b',
+  /** The reader's own rows and callouts. */
+  goldTint: '#fff6d6',
+  /** Text on goldTint. */
+  goldInk: '#5c4600',
+  green: '#1f7a3a',
   red: '#a8202d',
   ink: '#0b0b0b',
   muted: '#6b6b64',
@@ -1429,6 +1462,9 @@ function renderContestEntryCompletedEmail(
     subject,
     preheader: `Your ${data.contestName} entry is saved.`,
     title: 'Entry completed',
+    leagueName: data.leagueName,
+    eventStrip: { event: data.event, line: formatDay(data.event.startsAt, context) },
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks,
     textLines,
   });
@@ -1439,40 +1475,43 @@ function renderContestStartedSummaryEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `${data.contestName} is live`;
-  const intro = `${data.contestName} is live for ${data.event.name}.`;
+  const entries = `${String(data.entryCount)} ${data.entryCount === 1 ? 'entry' : 'entries'}`;
+  const intro = `Good luck, everyone. ${data.contestName} is live with ${entries}.`;
   const followAlong = data.hasEntry
     ? null
     : 'You didn\'t enter this one, but you can follow every entry on the leaderboard.';
-  const rows: Array<[string, string]> = [
-    ['League', data.leagueName],
-    ['Event', data.event.name],
-    ...(data.event.venue ? ([['Venue', data.event.venue]] as Array<[string, string]>) : []),
-    ['Starts', formatDay(data.event.startsAt, context)],
-    ...(data.eventFormat ? ([['Format', data.eventFormat]] as Array<[string, string]>) : []),
-    ['Rules', data.rules],
+  // The live email lists no entries (Derek, 2026-10-21): the leaderboard has them.
+  const stats: Array<[string, string]> = [
     ['Entries', String(data.entryCount)],
+    ['Format', data.format.name],
+    ...(data.eventFormat ? ([['Event', data.eventFormat]] as Array<[string, string]>) : []),
   ];
+  const action = 'Watch the leaderboard';
   const bodyBlocks = [
-    paragraph('Good luck, everyone.'),
-    paragraph(`${strong(data.contestName)} is live for ${strong(data.event.name)}.`),
-    detailList(rows),
+    paragraph(`Good luck, everyone. ${strong(data.contestName)} is live with ${escapeHtml(entries)}.`),
+    statRow(stats),
+    paragraph(escapeHtml(data.rules)),
     ...(followAlong ? [paragraph(escapeHtml(followAlong))] : []),
-    button('Leaderboard', data.leaderboardUrl),
+    button(action, data.leaderboardUrl),
   ].join('');
   const textLines = [
-    'Good luck, everyone.',
-    '',
     intro,
-    ...rows.map(([label, value]) => `${label}: ${value}`),
+    '',
+    ...stats.map(([label, value]) => `${label}: ${value}`),
+    data.rules,
     ...(followAlong ? ['', followAlong] : []),
-    `Leaderboard: ${data.leaderboardUrl}`,
+    '',
+    `${action}: ${data.leaderboardUrl}`,
   ];
 
   return buildMessage(context, {
     templateKey: 'CONTEST_STARTED_SUMMARY',
     subject,
-    preheader: `Good luck, everyone. ${data.contestName} is live with ${data.entryCount} ${data.entryCount === 1 ? 'entry' : 'entries'}.`,
+    preheader: intro,
     title: 'Contest is live',
+    leagueName: data.leagueName,
+    eventHeader: data.event,
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks,
     textLines,
   });
@@ -1484,41 +1523,39 @@ function renderContestOpenedEmail(
 ): SystemEmailMessage {
   const subject = `New contest: ${data.contestName}`;
   const closesLine = formatDay(data.closesAt, context);
-  const onlyEvent = data.events.length === 1 ? data.events[0] : undefined;
-  const eventRows: Array<[string, string]> = onlyEvent
-    ? [
-      ['Event', onlyEvent.name],
-      ...(onlyEvent.venue ? ([['Venue', onlyEvent.venue]] as Array<[string, string]>) : []),
-      ['Starts', formatDay(onlyEvent.startsAt, context)],
-    ]
-    : [['Events', data.events.map((event) => `${event.name} (${formatDay(event.startsAt, context)})`).join(', ')]];
-  const rows: Array<[string, string]> = [
-    ['League', data.leagueName],
-    ...eventRows,
-    ['Rules', data.rules],
-    ['Entries', data.entriesPerMember],
-    [onlyEvent ? 'Picks close' : 'First picks close', closesLine],
-  ];
+  const closesLabel = data.events.length === 1 ? 'Picks close' : 'First picks close';
   const intro = `${data.contestName} is open in ${data.leagueName}.`;
+  // A season's events after the first, which the header doesn't name.
+  const laterEvents = data.events.slice(1).map((event) => `${event.name}, ${formatDay(event.startsAt, context)}`);
+  const laterTitle = 'Then';
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
     paragraph(`${strong(data.contestName)} is open in ${strong(data.leagueName)}.`),
-    detailList(rows),
+    contestCard(data.format, data.contestName, data.rules, data.entriesPerMember),
+    ...(laterEvents.length > 0 ? [sectionTitle(laterTitle), ...laterEvents.map((line) => paragraph(escapeHtml(line)))] : []),
+    goldBand(closesLabel, closesLine),
     button('Enter contest', data.contestUrl),
   ].join('');
   const textLines = [
     `Hi ${data.userName},`,
     '',
     intro,
-    ...rows.map(([label, value]) => `${label}: ${value}`),
+    '',
+    ...contestCardLines(data.format, data.contestName, data.rules, data.entriesPerMember),
+    ...(laterEvents.length > 0 ? ['', `${laterTitle}:`, ...laterEvents] : []),
+    '',
+    `${closesLabel}: ${closesLine}`,
     `Enter contest: ${data.contestUrl}`,
   ];
 
   return buildMessage(context, {
     templateKey: 'CONTEST_OPENED',
     subject,
-    preheader: `${data.contestName} is open. Picks close ${closesLine}.`,
+    preheader: `${data.contestName} is open. ${closesLabel} ${closesLine}.`,
     title: 'New contest open',
+    leagueName: data.leagueName,
+    eventHeader: data.event,
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks,
     textLines,
   });
@@ -1555,10 +1592,10 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
         subject: `Picks close soon: ${data.contestName}`,
         title: 'Picks close soon',
         message: standing.drafts > 1
-          ? `You have ${String(standing.drafts)} draft entries for ${data.eventName}. They won't count until you submit them.`
+          ? `You have ${String(standing.drafts)} draft entries for ${data.event.eventName}. They won't count until you submit them.`
           : standing.progress === undefined
-            ? `Your ${data.eventName} entry is saved as a draft. It won't count until you submit it.`
-            : `Your ${data.eventName} entry is a draft with ${String(standing.progress.made)} of ${String(standing.progress.of)} picked. It won't count until you submit it.`,
+            ? `Your ${data.event.eventName} entry is saved as a draft. It won't count until you submit it.`
+            : `Your ${data.event.eventName} entry is a draft with ${String(standing.progress.made)} of ${String(standing.progress.of)} picked. It won't count until you submit it.`,
         closesLabel: 'Picks close',
         action: 'Make your picks',
       };
@@ -1566,7 +1603,7 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
       return {
         subject: `Picks close soon: ${data.contestName}`,
         title: 'Picks close soon',
-        message: `You haven't entered ${data.contestName} for ${data.eventName} yet.`,
+        message: `You haven't entered ${data.contestName} for ${data.event.eventName} yet.`,
         closesLabel: 'Picks close',
         action: 'Make your picks',
       };
@@ -1579,6 +1616,13 @@ function entryReminderWording(data: ContestEntryReminderEmailData): {
  */
 const SAME_DAY_HOURS = 24;
 
+/** How long a reminder's countdown says is left: "3 hours", "1 day", "2 days". */
+function timeLeft(hoursBefore: number): string {
+  if (hoursBefore < SAME_DAY_HOURS) return `${String(hoursBefore)} ${hoursBefore === 1 ? 'hour' : 'hours'}`;
+  const days = Math.round(hoursBefore / SAME_DAY_HOURS);
+  return `${String(days)} ${days === 1 ? 'day' : 'days'}`;
+}
+
 function renderContestEntryReminderEmail(
   data: ContestEntryReminderEmailData,
   context: EmailRenderContext,
@@ -1587,23 +1631,25 @@ function renderContestEntryReminderEmail(
     ? formatInstant(data.closesAt, context)
     : formatDay(data.closesAt, context);
   const wording = entryReminderWording(data);
+  const countdownLabel = `${wording.closesLabel} in`;
+  const left = timeLeft(data.hoursBefore);
+  const soFar = `${String(data.entryCount)} ${data.entryCount === 1 ? 'entry' : 'entries'} so far`;
   const bodyBlocks = [
+    countdown(countdownLabel, left, closesLine),
     paragraph(`Hi ${escapeHtml(data.userName)},`),
     paragraph(escapeHtml(wording.message)),
-    detailList([
-      ['League', data.leagueName],
-      ['Contest', data.contestName],
-      [wording.closesLabel, closesLine],
-    ]),
+    contestCard(data.format, data.contestName, data.rules, soFar),
     button(wording.action, data.contestUrl),
   ].join('');
   const textLines = [
+    `${countdownLabel} ${left}: ${closesLine}`,
+    '',
     `Hi ${data.userName},`,
     '',
     wording.message,
-    `League: ${data.leagueName}`,
-    `Contest: ${data.contestName}`,
-    `${wording.closesLabel}: ${closesLine}`,
+    '',
+    ...contestCardLines(data.format, data.contestName, data.rules, soFar),
+    '',
     `${wording.action}: ${data.contestUrl}`,
   ];
 
@@ -1612,6 +1658,9 @@ function renderContestEntryReminderEmail(
     subject: wording.subject,
     preheader: `${wording.closesLabel} ${closesLine}.`,
     title: wording.title,
+    leagueName: data.leagueName,
+    eventStrip: { event: data.event, line: formatDay(data.event.startsAt, context) },
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks,
     textLines,
   });
@@ -1723,14 +1772,25 @@ function standingsTextLine(line: StandingsLine): string {
   ].join(', ');
 }
 
+/** The colour of a movement mark: green up, red down, grey otherwise. */
+function movementColor(movement: number | null): string {
+  if (movement === null || movement === 0) return EMAIL_THEME.muted;
+  return movement > 0 ? EMAIL_THEME.green : EMAIL_THEME.red;
+}
+
+/** Entries by place; the reader's rows are tinted gold and marked "YOU". */
 function standingsTable(lines: StandingsLine[]): string {
   const cell = `padding:10px 12px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:14px;line-height:1.4;color:${EMAIL_THEME.navy};vertical-align:top;`;
-  const rows = lines.map((line) => `<tr>
-        <td style="${cell}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
-        <td style="${cell}">${line.isYours ? strong(line.entryName) : escapeHtml(line.entryName)}${line.isYours ? ` <span style="color:${EMAIL_THEME.muted};">(yours)</span>` : ''}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(formatEventResult(line.eventResult))}` : ''}</span></td>
-        <td style="${cell}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}${line.isOut ? `<br><span style="font-size:12px;font-weight:400;color:${EMAIL_THEME.muted};">out</span>` : ''}</td>
-        <td style="${cell}text-align:right;color:${EMAIL_THEME.muted};">${escapeHtml(movementMark(line.movement))}</td>
-      </tr>`).join('');
+  const rows = lines.map((line) => {
+    const row = line.isYours ? `${cell}background:${EMAIL_THEME.goldTint};` : cell;
+    const you = line.isYours ? ` <span style="font-size:12px;font-weight:700;color:${EMAIL_THEME.goldInk};">YOU</span>` : '';
+    return `<tr>
+        <td style="${row}font-weight:700;">${escapeHtml(line.place ?? '-')}</td>
+        <td style="${row}">${strong(line.entryName)}${you}<br><span style="font-size:12px;color:${EMAIL_THEME.muted};">${escapeHtml(line.squadName)}${line.eventResult ? ` · This event ${escapeHtml(formatEventResult(line.eventResult))}` : ''}</span></td>
+        <td style="${row}text-align:right;font-weight:700;">${escapeHtml(line.score ?? '-')}${line.isOut ? `<br><span style="font-size:12px;font-weight:400;color:${EMAIL_THEME.muted};">out</span>` : ''}</td>
+        <td style="${row}text-align:right;font-weight:700;color:${movementColor(line.movement)};">${escapeHtml(movementMark(line.movement))}</td>
+      </tr>`;
+  }).join('');
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">${rows}</table>`;
 }
 
@@ -1763,9 +1823,13 @@ function renderContestStandingsEmail(
     ...data.cut.map((news) => `Missed the cut from ${news.entryName}: ${news.names.join(', ')}.`),
   ];
   const picksAction = 'Make picks for next week';
+  const leaderboardAction = 'Full leaderboard';
+  const yourBest = yourBestLine([...data.top, ...data.yours]);
+  const placeNote = yourBest ? describePlaceMove(yourBest.movement) : null;
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
     paragraph(escapeHtml(wording.lead)),
+    ...(yourBest ? [placeCallout(yourBest, placeNote)] : []),
     ...personalLines.map((line) => paragraph(escapeHtml(line))),
     ...(weekLeaders.length > 0 ? [sectionTitle(weekLeadersTitle), standingsTable(weekLeaders)] : []),
     sectionTitle(leadersTitle),
@@ -1773,12 +1837,13 @@ function renderContestStandingsEmail(
     ...(data.yours.length > 0 ? [sectionTitle(data.yours.length === 1 ? 'Your entry' : 'Your entries'), standingsTable(data.yours)] : []),
     ...(nextRows.length > 0 ? [detailList(nextRows)] : []),
     ...(data.picksUrl ? [button(picksAction, data.picksUrl)] : []),
-    button('Leaderboard', data.leaderboardUrl),
+    button(leaderboardAction, data.leaderboardUrl),
   ].join('');
   const textLines = [
     `Hi ${data.userName},`,
     '',
     wording.lead,
+    ...(yourBest ? ['', placeCalloutLine(yourBest, placeNote)] : []),
     ...(personalLines.length > 0 ? ['', ...personalLines] : []),
     ...(weekLeaders.length > 0 ? ['', `${weekLeadersTitle}:`, ...weekLeaders.map(standingsTextLine)] : []),
     '',
@@ -1788,7 +1853,7 @@ function renderContestStandingsEmail(
     ...(nextRows.length > 0 ? ['', ...nextRows.map(([label, value]) => `${label}: ${value}`)] : []),
     '',
     ...(data.picksUrl ? [`${picksAction}: ${data.picksUrl}`] : []),
-    `Leaderboard: ${data.leaderboardUrl}`,
+    `${leaderboardAction}: ${data.leaderboardUrl}`,
   ];
 
   return buildMessage(context, {
@@ -1796,6 +1861,9 @@ function renderContestStandingsEmail(
     subject: wording.subject,
     preheader: wording.lead,
     title: wording.title,
+    leagueName: data.leagueName,
+    eventStrip: { event: data.event, line: `${data.contestName} · ${String(data.entryCount)} ${data.entryCount === 1 ? 'entry' : 'entries'}` },
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks,
     textLines,
   });
@@ -1807,6 +1875,21 @@ function describeWinners(winners: readonly StandingsEntryName[]): string | null 
   if (names.length === 0) return null;
   if (names.length === 1) return `${names[0]} won.`;
   return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tied for first.`;
+}
+
+/** "Chalk Talk wins", or "Chalk Talk and Upsets tie for first". */
+function winnersHeadline(winners: readonly StandingsEntryName[]): string {
+  const names = winners.map((winner) => winner.entryName);
+  if (names.length === 0) return 'Final results';
+  if (names.length === 1) return `${names[0]} wins`;
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1) ?? ''} tie for first`;
+}
+
+/** Under the headline: the winners' squads and the winning score, "Sam · -17". */
+function winnersLine(outcome: Extract<ContestResultsOutcome, { kind: typeof ContestResultsKind.SCORED }>): string {
+  const squads = [...new Set(outcome.winners.map((winner) => winner.squadName))].join(' and ');
+  const score = outcome.top[0]?.score ?? null;
+  return score === null ? squads : `${squads} · ${score}`;
 }
 
 function renderContestResultsEmail(
@@ -1824,6 +1907,7 @@ function renderContestResultsEmail(
       subject: `${data.contestName} ended with no scores`,
       preheader: lead,
       title: 'No scores',
+      leagueName: data.leagueName,
       bodyBlocks: [paragraph(`Hi ${escapeHtml(data.userName)},`), paragraph(escapeHtml(lead)), button('View contest', data.contestUrl)].join(''),
       textLines: [`Hi ${data.userName},`, '', lead, '', `View contest: ${data.contestUrl}`],
     });
@@ -1835,10 +1919,13 @@ function renderContestResultsEmail(
     ? `Final top ${String(outcome.top.length)} of ${String(outcome.entryCount)}`
     : 'Final standings';
   const yoursTitle = outcome.yours.length === 1 ? 'Your entry' : 'Your entries';
+  const yourBest = yourBestLine([...outcome.top, ...outcome.yours]);
+  const placeNote = 'Your final place.';
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
     ...congratulations.map((line) => paragraph(strong(line))),
     paragraph(escapeHtml(lead)),
+    ...(yourBest ? [placeCallout(yourBest, placeNote)] : []),
     sectionTitle(leadersTitle),
     standingsTable(outcome.top),
     ...(outcome.yours.length > 0 ? [sectionTitle(yoursTitle), standingsTable(outcome.yours)] : []),
@@ -1849,6 +1936,7 @@ function renderContestResultsEmail(
     '',
     ...(congratulations.length > 0 ? [...congratulations, ''] : []),
     lead,
+    ...(yourBest ? ['', placeCalloutLine(yourBest, placeNote)] : []),
     '',
     `${leadersTitle}:`,
     ...outcome.top.map(standingsTextLine),
@@ -1861,6 +1949,8 @@ function renderContestResultsEmail(
     subject: `Final results: ${data.contestName}`,
     preheader: lead,
     title: 'Final results',
+    leagueName: data.leagueName,
+    trophy: { eyebrow: `${data.contestName} · Final results`, headline: winnersHeadline(outcome.winners), line: winnersLine(outcome) },
     bodyBlocks,
     textLines,
   });
@@ -1873,27 +1963,27 @@ function contestEventChangeWording(data: ContestEventChangedEmailData, dates: Em
   switch (change.kind) {
     case ContestEventChangeKind.POSTPONED:
       return {
-        subject: `Postponed: ${data.eventName}`,
+        subject: `Postponed: ${data.event.eventName}`,
         title: 'Event postponed',
         sentences: [
-          `${data.eventName} has been postponed, with no new date yet.`,
+          `${data.event.eventName} has been postponed, with no new date yet.`,
           change.picksOpen ? picksLine : `${data.contestName} carries on when it resumes.`,
         ],
       };
     case ContestEventChangeKind.RESCHEDULED:
       return {
-        subject: `New date: ${data.eventName}`,
+        subject: `New date: ${data.event.eventName}`,
         title: 'Event moved',
         sentences: [
-          `${data.eventName} has moved from ${formatMove(change.previousStart, change.newStart, dates)}.`,
+          `${data.event.eventName} has moved from ${formatMove(change.previousStart, change.newStart, dates)}.`,
           ...(change.picksOpen ? [`Picks for ${data.contestName} stay open until the new start.`] : []),
         ],
       };
     case ContestEventChangeKind.CANCELLED:
       return {
-        subject: `Cancelled: ${data.eventName}`,
+        subject: `Cancelled: ${data.event.eventName}`,
         title: 'Event cancelled',
-        sentences: [`${data.eventName} has been cancelled. It counts for nothing in ${data.contestName}.`],
+        sentences: [`${data.event.eventName} has been cancelled. It counts for nothing in ${data.contestName}.`],
       };
   }
 }
@@ -1908,6 +1998,13 @@ function renderContestEventChangedEmail(
     subject,
     preheader: sentences[0] ?? subject,
     title,
+    leagueName: data.leagueName,
+    // Only a move has a start worth showing: a postponed event has none yet, a cancelled one never will.
+    eventStrip: {
+      event: data.event,
+      line: data.change.kind === ContestEventChangeKind.RESCHEDULED ? formatDay(data.change.newStart, context) : null,
+    },
+    notAffiliatedWith: [data.event.sportLeagueName],
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
@@ -2329,6 +2426,10 @@ function buildMessage(context: EmailRenderContext, input: {
   leagueName?: string;
   /** The event an email is about: its picture and band replace the title heading, which becomes the band's eyebrow. */
   eventHeader?: EmailEventHeader;
+  /** As eventHeader, but a small picture beside the band, with `line` under the name (none when null). */
+  eventStrip?: { event: EmailEventHeader; line: string | null };
+  /** A navy band with a trophy, in place of the title heading: the final results' winner. */
+  trophy?: { eyebrow: string; headline: string; line: string };
   /** The sport leagues an email names, for the footer's "Not affiliated with" line. */
   notAffiliatedWith?: string[];
 }): SystemEmailMessage {
@@ -2344,6 +2445,8 @@ function buildMessage(context: EmailRenderContext, input: {
       '',
       input.title,
       ...(input.eventHeader ? [eventHeaderLine(input.eventHeader, context)] : []),
+      ...(input.eventStrip ? [eventStripLine(input.eventStrip.event, input.eventStrip.line)] : []),
+      ...(input.trophy ? [input.trophy.headline] : []),
       '',
       ...input.textLines,
       '',
@@ -2356,7 +2459,7 @@ function buildMessage(context: EmailRenderContext, input: {
       title: input.title,
       bodyBlocks: input.bodyBlocks,
       leagueName: input.leagueName,
-      header: input.eventHeader ? eventHeader(input.eventHeader, input.title, context) : undefined,
+      header: emailHeader(input, context),
       notAffiliated,
       unsubscribeUrl: context.unsubscribeUrl,
     }),
@@ -2423,6 +2526,17 @@ function documentShell(input: {
 </html>`;
 }
 
+/** The rows between the brand bar and the body: an event's picture and band, a strip or a trophy band. */
+function emailHeader(
+  input: { title: string; eventHeader?: EmailEventHeader; eventStrip?: { event: EmailEventHeader; line: string | null }; trophy?: { eyebrow: string; headline: string; line: string } },
+  dates: EmailDateStyle,
+): string | undefined {
+  if (input.eventHeader) return eventHeader(input.eventHeader, input.title, dates);
+  if (input.eventStrip) return eventStrip(input.eventStrip.event, input.title, input.eventStrip.line);
+  if (input.trophy) return trophyBand(input.trophy);
+  return undefined;
+}
+
 /** "PGA Tour · Ready for contests": the band's eyebrow, the email's title after the sport league. */
 function eventEyebrow(event: EmailEventHeader, title: string): string {
   return event.sportLeagueName === '' ? title : `${event.sportLeagueName} · ${title}`;
@@ -2449,6 +2563,147 @@ function eventHeader(event: EmailEventHeader, title: string, dates: EmailDateSty
                 <div style="margin-top:6px;font-size:16px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(formatDay(event.startsAt, dates))}</div>
               </td>
             </tr>`;
+}
+
+/**
+ * A smaller event header, for an email about a contest on the event: the sport's picture beside
+ * a navy band with its sport league and the email's title, its name and `line`.
+ */
+function eventStrip(event: EmailEventHeader, title: string, line: string | null): string {
+  return `<tr>
+              <td style="padding:0;background:${EMAIL_THEME.navy};">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td width="${STRIP_IMAGE_WIDTH}" style="width:${STRIP_IMAGE_WIDTH}px;padding:0;line-height:0;font-size:0;vertical-align:middle;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${STRIP_IMAGE_WIDTH}" height="${STRIP_IMAGE_HEIGHT}" style="display:block;width:${STRIP_IMAGE_WIDTH}px;height:${STRIP_IMAGE_HEIGHT}px;border:0;"></td>
+                    <td style="padding:14px 24px;vertical-align:middle;color:#ffffff;">
+                      <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
+                      <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:21px;font-weight:800;line-height:1.15;color:#ffffff;">${escapeHtml(event.eventName)}</div>
+                      ${line === null ? '' : `<div style="margin-top:4px;font-size:15px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(line)}</div>`}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>`;
+}
+
+/** The strip's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */
+function eventStripLine(event: EmailEventHeader, line: string | null): string {
+  const name = eventWithSportLeague(event.eventName, event.sportLeagueName);
+  return line === null ? name : `${name}, ${line}`;
+}
+
+/** The final results' header: a trophy, then the contest and the winner on a navy band. */
+function trophyBand(trophy: { eyebrow: string; headline: string; line: string }): string {
+  return `<tr>
+              <td align="center" style="background:${EMAIL_THEME.navy};padding:24px 32px 28px;color:#ffffff;text-align:center;">
+                <div style="font-size:40px;line-height:1;">&#127942;</div>
+                <div style="margin-top:10px;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(trophy.eyebrow)}</div>
+                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;color:#ffffff;">${escapeHtml(trophy.headline)}</div>
+                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(trophy.line)}</div>
+              </td>
+            </tr>`;
+}
+
+/**
+ * A contest as a card: its way to play's picture, the format, its name, its rules and `detail`
+ * in grey ("1 entry per member").
+ */
+function contestCard(format: EmailContestFormat, contestName: string, rules: string, detail: string): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">
+    <tr>
+      <td width="150" style="width:150px;padding:0;line-height:0;vertical-align:middle;"><img src="${escapeAttribute(format.imageUrl)}" alt="" width="150" height="94" style="display:block;width:150px;height:94px;border:0;"></td>
+      <td style="padding:12px 16px;vertical-align:middle;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(format.name)}</div>
+        <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:18px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(contestName)}</div>
+        <div style="margin-top:4px;font-size:14px;line-height:1.45;color:${EMAIL_THEME.ink};">${escapeHtml(rules)}</div>
+        <div style="margin-top:4px;font-size:13px;line-height:1.45;color:${EMAIL_THEME.muted};">${escapeHtml(detail)}</div>
+      </td>
+    </tr>
+  </table>`;
+}
+
+/** The card's plain-text twin. */
+function contestCardLines(format: EmailContestFormat, contestName: string, rules: string, detail: string): string[] {
+  return [`${contestName} (${format.name})`, rules, detail];
+}
+
+/** A gold band with a label on the left and a value on the right: "PICKS CLOSE   Sun, Nov 1, 2026". */
+function goldBand(label: string, value: string): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;background:${EMAIL_THEME.goldTint};border-radius:10px;">
+    <tr>
+      <td style="padding:14px 16px;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.goldInk};">${escapeHtml(label)}</td>
+      <td align="right" style="padding:14px 16px;font-size:16px;font-weight:700;color:${EMAIL_THEME.navy};">${escapeHtml(value)}</td>
+    </tr>
+  </table>`;
+}
+
+/** A big centred countdown: "PICKS CLOSE IN", "3 hours", then when. */
+function countdown(label: string, value: string, when: string): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;">
+    <tr>
+      <td align="center" style="text-align:center;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.red};">${escapeHtml(label)}</div>
+        <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:52px;font-weight:800;line-height:1;color:${EMAIL_THEME.navy};">${escapeHtml(value)}</div>
+        <div style="margin-top:6px;font-size:15px;color:${EMAIL_THEME.ink};">${escapeHtml(when)}</div>
+      </td>
+    </tr>
+  </table>`;
+}
+
+/** A row of small stats side by side: "ENTRIES 18", "FORMAT Tiered". */
+function statRow(stats: Array<[string, string]>): string {
+  const cells = stats.map(([label, value], index) => `<td width="${String(Math.floor(100 / stats.length))}%" style="padding:${index === 0 ? '0' : '0 0 0 10px'};vertical-align:top;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${EMAIL_THEME.canvas};border-radius:10px;">
+          <tr>
+            <td style="padding:14px;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(label)}</div>
+              <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:20px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(value)}</div>
+            </td>
+          </tr>
+        </table>
+      </td>`).join('');
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;"><tr>${cells}</tr></table>`;
+}
+
+/** The reader's best placed entry, the first of theirs in `lines`; undefined when none has a place. */
+function yourBestLine(lines: readonly StandingsLine[]): StandingsLine | undefined {
+  return lines.find((line) => line.isYours && line.place !== null);
+}
+
+/** "3rd" for a place of 3; a tie ("T3") stays as it is. */
+function ordinalPlace(place: string): string {
+  if (!/^\d+$/.test(place)) return place;
+  const value = Number(place);
+  const lastTwo = value % 100;
+  const suffix = lastTwo >= 11 && lastTwo <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[value % 10] ?? 'th';
+  return `${place}${suffix}`;
+}
+
+/** "Up 4 places since the last update."; null with nothing to compare with. */
+function describePlaceMove(movement: number | null): string | null {
+  if (movement === null) return null;
+  if (movement === 0) return 'Same place as the last update.';
+  const places = Math.abs(movement) === 1 ? 'place' : 'places';
+  return `${movement > 0 ? 'Up' : 'Down'} ${String(Math.abs(movement))} ${places} since the last update.`;
+}
+
+/** The reader's place in big type on a gold band, with their entry, its score and `note` beside it. */
+function placeCallout(line: StandingsLine, note: string | null): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;background:${EMAIL_THEME.goldTint};border-radius:12px;">
+    <tr>
+      <td width="1" style="padding:16px 0 16px 18px;font-family:Archivo,Arial,sans-serif;font-size:40px;font-weight:800;line-height:1;color:${EMAIL_THEME.navy};white-space:nowrap;vertical-align:middle;">${escapeHtml(ordinalPlace(line.place ?? ''))}</td>
+      <td style="padding:16px 18px;font-size:15px;line-height:1.45;color:${EMAIL_THEME.navy};vertical-align:middle;">
+        <strong>${escapeHtml(line.entryName)}${line.score === null ? '' : ` · ${escapeHtml(line.score)}`}</strong>
+        ${note === null ? '' : `<br><span style="color:${EMAIL_THEME.ink};">${escapeHtml(note)}</span>`}
+      </td>
+    </tr>
+  </table>`;
+}
+
+/** The callout's plain-text twin: "Your place: 3rd, Fairway Bandits, -8". */
+function placeCalloutLine(line: StandingsLine, note: string | null): string {
+  const place = `Your place: ${ordinalPlace(line.place ?? '')}, ${line.entryName}${line.score === null ? '' : `, ${line.score}`}`;
+  return note === null ? place : `${place}. ${note}`;
 }
 
 /** The header's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */

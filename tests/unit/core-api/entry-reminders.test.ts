@@ -13,6 +13,7 @@ import {
   PredictedResult,
   SelectionType,
   SportEventStatus,
+  type Contest,
   type ContestEntrySquare,
   type SportEventMatch,
 } from '@poolmaster/shared/domain';
@@ -106,6 +107,7 @@ describe('EntryReminders.queueDue', () => {
         getEffectiveTiersForSportEvent: async (sportEventId) =>
           (world.eventTiers.get(sportEventId) ?? []).map((tier) => ({ ...tier, participants: [] })),
       },
+      sportLeagues: world.sportLeagueRepo(),
       squares: { findSquares: async (contestId) => boxes.filter((box) => box.contestId === contestId) },
       leagues: world.leagueRepo(),
       memberships: world.membershipRepo(),
@@ -136,14 +138,22 @@ describe('EntryReminders.queueDue', () => {
     return created.entry;
   }
 
+  /** A contest with its rules saved, as every contest has; the reminder's card states them. */
+  function contestWithRules(leagueId: string, overrides: Partial<Contest>): Contest {
+    const contest = world.addContest(leagueId, overrides);
+    world.addConfiguration(contest.id);
+    return contest;
+  }
+
   function remindedUserIds(): string[] {
     return outbox.rows.map((row) => row.recipientUserId ?? '').sort();
   }
 
-  it('reminds every active member of an open contest with nothing submitted, entered or not, and nobody who submitted', async () => {
+  it('reminds every active member of an open contest with nothing submitted, entered or not, and nobody who submitted, with the contest card and the entries so far', async () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: CLOSES_AT });
-    const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
+    // The in-memory sport leagues are named by their ids.
+    const masters = world.addSportEvent({ name: 'The Masters', sportLeagueId: 'PGA Tour', startDate: CLOSES_AT });
+    const contest = contestWithRules(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
     const notEntered = member(league.id, 'Nora');
     const drafting = member(league.id, 'Dana');
     const submitted = member(league.id, 'Sam');
@@ -159,13 +169,15 @@ describe('EntryReminders.queueDue', () => {
     expect(byUser.get(notEntered.user.id)?.textBody).toContain('You haven\'t entered Masters Pick 6 for The Masters yet.');
     expect(byUser.get(drafting.user.id)?.textBody).toContain('Your The Masters entry is saved as a draft.');
     expect(byUser.get(drafting.user.id)?.textBody).toContain(`Make your picks: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+    expect(byUser.get(drafting.user.id)?.textBody).toContain('Picks close soon\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
+    expect(byUser.get(drafting.user.id)?.textBody).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of the event\'s tiers. The best 4 scores count.\n1 entry so far');
     expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_ENTRY_REMINDER' && row.fromName === 'Office League')).toBe(true);
   });
 
   it('queues each reminder once however many sweeps run in its hour, then the next one at its own time', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
-    world.addContest(league.id, { sportEventIds: [event.id] });
+    contestWithRules(league.id, { sportEventIds: [event.id] });
     const nora = member(league.id, 'Nora');
     const service = reminders();
 
@@ -184,7 +196,7 @@ describe('EntryReminders.queueDue', () => {
   it('logs at info only the sweep that queues a reminder, not the later sweeps in its grace hour', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
-    world.addContest(league.id, { sportEventIds: [event.id] });
+    contestWithRules(league.id, { sportEventIds: [event.id] });
     member(league.id, 'Nora');
     member(league.id, 'Dana');
     const service = reminders();
@@ -201,7 +213,7 @@ describe('EntryReminders.queueDue', () => {
   it('sends one email to a person who owns two squads, and none when either squad submitted', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
-    const golf = world.addContest(league.id, { name: 'Golf', sportEventIds: [event.id] });
+    const golf = contestWithRules(league.id, { name: 'Golf', sportEventIds: [event.id] });
     const both = member(league.id, 'Bo');
     const secondSquad = world.addSquad(league.id, 'Bo\'s Second Squad');
     world.addSquadMember(secondSquad.id, both.user.id);
@@ -220,7 +232,7 @@ describe('EntryReminders.queueDue', () => {
     const league = world.addLeague();
     const week6 = world.addSportEvent({ name: 'Week 6', status: SportEventStatus.COMPLETED, startDate: new Date('2026-10-15T00:15:00.000Z') });
     const week7 = world.addSportEvent({ name: 'Week 7', startDate: CLOSES_AT });
-    const contest = world.addContest(league.id, {
+    const contest = contestWithRules(league.id, {
       status: ContestStatus.ACTIVE,
       selectionType: SelectionType.PICK_EM,
       sportEventIds: [week6.id, week7.id],
@@ -268,8 +280,8 @@ describe('EntryReminders.queueDue', () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
     const now = before(CLOSES_AT, 24, 1);
-    world.addContest(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 5 * HOUR) });
-    const settled = world.addContest(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 6 * HOUR) });
+    contestWithRules(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 5 * HOUR) });
+    const settled = contestWithRules(league.id, { sportEventIds: [event.id], openedAt: new Date(now.getTime() - 6 * HOUR) });
     const nora = member(league.id, 'Nora');
 
     await reminders().queueDue(now);
@@ -367,7 +379,7 @@ describe('EntryReminders.queueDue', () => {
     const league = world.addLeague();
     const week1 = world.addSportEvent({ name: 'Week 1', status: SportEventStatus.COMPLETED, startDate: new Date('2026-04-02T17:00:00.000Z') });
     const week2 = world.addSportEvent({ name: 'Week 2', startDate: CLOSES_AT });
-    const contest = world.addContest(league.id, {
+    const contest = contestWithRules(league.id, {
       status: ContestStatus.ACTIVE,
       selectionType: SelectionType.SURVIVOR,
       sportEventIds: [week1.id, week2.id],
@@ -405,7 +417,7 @@ describe('EntryReminders.queueDue', () => {
   it('asks only members not yet in a random draw to join it, while it takes entries', async () => {
     const league = world.addLeague();
     const masters = world.addSportEvent({ name: 'The Masters', startDate: CLOSES_AT });
-    const contest = world.addContest(league.id, { name: 'Sweepstake', selectionType: SelectionType.RANDOM_DRAW, sportEventIds: [masters.id] });
+    const contest = contestWithRules(league.id, { name: 'Sweepstake', selectionType: SelectionType.RANDOM_DRAW, sportEventIds: [masters.id] });
     const joined = member(league.id, 'Sam');
     const nora = member(league.id, 'Nora');
     await enter(contest.id, joined.squad.id);
@@ -470,7 +482,7 @@ describe('EntryReminders.queueDue', () => {
 
     expect(remindedUserIds()).toEqual([nora.user.id]);
     expect(outbox.rows[0]?.textBody).toContain('You haven\'t claimed a box on the Super Bowl Squares grid yet.');
-    expect(outbox.rows[0]?.textBody).toContain('Game starts: Thu, Apr 9, 2026');
+    expect(outbox.rows[0]?.textBody).toContain('Game starts in 1 day: Thu, Apr 9, 2026');
 
     world.contests.set(contest.id, { ...contest, drawnAt: new Date() });
     await reminders().queueDue(before(CLOSES_AT, 3, 1));
@@ -480,7 +492,7 @@ describe('EntryReminders.queueDue', () => {
   it('sends nothing for an event whose picks have closed early because it has started', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ status: SportEventStatus.IN_PROGRESS, startDate: CLOSES_AT });
-    world.addContest(league.id, { sportEventIds: [event.id] });
+    contestWithRules(league.id, { sportEventIds: [event.id] });
     member(league.id, 'Nora');
 
     await reminders().queueDue(before(CLOSES_AT, 3, 1));
@@ -491,7 +503,7 @@ describe('EntryReminders.queueDue', () => {
   it('follows the offsets a root admin saved in EMAIL_CONFIG', async () => {
     const league = world.addLeague();
     const event = world.addSportEvent({ startDate: CLOSES_AT });
-    world.addContest(league.id, { sportEventIds: [event.id] });
+    contestWithRules(league.id, { sportEventIds: [event.id] });
     member(league.id, 'Nora');
     const config = { ...EMAIL_SETTINGS.defaults({ POOLMASTER_ENVIRONMENT: 'prod' }), entryReminderHours: [72] };
 

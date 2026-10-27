@@ -9,10 +9,13 @@ import {
   sportHeaderImagePath,
   sportPathSegment,
   type EventPage,
+  formatSelectionTypeName,
   type SelectionType,
   type Sport,
+  type SportEvent,
   type User,
 } from '@poolmaster/shared/domain';
+import type { EmailContestFormat, EmailEventHeader } from './system-email-templates';
 
 /** The reader's full name, else their username, else their address. */
 export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'username' | 'email'>): string {
@@ -95,6 +98,25 @@ export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: strin
 /** A sport's picture at the top of an email about one of its events. */
 export function buildEmailSportImageUrl(appBaseUrl: string, sport: Sport): string {
   return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sport)}`;
+}
+
+/** The top of an email about `sportEvent`: its sport's picture, its sport league's name ('' for none), its name and start. */
+export function buildEmailEventHeader(
+  appBaseUrl: string,
+  sportEvent: Pick<SportEvent, 'name' | 'startDate' | 'sport'>,
+  sportLeagueName: string,
+): EmailEventHeader {
+  return {
+    sportLeagueName,
+    eventName: sportEvent.name,
+    startsAt: sportEvent.startDate,
+    imageUrl: buildEmailSportImageUrl(appBaseUrl, sportEvent.sport),
+  };
+}
+
+/** A contest's way to play, on its card in a member email. */
+export function buildEmailContestFormat(appBaseUrl: string, selectionType: SelectionType): EmailContestFormat {
+  return { name: formatSelectionTypeName(selectionType), imageUrl: buildEmailFormatImageUrl(appBaseUrl, selectionType) };
 }
 
 /** A way to play's How to Play picture, on its contest type tile. */

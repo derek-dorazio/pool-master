@@ -52,6 +52,7 @@ function entryReceipt(userId: string | undefined, league = LEAGUE): EmailSendInp
     data: {
       userName: 'Morgan Member',
       leagueName: LEAGUE.name,
+      event: { sportLeagueName: 'PGA Tour', eventName: 'The Masters', startsAt: new Date('2026-10-23T12:00:00.000Z'), imageUrl: 'https://qa.example.com/email/sports/golf.jpg' },
       contestName: 'Masters Pick 6',
       teamName: 'Morgan Member',
       entryName: 'Entry 1',

@@ -64,6 +64,7 @@ import {
   emailRecipientOf,
   StandingsMomentKind,
   buildContestUrl,
+  buildEmailEventHeader,
   buildLeaderboardUrl,
   formatUserName,
   type ContestStandingsEmailData,
@@ -99,7 +100,7 @@ export interface LiveStandingsDeps extends LeagueMemberDeps {
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   /** A bracket contest's rules, for the round it starts at. */
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
-  /** A bracket's round names, in its sport league's words. */
+  /** The event's sport league: named on the email, and a bracket's round names in its words. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   positions: StandingsEmailPositionRepository;
   leagues: Pick<LeagueRepository, 'findById'>;
@@ -533,8 +534,12 @@ export class LiveStandings implements DueNotifications {
   private async queueStandings(due: DueStandings): Promise<void> {
     const { contest, sportEvent } = due;
     if (await this.deps.email.hasRecordedForContest('CONTEST_STANDINGS', contest.id, due.about)) return;
-    const league = await this.deps.leagues.findById(contest.leagueId);
+    const [league, sportLeague] = await Promise.all([
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
+    ]);
     if (!league) return;
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeague?.name ?? '');
     const board = await due.board(await this.deps.positions.findByContest(contest.id), league);
     const { rows } = board;
     const leaders = leaderCount(rows);
@@ -554,6 +559,7 @@ export class LiveStandings implements DueNotifications {
             userName: formatUserName(user),
             leagueName: league.name,
             contestName: contest.name,
+            event,
             moment: board.momentFor(ownsSquad),
             top: lines.slice(0, leaders),
             yours: lines.slice(leaders).filter((line) => line.isYours),

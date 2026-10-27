@@ -57,6 +57,7 @@ export function createEntryReminders(prisma: PrismaClient, options: {
     picks: new PrismaContestEntryPickRepository(prisma),
     predictions: new PrismaContestEntryMatchPredictionRepository(prisma),
     tiers: createSportEventTierService(prisma, options.logger),
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
     squares: new PrismaSquaresRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),

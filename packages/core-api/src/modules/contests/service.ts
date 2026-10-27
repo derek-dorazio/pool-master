@@ -21,6 +21,7 @@ import type {
   ParticipantRepository,
   SportEventMatchRepository,
   SportEventRepository,
+  SportLeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
   UserRepository,
@@ -108,6 +109,7 @@ import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-e
 import {
   emailRecipientOf,
   EntryReceiptKind,
+  buildEmailEventHeader,
   buildEntryUrl,
   formatUserName,
   type ContestEntryCompletedEmailData,
@@ -195,6 +197,8 @@ export interface ContestServiceDeps {
   leagues: LeagueRepository;
   users: UserRepository;
   sportEvents: SportEventRepository;
+  /** An event's sport league, named on an entry receipt. */
+  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   eventParticipants: Pick<SportEventParticipantService, 'listEventParticipants'>;
   tiers: Pick<SportEventTierService, 'getEffectiveValuationsForSportEvent' | 'listTiers'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
@@ -1282,9 +1286,10 @@ export class ContestService {
       .filter((user): user is User => user !== null && user.isActive);
     const templateKey = 'CONTEST_ENTRY_COMPLETED';
     const league = entry.contest.league;
-    const [lineup, configuration] = await Promise.all([
+    const [lineup, configuration, sportLeague] = await Promise.all([
       this.buildEntryLineupForEmail(entry, sportEventId),
       this.deps.configurations.findByContest(contestId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
     ]);
     const rules = configuration?.configJson;
     // A quick pick entry is dealt its picks by the draw (#867): nobody submitted it, and there is
@@ -1293,6 +1298,7 @@ export class ContestService {
     const golf = eventSportDefinition(sportEvent).scoringFamily === ScoringFamily.STROKE_PLAY;
     const data = {
       leagueName: league.name,
+      event: buildEmailEventHeader(this.appBaseUrl, sportEvent, sportLeague?.name ?? ''),
       contestName: entry.contest.name,
       teamName: entry.squad.name,
       entryName: entry.name,

@@ -230,7 +230,7 @@ describe('LiveStandings.queueDue', () => {
       },
       matches: { findBySportEvent: async (sportEventId) => matches.get(sportEventId) ?? [] },
       configurations: world.configurationRepo(),
-      sportLeagues: { findById: async () => ({ roundNames }) as unknown as SportLeague },
+      sportLeagues: { findById: async () => ({ name: 'PGA Tour', roundNames }) as unknown as SportLeague },
       positions: {
         findByContest: async (contestId) => new Map(
           [
@@ -318,9 +318,10 @@ describe('LiveStandings.queueDue', () => {
     const [toAna] = emailsTo(ana.user.id);
     expect(toAna.templateKey).toBe('CONTEST_STANDINGS');
     expect(toAna.subject).toBe('After round 1: Masters Pick 6');
+    expect(toAna.textBody).toContain('Round 1 standings\nThe Masters (PGA Tour), Masters Pick 6 · 2 entries');
     expect(toAna.textBody).toContain('1. Entry e1 (Ana\'s Squad), yours, -6');
     expect(toAna.textBody).toContain('2. Entry e2 (Ben\'s Squad), -3');
-    expect(toAna.textBody).toContain(`Leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+    expect(toAna.textBody).toContain(`Full leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
   });
 
   it('queues each round\'s standings once however many sweeps run in its hour, and none more than an hour late', async () => {

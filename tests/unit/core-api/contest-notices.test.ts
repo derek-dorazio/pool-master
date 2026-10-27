@@ -68,7 +68,7 @@ describe('ContestNotices', () => {
       contests: world.contestRepo(),
       configurations: world.configurationRepo(),
       sportEvents: world.sportEventRepo(),
-      sportLeagues: { findById: async () => ({ roundNames } as unknown as SportLeague) },
+      sportLeagues: { findById: async () => ({ name: 'PGA Tour', roundNames } as unknown as SportLeague) },
       matches: { findBySportEvent: async (sportEventId) => matches.filter((match) => match.sportEventId === sportEventId) },
       tiers: {
         getEffectiveTiersForSportEvent: async (sportEventId) => world.addEventTiers(sportEventId, tierCount)
@@ -105,7 +105,7 @@ describe('ContestNotices', () => {
   }
 
   describe('contestOpened (D1)', () => {
-    it('tells every active league member once, from the league, with the event, the rules, the entry limit, when picks close and a link to the contest', async () => {
+    it('tells every active league member once, from the league, with the event across the top, the contest card with its rules and entry limit, when picks close and a link to the contest', async () => {
       const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
       const masters = world.addSportEvent({ name: 'The Masters', venue: 'Augusta National', startDate: STARTS_AT });
       const contest = world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
@@ -124,11 +124,10 @@ describe('ContestNotices', () => {
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_OPENED' && row.fromName === 'Office League')).toBe(true);
       const text = textTo(nora.user.id);
       expect(text).toContain('Masters Pick 6 is open in Office League.');
-      expect(text).toContain('Event: The Masters');
-      expect(text).toContain('Venue: Augusta National');
-      expect(text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
-      expect(text).toContain('Entries: 2 entries per member');
+      expect(text).toContain('New contest open\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
+      expect(text).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of 6 tiers. The best 4 scores count.\n2 entries per member');
       expect(text).toContain('Picks close: Thu, Apr 9, 2026');
+      expect(outbox.rows[0]?.htmlBody).toContain('src="https://app.example.test/email/formats/tiered.png"');
       expect(text).toContain(`Enter contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
     });
 
@@ -158,7 +157,7 @@ describe('ContestNotices', () => {
 
       await notices().contestOpened(contest.id);
 
-      expect(textTo(nora.user.id)).toContain('Rules: Second-chance bracket from the Sweet 16');
+      expect(textTo(nora.user.id)).toContain('Second-chance bracket from the Sweet 16');
       expect(textTo(nora.user.id)).toContain('Picks close: Thu, Apr 9, 2026');
     });
 
@@ -221,12 +220,10 @@ describe('ContestNotices', () => {
       expect(recipientIds()).toEqual([entrant.user.id, drafting.user.id, onlooker.user.id].sort());
       expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_STARTED_SUMMARY')).toBe(true);
       const text = textTo(entrant.user.id);
-      expect(text).toContain('Good luck, everyone.');
-      expect(text).toContain('Week 1 Pick\'em is live for NFL Week 1.');
-      expect(text).toContain('Format: 2 games');
-      expect(text).toContain('Rules: Pick the winner of every game.');
-      expect(text).toContain('Entries: 1');
-      expect(text).toContain(`Leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
+      expect(text).toContain('Contest is live\nNFL Week 1 (PGA Tour), ');
+      expect(text).toContain('Good luck, everyone. Week 1 Pick\'em is live with 1 entry.');
+      expect(text).toContain('Entries: 1\nFormat: Pick’em\nEvent: 2 games\nPick the winner of every game.');
+      expect(text).toContain(`Watch the leaderboard: https://app.example.test/league/OFFICE24/contests/${contest.id}/leaderboard`);
       expect(text).not.toContain('You didn\'t enter this one');
       expect(textTo(drafting.user.id)).toContain('You didn\'t enter this one');
       expect(textTo(onlooker.user.id)).toContain('You didn\'t enter this one');
@@ -243,7 +240,7 @@ describe('ContestNotices', () => {
       await notices().contestStarted(contest, event);
 
       expect(outbox.rows).toHaveLength(1);
-      expect(outbox.rows[0]?.textBody).toContain('Format: 4 rounds');
+      expect(outbox.rows[0]?.textBody).toContain('Event: 4 rounds');
     });
 
     it('sends nothing when the contest\'s league is gone', async () => {

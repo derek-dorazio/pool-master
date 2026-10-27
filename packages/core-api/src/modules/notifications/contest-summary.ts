@@ -21,6 +21,7 @@ import {
   type ContestSelectionConfig,
   type RoundName,
   type SportEvent,
+  type SportLeague,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
@@ -28,7 +29,7 @@ import type { SportEventTierService } from '../events/sport-event-tier-service';
 export interface ContestSummaryDeps {
   configurations: Pick<ContestConfigurationRepository, 'findByContest'>;
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
-  /** A bracket's round names, for a second-chance bracket's starting round. */
+  /** The first event's sport league: its name, and a bracket's round names for a second-chance bracket's starting round. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
@@ -37,6 +38,9 @@ export interface ContestSummaryDeps {
 export interface ContestSummary {
   /** The contest's events, in sequence order. */
   sportEvents: SportEvent[];
+  firstEvent: SportEvent;
+  /** The first event's sport league's name; '' when it is gone. */
+  sportLeagueName: string;
   /** "Pick 1 golfer from each of 6 tiers. The best 4 scores count." */
   rules: string;
   /** "1 entry per member", or "No limit on entries per member". */
@@ -59,15 +63,20 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
   const rules = configuration?.configJson;
   if (!first || !rules) return null;
 
-  const closesAt = await contestClosesAt(deps, contest, rules, first);
+  const [closesAt, sportLeague] = await Promise.all([
+    contestClosesAt(deps, contest, rules, first),
+    deps.sportLeagues.findById(first.sportLeagueId),
+  ]);
   return {
     sportEvents,
+    firstEvent: first,
+    sportLeagueName: sportLeague?.name ?? '',
     rules: formatContestRules(
       rules,
       rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
       eventSportDefinition(first).vocabulary.participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
-      rules.selectionType === SelectionType.BRACKET ? await roundNameOf(deps, first) : undefined,
+      rules.selectionType === SelectionType.BRACKET ? roundNameOf(sportLeague, first) : undefined,
     ),
     entriesPerMember: formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad),
     closesAt,
@@ -92,8 +101,8 @@ export async function contestClosesAt(
 }
 
 /** A knockout's rounds by name, in its sport league's words where it has them ("Sweet 16"). */
-async function roundNameOf(deps: Pick<ContestSummaryDeps, 'sportLeagues'>, sportEvent: SportEvent): Promise<RoundName> {
-  const roundNames = (await deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
+function roundNameOf(sportLeague: SportLeague | null, sportEvent: SportEvent): RoundName {
+  const roundNames = sportLeague?.roundNames ?? [];
   const roundCount = sportEvent.rounds ?? eventSportDefinition(sportEvent).defaultRounds;
   return (roundNumber) => eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount);
 }

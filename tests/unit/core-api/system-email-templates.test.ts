@@ -2,6 +2,7 @@ import { EmailCategory, EmailTemplateKey, PLAN_FEATURE_GROUP, PlanFeature, PlanF
 import {
   EMAIL_SETTINGS,
   ContestEventChangeKind,
+  ContestResultsKind,
   EMAIL_TEMPLATES,
   EntryReceiptKind,
   EntryReminderKind,
@@ -52,6 +53,9 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Open league');
   });
 
+  const MASTERS_EVENT = EMAIL_TEMPLATE_FIXTURES.CONTEST_OPENED.event;
+  const TIERED = EMAIL_TEMPLATE_FIXTURES.CONTEST_OPENED.format;
+  const REMINDER_CARD = { format: TIERED, rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.', entryCount: 14 };
   const ENTRY = {
     userName: 'Derek Dorazio',
     leagueName: 'Mathworks',
@@ -59,6 +63,7 @@ describe('pool-master-98i system email templates', () => {
     entryName: 'Entry 1',
     entryUrl: 'https://app.primetimecommissioner.com/entries/entry-1',
     submittedAt: '2026-04-04T15:30:00.000Z',
+    event: EMAIL_TEMPLATE_FIXTURES.CONTEST_ENTRY_COMPLETED.event,
   };
 
   it('renders a lineup receipt with each tier\'s selections, the tiebreaker and when picks close', () => {
@@ -198,12 +203,13 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('A box wins when the last digit of each team\'s score matches its numbers.');
   });
 
-  it('renders the contest is live email with good luck, the event, the rules, the entry count and a Leaderboard button, and no entry list', () => {
+  it('renders the contest is live email with the event\'s picture, good luck, the entries, format and event as stats, the rules and a Watch the leaderboard button, and no entry list', () => {
     const message = renderSystemEmailTemplate('CONTEST_STARTED_SUMMARY', {
       userName: 'Derek Dorazio',
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
-      event: { name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' },
+      event: MASTERS_EVENT,
+      format: TIERED,
       eventFormat: '4 rounds',
       rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
       entryCount: 2,
@@ -212,15 +218,14 @@ describe('pool-master-98i system email templates', () => {
     }, UTC);
 
     expect(message.subject).toBe('Masters Pick 6 is live');
-    expect(message.text).toContain('Good luck, everyone.');
-    expect(message.text).toContain('Venue: Augusta National Golf Club');
-    expect(message.text).toContain('Starts: Thu, Apr 9, 2026');
-    expect(message.text).toContain('Format: 4 rounds');
-    expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
-    expect(message.text).toContain('Entries: 2');
-    expect(message.text).toContain('Leaderboard: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/leaderboard');
+    expect(message.text).toContain('The Masters (PGA Tour), Thu, Apr 9, 2026');
+    expect(message.text).toContain('Good luck, everyone. Masters Pick 6 is live with 2 entries.');
+    expect(message.text).toContain('Entries: 2\nFormat: Tiered\nEvent: 4 rounds\nPick 1 golfer from each of 6 tiers. The best 4 scores count.');
+    expect(message.text).toContain('Watch the leaderboard: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/leaderboard');
+    expect(message.text).not.toContain('Augusta National');
     expect(message.text).not.toContain('You didn\'t enter this one');
-    expect(message.html).toContain('Leaderboard');
+    expect(message.html).toContain(`src="${MASTERS_EVENT.imageUrl}"`);
+    expect(message.html).toContain('PGA Tour · Contest is live');
   });
 
   it('tells a member with no entry in a live contest that they can still follow it on the leaderboard', () => {
@@ -228,7 +233,8 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Mathworks',
       contestName: 'NFL Week 1 Pick\'em',
-      event: { name: 'NFL Week 1', startsAt: new Date('2026-09-10T00:20:00.000Z') },
+      event: { ...MASTERS_EVENT, sportLeagueName: 'NFL', eventName: 'NFL Week 1', startsAt: new Date('2026-09-10T00:20:00.000Z') },
+      format: { name: 'Pick\'em', imageUrl: 'https://app.example.test/email/formats/pick-em.png' },
       rules: 'Pick the winner of every game.',
       entryCount: 1,
       hasEntry: false,
@@ -237,16 +243,18 @@ describe('pool-master-98i system email templates', () => {
 
     expect(message.text).toContain('You didn\'t enter this one, but you can follow every entry on the leaderboard.');
     expect(message.text).not.toContain('Venue:');
-    expect(message.text).not.toContain('Format:');
+    expect(message.text).not.toContain('Event:');
     expect(message.html).toContain('is live with 1 entry.');
   });
 
-  it('renders the new contest email with the event, the rules, the entry limit, when picks close and an Enter contest button', () => {
+  it('renders the new contest email with the event\'s picture, the contest card with its format, rules and entry limit, when picks close and an Enter contest button', () => {
     const message = renderSystemEmailTemplate('CONTEST_OPENED', {
       userName: 'Morgan Member',
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
-      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' }],
+      event: MASTERS_EVENT,
+      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z') }],
+      format: TIERED,
       rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
       entriesPerMember: '1 entry per member',
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
@@ -255,20 +263,23 @@ describe('pool-master-98i system email templates', () => {
 
     expect(message.templateKey).toBe('CONTEST_OPENED');
     expect(message.subject).toBe('New contest: Masters Pick 6');
+    expect(message.text).toContain('New contest open\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
     expect(message.text).toContain('Masters Pick 6 is open in Mathworks.');
-    expect(message.text).toContain('Event: The Masters');
-    expect(message.text).toContain('Rules: Pick 1 golfer from each of 6 tiers. The best 4 scores count.');
-    expect(message.text).toContain('Entries: 1 entry per member');
+    expect(message.text).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of 6 tiers. The best 4 scores count.\n1 entry per member');
     expect(message.text).toContain('Picks close: Thu, Apr 9, 2026');
+    expect(message.text).not.toContain('Then:');
     expect(message.text).toContain('Enter contest: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1');
-    expect(message.html).toContain('New contest open');
+    expect(message.html).toContain(`src="${TIERED.imageUrl}"`);
+    expect(message.html).toContain('Not affiliated with PGA Tour or any sports league.');
   });
 
-  it('lists every event of a multi-event contest in the new contest email, and says when the first picks close', () => {
+  it('lists a multi-event contest\'s events after the first in the new contest email, and says when the first picks close', () => {
     const message = renderSystemEmailTemplate('CONTEST_OPENED', {
       userName: 'Morgan Member',
       leagueName: 'Mathworks',
       contestName: 'Majors Pool',
+      event: MASTERS_EVENT,
+      format: TIERED,
       events: [
         { name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z') },
         { name: 'PGA Championship', startsAt: new Date('2026-05-14T11:40:00.000Z') },
@@ -279,7 +290,7 @@ describe('pool-master-98i system email templates', () => {
       contestUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-3',
     }, UTC);
 
-    expect(message.text).toContain('Events: The Masters (Thu, Apr 9, 2026), PGA Championship (Thu, May 14, 2026)');
+    expect(message.text).toContain('Then:\nPGA Championship, Thu, May 14, 2026');
     expect(message.text).toContain('First picks close: Thu, Apr 9, 2026');
   });
 
@@ -288,7 +299,8 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'Masters Pick 6',
-      eventName: 'The Masters',
+      event: MASTERS_EVENT,
+      ...REMINDER_CARD,
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
       hoursBefore: 3,
       standing: { kind: EntryReminderKind.NOT_ENTERED },
@@ -297,7 +309,8 @@ describe('pool-master-98i system email templates', () => {
 
     expect(message.subject).toBe('Picks close soon: Masters Pick 6');
     expect(message.text).toContain('You haven\'t entered Masters Pick 6 for The Masters yet.');
-    expect(message.text).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
+    expect(message.text).toContain('Picks close in 3 hours: Apr 9, 2026, 7:40 AM EDT');
+    expect(message.text).toContain('Masters Pick 6 (Tiered)\nPick 1 golfer from each of 6 tiers. The best 4 scores count.\n14 entries so far');
     expect(message.text).toContain('Make your picks: https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1');
     expect(message.html).toContain('Make your picks');
   });
@@ -307,14 +320,15 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'Masters Pick 6',
-      eventName: 'The Masters',
+      event: MASTERS_EVENT,
+      ...REMINDER_CARD,
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
       hoursBefore: 3,
       standing: { kind: EntryReminderKind.NOT_ENTERED },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
     }, { timeZone: 'Europe/London', locale: 'en-GB', hour12: false });
 
-    expect(message.text).toContain('Picks close: 9 Apr 2026, 12:40 BST');
+    expect(message.text).toContain('Picks close in 3 hours: 9 Apr 2026, 12:40 BST');
   });
 
   it('gives an entry reminder sent a day or more ahead the date picks close, without a time', () => {
@@ -322,14 +336,15 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'Masters Pick 6',
-      eventName: 'The Masters',
+      event: MASTERS_EVENT,
+      ...REMINDER_CARD,
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
       hoursBefore: 24,
       standing: { kind: EntryReminderKind.NOT_ENTERED },
       contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
     }, { timeZone: 'America/New_York' });
 
-    expect(message.text).toContain('Picks close: Thu, Apr 9, 2026\n');
+    expect(message.text).toContain('Picks close in 1 day: Thu, Apr 9, 2026\n');
     expect(message.text).not.toContain('7:40 AM');
   });
 
@@ -357,7 +372,8 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'NFL Pick\'em',
-      eventName: 'Week 7',
+      event: { ...MASTERS_EVENT, sportLeagueName: 'NFL', eventName: 'Week 7' },
+      ...REMINDER_CARD,
       closesAt: new Date('2026-10-22T00:15:00.000Z'),
       hoursBefore: 3,
       standing: { kind: EntryReminderKind.DRAFT, drafts: 1 },
@@ -383,7 +399,7 @@ describe('pool-master-98i system email templates', () => {
       expect(message.text).toContain('T2. Azalea (The Fourballs), -9, down 1');
       expect(message.html).toContain('▲2');
       expect(message.html).toContain('▼1');
-      expect(message.text).toContain('Leaderboard: http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard');
+      expect(message.text).toContain('Full leaderboard: http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard');
     });
 
     it('lists the reader\'s entries placed below the leaders, and their golfers who missed the cut', () => {
@@ -540,7 +556,8 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Morgan Member',
       leagueName: 'Office League',
       contestName: 'Office Pool',
-      eventName: 'The Masters',
+      event: MASTERS_EVENT,
+      ...REMINDER_CARD,
       closesAt: new Date('2026-04-09T11:40:00.000Z'),
       hoursBefore: 3,
       contestUrl: 'https://app.example.test/league/OFFICE24/contests/contest-1',
@@ -572,7 +589,7 @@ describe('pool-master-98i system email templates', () => {
 
       expect(message.subject).toBe('Entries close soon: Office Pool');
       expect(message.text).toContain('Just join Office Pool before entries close. It\'s a quick pick contest, so your picks are made for you.');
-      expect(message.text).toContain('Entries close: Apr 9, 2026');
+      expect(message.text).toContain('Entries close in 3 hours: Apr 9, 2026');
       expect(message.text).toContain(`Join the contest: ${base.contestUrl}`);
       expect(message.text).not.toContain('Make your picks');
     });
@@ -585,7 +602,7 @@ describe('pool-master-98i system email templates', () => {
 
       expect(message.subject).toBe('Boxes close soon: Office Pool');
       expect(message.text).toContain('You haven\'t claimed a box on the Office Pool grid yet. Boxes close when the game starts, or sooner if the numbers are drawn first.');
-      expect(message.text).toContain('Game starts: Apr 9, 2026');
+      expect(message.text).toContain('Game starts in 3 hours: Apr 9, 2026');
       expect(message.text).toContain(`Claim your boxes: ${base.contestUrl}`);
     });
   });
@@ -595,7 +612,8 @@ describe('pool-master-98i system email templates', () => {
       userName: 'Derek Dorazio',
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
-      event: { name: 'Manual Test Golf Tournament', startsAt: new Date('2026-04-05T14:00:00.000Z') },
+      event: MASTERS_EVENT,
+      format: TIERED,
       rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
       entryCount: 0,
       hasEntry: false,
@@ -931,5 +949,94 @@ describe('the event emails\' header and contest type tiles', () => {
 
     expect(message.text).toContain('Not affiliated with PGA Tour, Triple Crown or any sports league.');
     expect(message.html).toContain('Not affiliated with PGA Tour, Triple Crown or any sports league.');
+  });
+});
+
+describe('the member contest emails\' header, contest card and places', () => {
+  const standings = EMAIL_TEMPLATE_FIXTURES.CONTEST_STANDINGS;
+  const results = EMAIL_TEMPLATE_FIXTURES.CONTEST_RESULTS;
+
+  it('opens the standings with the event as a strip naming the contest and its entries, then the reader\'s best place and how it moved', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
+
+    expect(message.text).toContain('Round 2 standings\nThe Masters (PGA Tour), Masters Pick 6 · 18 entries');
+    expect(message.text).toContain('Your place: T2, Green Jackets, -9. Same place as the last update.');
+    expect(message.html).toContain(`src="${standings.event.imageUrl}"`);
+    expect(message.html).toContain('>T2</td>');
+  });
+
+  it('marks the reader\'s rows "YOU" on a gold tint and leaves everyone else\'s plain', () => {
+    const message = renderSystemEmailTemplate('CONTEST_STANDINGS', standings, UTC);
+
+    expect(message.html.match(/>YOU</g)).toHaveLength(2);
+    expect(message.html).not.toContain('(yours)');
+  });
+
+  it('gives a reader whose only placed entry moved up the places it climbed, and no callout to a reader with no entry', () => {
+    const climbed = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+      ...standings,
+      top: standings.top.map((line) => ({ ...line, isYours: line.entryName === 'Amen Corner' })),
+      yours: [],
+    }, UTC);
+    const watching = renderSystemEmailTemplate('CONTEST_STANDINGS', {
+      ...standings,
+      top: standings.top.map((line) => ({ ...line, isYours: false })),
+      yours: [],
+    }, UTC);
+
+    expect(climbed.text).toContain('Your place: 1st, Amen Corner, -12. Up 2 places since the last update.');
+    expect(watching.text).not.toContain('Your place');
+  });
+
+  it('heads the final results with a trophy and the winner, then gives the reader their final place', () => {
+    const message = renderSystemEmailTemplate('CONTEST_RESULTS', results, UTC);
+
+    expect(message.text).toContain('Final results\nGreen Jackets wins');
+    expect(message.text).toContain('Your place: 1st, Green Jackets, -14. Your final place.');
+    expect(message.html).toContain('Masters Pick 6 · Final results');
+    expect(message.html).toContain('Morgan Member · -14');
+  });
+
+  it('heads tied final results with every winner', () => {
+    const outcome = results.outcome.kind === ContestResultsKind.SCORED ? results.outcome : undefined;
+    if (!outcome) throw new Error('the fixture is scored');
+    const message = renderSystemEmailTemplate('CONTEST_RESULTS', {
+      ...results,
+      outcome: { ...outcome, winners: [...outcome.winners, { entryName: 'Amen Corner', squadName: 'Casey & Co' }] },
+    }, UTC);
+
+    expect(message.text).toContain('Green Jackets and Amen Corner tie for first');
+  });
+
+  it('shows the new start under a moved event, and no date under a postponed one', () => {
+    const moved = renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', EMAIL_TEMPLATE_FIXTURES.CONTEST_EVENT_CHANGED, UTC);
+    const postponed = renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', {
+      ...EMAIL_TEMPLATE_FIXTURES.CONTEST_EVENT_CHANGED,
+      change: { kind: ContestEventChangeKind.POSTPONED, picksOpen: true },
+    }, UTC);
+
+    expect(moved.text).toContain('Event moved\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
+    expect(postponed.text).toContain('Event postponed\nThe Masters (PGA Tour)\n');
+  });
+
+  it('counts down to a reminder\'s close in hours under a day and in days beyond, and shows the contest card with the entries so far', () => {
+    const reminder = EMAIL_TEMPLATE_FIXTURES.CONTEST_ENTRY_REMINDER;
+    const soon = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', reminder, UTC);
+    const twoDays = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', { ...reminder, hoursBefore: 48, entryCount: 1 }, UTC);
+
+    expect(soon.html).toContain('>3 hours</div>');
+    expect(soon.text).toContain('14 entries so far');
+    expect(twoDays.html).toContain('>2 days</div>');
+    expect(twoDays.text).toContain('1 entry so far');
+    expect(soon.html).toContain(`src="${reminder.format.imageUrl}"`);
+  });
+
+  it('puts the event the picks are for across the top of an entry receipt', () => {
+    const receipt = EMAIL_TEMPLATE_FIXTURES.CONTEST_ENTRY_COMPLETED;
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', receipt, UTC);
+
+    expect(message.text).toContain('Entry completed\nThe Masters (PGA Tour), Thu, Apr 9, 2026');
+    expect(message.html).toContain(`src="${receipt.event.imageUrl}"`);
+    expect(message.text).toContain('Not affiliated with PGA Tour or any sports league.');
   });
 });

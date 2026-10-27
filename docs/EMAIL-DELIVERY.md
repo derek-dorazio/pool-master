@@ -141,6 +141,23 @@ setup is a tile: its way to play's How to Play picture, the format, the rest of 
 and its description, the whole tile one link. An email that names a sport league says in its
 footer that we are not affiliated with it or any sports league.
 
+The member contest emails (#1070) use the same pieces:
+
+- **New contest** and **Contest is live** open with the full event header. The new contest email
+  shows the contest as a card (its format's picture, the format, its name, its rules and the
+  entry limit) and when picks close on a gold band. The live email shows the entries, the format
+  and how the event plays as three small stats, then the rules; it still lists no entries.
+- **Picks close soon**, **live standings**, **entry receipts** and **event changed** open with a
+  strip: a small crop of the sport's picture beside the band. The reminder adds a big countdown
+  ("3 hours", "2 days") and the contest card with how many entries are in so far. The standings
+  strip names the contest and its entry count; a moved event's strip gives the new start, and a
+  postponed or cancelled one's gives none.
+- **Final results** open with a trophy band naming the winner ("Green Jackets wins", or every
+  winner on a tie) with the winners' squads and the winning score.
+- Standings and final results put the reader's best placed entry in a gold callout ("3rd", or
+  "T2" on a tie) with its score and, in standings, how many places it moved since the last
+  update. In every leaderboard table the reader's rows are tinted gold and marked "YOU".
+
 Gmail and Outlook show no SVG, so every picture is a JPG or PNG in
 `clients/poolmaster/public/email/`, served by the web app and linked by absolute URL on
 `appBaseUrl` (`sportHeaderImagePath` and `emailFormatImagePath` in `@poolmaster/shared/domain`):

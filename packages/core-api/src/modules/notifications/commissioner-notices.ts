@@ -55,6 +55,7 @@ import {
   emailRecipientOf,
   buildContestAdminUrl,
   buildCreateContestUrl,
+  buildEmailEventHeader,
   buildEmailFormatImageUrl,
   buildEmailSportImageUrl,
   buildEventPageUrl,
@@ -332,12 +333,8 @@ export class CommissionerNotices implements DueNotifications {
 
   /** The top of an email about `sportEvent`: its sport's picture, sport league, name and start. */
   private async eventHeader(sportEvent: SportEvent): Promise<EmailEventHeader> {
-    return {
-      sportLeagueName: (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '',
-      eventName: sportEvent.name,
-      startsAt: sportEvent.startDate,
-      imageUrl: buildEmailSportImageUrl(this.deps.appBaseUrl, sportEvent.sport),
-    };
+    const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
+    return buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
   }
 
   /** The default contest setups offered on `sportEvent`, in the order the contest types page shows them. */
