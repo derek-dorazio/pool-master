@@ -149,6 +149,11 @@ Gmail and Outlook show no SVG, so every picture is a JPG or PNG in
   used. A sport without a photo gets its How to Play scene drawn instead.
 - `formats/<type>.png`, 320 by 200: each way to play's How to Play picture.
 
+The rest of the build is uploaded under `releases/<sha>/`, but these pictures are linked by
+`/email/` on every release, so the deploy also copies `dist/email/` to the bucket root, never
+deleting a file there, since emails already sent still link to it. Without that copy CloudFront
+returns S3's `AccessDenied` for every picture.
+
 The drawn pictures come from the app's illustrations: `node scripts/render-email-images.mjs`
 from `clients/poolmaster` draws each one in Chromium and records a fingerprint of what it drew in
 `public/email/drawn.json`. A web app test fails when an illustration or its colours change and
