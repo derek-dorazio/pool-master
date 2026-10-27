@@ -13,11 +13,14 @@ export const SportStat = {
   // Basketball: Triple Threat.
   POINTS: 'POINTS',
   REBOUNDS: 'REBOUNDS',
-  /** Basketball's and hockey's: a pass that set up a score. */
+  /** Basketball's, hockey's and soccer's: a pass that set up a score. */
   ASSISTS: 'ASSISTS',
   // Hockey: Power Play.
+  /** Hockey's and soccer's. */
   GOALS: 'GOALS',
   SHOTS_ON_GOAL: 'SHOTS_ON_GOAL',
+  // Soccer: Hat Trick.
+  SHOTS_ON_TARGET: 'SHOTS_ON_TARGET',
   // American football: Redzone.
   PASSING_TOUCHDOWNS: 'PASSING_TOUCHDOWNS',
   RUSHING_TOUCHDOWNS: 'RUSHING_TOUCHDOWNS',

@@ -5,17 +5,17 @@ import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api'
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { Chip, ErrorState, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
+import { ErrorState, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
 import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
 
 /** The built stat lines, in the order the copy tells them: each sport's composite name and formula. */
-const BUILT_STAT_LINE_SPORTS: readonly Sport[] = [Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.AMERICAN_FOOTBALL];
+const BUILT_STAT_LINE_SPORTS: readonly Sport[] = [Sport.BASEBALL, Sport.BASKETBALL, Sport.HOCKEY, Sport.AMERICAN_FOOTBALL, Sport.SOCCER];
 
-/** A sport's stat line name: its composite's, or the one the copy promises while it is coming. */
+/** A sport's stat line name: its composite's. */
 function statLineName(sport: Sport): string | undefined {
-  return getSportDefinition(sport).composite?.name ?? CLUTCH_CARD_PAGE.cardTypes.coming.find((line) => line.sport === sport)?.name;
+  return getSportDefinition(sport).composite?.name;
 }
 
 /** A section's heading row: its eyebrow, title and intro, and the address its menu link jumps to. */
@@ -173,17 +173,6 @@ function CardTypes() {
             <h3 className="font-display text-xl font-bold text-primary">{statLineName(sport)}</h3>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
             <p className="mt-2 text-sm text-on-inverse-muted">{copy.lines[sport]}</p>
-          </div>
-        ))}
-        {copy.coming.map((line) => (
-          <div className="rounded-2xl border border-dashed border-border p-5" data-testid={`clutch-card-type-${line.sport}`} key={line.sport}>
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">{getSportDefinition(line.sport).name}</p>
-              <Chip>{CLUTCH_CARD_PAGE.calendar.legend.coming}</Chip>
-            </div>
-            <h3 className="font-display text-xl font-bold text-foreground">{line.name}</h3>
-            <p className="mt-2 font-mono text-sm text-muted-foreground">{line.formula}</p>
-            <p className="mt-2 text-sm text-muted-foreground">{line.line}</p>
           </div>
         ))}
       </div>

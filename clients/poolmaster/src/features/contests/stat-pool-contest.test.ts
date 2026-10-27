@@ -57,22 +57,26 @@ describe('how a stat pool scores, in words', () => {
     }
   });
 
-  it('names the composite and its formula for a stat pool, and nothing for the sport\'s own events', () => {
+  it('names the composite and its formula for a stat pool, each game or each soccer match, and nothing for the sport\'s own events', () => {
     expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.BASEBALL, ...statPool })))
       .toBe('Box Score: total bases + runs + RBI + walks + stolen bases, each game.');
     expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.HOCKEY, ...statPool })))
       .toBe('Power Play: 2 × goals + assists + shots on goal, each game.');
+    expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.SOCCER, ...statPool })))
+      .toBe('Hat Trick: 3 × goals + 2 × assists + shots on target, each match.');
     expect(statPoolScoringLine(getSportDefinition(Sport.BASEBALL))).toBeNull();
   });
 });
 
 describe('a Clutch Card contest\'s suggested name', () => {
-  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship, NBA Conference Finals, NHL Conference Finals, League Championship Series and Men\'s Frozen Four Stars', () => {
+  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship, NBA Conference Finals, NHL Conference Finals, League Championship Series, Men\'s Frozen Four, the Champions League\'s and the Women\'s World Cup\'s semifinals and finals Stars', () => {
     expect(['World Series', 'NBA Finals', 'Stanley Cup Final', 'Super Bowl', 'Championship Weekend', 'CFP Semifinals', 'CFP National Championship',
-      'Men\'s Final Four', 'Men\'s National Championship', 'NBA Conference Finals', 'NHL Conference Finals', 'League Championship Series', 'Men\'s Frozen Four'].map(statPoolContestName)).toEqual([
+      'Men\'s Final Four', 'Men\'s National Championship', 'NBA Conference Finals', 'NHL Conference Finals', 'League Championship Series', 'Men\'s Frozen Four',
+      'Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final'].map(statPoolContestName)).toEqual([
       'World Series Stars', 'NBA Finals Stars', 'Stanley Cup Stars', 'Super Bowl Stars', 'Championship Weekend Stars',
       'CFP Semifinals Stars', 'CFP National Championship Stars',
       'Men\'s Final Four Stars', 'Men\'s National Championship Stars', 'NBA Conference Finals Stars', 'NHL Conference Finals Stars', 'League Championship Series Stars', 'Men\'s Frozen Four Stars',
+      'Champions League Semifinals Stars', 'Champions League Stars', 'Women\'s World Cup Semifinals Stars', 'Women\'s World Cup Stars',
     ]);
   });
 });

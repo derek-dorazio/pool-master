@@ -1,0 +1,2274 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "SOCCER",
+    "season": 2026,
+    "sportLeagues": [
+      "Champions League Semifinals",
+      "Champions League Final"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-27",
+    "gatheredBy": "load-sport-data, the 2025-26 UEFA Champions League semifinals and final as played: the semifinal first legs on 28 and 29 April (Paris Saint-Germain beat Bayern Munich 5-4, Atlético Madrid drew 1-1 with Arsenal), the second legs on 5 and 6 May (Arsenal beat Atlético 1-0, Bayern drew 1-1 with Paris), and the final at the Puskás Aréna, Budapest, on 30 May (Paris Saint-Germain drew 1-1 with Arsenal after extra time and won the shoot-out). The semifinals are one event of two games, game 1 the first legs and game 2 the second legs; the final is one game. The field is every outfield player in either side's matchday squad for the round (goalkeepers left out), with UEFA's position (defender, midfielder or forward) and nationality; a player who came on or started has a line, an unused substitute none. Each line's goals, assists and shots on target (UEFA's attempts on target) are UEFA's own match statistics, cross-checked against ESPN's box scores, which agree on every line but three, where UEFA's record is kept: Joshua Kimmich's shots on target in the first leg in Paris (UEFA 0, ESPN 1), Julián Alvarez's in the first leg in Madrid (UEFA 3, ESPN 2), and Leandro Trossard's assist, which UEFA gives for Bukayo Saka's goal in the second leg in London and ESPN for Kai Havertz's goal in the final. Shoot-out kicks count for nothing. Ranking is the player's Hat Trick total in the 2025-26 competition before the round (3 per goal + 2 per assist + shots on target), from UEFA's competition statistics less the round's matches (for the semifinals, less the final too); ties go by name.",
+    "sources": [
+      {
+        "name": "UEFA, Paris Saint-Germain v Bayern Munich semifinal first leg player statistics",
+        "url": "https://matchstats.uefa.com/v2/player-statistics/2048072"
+      },
+      {
+        "name": "UEFA, Atlético Madrid v Arsenal semifinal first leg player statistics",
+        "url": "https://matchstats.uefa.com/v2/player-statistics/2048071"
+      },
+      {
+        "name": "UEFA, Arsenal v Atlético Madrid semifinal second leg player statistics",
+        "url": "https://matchstats.uefa.com/v2/player-statistics/2048074"
+      },
+      {
+        "name": "UEFA, Bayern Munich v Paris Saint-Germain semifinal second leg player statistics",
+        "url": "https://matchstats.uefa.com/v2/player-statistics/2048073"
+      },
+      {
+        "name": "UEFA, Paris Saint-Germain v Arsenal final player statistics",
+        "url": "https://matchstats.uefa.com/v2/player-statistics/2047742"
+      },
+      {
+        "name": "UEFA, the five matches' line-ups (matchday squads, positions and nationalities; one per match id, as for the final)",
+        "url": "https://match.uefa.com/v5/matches/2047742/lineups"
+      },
+      {
+        "name": "UEFA, 2025-26 Champions League player rankings by goals, assists and attempts on target (league phase to final, paged by offset)",
+        "url": "https://compstats.uefa.com/v1/player-ranking?competitionId=1&limit=300&offset=0&optionalFields=PLAYER%2CTEAM&order=DESC&phase=TOURNAMENT&seasonYear=2026&stats=goals%2Cassists%2Cattempts_on_target"
+      },
+      {
+        "name": "ESPN, Paris Saint-Germain v Bayern Munich semifinal first leg box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/summary?event=401862893"
+      },
+      {
+        "name": "ESPN, Atlético Madrid v Arsenal semifinal first leg box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/summary?event=401862894"
+      },
+      {
+        "name": "ESPN, Arsenal v Atlético Madrid semifinal second leg box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/summary?event=401862896"
+      },
+      {
+        "name": "ESPN, Bayern Munich v Paris Saint-Germain semifinal second leg box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/summary?event=401862895"
+      },
+      {
+        "name": "ESPN, Paris Saint-Germain v Arsenal final box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/uefa.champions/summary?event=401862897"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Champions League Semifinals",
+      "players": [
+        {
+          "key": "clp-harry-kane",
+          "name": "Harry Kane",
+          "countryCode": "GB",
+          "ranking": 1,
+          "team": "Bayern Munich",
+          "position": "FW"
+        },
+        {
+          "key": "clp-julian-alvarez",
+          "name": "Julián Alvarez",
+          "countryCode": "AR",
+          "ranking": 2,
+          "team": "Atlético Madrid",
+          "position": "FW"
+        },
+        {
+          "key": "clp-khvicha-kvaratskhelia",
+          "name": "Khvicha Kvaratskhelia",
+          "countryCode": "GE",
+          "ranking": 3,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-michael-olise",
+          "name": "Michael Olise",
+          "countryCode": "FR",
+          "ranking": 4,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-luis-diaz",
+          "name": "Luis Díaz",
+          "countryCode": "CO",
+          "ranking": 5,
+          "team": "Bayern Munich",
+          "position": "FW"
+        },
+        {
+          "key": "clp-alexander-srloth",
+          "name": "Alexander Sørloth",
+          "countryCode": "NO",
+          "ranking": 6,
+          "team": "Atlético Madrid",
+          "position": "FW"
+        },
+        {
+          "key": "clp-vitinha",
+          "name": "Vitinha",
+          "countryCode": "PT",
+          "ranking": 7,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-gabriel-martinelli",
+          "name": "Gabriel Martinelli",
+          "countryCode": "BR",
+          "ranking": 8,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-desire-doue",
+          "name": "Désiré Doué",
+          "countryCode": "FR",
+          "ranking": 9,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-viktor-gyokeres",
+          "name": "Viktor Gyökeres",
+          "countryCode": "SE",
+          "ranking": 10,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-antoine-griezmann",
+          "name": "Antoine Griezmann",
+          "countryCode": "FR",
+          "ranking": 11,
+          "team": "Atlético Madrid",
+          "position": "FW"
+        },
+        {
+          "key": "clp-ademola-lookman",
+          "name": "Ademola Lookman",
+          "countryCode": "NG",
+          "ranking": 12,
+          "team": "Atlético Madrid",
+          "position": "FW"
+        },
+        {
+          "key": "clp-lennart-karl",
+          "name": "Lennart Karl",
+          "countryCode": "DE",
+          "ranking": 13,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-nicolas-jackson",
+          "name": "Nicolas Jackson",
+          "countryCode": "SN",
+          "ranking": 14,
+          "team": "Bayern Munich",
+          "position": "FW"
+        },
+        {
+          "key": "clp-bradley-barcola",
+          "name": "Bradley Barcola",
+          "countryCode": "FR",
+          "ranking": 15,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-ousmane-dembele",
+          "name": "Ousmane Dembélé",
+          "countryCode": "FR",
+          "ranking": 16,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-bukayo-saka",
+          "name": "Bukayo Saka",
+          "countryCode": "GB",
+          "ranking": 17,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-marcos-llorente",
+          "name": "Marcos Llorente",
+          "countryCode": "ES",
+          "ranking": 18,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-achraf-hakimi",
+          "name": "Achraf Hakimi",
+          "countryCode": "MA",
+          "ranking": 19,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-noni-madueke",
+          "name": "Noni Madueke",
+          "countryCode": "GB",
+          "ranking": 20,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-nuno-mendes",
+          "name": "Nuno Mendes",
+          "countryCode": "PT",
+          "ranking": 21,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-joao-neves",
+          "name": "João Neves",
+          "countryCode": "PT",
+          "ranking": 22,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-leandro-trossard",
+          "name": "Leandro Trossard",
+          "countryCode": "BE",
+          "ranking": 23,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-kai-havertz",
+          "name": "Kai Havertz",
+          "countryCode": "DE",
+          "ranking": 24,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-giuliano-simeone",
+          "name": "Giuliano Simeone",
+          "countryCode": "AR",
+          "ranking": 25,
+          "team": "Atlético Madrid",
+          "position": "FW"
+        },
+        {
+          "key": "clp-senny-mayulu",
+          "name": "Senny Mayulu",
+          "countryCode": "FR",
+          "ranking": 26,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-gabriel-jesus",
+          "name": "Gabriel Jesus",
+          "countryCode": "BR",
+          "ranking": 27,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-goncalo-ramos",
+          "name": "Gonçalo Ramos",
+          "countryCode": "PT",
+          "ranking": 28,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-jamal-musiala",
+          "name": "Jamal Musiala",
+          "countryCode": "DE",
+          "ranking": 29,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-david-hancko",
+          "name": "Dávid Hancko",
+          "countryCode": "SK",
+          "ranking": 30,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-declan-rice",
+          "name": "Declan Rice",
+          "countryCode": "GB",
+          "ranking": 31,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-fabian-ruiz",
+          "name": "Fabián Ruiz",
+          "countryCode": "ES",
+          "ranking": 32,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-willian-pacho",
+          "name": "Willian Pacho",
+          "countryCode": "EC",
+          "ranking": 33,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-aleksandar-pavlovic",
+          "name": "Aleksandar Pavlović",
+          "countryCode": "DE",
+          "ranking": 34,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-eberechi-eze",
+          "name": "Eberechi Eze",
+          "countryCode": "GB",
+          "ranking": 35,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-robin-le-normand",
+          "name": "Robin Le Normand",
+          "countryCode": "ES",
+          "ranking": 36,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-marquinhos",
+          "name": "Marquinhos",
+          "countryCode": "BR",
+          "ranking": 37,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-josip-stanisic",
+          "name": "Josip Stanišić",
+          "countryCode": "HR",
+          "ranking": 38,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-martin-degaard",
+          "name": "Martin Ødegaard",
+          "countryCode": "NO",
+          "ranking": 39,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-dayot-upamecano",
+          "name": "Dayot Upamecano",
+          "countryCode": "FR",
+          "ranking": 40,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-gabriel",
+          "name": "Gabriel",
+          "countryCode": "BR",
+          "ranking": 41,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-konrad-laimer",
+          "name": "Konrad Laimer",
+          "countryCode": "AT",
+          "ranking": 42,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-matteo-ruggeri",
+          "name": "Matteo Ruggeri",
+          "countryCode": "IT",
+          "ranking": 43,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-raphael-guerreiro",
+          "name": "Raphaël Guerreiro",
+          "countryCode": "PT",
+          "ranking": 44,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-kang-in-lee",
+          "name": "Kang-in Lee",
+          "countryCode": "KR",
+          "ranking": 45,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-johnny-cardoso",
+          "name": "Johnny Cardoso",
+          "countryCode": "US",
+          "ranking": 46,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-jonathan-tah",
+          "name": "Jonathan Tah",
+          "countryCode": "DE",
+          "ranking": 47,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-jose-maria-gimenez",
+          "name": "José María Giménez",
+          "countryCode": "UY",
+          "ranking": 48,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-joshua-kimmich",
+          "name": "Joshua Kimmich",
+          "countryCode": "DE",
+          "ranking": 49,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-nahuel-molina",
+          "name": "Nahuel Molina",
+          "countryCode": "AR",
+          "ranking": 50,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-thiago-almada",
+          "name": "Thiago Almada",
+          "countryCode": "AR",
+          "ranking": 51,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-warren-zaire-emery",
+          "name": "Warren Zaïre-Emery",
+          "countryCode": "FR",
+          "ranking": 52,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-martin-zubimendi",
+          "name": "Martín Zubimendi",
+          "countryCode": "ES",
+          "ranking": 53,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-riccardo-calafiori",
+          "name": "Riccardo Calafiori",
+          "countryCode": "IT",
+          "ranking": 54,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-alphonso-davies",
+          "name": "Alphonso Davies",
+          "countryCode": "CA",
+          "ranking": 55,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-ben-white",
+          "name": "Ben White",
+          "countryCode": "GB",
+          "ranking": 56,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-dro-fernandez",
+          "name": "Dro Fernández",
+          "countryCode": "ES",
+          "ranking": 57,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-ibrahim-mbaye",
+          "name": "Ibrahim Mbaye",
+          "countryCode": "SN",
+          "ranking": 58,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-marc-pubill",
+          "name": "Marc Pubill",
+          "countryCode": "ES",
+          "ranking": 59,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-myles-lewis-skelly",
+          "name": "Myles Lewis-Skelly",
+          "countryCode": "GB",
+          "ranking": 60,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-alex-baena",
+          "name": "Álex Baena",
+          "countryCode": "ES",
+          "ranking": 61,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-christian-nrgaard",
+          "name": "Christian Nørgaard",
+          "countryCode": "DK",
+          "ranking": 62,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-cristhian-mosquera",
+          "name": "Cristhian Mosquera",
+          "countryCode": "ES",
+          "ranking": 63,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-piero-hincapie",
+          "name": "Piero Hincapié",
+          "countryCode": "EC",
+          "ranking": 64,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-tom-bischof",
+          "name": "Tom Bischof",
+          "countryCode": "DE",
+          "ranking": 65,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-clement-lenglet",
+          "name": "Clément Lenglet",
+          "countryCode": "FR",
+          "ranking": 66,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-deniz-ofli",
+          "name": "Deniz Ofli",
+          "countryCode": "TR",
+          "ranking": 67,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-filip-pavic",
+          "name": "Filip Pavić",
+          "countryCode": "HR",
+          "ranking": 68,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-hiroki-ito",
+          "name": "Hiroki Ito",
+          "countryCode": "JP",
+          "ranking": 69,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-illia-zabarnyi",
+          "name": "Illia Zabarnyi",
+          "countryCode": "UA",
+          "ranking": 70,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-javier-bonar",
+          "name": "Javier Boñar",
+          "countryCode": "ES",
+          "ranking": 71,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-julio-diaz",
+          "name": "Julio Díaz",
+          "countryCode": "ES",
+          "ranking": 72,
+          "team": "Atlético Madrid",
+          "position": "DF"
+        },
+        {
+          "key": "clp-koke",
+          "name": "Koke",
+          "countryCode": "ES",
+          "ranking": 73,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-leon-goretzka",
+          "name": "Leon Goretzka",
+          "countryCode": "DE",
+          "ranking": 74,
+          "team": "Bayern Munich",
+          "position": "MF"
+        },
+        {
+          "key": "clp-lucas-beraldo",
+          "name": "Lucas Beraldo",
+          "countryCode": "BR",
+          "ranking": 75,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-lucas-hernandez",
+          "name": "Lucas Hernández",
+          "countryCode": "FR",
+          "ranking": 76,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-marli-salmon",
+          "name": "Marli Salmon",
+          "countryCode": "GB",
+          "ranking": 77,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-max-dowman",
+          "name": "Max Dowman",
+          "countryCode": "GB",
+          "ranking": 78,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-minjae-kim",
+          "name": "Minjae Kim",
+          "countryCode": "KR",
+          "ranking": 79,
+          "team": "Bayern Munich",
+          "position": "DF"
+        },
+        {
+          "key": "clp-obed-vargas",
+          "name": "Obed Vargas",
+          "countryCode": "MX",
+          "ranking": 80,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-rodrigo-mendoza",
+          "name": "Rodrigo Mendoza",
+          "countryCode": "ES",
+          "ranking": 81,
+          "team": "Atlético Madrid",
+          "position": "MF"
+        },
+        {
+          "key": "clp-william-saliba",
+          "name": "William Saliba",
+          "countryCode": "FR",
+          "ranking": 82,
+          "team": "Arsenal",
+          "position": "DF"
+        }
+      ],
+      "events": [
+        {
+          "key": "champions-league-semifinals-2026",
+          "name": "Champions League Semifinals",
+          "startDate": "2026-04-28",
+          "endDate": "2026-05-06",
+          "venue": null,
+          "location": "Paris, Madrid, London and Munich",
+          "rounds": 2,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "clp-harry-kane",
+              "ranking": 1
+            },
+            {
+              "player": "clp-julian-alvarez",
+              "ranking": 2
+            },
+            {
+              "player": "clp-khvicha-kvaratskhelia",
+              "ranking": 3
+            },
+            {
+              "player": "clp-michael-olise",
+              "ranking": 4
+            },
+            {
+              "player": "clp-luis-diaz",
+              "ranking": 5
+            },
+            {
+              "player": "clp-alexander-srloth",
+              "ranking": 6
+            },
+            {
+              "player": "clp-vitinha",
+              "ranking": 7
+            },
+            {
+              "player": "clp-gabriel-martinelli",
+              "ranking": 8
+            },
+            {
+              "player": "clp-desire-doue",
+              "ranking": 9
+            },
+            {
+              "player": "clp-viktor-gyokeres",
+              "ranking": 10
+            },
+            {
+              "player": "clp-antoine-griezmann",
+              "ranking": 11
+            },
+            {
+              "player": "clp-ademola-lookman",
+              "ranking": 12
+            },
+            {
+              "player": "clp-lennart-karl",
+              "ranking": 13
+            },
+            {
+              "player": "clp-nicolas-jackson",
+              "ranking": 14
+            },
+            {
+              "player": "clp-bradley-barcola",
+              "ranking": 15
+            },
+            {
+              "player": "clp-ousmane-dembele",
+              "ranking": 16
+            },
+            {
+              "player": "clp-bukayo-saka",
+              "ranking": 17
+            },
+            {
+              "player": "clp-marcos-llorente",
+              "ranking": 18
+            },
+            {
+              "player": "clp-achraf-hakimi",
+              "ranking": 19
+            },
+            {
+              "player": "clp-noni-madueke",
+              "ranking": 20
+            },
+            {
+              "player": "clp-nuno-mendes",
+              "ranking": 21
+            },
+            {
+              "player": "clp-joao-neves",
+              "ranking": 22
+            },
+            {
+              "player": "clp-leandro-trossard",
+              "ranking": 23
+            },
+            {
+              "player": "clp-kai-havertz",
+              "ranking": 24
+            },
+            {
+              "player": "clp-giuliano-simeone",
+              "ranking": 25
+            },
+            {
+              "player": "clp-senny-mayulu",
+              "ranking": 26
+            },
+            {
+              "player": "clp-gabriel-jesus",
+              "ranking": 27
+            },
+            {
+              "player": "clp-goncalo-ramos",
+              "ranking": 28
+            },
+            {
+              "player": "clp-jamal-musiala",
+              "ranking": 29
+            },
+            {
+              "player": "clp-david-hancko",
+              "ranking": 30
+            },
+            {
+              "player": "clp-declan-rice",
+              "ranking": 31
+            },
+            {
+              "player": "clp-fabian-ruiz",
+              "ranking": 32
+            },
+            {
+              "player": "clp-willian-pacho",
+              "ranking": 33
+            },
+            {
+              "player": "clp-aleksandar-pavlovic",
+              "ranking": 34
+            },
+            {
+              "player": "clp-eberechi-eze",
+              "ranking": 35
+            },
+            {
+              "player": "clp-robin-le-normand",
+              "ranking": 36
+            },
+            {
+              "player": "clp-marquinhos",
+              "ranking": 37
+            },
+            {
+              "player": "clp-josip-stanisic",
+              "ranking": 38
+            },
+            {
+              "player": "clp-martin-degaard",
+              "ranking": 39
+            },
+            {
+              "player": "clp-dayot-upamecano",
+              "ranking": 40
+            },
+            {
+              "player": "clp-gabriel",
+              "ranking": 41
+            },
+            {
+              "player": "clp-konrad-laimer",
+              "ranking": 42
+            },
+            {
+              "player": "clp-matteo-ruggeri",
+              "ranking": 43
+            },
+            {
+              "player": "clp-raphael-guerreiro",
+              "ranking": 44
+            },
+            {
+              "player": "clp-kang-in-lee",
+              "ranking": 45
+            },
+            {
+              "player": "clp-johnny-cardoso",
+              "ranking": 46
+            },
+            {
+              "player": "clp-jonathan-tah",
+              "ranking": 47
+            },
+            {
+              "player": "clp-jose-maria-gimenez",
+              "ranking": 48
+            },
+            {
+              "player": "clp-joshua-kimmich",
+              "ranking": 49
+            },
+            {
+              "player": "clp-nahuel-molina",
+              "ranking": 50
+            },
+            {
+              "player": "clp-thiago-almada",
+              "ranking": 51
+            },
+            {
+              "player": "clp-warren-zaire-emery",
+              "ranking": 52
+            },
+            {
+              "player": "clp-martin-zubimendi",
+              "ranking": 53
+            },
+            {
+              "player": "clp-riccardo-calafiori",
+              "ranking": 54
+            },
+            {
+              "player": "clp-alphonso-davies",
+              "ranking": 55
+            },
+            {
+              "player": "clp-ben-white",
+              "ranking": 56
+            },
+            {
+              "player": "clp-dro-fernandez",
+              "ranking": 57
+            },
+            {
+              "player": "clp-ibrahim-mbaye",
+              "ranking": 58
+            },
+            {
+              "player": "clp-marc-pubill",
+              "ranking": 59
+            },
+            {
+              "player": "clp-myles-lewis-skelly",
+              "ranking": 60
+            },
+            {
+              "player": "clp-alex-baena",
+              "ranking": 61
+            },
+            {
+              "player": "clp-christian-nrgaard",
+              "ranking": 62
+            },
+            {
+              "player": "clp-cristhian-mosquera",
+              "ranking": 63
+            },
+            {
+              "player": "clp-piero-hincapie",
+              "ranking": 64
+            },
+            {
+              "player": "clp-tom-bischof",
+              "ranking": 65
+            },
+            {
+              "player": "clp-clement-lenglet",
+              "ranking": 66
+            },
+            {
+              "player": "clp-deniz-ofli",
+              "ranking": 67
+            },
+            {
+              "player": "clp-filip-pavic",
+              "ranking": 68
+            },
+            {
+              "player": "clp-hiroki-ito",
+              "ranking": 69
+            },
+            {
+              "player": "clp-illia-zabarnyi",
+              "ranking": 70
+            },
+            {
+              "player": "clp-javier-bonar",
+              "ranking": 71
+            },
+            {
+              "player": "clp-julio-diaz",
+              "ranking": 72
+            },
+            {
+              "player": "clp-koke",
+              "ranking": 73
+            },
+            {
+              "player": "clp-leon-goretzka",
+              "ranking": 74
+            },
+            {
+              "player": "clp-lucas-beraldo",
+              "ranking": 75
+            },
+            {
+              "player": "clp-lucas-hernandez",
+              "ranking": 76
+            },
+            {
+              "player": "clp-marli-salmon",
+              "ranking": 77
+            },
+            {
+              "player": "clp-max-dowman",
+              "ranking": 78
+            },
+            {
+              "player": "clp-minjae-kim",
+              "ranking": 79
+            },
+            {
+              "player": "clp-obed-vargas",
+              "ranking": 80
+            },
+            {
+              "player": "clp-rodrigo-mendoza",
+              "ranking": 81
+            },
+            {
+              "player": "clp-william-saliba",
+              "ranking": 82
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "clp-achraf-hakimi",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "clp-ademola-lookman",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-aleksandar-pavlovic",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "clp-alex-baena",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-alphonso-davies",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-antoine-griezmann",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-ben-white",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-bradley-barcola",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-bukayo-saka",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-cristhian-mosquera",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-david-hancko",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-dayot-upamecano",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-declan-rice",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-desire-doue",
+                  "stats": {
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "clp-eberechi-eze",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-fabian-ruiz",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel-jesus",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel-martinelli",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-giuliano-simeone",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-harry-kane",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_TARGET": 3
+                  }
+                },
+                {
+                  "player": "clp-jamal-musiala",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-joao-neves",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-johnny-cardoso",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-jonathan-tah",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-joshua-kimmich",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "clp-josip-stanisic",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-julian-alvarez",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 3
+                  }
+                },
+                {
+                  "player": "clp-khvicha-kvaratskhelia",
+                  "stats": {
+                    "GOALS": 2,
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-koke",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-konrad-laimer",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-leandro-trossard",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-leon-goretzka",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-lucas-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-luis-diaz",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-marc-pubill",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-marcos-llorente",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-marquinhos",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-degaard",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-zubimendi",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-matteo-ruggeri",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-michael-olise",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-nahuel-molina",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nicolas-jackson",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-noni-madueke",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nuno-mendes",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-ousmane-dembele",
+                  "stats": {
+                    "GOALS": 2,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-piero-hincapie",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-robin-le-normand",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-senny-mayulu",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-viktor-gyokeres",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-vitinha",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-warren-zaire-emery",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-william-saliba",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-willian-pacho",
+                  "stats": {}
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "clp-ademola-lookman",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-aleksandar-pavlovic",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-alex-baena",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-alexander-srloth",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-alphonso-davies",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "clp-antoine-griezmann",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-ben-white",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-bradley-barcola",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-bukayo-saka",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-david-hancko",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-dayot-upamecano",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-declan-rice",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-desire-doue",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-eberechi-eze",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-fabian-ruiz",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel-martinelli",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-giuliano-simeone",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-harry-kane",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-jamal-musiala",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-joao-neves",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-johnny-cardoso",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-jonathan-tah",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-joshua-kimmich",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-josip-stanisic",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-julian-alvarez",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-khvicha-kvaratskhelia",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_TARGET": 2
+                  }
+                },
+                {
+                  "player": "clp-koke",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-konrad-laimer",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-leandro-trossard",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-lennart-karl",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-lucas-beraldo",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-lucas-hernandez",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-luis-diaz",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-marc-pubill",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-marcos-llorente",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-marquinhos",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-degaard",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-zubimendi",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-matteo-ruggeri",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-michael-olise",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-minjae-kim",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-myles-lewis-skelly",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nahuel-molina",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nicolas-jackson",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-noni-madueke",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nuno-mendes",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-ousmane-dembele",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-piero-hincapie",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-riccardo-calafiori",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-robin-le-normand",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-senny-mayulu",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-thiago-almada",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-viktor-gyokeres",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-vitinha",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-warren-zaire-emery",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-william-saliba",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-willian-pacho",
+                  "stats": {}
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Champions League Final",
+      "players": [
+        {
+          "key": "clp-khvicha-kvaratskhelia",
+          "name": "Khvicha Kvaratskhelia",
+          "countryCode": "GE",
+          "ranking": 1,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-ousmane-dembele",
+          "name": "Ousmane Dembélé",
+          "countryCode": "FR",
+          "ranking": 2,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-vitinha",
+          "name": "Vitinha",
+          "countryCode": "PT",
+          "ranking": 3,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-desire-doue",
+          "name": "Désiré Doué",
+          "countryCode": "FR",
+          "ranking": 4,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-viktor-gyokeres",
+          "name": "Viktor Gyökeres",
+          "countryCode": "SE",
+          "ranking": 5,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-gabriel-martinelli",
+          "name": "Gabriel Martinelli",
+          "countryCode": "BR",
+          "ranking": 6,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-bukayo-saka",
+          "name": "Bukayo Saka",
+          "countryCode": "GB",
+          "ranking": 7,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-bradley-barcola",
+          "name": "Bradley Barcola",
+          "countryCode": "FR",
+          "ranking": 8,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-achraf-hakimi",
+          "name": "Achraf Hakimi",
+          "countryCode": "MA",
+          "ranking": 9,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-joao-neves",
+          "name": "João Neves",
+          "countryCode": "PT",
+          "ranking": 10,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-leandro-trossard",
+          "name": "Leandro Trossard",
+          "countryCode": "BE",
+          "ranking": 11,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-noni-madueke",
+          "name": "Noni Madueke",
+          "countryCode": "GB",
+          "ranking": 12,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-nuno-mendes",
+          "name": "Nuno Mendes",
+          "countryCode": "PT",
+          "ranking": 13,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-kai-havertz",
+          "name": "Kai Havertz",
+          "countryCode": "DE",
+          "ranking": 14,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-senny-mayulu",
+          "name": "Senny Mayulu",
+          "countryCode": "FR",
+          "ranking": 15,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-gabriel-jesus",
+          "name": "Gabriel Jesus",
+          "countryCode": "BR",
+          "ranking": 16,
+          "team": "Arsenal",
+          "position": "FW"
+        },
+        {
+          "key": "clp-goncalo-ramos",
+          "name": "Gonçalo Ramos",
+          "countryCode": "PT",
+          "ranking": 17,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-declan-rice",
+          "name": "Declan Rice",
+          "countryCode": "GB",
+          "ranking": 18,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-fabian-ruiz",
+          "name": "Fabián Ruiz",
+          "countryCode": "ES",
+          "ranking": 19,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-mikel-merino",
+          "name": "Mikel Merino",
+          "countryCode": "ES",
+          "ranking": 20,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-willian-pacho",
+          "name": "Willian Pacho",
+          "countryCode": "EC",
+          "ranking": 21,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-eberechi-eze",
+          "name": "Eberechi Eze",
+          "countryCode": "GB",
+          "ranking": 22,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-marquinhos",
+          "name": "Marquinhos",
+          "countryCode": "BR",
+          "ranking": 23,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-jurrien-timber",
+          "name": "Jurriën Timber",
+          "countryCode": "NL",
+          "ranking": 24,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-martin-degaard",
+          "name": "Martin Ødegaard",
+          "countryCode": "NO",
+          "ranking": 25,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-gabriel",
+          "name": "Gabriel",
+          "countryCode": "BR",
+          "ranking": 26,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-kang-in-lee",
+          "name": "Kang-in Lee",
+          "countryCode": "KR",
+          "ranking": 27,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-warren-zaire-emery",
+          "name": "Warren Zaïre-Emery",
+          "countryCode": "FR",
+          "ranking": 28,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-martin-zubimendi",
+          "name": "Martín Zubimendi",
+          "countryCode": "ES",
+          "ranking": 29,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-riccardo-calafiori",
+          "name": "Riccardo Calafiori",
+          "countryCode": "IT",
+          "ranking": 30,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-cristhian-mosquera",
+          "name": "Cristhian Mosquera",
+          "countryCode": "ES",
+          "ranking": 31,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-dro-fernandez",
+          "name": "Dro Fernández",
+          "countryCode": "ES",
+          "ranking": 32,
+          "team": "Paris Saint-Germain",
+          "position": "MF"
+        },
+        {
+          "key": "clp-ibrahim-mbaye",
+          "name": "Ibrahim Mbaye",
+          "countryCode": "SN",
+          "ranking": 33,
+          "team": "Paris Saint-Germain",
+          "position": "FW"
+        },
+        {
+          "key": "clp-myles-lewis-skelly",
+          "name": "Myles Lewis-Skelly",
+          "countryCode": "GB",
+          "ranking": 34,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-christian-nrgaard",
+          "name": "Christian Nørgaard",
+          "countryCode": "DK",
+          "ranking": 35,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-piero-hincapie",
+          "name": "Piero Hincapié",
+          "countryCode": "EC",
+          "ranking": 36,
+          "team": "Arsenal",
+          "position": "DF"
+        },
+        {
+          "key": "clp-illia-zabarnyi",
+          "name": "Illia Zabarnyi",
+          "countryCode": "UA",
+          "ranking": 37,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-lucas-beraldo",
+          "name": "Lucas Beraldo",
+          "countryCode": "BR",
+          "ranking": 38,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-lucas-hernandez",
+          "name": "Lucas Hernández",
+          "countryCode": "FR",
+          "ranking": 39,
+          "team": "Paris Saint-Germain",
+          "position": "DF"
+        },
+        {
+          "key": "clp-max-dowman",
+          "name": "Max Dowman",
+          "countryCode": "GB",
+          "ranking": 40,
+          "team": "Arsenal",
+          "position": "MF"
+        },
+        {
+          "key": "clp-william-saliba",
+          "name": "William Saliba",
+          "countryCode": "FR",
+          "ranking": 41,
+          "team": "Arsenal",
+          "position": "DF"
+        }
+      ],
+      "events": [
+        {
+          "key": "champions-league-final-2026",
+          "name": "Champions League Final",
+          "startDate": "2026-05-30",
+          "endDate": "2026-05-30",
+          "venue": "Puskás Aréna",
+          "location": "Budapest, Hungary",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "clp-khvicha-kvaratskhelia",
+              "ranking": 1
+            },
+            {
+              "player": "clp-ousmane-dembele",
+              "ranking": 2
+            },
+            {
+              "player": "clp-vitinha",
+              "ranking": 3
+            },
+            {
+              "player": "clp-desire-doue",
+              "ranking": 4
+            },
+            {
+              "player": "clp-viktor-gyokeres",
+              "ranking": 5
+            },
+            {
+              "player": "clp-gabriel-martinelli",
+              "ranking": 6
+            },
+            {
+              "player": "clp-bukayo-saka",
+              "ranking": 7
+            },
+            {
+              "player": "clp-bradley-barcola",
+              "ranking": 8
+            },
+            {
+              "player": "clp-achraf-hakimi",
+              "ranking": 9
+            },
+            {
+              "player": "clp-joao-neves",
+              "ranking": 10
+            },
+            {
+              "player": "clp-leandro-trossard",
+              "ranking": 11
+            },
+            {
+              "player": "clp-noni-madueke",
+              "ranking": 12
+            },
+            {
+              "player": "clp-nuno-mendes",
+              "ranking": 13
+            },
+            {
+              "player": "clp-kai-havertz",
+              "ranking": 14
+            },
+            {
+              "player": "clp-senny-mayulu",
+              "ranking": 15
+            },
+            {
+              "player": "clp-gabriel-jesus",
+              "ranking": 16
+            },
+            {
+              "player": "clp-goncalo-ramos",
+              "ranking": 17
+            },
+            {
+              "player": "clp-declan-rice",
+              "ranking": 18
+            },
+            {
+              "player": "clp-fabian-ruiz",
+              "ranking": 19
+            },
+            {
+              "player": "clp-mikel-merino",
+              "ranking": 20
+            },
+            {
+              "player": "clp-willian-pacho",
+              "ranking": 21
+            },
+            {
+              "player": "clp-eberechi-eze",
+              "ranking": 22
+            },
+            {
+              "player": "clp-marquinhos",
+              "ranking": 23
+            },
+            {
+              "player": "clp-jurrien-timber",
+              "ranking": 24
+            },
+            {
+              "player": "clp-martin-degaard",
+              "ranking": 25
+            },
+            {
+              "player": "clp-gabriel",
+              "ranking": 26
+            },
+            {
+              "player": "clp-kang-in-lee",
+              "ranking": 27
+            },
+            {
+              "player": "clp-warren-zaire-emery",
+              "ranking": 28
+            },
+            {
+              "player": "clp-martin-zubimendi",
+              "ranking": 29
+            },
+            {
+              "player": "clp-riccardo-calafiori",
+              "ranking": 30
+            },
+            {
+              "player": "clp-cristhian-mosquera",
+              "ranking": 31
+            },
+            {
+              "player": "clp-dro-fernandez",
+              "ranking": 32
+            },
+            {
+              "player": "clp-ibrahim-mbaye",
+              "ranking": 33
+            },
+            {
+              "player": "clp-myles-lewis-skelly",
+              "ranking": 34
+            },
+            {
+              "player": "clp-christian-nrgaard",
+              "ranking": 35
+            },
+            {
+              "player": "clp-piero-hincapie",
+              "ranking": 36
+            },
+            {
+              "player": "clp-illia-zabarnyi",
+              "ranking": 37
+            },
+            {
+              "player": "clp-lucas-beraldo",
+              "ranking": 38
+            },
+            {
+              "player": "clp-lucas-hernandez",
+              "ranking": 39
+            },
+            {
+              "player": "clp-max-dowman",
+              "ranking": 40
+            },
+            {
+              "player": "clp-william-saliba",
+              "ranking": 41
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "clp-achraf-hakimi",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-bradley-barcola",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-bukayo-saka",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-cristhian-mosquera",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-declan-rice",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-desire-doue",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-eberechi-eze",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-fabian-ruiz",
+                  "stats": {
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-gabriel",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-gabriel-martinelli",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-goncalo-ramos",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-illia-zabarnyi",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-joao-neves",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-jurrien-timber",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-kai-havertz",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-khvicha-kvaratskhelia",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-leandro-trossard",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-lucas-beraldo",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-marquinhos",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-degaard",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-martin-zubimendi",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-myles-lewis-skelly",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-noni-madueke",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-nuno-mendes",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-ousmane-dembele",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_TARGET": 1
+                  }
+                },
+                {
+                  "player": "clp-piero-hincapie",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-viktor-gyokeres",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-vitinha",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-warren-zaire-emery",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-william-saliba",
+                  "stats": {}
+                },
+                {
+                  "player": "clp-willian-pacho",
+                  "stats": {}
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

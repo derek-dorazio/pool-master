@@ -16,6 +16,7 @@ export const SPORT_STAT_LABELS: Readonly<Record<SportStat, { short: string; long
   [SportStat.ASSISTS]: { short: 'AST', long: 'Assists' },
   [SportStat.GOALS]: { short: 'G', long: 'Goals' },
   [SportStat.SHOTS_ON_GOAL]: { short: 'SOG', long: 'Shots on goal' },
+  [SportStat.SHOTS_ON_TARGET]: { short: 'SOT', long: 'Shots on target' },
   [SportStat.PASSING_TOUCHDOWNS]: { short: 'Pass TD', long: 'Passing touchdowns' },
   [SportStat.RUSHING_TOUCHDOWNS]: { short: 'Rush TD', long: 'Rushing touchdowns' },
   [SportStat.RECEIVING_TOUCHDOWNS]: { short: 'Rec TD', long: 'Receiving touchdowns' },

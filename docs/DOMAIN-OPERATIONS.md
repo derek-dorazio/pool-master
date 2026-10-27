@@ -694,7 +694,7 @@ The per-round join and the running standing. **The score lives in the sport exte
 One component stat of a stat pool player's game (#934): `stat` (a `PrismaSportStat` value such
 as `TOTAL_BASES`) and an integer `value`, one row per participant round and stat, removed with
 its round. A game is a round, and a player's round is their game. The composite (Box Score,
-Triple Threat, Power Play, Redzone) is computed from a round's lines and never stored; a stat
+Triple Threat, Power Play, Redzone, Hat Trick) is computed from a round's lines and never stored; a stat
 with no line counts 0. Only events of a sport league scored by the composite family have lines.
 
 | Operation | Role | Notes |

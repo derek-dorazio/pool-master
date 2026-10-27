@@ -1,9 +1,27 @@
 import { MatchPeriodLayout, ParticipantType, SelectionType, Sport, TournamentFormat } from '../enums';
 import { ScoringFamily } from './scoring-family';
 import type { SportDefinition } from './sport-definition';
+import { SportStat, statValue, type SportComposite } from './sport-stats';
 
 /** What the rounds of a soccer knockout are called, counted back from the final. */
 const ROUND_NAMES_FROM_FINAL = ['Final', 'Semi-finals', 'Quarter-finals', 'Round of 16', 'Round of 32'] as const;
+
+/** The stats Hat Trick counts. */
+const SOCCER_STATS = [SportStat.GOALS, SportStat.ASSISTS, SportStat.SHOTS_ON_TARGET] as const;
+/** One of Hat Trick's stats: soccer's typed slice of `SportStat`. */
+type SoccerStat = (typeof SOCCER_STATS)[number];
+
+/**
+ * Hat Trick (#994): 3 x goals + 2 x assists + shots on target, an outfield player's match. Extra
+ * time counts; a shoot-out does not. The name may change (Golden Boot was also considered), so
+ * this is the one place it is written.
+ */
+const soccerComposite: SportComposite<SoccerStat> = {
+  name: 'Hat Trick',
+  stats: SOCCER_STATS,
+  defaultGames: 1,
+  score: (line) => 3 * statValue(line, SportStat.GOALS) + 2 * statValue(line, SportStat.ASSISTS) + statValue(line, SportStat.SHOTS_ON_TARGET),
+};
 
 /**
  * Soccer (#787): teams playing a knockout bracket, scored by the head-to-head family from the
@@ -33,7 +51,7 @@ export const soccerSportDefinition: SportDefinition = {
   // A pick'em pick may be a draw (#792); soccer has no spread to pick against.
   pickEm: { tiePicks: true, againstTheSpread: false },
   shootout: { label: 'pens' },
-  composite: null,
+  composite: soccerComposite,
   matchPeriodLayout: MatchPeriodLayout.HALVES,
   vocabulary: {
     participant: { one: 'team', many: 'teams' },

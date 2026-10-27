@@ -86,7 +86,7 @@ describe('Clutch Card page', () => {
     expect(screen.getByTestId('clutch-card-how-it-plays')).toHaveTextContent('Root for every score');
   });
 
-  it('shows each sport\'s stat line by the app\'s own name and formula, and Hat Trick as coming', async () => {
+  it('shows each sport\'s stat line by the app\'s own name and formula, soccer\'s Hat Trick among them', async () => {
     listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: STAT_POOL_LEAGUES } });
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
     renderPage();
@@ -99,7 +99,8 @@ describe('Clutch Card page', () => {
     expect(screen.getByTestId('clutch-card-type-BASEBALL')).toHaveTextContent('Box Score');
     const soccer = screen.getByTestId('clutch-card-type-SOCCER');
     expect(soccer).toHaveTextContent('Hat Trick');
-    expect(soccer).toHaveTextContent('Coming soon');
+    expect(soccer).toHaveTextContent('3 × goals + 2 × assists + shots on target');
+    expect(soccer).not.toHaveTextContent('Coming soon');
   });
 
   it('marks a title round available only while its own sport\'s stat pool league of that name is active, linking it to the event page that offers it', async () => {
