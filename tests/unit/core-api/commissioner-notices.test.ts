@@ -13,6 +13,7 @@ import {
   SportEventStatus,
   type ContestConfigTemplate,
   type ContestTemplateEventType,
+  type EventPage,
   type League,
   type SportEvent,
   type SportLeague,
@@ -40,12 +41,16 @@ describe('CommissionerNotices', () => {
   let outbox: InMemoryEmailMessages;
   let templates: ContestConfigTemplate[];
   let finals: Map<string, ContestFinalStandings>;
+  let eventPages: Map<string, EventPage>;
+  let eventPageReads: number;
 
   beforeEach(() => {
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     templates = [];
     finals = new Map();
+    eventPages = new Map();
+    eventPageReads = 0;
   });
 
   function notices(): CommissionerNotices {
@@ -73,6 +78,7 @@ describe('CommissionerNotices', () => {
       sportLeagues: { findById: async (id) => ({ id, name: SPORT_LEAGUE_NAMES[id] ?? id } as SportLeague) },
       memberships: world.membershipRepo(),
       users: world.userRepo(),
+      eventPages: { pagesByEvent: () => { eventPageReads += 1; return Promise.resolve(eventPages); } },
       finalStandings: { finalStandingsOf: async (contest) => finals.get(contest.id) ?? { scoringDefinitionId: null, entries: [] } },
       email,
       appBaseUrl: 'https://app.example.test/',
@@ -129,6 +135,7 @@ describe('CommissionerNotices', () => {
       expect(text).toContain('Coming up soon\nThe Masters (PGA Tour), Sat, Apr 11, 2026');
       expect(text).toContain('Ways to play:\nTiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types');
       expect(text).toContain('Plan your contest: https://app.example.test/league/OFFICE24/admin/contests');
+      expect(text).not.toContain('See every way to play');
       expect(text).toContain('Not affiliated with PGA Tour or any sports league.');
       expect(text).not.toContain('Last year');
       const html = outbox.rows.find((row) => row.templateKey === 'EVENT_COMING_UP' && row.leagueId === office.id)?.htmlBody ?? '';
@@ -230,6 +237,27 @@ describe('CommissionerNotices', () => {
       expect(text).toContain('See every way to play: https://app.example.test/league/OFFICE24/contest-types\nField: 40 golfers');
     });
 
+    it("sends C2's \"See every way to play\" and C1's tiles to the event's page when one offers it, and to the contest types page otherwise, reading the pages once a run", async () => {
+      const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+      const casey = person(office.id, 'Casey');
+      const masters = event({ name: 'The Masters', startDate: inDays(6) });
+      event({ name: 'The Players', startDate: inDays(9.5) });
+      const open = event({ name: 'The Open', status: SportEventStatus.DRAFT, startDate: inDays(9.5) });
+      eventPages.set(masters.id, { id: 'page-masters', sport: Sport.GOLF, slug: 'the-masters', displayOrder: 1, isActive: true, redirectTo: null });
+      eventPages.set(open.id, { id: 'page-open', sport: Sport.GOLF, slug: 'the-open', displayOrder: 2, isActive: true, redirectTo: null });
+
+      templates = [template({ id: 'pick-6', name: 'Tiered: Pick 6' })];
+
+      await notices().queueDue(NOW);
+
+      expect(textTo('EVENT_READY_FOR_CONTESTS', casey.id, office)).toContain('See every way to play: https://app.example.test/play/golf/the-masters');
+      const comingUp = sent('EVENT_COMING_UP').map(({ text }) => text);
+      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/play/golf/the-open'))).toHaveLength(1);
+      expect(comingUp.filter((text) => text.includes('Tiered: Pick 6: https://app.example.test/league/OFFICE24/contest-types'))).toHaveLength(1);
+      expect(comingUp.some((text) => text.includes('See every way to play'))).toBe(false);
+      expect(eventPageReads).toBe(1);
+    });
+
     it("tells no commissioner of a league that muted the event's sport league, coming up or ready, while a league that muted another one is told", async () => {
       const muted = world.addLeague({ name: 'No Golf League', mutedSportLeagueIds: ['pga-tour'] });
       const other = world.addLeague({ name: 'No Racing League', mutedSportLeagueIds: ['nascar'] });
@@ -279,7 +307,7 @@ describe('CommissionerNotices', () => {
   });
 
   describe('Weekly digest', () => {
-    it("sends each commissioner of a league that chose the digest one email on Monday listing the next two weeks' events by week, with where the league stands on each, instead of the per-event emails", async () => {
+    it("sends each commissioner of a league that chose the digest one email on Monday listing the next two weeks' events by week, with where the league stands on each and a link to the event's page when one offers it, instead of the per-event emails", async () => {
       const office = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24', eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
       const perEvent = world.addLeague({ name: 'Per Event League' });
       const casey = person(office.id, 'Casey');
@@ -288,6 +316,7 @@ describe('CommissionerNotices', () => {
       const masters = event({ name: 'The Masters', startDate: mondayPlus(2) });
       const heritage = event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
       world.addContest(office.id, { status: ContestStatus.DRAFT, sportEventIds: [heritage.id] });
+      eventPages.set(heritage.id, { id: 'page-heritage', sport: Sport.GOLF, slug: 'rbc-heritage', displayOrder: 1, isActive: true, redirectTo: null });
       event({ name: 'Valero Texas Open', status: SportEventStatus.DRAFT, startDate: mondayPlus(9) });
       event({ name: 'Too Far Open', startDate: mondayPlus(15) });
       event({ name: 'Already Started', startDate: new Date(MONDAY.getTime() - HOUR) });
@@ -309,6 +338,7 @@ describe('CommissionerNotices', () => {
         '',
         'RBC Heritage (PGA Tour), Fri, Apr 10, 2026',
         'Contest set up',
+        'See every way to play: https://app.example.test/play/golf/rbc-heritage',
         '',
         'Next week:',
         '',

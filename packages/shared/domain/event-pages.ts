@@ -5,6 +5,7 @@
  */
 import type { ContestConfigTemplate } from './contest-management-types';
 import type { Sport } from './enums';
+import { sportPathSegment } from './sports/registry';
 
 /**
  * An event page's URL name: lower case letters and digits, in words joined by single dashes.
@@ -15,6 +16,15 @@ export const EVENT_PAGE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 export function isEventPageSlug(value: string): boolean {
   return EVENT_PAGE_SLUG_PATTERN.test(value);
+}
+
+/**
+ * An event page's address: `/play/american-football/championship-weekend`. The slug is the page's
+ * stored one, never derived; the sport segment is the sport's path segment. The web app routes
+ * it, and emails link to it.
+ */
+export function buildEventPagePath(sport: Sport, slug: string): string {
+  return `/play/${sportPathSegment(sport)}/${slug}`;
 }
 
 /**

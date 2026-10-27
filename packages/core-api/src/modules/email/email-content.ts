@@ -3,7 +3,16 @@
  * web app. One copy, so every email names people and links to a contest the same way.
  */
 
-import { emailFormatImagePath, sportHeaderImagePath, sportPathSegment, type SelectionType, type Sport, type User } from '@poolmaster/shared/domain';
+import {
+  buildEventPagePath,
+  emailFormatImagePath,
+  sportHeaderImagePath,
+  sportPathSegment,
+  type EventPage,
+  type SelectionType,
+  type Sport,
+  type User,
+} from '@poolmaster/shared/domain';
 
 /** The reader's full name, else their username, else their address. */
 export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'username' | 'email'>): string {
@@ -71,6 +80,11 @@ export function buildCreateContestUrl(
   if (start.sportEventId !== undefined) query.set('event', start.sportEventId);
   const search = query.toString();
   return search === '' ? url : `${url}?${search}`;
+}
+
+/** An event page, where a fan sees every way to play the event. */
+export function buildEventPageUrl(appBaseUrl: string, page: Pick<EventPage, 'sport' | 'slug'>): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${buildEventPagePath(page.sport, page.slug)}`;
 }
 
 /** The league's contest types page: every way to play its sport leagues offer. */

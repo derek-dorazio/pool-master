@@ -18,6 +18,7 @@ import {
  */
 const IMAGE_HOST = 'https://qa.ultimateofficepoolmanager.com';
 const GOLF_IMAGE_URL = `${IMAGE_HOST}/email/sports/golf.jpg`;
+const MASTERS_PAGE_URL = 'http://localhost:5173/play/golf/the-masters';
 const MASTERS_HEADER = {
   sportLeagueName: 'PGA Tour',
   eventName: 'The Masters',
@@ -190,7 +191,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     leagueName: 'Office League',
     event: MASTERS_HEADER,
     released: false,
-    setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: 'http://localhost:5173/league/OFFICE24/contest-types' })),
+    setups: MASTERS_SETUPS.map((setup) => ({ ...setup, url: MASTERS_PAGE_URL })),
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
     contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },
@@ -201,17 +202,18 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     field: '89 golfers',
     setups: MASTERS_SETUPS,
     lastYear: [{ contestName: 'Masters Pick 6', winners: ['Green Jackets'] }],
+    eventPageUrl: MASTERS_PAGE_URL,
     contestTypesUrl: 'http://localhost:5173/league/OFFICE24/contest-types',
   },
   EVENT_WEEKLY_DIGEST: {
     userName: 'Casey Commissioner',
     leagueName: 'Office League',
     thisWeek: [
-      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new?event=event-1' },
-      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), imageUrl: `${IMAGE_HOST}/email/sports/horse-racing.jpg`, state: DigestEventState.CONTEST_SET_UP },
+      { eventName: 'The Masters', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-08T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, eventPageUrl: MASTERS_PAGE_URL, state: DigestEventState.READY, createContestUrl: 'http://localhost:5173/league/OFFICE24/admin/contests/new?event=event-1' },
+      { eventName: 'Kentucky Derby', sportLeagueName: 'Triple Crown', startsAt: new Date('2027-04-10T22:00:00.000Z'), imageUrl: `${IMAGE_HOST}/email/sports/horse-racing.jpg`, eventPageUrl: null, state: DigestEventState.CONTEST_SET_UP },
     ],
     nextWeek: [
-      { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, state: DigestEventState.NOT_READY },
+      { eventName: 'RBC Heritage', sportLeagueName: 'PGA Tour', startsAt: new Date('2027-04-15T12:00:00.000Z'), imageUrl: GOLF_IMAGE_URL, eventPageUrl: null, state: DigestEventState.NOT_READY },
     ],
     contestsUrl: 'http://localhost:5173/league/OFFICE24/admin/contests',
   },

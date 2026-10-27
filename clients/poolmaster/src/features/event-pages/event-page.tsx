@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { EventPageOfferState, getSportDefinition, sportHeaderImagePath } from '@poolmaster/shared/domain';
+import { buildEventPagePath, EventPageOfferState, getSportDefinition, sportHeaderImagePath } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -8,7 +8,7 @@ import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
 import { eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
-import { buildEventPagePath, buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
+import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
 

@@ -1,13 +1,12 @@
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
+import { buildEventPagePath, EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { Chip, ErrorState, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
 import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
-import { buildEventPagePath } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
 
