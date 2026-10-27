@@ -225,7 +225,7 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.change(await screen.findByTestId('root-admin-email-settings-send-rate'), { target: { value: '0' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
-    expect(await screen.findByText(/expected number to be >=1/)).toBeInTheDocument();
+    expect(await screen.findByText('From 1 to 100 emails a second.')).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
@@ -251,7 +251,7 @@ describe('RootAdminSettingsPage email card', () => {
     expect(field).toHaveValue(3);
     fireEvent.change(field, { target: { value: '24' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
-    expect(await screen.findByText(/expected number to be <=23/)).toBeInTheDocument();
+    expect(await screen.findByText('An hour from 0 to 23.')).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
 
     fireEvent.change(field, { target: { value: '5' } });
@@ -267,7 +267,7 @@ describe('RootAdminSettingsPage email card', () => {
     fireEvent.change(await screen.findByTestId('root-admin-email-settings-standings-buffer'), { target: { value: '300' } });
     fireEvent.click(screen.getByTestId('root-admin-email-settings-save'));
 
-    expect(await screen.findByText(/expected number to be <=240/)).toBeInTheDocument();
+    expect(await screen.findByText('From 0 to 240 minutes.')).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 
@@ -402,6 +402,22 @@ describe('RootAdminSettingsPage budget pricing card (#93)', () => {
 
     expect(await screen.findByText('Another profile already has this name.')).toBeInTheDocument();
     expect(screen.getByText('The worst seed\'s share can\'t be above the best seed\'s.')).toBeInTheDocument();
+    expect(updateSettingsGroupMock).not.toHaveBeenCalled();
+  });
+
+  it('names the allowed range of a pricing value that is out of it, or asks for one left blank', async () => {
+    renderPage();
+
+    fireEvent.change(await screen.findByTestId('root-admin-budget-pricing-salaryCap-0'), { target: { value: '0' } });
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-unit-0'), { target: { value: '2.5' } });
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-topSharePercent-0'), { target: { value: '150' } });
+    fireEvent.change(screen.getByTestId('root-admin-budget-pricing-steepness-0'), { target: { value: '' } });
+    fireEvent.click(screen.getByTestId('root-admin-budget-pricing-settings-save'));
+
+    expect(await screen.findByText('From $1 to $10,000,000.')).toBeInTheDocument();
+    expect(screen.getByText('Whole dollars only.')).toBeInTheDocument();
+    expect(screen.getByText('From 0.1% to 100% of the cap.')).toBeInTheDocument();
+    expect(screen.getByText('Enter a steepness.')).toBeInTheDocument();
     expect(updateSettingsGroupMock).not.toHaveBeenCalled();
   });
 });

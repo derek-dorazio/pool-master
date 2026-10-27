@@ -53,7 +53,7 @@ It is one PR; the deprecated-forms section says why it could not be two.
   a coerced number say both.
 - Root admin settings show Zod 4's wording for an unlabelled number limit ("Too small: expected
   number to be >=1" in place of "Number must be greater than or equal to 1"). Three tests
-  follow it. Product-worded messages for those fields would be a small follow-up.
+  follow it. #1145 then gave those fields product wording, built from the DTO limits.
 - Test fixtures that used made-up ids such as `11111111-1111-1111-1111-111111111111` get valid
   ones: Zod 4's `.uuid()` checks the version and variant. Every real id is valid
   (`gen_random_uuid()`, and every id written in a migration was checked).
