@@ -10355,6 +10355,8 @@ export interface components {
             /** @description Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field. */
             roundsPar?: number | null;
             autoLifecycleEnabled?: boolean;
+            /** @description false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Defaults to true. */
+            tellMembers?: boolean;
         };
         /** @description Moves an event to its next lifecycle status, activating or settling its contests as that status requires. */
         TransitionSportEventRequest: {

@@ -531,6 +531,20 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     );
   });
 
+  it('moves a released event\'s start and its rounds without telling its leagues when the edit is a data correction', async () => {
+    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice);
+    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 1 });
+    await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
+    // Noon UTC, the date-only placeholder, filled in with the real first tee time that day.
+    const realStart = new Date('2026-06-04T11:45:00.000Z');
+
+    await service.updateEvent(released.id, { startDate: realStart }, { tellMembers: false });
+
+    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
+  });
+
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
     const { store, service, sportLeague } = setup();
     const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 2 });

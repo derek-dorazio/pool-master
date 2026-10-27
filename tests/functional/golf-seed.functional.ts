@@ -424,6 +424,26 @@ describe('Loading a real horse racing schedule and field through the admin API',
     expect(field.get(`${prefix} Horse 1`)).toMatchObject({ seedNumber: 2, isActive: true });
   });
 
+  it('fills in the real post time of a race loaded with only its date as a correction its leagues are not told about, but tells them of a later move', async () => {
+    const dateOnly = (startsAt?: string): SportDataFile => {
+      const loaded = file('2027-01-30T12:00:00-05:00');
+      const event = { ...loaded.sportLeagues[0].events[0], key: 'oaks', name: `${prefix} Oaks`, startDate: '2027-05-01', endDate: '2027-05-01' };
+      delete event.startsAt;
+      loaded.sportLeagues[0].events[0] = startsAt ? { ...event, startsAt } : event;
+      return loaded;
+    };
+    await loadSportData(parsed(dateOnly()), { getClient, now: NOW, mode: LoadMode.APPLY });
+
+    const filledIn = changes(await loadSportData(parsed(dateOnly('2027-05-01T17:51:00-04:00')), { getClient, now: NOW, mode: LoadMode.APPLY }));
+    const movedAgain = changes(await loadSportData(parsed(dateOnly('2027-05-01T18:10:00-04:00')), { getClient, now: NOW, mode: LoadMode.APPLY }));
+
+    expect(filledIn.find((row) => row.subject === LoadSubject.EVENT)?.detail).toContain('start 2027-05-01T12:00:00.000Z → 2027-05-01T21:51:00.000Z (time filled in, leagues not told)');
+    expect(movedAgain.find((row) => row.subject === LoadSubject.EVENT)?.detail).not.toContain('leagues not told');
+    const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
+    const oaks = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === `${prefix} Oaks`));
+    expect(oaks.startDate).toBe('2027-05-01T22:10:00.000Z');
+  });
+
   it('keeps a race ending after its start when an evening post time moves later on the same day', async () => {
     const race2 = (startsAt: string): SportDataFile => {
       const loaded = file(startsAt);

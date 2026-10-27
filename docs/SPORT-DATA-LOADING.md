@@ -86,7 +86,11 @@ event or writes odds, tiers, prices or scores; those stay admin actions
 **Any sport.** A real file may be any sport in the registry: rounds are the sport's count
 (1 for a race), and par is golf's alone (`null` for every other sport). An event may give
 `startsAt`, its exact start with a UTC offset (a race's post time), which is the entry cutoff;
-without it an event starts at noon UTC on its start date. Every loaded event ends at noon UTC
+without it an event starts at noon UTC on its start date. Giving `startsAt` later to an event
+stored at that noon placeholder fills in its real time as a correction: the update sends
+`tellMembers: false`, so a released event's leagues get no "event moved" email, and the run
+reports it as "time filled in, leagues not told" (#1042). Any other start change is a move
+they are told about. Every loaded event ends at noon UTC
 the day after its end date, so automatic lifecycle never completes it, and settles its
 contests, while a US afternoon or evening finish on that date is still being played. An
 event of a sport whose finishing order an admin enters (every racing sport) is created with

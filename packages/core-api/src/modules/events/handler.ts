@@ -168,12 +168,12 @@ export function createEventHandlers({ services, eventLifecycle, scoreSource, ing
     },
 
     updateEvent: async (request: FastifyRequest<EventParams & { Body: UpdateSportEventRequest }>): Promise<SportEventResponse> => {
-      const { startDate, endDate, ...rest } = request.body;
+      const { startDate, endDate, tellMembers, ...rest } = request.body;
       const updated = await sportEvents.updateEvent(request.params.eventId, {
         ...rest,
         ...(startDate !== undefined && { startDate: new Date(startDate) }),
         ...(endDate !== undefined && { endDate: endDate === null ? null : new Date(endDate) }),
-      });
+      }, { tellMembers: tellMembers ?? true });
       return { event: mapSportEventToDto(updated) };
     },
 

@@ -342,9 +342,15 @@ export class SportEventService {
    * Edits an event. Every event is admin-owned, linked to a provider or not. The round
    * schedule follows the edit: a new start date moves every round by the same amount, and a
    * higher round count schedules the added rounds, so automatic lifecycle and live scores
-   * read the schedule the admin now sees.
+   * read the schedule the admin now sees. A released event's moved start is told to its leagues
+   * unless the edit is a data correction (`tellMembers: false`, #1042), such as filling in the
+   * real start time of an event loaded with only its date.
    */
-  async updateEvent(sportEventId: string, updates: SportEventUpdate): Promise<SportEventSummary> {
+  async updateEvent(
+    sportEventId: string,
+    updates: SportEventUpdate,
+    options: { tellMembers: boolean } = { tellMembers: true },
+  ): Promise<SportEventSummary> {
     const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
     // Three writes, not one transaction: a failure after the first leaves the rounds behind the
     // event's new dates. The round writes only reject a round the event lacks, and they read the
@@ -359,7 +365,7 @@ export class SportEventService {
       await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });
     }
     // A draft's commissioners can't see it yet, and a started event's picks are closed.
-    if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status)) {
+    if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers) {
       await this.deps.lifecycle.sportEventRescheduled(await this.requireEvent(sportEventId), startedAt);
     }
     return this.requireSummary(sportEventId);
