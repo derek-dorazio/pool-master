@@ -28,13 +28,19 @@ export function isKnownLocale(locale: string): boolean {
   }
 }
 
+/** English for a region with no English locale of its own: day before month, 24-hour clock. */
+const NON_US_ENGLISH_LOCALE = 'en-150';
+
 /**
  * The locale a member's dates are written in (#1088): English words in the region of the locale
- * on their account, so "de-DE" writes "Thu, 9 Apr 2026, 19:40" rather than German date words in
- * English copy. A locale with no region, none at all, or one that isn't a language tag writes en-US.
+ * on their account, so "de-DE" writes "9 Apr 2026, 13:40 CEST" rather than German date words in
+ * English copy. A region with no English locale of its own (Brazil, Japan) writes European English,
+ * never US order. A locale with no region, none at all, or one that isn't a language tag writes en-US.
  */
 export function englishLocaleFor(locale: string | null | undefined): string {
   if (!locale || !isKnownLocale(locale)) return DEFAULT_DISPLAY_LOCALE;
   const { region } = new Intl.Locale(locale);
-  return region === undefined ? DEFAULT_DISPLAY_LOCALE : `en-${region}`;
+  if (region === undefined) return DEFAULT_DISPLAY_LOCALE;
+  const regional = `en-${region}`;
+  return new Intl.DateTimeFormat(regional).resolvedOptions().locale === regional ? regional : NON_US_ENGLISH_LOCALE;
 }

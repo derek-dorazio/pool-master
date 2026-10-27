@@ -750,7 +750,7 @@ export interface SystemEmailTemplateDataByKey {
 export interface EmailRenderContext {
   /** IANA time zone dates are shown in: the recipient's, or US Eastern when they have none. */
   timeZone: string;
-  /** BCP 47 locale dates are written in: the recipient's, or en-US when absent. */
+  /** BCP 47 locale dates are written in: English in the recipient's region (englishLocaleFor), or en-US when absent. */
   locale?: string;
   /** True for a 12-hour clock, false for 24-hour, absent for the locale's own. */
   hour12?: boolean;
