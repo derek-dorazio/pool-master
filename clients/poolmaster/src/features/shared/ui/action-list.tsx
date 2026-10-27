@@ -20,7 +20,7 @@ type ActionTileBaseProps = {
 };
 
 const actionTileClassName =
-  "flex w-full items-center justify-between gap-4 rounded-[1.25rem] border px-4 py-3 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
+  "flex w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60";
 
 function actionToneClassName(tone: ActionTileBaseProps["tone"]) {
   if (tone === "danger") {

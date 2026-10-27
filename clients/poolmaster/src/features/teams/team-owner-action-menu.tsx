@@ -32,7 +32,7 @@ function OwnerActionDialog({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-background/70 backdrop-blur-sm" />
         <Dialog.Content
           aria-describedby={`${testId}-description`}
-          className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,36rem)] -translate-x-1/2 -translate-y-1/2 rounded-[2rem] border border-border bg-card p-6 shadow-2xl"
+          className="fixed left-1/2 top-1/2 z-50 w-[min(96vw,36rem)] -translate-x-1/2 -translate-y-1/2 rounded-4xl border border-border bg-card p-6 shadow-2xl"
           data-testid={testId}
         >
           <div className="flex items-start justify-between gap-4">
@@ -162,7 +162,7 @@ export function TeamOwnerActionMenu({
         </Button>
         {menuOpen ? (
           <div
-            className="absolute right-0 top-full z-20 mt-2 min-w-[14rem] rounded-[1.25rem] border border-border bg-card p-2 shadow-xl"
+            className="absolute right-0 top-full z-20 mt-2 min-w-[14rem] rounded-2xl border border-border bg-card p-2 shadow-xl"
             data-testid={`${testPrefix}-menu-${teamId}-${ownerUserId}`}
           >
             {canPromote ? (

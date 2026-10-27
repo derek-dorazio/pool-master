@@ -44,7 +44,7 @@ export function IconPalette<Key extends string, Option extends IconPaletteOption
           <button
             aria-pressed={isSelected}
             className={cn(
-              "rounded-[1rem] border px-2 py-3 text-center transition",
+              "rounded-2xl border px-2 py-3 text-center transition",
               isSelected
                 ? "border-primary bg-primary/10 text-foreground"
                 : "border-border bg-card text-muted-foreground hover:bg-muted/40",

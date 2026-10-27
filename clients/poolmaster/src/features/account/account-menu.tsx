@@ -36,7 +36,7 @@ export function AccountMenu({
           padding="sm"
           radius="lg"
         >
-          <div className="rounded-[1.25rem] border border-border bg-background px-4 py-3">
+          <div className="rounded-2xl border border-border bg-background px-4 py-3">
             <div className="text-xs uppercase text-muted-foreground">
               Signed in as
             </div>

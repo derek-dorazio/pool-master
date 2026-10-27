@@ -315,7 +315,7 @@ export function JoinLeaguePage() {
           {acceptMutation.isSuccess ? <p>Invitation accepted. Redirecting you to the league...</p> : null}
         </div>
 
-        <div className="rounded-[1.5rem] border border-border bg-background p-4 sm:p-5">
+        <div className="rounded-3xl border border-border bg-background p-4 sm:p-5">
           <h3 className="text-base font-semibold text-foreground">Your name and icon</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Every member plays in the league under a name and an icon. Choose yours now; you can change both later.
@@ -333,8 +333,8 @@ export function JoinLeaguePage() {
 
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
-              <div className="flex items-center gap-4 rounded-[1.25rem] border border-border bg-card px-4 py-4">
-                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[1rem] ${selectedIcon.themeClass}`}>
+              <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4">
+                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
                   <TeamIcon iconKey={selectedIconKey} size="lg" />
                 </div>
                 <div className="min-w-0">
