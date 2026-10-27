@@ -6,8 +6,9 @@ module.exports = {
   transform: {
     '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tests/tsconfig.json' }],
     // content-disposition 3 (under @fastify/static, which swagger-ui serves its page with) ships
-    // ESM only, and Jest 29 cannot require ESM; Node can, so only these suites need it compiled
-    // to CommonJS. Drop this, and the pattern below, with Jest 30.
+    // ESM only. Node can require() it, but Jest's CommonJS runtime cannot, so only these suites
+    // need it compiled to CommonJS. Drop this, and the pattern below, once Jest's runtime supports
+    // native require(esm) or these suites run as ESM.
     '/node_modules/content-disposition/.+\\.js$': [
       'ts-jest',
       { tsconfig: { allowJs: true, module: 'commonjs', target: 'es2022' } },
