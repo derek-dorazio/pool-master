@@ -1229,7 +1229,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     const textTo = (to: string) => send.mock.calls.find(([message]) => message.to === to)?.[0].text ?? '';
     expect(textTo(member.user.email)).toContain('Good luck, everyone.');
     expect(textTo(member.user.email)).toContain('Entries: 1');
-    expect(textTo(member.user.email)).toContain(`Leaderboard: https://app.example.test/league/${league.leagueCode}/contests/${open.id}/leaderboard`);
+    expect(textTo(member.user.email)).toContain(`Watch the leaderboard: https://app.example.test/league/${league.leagueCode}/contests/${open.id}/leaderboard`);
     expect(textTo(member.user.email)).not.toContain('You didn\'t enter this one');
     expect(textTo(onlooker.user.email)).toContain('You didn\'t enter this one');
 
@@ -1291,6 +1291,13 @@ describe('Entry reminders on the Prisma adapters (#845)', () => {
     const prisma = getPrisma();
     const { owner, league, squads, event } = await createLeagueAndEvent();
     const open = await createContest(league.id, event.id, 'Reminded Pool', ContestStatus.OPEN);
+    await prisma.contestConfiguration.create({
+      data: {
+        contestId: open.id,
+        selectionType: 'TIERED',
+        configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      },
+    });
     const [drafting, submitted, removed] = await Promise.all([
       createTestUser({ displayName: 'Drafting Member' }),
       createTestUser({ displayName: 'Submitted Member' }),
