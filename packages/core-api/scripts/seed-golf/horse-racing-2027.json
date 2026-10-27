@@ -32,6 +32,10 @@
         "url": "https://www.kentuckyderby.com/"
       },
       {
+        "name": "Kentucky Derby FAQ (post time approximately 6:57 PM ET; official site only, gathered 2026-10-27; the page also calls it the 151st Derby, so it may be left over from 2025: recheck at the post-position draw)",
+        "url": "https://www.kentuckyderby.com/faq/"
+      },
+      {
         "name": "Wikipedia, Kentucky Derby (date, Churchill Downs, Louisville)",
         "url": "https://en.wikipedia.org/wiki/Kentucky_Derby"
       },
@@ -73,6 +77,7 @@
           "key": "kentucky-derby",
           "name": "Kentucky Derby",
           "startDate": "2027-05-01",
+          "startsAt": "2027-05-01T18:57:00-04:00",
           "endDate": "2027-05-01",
           "venue": "Churchill Downs",
           "location": "Louisville, Kentucky",
