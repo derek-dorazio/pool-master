@@ -66,7 +66,7 @@ function bracketColumns(contestId: string, leagueCode: string | null, mySquadId:
       id: 'points',
       header: 'Points',
       accessorFn: (row) => row.points,
-      cell: ({ row }) => <span data-testid={`bracket-leaderboard-points-${row.original.entryId}`}>{formatPoints(row.original.points)}</span>,
+      cell: ({ row }) => <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums" data-testid={`bracket-leaderboard-points-${row.original.entryId}`}>{formatPoints(row.original.points)}</span>,
     },
     {
       id: 'max-possible',
@@ -180,6 +180,7 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
 
       <Tile>
         <DataGrid
+          headerTone="scoreboard"
           columns={bracketColumns(contestId, leagueCode, mySquadId, board.gameCount)}
           data={board.entries}
           emptyMessage="No brackets were submitted in this contest."

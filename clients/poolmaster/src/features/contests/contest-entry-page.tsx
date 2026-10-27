@@ -773,7 +773,7 @@ function RosterContestEntryPage() {
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
           <Tile>
-            <h3 className="text-xl font-semibold">
+            <h3 className="title-card text-xl">
               {isEditable ? 'Entry details' : 'Entry summary'}
             </h3>
 
@@ -831,7 +831,7 @@ function RosterContestEntryPage() {
         </div>
 
         <Tile>
-          <h3 className="text-xl font-semibold" data-testid="contest-entry-builder-heading">
+          <h3 className="title-card text-xl" data-testid="contest-entry-builder-heading">
             {isRandomDraw
               ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
               : isEditable ? 'Build your lineup' : 'Saved lineup detail'}

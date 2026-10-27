@@ -66,7 +66,7 @@ export function MyTeamEntriesSection({
 
   return (
     <section className="space-y-3" data-testid="my-team-entries">
-      <h2 className="text-lg font-semibold text-foreground">My entries</h2>
+      <h2 className="title-card text-lg text-foreground">My entries</h2>
       {contestsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground" role="status">Loading your contests...</p>
       ) : contestsQuery.isError ? (

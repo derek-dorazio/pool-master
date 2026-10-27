@@ -26,7 +26,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition data-[state=active]:bg-card data-[state=active]:text-foreground disabled:cursor-not-allowed disabled:opacity-60",
+        "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition data-[state=active]:bg-selected data-[state=active]:text-on-inverse disabled:cursor-not-allowed disabled:opacity-60",
         className,
       )}
       {...props}
@@ -68,7 +68,7 @@ export function SegmentedControl({
           className={cn(
             "rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-60",
             value === option.value
-              ? "bg-card text-foreground"
+              ? "bg-selected text-on-inverse"
               : "hover:bg-muted/40",
           )}
           data-testid={option.testId}

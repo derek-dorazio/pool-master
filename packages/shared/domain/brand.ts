@@ -29,8 +29,8 @@ export const BRAND_COLORS = {
   navyHaze: '#8ea3c4',
   /** `--color-gold-400`: the accent. */
   gold: '#f5b800',
-  /** `--color-gold-200`: a light gold edge. */
-  goldLight: '#ffd86b',
+  /** `--color-field-blue`: small labels over titles and the selected tab. */
+  fieldBlue: '#3d64a8',
   /** `--color-red-400`: errors and losses. */
   red: '#a8202d',
   /** `--color-paper`: the page behind everything. */

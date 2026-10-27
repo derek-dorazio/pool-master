@@ -39,7 +39,7 @@ export function TeamOwnersSection({
 
   return (
     <section className="space-y-3" data-testid={testId}>
-      <h2 className="text-lg font-semibold text-foreground">Owners</h2>
+      <h2 className="title-card text-lg text-foreground">Owners</h2>
       {invitationsQuery.isError ? (
         <Alert
           data-testid={`${testId}-invitations-error`}

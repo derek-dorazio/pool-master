@@ -79,7 +79,7 @@ export function CupStandingsGrid({
         header: 'Points',
         accessorFn: (row) => row.points,
         enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-semibold tabular-nums">{formatCupPoints(row.original.points)}</span>,
+        cell: ({ row }) => <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums">{formatCupPoints(row.original.points)}</span>,
       },
       {
         id: 'wins',
@@ -115,6 +115,7 @@ export function CupStandingsGrid({
 
   return (
     <DataGrid
+      headerTone="scoreboard"
       columns={columns}
       data={rows}
       emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}

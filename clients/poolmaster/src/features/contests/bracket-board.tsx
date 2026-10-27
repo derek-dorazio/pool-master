@@ -26,7 +26,7 @@ function TeamChoice({
   return (
     <Button
       aria-pressed={isPicked}
-      className="w-full justify-between text-left"
+      className="normal-case tracking-normal w-full justify-between text-left"
       data-testid={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
       disabled={isBusy}
       onClick={() => {
@@ -135,7 +135,7 @@ export function BracketBoard({
     <div className="space-y-8" data-testid="bracket-board">
       {rounds.map((round) => (
         <section aria-labelledby={`bracket-round-${round.roundNumber}`} className="space-y-4" data-testid={`bracket-round-${round.roundNumber}`} key={round.roundNumber}>
-          <h3 className="text-lg font-semibold" id={`bracket-round-${round.roundNumber}`}>{round.label}</h3>
+          <h3 className="title-card text-lg" id={`bracket-round-${round.roundNumber}`}>{round.label}</h3>
           {round.regions.map((region) => (
             <div className="space-y-2" key={region.regionLabel ?? ''}>
               {region.regionLabel ? (

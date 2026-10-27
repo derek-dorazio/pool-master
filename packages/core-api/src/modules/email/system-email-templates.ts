@@ -858,7 +858,6 @@ const EMAIL_THEME = {
   navy: BRAND_COLORS.navy,
   navyDeep: BRAND_COLORS.navyDeep,
   gold: BRAND_COLORS.gold,
-  goldLight: BRAND_COLORS.goldLight,
   /** The reader's own rows and callouts. Email only. */
   goldTint: '#fff6d6',
   /** Text on goldTint. Email only. */
@@ -868,6 +867,10 @@ const EMAIL_THEME = {
   red: BRAND_COLORS.red,
   ink: BRAND_COLORS.ink,
   muted: BRAND_COLORS.muted,
+  /** Small uppercase labels on white: a format's name, a row's name. */
+  label: BRAND_COLORS.fieldBlue,
+  /** Small uppercase labels on navy: a band's eyebrow. */
+  labelOnInverse: BRAND_COLORS.navyHaze,
   border: colorWithAlpha(BRAND_COLORS.navy, 0.18),
   subtleBorder: colorWithAlpha(BRAND_COLORS.navy, 0.1),
   /** Text on navy. */
@@ -2516,7 +2519,7 @@ function documentShell(input: {
               <td style="background:${EMAIL_THEME.navy};padding:14px 32px;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td style="font-family:Archivo,Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}<div style="margin-top:2px;font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:${EMAIL_THEME.onInverseMuted};">${PRODUCT_TAGLINE}</div></td>
+                    <td style="font-family:Archivo,Arial,sans-serif;font-size:12px;font-weight:800;font-style:italic;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}<div style="margin-top:2px;font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:${EMAIL_THEME.onInverseMuted};">${PRODUCT_TAGLINE}</div></td>
                     <td align="right" style="font-size:13px;color:${EMAIL_THEME.onInverseMuted};">${escapeHtml(input.leagueName ?? '')}</td>
                   </tr>
                 </table>
@@ -2574,7 +2577,7 @@ function eventHeader(event: EmailEventHeader, title: string, dates: EmailDateSty
             </tr>
             <tr>
               <td style="background:${EMAIL_THEME.navy};padding:20px 32px 24px;color:${EMAIL_THEME.onInverse};">
-                <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.labelOnInverse};">${escapeHtml(eventEyebrow(event, title))}</div>
                 <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:34px;font-weight:800;line-height:1.1;color:${EMAIL_THEME.onInverse};">${escapeHtml(event.eventName)}</div>
                 <div style="margin-top:6px;font-size:16px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(formatDay(event.startsAt, dates))}</div>
               </td>
@@ -2592,7 +2595,7 @@ function eventStrip(event: EmailEventHeader, title: string, line: string | null)
                   <tr>
                     <td width="${STRIP_IMAGE_WIDTH}" style="width:${STRIP_IMAGE_WIDTH}px;padding:0;line-height:0;font-size:0;vertical-align:middle;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${STRIP_IMAGE_WIDTH}" height="${STRIP_IMAGE_HEIGHT}" style="display:block;width:${STRIP_IMAGE_WIDTH}px;height:${STRIP_IMAGE_HEIGHT}px;border:0;"></td>
                     <td style="padding:14px 24px;vertical-align:middle;color:${EMAIL_THEME.onInverse};">
-                      <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
+                      <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.labelOnInverse};">${escapeHtml(eventEyebrow(event, title))}</div>
                       <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:21px;font-weight:800;line-height:1.15;color:${EMAIL_THEME.onInverse};">${escapeHtml(event.eventName)}</div>
                       ${line === null ? '' : `<div style="margin-top:4px;font-size:15px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(line)}</div>`}
                     </td>
@@ -2613,7 +2616,7 @@ function trophyBand(trophy: { eyebrow: string; headline: string; line: string })
   return `<tr>
               <td align="center" style="background:${EMAIL_THEME.navy};padding:24px 32px 28px;color:${EMAIL_THEME.onInverse};text-align:center;">
                 <div style="font-size:40px;line-height:1;">&#127942;</div>
-                <div style="margin-top:10px;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(trophy.eyebrow)}</div>
+                <div style="margin-top:10px;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.labelOnInverse};">${escapeHtml(trophy.eyebrow)}</div>
                 <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;color:${EMAIL_THEME.onInverse};">${escapeHtml(trophy.headline)}</div>
                 <div style="margin-top:6px;font-size:16px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(trophy.line)}</div>
               </td>
@@ -2629,7 +2632,7 @@ function contestCard(format: EmailContestFormat, contestName: string, rules: str
     <tr>
       <td width="150" style="width:150px;padding:0;line-height:0;vertical-align:middle;"><img src="${escapeAttribute(format.imageUrl)}" alt="" width="150" height="94" style="display:block;width:150px;height:94px;border:0;"></td>
       <td style="padding:12px 16px;vertical-align:middle;">
-        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(format.name)}</div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.label};">${escapeHtml(format.name)}</div>
         <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:18px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(contestName)}</div>
         <div style="margin-top:4px;font-size:14px;line-height:1.45;color:${EMAIL_THEME.ink};">${escapeHtml(rules)}</div>
         <div style="margin-top:4px;font-size:13px;line-height:1.45;color:${EMAIL_THEME.muted};">${escapeHtml(detail)}</div>
@@ -2672,7 +2675,7 @@ function statRow(stats: Array<[string, string]>): string {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${EMAIL_THEME.canvas};border-radius:10px;">
           <tr>
             <td style="padding:14px;">
-              <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(label)}</div>
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.label};">${escapeHtml(label)}</div>
               <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:20px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(value)}</div>
             </td>
           </tr>
@@ -2748,7 +2751,7 @@ function contestTypeTile(tile: ContestSetupTile, action: string): string {
       <td width="150" style="width:150px;padding:0;line-height:0;vertical-align:middle;"><a href="${href}"><img src="${escapeAttribute(tile.imageUrl)}" alt="" width="150" height="94" style="display:block;width:150px;height:94px;border:0;"></a></td>
       <td style="padding:12px 16px;vertical-align:middle;">
         <a href="${href}" style="display:block;text-decoration:none;color:${EMAIL_THEME.navy};">
-          <span style="display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(tile.formatName)}</span>
+          <span style="display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.label};">${escapeHtml(tile.formatName)}</span>
           <span style="display:block;margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:17px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(setupNameAfterFormat(tile))}</span>
           <span style="display:block;margin-top:4px;font-size:13px;line-height:1.45;color:${EMAIL_THEME.ink};">${escapeHtml(tile.description)}</span>
         </a>
@@ -2783,7 +2786,7 @@ function detailList(rows: Array<[string, string]>): string {
   const renderedRows = rows
     .map(
       ([label, value]) => `<tr>
-        <td style="padding:12px 16px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};vertical-align:top;">${escapeHtml(label)}</td>
+        <td style="padding:12px 16px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.label};vertical-align:top;">${escapeHtml(label)}</td>
         <td style="padding:12px 16px;border-top:1px solid ${EMAIL_THEME.subtleBorder};font-size:14px;line-height:1.45;color:${EMAIL_THEME.navy};vertical-align:top;">${escapeHtml(value)}</td>
       </tr>`,
     )

@@ -33,7 +33,7 @@ export function LeagueMenu({ action, "aria-label": ariaLabel, items }: LeagueMen
             <Link
               aria-current={item.isActive ? "page" : undefined}
               className={cn(
-                "whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition",
+                "whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold uppercase tracking-button transition",
                 item.isActive
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -83,7 +83,7 @@ export function AdminAreaLayout({
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-inverse-border bg-surface-inverse-deep px-5 py-3 text-on-inverse">
         {icon ? <span className="text-primary">{icon}</span> : null}
         <div className="min-w-0">
-          <Eyebrow>{eyebrow}</Eyebrow>
+          <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
           <div className="truncate font-semibold">{title}</div>
         </div>
         <Link

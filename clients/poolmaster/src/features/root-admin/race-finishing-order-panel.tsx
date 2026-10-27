@@ -103,7 +103,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
   return (
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-base font-semibold text-foreground">Result</h3>
+        <h3 className="title-card text-base text-foreground">Result</h3>
         {hasResults ? (
           <StatusBadge data-testid="root-admin-race-result-official" tone={official ? 'final' : 'warning'}>
             {official ? 'Official' : 'Provisional'}
@@ -207,7 +207,7 @@ function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; fiel
 
   return (
     <Tile>
-      <h3 className="text-base font-semibold text-foreground">Finishing order</h3>
+      <h3 className="title-card text-base text-foreground">Finishing order</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${capitalize(vocabulary.participant.many)} you leave out keep the result they have.`}
       </p>

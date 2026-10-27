@@ -36,7 +36,7 @@ function readTokenFromHash(hash: string): string | null {
 function DeadLinkState() {
   return (
     <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <h2 className="font-display text-lg font-extrabold text-foreground">Choose a new password</h2>
+      <h2 className="title-card text-lg text-foreground">Choose a new password</h2>
       <p className="text-sm text-muted-foreground" data-testid="reset-password-link-invalid">
         This reset link has expired or has already been used.
       </p>
@@ -100,7 +100,7 @@ export function ResetPasswordPage() {
   if (confirmMutation.isSuccess) {
     return (
       <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-        <h2 className="font-display text-lg font-extrabold text-foreground">Password reset</h2>
+        <h2 className="title-card text-lg text-foreground">Password reset</h2>
         <p className="text-sm text-muted-foreground" data-testid="reset-password-done">
           Your password is reset. Sign in with your new password.
         </p>

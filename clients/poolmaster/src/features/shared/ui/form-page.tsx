@@ -40,7 +40,7 @@ export function FormPage({
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
       <div>
-        <h2 className="font-display text-lg font-extrabold text-foreground">{title}</h2>
+        <h2 className="title-card text-lg text-foreground">{title}</h2>
         {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>

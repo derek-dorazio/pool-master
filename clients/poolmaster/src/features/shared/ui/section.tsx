@@ -17,7 +17,7 @@ export function SectionHeader({
   return (
     <div className={cn("flex flex-wrap items-start justify-between gap-4", className)}>
       <div className="min-w-0">
-        <h3 className="font-medium text-foreground">{title}</h3>
+        <h3 className="title-card text-foreground">{title}</h3>
         {description ? (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         ) : null}

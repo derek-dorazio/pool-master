@@ -286,7 +286,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           {pickError ? <Alert data-testid="bracket-pick-error" tone="danger">{pickError}</Alert> : null}
 
           <Tile>
-            <h3 className="mb-5 text-xl font-semibold" data-testid="contest-entry-builder-heading">
+            <h3 className="title-card mb-5 text-xl" data-testid="contest-entry-builder-heading">
               {canPick ? 'Fill in your bracket' : 'Bracket'}
             </h3>
             {canPick ? (

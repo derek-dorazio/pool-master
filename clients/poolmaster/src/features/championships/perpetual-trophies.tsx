@@ -20,10 +20,10 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
 
   return (
     <section className="space-y-3" data-testid="perpetual-trophies">
-      <h2 className="text-lg font-semibold text-foreground">Perpetual trophies</h2>
+      <h2 className="title-card text-lg text-foreground">Perpetual trophies</h2>
       {trophies.map((trophy) => (
         <Tile className="space-y-2" data-testid={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`} key={`${trophy.eventSeriesId}-${trophy.selectionType}`} padding="sm" radius="lg">
-          <h3 className="flex items-center gap-2 font-semibold text-foreground">
+          <h3 className="title-card flex items-center gap-2 text-foreground">
             <Award aria-hidden className="text-primary" size={18} />
             {perpetualTrophyName(trophy)}
           </h3>

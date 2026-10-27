@@ -55,7 +55,7 @@ export function ReseedRoundsCard({
 
   return (
     <Tile data-testid="root-admin-reseed">
-      <h3 className="text-base font-semibold text-foreground">Reseeded rounds</h3>
+      <h3 className="title-card text-base text-foreground">Reseeded rounds</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${matchNoun(context.vocabulary).many}, change any that need it, then save them.`}
       </p>

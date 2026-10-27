@@ -155,7 +155,7 @@ export function TierDefinitionsPanel({
   return (
     <Tile>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-semibold text-foreground">Tiers</h3>
+        <h3 className="title-card text-base text-foreground">Tiers</h3>
         <Button
           data-testid="root-admin-tier-def-add"
           disabled={locked || draft.length >= 12}

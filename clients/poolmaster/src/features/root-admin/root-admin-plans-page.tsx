@@ -254,7 +254,7 @@ function FeatureList({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
       />
       {Object.values(PlanFeatureGroup).map((featureGroup) => (
         <Tile data-testid={`root-admin-plans-features-${featureGroup}`} key={featureGroup} padding="none" radius="xl">
-          <h3 className="px-4 pt-4 text-sm font-semibold text-foreground">{PLAN_FEATURE_GROUP_LABEL[featureGroup]}</h3>
+          <h3 className="title-card px-4 pt-4 text-sm text-foreground">{PLAN_FEATURE_GROUP_LABEL[featureGroup]}</h3>
           <ul className="divide-y divide-border">
             {ALWAYS_INCLUDED[featureGroup].map((label) => (
               <li className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm" key={label}>

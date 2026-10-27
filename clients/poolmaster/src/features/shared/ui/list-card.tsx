@@ -36,7 +36,7 @@ function ListCardContent({
     <>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+          <h3 className="title-card text-lg text-foreground">{title}</h3>
           {description ? (
             <p className="mt-2 text-sm text-muted-foreground">{description}</p>
           ) : null}

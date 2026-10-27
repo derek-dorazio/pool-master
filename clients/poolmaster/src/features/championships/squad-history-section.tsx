@@ -51,7 +51,7 @@ export function SquadHistorySection({
     <section className="space-y-6" data-testid="squad-history">
       <div className="space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">{historyYearTitle({ year, isOver: year < currentYear })}</h2>
+          <h2 className="title-card text-lg text-foreground">{historyYearTitle({ year, isOver: year < currentYear })}</h2>
           <Select
             aria-label="Year"
             className="w-auto"
@@ -74,7 +74,7 @@ export function SquadHistorySection({
       ) : (
         <>
           <Tile className="space-y-3" padding="sm" radius="lg">
-            <h2 className="text-lg font-semibold text-foreground">Trophy case</h2>
+            <h2 className="title-card text-lg text-foreground">Trophy case</h2>
             <MetricGrid className="grid-cols-3">
               <div data-testid="squad-history-medal-firsts"><MetricTile label="Contest 1sts" value={historyQuery.data.medals.firsts} /></div>
               <div data-testid="squad-history-medal-seconds"><MetricTile label="Contest 2nds" value={historyQuery.data.medals.seconds} /></div>
@@ -111,7 +111,7 @@ export function SquadHistorySection({
 
           {placedYears.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">
-              <h2 className="text-lg font-semibold text-foreground">All years</h2>
+              <h2 className="title-card text-lg text-foreground">All years</h2>
               <ul className="space-y-1 text-sm" data-testid="squad-history-years">
                 {placedYears.map((row) => {
                   const line = describeSquadYearLine(row, currentYear);
@@ -119,7 +119,7 @@ export function SquadHistorySection({
                     <li key={row.year}>
                       <Button
                         aria-pressed={row.year === year}
-                        className="h-auto w-full flex-wrap justify-between gap-2 px-0 text-left font-normal"
+                        className="normal-case tracking-normal h-auto w-full flex-wrap justify-between gap-2 px-0 text-left font-normal"
                         data-testid={`squad-history-year-${row.year}`}
                         onClick={() => chooseYear(row.year)}
                         type="button"

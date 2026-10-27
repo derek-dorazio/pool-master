@@ -136,7 +136,7 @@ function PickRow({ entryId, gridTemplateColumns, pick }: { entryId: string; grid
           <Button
             aria-controls={breakdown.testId}
             aria-expanded={isOpen}
-            className={cn(nameClassName, 'h-auto justify-start p-0 text-left text-sm font-normal underline-offset-2 hover:underline')}
+            className={cn(nameClassName, 'normal-case tracking-normal h-auto justify-start p-0 text-left text-sm font-normal underline-offset-2 hover:underline')}
             data-testid={`${breakdown.testId}-toggle`}
             onClick={() => setIsOpen((open) => !open)}
             size="auto"
@@ -211,7 +211,7 @@ function EntryBlock({
         aria-controls={picksId}
         aria-expanded={!isCollapsed}
         className={cn(
-          'flex w-full flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 text-left font-normal',
+          'normal-case tracking-normal flex w-full flex-wrap items-baseline justify-between gap-3 rounded-none bg-muted px-4 py-3 text-left font-normal',
           isCollapsed ? 'rounded-[inherit]' : 'rounded-t-[inherit] border-b border-border',
         )}
         data-testid={`contest-leaderboard-entry-toggle-${entry.entryId}`}
@@ -255,7 +255,7 @@ function EntryBlock({
           ) : null}
         </span>
         <span
-          className="text-lg font-semibold text-foreground"
+          className="font-numeric text-2xl font-extrabold leading-none tabular-nums text-foreground"
           data-testid={`contest-leaderboard-total-${entry.entryId}`}
         >
           {entry.total ?? NO_SCORE}
@@ -554,7 +554,7 @@ export function ContestLeaderboardPage() {
           </div>
         ) : null}
         <div
-          className="grid gap-2 px-4 pb-2 text-xs font-medium uppercase text-muted-foreground"
+          className="grid gap-2 rounded-lg bg-surface-inverse px-4 py-2 text-xs font-medium uppercase text-primary"
           data-testid="contest-leaderboard-column-headers"
           style={{ gridTemplateColumns }}
         >

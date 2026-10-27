@@ -103,7 +103,7 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
     >
       <Button
         aria-expanded={isOpen}
-        className="h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
         data-testid={`how-to-play-format-${selectionType}-toggle`}
         onClick={onToggle}
         size="auto"
@@ -183,7 +183,7 @@ function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
     >
       <Button
         aria-expanded={isOpen}
-        className="h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        className="normal-case tracking-normal h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
         data-testid="how-to-play-clutch-card-toggle"
         onClick={onToggle}
         size="auto"
@@ -351,7 +351,7 @@ export function HowToPlayPage() {
             <Tile className="h-full" padding="none" radius="md">
               <StepIllustration className="aspect-[16/10] w-full rounded-t-2xl" step={step.picture} />
               <div className="p-3">
-                <h3 className="font-semibold text-foreground"><span className="mr-1 font-display font-bold text-primary">{index + 1}</span>{step.title}</h3>
+                <h3 className="title-card text-foreground"><span className="mr-1 font-display font-bold text-primary">{index + 1}</span>{step.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
               </div>
             </Tile>
@@ -379,7 +379,7 @@ export function HowToPlayPage() {
             <Tile className="overflow-hidden md:flex" data-testid="how-to-play-sport-banner" padding="none" radius="md">
               <SportIllustration className="aspect-[16/10] w-full md:w-80" sport={chosenSport.sport} />
               <div className="p-4">
-                <h3 className="font-display text-xl font-bold text-foreground">{chosenName}</h3>
+                <h3 className="title-card text-xl text-foreground">{chosenName}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{SPORT_BLURBS[chosenSport.sport]}</p>
               </div>
             </Tile>
@@ -411,7 +411,7 @@ export function HowToPlayPage() {
       {auth.isAuthenticated ? null : (
         <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
           <div>
-            <h3 className="font-semibold text-foreground">Ready to run your pool?</h3>
+            <h3 className="title-card text-foreground">Ready to run your pool?</h3>
             <p className="text-sm text-muted-foreground">Create an account, start a league, and set up your first contest.</p>
           </div>
           {callToAction}

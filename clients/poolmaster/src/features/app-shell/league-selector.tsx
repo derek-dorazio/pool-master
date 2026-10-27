@@ -69,7 +69,7 @@ export function LeagueSelector({
       <Button
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className="flex w-full cursor-pointer items-center justify-start gap-3 rounded-3xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
+        className="normal-case tracking-normal flex w-full cursor-pointer items-center justify-start gap-3 rounded-3xl border border-inverse-border bg-on-inverse-subtle px-4 py-3 text-left shadow-sm sm:w-auto sm:max-w-xs lg:max-w-none"
         data-testid="league-selector-toggle"
         onClick={() => setIsOpen((current) => !current)}
         size="auto"
@@ -97,7 +97,7 @@ export function LeagueSelector({
           <div className="space-y-2">
             {selectorLeagues.map((league) => (
               <Button
-                className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                className={`normal-case tracking-normal flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                   league.leagueCode === activeLeagueCode
                     ? league.isActive
                       ? "border-primary/20 bg-primary/10"
@@ -142,7 +142,7 @@ export function LeagueSelector({
             ))}
 
             <Button
-              className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted/50"
+              className="normal-case tracking-normal flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-muted/50"
               data-testid="league-selector-create"
               onClick={() => {
                 setIsOpen(false);

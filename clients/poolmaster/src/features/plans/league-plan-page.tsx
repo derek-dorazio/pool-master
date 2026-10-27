@@ -112,7 +112,7 @@ function LeaguePlanView({ league }: { league: LeagueDto }) {
           {chosen ? (
             <Tile className="space-y-4" data-testid="league-plan-confirm" padding="md" radius="md">
               <div className="space-y-1">
-                <h3 className="font-semibold text-foreground">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</h3>
+                <h3 className="title-card text-foreground">{`Move to ${LEAGUE_PLAN_LABEL[chosen.plan]}?`}</h3>
                 <p className="text-sm text-muted-foreground">Plan changes are free for now, so this takes effect at once and costs nothing.</p>
               </div>
               {usageQuery.data ? (
@@ -219,7 +219,7 @@ function YourLeagueNow({
   ) ?? null;
   return (
     <Tile className="space-y-3" data-testid="league-plan-now" padding="md" radius="md">
-      <h3 className="font-semibold text-foreground">Your league now</h3>
+      <h3 className="title-card text-foreground">Your league now</h3>
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-muted-foreground">Plan</dt>

@@ -82,7 +82,7 @@ export function SquadYearSection({
 
           {cups.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">
-              <h3 className="font-semibold text-foreground">Cups</h3>
+              <h3 className="title-card text-foreground">Cups</h3>
               <ul className="space-y-1 text-sm" data-testid="squad-year-cups">
                 {cups.map((cup) => (
                   <li key={cup.cupId}>
@@ -107,7 +107,7 @@ export function SquadYearSection({
 
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="font-semibold text-foreground" data-testid="squad-year-contests-heading">
+          <h3 className="title-card text-foreground" data-testid="squad-year-contests-heading">
             {describeContestResultFilter(filter, squad.name, year)}
           </h3>
           {place === null ? null : (

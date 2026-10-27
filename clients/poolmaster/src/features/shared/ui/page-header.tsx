@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router";
+import { Eyebrow } from "./eyebrow";
 import { Tile } from "./tile";
 
 type Breadcrumb = {
@@ -29,9 +30,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           {eyebrow ? (
-            <div className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-              {eyebrow}
-            </div>
+            <Eyebrow className="mb-2">{eyebrow}</Eyebrow>
           ) : null}
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             {title}

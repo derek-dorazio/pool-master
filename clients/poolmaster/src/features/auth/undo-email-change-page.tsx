@@ -20,7 +20,7 @@ function readTokenFromHash(hash: string): string | null {
 function UndoTile({ children, title }: { children: ReactNode; title: string }) {
   return (
     <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <h2 className="font-display text-lg font-extrabold text-foreground">{title}</h2>
+      <h2 className="title-card text-lg text-foreground">{title}</h2>
       {children}
     </Tile>
   );
