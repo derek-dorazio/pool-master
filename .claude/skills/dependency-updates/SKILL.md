@@ -30,8 +30,9 @@ around a library change (`rules/testing-rules.md` §1B *Forbidden Application-Co
 
 ## Step 1 — what is open
 
-List the open PRs whose author is `dependabot[bot]`. None open and no new major (Step 6):
-post nothing, schedule the next Monday, and stop. A quiet week is silent.
+List the open PRs whose author is `dependabot[bot]`. With none open, still do Steps 6
+and 7; when none of them has anything to report, post nothing, schedule the next Monday and
+stop. A quiet week is silent.
 
 Take the PRs one at a time, security PRs first. Each PR you finish rebases the others, so
 working them in parallel only produces conflicts.
