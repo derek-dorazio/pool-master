@@ -1,4 +1,4 @@
-import { forwardRef, type InputHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { cn } from "./class-names";
 import { normalizeDate, timeZoneAbbreviation, timeZoneGenericName } from "./date-time-format";
 import { useDisplayPreferences } from "./display-preferences";
@@ -35,21 +35,18 @@ export function DateDisplay({
   return <span className={cn("text-foreground", className)}>{formatted}</span>;
 }
 
-type DateTimeFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "type">;
+type DateTimeFieldProps = Omit<ComponentProps<"input">, "type">;
 
 /**
  * A date and time entry box. Its value is the wall clock in the member's zone (#1061), named
  * beside it; convert with `toDateTimeLocalValue` and `dateTimeLocalValueToIso`.
  */
-export const DateTimeField = forwardRef<HTMLInputElement, DateTimeFieldProps>(function DateTimeField(
-  { className, ...props },
-  ref,
-) {
+export function DateTimeField({ className, ...props }: DateTimeFieldProps) {
   const preferences = useDisplayPreferences();
   return (
     <div className="flex items-center gap-2">
-      <Input className={cn("flex-1", className)} ref={ref} type="datetime-local" {...props} />
+      <Input className={cn("flex-1", className)} type="datetime-local" {...props} />
       <span className="shrink-0 text-sm text-muted-foreground">{timeZoneGenericName(preferences)}</span>
     </div>
   );
-});
+}

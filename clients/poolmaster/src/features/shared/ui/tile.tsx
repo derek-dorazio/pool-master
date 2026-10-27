@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { forwardRef, type HTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { cn } from "./class-names";
 
 const tileVariants = cva("border", {
@@ -36,18 +36,14 @@ const tileVariants = cva("border", {
   },
 });
 
-export type TileProps = HTMLAttributes<HTMLDivElement> &
+export type TileProps = ComponentProps<"div"> &
   VariantProps<typeof tileVariants>;
 
-export const Tile = forwardRef<HTMLDivElement, TileProps>(function Tile(
-  { className, padding, radius, variant, ...props },
-  ref,
-) {
+export function Tile({ className, padding, radius, variant, ...props }: TileProps) {
   return (
     <div
       className={cn(tileVariants({ className, padding, radius, variant }))}
-      ref={ref}
       {...props}
     />
   );
-});
+}
