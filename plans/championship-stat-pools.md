@@ -204,7 +204,8 @@ beside slice 2.
 - Earlier playoff rounds: championship series only (Decided).
 - A commissioner's choice of stat, or their own weights (Decided: one composite per sport).
 - Pitchers, goalies, defensive players and kickers (Q5).
-- The WNBA Finals, the PWHL Final and college championships (Decided).
+- The PWHL Final and college championships (Decided). The WNBA's semifinals and Finals were
+  added later (`plans/stat-pools-expansion.md` Q4, #993 and #1044).
 
 ---
 
@@ -229,7 +230,8 @@ All answered by Derek on 2026-10-23.
 - **Q7. Player leagues as sport leagues, or a new sport? Decided:** a sport league per
   championship, named for the event with no "players": World Series, NBA Finals, Stanley Cup
   Final, Championship Weekend and Super Bowl (section 3).
-- **Q8. Which leagues? Decided:** MLB, NBA, NHL and NFL. No WNBA.
+- **Q8. Which leagues? Decided:** MLB, NBA, NHL and NFL. No WNBA. *Reversed (Derek 2026-10-24,
+  `plans/stat-pools-expansion.md` Q4): the WNBA's semifinals and Finals are built (#993, #1044).*
 - **Q9. Roster size and counted players. Decided:** Tiered: one player from each of six tiers,
   best four count. Budget: six players under the cap, best four count. Quick pick: three players
   each. All are editable by the commissioner, as today.

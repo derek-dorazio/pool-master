@@ -69,14 +69,16 @@ describe('how a stat pool scores, in words', () => {
 });
 
 describe('a Clutch Card contest\'s suggested name', () => {
-  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship, NBA Conference Finals, NHL Conference Finals, League Championship Series, Men\'s Frozen Four, the Champions League\'s and the Women\'s World Cup\'s semifinals and finals Stars', () => {
+  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship, NBA Conference Finals, NHL Conference Finals, League Championship Series, Men\'s Frozen Four, the Champions League\'s and the Women\'s World Cup\'s semifinals and finals, WNBA Semifinals and WNBA Finals Stars', () => {
     expect(['World Series', 'NBA Finals', 'Stanley Cup Final', 'Super Bowl', 'Championship Weekend', 'CFP Semifinals', 'CFP National Championship',
       'Men\'s Final Four', 'Men\'s National Championship', 'NBA Conference Finals', 'NHL Conference Finals', 'League Championship Series', 'Men\'s Frozen Four',
-      'Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final'].map(statPoolContestName)).toEqual([
+      'Champions League Semifinals', 'Champions League Final', 'Women\'s World Cup Semifinals', 'Women\'s World Cup Final',
+      'WNBA Semifinals', 'WNBA Finals'].map(statPoolContestName)).toEqual([
       'World Series Stars', 'NBA Finals Stars', 'Stanley Cup Stars', 'Super Bowl Stars', 'Championship Weekend Stars',
       'CFP Semifinals Stars', 'CFP National Championship Stars',
       'Men\'s Final Four Stars', 'Men\'s National Championship Stars', 'NBA Conference Finals Stars', 'NHL Conference Finals Stars', 'League Championship Series Stars', 'Men\'s Frozen Four Stars',
       'Champions League Semifinals Stars', 'Champions League Stars', 'Women\'s World Cup Semifinals Stars', 'Women\'s World Cup Stars',
+      'WNBA Semifinals Stars', 'WNBA Finals Stars',
     ]);
   });
 });

@@ -67,7 +67,8 @@ sport league of players scored by the composite family (the League Championship 
 Series, NBA Conference Finals, NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL
 Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four,
 Men's National Championship (basketball's and hockey's), Men's Frozen Four, Champions League Semifinals,
-Champions League Final, Women's World Cup Semifinals and Women's World Cup Final leagues the migrations create). Its players
+Champions League Final, Women's World Cup Semifinals, Women's World Cup Final, WNBA Semifinals and WNBA Finals
+leagues the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
 and its box score, one `lines` row per field player who played, with that player's count of each
 stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
@@ -345,7 +346,10 @@ one game, and Denver over Wisconsin in the title game) and
 semifinals as one event of two games, game 1 the first legs and game 2 the second legs, and Paris
 Saint-Germain over Arsenal on penalties in the final) and
 `soccer-2023-womens-world-cup-semifinals-and-final-test.json` (the 2023 Women's World Cup
-semifinals, both one event of one game, and Spain over England in the final). The field is both teams' players who
+semifinals, both one event of one game, and Spain over England in the final) and
+`basketball-2025-wnba-semifinals-and-finals-test.json` (both 2025 WNBA semifinal series as one
+event, game N holding each series' Game N: Las Vegas over Indiana in five, Phoenix over Minnesota
+in four, and Las Vegas's Finals sweep of Phoenix). The field is both teams' players who
 can score the sport's composite, ranked by their regular-season composite total; tiers come
 from that ranking and prices are the default curve, so no odds are made up. Each box score was
 checked player by player against a second source, named in the file's provenance. A test load
