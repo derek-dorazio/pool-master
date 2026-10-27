@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ComponentProps } from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { mockApi } from '@/test/msw-api';
 import { apiSuccess, buildLeagueMembership, buildLeagueSquadMember } from '@/features/leagues/test/fixtures';

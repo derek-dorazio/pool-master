@@ -1,6 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import { useMemo, useState } from "react";
-import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router";
 import { AdminAreaLayout, Breadcrumbs, PageHeader } from "@/features/shared/ui";
 import {
   buildManageMenuItems,

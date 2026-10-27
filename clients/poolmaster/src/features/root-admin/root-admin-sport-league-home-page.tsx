@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { listParticipantLeagueAffiliations } from '@/lib/api';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { LeaguePayment, UserPayment } from '@/lib/api';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';

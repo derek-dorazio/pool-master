@@ -1,6 +1,6 @@
 import { SportEventSyncScope } from '@poolmaster/shared/domain';
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import {
   AsyncPage,
   Callout,

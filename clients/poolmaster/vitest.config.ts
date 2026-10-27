@@ -7,6 +7,13 @@ export default defineConfig({
   resolve: {
     alias: [
       {
+        // Under Node, `react-router` resolves to its CommonJS build while `react-router/dom`
+        // loads the ES build, so a test of the whole app would hold two router contexts and
+        // every hook would throw. Point both at the ES build, as the browser bundle does.
+        find: /^react-router$/,
+        replacement: path.resolve(import.meta.dirname, '../../node_modules/react-router/dist/development/index.mjs'),
+      },
+      {
         find: '@',
         replacement: path.resolve(import.meta.dirname, './src'),
       },

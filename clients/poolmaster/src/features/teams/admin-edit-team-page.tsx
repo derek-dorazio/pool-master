@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { LoadingState } from '@/features/shared/ui';

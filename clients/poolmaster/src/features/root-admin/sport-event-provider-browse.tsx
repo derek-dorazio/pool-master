@@ -1,6 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { createEventFromProviderEvent } from '@/lib/api';
 import {
   Alert,
@@ -101,7 +101,7 @@ export function SportEventProviderBrowse({
         { action: 'event.create.provider', data: { id: tournament.id } },
         'Created event from provider event',
       );
-      navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(

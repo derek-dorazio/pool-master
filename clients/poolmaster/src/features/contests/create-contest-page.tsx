@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { LucideIcon } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { z } from 'zod';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
@@ -628,7 +628,7 @@ export function CreateContestPage() {
       );
       // A new contest is not open yet (#117): the commissioner lands on its page, where they can
       // still edit or delete it and open it to the league when it is ready.
-      navigate(buildLeagueAdminContestPath(leagueCode, savedContestId));
+      void navigate(buildLeagueAdminContestPath(leagueCode, savedContestId));
     },
     invalidates: (savedContestId) => [
       QueryKeys.contests.list({ leagueId: league?.id }),

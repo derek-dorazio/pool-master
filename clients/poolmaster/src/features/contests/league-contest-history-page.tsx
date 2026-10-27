@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router';
 import { useEffect, useMemo } from 'react';
 import { ChampionshipContestList } from '@/features/championships/championship-contest-list';
 import { useChampionshipContestsQuery } from '@/features/championships/use-championship-query';

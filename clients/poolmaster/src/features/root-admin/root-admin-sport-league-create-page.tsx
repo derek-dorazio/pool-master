@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { createSportLeague } from '@/lib/api';
 import { FormField, FormPage, Input } from '@/features/shared/ui';

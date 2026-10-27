@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { EventEmailDelivery } from '@poolmaster/shared/domain';
 import { updateLeagueEventEmailSettings, type LeagueDto, type UpdateLeagueEventEmailSettingsRequest } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -97,7 +97,7 @@ function EventEmailsForm({ league, sports }: { league: LeagueDto; sports: EventE
     },
     onSuccess: (updated) => {
       syncLeagueCaches(queryClient, updated);
-      navigate(settingsPath);
+      void navigate(settingsPath);
     },
     // Nothing else shows how the league hears about events.
     invalidates: [],

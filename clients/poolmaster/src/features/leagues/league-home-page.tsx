@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { championshipYear, ContestStatus, PlanFeature } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
@@ -60,7 +60,7 @@ export function LeagueHomePage() {
   const teamSetupFailed = teamSetupFailedLeagueCode === leagueCode;
   useEffect(() => {
     if (parseRouteState(location.state).teamSetupFailed) {
-      navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+      void navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
     }
   }, [location.pathname, location.search, location.state, navigate]);
 

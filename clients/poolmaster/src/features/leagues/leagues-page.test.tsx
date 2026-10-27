@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockApi } from '@/test/msw-api';
 import { championshipWeekendFixture } from '@/features/event-pages/event-page-test-fixtures';

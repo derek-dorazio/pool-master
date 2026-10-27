@@ -1,4 +1,4 @@
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { buildLeagueTeamPath } from '@/features/leagues/league-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { getContest, getSelectionState, submitContestEntry, submitContestSelection, updateContestEntry, type SelectionStateResponse, type ContestDto } from '@/lib/api';
 import {
   buildLeagueContestPath,
@@ -634,7 +634,7 @@ function RosterContestEntryPage() {
     } catch {
       return;
     }
-    navigate(backToContestPath, {
+    void navigate(backToContestPath, {
       state: { leagueCode: backLeagueCode },
     });
   }

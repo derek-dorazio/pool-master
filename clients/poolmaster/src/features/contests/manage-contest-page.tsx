@@ -12,7 +12,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { deleteContest, type EffectiveTierDto } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -135,7 +135,7 @@ export function ManageContestPage() {
     },
     onSuccess: () => {
       logger.info({ action: 'contest.delete.succeeded', data: { leagueCode, contestId } }, 'Deleted contest');
-      navigate(contestsPath);
+      void navigate(contestsPath);
     },
     invalidates: [QueryKeys.contests.list({ leagueId }), QueryKeys.managedContests.all],
     onError: (error) => {

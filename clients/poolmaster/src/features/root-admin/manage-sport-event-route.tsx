@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useParams } from 'react-router';
 import { sportPathSegment } from '@poolmaster/shared/domain';
 import { SPORTS_PATH } from './manage-navigation';
 import { useSportEventQuery } from './use-sport-event';

@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from '@tanstack/react-query';
 import { Trophy } from 'lucide-react';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ContestStatus, SportEventStatus, formatPickEmRulesName  } from '@poolmaster/shared/domain';
 import type { ContestDto, PickEmLeaderboardResponse } from '@/lib/api';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';

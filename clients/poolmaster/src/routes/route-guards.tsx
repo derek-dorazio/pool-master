@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { Navigate, Outlet, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useParams } from 'react-router';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLastSignedInUserId } from '@/features/auth/signed-in-user';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';

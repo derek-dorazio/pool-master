@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { EventPageOfferState } from '@poolmaster/shared/domain';
 import { Alert, LinkButton } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy } from './event-page-copy';

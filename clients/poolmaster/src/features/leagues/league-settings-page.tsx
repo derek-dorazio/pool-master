@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { LeagueRole, LeagueMembershipStatus, PlanCap, PlanFeature, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { formatUserName } from '@/features/account/user-name';
 import {

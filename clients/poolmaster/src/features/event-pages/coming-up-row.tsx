@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { buildEventPagePath, type Sport } from '@poolmaster/shared/domain';
 import { SectionHeader, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy, formatStartsIn } from './event-page-copy';

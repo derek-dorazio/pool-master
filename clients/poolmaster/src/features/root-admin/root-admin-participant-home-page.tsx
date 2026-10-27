@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { listParticipantProviderMappings } from '@/lib/api';
 import {
   AsyncPage,

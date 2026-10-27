@@ -8,7 +8,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { Pencil } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router';
 import { enterContest, getContest, updateContestEntry, type ContestDto, type ContestEntryDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import {
@@ -194,7 +194,7 @@ export function ContestDetailPage() {
       return response.data.entry;
     },
     onSuccess: (entry) => {
-      navigate(
+      void navigate(
         hintedLeagueCode
           ? buildLeagueContestEntryPath(hintedLeagueCode, contestId, entry.id)
           : buildContestEntryPath(contestId, entry.id),

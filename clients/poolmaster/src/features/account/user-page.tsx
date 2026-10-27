@@ -7,7 +7,7 @@ import {
 } from 'react-hook-form';
 import { type z } from 'zod';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import {
   UserPasswordChangeRequestSchema,
   UserPreferencesUpdateRequestSchema,
@@ -460,7 +460,7 @@ export function UserPage() {
             className="mt-4"
             onClick={() =>
               void auth.clearSession().then(() => {
-                navigate('/', { replace: true });
+                void navigate('/', { replace: true });
               })
             }
             type="button"

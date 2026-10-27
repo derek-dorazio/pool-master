@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   buildLeagueContestEntryPath,
   buildLeagueContestLeaderboardPath,
@@ -48,7 +48,7 @@ export function ContestSubMenu({
         onChange={(next) => {
           const path = paths[next as ContestView];
           if (path) {
-            navigate(path, { state: { leagueCode } });
+            void navigate(path, { state: { leagueCode } });
           }
         }}
         options={views.map((view) => ({ label: labels[view], testId: `contest-menu-${view}`, value: view }))}

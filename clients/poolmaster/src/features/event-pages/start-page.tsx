@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { buildEventPagePath, PlanCap } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, LeagueDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
@@ -186,7 +186,7 @@ function StartForUser({ request }: { request: StartRequest }) {
         isOpen={showCreate}
         nextStep={offer ? `your ${eventPageOfferCopy(copy, offer).contestType} for ${copy.name}` : `contests for ${copy.name}`}
         onClose={() => setIsCreating(false)}
-        onCreated={(leagueCode) => navigate(buildStartDestination(leagueCode, request, offer), { replace: true })}
+        onCreated={(leagueCode) => void navigate(buildStartDestination(leagueCode, request, offer), { replace: true })}
       />
     </section>
   );

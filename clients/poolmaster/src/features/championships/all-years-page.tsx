@@ -1,6 +1,6 @@
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueChampionshipsPath,

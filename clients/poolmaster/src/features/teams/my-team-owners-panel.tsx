@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
 import { Alert, Button, Input, Tile } from '@/features/shared/ui';
