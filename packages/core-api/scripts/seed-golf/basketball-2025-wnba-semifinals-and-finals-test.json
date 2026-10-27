@@ -1,0 +1,2843 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "BASKETBALL",
+    "season": 2025,
+    "sportLeagues": [
+      "WNBA Semifinals",
+      "WNBA Finals"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-27",
+    "gatheredBy": "load-sport-data, the 2025 WNBA semifinals and Finals as played: Las Vegas beat Indiana 3-2 and Phoenix beat Minnesota 3-1 in the semifinals (21-30 September), and Las Vegas swept Phoenix in the Finals (3-10 October). The semifinals are one event, game N holding both series' Game N, so Game 5 is Las Vegas and Indiana's alone; the Finals are one event of four games. The 2026 Finals were not over when this was gathered. The field is every player in the round's ESPN box scores, injured players included, with ESPN's position (G, F or C) and birth country (Aliyah Boston's US Virgin Islands as VI; Natasha Howard's and Anastasiia Olairi Kosu's, which ESPN leaves out, from Wikipedia); ranking is the player's 2025 regular-season Triple Threat total (points + rebounds + assists) with her playoff team, from Basketball-Reference's team totals (Olairi Kosu, who played no regular-season game for Minnesota, has none and ranks with the zeros); ties go by name. Each game's box score (points, rebounds, assists) is from ESPN, cross-checked player by player against Basketball-Reference, which agree on every line (Basketball-Reference names Olairi Kosu 'Anastasiia Kosu'). A player who did not play a game has no line; one who played and scored no point, rebound or assist has an empty line.",
+    "sources": [
+      {
+        "name": "ESPN WNBA, Semifinals Game 1, Indiana at Las Vegas box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820327"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 1, Phoenix at Minnesota box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820328"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 2, Phoenix at Minnesota box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820330"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 2, Indiana at Las Vegas box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820331"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 3, Las Vegas at Indiana box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820334"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 3, Minnesota at Phoenix box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820333"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 4, Las Vegas at Indiana box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820337"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 4, Minnesota at Phoenix box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820338"
+      },
+      {
+        "name": "ESPN WNBA, Semifinals Game 5, Indiana at Las Vegas box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820340"
+      },
+      {
+        "name": "ESPN WNBA, Finals Game 1, Phoenix at Las Vegas box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820322"
+      },
+      {
+        "name": "ESPN WNBA, Finals Game 2, Phoenix at Las Vegas box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820325"
+      },
+      {
+        "name": "ESPN WNBA, Finals Game 3, Las Vegas at Phoenix box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820326"
+      },
+      {
+        "name": "ESPN WNBA, Finals Game 4, Las Vegas at Phoenix box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=401820329"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 1, Indiana at Las Vegas box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509210LVA.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 1, Phoenix at Minnesota box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509210MIN.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 2, Phoenix at Minnesota box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509230MIN.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 2, Indiana at Las Vegas box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509230LVA.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 3, Las Vegas at Indiana box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509260IND.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 3, Minnesota at Phoenix box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509260PHO.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 4, Las Vegas at Indiana box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509280IND.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 4, Minnesota at Phoenix box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509280PHO.html"
+      },
+      {
+        "name": "Basketball-Reference, Semifinals Game 5, Indiana at Las Vegas box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202509300LVA.html"
+      },
+      {
+        "name": "Basketball-Reference, Finals Game 1, Phoenix at Las Vegas box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202510030LVA.html"
+      },
+      {
+        "name": "Basketball-Reference, Finals Game 2, Phoenix at Las Vegas box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202510050LVA.html"
+      },
+      {
+        "name": "Basketball-Reference, Finals Game 3, Las Vegas at Phoenix box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202510080PHO.html"
+      },
+      {
+        "name": "Basketball-Reference, Finals Game 4, Las Vegas at Phoenix box score",
+        "url": "https://www.basketball-reference.com/wnba/boxscores/202510100PHO.html"
+      },
+      {
+        "name": "Basketball-Reference, 2025 Las Vegas Aces regular-season totals",
+        "url": "https://www.basketball-reference.com/wnba/teams/LVA/2025.html"
+      },
+      {
+        "name": "Basketball-Reference, 2025 Indiana Fever regular-season totals",
+        "url": "https://www.basketball-reference.com/wnba/teams/IND/2025.html"
+      },
+      {
+        "name": "Basketball-Reference, 2025 Minnesota Lynx regular-season totals",
+        "url": "https://www.basketball-reference.com/wnba/teams/MIN/2025.html"
+      },
+      {
+        "name": "Basketball-Reference, 2025 Phoenix Mercury regular-season totals",
+        "url": "https://www.basketball-reference.com/wnba/teams/PHO/2025.html"
+      },
+      {
+        "name": "ESPN WNBA athletes, 2025 (position and birth country, seasons/2025/athletes/<id>)",
+        "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2025/athletes/2529130"
+      },
+      {
+        "name": "Wikipedia, Natasha Howard (born in Toledo, Ohio; ESPN gives no birthplace)",
+        "url": "https://en.wikipedia.org/wiki/Natasha_Howard"
+      },
+      {
+        "name": "Wikipedia, Anastasiia Olairi Kosu (Russian; ESPN gives no birthplace)",
+        "url": "https://en.wikipedia.org/wiki/Anastasiia_Olairi_Kosu"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "WNBA Semifinals",
+      "players": [
+        {
+          "key": "wnba-a-ja-wilson",
+          "name": "A'ja Wilson",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-alyssa-thomas",
+          "name": "Alyssa Thomas",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-aliyah-boston",
+          "name": "Aliyah Boston",
+          "countryCode": "VI",
+          "ranking": 3,
+          "team": "Indiana Fever",
+          "position": "C"
+        },
+        {
+          "key": "wnba-jackie-young",
+          "name": "Jackie Young",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kelsey-mitchell",
+          "name": "Kelsey Mitchell",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-napheesa-collier",
+          "name": "Napheesa Collier",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-courtney-williams",
+          "name": "Courtney Williams",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Minnesota Lynx",
+          "position": "G"
+        },
+        {
+          "key": "wnba-satou-sabally",
+          "name": "Satou Sabally",
+          "countryCode": "DE",
+          "ranking": 8,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-chelsea-gray",
+          "name": "Chelsea Gray",
+          "countryCode": "US",
+          "ranking": 9,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-natasha-howard",
+          "name": "Natasha Howard",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Indiana Fever",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kayla-mcbride",
+          "name": "Kayla McBride",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Minnesota Lynx",
+          "position": "G"
+        },
+        {
+          "key": "wnba-alanna-smith",
+          "name": "Alanna Smith",
+          "countryCode": "AU",
+          "ranking": 12,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-jessica-shepard",
+          "name": "Jessica Shepard",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-jewell-loyd",
+          "name": "Jewell Loyd",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-sami-whitcomb",
+          "name": "Sami Whitcomb",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-natisha-hiedeman",
+          "name": "Natisha Hiedeman",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Minnesota Lynx",
+          "position": "G"
+        },
+        {
+          "key": "wnba-lexie-hull",
+          "name": "Lexie Hull",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kahleah-copper",
+          "name": "Kahleah Copper",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-bridget-carleton",
+          "name": "Bridget Carleton",
+          "countryCode": "CA",
+          "ranking": 19,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-monique-akoa-makani",
+          "name": "Monique Akoa Makani",
+          "countryCode": "CM",
+          "ranking": 20,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-dana-evans",
+          "name": "Dana Evans",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-sophie-cunningham",
+          "name": "Sophie Cunningham",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-caitlin-clark",
+          "name": "Caitlin Clark",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-dewanna-bonner",
+          "name": "DeWanna Bonner",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-natasha-mack",
+          "name": "Natasha Mack",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-nalyssa-smith",
+          "name": "NaLyssa Smith",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kathryn-westbeld",
+          "name": "Kathryn Westbeld",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-aari-mcdonald",
+          "name": "Aari McDonald",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-damiris-dantas",
+          "name": "Damiris Dantas",
+          "countryCode": "BR",
+          "ranking": 29,
+          "team": "Indiana Fever",
+          "position": "C"
+        },
+        {
+          "key": "wnba-kalani-brown",
+          "name": "Kalani Brown",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Phoenix Mercury",
+          "position": "C"
+        },
+        {
+          "key": "wnba-maria-kliundikova",
+          "name": "Maria Kliundikova",
+          "countryCode": "RU",
+          "ranking": 31,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-aaliyah-nye",
+          "name": "Aaliyah Nye",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kitija-laksa",
+          "name": "Kitija Laksa",
+          "countryCode": "LV",
+          "ranking": 33,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-lexi-held",
+          "name": "Lexi Held",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kierstan-bell",
+          "name": "Kierstan Bell",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kiah-stokes",
+          "name": "Kiah Stokes",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-odyssey-sims",
+          "name": "Odyssey Sims",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-sydney-colson",
+          "name": "Sydney Colson",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-makayla-timpson",
+          "name": "Makayla Timpson",
+          "countryCode": "US",
+          "ranking": 39,
+          "team": "Indiana Fever",
+          "position": "F"
+        },
+        {
+          "key": "wnba-dijonai-carrington",
+          "name": "DiJonai Carrington",
+          "countryCode": "US",
+          "ranking": 40,
+          "team": "Minnesota Lynx",
+          "position": "G"
+        },
+        {
+          "key": "wnba-aerial-powers",
+          "name": "Aerial Powers",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-megan-dileo",
+          "name": "Megan DiLeo",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-brianna-turner",
+          "name": "Brianna Turner",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Indiana Fever",
+          "position": "F"
+        },
+        {
+          "key": "wnba-shey-peddy",
+          "name": "Shey Peddy",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Indiana Fever",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kiana-williams",
+          "name": "Kiana Williams",
+          "countryCode": "US",
+          "ranking": 45,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-anastasiia-olairi-kosu",
+          "name": "Anastasiia Olairi Kosu",
+          "countryCode": "RU",
+          "ranking": 46,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-chloe-bibby",
+          "name": "Chloe Bibby",
+          "countryCode": "AU",
+          "ranking": 47,
+          "team": "Indiana Fever",
+          "position": "F"
+        },
+        {
+          "key": "wnba-cheyenne-parker-tyus",
+          "name": "Cheyenne Parker-Tyus",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        },
+        {
+          "key": "wnba-jaylyn-sherrod",
+          "name": "Jaylyn Sherrod",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Minnesota Lynx",
+          "position": "G"
+        },
+        {
+          "key": "wnba-camryn-taylor",
+          "name": "Camryn Taylor",
+          "countryCode": "US",
+          "ranking": 50,
+          "team": "Minnesota Lynx",
+          "position": "F"
+        },
+        {
+          "key": "wnba-bree-hall",
+          "name": "Bree Hall",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Indiana Fever",
+          "position": "G"
+        }
+      ],
+      "events": [
+        {
+          "key": "wnba-semifinals-2025",
+          "name": "WNBA Semifinals",
+          "startDate": "2025-09-21",
+          "endDate": "2025-09-30",
+          "venue": null,
+          "location": "Las Vegas, Indianapolis, Minneapolis and Phoenix",
+          "rounds": 5,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wnba-a-ja-wilson",
+              "ranking": 1
+            },
+            {
+              "player": "wnba-alyssa-thomas",
+              "ranking": 2
+            },
+            {
+              "player": "wnba-aliyah-boston",
+              "ranking": 3
+            },
+            {
+              "player": "wnba-jackie-young",
+              "ranking": 4
+            },
+            {
+              "player": "wnba-kelsey-mitchell",
+              "ranking": 5
+            },
+            {
+              "player": "wnba-napheesa-collier",
+              "ranking": 6
+            },
+            {
+              "player": "wnba-courtney-williams",
+              "ranking": 7
+            },
+            {
+              "player": "wnba-satou-sabally",
+              "ranking": 8
+            },
+            {
+              "player": "wnba-chelsea-gray",
+              "ranking": 9
+            },
+            {
+              "player": "wnba-natasha-howard",
+              "ranking": 10
+            },
+            {
+              "player": "wnba-kayla-mcbride",
+              "ranking": 11
+            },
+            {
+              "player": "wnba-alanna-smith",
+              "ranking": 12
+            },
+            {
+              "player": "wnba-jessica-shepard",
+              "ranking": 13
+            },
+            {
+              "player": "wnba-jewell-loyd",
+              "ranking": 14
+            },
+            {
+              "player": "wnba-sami-whitcomb",
+              "ranking": 15
+            },
+            {
+              "player": "wnba-natisha-hiedeman",
+              "ranking": 16
+            },
+            {
+              "player": "wnba-lexie-hull",
+              "ranking": 17
+            },
+            {
+              "player": "wnba-kahleah-copper",
+              "ranking": 18
+            },
+            {
+              "player": "wnba-bridget-carleton",
+              "ranking": 19
+            },
+            {
+              "player": "wnba-monique-akoa-makani",
+              "ranking": 20
+            },
+            {
+              "player": "wnba-dana-evans",
+              "ranking": 21
+            },
+            {
+              "player": "wnba-sophie-cunningham",
+              "ranking": 22
+            },
+            {
+              "player": "wnba-caitlin-clark",
+              "ranking": 23
+            },
+            {
+              "player": "wnba-dewanna-bonner",
+              "ranking": 24
+            },
+            {
+              "player": "wnba-natasha-mack",
+              "ranking": 25
+            },
+            {
+              "player": "wnba-nalyssa-smith",
+              "ranking": 26
+            },
+            {
+              "player": "wnba-kathryn-westbeld",
+              "ranking": 27
+            },
+            {
+              "player": "wnba-aari-mcdonald",
+              "ranking": 28
+            },
+            {
+              "player": "wnba-damiris-dantas",
+              "ranking": 29
+            },
+            {
+              "player": "wnba-kalani-brown",
+              "ranking": 30
+            },
+            {
+              "player": "wnba-maria-kliundikova",
+              "ranking": 31
+            },
+            {
+              "player": "wnba-aaliyah-nye",
+              "ranking": 32
+            },
+            {
+              "player": "wnba-kitija-laksa",
+              "ranking": 33
+            },
+            {
+              "player": "wnba-lexi-held",
+              "ranking": 34
+            },
+            {
+              "player": "wnba-kierstan-bell",
+              "ranking": 35
+            },
+            {
+              "player": "wnba-kiah-stokes",
+              "ranking": 36
+            },
+            {
+              "player": "wnba-odyssey-sims",
+              "ranking": 37
+            },
+            {
+              "player": "wnba-sydney-colson",
+              "ranking": 38
+            },
+            {
+              "player": "wnba-makayla-timpson",
+              "ranking": 39
+            },
+            {
+              "player": "wnba-dijonai-carrington",
+              "ranking": 40
+            },
+            {
+              "player": "wnba-aerial-powers",
+              "ranking": 41
+            },
+            {
+              "player": "wnba-megan-dileo",
+              "ranking": 42
+            },
+            {
+              "player": "wnba-brianna-turner",
+              "ranking": 43
+            },
+            {
+              "player": "wnba-shey-peddy",
+              "ranking": 44
+            },
+            {
+              "player": "wnba-kiana-williams",
+              "ranking": 45
+            },
+            {
+              "player": "wnba-anastasiia-olairi-kosu",
+              "ranking": 46
+            },
+            {
+              "player": "wnba-chloe-bibby",
+              "ranking": 47
+            },
+            {
+              "player": "wnba-cheyenne-parker-tyus",
+              "ranking": 48
+            },
+            {
+              "player": "wnba-jaylyn-sherrod",
+              "ranking": 49
+            },
+            {
+              "player": "wnba-camryn-taylor",
+              "ranking": 50
+            },
+            {
+              "player": "wnba-bree-hall",
+              "ranking": 51
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 13,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-aaliyah-nye",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-aerial-powers",
+                  "stats": {
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-alanna-smith",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-aliyah-boston",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "wnba-bree-hall",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-brianna-turner",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-bridget-carleton",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-cheyenne-parker-tyus",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-courtney-williams",
+                  "stats": {
+                    "POINTS": 23,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "REBOUNDS": 9,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jessica-shepard",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kayla-mcbride",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kelsey-mitchell",
+                  "stats": {
+                    "POINTS": 34,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-lexie-hull",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-makayla-timpson",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-maria-kliundikova",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-napheesa-collier",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-natasha-howard",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 11,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-natisha-hiedeman",
+                  "stats": {
+                    "POINTS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-odyssey-sims",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-shey-peddy",
+                  "stats": {
+                    "POINTS": 4,
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 25,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-aaliyah-nye",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-aerial-powers",
+                  "stats": {
+                    "POINTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-alanna-smith",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-aliyah-boston",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 13,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 13
+                  }
+                },
+                {
+                  "player": "wnba-anastasiia-olairi-kosu",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-bree-hall",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-brianna-turner",
+                  "stats": {
+                    "POINTS": 1,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-bridget-carleton",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-camryn-taylor",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-cheyenne-parker-tyus",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-courtney-williams",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-jaylyn-sherrod",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-jessica-shepard",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kayla-mcbride",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kelsey-mitchell",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-lexie-hull",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-makayla-timpson",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-maria-kliundikova",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-napheesa-collier",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-howard",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-natisha-hiedeman",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-odyssey-sims",
+                  "stats": {
+                    "POINTS": 18,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-shey-peddy",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-aerial-powers",
+                  "stats": {
+                    "POINTS": 1,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-alanna-smith",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-aliyah-boston",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 8
+                  }
+                },
+                {
+                  "player": "wnba-brianna-turner",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-bridget-carleton",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "wnba-courtney-williams",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 25,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-jessica-shepard",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kayla-mcbride",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-kelsey-mitchell",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-lexie-hull",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-makayla-timpson",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-maria-kliundikova",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-napheesa-collier",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-natasha-howard",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "wnba-natisha-hiedeman",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-odyssey-sims",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 23,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-shey-peddy",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 31,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-aerial-powers",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-alanna-smith",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-aliyah-boston",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 14,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 23,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-anastasiia-olairi-kosu",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-brianna-turner",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-bridget-carleton",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-courtney-williams",
+                  "stats": {
+                    "POINTS": 20,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-jessica-shepard",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kayla-mcbride",
+                  "stats": {
+                    "POINTS": 31,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kelsey-mitchell",
+                  "stats": {
+                    "POINTS": 25,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "POINTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-lexie-hull",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-makayla-timpson",
+                  "stats": {
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-maria-kliundikova",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-natasha-howard",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natisha-hiedeman",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-odyssey-sims",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-shey-peddy",
+                  "stats": {
+                    "POINTS": 7,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 5,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 35,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-aerial-powers",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-aliyah-boston",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 16,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-brianna-turner",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 32,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kelsey-mitchell",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-lexie-hull",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-makayla-timpson",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 5,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-howard",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-odyssey-sims",
+                  "stats": {
+                    "POINTS": 27,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 6
+                  }
+                },
+                {
+                  "player": "wnba-shey-peddy",
+                  "stats": {
+                    "POINTS": 13,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "WNBA Finals",
+      "players": [
+        {
+          "key": "wnba-a-ja-wilson",
+          "name": "A'ja Wilson",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-alyssa-thomas",
+          "name": "Alyssa Thomas",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-jackie-young",
+          "name": "Jackie Young",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-satou-sabally",
+          "name": "Satou Sabally",
+          "countryCode": "DE",
+          "ranking": 4,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-chelsea-gray",
+          "name": "Chelsea Gray",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-jewell-loyd",
+          "name": "Jewell Loyd",
+          "countryCode": "US",
+          "ranking": 6,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-sami-whitcomb",
+          "name": "Sami Whitcomb",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kahleah-copper",
+          "name": "Kahleah Copper",
+          "countryCode": "US",
+          "ranking": 8,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-monique-akoa-makani",
+          "name": "Monique Akoa Makani",
+          "countryCode": "CM",
+          "ranking": 9,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-dana-evans",
+          "name": "Dana Evans",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-dewanna-bonner",
+          "name": "DeWanna Bonner",
+          "countryCode": "US",
+          "ranking": 11,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-natasha-mack",
+          "name": "Natasha Mack",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-nalyssa-smith",
+          "name": "NaLyssa Smith",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kathryn-westbeld",
+          "name": "Kathryn Westbeld",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Phoenix Mercury",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kalani-brown",
+          "name": "Kalani Brown",
+          "countryCode": "US",
+          "ranking": 15,
+          "team": "Phoenix Mercury",
+          "position": "C"
+        },
+        {
+          "key": "wnba-aaliyah-nye",
+          "name": "Aaliyah Nye",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Las Vegas Aces",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kitija-laksa",
+          "name": "Kitija Laksa",
+          "countryCode": "LV",
+          "ranking": 17,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-lexi-held",
+          "name": "Lexi Held",
+          "countryCode": "US",
+          "ranking": 18,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-kierstan-bell",
+          "name": "Kierstan Bell",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        },
+        {
+          "key": "wnba-kiah-stokes",
+          "name": "Kiah Stokes",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-megan-dileo",
+          "name": "Megan DiLeo",
+          "countryCode": "US",
+          "ranking": 21,
+          "team": "Las Vegas Aces",
+          "position": "C"
+        },
+        {
+          "key": "wnba-kiana-williams",
+          "name": "Kiana Williams",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Phoenix Mercury",
+          "position": "G"
+        },
+        {
+          "key": "wnba-cheyenne-parker-tyus",
+          "name": "Cheyenne Parker-Tyus",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Las Vegas Aces",
+          "position": "F"
+        }
+      ],
+      "events": [
+        {
+          "key": "wnba-finals-2025",
+          "name": "WNBA Finals",
+          "startDate": "2025-10-03",
+          "endDate": "2025-10-10",
+          "venue": null,
+          "location": "Las Vegas and Phoenix",
+          "rounds": 4,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "wnba-a-ja-wilson",
+              "ranking": 1
+            },
+            {
+              "player": "wnba-alyssa-thomas",
+              "ranking": 2
+            },
+            {
+              "player": "wnba-jackie-young",
+              "ranking": 3
+            },
+            {
+              "player": "wnba-satou-sabally",
+              "ranking": 4
+            },
+            {
+              "player": "wnba-chelsea-gray",
+              "ranking": 5
+            },
+            {
+              "player": "wnba-jewell-loyd",
+              "ranking": 6
+            },
+            {
+              "player": "wnba-sami-whitcomb",
+              "ranking": 7
+            },
+            {
+              "player": "wnba-kahleah-copper",
+              "ranking": 8
+            },
+            {
+              "player": "wnba-monique-akoa-makani",
+              "ranking": 9
+            },
+            {
+              "player": "wnba-dana-evans",
+              "ranking": 10
+            },
+            {
+              "player": "wnba-dewanna-bonner",
+              "ranking": 11
+            },
+            {
+              "player": "wnba-natasha-mack",
+              "ranking": 12
+            },
+            {
+              "player": "wnba-nalyssa-smith",
+              "ranking": 13
+            },
+            {
+              "player": "wnba-kathryn-westbeld",
+              "ranking": 14
+            },
+            {
+              "player": "wnba-kalani-brown",
+              "ranking": 15
+            },
+            {
+              "player": "wnba-aaliyah-nye",
+              "ranking": 16
+            },
+            {
+              "player": "wnba-kitija-laksa",
+              "ranking": 17
+            },
+            {
+              "player": "wnba-lexi-held",
+              "ranking": 18
+            },
+            {
+              "player": "wnba-kierstan-bell",
+              "ranking": 19
+            },
+            {
+              "player": "wnba-kiah-stokes",
+              "ranking": 20
+            },
+            {
+              "player": "wnba-megan-dileo",
+              "ranking": 21
+            },
+            {
+              "player": "wnba-kiana-williams",
+              "ranking": 22
+            },
+            {
+              "player": "wnba-cheyenne-parker-tyus",
+              "ranking": 23
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-aaliyah-nye",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 15,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 8,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 8
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 6
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "POINTS": 4,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 19,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 4
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 2,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 28,
+                    "REBOUNDS": 14,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-aaliyah-nye",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-cheyenne-parker-tyus",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 5,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 32,
+                    "REBOUNDS": 8,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 7
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 23,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kalani-brown",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kiana-williams",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kitija-laksa",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 9,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 7
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 10
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 22,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 2
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 3,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 34,
+                    "REBOUNDS": 14,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-aaliyah-nye",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 14,
+                    "REBOUNDS": 12,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 11,
+                    "REBOUNDS": 2,
+                    "ASSISTS": 5
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 25,
+                    "REBOUNDS": 10
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 21,
+                    "REBOUNDS": 3,
+                    "ASSISTS": 9
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 16,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "POINTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "REBOUNDS": 2
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 6,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 2,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {
+                    "REBOUNDS": 2,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "REBOUNDS": 1,
+                    "ASSISTS": 3
+                  }
+                },
+                {
+                  "player": "wnba-satou-sabally",
+                  "stats": {
+                    "POINTS": 24,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 3
+                  }
+                }
+              ]
+            },
+            {
+              "gameNumber": 4,
+              "lines": [
+                {
+                  "player": "wnba-a-ja-wilson",
+                  "stats": {
+                    "POINTS": 31,
+                    "REBOUNDS": 9,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-alyssa-thomas",
+                  "stats": {
+                    "POINTS": 17,
+                    "REBOUNDS": 12,
+                    "ASSISTS": 10
+                  }
+                },
+                {
+                  "player": "wnba-chelsea-gray",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-dana-evans",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 1,
+                    "ASSISTS": 2
+                  }
+                },
+                {
+                  "player": "wnba-dewanna-bonner",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 10,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-jackie-young",
+                  "stats": {
+                    "POINTS": 18,
+                    "REBOUNDS": 7,
+                    "ASSISTS": 8
+                  }
+                },
+                {
+                  "player": "wnba-jewell-loyd",
+                  "stats": {
+                    "POINTS": 12,
+                    "REBOUNDS": 4,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kahleah-copper",
+                  "stats": {
+                    "POINTS": 30,
+                    "REBOUNDS": 6,
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "wnba-kalani-brown",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 4
+                  }
+                },
+                {
+                  "player": "wnba-kathryn-westbeld",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 3
+                  }
+                },
+                {
+                  "player": "wnba-kiah-stokes",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-kierstan-bell",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-lexi-held",
+                  "stats": {
+                    "POINTS": 3,
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-megan-dileo",
+                  "stats": {
+                    "REBOUNDS": 1
+                  }
+                },
+                {
+                  "player": "wnba-monique-akoa-makani",
+                  "stats": {
+                    "POINTS": 10,
+                    "REBOUNDS": 5,
+                    "ASSISTS": 4
+                  }
+                },
+                {
+                  "player": "wnba-nalyssa-smith",
+                  "stats": {
+                    "POINTS": 5,
+                    "REBOUNDS": 5
+                  }
+                },
+                {
+                  "player": "wnba-natasha-mack",
+                  "stats": {}
+                },
+                {
+                  "player": "wnba-sami-whitcomb",
+                  "stats": {
+                    "POINTS": 3,
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

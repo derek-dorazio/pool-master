@@ -158,6 +158,9 @@ National Championship** (display 70), the same name as basketball's title-game l
 `SHOTS_ON_TARGET` stat) and four leagues of outfield players: **Champions League Semifinals**
 (both legs one event of two games), **Champions League Final**, **Women's World Cup Semifinals**
 and **Women's World Cup Final** (display 110 to 140, after the soccer bracket leagues).
+#1044 and #993 built **WNBA Semifinals** (display 80; both series one event, as the NBA's
+conference finals are) and **WNBA Finals** (display 90), on Triple Threat, with the 2025 playoffs
+as test data because the 2026 Finals were still being played.
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

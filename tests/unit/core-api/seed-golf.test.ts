@@ -418,6 +418,37 @@ describe('basketball-2026-nba-conference-finals-test.json', () => {
   });
 });
 
+describe('basketball-2025-wnba-semifinals-and-finals-test.json', () => {
+  const file = readDataFile('basketball-2025-wnba-semifinals-and-finals-test.json', true);
+  const [semifinals, finals] = file.sportLeagues;
+  const semifinalGames = semifinals.events[0].games ?? [];
+  const finalsGames = finals.events[0].games ?? [];
+  const lineIn = (games: typeof semifinalGames, gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2025 WNBA semifinals, both series one event of five games, and the Finals, a sweep of four', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.BASKETBALL, 2025, ['WNBA Semifinals', 'WNBA Finals'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['WNBA Semifinals', '2025-09-21', '2025-09-30', 5, null]]);
+    expect(eventRows(file, 1)).toEqual([['WNBA Finals', '2025-10-03', '2025-10-10', 4, null]]);
+    expect(semifinalGames.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4, 5]);
+    expect(finalsGames.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('fields all four semifinalists\' players, only Las Vegas and Indiana play Game 5, and only the two finalists are in the Finals', () => {
+    const teamOf = new Map(semifinals.players.map((player) => [player.key, player.team]));
+    expect(new Set(teamOf.values())).toEqual(new Set(['Las Vegas Aces', 'Indiana Fever', 'Minnesota Lynx', 'Phoenix Mercury']));
+    expect(new Set(semifinalGames[4].lines.map((line) => teamOf.get(line.player)))).toEqual(new Set(['Las Vegas Aces', 'Indiana Fever']));
+    expect(new Set(finals.players.map((player) => player.team))).toEqual(new Set(['Las Vegas Aces', 'Phoenix Mercury']));
+  });
+
+  it('carries both rounds as played: A\'ja Wilson\'s 35 points in the semifinal Game 5, Kelsey Mitchell\'s 34 in Game 1, Wilson\'s 34 and 14 rebounds in the Finals\' Game 3', () => {
+    expect(lineIn(semifinalGames, 5, 'wnba-a-ja-wilson')).toEqual({ POINTS: 35, REBOUNDS: 8, ASSISTS: 5 });
+    expect(lineIn(semifinalGames, 1, 'wnba-kelsey-mitchell')).toEqual({ POINTS: 34, REBOUNDS: 1, ASSISTS: 3 });
+    expect(lineIn(finalsGames, 3, 'wnba-a-ja-wilson')).toEqual({ POINTS: 34, REBOUNDS: 14, ASSISTS: 4 });
+  });
+});
+
 describe('hockey-2026-nhl-conference-finals-test.json', () => {
   const file = readDataFile('hockey-2026-nhl-conference-finals-test.json', true);
   const [conferenceFinals] = file.sportLeagues;

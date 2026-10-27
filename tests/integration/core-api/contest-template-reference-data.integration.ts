@@ -794,7 +794,7 @@ describe('The seeded NFL league and its knockout templates', () => {
       expect(new Set(orders).size).toBe(orders.length);
     }
     expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
-    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship']);
+    expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship', 'WNBA Semifinals', 'WNBA Finals']);
     expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
     expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s National Championship']);
@@ -1180,12 +1180,14 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.SOCCER, league: 'Champions League Final', prefix: 'champions-league-final', composite: 'hat-trick' },
     { sport: Sport.SOCCER, league: 'Women\'s World Cup Semifinals', prefix: 'womens-world-cup-semifinals', composite: 'hat-trick' },
     { sport: Sport.SOCCER, league: 'Women\'s World Cup Final', prefix: 'womens-world-cup-final', composite: 'hat-trick' },
+    { sport: Sport.BASKETBALL, league: 'WNBA Semifinals', prefix: 'wnba-semifinals', composite: 'triple-threat' },
+    { sport: Sport.BASKETBALL, league: 'WNBA Finals', prefix: 'wnba-finals', composite: 'triple-threat' },
   ];
   // Basketball and hockey each have a "Men's National Championship", so a league is its sport and its name.
   const bySportAndName = (left: { sport: string; league: string }, right: { sport: string; league: string }) =>
     left.league.localeCompare(right.league) || left.sport.localeCompare(right.sport);
 
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the men\'s Frozen Four\'s too, the Champions League\'s and Women\'s World Cup\'s semifinals and finals, the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the men\'s Frozen Four\'s too, the Champions League\'s and Women\'s World Cup\'s semifinals and finals, the NBA\'s and NHL\'s conference finals, the WNBA\'s semifinals and Finals and MLB\'s League Championship Series among them', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true } });
 
     expect(leagues.map((league) => ({ sport: league.sport.sport, league: league.name, participantType: league.participantType, scoringFamily: league.scoringFamily }))
