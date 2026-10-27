@@ -300,7 +300,13 @@ administration area (root admin included), reusing the same shared components.
     illustrated card, with chips naming the sport leagues people know (the NFL,
     the PGA TOUR), in one row per sport with the sport in a fixed left column,
     that narrow it to one league or sport and show the sport's picture and line
-    and the league's default templates (#878). Sports run most popular first
+    and the league's default templates (#878). The Clutch Card is one more card
+    among them, shown while a shown league is a stat pool's: its line and steps,
+    each sport's stat line (Box Score, Redzone) as a small tile, and a link to
+    `/play/clutch-card` for the rest; no per-league formula list. An open card
+    offers Create contest to a signed-in viewer who runs an active league, on
+    the shown league's default (with every sport shown, the most popular sport's
+    first league's), asking which league when they run several (#1104). Sports run most popular first
     (`SPORTS_BY_POPULARITY`, cycling and running last), and each sport's leagues
     by their `displayOrder`: major professional leagues first, then the NCAA's.
     A league whose name alone doesn't say the sport ("NCAA Division I Men") gets

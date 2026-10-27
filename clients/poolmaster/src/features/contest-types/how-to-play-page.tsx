@@ -1,17 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SelectionType, formatSelectionTypeName, type Sport } from '@poolmaster/shared/domain';
+import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
+import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { useActiveContestTemplatesQuery } from '@/features/contests/use-active-contest-templates-query';
 import { Button, ErrorState, LinkButton, LoadingState, PageHeader, SectionHeader, Tile, cn } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import { buildPublicContestCatalog, type ContestTypeTile, type PublicCatalogLeague, type PublicCatalogSport } from './contest-catalog';
 import { FORMAT_GUIDES } from './format-guides';
-import { FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
+import { ClutchCardIllustration, FormatIllustration, SportIllustration, StepIllustration, type StepPicture } from './illustrations';
 import { SPORT_BLURBS } from './sport-blurbs';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_GUIDE, statPoolScoringLine } from '@/features/contests/scoring-family-ui/stat-pool-copy';
+import { buildLeagueAdminContestCreateFromTemplatePath } from '@/features/leagues/league-routing';
+import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { useSportLeaguesQuery } from './use-sport-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
+import { CLUTCH_CARD_PAGE_PATH } from '@/features/event-pages/event-page-paths';
 
 /** How a pool runs, in three steps, each with its picture. */
 const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string }[] = [
@@ -23,6 +27,10 @@ const HOW_IT_WORKS: readonly { picture: StepPicture; title: string; body: string
 /** The ways to play in the order the page lists them. */
 const FORMAT_ORDER = Object.values(SelectionType);
 
+/** The Clutch Card's place among the ways to play, which are otherwise formats. */
+const CLUTCH_CARD = 'CLUTCH_CARD';
+type WayToPlay = SelectionType | typeof CLUTCH_CARD;
+
 /** A sport as the page's link names it: `?sport=horse-racing`. */
 function sportSlug(sport: Sport) {
   return sport.toLowerCase().replaceAll('_', '-');
@@ -30,6 +38,39 @@ function sportSlug(sport: Sport) {
 
 function SportThumb({ sport, className }: { sport: Sport; className?: string }) {
   return <SportIllustration className={cn('shrink-0 rounded-full', className)} decorative sport={sport} />;
+}
+
+/**
+ * Create contest on a way to play's template (#1104), for a viewer who runs a league: one league
+ * opens straight on it, several are each a button. Nothing for anyone else.
+ */
+function CreateContestAction({ leagues, template, testId }: { leagues: readonly LeagueDto[]; template: ContestConfigTemplateDto | undefined; testId: string }) {
+  if (!template || leagues.length === 0) {
+    return null;
+  }
+  if (leagues.length === 1) {
+    return (
+      <LinkButton data-testid={`${testId}-create`} size="sm" to={buildLeagueAdminContestCreateFromTemplatePath(leagues[0].leagueCode, template.id)}>
+        Create contest
+      </LinkButton>
+    );
+  }
+  return (
+    <div className="flex flex-wrap items-center gap-2" data-testid={`${testId}-create`}>
+      <span className="text-muted-foreground">Create contest in</span>
+      {leagues.map((league) => (
+        <LinkButton
+          data-testid={`${testId}-create-${league.leagueCode}`}
+          key={league.id}
+          size="sm"
+          to={buildLeagueAdminContestCreateFromTemplatePath(league.leagueCode, template.id)}
+          variant="secondary"
+        >
+          {league.name}
+        </LinkButton>
+      ))}
+    </div>
+  );
 }
 
 interface FormatCardProps {
@@ -41,12 +82,18 @@ interface FormatCardProps {
   isOpen: boolean;
   onToggle: () => void;
   onChooseSport: (sport: Sport) => void;
+  /** The active leagues the viewer runs, for Create contest. */
+  createLeagues: readonly LeagueDto[];
 }
 
-/** One way to play: its diagram and summary, opening to its steps and where to play it. */
-function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseSport }: FormatCardProps) {
+/** One way to play: its diagram and summary, opening to its steps, where to play it and Create contest. */
+function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseSport, createLeagues }: FormatCardProps) {
   const guide = FORMAT_GUIDES[selectionType];
   const featured = chosen?.find((tile) => tile.selectionType === selectionType)?.featured;
+  // With every sport shown, Create contest starts on the most popular sport's first league to offer it: the NFL's.
+  const createTemplate = featured ?? sports[0]?.leagues
+    .flatMap((league) => league.groups.filter((tile) => tile.selectionType === selectionType))
+    .at(0)?.featured;
   return (
     <Tile
       className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
@@ -98,6 +145,7 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
               ))}
             </div>
           )}
+          <CreateContestAction leagues={createLeagues} template={createTemplate} testId={`how-to-play-format-${selectionType}`} />
         </div>
       ) : null}
     </Tile>
@@ -105,33 +153,69 @@ function FormatCard({ selectionType, sports, chosen, isOpen, onToggle, onChooseS
 }
 
 /**
- * The Clutch Card (#936): how a championship stat pool plays, and how each shown stat pool
- * league's stat is counted. Its formats are the cards beside it; this says what they score.
+ * The Clutch Card (#936, #1104) as one of the ways to play: its picture and line, opening to its
+ * steps, each shown sport's stat line as a small tile, the Clutch Card page for the rest, and
+ * Create contest on the first shown stat pool league's default. Nothing while no shown league
+ * is a stat pool's.
  */
-function ClutchCardGuide({ leagues }: { leagues: readonly PublicCatalogLeague[] }) {
-  const lines = leagues.flatMap((league) => {
-    const line = statPoolScoringLine(league.definition);
-    return line === null ? [] : [{ league, line }];
+function ClutchCardTile({ leagues, isOpen, onToggle, createLeagues }: {
+  leagues: readonly PublicCatalogLeague[];
+  isOpen: boolean;
+  onToggle: () => void;
+  createLeagues: readonly LeagueDto[];
+}) {
+  // A stat pool league scores its sport's composite, whose name is its stat line.
+  const statPoolLeagues = leagues.flatMap((league) => {
+    const name = league.definition.composite?.name;
+    return name && statPoolScoringLine(league.definition) !== null ? [{ league, name }] : [];
   });
-  if (lines.length === 0) {
+  if (statPoolLeagues.length === 0) {
     return null;
   }
+  // One tile a sport: its stat line is the same in every one of its stat pool leagues.
+  const statLines = [...new Map(statPoolLeagues.map(({ league, name }) => [league.definition.sport, { sport: league.definition.sport, name }] as const)).values()];
   return (
-    <Tile className="space-y-3" data-testid="how-to-play-clutch-card" padding="md" radius="md">
-      <div>
-        <h3 className="font-display text-lg font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</p>
-      </div>
-      <ol className="list-decimal space-y-1 pl-5 text-sm text-foreground">
-        {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
-      </ol>
-      <ul className="space-y-1 text-sm text-muted-foreground">
-        {lines.map(({ league, line }) => (
-          <li data-testid={`how-to-play-clutch-card-${league.slug}`} key={league.sportLeagueId}>
-            <span className="font-semibold text-foreground">{league.name}.</span> {line}
-          </li>
-        ))}
-      </ul>
+    <Tile
+      className={cn('flex flex-col gap-3', isOpen ? 'col-span-full border-primary' : null)}
+      data-testid="how-to-play-clutch-card"
+      padding="none"
+      radius="md"
+    >
+      <Button
+        aria-expanded={isOpen}
+        className="h-auto flex-col items-stretch gap-2 rounded-2xl p-2 text-left font-normal"
+        data-testid="how-to-play-clutch-card-toggle"
+        onClick={onToggle}
+        size="auto"
+        variant="ghost"
+      >
+        {/* The card fills its whole picture, so an open tile keeps its shape rather than cropping it. */}
+        <ClutchCardIllustration className={cn('aspect-[16/10] w-full rounded-xl', isOpen ? 'max-h-48 w-auto self-center' : null)} />
+        <span className="px-1 font-display text-base font-bold text-foreground">{STAT_POOL_CONTEST_TYPE}</span>
+        <span className="px-1 text-sm text-muted-foreground">{STAT_POOL_GUIDE.summary}</span>
+      </Button>
+      {isOpen ? (
+        <div className="space-y-3 border-t border-border px-3 pb-3 pt-3 text-sm" data-testid="how-to-play-clutch-card-details">
+          <ol className="list-decimal space-y-1 pl-5 text-foreground">
+            {STAT_POOL_GUIDE.steps.map((step) => <li key={step}>{step}</li>)}
+          </ol>
+          <ul aria-label="Stat lines" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {statLines.map(({ sport, name }) => (
+              <li className="flex items-center gap-2 rounded-lg border border-border bg-background p-2" data-testid={`how-to-play-clutch-card-stat-${sport}`} key={sport}>
+                <SportThumb className="h-7 w-7" sport={sport} />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-foreground">{name}</span>
+                  <span className="block text-xs text-muted-foreground">{getSportDefinition(sport).name}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <LinkButton data-testid="how-to-play-clutch-card-more" size="sm" to={CLUTCH_CARD_PAGE_PATH} variant="secondary">
+            {`More about the ${STAT_POOL_CONTEST_TYPE}`}
+          </LinkButton>
+          <CreateContestAction leagues={createLeagues} template={statPoolLeagues[0]?.league.groups[0]?.featured} testId="how-to-play-clutch-card" />
+        </div>
+      ) : null}
     </Tile>
   );
 }
@@ -219,7 +303,15 @@ export function HowToPlayPage() {
   const chosenSport = catalog.find((sport) => sportSlug(sport.sport) === searchParams.get('sport')) ?? null;
   const chosenLeague = chosenSport?.leagues.find((league) => league.slug === searchParams.get('league')) ?? null;
   const chosen = chosenLeague?.groups ?? chosenSport?.groups ?? null;
-  const [openFormat, setOpenFormat] = useState<SelectionType | null>(null);
+  const [openFormat, setOpenFormat] = useState<WayToPlay | null>(null);
+  const toggle = (wayToPlay: WayToPlay) => setOpenFormat((open) => (open === wayToPlay ? null : wayToPlay));
+
+  // Create contest is for whoever runs an active league; only a signed-in viewer's are read.
+  const { leagues, commissionerLeagueIds } = useLeaguesQuery({ enabled: auth.isAuthenticated });
+  const createLeagues = useMemo(
+    () => (auth.isAuthenticated ? (leagues ?? []).filter((league) => league.isActive && commissionerLeagueIds.has(league.id)) : []),
+    [auth.isAuthenticated, commissionerLeagueIds, leagues],
+  );
 
   const isError = templatesQuery.isError || sportLeaguesQuery.isError;
   useEffect(() => {
@@ -293,20 +385,25 @@ export function HowToPlayPage() {
             </Tile>
           ) : null}
 
-          <ClutchCardGuide leagues={chosenLeague ? [chosenLeague] : (chosenSport ? [chosenSport] : catalog).flatMap((sport) => sport.leagues)} />
-
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {formats.map((selectionType) => (
               <FormatCard
                 chosen={chosen}
+                createLeagues={createLeagues}
                 isOpen={openFormat === selectionType}
                 key={selectionType}
                 onChooseSport={choose}
-                onToggle={() => setOpenFormat((open) => (open === selectionType ? null : selectionType))}
+                onToggle={() => toggle(selectionType)}
                 selectionType={selectionType}
                 sports={chosenSport ? [chosenSport] : sportsOffering(selectionType)}
               />
             ))}
+            <ClutchCardTile
+              createLeagues={createLeagues}
+              isOpen={openFormat === CLUTCH_CARD}
+              leagues={chosenLeague ? [chosenLeague] : (chosenSport ? [chosenSport] : catalog).flatMap((sport) => sport.leagues)}
+              onToggle={() => toggle(CLUTCH_CARD)}
+            />
           </div>
         </section>
       )}

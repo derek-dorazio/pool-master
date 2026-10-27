@@ -368,6 +368,28 @@ const FORMAT_SCENES: Record<SelectionType, Scene> = {
 };
 
 
+/** A Clutch Card (#1104): a member's card of stars, each with its points, and the total. */
+const CLUTCH_CARD_SCENE: Scene = {
+  background: tint,
+  art: (
+    <>
+      <rect fill={card} height="84" rx="8" stroke={line} width="104" x="28" y="8" />
+      <rect fill={ink} height="16" rx="8" width="104" x="28" y="8" />
+      <rect fill={ink} height="6" width="104" x="28" y="18" />
+      <text className="font-display" fill={paper} fontSize="8" fontWeight="800" textAnchor="middle" x="80" y="19">CLUTCH CARD</text>
+      {[34, 27, 19].map((points, row) => (
+        <g key={points}>
+          <path d={`M42 ${34 + row * 16} l2 4.5 l5 0.5 l-3.8 3.3 l1.1 5 l-4.3 -2.6 l-4.3 2.6 l1.1 -5 l-3.8 -3.3 l5 -0.5Z`} fill={gold} />
+          {pill(54, 35 + row * 16, [42, 34, 38][row] ?? 0, chip)}
+          <text fill={ink} fontSize="9" fontWeight="800" textAnchor="end" x="124" y={42 + row * 16}>{points}</text>
+        </g>
+      ))}
+      <line stroke={line} x1="36" x2="124" y1="80" y2="80" />
+      <text fill={goldInk} fontSize="8" fontWeight="800" textAnchor="end" x="124" y="89">80 pts</text>
+    </>
+  ),
+};
+
 /** The three how-it-works steps: friends joining a league, a contest on the calendar, a live leaderboard. */
 export type StepPicture = 'league' | 'contest' | 'live';
 
@@ -451,4 +473,9 @@ export function FormatIllustration({ selectionType, className }: { selectionType
 /** A how-it-works step's picture, always beside the step's title. */
 export function StepIllustration({ step, className }: { step: StepPicture; className?: string }) {
   return <Illustration className={className} scene={STEP_SCENES[step]} />;
+}
+
+/** The Clutch Card's picture, always beside its name. */
+export function ClutchCardIllustration({ className }: { className?: string }) {
+  return <Illustration className={className} scene={CLUTCH_CARD_SCENE} />;
 }

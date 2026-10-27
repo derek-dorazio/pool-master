@@ -9,3 +9,6 @@ export function sportFromPathSegment(segment: string | undefined): Sport | null 
 export function buildHowToPlaySportPath(sport: Sport): string {
   return `/how-to-play?sport=${sportPathSegment(sport)}`;
 }
+
+/** The Clutch Card's own landing page (#1066), where How to Play's Clutch Card links for more. */
+export const CLUTCH_CARD_PAGE_PATH = '/play/clutch-card';
