@@ -97,11 +97,17 @@ fine, a third waits for `main`'s run.
 
 ## Step 6 — new major versions
 
-Majors get no PR, so look for them:
+Majors get no PR, so look for them, on an up-to-date `main` after `npm ci`. Without
+`node_modules` npm has no current version to compare, and the command prints nothing, which
+looks exactly like a quiet week:
 
 ```
-npm outdated --json | node -e 'const o=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const[n,v]of Object.entries(o))if(parseInt(v.latest)>parseInt(v.current))console.log(n,v.current,"->",v.latest)'
+npm outdated --json | node -e 'const o=JSON.parse(require("fs").readFileSync(0,"utf8"));for(const[n,e]of Object.entries(o)){const v=[e].flat()[0];if(parseInt(v.latest)>parseInt(v.current))console.log(n,v.current,"->",v.latest)}'
 ```
+
+A package declared in more than one workspace comes back as a list, one entry per workspace,
+all with the same hoisted current version; `[e].flat()[0]` takes the first. Comparing the
+list itself drops exactly the shared packages (zod, TypeScript), the majors that matter most.
 
 Also check the Node release schedule for a new LTS line, and whether a pre-release we are
 waiting on has gone final (npm can list a release candidate as `latest`; read the version,

@@ -33,6 +33,8 @@ updates:
   - package-ecosystem: docker
     # Dockerfile.core-api and Dockerfile.mock-contest-feed-provider. The Node version in them
     # must match .nvmrc, which Dependabot does not update: the skill bumps it in the same PR.
+    # Not covered: the images in docker-compose.dev.yml and the CI service containers in
+    # ci.yml (mailpit is pinned there); those are bumped by hand.
     directory: /infrastructure/docker
     schedule:
       interval: weekly
