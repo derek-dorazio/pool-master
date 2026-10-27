@@ -1,6 +1,7 @@
 import type { FormEventHandler, ReactNode } from "react";
 import { Alert } from "./alert";
 import { Button, LinkButton } from "./button";
+import { Tile } from "./tile";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
@@ -42,7 +43,7 @@ export function FormPage({
         <h2 className="font-display text-lg font-extrabold text-foreground">{title}</h2>
         {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      <div className="space-y-5 rounded-2xl border border-border bg-card p-5">{children}</div>
+      <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
       {errorMessage ? <Alert tone="danger">{errorMessage}</Alert> : null}
       <div className="flex flex-wrap justify-end gap-3">
         <LinkButton isDisabled={isPending} to={cancelTo} variant="secondary">

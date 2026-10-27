@@ -23,6 +23,7 @@ import noMockedApi from '../no-mocked-api.mjs';
 import noNodeEnvReads from '../no-node-env-reads.mjs';
 import noSportBranching from '../no-sport-branching.mjs';
 import noPlanBranching from '../no-plan-branching.mjs';
+import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
 
@@ -186,6 +187,27 @@ ruleTester.run('no-raw-theme-colors', noRawThemeColors, {
     { code: "const d = { color: '#1a2b3c' };", errors: [{ messageId: 'rawThemeColor' }] },
     { code: "const e = 'rgba(0, 0, 0, 0.5)';", errors: [{ messageId: 'rawThemeColor' }] },
     { code: 'const f = <span>hsl(10, 20%, 30%)</span>;', errors: [{ messageId: 'rawThemeColor' }] },
+  ],
+});
+
+ruleTester.run('no-arbitrary-type-sizes', noArbitraryTypeSizes, {
+  valid: [
+    // Theme spacing names and Tailwind's size steps are what the rule pushes toward.
+    'const a = <div className="text-xs tracking-eyebrow uppercase" />;',
+    // An arbitrary colour in text-[…] is a colour, not a size.
+    "const b = 'text-[color:var(--status-warning-text)]';",
+    // Other arbitrary values are not this rule's.
+    "const c = 'aspect-[5/2] rounded-[inherit]';",
+    // A comment is never a class.
+    '// tracking-[0.2em] text-[11px]\nconst d = 1;',
+  ],
+  invalid: [
+    {
+      code: 'const a = <p className="text-[11px] font-semibold tracking-[0.18em]" />;',
+      errors: [{ messageId: 'arbitraryTypeSize', data: { matches: 'text-[11px], tracking-[0.18em]' } }],
+    },
+    { code: "const b = cn('p-2', 'sm:text-[0.7rem]');", errors: [{ messageId: 'arbitraryTypeSize' }] },
+    { code: 'const c = `tracking-[.06em] ${extra}`;', errors: [{ messageId: 'arbitraryTypeSize' }] },
   ],
 });
 
