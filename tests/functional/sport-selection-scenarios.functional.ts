@@ -255,7 +255,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
         path: { id: league.id },
         body: { name: `Scenario Pool ${tag}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType, templateId: preset.id },
       });
-      expect([contest.response.status, contest.error]).toEqual([201, undefined]);
+      expect([contest.response?.status, contest.error]).toEqual([201, undefined]);
       const contestId = expectDefined(contest.data).contest.id;
       expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -279,10 +279,10 @@ describe('SDK Functional: one journey per sport and selection type', () => {
           lineups.set(entryId, lineup);
           for (const participantId of lineup) {
             const pick = await submitContestSelection({ client: entrant.client, path: { contestId }, body: { entryId, participantId } });
-            expect([pick.response.status, pick.error]).toEqual([200, undefined]);
+            expect([pick.response?.status, pick.error]).toEqual([200, undefined]);
           }
           const submitted = await submitContestEntry({ client: entrant.client, path: { contestId, entryId, sportEventId: event.id } });
-          expect([submitted.response.status, submitted.error]).toEqual([200, undefined]);
+          expect([submitted.response?.status, submitted.error]).toEqual([200, undefined]);
         }
       }
 

@@ -61,8 +61,7 @@ function requireEnv(name: SeedEnvName): string {
 async function signIn(baseUrl: string, identifier: string, password: string): Promise<{ client: Client; isRootAdmin: boolean }> {
   const login = await loginUser({ client: createClient(createConfig({ baseUrl })), body: { identifier, password } });
   if (!login.data) {
-    // Typed as always present, but hey-api leaves it undefined when the fetch itself throws.
-    const status = (login.response as Response | undefined)?.status ?? 'none';
+    const status = login.response?.status ?? 'none';
     throw new Error(`Sign-in as ${identifier} failed (HTTP ${status}).`);
   }
   const { accessToken } = login.data.tokens;
@@ -77,7 +76,7 @@ async function signIn(baseUrl: string, identifier: string, password: string): Pr
 /** The site's environment, from its public /version. */
 async function siteEnvironment(baseUrl: string): Promise<string> {
   const version = await getVersion({ client: createClient(createConfig({ baseUrl })) });
-  if (!version.data) throw new Error(`Reading ${baseUrl}/api/v1/version failed (HTTP ${(version.response as Response | undefined)?.status ?? 'none'}).`);
+  if (!version.data) throw new Error(`Reading ${baseUrl}/api/v1/version failed (HTTP ${version.response?.status ?? 'none'}).`);
   return version.data.environment;
 }
 

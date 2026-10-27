@@ -73,7 +73,7 @@ async function buildContestWithMemberAndOutsider(status: 'DRAFT' | 'OPEN' = 'OPE
 
 async function expectContestUnchanged(commissioner: RegisteredUserContext, contestId: string) {
   const reread = await getContest({ client: commissioner.client, path: { contestId } });
-  expect(reread.response.status).toBe(200);
+  expect(reread.response?.status).toBe(200);
   expect(reread.data?.contest.name).toBe('Authorization Contest');
 }
 
@@ -83,7 +83,7 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
 
     const response = await getContest({ client: member.client, path: { contestId } });
 
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     expect(response.data?.contest.id).toBe(contestId);
   });
 
@@ -141,11 +141,11 @@ describe('SDK Functional: contest authorization by id (#193)', () => {
       path: { contestId },
       body: { name: 'Renamed By The Commissioner' },
     });
-    expect(updateResponse.response.status).toBe(200);
+    expect(updateResponse.response?.status).toBe(200);
     expect(updateResponse.data?.contest.name).toBe('Renamed By The Commissioner');
 
     const deleteResponse = await deleteContest({ client: commissioner.client, path: { contestId } });
-    expect(deleteResponse.response.status).toBe(204);
+    expect(deleteResponse.response?.status).toBe(204);
   });
 });
 
@@ -170,7 +170,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
       listContests: await listContests({ client: outsider.client, path: { id: league.id } }),
     };
     // All five at once, so a failure names every read that let the outsider through.
-    expect(Object.fromEntries(Object.entries(reads).map(([name, response]) => [name, response.response.status])))
+    expect(Object.fromEntries(Object.entries(reads).map(([name, response]) => [name, response.response?.status])))
       .toEqual({
         listContestEntries: 403,
         getContestEntry: 403,
@@ -188,9 +188,9 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
     const entered = await enterContest({ client: commissioner.client, path: { contestId } });
     const entryId = entered.data?.entry.id as string;
 
-    expect((await listContestEntries({ client: member.client, path: { contestId } })).response.status).toBe(200);
-    expect((await getContestEntry({ client: member.client, path: { contestId, entryId } })).response.status).toBe(200);
-    expect((await listContests({ client: member.client, path: { id: league.id } })).response.status).toBe(200);
+    expect((await listContestEntries({ client: member.client, path: { contestId } })).response?.status).toBe(200);
+    expect((await getContestEntry({ client: member.client, path: { contestId, entryId } })).response?.status).toBe(200);
+    expect((await listContests({ client: member.client, path: { id: league.id } })).response?.status).toBe(200);
     // Past the gate, the contest leaderboard refuses a DRAFT contest on its own terms: 400, not 403.
     expectFunctionalError(
       await getContestLeaderboard({ client: member.client, path: { contestId } }),
@@ -201,12 +201,12 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
   it('refuses a member removed from the league a PATCH and a DELETE of their former entry, and the entry is unchanged', async () => {
     const { commissioner, member, league, contestId } = await buildContestWithMemberAndOutsider();
     const entered = await enterContest({ client: member.client, path: { contestId } });
-    expect(entered.response.status).toBe(201);
+    expect(entered.response?.status).toBe(201);
     const entryId = entered.data?.entry.id as string;
     const originalName = entered.data?.entry.name;
 
     const removed = await removeMember({ client: commissioner.client, path: { id: league.id, uid: member.userId } });
-    expect(removed.response.status).toBe(200);
+    expect(removed.response?.status).toBe(200);
 
     const patchResponse = await updateContestEntry({
       client: member.client,
@@ -219,7 +219,7 @@ describe('SDK Functional: contest reads and entry access (#291)', () => {
     expectFunctionalError(deleteResponse, { status: 403, code: 'LEAGUE_MEMBERSHIP_INACTIVE' });
 
     const reread = await getContestEntry({ client: commissioner.client, path: { contestId, entryId } });
-    expect(reread.response.status).toBe(200);
+    expect(reread.response?.status).toBe(200);
     expect(reread.data?.entry.id).toBe(entryId);
     expect(reread.data?.entry.name).toBe(originalName);
     expect(reread.data?.entry.events.every((event) => event.status === 'DRAFT')).toBe(true);

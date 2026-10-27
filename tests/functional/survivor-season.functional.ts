@@ -126,9 +126,9 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     client: a,
     path: { eventId },
     body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
-  })).response.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+  })).response?.status).toBe(200);
+  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${run}`), team).id;
 
@@ -147,7 +147,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
       })),
     },
   });
-  expect([loaded.error, loaded.response.status]).toEqual([undefined, 200]);
+  expect([loaded.error, loaded.response?.status]).toEqual([undefined, 200]);
   const released = await releaseEvent({ client: a, path: { eventId } });
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
@@ -166,12 +166,12 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
       path: { eventId, matchNumber },
       body: side === 'home' ? { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60 } : { winnerSide: MatchSide.AWAY, homeScore: 60, awayScore: 70 },
     });
-    expect([recorded.error, recorded.response.status]).toEqual([undefined, 200]);
+    expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
   };
   /** The admin calls off game `matchNumber`, as for a postponed game. */
   const cancel = async (matchNumber: number) => {
     const cancelled = await cancelEventMatch({ client: a, path: { eventId, matchNumber } });
-    expect([cancelled.error, cancelled.response.status]).toEqual([undefined, 200]);
+    expect([cancelled.error, cancelled.response?.status]).toEqual([undefined, 200]);
   };
   return { eventId, gameId: (matchNumber: number) => game(matchNumber).id, pick, result, cancel };
 }
@@ -226,7 +226,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
         configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: alice.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const entryOf = async (client: Client) => expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
@@ -236,7 +236,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
 
     const leaderboard = async (): Promise<SurvivorLeaderboardResponse> => {
       const read = await getSurvivorLeaderboard({ client: cara.client, path: { contestId } });
-      expect([read.error, read.response.status]).toEqual([undefined, 200]);
+      expect([read.error, read.response?.status]).toEqual([undefined, 200]);
       return expectMatchesSchema(SurvivorLeaderboardResponseSchema, read.data);
     };
     /** Each entry's place, whether it is in, the week it went out, its weeks survived and each week's outcome, keyed by entry. */
@@ -381,7 +381,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
     // cancelled game (which no longer counts as SCHEDULED) does not lock the pick on it.
     await week.cancel(3);
     const moved = await saveGamePicks({ client: commissioner.client, path, body: { picks: [week.pick(4, 'home')] } });
-    expect([moved.error, moved.response.status]).toEqual([undefined, 200]);
+    expect([moved.error, moved.response?.status]).toEqual([undefined, 200]);
     // The games listed leave out the cancelled one, so this shows the new pick, not that the old one
     // was cleared: the leaderboard below proves that.
     const picks = expectMatchesSchema(GamePicksResponseSchema, moved.data);

@@ -122,12 +122,12 @@ async function inviteAndJoin(
     path: { id: leagueId },
     body: { emails: [invitee.email] },
   });
-  expect(invite.response.status).toBe(201);
+  expect(invite.response?.status).toBe(201);
   const inviteCode = invite.data?.sent[0]?.inviteCode as string;
   expect(inviteCode).toBeTruthy();
 
   const accepted = await acceptInvitation({ client: invitee.client, body: { inviteCode } });
-  expect(accepted.response.status).toBe(201);
+  expect(accepted.response?.status).toBe(201);
   return inviteCode;
 }
 
@@ -177,7 +177,7 @@ async function enteredContest() {
       configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     },
   });
-  expect(created.response.status).toBe(201);
+  expect(created.response?.status).toBe(201);
   const contestId = created.data?.contest.id as string;
   const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
   expect(opened.data?.contest.status).toBe('OPEN');
@@ -194,7 +194,7 @@ async function enteredContest() {
   expect(entryId).toBeTruthy();
   // #481: an entry with an incomplete lineup cannot be submitted.
   const early = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
-  expect(early.response.status).toBe(409);
+  expect(early.response?.status).toBe(409);
   expect(early.error?.error.code).toBe('ENTRY_LINEUP_INCOMPLETE');
   const picked = await submitContestSelection({
     client: member.client,
@@ -209,7 +209,7 @@ async function enteredContest() {
     path: { contestId, entryId },
     body: { tiebreakerValue: -12 },
   });
-  expect(completed.response.status).toBe(200);
+  expect(completed.response?.status).toBe(200);
   // The confirmation goes out when the entry is submitted (#481), not when its details are saved.
   expect(await sentMailWithSubject(member.email, `Entry submitted: ${contestName}`)).toHaveLength(0);
 
@@ -245,7 +245,7 @@ describe('SDK Functional: system emails', () => {
       path: { id: league.id },
       body: { emails: [invitee.email] },
     });
-    expect(invite.response.status).toBe(201);
+    expect(invite.response?.status).toBe(201);
     expect(invite.data?.sent[0]?.emailStatus).toBe('QUEUED');
     const inviteCode = invite.data?.sent[0]?.inviteCode as string;
 
@@ -261,7 +261,7 @@ describe('SDK Functional: system emails', () => {
     expect(await inviteEmailStatusesOnceSettled(commissioner, league.id)).toEqual(['SENT']);
 
     const accepted = await acceptInvitation({ client: invitee.client, body: { inviteCode } });
-    expect(accepted.response.status).toBe(201);
+    expect(accepted.response?.status).toBe(201);
 
     const welcomes = await awaitSentMailTo(invitee.email, 1, `Welcome to ${league.name}`);
     expect(welcomes).toHaveLength(1);
@@ -294,7 +294,7 @@ describe('SDK Functional: system emails', () => {
       path: { id: league.id, invitationId: original?.id as string },
     });
 
-    expect(resent.response.status).toBe(200);
+    expect(resent.response?.status).toBe(200);
     const newCode = resent.data?.invitation.inviteCode as string;
     expect(newCode).toBeTruthy();
     expect(newCode).not.toBe(original?.inviteCode);
@@ -310,16 +310,16 @@ describe('SDK Functional: system emails', () => {
       client: invitee.client,
       body: { inviteCode: original?.inviteCode as string },
     });
-    expect(oldLink.response.status).toBe(404);
+    expect(oldLink.response?.status).toBe(404);
     const newLink = await acceptInvitation({ client: invitee.client, body: { inviteCode: newCode } });
-    expect(newLink.response.status).toBe(201);
+    expect(newLink.response?.status).toBe(201);
   });
 
   it('tells every league member a contest opened, sends the entry confirmation to the entry\'s owner linking to that entry, and wishes every member good luck with a leaderboard link when an admin starts the event', async () => {
     const { commissioner, member, bystander, event, contestId, contestUrl, entryId, contestName } = await enteredContest();
 
     const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
-    expect(submitted.response.status).toBe(200);
+    expect(submitted.response?.status).toBe(200);
     expect(submitted.data?.entries.find((row) => row.id === entryId)?.status).toBe('SUBMITTED');
 
     const confirmations = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
@@ -339,7 +339,7 @@ describe('SDK Functional: system emails', () => {
       path: { eventId: event.sportEventId },
       body: { toStatus: 'IN_PROGRESS' },
     });
-    expect(started.response.status).toBe(200);
+    expect(started.response?.status).toBe(200);
 
     const startedSubject = `${contestName} is live`;
     for (const recipient of [commissioner, member, bystander]) {
@@ -361,10 +361,10 @@ describe('SDK Functional: email preferences and unsubscribe', () => {
       path: { userId: 'me' },
       body: { category: 'LIVE_STANDINGS', enabled: false },
     });
-    expect(liveOff.response.status).toBe(200);
+    expect(liveOff.response?.status).toBe(200);
 
     const submitted = await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.sportEventId } });
-    expect(submitted.response.status).toBe(200);
+    expect(submitted.response?.status).toBe(200);
     const [receipt] = await awaitSentMailTo(member.email, 1, `Entry submitted: ${contestName}`);
     expect(receipt.listUnsubscribePost).toBe('List-Unsubscribe=One-Click');
 
@@ -381,7 +381,7 @@ describe('SDK Functional: email preferences and unsubscribe', () => {
     const admin = await buildRegisteredUser({ displayName: 'Preferences Root Admin' });
     await promoteToRootAdmin(admin);
     const started = await transitionEvent({ client: admin.client, path: { eventId: event.sportEventId }, body: { toStatus: 'IN_PROGRESS' } });
-    expect(started.response.status).toBe(200);
+    expect(started.response?.status).toBe(200);
 
     // The commissioner still gets theirs; the member, who turned live standings off, does not.
     expect(await awaitSentMailTo(commissioner.email, 1, `${contestName} is live`)).toHaveLength(1);
@@ -405,7 +405,7 @@ describe('SDK Functional: SES delivery events', () => {
       },
     });
 
-    expect(answer.response.status).toBe(403);
+    expect(answer.response?.status).toBe(403);
     expect(answer.error?.error.code).toBe('EMAIL_EVENT_UNVERIFIED');
   });
 });

@@ -42,11 +42,11 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
 
     // --- A member may not change it -----------------------------------------------------------
     const refused = await updateLeaguePlan({ client: member.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
-    expect(refused.response.status).toBe(403);
+    expect(refused.response?.status).toBe(403);
 
     // --- Platinum is not offered to commissioners yet ------------------------------------------
     const notYet = await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.PLATINUM } });
-    expect(notYet.response.status).toBe(400);
+    expect(notYet.response?.status).toBe(400);
     expect(notYet.error?.error.code).toBe('LEAGUE_PLAN_NOT_AVAILABLE');
 
     // --- A root admin outside the league moves it to Platinum -----------------------------------
@@ -60,7 +60,7 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
   it('lets a visitor who is not signed in read every plan, lowest first, with its caps and features from the plan settings', async () => {
     const response = await listLeaguePlans({ client: getSdkClient() });
 
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     const plans = LeaguePlanListResponseSchema.parse(expectDefined(response.data)).plans;
     expect(plans.map((plan) => plan.plan)).toEqual([LeaguePlan.FREE, LeaguePlan.PRO, LeaguePlan.PREMIUM, LeaguePlan.PLATINUM]);
     expect(plans[0]?.caps).toEqual({ ENTRIES_PER_CONTEST: 20, SPORTS_LEAGUES_PER_YEAR: 5 });

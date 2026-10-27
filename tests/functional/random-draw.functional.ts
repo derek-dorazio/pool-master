@@ -133,7 +133,7 @@ describe('SDK Functional: Quick pick', () => {
     expectFunctionalError(memberPick, { status: 409, code: 'SELECTION_DEALT_BY_DRAW' });
 
     const memberDraw = await runContestDraw({ client: fixture.member.client, path: { contestId } });
-    expect(memberDraw.response.status).toBe(403);
+    expect(memberDraw.response?.status).toBe(403);
 
     const drawn = await runContestDraw({ client: fixture.commissioner.client, path: { contestId } });
     expect(drawn.data?.drawnAt).toEqual(expect.any(String));

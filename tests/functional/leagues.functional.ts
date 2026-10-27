@@ -197,7 +197,7 @@ describe('SDK Functional: Leagues', () => {
     });
 
     const before = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
-    expect(before.response.status).toBe(200);
+    expect(before.response?.status).toBe(200);
     const byId = (a: string, b: string) => a.localeCompare(b);
     expect(before.data?.invitations.map((invitation) => invitation.id).sort(byId)).toEqual(
       [acceptedInvite.id, cancelledInvite.id, linkInvite.data?.invitation.id as string].sort(byId),
@@ -208,7 +208,7 @@ describe('SDK Functional: Leagues', () => {
       client: commissioner.client,
       path: { id: leagueId, code: cancelledInvite.inviteCode },
     });
-    expect(cancelled.response.status).toBe(200);
+    expect(cancelled.response?.status).toBe(200);
 
     const after = await listLeagueInvitations({ client: commissioner.client, path: { id: leagueId } });
     expect(after.data?.invitations.map((invitation) => invitation.id)).toEqual([
@@ -218,14 +218,14 @@ describe('SDK Functional: Leagues', () => {
       client: invitee.client,
       body: { inviteCode: cancelledInvite.inviteCode },
     });
-    expect(cancelledAccept.response.status).toBe(400);
+    expect(cancelledAccept.response?.status).toBe(400);
 
     // An accepted invite cannot be cancelled after the fact; it stays ACCEPTED.
     const lateCancel = await revokeInviteLink({
       client: commissioner.client,
       path: { id: leagueId, code: acceptedInvite.inviteCode },
     });
-    expect(lateCancel.response.status).toBe(409);
+    expect(lateCancel.response?.status).toBe(409);
     expect(lateCancel.error?.error.code).toBe('LEAGUE_INVITATION_NOT_CANCELLABLE');
     const acceptedRow = await getFunctionalPrisma().leagueInvitation.findUniqueOrThrow({
       where: { id: acceptedInvite.id },
@@ -246,7 +246,7 @@ describe('SDK Functional: Leagues', () => {
 
     const response = await listLeagueInvitations({ client: member.client, path: { id: leagueId } });
 
-    expect(response.response.status).toBe(403);
+    expect(response.response?.status).toBe(403);
   });
 
   it('generates a commissioner invite link and accepts it for another authenticated user', async () => {

@@ -831,9 +831,8 @@ class Loader {
       const result = await removeEventParticipant({ client, path: { eventId, sportEventParticipantId: row.id } });
       if (result.error?.error.code === 'EVENT_PARTICIPANT_HAS_PICKS') {
         picked.push(row);
-      } else if (result.error !== undefined || !(result.response as Response | undefined)?.ok) {
-        // Typed as always present, but hey-api leaves the response undefined when the fetch itself throws.
-        throw new Error(`Remove ${row.participant.name} from the field of ${event.name} failed (HTTP ${(result.response as Response | undefined)?.status ?? 'none'}): ${JSON.stringify(result.error)}`);
+      } else if (result.error !== undefined || !result.response?.ok) {
+        throw new Error(`Remove ${row.participant.name} from the field of ${event.name} failed (HTTP ${result.response?.status ?? 'none'}): ${JSON.stringify(result.error)}`);
       }
     }
     if (plan.add.length > 0) {

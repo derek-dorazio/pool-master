@@ -31,13 +31,13 @@ describe('SDK Functional: the year in review (#872)', () => {
     expect(review).toEqual({ year: lastYear, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentByName: null });
 
     const thisYear = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: lastYear + 1 } });
-    expect(thisYear.response.status).toBe(409);
+    expect(thisYear.response?.status).toBe(409);
     expect(thisYear.error?.error.code).toBe('YEAR_REVIEW_NOT_OPEN');
     const nothing = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: lastYear } });
-    expect(nothing.response.status).toBe(409);
+    expect(nothing.response?.status).toBe(409);
     expect(nothing.error?.error.code).toBe('YEAR_REVIEW_NOTHING_TO_SEND');
 
-    expect((await getYearReview({ client: member.client, path: { id: league.id } })).response.status).toBe(403);
-    expect((await sendYearReview({ client: member.client, path: { id: league.id, year: lastYear } })).response.status).toBe(403);
+    expect((await getYearReview({ client: member.client, path: { id: league.id } })).response?.status).toBe(403);
+    expect((await sendYearReview({ client: member.client, path: { id: league.id, year: lastYear } })).response?.status).toBe(403);
   });
 });

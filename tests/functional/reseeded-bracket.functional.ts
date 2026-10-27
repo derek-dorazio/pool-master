@@ -113,8 +113,8 @@ describe('SDK Functional: Reseeded bracket', () => {
       path: { eventId },
       body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed, oddsToWin: seed * 3 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const seedRow = (seed: number) => expectDefined(field.find((row) => row.participant.name === `Seed ${seed} ${RUN}`)).id;

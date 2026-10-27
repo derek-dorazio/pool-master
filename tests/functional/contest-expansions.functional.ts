@@ -70,7 +70,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
       ],
     });
     for (let entry = 1; entry <= 20; entry += 1) {
-      expect((await enterContest({ client: commissioner.client, path: { contestId } })).response.status).toBe(201);
+      expect((await enterContest({ client: commissioner.client, path: { contestId } })).response?.status).toBe(201);
     }
     expect((await enterContest({ client: commissioner.client, path: { contestId } })).error?.error.code).toBe('CONTEST_FULL');
 
@@ -89,7 +89,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
         { entriesPerContest: 500, priceCents: 3000 },
       ],
     });
-    expect((await enterContest({ client: commissioner.client, path: { contestId } })).response.status).toBe(201);
+    expect((await enterContest({ client: commissioner.client, path: { contestId } })).response?.status).toBe(201);
     // Every contest read carries the contest's own cap, so the contest page shows 21 of 50.
     expect((await getContest({ client: commissioner.client, path: { contestId } })).data?.contest.entriesPerContest).toBe(50);
 
@@ -116,8 +116,8 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const odd = await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 75 } });
     const passed = await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
 
-    expect([odd.response.status, odd.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_BAND_UNAVAILABLE']);
-    expect([passed.response.status, passed.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_BAND_UNAVAILABLE']);
+    expect([odd.response?.status, odd.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_BAND_UNAVAILABLE']);
+    expect([passed.response?.status, passed.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_BAND_UNAVAILABLE']);
     expect(await paymentLines(league.id)).toHaveLength(1);
   });
 
@@ -127,7 +127,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
 
     const read = await getContestExpansion({ client: commissioner.client, path: { id: league.id, contestId: other.contestId } });
 
-    expect([read.response.status, read.error?.error.code]).toEqual([404, 'CONTEST_NOT_FOUND']);
+    expect([read.response?.status, read.error?.error.code]).toEqual([404, 'CONTEST_NOT_FOUND']);
   });
 
   it('refuses a commissioner\'s expansion in an inactive league with 400 LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE, but lets a root admin give one', async () => {
@@ -140,7 +140,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const refused = await expandContest({ client: commissioner.client, path, body: { entriesPerContest: 50 } });
     const granted = await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 50, reason: 'Reactivating soon' } });
 
-    expect([refused.response.status, refused.error?.error.code]).toEqual([400, 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE']);
+    expect([refused.response?.status, refused.error?.error.code]).toEqual([400, 'LEAGUE_DETAILS_READ_ONLY_WHEN_INACTIVE']);
     expect(granted.data?.entriesPerContest).toBe(50);
     expect(await paymentLines(league.id)).toEqual([
       expect.objectContaining({ kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT }),
@@ -152,8 +152,8 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const outsider = await buildRegisteredUser({ displayName: 'Price Peeker' });
     const path = { id: league.id, contestId };
 
-    expect((await getContestExpansion({ client: outsider.client, path })).response.status).toBe(403);
-    expect((await expandContest({ client: outsider.client, path, body: { entriesPerContest: 50 } })).response.status).toBe(403);
+    expect((await getContestExpansion({ client: outsider.client, path })).response?.status).toBe(403);
+    expect((await expandContest({ client: outsider.client, path, body: { entriesPerContest: 50 } })).response?.status).toBe(403);
   });
 
   it('lets a root admin give any size above the cap free with a reason, recorded as a $0 grant, and refuses a commissioner', async () => {
@@ -166,8 +166,8 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const tooSmall = await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 20, reason: 'No change' } });
     const granted = await grantContestExpansion({ client: admin.client, path, body: { entriesPerContest: 300, reason: 'Charity pool' } });
 
-    expect(byCommissioner.response.status).toBe(403);
-    expect([tooSmall.response.status, tooSmall.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_NOT_ABOVE_CAP']);
+    expect(byCommissioner.response?.status).toBe(403);
+    expect([tooSmall.response?.status, tooSmall.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_NOT_ABOVE_CAP']);
     expect(granted.data).toMatchObject({ entriesPerContest: 300, expandedTo: 300 });
     expect(await paymentLines(league.id)).toEqual([
       { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Primetime Commissioner: Charity pool', payerId: admin.userId },
@@ -223,9 +223,9 @@ describe('SDK Functional: contest expansions (#987)', () => {
       { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contestId, payer: { id: commissioner.userId, name: commissioner.displayName } },
     ]);
     expect(byAdmin.data?.payments).toHaveLength(2);
-    expect(byOutsider.response.status).toBe(403);
+    expect(byOutsider.response?.status).toBe(403);
     // Members never see money (plans/payments.md §7).
-    expect(byMember.response.status).toBe(403);
+    expect(byMember.response?.status).toBe(403);
   });
 
   it('lists a user\'s own payments on their account, and nobody else\'s, leaving a root admin\'s grants off the admin\'s list', async () => {
@@ -245,7 +245,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
       description: 'Purse One Picks: up to 100 entries, free while payments are off',
       league: { id: first.league.id, name: first.league.name, leagueCode: first.league.leagueCode },
     })]);
-    expect(snooped.response.status).toBe(403);
+    expect(snooped.response?.status).toBe(403);
     expect(theirOwn.data?.payments).toEqual([]);
     // A grant is Poolmaster's gift, not a payment the admin made.
     expect((await listUserPayments({ client: admin.client, path: { userId: 'me' } })).data?.payments).toEqual([]);

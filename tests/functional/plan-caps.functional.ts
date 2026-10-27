@@ -98,7 +98,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     };
 
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Cap Keeper', leagueName: `Cap Harriers ${RUN}` });
-    expect((await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.FREE } })).response.status).toBe(200);
+    expect((await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.FREE } })).response?.status).toBe(200);
     // Free allows 5 sports leagues a year; two running leagues show the cap with Free saved at one.
     const plans = expectDefined((await getSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } })).data);
     if (plans.key !== 'PLAN_CONFIG') throw new Error('Expected the PLAN_CONFIG settings group');
@@ -111,7 +111,7 @@ describe('SDK Functional: plan caps (#947)', () => {
         expectedUpdatedAt: plans.updatedAt,
       },
     });
-    expect(saved.response.status).toBe(200);
+    expect(saved.response?.status).toBe(200);
     try {
       const templateFor = async (sportLeagueId: string, templateKey: string) => expectDefined(expectDefined((await listContestConfigTemplates({
         client: commissioner.client,
@@ -132,21 +132,21 @@ describe('SDK Functional: plan caps (#947)', () => {
 
       expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [] });
       const harbour = await releaseRace(majorsMen.id, 'Harbour Marathon', `${SEASON}-04-19T13:30:00.000Z`);
-      expect((await create('Harbour Picks', harbour, menTemplate)).response.status).toBe(201);
+      expect((await create('Harbour Picks', harbour, menTemplate)).response?.status).toBe(201);
       expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
 
       const ridge = await releaseRace(majorsWomen.id, 'Ridge Marathon', `${SEASON}-05-03T13:30:00.000Z`);
       const refused = await create('Ridge Picks', ridge, womenTemplate);
-      expect(refused.response.status).toBe(409);
+      expect(refused.response?.status).toBe(409);
       expect(refused.error?.error.code).toBe('PLAN_SPORTS_LEAGUE_LIMIT_REACHED');
 
       const valley = await releaseRace(majorsMen.id, 'Valley Marathon', `${SEASON}-10-11T13:30:00.000Z`);
-      expect((await create('Valley Picks', valley, menTemplate)).response.status).toBe(201);
+      expect((await create('Valley Picks', valley, menTemplate)).response?.status).toBe(201);
       expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
 
       // A member may not read the usage; it is the commissioner's Create contest counter.
       const member = await buildRegisteredUser({ displayName: 'Cap Bystander' });
-      expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response.status).toBe(403);
+      expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response?.status).toBe(403);
     } finally {
       await resetSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } });
     }
@@ -163,14 +163,14 @@ describe('SDK Functional: plan caps (#947)', () => {
     const enter = () => enterContest({ client: commissioner.client, path: { contestId } });
 
     for (let entry = 1; entry <= 20; entry += 1) {
-      expect((await enter()).response.status).toBe(201);
+      expect((await enter()).response?.status).toBe(201);
     }
     const full = await enter();
-    expect(full.response.status).toBe(409);
+    expect(full.response?.status).toBe(409);
     expect(full.error?.error.code).toBe('CONTEST_FULL');
 
     await updateLeaguePlan({ client: commissioner.client, path: { id: league.id }, body: { plan: LeaguePlan.PRO } });
-    expect((await enter()).response.status).toBe(201);
+    expect((await enter()).response?.status).toBe(201);
   });
 
   it('shows the commissioner each contest still taking entries with every entry it holds, drafts included, and refuses a league member who is not a commissioner with 403', async () => {
@@ -182,7 +182,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     });
     await seedContestFixture(league.id, { name: `Usage Draft ${RUN}`, selectionType: SelectionType.TIERED, status: 'DRAFT' });
     for (let entry = 1; entry <= 2; entry += 1) {
-      expect((await enterContest({ client: commissioner.client, path: { contestId } })).response.status).toBe(201);
+      expect((await enterContest({ client: commissioner.client, path: { contestId } })).response?.status).toBe(201);
     }
 
     const usage = LeaguePlanUsageResponseSchema.parse(expectDefined((await getLeaguePlanUsage({
@@ -200,6 +200,6 @@ describe('SDK Functional: plan caps (#947)', () => {
     const member = await buildRegisteredUser({ displayName: 'Usage Member' });
     const invite = expectDefined((await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } })).data);
     expect((await acceptInvitation({ client: member.client, body: { inviteCode: invite.invitation.inviteCode } })).data?.membership.userId).toBe(member.userId);
-    expect((await getLeaguePlanUsage({ client: member.client, path: { id: league.id } })).response.status).toBe(403);
+    expect((await getLeaguePlanUsage({ client: member.client, path: { id: league.id } })).response?.status).toBe(403);
   });
 });

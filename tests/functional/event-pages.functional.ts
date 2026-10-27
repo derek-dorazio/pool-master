@@ -71,7 +71,7 @@ function upcomingSeed(): SportDataFile {
 
 async function readPage(client: Client) {
   const response = await getEventPage({ client, path: { sport: Sport.AMERICAN_FOOTBALL, pageSlug: 'championship-weekend' } });
-  expect(response.response.status).toBe(200);
+  expect(response.response?.status).toBe(200);
   return EventPageResponseSchema.parse(response.data).eventPage;
 }
 
@@ -93,7 +93,7 @@ describe('SDK Functional: event pages (#1007)', () => {
       client: a,
       body: { sportLeagueId, eventYear: YEAR, name: 'Conference Championships', startDate: `${YEAR}-01-24T20:00:00.000Z`, rounds: 1, autoLifecycleEnabled: false },
     });
-    expect(draft.response.status).toBe(201);
+    expect(draft.response?.status).toBe(201);
     const drafted = await readPage(visitor);
     expect(drafted.offers.find((offer) => offer.isPrimary)).toMatchObject({
       sportLeagueName: 'Championship Weekend',
@@ -117,7 +117,7 @@ describe('SDK Functional: event pages (#1007)', () => {
   it('answers 404 EVENT_PAGE_NOT_FOUND for an address no page has', async () => {
     const response = await getEventPage({ client: getSdkClient(), path: { sport: Sport.BASKETBALL, pageSlug: 'championship-weekend' } });
 
-    expect(response.response.status).toBe(404);
+    expect(response.response?.status).toBe(404);
     expect(response.error?.error.code).toBe('EVENT_PAGE_NOT_FOUND');
   });
 });
