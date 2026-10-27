@@ -545,9 +545,14 @@ class Loader {
       : Date.parse(stored.startDate) !== Date.parse(dates.startDate);
     if (compareDates && startChanged) {
       body.startDate = dates.startDate;
+      // The real start time of an event stored at its date-only placeholder (noon UTC) is a data
+      // correction, not a move: its leagues are not told (#1042).
+      const fillsInTime = event.startsAt !== undefined
+        && Date.parse(stored.startDate) === Date.parse(shiftedEventDates({ ...event, startsAt: undefined }, this.offsetDays).startDate);
+      if (fillsInTime) body.tellMembers = false;
       changes.push(event.startsAt === undefined
         ? `start ${day(stored.startDate)} → ${day(dates.startDate)}`
-        : `start ${stored.startDate} → ${dates.startDate}`);
+        : `start ${stored.startDate} → ${dates.startDate}${fillsInTime ? ' (time filled in, leagues not told)' : ''}`);
     }
     if (compareDates && day(stored.endDate) !== day(dates.endDate)) {
       body.endDate = dates.endDate;

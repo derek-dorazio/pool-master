@@ -180,6 +180,8 @@ export const UpdateSportEventRequestSchema = z.object({
   roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
     .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),
   autoLifecycleEnabled: z.boolean().optional(),
+  tellMembers: z.boolean().optional()
+    .describe('false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event\'s start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true.'),
 }).describe('Changes to an event; omitted fields are left alone.');
 export type UpdateSportEventRequest = z.infer<typeof UpdateSportEventRequestSchema>;
 

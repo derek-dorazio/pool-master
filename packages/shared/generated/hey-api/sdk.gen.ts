@@ -1447,7 +1447,7 @@ export const getEvent = <ThrowOnError extends boolean = false>(options: Options<
 /**
  * Update a sport event
  *
- * Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.
+ * Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.
  */
 export const updateEvent = <ThrowOnError extends boolean = false>(options: Options<UpdateEventData, ThrowOnError>) => (options.client ?? client).patch<UpdateEventResponses, UpdateEventErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

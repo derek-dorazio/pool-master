@@ -21210,6 +21210,10 @@
           },
           "autoLifecycleEnabled": {
             "type": "boolean"
+          },
+          "tellMembers": {
+            "type": "boolean",
+            "description": "false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the \"event moved\" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true."
           }
         },
         "additionalProperties": false,
@@ -71309,7 +71313,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.",
+        "description": "Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.",
         "requestBody": {
           "required": true,
           "content": {
@@ -71338,6 +71342,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
