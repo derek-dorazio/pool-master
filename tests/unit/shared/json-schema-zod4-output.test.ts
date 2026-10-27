@@ -17,17 +17,17 @@ function convert(shape: z.ZodRawShape): JsonNode {
 
 describe('zodToJsonSchema on Zod 4', () => {
   it('publishes a uuid, date-time or email as its format alone, without Zod\'s stricter regex', () => {
-    const { properties } = convert({ id: z.uuid(), at: z.iso.datetime(), email: z.email() });
+    const { id, at, email } = convert({ id: z.uuid(), at: z.iso.datetime(), email: z.email() }).properties;
 
-    expect(properties.id).toEqual({ type: 'string', format: 'uuid' });
-    expect(properties.at).toEqual({ type: 'string', format: 'date-time' });
-    expect(properties.email).toEqual({ type: 'string', format: 'email' });
+    expect(id).toEqual({ type: 'string', format: 'uuid' });
+    expect(at).toEqual({ type: 'string', format: 'date-time' });
+    expect(email).toEqual({ type: 'string', format: 'email' });
   });
 
   it('keeps a pattern the schema declares itself', () => {
-    const { properties } = convert({ code: z.string().regex(/^[A-Z]{3}$/) });
+    const { code } = convert({ code: z.string().regex(/^[A-Z]{3}$/) }).properties;
 
-    expect(properties.code).toMatchObject({ pattern: '^[A-Z]{3}$' });
+    expect(code).toMatchObject({ pattern: '^[A-Z]{3}$' });
   });
 
   it('publishes a discriminated union as anyOf, so Ajv stops at the first matching member', () => {
@@ -36,16 +36,16 @@ describe('zodToJsonSchema on Zod 4', () => {
       z.object({ kind: z.literal('b') }),
     ]);
 
-    const { properties } = convert({ rules: union });
+    const { rules } = convert({ rules: union }).properties;
 
-    expect(properties.rules).toHaveProperty('anyOf');
-    expect(properties.rules).not.toHaveProperty('oneOf');
+    expect(rules).toHaveProperty('anyOf');
+    expect(rules).not.toHaveProperty('oneOf');
   });
 
   it('records toUpperCase under x-transform like trim and toLowerCase', () => {
-    const { properties } = convert({ code: z.string().trim().toUpperCase() });
+    const { code } = convert({ code: z.string().trim().toUpperCase() }).properties;
 
-    expect(properties.code).toMatchObject({ [STRING_TRANSFORM_KEYWORD]: ['trim', 'toUpperCase'] });
+    expect(code).toMatchObject({ [STRING_TRANSFORM_KEYWORD]: ['trim', 'toUpperCase'] });
   });
 
   it('refuses a string overwrite the request validator could not apply', () => {
