@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { PasswordResetConfirmRequestSchema } from "@poolmaster/shared/dto";
 import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
@@ -67,7 +67,7 @@ export function ResetPasswordPage() {
   // the URL. Synchronises with the browser's location, an external system.
   useEffect(() => {
     if (location.hash) {
-      navigate({ pathname: location.pathname, search: location.search }, { replace: true });
+      void navigate({ pathname: location.pathname, search: location.search }, { replace: true });
     }
   }, [location.hash, location.pathname, location.search, navigate]);
 

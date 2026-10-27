@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { UserRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { deleteUser, disableUser, enableUser, getUser, resetUserPassword, setUserRootAdmin, type UserDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
@@ -182,7 +182,7 @@ export function RootAdminUserPage() {
     onSuccess: () => {
       setActiveDialog(null);
       setDeleteEmailConfirmation('');
-      navigate('/manage/users', { replace: true });
+      void navigate('/manage/users', { replace: true });
     },
     invalidates: [QueryKeys.rootAdmin.users],
   });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { type SquadDto, deleteLeagueSquad, inactivateLeagueSquad } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -86,7 +86,7 @@ export function useMyTeamLifecycle({
     onSuccess: () => {
       setActiveDialog(null);
       resetOwnerForms();
-      navigate(afterDeletePath);
+      void navigate(afterDeletePath);
     },
     invalidates: [
       QueryKeys.leagueTeamOwnerInvitations.byLeague(leagueId),

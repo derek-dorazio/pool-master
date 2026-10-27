@@ -1,4 +1,4 @@
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router";
 import { useEffect, useMemo } from "react";
 import { useLeagueContextGuard } from "@/features/leagues/league-context-guard";
 import { getLogger } from "@/lib/logger";

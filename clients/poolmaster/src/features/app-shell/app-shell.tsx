@@ -6,7 +6,7 @@ import {
   useNavigate,
   useParams,
   useSearchParams,
-} from "react-router-dom";
+} from "react-router";
 import { useAuth } from "@/features/auth/auth-context";
 import { getLogger } from "@/lib/logger";
 import { AccountMenu } from "@/features/account/account-menu";
@@ -165,7 +165,7 @@ export function AppShell() {
                     },
                     "Navigating to selected league from app shell",
                   );
-                  navigate(path);
+                  void navigate(path);
                 }}
               />
             ) : null}
@@ -195,7 +195,7 @@ export function AppShell() {
                     );
 
                     await auth.clearSession();
-                    navigate("/", { replace: true });
+                    void navigate("/", { replace: true });
                     logger.info(
                       {
                         action: "appShell.logout.completed",
@@ -264,7 +264,7 @@ export function AppShell() {
               },
               "Created a league from the app shell modal",
             );
-            navigate(buildCreateLeagueDestination(leagueCode), {
+            void navigate(buildCreateLeagueDestination(leagueCode), {
               replace: true,
             });
           }}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
 import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -194,7 +194,7 @@ export function JoinLeaguePage() {
       );
       if (leagueCode) {
         rememberRecentLeagueCode(leagueCode);
-        navigate(
+        void navigate(
           buildLeaguePath(leagueCode),
           teamSetupFailed ? { state: { teamSetupFailed } satisfies ParsedRouteState } : undefined,
         );

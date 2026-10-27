@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { sportLeagueDefinitionOf, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, SportEventDto } from '@/lib/api';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';

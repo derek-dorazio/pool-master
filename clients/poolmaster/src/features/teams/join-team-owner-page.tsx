@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { RegisterWithTeamOwnerInvitationRequestSchema } from '@poolmaster/shared/dto';
 import { acceptTeamOwnerInvitation, registerWithTeamOwnerInvitation } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
@@ -153,7 +153,7 @@ export function JoinTeamOwnerPage() {
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
         rememberRecentLeagueCode(leagueCode);
-        navigate(buildLeagueTeamPath(leagueCode), { replace: true });
+        void navigate(buildLeagueTeamPath(leagueCode), { replace: true });
       }
     },
     invalidates: [
@@ -207,7 +207,7 @@ export function JoinTeamOwnerPage() {
       const leagueCode = invitationQuery.data?.league.leagueCode;
       if (leagueCode) {
         rememberRecentLeagueCode(leagueCode);
-        navigate(buildLeagueTeamPath(leagueCode));
+        void navigate(buildLeagueTeamPath(leagueCode));
       }
     },
     invalidates: [

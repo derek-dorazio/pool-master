@@ -1,4 +1,4 @@
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router';
 import { useAuth } from '@/features/auth/auth-context';
 import { formatUserName } from '@/features/account/user-name';
 import { MANAGE_LANDING_PATH } from '@/features/root-admin/manage-navigation';

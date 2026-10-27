@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router';
 import { AuthHomePage } from '@/features/auth/auth-home-page';
 import { PublicPlansPage } from '@/features/plans/public-plans-page';
 import { ForgotPasswordPage } from '@/features/auth/forgot-password-page';

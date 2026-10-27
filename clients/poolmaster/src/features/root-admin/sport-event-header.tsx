@@ -1,6 +1,6 @@
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import { Flag } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import type { SportEventDto } from '@/lib/api';
 import { IdentityHeading, SegmentedControl, StatusBadge } from '@/features/shared/ui';
 import { formatSportEventStatus, sportEventStatusTone } from './sport-admin-utils';
@@ -64,7 +64,7 @@ export function SportEventHeader({
           onChange={(next) => {
             const view = VIEWS.find((candidate) => candidate === next);
             if (view) {
-              navigate(paths[view]);
+              void navigate(paths[view]);
             }
           }}
           options={VIEWS.map((view) => ({

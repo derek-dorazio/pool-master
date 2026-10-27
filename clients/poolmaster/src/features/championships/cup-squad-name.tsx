@@ -1,5 +1,5 @@
 import type { TeamIconKey } from '@poolmaster/shared/domain';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { Chip, IconAvatar } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
 import { TeamIcon } from '@/features/teams/team-icon';

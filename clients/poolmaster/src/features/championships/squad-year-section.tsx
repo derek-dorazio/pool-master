@@ -1,6 +1,6 @@
 import { championshipYear } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
 import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';

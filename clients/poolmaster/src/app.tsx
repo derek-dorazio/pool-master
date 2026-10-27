@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { RouterProvider } from 'react-router-dom';
+import { RouterProvider } from 'react-router/dom';
 import { ErrorBoundary } from './features/app-shell/error-boundary';
 import { AuthProvider } from './features/auth/auth-provider';
 import { logger } from './lib/logger';

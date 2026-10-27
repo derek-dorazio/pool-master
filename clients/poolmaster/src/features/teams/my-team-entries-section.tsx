@@ -1,5 +1,5 @@
 import { ContestStatus, SelectionType } from '@poolmaster/shared/domain';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { describeMyEntry, ENTRY_STATE_NOTE, type MyEntriesState } from '@/features/contests/my-contest-entry';

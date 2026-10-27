@@ -1,11 +1,20 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
+      {
+        // Under Node, Vitest resolves `react-router` to its CommonJS build while `react-router/dom`
+        // loads the ES build, so a test of the whole app would hold two router contexts and
+        // every hook would throw. Node's own ES resolver reads the export map to the ES build,
+        // as the browser bundle does.
+        find: /^react-router$/,
+        replacement: fileURLToPath(import.meta.resolve('react-router')),
+      },
       {
         find: '@',
         replacement: path.resolve(import.meta.dirname, './src'),

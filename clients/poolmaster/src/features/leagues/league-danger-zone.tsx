@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { activateLeague, deleteLeague, inactivateLeague, type LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import {
@@ -76,7 +76,7 @@ export function LeagueDangerZone({ league }: { league: LeagueDto }) {
       queryClient.setQueryData<LeagueListCache>(QueryKeys.leagues.list, (current) =>
         removeLeague(current, league.id),
       );
-      navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
+      void navigate(auth.isRootAdmin ? '/manage/leagues' : '/welcome');
     },
     invalidates: [QueryKeys.rootAdmin.manageLeagues],
   });

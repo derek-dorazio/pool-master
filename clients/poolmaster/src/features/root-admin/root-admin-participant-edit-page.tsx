@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { updateParticipant } from '@/lib/api';
 import type { ParticipantDto, UpdateParticipantData } from '@/lib/api';

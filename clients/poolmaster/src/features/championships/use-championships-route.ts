@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { parseChampionshipYearParam } from './championship-year';
 

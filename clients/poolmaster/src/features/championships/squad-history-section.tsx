@@ -1,6 +1,6 @@
 import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { Trophy } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { updateEventRounds } from '@/lib/api';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';

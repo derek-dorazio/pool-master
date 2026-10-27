@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { buildEventPagePath, EventPageOfferState, getSportDefinition, sportHeaderImagePath } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';

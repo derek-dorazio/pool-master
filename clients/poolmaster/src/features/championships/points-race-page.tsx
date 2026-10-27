@@ -1,6 +1,6 @@
 import { ContestStatus, CupStatus, PlanFeature } from '@poolmaster/shared/domain';
 import { useCallback, useMemo } from 'react';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router';
 import type { CupDto } from '@/lib/api';
 import { buildLeagueCupSquadPath, buildLeaguePointsRacePath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
 import {

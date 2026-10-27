@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import { PageHeader } from '@/features/shared/ui';

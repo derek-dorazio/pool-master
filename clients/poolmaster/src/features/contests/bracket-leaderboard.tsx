@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ContestStatus } from '@poolmaster/shared/domain';
 import type { BracketLeaderboardResponse, ContestDto } from '@/lib/api';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';

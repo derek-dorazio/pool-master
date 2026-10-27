@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueTeamHomePath } from '@/features/leagues/league-routing';
 import { Chip } from '@/features/shared/ui';

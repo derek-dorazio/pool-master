@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { CupPointsScale, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { updateLeagueCupSettings, type LeagueDto } from '@/lib/api';
@@ -129,7 +129,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
     },
     onSuccess: (updated) => {
       syncLeagueCaches(queryClient, updated);
-      navigate(settingsPath);
+      void navigate(settingsPath);
     },
     // Open cups score on the table as it stands, and the championship is named by the cup name.
     invalidates: [QueryKeys.cups.all, QueryKeys.championship.all],

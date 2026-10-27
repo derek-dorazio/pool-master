@@ -1,6 +1,6 @@
 import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
-import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import {
   buildLeagueChampionshipsPath,
@@ -92,14 +92,14 @@ export function ChampionshipsLayout() {
               aria-label="Year"
               className="w-auto"
               data-testid="championships-year"
-              onChange={(event) => navigate(tabPaths(Number(event.target.value))[tab])}
+              onChange={(event) => void navigate(tabPaths(Number(event.target.value))[tab])}
               value={year}
             >
               {years.map((option) => <option key={option} value={option}>{option}</option>)}
             </Select>
             <SegmentedControl
               aria-label="Championship views"
-              onChange={(next) => navigate(paths[next as ChampionshipsTab])}
+              onChange={(next) => void navigate(paths[next as ChampionshipsTab])}
               options={[
                 { label: 'Championship', testId: 'championships-tab-championship', value: 'championship' },
                 { label: 'Trophy case', testId: 'championships-tab-trophies', value: 'trophies' },

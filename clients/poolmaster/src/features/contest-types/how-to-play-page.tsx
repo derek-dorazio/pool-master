@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { SelectionType, formatSelectionTypeName, getSportDefinition, type Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto, LeagueDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';

@@ -1,5 +1,5 @@
 import { Settings } from 'lucide-react';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
+import { Outlet, useLocation, useParams } from 'react-router';
 import { AdminAreaLayout } from '@/features/shared/ui';
 import {
   buildLeagueAdminChampionshipsEditPath,
