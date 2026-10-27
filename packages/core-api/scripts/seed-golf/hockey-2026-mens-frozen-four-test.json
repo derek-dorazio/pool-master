@@ -5,7 +5,7 @@
     "season": 2026,
     "sportLeagues": [
       "Men's Frozen Four",
-      "Men's National Championship"
+      "Men's Hockey National Championship"
     ],
     "contents": [
       "SCHEDULE",
@@ -1458,7 +1458,7 @@
       ]
     },
     {
-      "name": "Men's National Championship",
+      "name": "Men's Hockey National Championship",
       "players": [
         {
           "key": "mch-eric-pohlkamp",
@@ -1768,7 +1768,7 @@
       "events": [
         {
           "key": "mens-hockey-national-championship-2026",
-          "name": "Men's National Championship",
+          "name": "Men's Hockey National Championship",
           "startDate": "2026-04-11",
           "endDate": "2026-04-11",
           "venue": "T-Mobile Arena",

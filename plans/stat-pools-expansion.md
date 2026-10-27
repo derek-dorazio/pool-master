@@ -145,15 +145,16 @@ which matches the NFL and the NBA as Derek asked. The sport leagues are named fo
 Q7 of the stat pools plan did: **College Football Playoff** and **Final Four** (#991, #992).
 "College Football Playoff" was already the bracket league's name, so #991 built **CFP
 Semifinals** and **CFP National Championship**; #992 built
-**Men's Final Four** (the semifinals) and **Men's National Championship** (display 60 and 70, after the
-NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 90 are left for
-the women's two leagues (#1052). #1043 built **NBA Conference Finals** (display 45, just before the
+**Men's Final Four** (the semifinals) and **Men's Basketball National Championship** (display 60 and 70, after the
+NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 90 went to the WNBA's
+leagues (#1044, #993), so the women's two (#1052) take later ones. #1043 built **NBA Conference Finals** (display 45, just before the
 NBA Finals): both conference finals series are one event, game N holding each series' Game N.
 #1045 built **NHL Conference Finals** the same way (display 45, before the Stanley Cup Final).
 #1048 built **League Championship Series** the same way under BASEBALL (display 15, between MLB and
 the World Series): the ALCS and NLCS are one event.
-#1047 built **Men's Frozen Four** (display 60, after the Stanley Cup Final) and hockey's **Men's
-National Championship** (display 70), the same name as basketball's title-game league.
+#1047 built **Men's Frozen Four** (display 60, after the Stanley Cup Final) and **Men's Hockey
+National Championship** (display 70). Both title-game leagues were first named "Men's National
+Championship"; #1102 (Derek 2026-10-27) added the sport so the Clutch Card calendar's chips differ.
 #994 built soccer's **Hat Trick** (3 per goal + 2 per assist + shots on target, a new
 `SHOTS_ON_TARGET` stat) and four leagues of outfield players: **Champions League Semifinals**
 (both legs one event of two games), **Champions League Final**, **Women's World Cup Semifinals**

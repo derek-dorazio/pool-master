@@ -66,7 +66,7 @@ write.
 sport league of players scored by the composite family (the League Championship Series, World
 Series, NBA Conference Finals, NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL
 Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four,
-Men's National Championship (basketball's and hockey's), Men's Frozen Four, Champions League Semifinals,
+Men's Basketball National Championship, Men's Frozen Four, Men's Hockey National Championship, Champions League Semifinals,
 Champions League Final, Women's World Cup Semifinals, Women's World Cup Final, WNBA Semifinals and WNBA Finals
 leagues the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
