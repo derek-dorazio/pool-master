@@ -187,8 +187,10 @@ export function TierDefinitionsPanel({
           setDraft((current) => reorderById(current, orderedIds))
         }
         renderItem={(tier, { dragHandleProps }) => (
-          <div
-            className="flex items-center gap-2 rounded-2xl border border-border bg-card p-3"
+          <Tile
+            className="flex items-center gap-2 p-3"
+            padding="none"
+            radius="md"
             data-testid={`root-admin-tier-def-row-${tier.tierKey}`}
           >
             {locked ? null : (
@@ -233,7 +235,7 @@ export function TierDefinitionsPanel({
             >
               Delete
             </Button>
-          </div>
+          </Tile>
         )}
       />
 

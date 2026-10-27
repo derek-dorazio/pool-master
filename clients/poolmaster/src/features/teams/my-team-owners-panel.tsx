@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
-import { Alert, Button, Input, Tile } from '@/features/shared/ui';
+import { Alert, Button, Input, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -115,13 +115,11 @@ export function MyTeamOwnersPanel({
                   >
                     {formatUserName(member.user.firstName, member.user.lastName)}
                   </Link>
-                  <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
-                    Active owner
-                  </span>
+                  <StatusBadge>Active owner</StatusBadge>
                   {leagueMembersByUserId.get(member.userId) ? (
-                    <span className="rounded-full border border-border px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">
+                    <StatusBadge>
                       {leagueMembersByUserId.get(member.userId)?.role === LeagueRole.COMMISSIONER ? 'Commissioner' : 'Member'}
-                    </span>
+                    </StatusBadge>
                   ) : null}
                 </div>
               </div>

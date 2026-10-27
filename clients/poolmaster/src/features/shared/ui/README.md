@@ -3,7 +3,11 @@
 The shared UI layer is split into three levels:
 
 1. **Primitives** own a single reusable control or visual pattern, such as
-   `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, and `StatusBadge`.
+   `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
+   `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
+   padding when it needs less), and the small uppercase line over a title is an
+   `Eyebrow`; letter spacing comes from the theme's `tracking-eyebrow` and
+   `tracking-label`, never a hand-typed `tracking-[…]`.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
