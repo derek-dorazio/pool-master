@@ -1,6 +1,6 @@
 /**
  * "Contest expanded" (#987): a contest's expansion is told to the league's commissioners other
- * than whoever expanded it; a root admin's grant names Poolmaster. The league world is in memory;
+ * than whoever expanded it; a root admin's grant names Primetime Commissioner. The league world is in memory;
  * the email service is the real one over an in-memory outbox, so the tests assert on the emails
  * recorded.
  */
@@ -56,13 +56,13 @@ describe('ContestExpandedNotices', () => {
     expect(outbox.rows[0].textBody).toContain('Manage contest: https://app.example.test/league/OFFICE/admin/contests/contest-1');
   });
 
-  it('names Poolmaster for a root admin\'s grant and tells every commissioner', async () => {
+  it('names Primetime Commissioner for a root admin\'s grant and tells every commissioner', async () => {
     const admin = world.addUser({ firstName: 'Root', lastName: 'Admin', isRootAdmin: true });
 
     await notices().service.tellExpanded({ contest: contest(), entriesPerContest: 500, expandedById: admin.id, granted: true });
 
     expect(outbox.rows.map((row) => row.recipientEmail).sort()).toEqual(['casey@example.com', 'sam@example.com']);
-    expect(outbox.rows[0].textBody).toContain('Masters Pool was expanded to 500 entries by Poolmaster.');
+    expect(outbox.rows[0].textBody).toContain('Masters Pool was expanded to 500 entries by Primetime Commissioner.');
     expect(outbox.rows[0].textBody).not.toContain('Root Admin');
   });
 

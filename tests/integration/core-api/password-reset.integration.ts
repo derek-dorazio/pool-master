@@ -61,7 +61,7 @@ class RecordingMailDelivery implements MailDeliveryProvider {
   }
 }
 
-const CHANGED_SUBJECT = 'Your Prime Time Commissioner password was changed';
+const CHANGED_SUBJECT = 'Your Primetime Commissioner password was changed';
 
 function buildUserService(mail: MailDeliveryProvider): UserService {
   const users = new PrismaUserRepository(getPrisma());
@@ -143,7 +143,7 @@ describe('password reset request (#847)', () => {
     await service.requestReset(user.email);
 
     const message = expectDefined(mail.to(user.email)[0]);
-    expect(message.subject).toBe('Reset your Prime Time Commissioner password');
+    expect(message.subject).toBe('Reset your Primetime Commissioner password');
     expect(message.text).toContain('Hi Riley,');
     expect(message.text).toContain(`${APP_BASE_URL}/reset-password#token=`);
     const token = tokenFrom(message);

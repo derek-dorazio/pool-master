@@ -323,7 +323,7 @@ describe('RootAdminSyncDashboardPage', () => {
 
     expect(
       screen.getByText(
-        'No normalized PoolMaster write rows were captured for this sync. Use the Payloads tab to inspect the raw provider payload.',
+        'No normalized Primetime Commissioner write rows were captured for this sync. Use the Payloads tab to inspect the raw provider payload.',
       ),
     ).toBeInTheDocument();
   });

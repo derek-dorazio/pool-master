@@ -52,6 +52,7 @@ import { formatUserName } from './user-name';
 import { buildUserPath, SELF_USER_ID } from './user-routing';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
+import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
 type UserProfileFormValues = z.infer<typeof UserProfileUpdateRequestSchema>;
 type UserUsernameFormValues = z.infer<typeof UserUsernameUpdateRequestSchema>;
@@ -454,7 +455,7 @@ export function UserPage() {
           tone="success"
           title="Your account was deleted."
         >
-          <p className="mt-2 text-sm">You no longer have access to Prime Time Commissioner with this account.</p>
+          <p className="mt-2 text-sm">You no longer have access to {PRODUCT_NAME} with this account.</p>
           <Button
             className="mt-4"
             onClick={() =>
@@ -891,7 +892,7 @@ export function UserPage() {
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
             {isInactive
-              ? 'Reactivating your account restores normal Prime Time Commissioner usage immediately.'
+              ? `Reactivating your account restores normal ${PRODUCT_NAME} usage immediately.`
               : 'Inactivating your account signs you out everywhere and hides you from your leagues. You can still edit your details, and reactivate or permanently delete the account later.'}
           </p>
           {activeLifecycleAction.isError ? (

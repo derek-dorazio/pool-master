@@ -8,7 +8,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { ContestExpansionRepository, ContestRepository, LeagueRepository } from '@poolmaster/shared/db';
-import { ContestStatus, LeaguePaymentKind, type Contest } from '@poolmaster/shared/domain';
+import { ContestStatus, LeaguePaymentKind, PRODUCT_NAME, type Contest } from '@poolmaster/shared/domain';
 import type { ApiErrorCode, BillingConfig, ContestExpansionResponse } from '@poolmaster/shared/dto';
 import { ContestNotFoundError, type ContestService } from '../contests/service';
 import { contestEntriesCap, type PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -102,7 +102,7 @@ export class ContestExpansionService {
     if (state.entriesPerContest === null || entriesPerContest <= state.entriesPerContest) {
       this.refuseNotAbove(contestId, entriesPerContest, state.entriesPerContest);
     }
-    await this.write(contest, entriesPerContest, userId, LeaguePaymentKind.CONTEST_EXPANSION_GRANT, `given free by Poolmaster: ${reason.trim()}`);
+    await this.write(contest, entriesPerContest, userId, LeaguePaymentKind.CONTEST_EXPANSION_GRANT, `given free by ${PRODUCT_NAME}: ${reason.trim()}`);
     logger.info({ action: 'contestExpansion.grant.success', data: { leagueId, contestId, entriesPerContest, userId } }, 'Granted contest expansion');
     return this.describe(contest);
   }

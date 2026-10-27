@@ -170,11 +170,11 @@ describe('SDK Functional: contest expansions (#987)', () => {
     expect([tooSmall.response.status, tooSmall.error?.error.code]).toEqual([409, 'CONTEST_EXPANSION_NOT_ABOVE_CAP']);
     expect(granted.data).toMatchObject({ entriesPerContest: 300, expandedTo: 300 });
     expect(await paymentLines(league.id)).toEqual([
-      { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Poolmaster: Charity pool', payerId: admin.userId },
+      { kind: LeaguePaymentKind.CONTEST_EXPANSION_GRANT, amountCents: 0, description: 'Favour House Picks: up to 300 entries, given free by Primetime Commissioner: Charity pool', payerId: admin.userId },
     ]);
   });
 
-  it('emails the league\'s other commissioners who expanded the contest, and every commissioner a Poolmaster grant, never naming the admin', async () => {
+  it('emails the league\'s other commissioners who expanded the contest, and every commissioner a Primetime Commissioner grant, never naming the admin', async () => {
     const { commissioner, league, contestId } = await freeContest('Herald House');
     const coCommissioner = await buildRegisteredUser({ displayName: 'Herald Partner' });
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
@@ -195,13 +195,13 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const grantToKeeper = await awaitSentMailTo(commissioner.email, 1, grantSubject);
     const grantToPartner = await awaitSentMailTo(coCommissioner.email, 1, grantSubject);
     expect([grantToKeeper.length, grantToPartner.length]).toEqual([1, 1]);
-    expect(grantToKeeper[0].text).toContain('Herald House Picks was expanded to 300 entries by Poolmaster.');
+    expect(grantToKeeper[0].text).toContain('Herald House Picks was expanded to 300 entries by Primetime Commissioner.');
     expect(grantToKeeper[0].text).not.toContain('Herald Admin');
     // Whoever expanded it is not told of their own expansion.
     expect(await sentMailWithSubject(commissioner.email, 'Herald House Picks now takes 50 entries')).toEqual([]);
   });
 
-  it('lists the league\'s payment history newest first to its commissioners and root admins only, naming no payer on a Poolmaster grant', async () => {
+  it('lists the league\'s payment history newest first to its commissioners and root admins only, naming no payer on a Primetime Commissioner grant', async () => {
     const { commissioner, league, contestId } = await freeContest('Ledger House');
     const admin = await buildRegisteredUser({ firstName: 'Ledger', lastName: 'Admin' });
     await promoteToRootAdmin(admin);
@@ -219,7 +219,7 @@ describe('SDK Functional: contest expansions (#987)', () => {
     const byMember = await listLeaguePayments({ client: member.client, path: { id: league.id } });
 
     expect(byCommissioner.payments.map(({ amountCents, description, contestId: lineContestId, payer }) => ({ amountCents, description, contestId: lineContestId, payer }))).toEqual([
-      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Poolmaster: Office party', contestId, payer: null },
+      { amountCents: 0, description: 'Ledger House Picks: 50 to 300 entries, given free by Primetime Commissioner: Office party', contestId, payer: null },
       { amountCents: 0, description: 'Ledger House Picks: up to 50 entries, free while payments are off', contestId, payer: { id: commissioner.userId, name: commissioner.displayName } },
     ]);
     expect(byAdmin.data?.payments).toHaveLength(2);

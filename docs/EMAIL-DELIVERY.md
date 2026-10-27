@@ -198,7 +198,7 @@ There is no Reply-To (#844, Q6.2): a reply to the sender bounces.
   `ADMIN`, `SUPPORT`, `SECURITY`, `BOUNCE`, `HOSTMASTER`, `WEBMASTER`):
   creation refuses it with `LEAGUE_CODE_RESERVED`, and a league that has one already sends from
   the `noreply@` address in its name.
-- **Platform emails** (account emails, with no league) come from `Prime Time Commissioner
+- **Platform emails** (account emails, with no league) come from `Primetime Commissioner
   <noreply@…>`.
 
 ## Providers

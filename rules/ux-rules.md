@@ -168,6 +168,10 @@ Use those conventions as the starting point, but bias toward a consumer app:
 
 ## 9. PoolMaster-Specific UX Guidance So Far
 
+- The product's name on screen, in the browser tab, in every email and in link previews is
+  `PRODUCT_NAME` ("Primetime Commissioner"), with `PRODUCT_TAGLINE` under it, both in
+  `packages/shared/domain/brand.ts`. Copy reads them rather than typing the name, so a rename
+  is one edit. `poolmaster` stays the name of code, packages, infrastructure and the repository.
 - The header league switcher is the only way to move between leagues — there
   is no separate "My Leagues" grid/list page. Keep the switcher compact:
   - league avatar/icon

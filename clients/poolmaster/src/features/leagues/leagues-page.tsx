@@ -11,6 +11,7 @@ import {
 } from './league-routing';
 import { useLeaguesQuery } from './use-leagues-query';
 import { ComingUpRow } from '@/features/event-pages/coming-up-row';
+import { PRODUCT_NAME } from '@poolmaster/shared/domain';
 
 export function WelcomePage() {
   const auth = useAuth();
@@ -74,7 +75,7 @@ export function WelcomePage() {
           }
           body="Once you create leagues, they'll appear here."
           testId="authenticated-landing-empty"
-          title={`Welcome to Ultimate Office Pool Manager, ${formatUserName(
+          title={`Welcome to ${PRODUCT_NAME}, ${formatUserName(
             auth.user?.firstName,
             auth.user?.lastName,
           )}.`}
