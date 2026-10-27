@@ -1,0 +1,70 @@
+# Dependency updates. Each ecosystem opens at most one grouped pull request a week, on Monday
+# morning Eastern, so the weekly dependency-updates thread finds them waiting with CI already run.
+# How those PRs are landed is the dependency-updates skill (.claude/skills/dependency-updates).
+#
+# Major versions of npm packages and Docker images are ignored on purpose: a major (Prisma, zod, React, Tailwind, Node...)
+# changes how we write code and is planned as its own ticket. The weekly thread still reports
+# new majors to the owner; it just does not get a PR for them.
+#
+# Security updates are not governed by the schedule: Dependabot opens them whenever an advisory
+# lands, grouped per ecosystem, and they may be a major when that is the only fixed version.
+version: 2
+updates:
+  - package-ecosystem: npm
+    # One lockfile at the root covers every workspace.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: America/New_York
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm-minor-and-patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        update-types: [minor, patch]
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    # Dockerfile.core-api and Dockerfile.mock-contest-feed-provider. The Node version in them
+    # must match .nvmrc, which Dependabot does not update: the skill bumps it in the same PR.
+    # Not covered: the images in docker-compose.dev.yml and the CI service containers in
+    # ci.yml (mailpit is pinned there); those are bumped by hand.
+    directory: /infrastructure/docker
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: America/New_York
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-images:
+        applies-to: version-updates
+        patterns: ["*"]
+      docker-security:
+        applies-to: security-updates
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    # Majors are allowed here: our workflows pin actions by major tag (actions/checkout@v6), so a
+    # major is the only update an action ever gets, and it rarely changes more than the runtime.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "04:00"
+      timezone: America/New_York
+    groups:
+      github-actions:
+        applies-to: version-updates
+        patterns: ["*"]
+      github-actions-security:
+        applies-to: security-updates
+        patterns: ["*"]
