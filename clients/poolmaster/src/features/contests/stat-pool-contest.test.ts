@@ -57,11 +57,13 @@ describe('how a stat pool scores, in words', () => {
     }
   });
 
-  it('names the composite and its formula for a stat pool, and nothing for the sport\'s own events', () => {
+  it('names the composite and its formula for a stat pool, each game or each soccer match, and nothing for the sport\'s own events', () => {
     expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.BASEBALL, ...statPool })))
       .toBe('Box Score: total bases + runs + RBI + walks + stolen bases, each game.');
     expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.HOCKEY, ...statPool })))
       .toBe('Power Play: 2 × goals + assists + shots on goal, each game.');
+    expect(statPoolScoringLine(eventSportDefinition({ sport: Sport.SOCCER, ...statPool })))
+      .toBe('Hat Trick: 3 × goals + 2 × assists + shots on target, each match.');
     expect(statPoolScoringLine(getSportDefinition(Sport.BASEBALL))).toBeNull();
   });
 });

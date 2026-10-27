@@ -48,6 +48,9 @@ export const STAT_POOL_FORMULAS: Readonly<Record<Sport, string | null>> = {
   [Sport.TENNIS]: null,
 };
 
+/** What one of a stat pool's games is called, where it is not a game: soccer plays matches. */
+const STAT_POOL_GAME_WORD: Readonly<Partial<Record<Sport, string>>> = { [Sport.SOCCER]: 'match' };
+
 /**
  * "Box Score: total bases + runs + RBI + walks + stolen bases, each game." How a stat pool scores,
  * for Create contest and How to Play; null for a definition that is not a stat pool's.
@@ -57,5 +60,5 @@ export function statPoolScoringLine(definition: Pick<SportDefinition, 'sport' | 
   if (definition.scoringFamily !== ScoringFamily.COMPOSITE || definition.composite === null || formula === null) {
     return null;
   }
-  return `${definition.composite.name}: ${formula}, each game.`;
+  return `${definition.composite.name}: ${formula}, each ${STAT_POOL_GAME_WORD[definition.sport] ?? 'game'}.`;
 }
