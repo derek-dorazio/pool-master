@@ -163,7 +163,6 @@ export interface ContestEntryCompletedEmailData {
 export interface ContestEmailEvent {
   name: string;
   startsAt: Date;
-  venue?: string;
 }
 
 export interface ContestStartedSummaryEmailData {
@@ -171,7 +170,6 @@ export interface ContestStartedSummaryEmailData {
   leagueName: string;
   contestName: string;
   event: EmailEventHeader;
-  venue?: string;
   /** The contest's way to play. */
   format: EmailContestFormat;
   /** How the event plays, such as "4 rounds" or "16 games", when known. */
@@ -1495,7 +1493,6 @@ function renderContestStartedSummaryEmail(
     paragraph(escapeHtml(data.rules)),
     ...(followAlong ? [paragraph(escapeHtml(followAlong))] : []),
     button(action, data.leaderboardUrl),
-    ...(data.venue ? [smallPrint(`Venue: ${data.venue}`)] : []),
   ].join('');
   const textLines = [
     intro,
@@ -1505,7 +1502,6 @@ function renderContestStartedSummaryEmail(
     ...(followAlong ? ['', followAlong] : []),
     '',
     `${action}: ${data.leaderboardUrl}`,
-    ...(data.venue ? [`Venue: ${data.venue}`] : []),
   ];
 
   return buildMessage(context, {
@@ -2581,7 +2577,7 @@ function eventStrip(event: EmailEventHeader, title: string, line: string | null)
                     <td width="${STRIP_IMAGE_WIDTH}" style="width:${STRIP_IMAGE_WIDTH}px;padding:0;line-height:0;font-size:0;vertical-align:middle;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${STRIP_IMAGE_WIDTH}" height="${STRIP_IMAGE_HEIGHT}" style="display:block;width:${STRIP_IMAGE_WIDTH}px;height:${STRIP_IMAGE_HEIGHT}px;border:0;"></td>
                     <td style="padding:14px 24px;vertical-align:middle;color:#ffffff;">
                       <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
-                      <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:26px;font-weight:800;line-height:1.1;color:#ffffff;">${escapeHtml(event.eventName)}</div>
+                      <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:21px;font-weight:800;line-height:1.15;color:#ffffff;">${escapeHtml(event.eventName)}</div>
                       ${line === null ? '' : `<div style="margin-top:4px;font-size:15px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(line)}</div>`}
                     </td>
                   </tr>

@@ -71,7 +71,7 @@ export interface ContestStartedNotice {
 }
 
 function toEmailEvent(sportEvent: SportEvent): ContestEmailEvent {
-  return { name: sportEvent.name, startsAt: sportEvent.startDate, venue: sportEvent.venue };
+  return { name: sportEvent.name, startsAt: sportEvent.startDate };
 }
 
 /** The contest-settled seam ContestSettlementService calls. */
@@ -159,7 +159,6 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         contestName: contest.name,
         // A season contest's events are all in one sport league, the first event's.
         event: buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, summary.sportLeagueName),
-        ...(sportEvent.venue !== undefined && { venue: sportEvent.venue }),
         format: buildEmailContestFormat(this.deps.appBaseUrl, contest.selectionType),
         ...(eventFormat !== null && { eventFormat }),
         rules: summary.rules,

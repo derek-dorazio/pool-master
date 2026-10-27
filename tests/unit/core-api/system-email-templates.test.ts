@@ -209,7 +209,6 @@ describe('pool-master-98i system email templates', () => {
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
       event: MASTERS_EVENT,
-      venue: 'Augusta National Golf Club',
       format: TIERED,
       eventFormat: '4 rounds',
       rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
@@ -223,7 +222,7 @@ describe('pool-master-98i system email templates', () => {
     expect(message.text).toContain('Good luck, everyone. Masters Pick 6 is live with 2 entries.');
     expect(message.text).toContain('Entries: 2\nFormat: Tiered\nEvent: 4 rounds\nPick 1 golfer from each of 6 tiers. The best 4 scores count.');
     expect(message.text).toContain('Watch the leaderboard: https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1/leaderboard');
-    expect(message.text).toContain('Venue: Augusta National Golf Club');
+    expect(message.text).not.toContain('Augusta National');
     expect(message.text).not.toContain('You didn\'t enter this one');
     expect(message.html).toContain(`src="${MASTERS_EVENT.imageUrl}"`);
     expect(message.html).toContain('PGA Tour · Contest is live');
@@ -254,7 +253,7 @@ describe('pool-master-98i system email templates', () => {
       leagueName: 'Mathworks',
       contestName: 'Masters Pick 6',
       event: MASTERS_EVENT,
-      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' }],
+      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z') }],
       format: TIERED,
       rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
       entriesPerMember: '1 entry per member',
