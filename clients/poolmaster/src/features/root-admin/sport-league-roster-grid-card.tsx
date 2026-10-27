@@ -309,7 +309,7 @@ export function SportLeagueRosterGridCard({
           data={entries}
           emptyMessage={
             rosterLoading
-              ? 'Loading roster…'
+              ? 'Loading roster...'
               : `No ${participant.many} on this ${sportLeague.one} yet. Add ${participant.many} or use the bulk upload above.`
           }
           getRowId={(entry) => entry.participantId}
@@ -364,7 +364,7 @@ export function SportLeagueRosterGridCard({
         canApply={addSelectedId !== null}
         emptyMessage={
           playersQuery.isLoading
-            ? `Loading ${participant.many}…`
+            ? `Loading ${participant.many}...`
             : playersQuery.isError
               ? `We could not load the ${participant.one} list.`
               : `Every active ${participant.one} is already on this roster.`

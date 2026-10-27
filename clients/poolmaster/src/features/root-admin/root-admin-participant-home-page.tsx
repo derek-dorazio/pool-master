@@ -47,7 +47,7 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
           })}
         </p>
       ) : mappingsQuery.isLoading ? (
-        <p className="px-5 py-4 text-sm text-muted-foreground">Loading provider mappings…</p>
+        <p className="px-5 py-4 text-sm text-muted-foreground">Loading provider mappings...</p>
       ) : providerMappings.length === 0 ? (
         <p className="px-5 py-4 text-sm text-muted-foreground">No provider mappings recorded.</p>
       ) : (

@@ -192,7 +192,7 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
 
   it('says scores are loading while the round loads, and points to the bulk load when the round has none', () => {
     const { rerender } = renderCard({ rows: [], rowsLoading: true });
-    expect(screen.getByText('Loading scores…')).toBeInTheDocument();
+    expect(screen.getByText('Loading scores...')).toBeInTheDocument();
 
     rerender(
       <QueryClientProvider client={new QueryClient()}>

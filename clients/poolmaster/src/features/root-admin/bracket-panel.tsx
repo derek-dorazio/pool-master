@@ -34,7 +34,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
     );
   }
   if (!bracketQuery.data || !fieldQuery.data) {
-    return <p className="text-sm text-muted-foreground">Loading the bracket…</p>;
+    return <p className="text-sm text-muted-foreground">Loading the bracket...</p>;
   }
 
   const bracket = bracketQuery.data;

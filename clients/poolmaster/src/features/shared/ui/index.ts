@@ -39,6 +39,7 @@ export { ServerErrorBar } from "./server-error";
 export { SectionHeader } from "./section";
 export { DangerZone, DangerZoneAction, SettingsRow, SettingsSection, SettingsSectionHeader } from "./settings-section";
 export { EmptyState, ErrorState, LoadingState } from "./state";
+export { LOADING_TEXT } from "./state-copy";
 export { ProgressIndicator } from "./progress";
 export {
   SegmentedControl,

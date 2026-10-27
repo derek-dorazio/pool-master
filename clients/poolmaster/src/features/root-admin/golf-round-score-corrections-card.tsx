@@ -353,7 +353,7 @@ export function GolfRoundScoreCorrectionsCard({
           data={rows}
           emptyMessage={
             rowsLoading
-              ? 'Loading scores…'
+              ? 'Loading scores...'
               : 'No scores recorded for this round yet. Use the bulk load above.'
           }
           getRowId={(row) => row.sportEventParticipantId}

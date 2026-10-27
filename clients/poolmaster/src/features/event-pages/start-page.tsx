@@ -13,7 +13,7 @@ import { buildLeagueAdminContestPath, buildLeagueAdminPlanPath } from '@/feature
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
 import { Button, EmptyState, ErrorState, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
-import { eventPageCopy, eventPageOfferCopy } from './event-page-copy';
+import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy } from './event-page-copy';
 import { buildStartDestination, parseStartRequest, type StartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
 
@@ -195,7 +195,7 @@ function StartForUser({ request }: { request: StartRequest }) {
 function IncompleteLink() {
   return (
     <EmptyState
-      action={<LinkButton to="/how-to-play">See every way to play</LinkButton>}
+      action={<LinkButton to="/how-to-play">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>}
       body="This start link is missing its event. How to Play lists every sport and what's coming up."
       testId="start-incomplete"
       title="We couldn't tell what to start"

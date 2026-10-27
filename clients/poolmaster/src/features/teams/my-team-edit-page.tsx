@@ -13,12 +13,12 @@ export function MyTeamEditPage() {
   const teamsQuery = useLeagueSquadsQuery(league?.id ?? '');
   const teamPath = buildLeagueTeamPath(leagueCode);
 
-  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading...' });
+  const leagueContext = useLeagueContextGuard(leagueQuery);
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading..." />;
+    return <LoadingState />;
   }
 
   const team = teamsQuery.data?.find((candidate) => candidate.id === viewer.mySquadId);

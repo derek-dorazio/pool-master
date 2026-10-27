@@ -289,7 +289,7 @@ export function EventFieldGridCard({
           data={entries}
           emptyMessage={
             fieldLoading
-              ? 'Loading field…'
+              ? 'Loading field...'
               : `No ${participant.many} in the field yet. Seed from the ${sportLeagueNoun.one} roster or add participants.`
           }
           getRowId={(entry) => entry.id}

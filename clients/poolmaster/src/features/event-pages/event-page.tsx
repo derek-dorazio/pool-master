@@ -7,7 +7,7 @@ import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
-import { eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
+import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
@@ -110,7 +110,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
             </p>
           )}
           <div className="flex flex-wrap items-center gap-3" ref={hero}>
-            <StartButton request={startRequest} testId="event-page-start">Start a free league</StartButton>
+            <StartButton request={startRequest} testId="event-page-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
           </div>
           {plansQuery.data ? (
             <Chip data-testid="event-page-gift" tone="active">
@@ -160,7 +160,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
 
       {showBar ? (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card p-3 md:hidden" data-testid="event-page-bar">
-          <StartButton request={startRequest} testId="event-page-bar-start">Start a free league</StartButton>
+          <StartButton request={startRequest} testId="event-page-bar-start">{EVENT_PAGE_ACTIONS.start}</StartButton>
         </div>
       ) : null}
     </section>
@@ -170,7 +170,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
 function MovedPage() {
   return (
     <EmptyState
-      action={<LinkButton to="/how-to-play">See every way to play</LinkButton>}
+      action={<LinkButton to="/how-to-play">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>}
       body="This event page has moved. How to Play lists every sport and what's coming up."
       testId="event-page-moved"
       title="This page has moved"

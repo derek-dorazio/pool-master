@@ -1,7 +1,7 @@
 /**
  * "Contest expanded" (#987, plans/payments.md §8): when a contest's entry cap is raised, the
  * league's commissioners hear who did it and the new cap, except whoever expanded it. A root
- * admin's free grant names Primetime Commissioner rather than the admin, and every commissioner hears of it.
+ * admin's free grant names the product (`PRODUCT_NAME`) rather than the admin, and every commissioner hears of it.
  *
  * Account category, so always sent. Each expansion is told once: an expansion only ever raises a
  * contest's cap, so the contest and its new cap name it, and that is the outbox subject.
@@ -20,7 +20,7 @@ export interface ContestExpansionNotice {
   entriesPerContest: number;
   /** Who expanded it; they are not told of their own expansion. */
   expandedById: string;
-  /** True for a root admin's free grant, which names Primetime Commissioner rather than the admin. */
+  /** True for a root admin's free grant, which names the product (`PRODUCT_NAME`) rather than the admin. */
   granted: boolean;
 }
 
@@ -42,7 +42,7 @@ export class ContestExpandedNotices {
       if (!league?.isActive) return;
       const members = await activeLeagueMembersWithRoles(this.deps, league.id);
       const expander = members.find(({ user }) => user.id === expandedById)?.user;
-      // A root admin outside the league expanding as a commissioner would is named as Primetime Commissioner too.
+      // A root admin outside the league expanding as a commissioner would is named as the product too.
       const expandedBy = !granted && expander ? formatUserName(expander) : null;
       const contestUrl = buildContestAdminUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
       const commissioners = members.filter(({ user, role }) => role === LeagueRole.COMMISSIONER && user.id !== expandedById);
