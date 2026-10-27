@@ -108,6 +108,8 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     });
   });
 
+  // Both draws are played out over HTTP, one request per match: about 27 s, so the 30 s default
+  // times out on a slow runner. The settling test plays one draw, about 17 s on its own.
   it('loads both draws as seven rounds, the 32 seeds seeded and everyone else unseeded, each qualifier place filled, every match played, Zverev and Rybakina the champions', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Tennis Director' });
     await promoteToRootAdmin(admin);
@@ -150,7 +152,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
 
     const again = await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.DRY_RUN });
     expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);
-  });
+  }, 120_000);
 
   it('scores and settles an entry from the ATP\'s default tiered template by matches won, a retirement a full win for the player who went through', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Tennis Settler' });
@@ -214,5 +216,5 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
     expect([settled.totalScore, settled.displayPosition]).toEqual([198, '1']);
-  });
+  }, 60_000);
 });
