@@ -76,10 +76,9 @@ and `FIELDS`. The event:
 
 - its name as the league uses it, its start date the first game's, and `startsAt` the first
   game's start with its UTC offset, since that is when picks close;
-- its end date the UTC date on which the last possible game ends, not its local date and not
-  the expected last game. The loader ends the event at 23:00 UTC on that date, so a game in a
-  US evening (8:30 PM Eastern is 00:30 UTC) needs the day after its local date (see *Where
-  this goes wrong*);
+- its end date the local date of the last possible game, not the expected last game. The
+  loader ends the event at noon UTC the day after, which is past any US evening finish (see
+  *Where this goes wrong*);
 - its rounds the most games the round can take.
 
 A cloud session cannot reach the sport sites, so source pages come through the "Fetch sport
@@ -122,19 +121,20 @@ event's Results page.
 ### Step 7 — the round ends
 
 Completion runs on the clock, not on the last box score: the event completes, and its
-contests settle, at 23:00 UTC on its end date, whatever is loaded by then. A series that ends
-early leaves its later games unplayed, and they score nothing for anyone; the event stays in
-progress until its end date, unless an admin completes it from the event's Manage page once
-the last box score is in. Open a PR for the data file, so next year's round starts from it, and add the round's
-sources to `docs/SPORT-DATA-SOURCES.md` if they changed.
+contests settle, at noon UTC the day after its end date, whatever is loaded by then. A series
+that ends early leaves its later games unplayed, and they score nothing for anyone; the event
+stays in progress until noon UTC the day after its end date, unless an admin completes it
+from the event's Manage page once the last box score is in. Open a PR for the data file, so
+next year's round starts from it, and add the round's sources to `docs/SPORT-DATA-SOURCES.md`
+if they changed.
 
 ## Where this goes wrong
 
-- **An end date that comes too soon.** The event completes on its own at 23:00 UTC on its end
-  date and its contests settle on whatever box scores are in. An end date on the last game's
-  local date settles a US evening Game 7 before tip-off. Use the UTC date the last possible
-  game ends, and if a game is postponed past it, ask an admin to turn off the event's automatic
-  lifecycle before it passes.
+- **An end date that comes too soon.** The event completes on its own at noon UTC the day
+  after its end date and its contests settle on whatever box scores are in. An end date on the
+  expected last game settles the round before a Game 7. Use the last possible game's date, and
+  if a game is postponed past it, ask an admin to turn off the event's automatic lifecycle
+  before it passes.
 - **A field built from the current roster.** It misses the player traded at the deadline and
   keeps the injured one released last week. Use the roster for the round.
 - **Ranking by something other than the regular-season composite.** Points per game, salary or

@@ -6,7 +6,7 @@
 import {
   buildEventPagePath,
   emailFormatImagePath,
-  emailSportImagePath,
+  sportHeaderImagePath,
   sportPathSegment,
   type EventPage,
   type SelectionType,
@@ -94,7 +94,7 @@ export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: strin
 
 /** A sport's picture at the top of an email about one of its events. */
 export function buildEmailSportImageUrl(appBaseUrl: string, sport: Sport): string {
-  return `${appBaseUrl.replace(/\/+$/, '')}${emailSportImagePath(sport)}`;
+  return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sport)}`;
 }
 
 /** A way to play's How to Play picture, on its contest type tile. */

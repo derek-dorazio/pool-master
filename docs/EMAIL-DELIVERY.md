@@ -143,7 +143,7 @@ footer that we are not affiliated with it or any sports league.
 
 Gmail and Outlook show no SVG, so every picture is a JPG or PNG in
 `clients/poolmaster/public/email/`, served by the web app and linked by absolute URL on
-`appBaseUrl` (`emailSportImagePath` and `emailFormatImagePath` in `@poolmaster/shared/domain`):
+`appBaseUrl` (`sportHeaderImagePath` and `emailFormatImagePath` in `@poolmaster/shared/domain`):
 
 - `sports/<sport>.jpg`, 1200 by 480: a generic licensed photo, with a `<sport>.source.md` note
   beside it naming the photographer, the source, the licence and what was checked (no logos,
