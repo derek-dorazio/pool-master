@@ -499,7 +499,7 @@ typechecked or linted.
 
 The parser is wired with `projectService: true` and
 `tsconfigRootDir: import.meta.dirname`, which requires Node ≥ 20.11 for
-`import.meta.dirname`. CI reads the Node version from `.nvmrc` (24.21.0, the
+`import.meta.dirname`. CI reads the Node version from `.nvmrc` (24.22.1, the
 Active LTS line, since #138) and the Dockerfiles pin the same version, which
 satisfies that requirement.
 
