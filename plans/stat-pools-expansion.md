@@ -152,6 +152,8 @@ NBA Finals): both conference finals series are one event, game N holding each se
 #1045 built **NHL Conference Finals** the same way (display 45, before the Stanley Cup Final).
 #1048 built **League Championship Series** the same way under BASEBALL (display 15, between MLB and
 the World Series): the ALCS and NLCS are one event.
+#1047 built **Men's Frozen Four** (display 60, after the Stanley Cup Final) and hockey's **Men's
+National Championship** (display 70), the same name as basketball's title-game league.
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

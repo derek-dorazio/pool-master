@@ -1,0 +1,2151 @@
+{
+  "schemaVersion": 1,
+  "scope": {
+    "sport": "HOCKEY",
+    "season": 2026,
+    "sportLeagues": [
+      "Men's Frozen Four",
+      "Men's National Championship"
+    ],
+    "contents": [
+      "SCHEDULE",
+      "PLAYERS",
+      "FIELDS",
+      "STATS",
+      "RESULTS"
+    ]
+  },
+  "testData": true,
+  "provenance": {
+    "gatheredAt": "2026-10-27",
+    "gatheredBy": "load-sport-data, the 2026 men's Frozen Four at T-Mobile Arena, Las Vegas, as played: the national semifinals on 9 April (Wisconsin beat North Dakota 2-1, Denver beat Michigan 4-3 in double overtime) and the National Championship on 11 April (Denver beat Wisconsin 2-1). Each event is one round, one game for each team. The field is every skater in the game's box score, positions (forward or defense) from ESPN's box scores and birth countries from ESPN's athlete records; ranking is the skater's 2025-26 Power Play total before the Frozen Four (2 per goal + assists + shots on goal), from the school's season statistics less the skater's Frozen Four games. Each box score (goals, assists, shots on goal) is from ESPN, cross-checked skater by skater against College Hockey News, which agree on every line; College Hockey News lists Denver's Brady Milburn as a dressed extra with no line in both games, where ESPN lists him with no goal, assist or shot, so he has an empty line. A skater with no goal, assist or shot in a game has an empty line.",
+    "sources": [
+      {
+        "name": "ESPN men's college hockey, Frozen Four semifinal Wisconsin v North Dakota box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/summary?event=401862339"
+      },
+      {
+        "name": "ESPN men's college hockey, Frozen Four semifinal Denver v Michigan box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/summary?event=401862340"
+      },
+      {
+        "name": "ESPN men's college hockey, National Championship Denver v Wisconsin box score",
+        "url": "https://site.api.espn.com/apis/site/v2/sports/hockey/mens-college-hockey/summary?event=401862341"
+      },
+      {
+        "name": "College Hockey News, Wisconsin v North Dakota box score",
+        "url": "https://www.collegehockeynews.com/box/final/20260409/wis/ndk/"
+      },
+      {
+        "name": "College Hockey News, Denver v Michigan box score",
+        "url": "https://www.collegehockeynews.com/box/final/20260409/den/mic/"
+      },
+      {
+        "name": "College Hockey News, Wisconsin v Denver box score",
+        "url": "https://www.collegehockeynews.com/box/final/20260411/wis/den/"
+      },
+      {
+        "name": "College Hockey News, 2025-26 schedule and results (the Frozen Four at T-Mobile Arena)",
+        "url": "https://www.collegehockeynews.com/schedules/?season=20252026"
+      },
+      {
+        "name": "Denver Pioneers, 2025-26 men's ice hockey cumulative statistics",
+        "url": "https://denverpioneers.com/sports/mens-ice-hockey/stats/2025-26"
+      },
+      {
+        "name": "Michigan Wolverines, 2025-26 men's ice hockey cumulative statistics",
+        "url": "https://mgoblue.com/sports/mens-ice-hockey/stats/2025-26"
+      },
+      {
+        "name": "Wisconsin Badgers, 2025-26 men's hockey cumulative statistics",
+        "url": "https://uwbadgers.com/sports/mens-ice-hockey/stats/2025-26"
+      },
+      {
+        "name": "North Dakota Fighting Hawks, 2025-26 men's hockey cumulative statistics",
+        "url": "https://fightinghawks.com/sports/mens-ice-hockey/stats/2025-26"
+      },
+      {
+        "name": "ESPN men's college hockey athletes, 2025-26 season (position and birth country, seasons/2026/athletes/<id>)",
+        "url": "https://sports.core.api.espn.com/v2/sports/hockey/leagues/mens-college-hockey/seasons/2026/athletes/5342469"
+      }
+    ]
+  },
+  "sportLeagues": [
+    {
+      "name": "Men's Frozen Four",
+      "players": [
+        {
+          "key": "mch-eric-pohlkamp",
+          "name": "Eric Pohlkamp",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-t-j-hughes",
+          "name": "T.J. Hughes",
+          "countryCode": "CA",
+          "ranking": 2,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-quinn-finley",
+          "name": "Quinn Finley",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-sam-harris",
+          "name": "Sam Harris",
+          "countryCode": "US",
+          "ranking": 4,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-will-zellers",
+          "name": "Will Zellers",
+          "countryCode": "US",
+          "ranking": 5,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-michael-hage",
+          "name": "Michael Hage",
+          "countryCode": "CA",
+          "ranking": 6,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-will-horcoff",
+          "name": "Will Horcoff",
+          "countryCode": "US",
+          "ranking": 7,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-boston-buckberger",
+          "name": "Boston Buckberger",
+          "countryCode": "CA",
+          "ranking": 8,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-jayden-perron",
+          "name": "Jayden Perron",
+          "countryCode": "CA",
+          "ranking": 9,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-ben-strinden",
+          "name": "Ben Strinden",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-rieger-lorenz",
+          "name": "Rieger Lorenz",
+          "countryCode": "CA",
+          "ranking": 11,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-dylan-james",
+          "name": "Dylan James",
+          "countryCode": "CA",
+          "ranking": 12,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-christian-fitzgerald",
+          "name": "Christian Fitzgerald",
+          "countryCode": "CA",
+          "ranking": 13,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kyle-chyzowski",
+          "name": "Kyle Chyzowski",
+          "countryCode": "CA",
+          "ranking": 14,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-nick-moldenhauer",
+          "name": "Nick Moldenhauer",
+          "countryCode": "CA",
+          "ranking": 15,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-garrett-schifsky",
+          "name": "Garrett Schifsky",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-adam-valentini",
+          "name": "Adam Valentini",
+          "countryCode": "CA",
+          "ranking": 17,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-simon-tassy",
+          "name": "Simon Tassy",
+          "countryCode": "CA",
+          "ranking": 18,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-ryan-botterill",
+          "name": "Ryan Botterill",
+          "countryCode": "CA",
+          "ranking": 19,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-ben-dexheimer",
+          "name": "Ben Dexheimer",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-samu-salminen",
+          "name": "Samu Salminen",
+          "countryCode": "FI",
+          "ranking": 21,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-abram-wiebe",
+          "name": "Abram Wiebe",
+          "countryCode": "CA",
+          "ranking": 22,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-cole-reschny",
+          "name": "Cole Reschny",
+          "countryCode": "CA",
+          "ranking": 23,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-malcolm-spence",
+          "name": "Malcolm Spence",
+          "countryCode": "CA",
+          "ranking": 24,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-kristian-epperson",
+          "name": "Kristian Epperson",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-grady-deering",
+          "name": "Grady Deering",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jake-livanavage",
+          "name": "Jake Livanavage",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-luke-osburn",
+          "name": "Luke Osburn",
+          "countryCode": "US",
+          "ranking": 28,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-mac-swanson",
+          "name": "Mac Swanson",
+          "countryCode": "US",
+          "ranking": 29,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-ellis-rickwood",
+          "name": "Ellis Rickwood",
+          "countryCode": "CA",
+          "ranking": 30,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-eric-jamieson",
+          "name": "Eric Jamieson",
+          "countryCode": "CA",
+          "ranking": 31,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-james-reeder",
+          "name": "James Reeder",
+          "countryCode": "US",
+          "ranking": 32,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-blake-montgomery",
+          "name": "Blake Montgomery",
+          "countryCode": "US",
+          "ranking": 33,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-clarke-caswell",
+          "name": "Clarke Caswell",
+          "countryCode": "CA",
+          "ranking": 34,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-gavin-morrissey",
+          "name": "Gavin Morrissey",
+          "countryCode": "US",
+          "ranking": 35,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jack-kernan",
+          "name": "Jack Kernan",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-jake-fisher",
+          "name": "Jake Fisher",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-josh-eernisse",
+          "name": "Josh Eernisse",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-oliver-tulk",
+          "name": "Oliver Tulk",
+          "countryCode": "CA",
+          "ranking": 39,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-keaton-verhoeff",
+          "name": "Keaton Verhoeff",
+          "countryCode": "CA",
+          "ranking": 40,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-ben-robertson",
+          "name": "Ben Robertson",
+          "countryCode": "US",
+          "ranking": 41,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-cody-croal",
+          "name": "Cody Croal",
+          "countryCode": "US",
+          "ranking": 42,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-cole-mckinney",
+          "name": "Cole McKinney",
+          "countryCode": "US",
+          "ranking": 43,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-kieran-cebrian",
+          "name": "Kieran Cebrian",
+          "countryCode": "US",
+          "ranking": 44,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-dakoda-rheaume-mullen",
+          "name": "Dakoda Rheaume-Mullen",
+          "countryCode": "US",
+          "ranking": 45,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-ollie-josephson",
+          "name": "Ollie Josephson",
+          "countryCode": "CA",
+          "ranking": 46,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-tyler-duke",
+          "name": "Tyler Duke",
+          "countryCode": "US",
+          "ranking": 47,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-ej-emery",
+          "name": "EJ Emery",
+          "countryCode": "US",
+          "ranking": 48,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-garrett-brown",
+          "name": "Garrett Brown",
+          "countryCode": "US",
+          "ranking": 49,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-asher-barnett",
+          "name": "Asher Barnett",
+          "countryCode": "US",
+          "ranking": 50,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-aidan-park",
+          "name": "Aidan Park",
+          "countryCode": "US",
+          "ranking": 51,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-adam-pietila",
+          "name": "Adam Pietila",
+          "countryCode": "US",
+          "ranking": 52,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jack-horbach",
+          "name": "Jack Horbach",
+          "countryCode": "US",
+          "ranking": 53,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-luca-fantilli",
+          "name": "Luca Fantilli",
+          "countryCode": "CA",
+          "ranking": 54,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-hagen-burrows",
+          "name": "Hagen Burrows",
+          "countryCode": "US",
+          "ranking": 55,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kienan-draper",
+          "name": "Kienan Draper",
+          "countryCode": "US",
+          "ranking": 56,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-aiden-dubinsky",
+          "name": "Aiden Dubinsky",
+          "countryCode": "US",
+          "ranking": 57,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-cale-ashcroft",
+          "name": "Cale Ashcroft",
+          "countryCode": "CA",
+          "ranking": 58,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-drew-schock",
+          "name": "Drew Schock",
+          "countryCode": "US",
+          "ranking": 59,
+          "team": "Michigan Wolverines",
+          "position": "D"
+        },
+        {
+          "key": "mch-tyler-young",
+          "name": "Tyler Young",
+          "countryCode": "US",
+          "ranking": 60,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-kent-anderson",
+          "name": "Kent Anderson",
+          "countryCode": "CA",
+          "ranking": 61,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-david-klee",
+          "name": "David Klee",
+          "countryCode": "US",
+          "ranking": 62,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-joe-palodichuk",
+          "name": "Joe Palodichuk",
+          "countryCode": "US",
+          "ranking": 63,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-finn-brink",
+          "name": "Finn Brink",
+          "countryCode": "US",
+          "ranking": 64,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-reid-varkonyi",
+          "name": "Reid Varkonyi",
+          "countryCode": "CA",
+          "ranking": 65,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-vasily-zelenov",
+          "name": "Vasily Zelenov",
+          "countryCode": "RU",
+          "ranking": 66,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-brendan-mcmorrow",
+          "name": "Brendan McMorrow",
+          "countryCode": "US",
+          "ranking": 67,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-brady-milburn",
+          "name": "Brady Milburn",
+          "countryCode": "CA",
+          "ranking": 68,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kyle-kukkonen",
+          "name": "Kyle Kukkonen",
+          "countryCode": "US",
+          "ranking": 69,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-andrew-strathmann",
+          "name": "Andrew Strathmann",
+          "countryCode": "US",
+          "ranking": 70,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-jack-phelan",
+          "name": "Jack Phelan",
+          "countryCode": "US",
+          "ranking": 71,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-bennett-zmolek",
+          "name": "Bennett Zmolek",
+          "countryCode": "US",
+          "ranking": 72,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-sam-laurila",
+          "name": "Sam Laurila",
+          "countryCode": "US",
+          "ranking": 73,
+          "team": "North Dakota Fighting Hawks",
+          "position": "D"
+        },
+        {
+          "key": "mch-josh-zakreski",
+          "name": "Josh Zakreski",
+          "countryCode": "CA",
+          "ranking": 74,
+          "team": "North Dakota Fighting Hawks",
+          "position": "F"
+        },
+        {
+          "key": "mch-kason-muscutt",
+          "name": "Kason Muscutt",
+          "countryCode": "US",
+          "ranking": 75,
+          "team": "Michigan Wolverines",
+          "position": "F"
+        },
+        {
+          "key": "mch-weston-knox",
+          "name": "Weston Knox",
+          "countryCode": "US",
+          "ranking": 76,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        }
+      ],
+      "events": [
+        {
+          "key": "mens-frozen-four-2026",
+          "name": "Men's Frozen Four",
+          "startDate": "2026-04-09",
+          "endDate": "2026-04-09",
+          "venue": "T-Mobile Arena",
+          "location": "Las Vegas, Nevada",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mch-eric-pohlkamp",
+              "ranking": 1
+            },
+            {
+              "player": "mch-t-j-hughes",
+              "ranking": 2
+            },
+            {
+              "player": "mch-quinn-finley",
+              "ranking": 3
+            },
+            {
+              "player": "mch-sam-harris",
+              "ranking": 4
+            },
+            {
+              "player": "mch-will-zellers",
+              "ranking": 5
+            },
+            {
+              "player": "mch-michael-hage",
+              "ranking": 6
+            },
+            {
+              "player": "mch-will-horcoff",
+              "ranking": 7
+            },
+            {
+              "player": "mch-boston-buckberger",
+              "ranking": 8
+            },
+            {
+              "player": "mch-jayden-perron",
+              "ranking": 9
+            },
+            {
+              "player": "mch-ben-strinden",
+              "ranking": 10
+            },
+            {
+              "player": "mch-rieger-lorenz",
+              "ranking": 11
+            },
+            {
+              "player": "mch-dylan-james",
+              "ranking": 12
+            },
+            {
+              "player": "mch-christian-fitzgerald",
+              "ranking": 13
+            },
+            {
+              "player": "mch-kyle-chyzowski",
+              "ranking": 14
+            },
+            {
+              "player": "mch-nick-moldenhauer",
+              "ranking": 15
+            },
+            {
+              "player": "mch-garrett-schifsky",
+              "ranking": 16
+            },
+            {
+              "player": "mch-adam-valentini",
+              "ranking": 17
+            },
+            {
+              "player": "mch-simon-tassy",
+              "ranking": 18
+            },
+            {
+              "player": "mch-ryan-botterill",
+              "ranking": 19
+            },
+            {
+              "player": "mch-ben-dexheimer",
+              "ranking": 20
+            },
+            {
+              "player": "mch-samu-salminen",
+              "ranking": 21
+            },
+            {
+              "player": "mch-abram-wiebe",
+              "ranking": 22
+            },
+            {
+              "player": "mch-cole-reschny",
+              "ranking": 23
+            },
+            {
+              "player": "mch-malcolm-spence",
+              "ranking": 24
+            },
+            {
+              "player": "mch-kristian-epperson",
+              "ranking": 25
+            },
+            {
+              "player": "mch-grady-deering",
+              "ranking": 26
+            },
+            {
+              "player": "mch-jake-livanavage",
+              "ranking": 27
+            },
+            {
+              "player": "mch-luke-osburn",
+              "ranking": 28
+            },
+            {
+              "player": "mch-mac-swanson",
+              "ranking": 29
+            },
+            {
+              "player": "mch-ellis-rickwood",
+              "ranking": 30
+            },
+            {
+              "player": "mch-eric-jamieson",
+              "ranking": 31
+            },
+            {
+              "player": "mch-james-reeder",
+              "ranking": 32
+            },
+            {
+              "player": "mch-blake-montgomery",
+              "ranking": 33
+            },
+            {
+              "player": "mch-clarke-caswell",
+              "ranking": 34
+            },
+            {
+              "player": "mch-gavin-morrissey",
+              "ranking": 35
+            },
+            {
+              "player": "mch-jack-kernan",
+              "ranking": 36
+            },
+            {
+              "player": "mch-jake-fisher",
+              "ranking": 37
+            },
+            {
+              "player": "mch-josh-eernisse",
+              "ranking": 38
+            },
+            {
+              "player": "mch-oliver-tulk",
+              "ranking": 39
+            },
+            {
+              "player": "mch-keaton-verhoeff",
+              "ranking": 40
+            },
+            {
+              "player": "mch-ben-robertson",
+              "ranking": 41
+            },
+            {
+              "player": "mch-cody-croal",
+              "ranking": 42
+            },
+            {
+              "player": "mch-cole-mckinney",
+              "ranking": 43
+            },
+            {
+              "player": "mch-kieran-cebrian",
+              "ranking": 44
+            },
+            {
+              "player": "mch-dakoda-rheaume-mullen",
+              "ranking": 45
+            },
+            {
+              "player": "mch-ollie-josephson",
+              "ranking": 46
+            },
+            {
+              "player": "mch-tyler-duke",
+              "ranking": 47
+            },
+            {
+              "player": "mch-ej-emery",
+              "ranking": 48
+            },
+            {
+              "player": "mch-garrett-brown",
+              "ranking": 49
+            },
+            {
+              "player": "mch-asher-barnett",
+              "ranking": 50
+            },
+            {
+              "player": "mch-aidan-park",
+              "ranking": 51
+            },
+            {
+              "player": "mch-adam-pietila",
+              "ranking": 52
+            },
+            {
+              "player": "mch-jack-horbach",
+              "ranking": 53
+            },
+            {
+              "player": "mch-luca-fantilli",
+              "ranking": 54
+            },
+            {
+              "player": "mch-hagen-burrows",
+              "ranking": 55
+            },
+            {
+              "player": "mch-kienan-draper",
+              "ranking": 56
+            },
+            {
+              "player": "mch-aiden-dubinsky",
+              "ranking": 57
+            },
+            {
+              "player": "mch-cale-ashcroft",
+              "ranking": 58
+            },
+            {
+              "player": "mch-drew-schock",
+              "ranking": 59
+            },
+            {
+              "player": "mch-tyler-young",
+              "ranking": 60
+            },
+            {
+              "player": "mch-kent-anderson",
+              "ranking": 61
+            },
+            {
+              "player": "mch-david-klee",
+              "ranking": 62
+            },
+            {
+              "player": "mch-joe-palodichuk",
+              "ranking": 63
+            },
+            {
+              "player": "mch-finn-brink",
+              "ranking": 64
+            },
+            {
+              "player": "mch-reid-varkonyi",
+              "ranking": 65
+            },
+            {
+              "player": "mch-vasily-zelenov",
+              "ranking": 66
+            },
+            {
+              "player": "mch-brendan-mcmorrow",
+              "ranking": 67
+            },
+            {
+              "player": "mch-brady-milburn",
+              "ranking": 68
+            },
+            {
+              "player": "mch-kyle-kukkonen",
+              "ranking": 69
+            },
+            {
+              "player": "mch-andrew-strathmann",
+              "ranking": 70
+            },
+            {
+              "player": "mch-jack-phelan",
+              "ranking": 71
+            },
+            {
+              "player": "mch-bennett-zmolek",
+              "ranking": 72
+            },
+            {
+              "player": "mch-sam-laurila",
+              "ranking": 73
+            },
+            {
+              "player": "mch-josh-zakreski",
+              "ranking": 74
+            },
+            {
+              "player": "mch-kason-muscutt",
+              "ranking": 75
+            },
+            {
+              "player": "mch-weston-knox",
+              "ranking": 76
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mch-abram-wiebe",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-adam-pietila",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-adam-valentini",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-aidan-park",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-aiden-dubinsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-andrew-strathmann",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-asher-barnett",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-ben-dexheimer",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mch-ben-robertson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-ben-strinden",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mch-bennett-zmolek",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-blake-montgomery",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "mch-boston-buckberger",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-brady-milburn",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-brendan-mcmorrow",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-cale-ashcroft",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-christian-fitzgerald",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-clarke-caswell",
+                  "stats": {
+                    "GOALS": 1,
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-cody-croal",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-cole-mckinney",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-cole-reschny",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-dakoda-rheaume-mullen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-david-klee",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-drew-schock",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-dylan-james",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-ej-emery",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-ellis-rickwood",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-eric-jamieson",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-eric-pohlkamp",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-finn-brink",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-garrett-brown",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mch-garrett-schifsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "mch-gavin-morrissey",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-grady-deering",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-hagen-burrows",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-jack-horbach",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-jack-kernan",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-jack-phelan",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-jake-fisher",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-jake-livanavage",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-james-reeder",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-jayden-perron",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "mch-joe-palodichuk",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-josh-eernisse",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-josh-zakreski",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kason-muscutt",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-keaton-verhoeff",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 5
+                  }
+                },
+                {
+                  "player": "mch-kent-anderson",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kienan-draper",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-kieran-cebrian",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-kristian-epperson",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kyle-chyzowski",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-kyle-kukkonen",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-luca-fantilli",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-luke-osburn",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-mac-swanson",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-malcolm-spence",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-michael-hage",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-nick-moldenhauer",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-oliver-tulk",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-ollie-josephson",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-quinn-finley",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-reid-varkonyi",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-rieger-lorenz",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-ryan-botterill",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-sam-harris",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-sam-laurila",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-samu-salminen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-simon-tassy",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 6
+                  }
+                },
+                {
+                  "player": "mch-t-j-hughes",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 4
+                  }
+                },
+                {
+                  "player": "mch-tyler-duke",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-tyler-young",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-vasily-zelenov",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-weston-knox",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-will-horcoff",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-will-zellers",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Men's National Championship",
+      "players": [
+        {
+          "key": "mch-eric-pohlkamp",
+          "name": "Eric Pohlkamp",
+          "countryCode": "US",
+          "ranking": 1,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-quinn-finley",
+          "name": "Quinn Finley",
+          "countryCode": "US",
+          "ranking": 2,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-sam-harris",
+          "name": "Sam Harris",
+          "countryCode": "US",
+          "ranking": 3,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-boston-buckberger",
+          "name": "Boston Buckberger",
+          "countryCode": "CA",
+          "ranking": 4,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-rieger-lorenz",
+          "name": "Rieger Lorenz",
+          "countryCode": "CA",
+          "ranking": 5,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-christian-fitzgerald",
+          "name": "Christian Fitzgerald",
+          "countryCode": "CA",
+          "ranking": 6,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kyle-chyzowski",
+          "name": "Kyle Chyzowski",
+          "countryCode": "CA",
+          "ranking": 7,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-simon-tassy",
+          "name": "Simon Tassy",
+          "countryCode": "CA",
+          "ranking": 8,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-ryan-botterill",
+          "name": "Ryan Botterill",
+          "countryCode": "CA",
+          "ranking": 9,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-ben-dexheimer",
+          "name": "Ben Dexheimer",
+          "countryCode": "US",
+          "ranking": 10,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-samu-salminen",
+          "name": "Samu Salminen",
+          "countryCode": "FI",
+          "ranking": 11,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kristian-epperson",
+          "name": "Kristian Epperson",
+          "countryCode": "US",
+          "ranking": 12,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-grady-deering",
+          "name": "Grady Deering",
+          "countryCode": "US",
+          "ranking": 13,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-luke-osburn",
+          "name": "Luke Osburn",
+          "countryCode": "US",
+          "ranking": 14,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-eric-jamieson",
+          "name": "Eric Jamieson",
+          "countryCode": "CA",
+          "ranking": 15,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-james-reeder",
+          "name": "James Reeder",
+          "countryCode": "US",
+          "ranking": 16,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-blake-montgomery",
+          "name": "Blake Montgomery",
+          "countryCode": "US",
+          "ranking": 17,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-clarke-caswell",
+          "name": "Clarke Caswell",
+          "countryCode": "CA",
+          "ranking": 18,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-gavin-morrissey",
+          "name": "Gavin Morrissey",
+          "countryCode": "US",
+          "ranking": 19,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jake-fisher",
+          "name": "Jake Fisher",
+          "countryCode": "US",
+          "ranking": 20,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-oliver-tulk",
+          "name": "Oliver Tulk",
+          "countryCode": "CA",
+          "ranking": 21,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kieran-cebrian",
+          "name": "Kieran Cebrian",
+          "countryCode": "US",
+          "ranking": 22,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-garrett-brown",
+          "name": "Garrett Brown",
+          "countryCode": "US",
+          "ranking": 23,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-adam-pietila",
+          "name": "Adam Pietila",
+          "countryCode": "US",
+          "ranking": 24,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jack-horbach",
+          "name": "Jack Horbach",
+          "countryCode": "US",
+          "ranking": 25,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-hagen-burrows",
+          "name": "Hagen Burrows",
+          "countryCode": "US",
+          "ranking": 26,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-aiden-dubinsky",
+          "name": "Aiden Dubinsky",
+          "countryCode": "US",
+          "ranking": 27,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-cale-ashcroft",
+          "name": "Cale Ashcroft",
+          "countryCode": "CA",
+          "ranking": 28,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-kent-anderson",
+          "name": "Kent Anderson",
+          "countryCode": "CA",
+          "ranking": 29,
+          "team": "Denver Pioneers",
+          "position": "D"
+        },
+        {
+          "key": "mch-joe-palodichuk",
+          "name": "Joe Palodichuk",
+          "countryCode": "US",
+          "ranking": 30,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-finn-brink",
+          "name": "Finn Brink",
+          "countryCode": "US",
+          "ranking": 31,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-reid-varkonyi",
+          "name": "Reid Varkonyi",
+          "countryCode": "CA",
+          "ranking": 32,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-vasily-zelenov",
+          "name": "Vasily Zelenov",
+          "countryCode": "RU",
+          "ranking": 33,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-brendan-mcmorrow",
+          "name": "Brendan McMorrow",
+          "countryCode": "US",
+          "ranking": 34,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-brady-milburn",
+          "name": "Brady Milburn",
+          "countryCode": "CA",
+          "ranking": 35,
+          "team": "Denver Pioneers",
+          "position": "F"
+        },
+        {
+          "key": "mch-kyle-kukkonen",
+          "name": "Kyle Kukkonen",
+          "countryCode": "US",
+          "ranking": 36,
+          "team": "Wisconsin Badgers",
+          "position": "F"
+        },
+        {
+          "key": "mch-jack-phelan",
+          "name": "Jack Phelan",
+          "countryCode": "US",
+          "ranking": 37,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        },
+        {
+          "key": "mch-weston-knox",
+          "name": "Weston Knox",
+          "countryCode": "US",
+          "ranking": 38,
+          "team": "Wisconsin Badgers",
+          "position": "D"
+        }
+      ],
+      "events": [
+        {
+          "key": "mens-hockey-national-championship-2026",
+          "name": "Men's National Championship",
+          "startDate": "2026-04-11",
+          "endDate": "2026-04-11",
+          "venue": "T-Mobile Arena",
+          "location": "Las Vegas, Nevada",
+          "rounds": 1,
+          "roundsPar": null,
+          "field": [
+            {
+              "player": "mch-eric-pohlkamp",
+              "ranking": 1
+            },
+            {
+              "player": "mch-quinn-finley",
+              "ranking": 2
+            },
+            {
+              "player": "mch-sam-harris",
+              "ranking": 3
+            },
+            {
+              "player": "mch-boston-buckberger",
+              "ranking": 4
+            },
+            {
+              "player": "mch-rieger-lorenz",
+              "ranking": 5
+            },
+            {
+              "player": "mch-christian-fitzgerald",
+              "ranking": 6
+            },
+            {
+              "player": "mch-kyle-chyzowski",
+              "ranking": 7
+            },
+            {
+              "player": "mch-simon-tassy",
+              "ranking": 8
+            },
+            {
+              "player": "mch-ryan-botterill",
+              "ranking": 9
+            },
+            {
+              "player": "mch-ben-dexheimer",
+              "ranking": 10
+            },
+            {
+              "player": "mch-samu-salminen",
+              "ranking": 11
+            },
+            {
+              "player": "mch-kristian-epperson",
+              "ranking": 12
+            },
+            {
+              "player": "mch-grady-deering",
+              "ranking": 13
+            },
+            {
+              "player": "mch-luke-osburn",
+              "ranking": 14
+            },
+            {
+              "player": "mch-eric-jamieson",
+              "ranking": 15
+            },
+            {
+              "player": "mch-james-reeder",
+              "ranking": 16
+            },
+            {
+              "player": "mch-blake-montgomery",
+              "ranking": 17
+            },
+            {
+              "player": "mch-clarke-caswell",
+              "ranking": 18
+            },
+            {
+              "player": "mch-gavin-morrissey",
+              "ranking": 19
+            },
+            {
+              "player": "mch-jake-fisher",
+              "ranking": 20
+            },
+            {
+              "player": "mch-oliver-tulk",
+              "ranking": 21
+            },
+            {
+              "player": "mch-kieran-cebrian",
+              "ranking": 22
+            },
+            {
+              "player": "mch-garrett-brown",
+              "ranking": 23
+            },
+            {
+              "player": "mch-adam-pietila",
+              "ranking": 24
+            },
+            {
+              "player": "mch-jack-horbach",
+              "ranking": 25
+            },
+            {
+              "player": "mch-hagen-burrows",
+              "ranking": 26
+            },
+            {
+              "player": "mch-aiden-dubinsky",
+              "ranking": 27
+            },
+            {
+              "player": "mch-cale-ashcroft",
+              "ranking": 28
+            },
+            {
+              "player": "mch-kent-anderson",
+              "ranking": 29
+            },
+            {
+              "player": "mch-joe-palodichuk",
+              "ranking": 30
+            },
+            {
+              "player": "mch-finn-brink",
+              "ranking": 31
+            },
+            {
+              "player": "mch-reid-varkonyi",
+              "ranking": 32
+            },
+            {
+              "player": "mch-vasily-zelenov",
+              "ranking": 33
+            },
+            {
+              "player": "mch-brendan-mcmorrow",
+              "ranking": 34
+            },
+            {
+              "player": "mch-brady-milburn",
+              "ranking": 35
+            },
+            {
+              "player": "mch-kyle-kukkonen",
+              "ranking": 36
+            },
+            {
+              "player": "mch-jack-phelan",
+              "ranking": 37
+            },
+            {
+              "player": "mch-weston-knox",
+              "ranking": 38
+            }
+          ],
+          "games": [
+            {
+              "gameNumber": 1,
+              "lines": [
+                {
+                  "player": "mch-adam-pietila",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-aiden-dubinsky",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-ben-dexheimer",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-blake-montgomery",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-boston-buckberger",
+                  "stats": {
+                    "ASSISTS": 1,
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-brady-milburn",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-brendan-mcmorrow",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-cale-ashcroft",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-christian-fitzgerald",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-clarke-caswell",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-eric-jamieson",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-eric-pohlkamp",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-finn-brink",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-garrett-brown",
+                  "stats": {
+                    "ASSISTS": 2,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-gavin-morrissey",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-grady-deering",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-hagen-burrows",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-jack-horbach",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-jack-phelan",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-jake-fisher",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-james-reeder",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-joe-palodichuk",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kent-anderson",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-kieran-cebrian",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kristian-epperson",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                },
+                {
+                  "player": "mch-kyle-chyzowski",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-kyle-kukkonen",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-luke-osburn",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-oliver-tulk",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-quinn-finley",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-reid-varkonyi",
+                  "stats": {}
+                },
+                {
+                  "player": "mch-rieger-lorenz",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-ryan-botterill",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-sam-harris",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-samu-salminen",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 2
+                  }
+                },
+                {
+                  "player": "mch-simon-tassy",
+                  "stats": {
+                    "SHOTS_ON_GOAL": 3
+                  }
+                },
+                {
+                  "player": "mch-vasily-zelenov",
+                  "stats": {
+                    "GOALS": 1,
+                    "SHOTS_ON_GOAL": 1
+                  }
+                },
+                {
+                  "player": "mch-weston-knox",
+                  "stats": {
+                    "ASSISTS": 1
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

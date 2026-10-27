@@ -796,7 +796,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship']);
     expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
-    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final']);
+    expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final', 'Men\'s Frozen Four', 'Men\'s National Championship']);
   });
 });
 
@@ -1172,20 +1172,26 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.BASKETBALL, league: 'NBA Conference Finals', prefix: 'nba-conference-finals', composite: 'triple-threat' },
     { sport: Sport.HOCKEY, league: 'NHL Conference Finals', prefix: 'nhl-conference-finals', composite: 'power-play' },
     { sport: Sport.BASEBALL, league: 'League Championship Series', prefix: 'league-championship-series', composite: 'box-score' },
+    { sport: Sport.HOCKEY, league: 'Men\'s Frozen Four', prefix: 'mens-frozen-four', composite: 'power-play' },
+    { sport: Sport.HOCKEY, league: 'Men\'s National Championship', prefix: 'mens-hockey-national-championship', composite: 'power-play' },
   ];
+  // Basketball and hockey each have a "Men's National Championship", so a league is its sport and its name.
+  const bySportAndName = (left: { sport: string; league: string }, right: { sport: string; league: string }) =>
+    left.league.localeCompare(right.league) || left.sport.localeCompare(right.sport);
 
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
-    const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the men\'s Frozen Four\'s too, the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
+    const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true } });
 
-    expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(
-      [...STAT_POOL_LEAGUES].sort((left, right) => left.league.localeCompare(right.league))
+    expect(leagues.map((league) => ({ sport: league.sport.sport, league: league.name, participantType: league.participantType, scoringFamily: league.scoringFamily }))
+      .sort(bySportAndName).map(({ sport, league, participantType, scoringFamily }) => [sport, league, participantType, scoringFamily])).toEqual(
+      [...STAT_POOL_LEAGUES].sort(bySportAndName)
         .map(({ sport, league }) => [sport, league, 'INDIVIDUAL', 'COMPOSITE']),
     );
   });
 
-  it.each(STAT_POOL_LEAGUES)('gives $league a Tiered (6 tiers, best 4), a Budget (6 players, best 4) and a Quick pick (3 players) default, Tiered first, each scored by the composite total', async ({ league, prefix, composite }) => {
+  it.each(STAT_POOL_LEAGUES)('gives $league a Tiered (6 tiers, best 4), a Budget (6 players, best 4) and a Quick pick (3 players) default, Tiered first, each scored by the composite total', async ({ sport, league, prefix, composite }) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE' } },
+      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE', sport: { sport } } },
       orderBy: { sortOrder: 'asc' },
     });
 
@@ -1214,9 +1220,9 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     expect(shapes).toEqual([[1, 4], [6, 4], [3, 3]]);
   });
 
-  it.each(STAT_POOL_LEAGUES)('names $league\'s setups and describes them with stars, never players, as the Clutch Card\'s copy calls them (#995)', async ({ league }) => {
+  it.each(STAT_POOL_LEAGUES)('names $league\'s setups and describes them with stars, never players, as the Clutch Card\'s copy calls them (#995)', async ({ sport, league }) => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE' } },
+      where: { sportLeague: { name: league, scoringFamily: 'COMPOSITE', sport: { sport } } },
       orderBy: { sortOrder: 'asc' },
     });
 
