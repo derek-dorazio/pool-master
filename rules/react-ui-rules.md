@@ -4,7 +4,7 @@ These rules govern the single go-forward React application: `clients/poolmaster`
 
 `clients/_archived/web` is legacy reference material only and should not be treated as the active implementation target for new frontend work. `clients/admin` has been retired rather than maintained as a separate app.
 
-The PoolMaster web app is a React 18 + TypeScript application using:
+The PoolMaster web app is a React 19 + TypeScript application using:
 
 - Vite
 - React Router
