@@ -6,6 +6,7 @@ import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
 import { ErrorState, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
+import { EVENT_PAGE_ACTIONS } from './event-page-copy';
 import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPagesQuery } from './use-event-pages-query';
@@ -353,7 +354,7 @@ export function ClutchCardPage() {
         {startRequest ? (
           <StartButton request={startRequest} testId="clutch-card-closing-start" />
         ) : (
-          <LinkButton data-testid="clutch-card-closing-how-to-play" to="/how-to-play" variant="secondary">See every way to play</LinkButton>
+          <LinkButton data-testid="clutch-card-closing-how-to-play" to="/how-to-play" variant="secondary">{EVENT_PAGE_ACTIONS.seeEveryWayToPlay}</LinkButton>
         )}
       </Tile>
       <p className="text-xs text-muted-foreground" data-testid="clutch-card-disclaimer">{CLUTCH_CARD_PAGE.footer}</p>

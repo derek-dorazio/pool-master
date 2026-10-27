@@ -79,8 +79,8 @@ jobs:
       LOAD_ALL_TEST_DATA: ${{ inputs.all_test_data }}
       LOAD_WITH_PARTICIPANTS: ${{ inputs.with_participants }}
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: 'npm'

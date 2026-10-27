@@ -217,7 +217,7 @@ export function StatLinesPanel({ event }: { event: SportEventDto }) {
             <DataGrid
               columns={columns}
               data={rows}
-              emptyMessage={fieldQuery.isLoading ? 'Loading players…' : 'No players in the field yet.'}
+              emptyMessage={fieldQuery.isLoading ? 'Loading players...' : 'No players in the field yet.'}
               getRowId={(row) => row.sportEventParticipantId}
               meta={meta}
               rowTestId={(row) => `root-admin-stat-lines-row-${row.sportEventParticipantId}`}

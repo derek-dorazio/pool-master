@@ -53,7 +53,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: github-actions
-    # Majors are allowed here: our workflows pin actions by major tag (actions/checkout@v6), so a
+    # Majors are allowed here: our workflows pin actions by major tag (actions/checkout@vN), so a
     # major is the only update an action ever gets, and it rarely changes more than the runtime.
     directory: /
     schedule:

@@ -209,7 +209,7 @@ export function EventFieldAddParticipantsModal({
               value={leagueId}
             >
               <option value="">
-                {leaguesQuery.isLoading ? `Loading ${sportLeague.many}…` : `Select a ${sportLeague.one} to browse`}
+                {leaguesQuery.isLoading ? `Loading ${sportLeague.many}...` : `Select a ${sportLeague.one} to browse`}
               </option>
               {(leaguesQuery.data ?? []).map((league) => (
                 <option key={league.id} value={league.id}>
@@ -233,7 +233,7 @@ export function EventFieldAddParticipantsModal({
               data={browseRows}
               emptyMessage={
                 rosterQuery.isLoading
-                  ? 'Loading roster…'
+                  ? 'Loading roster...'
                   : `Every ${participant.one} on that ${sportLeague.one}’s roster is already in this field.`
               }
               getRowId={(entry) => entry.participantId}

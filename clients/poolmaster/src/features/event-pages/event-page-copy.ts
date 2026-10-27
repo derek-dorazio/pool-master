@@ -29,6 +29,12 @@ export interface EventPageCopy {
   offers: Readonly<Record<string, EventPageOfferCopy>>;
 }
 
+/** The buttons the event pages repeat, so each reads the same wherever it appears. */
+export const EVENT_PAGE_ACTIONS = {
+  start: 'Start a free league',
+  seeEveryWayToPlay: 'See every way to play',
+} as const;
+
 /**
  * Every event page's copy, by sport then slug. A page with no entry falls back to its sport's
  * How to Play line, and an offer with none to its template's own name and description.
