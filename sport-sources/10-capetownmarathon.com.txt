@@ -1,0 +1,133 @@
+Source: https://www.capetownmarathon.com/race-day/
+Final URL: https://capetownmarathon.com/race-day/
+HTTP 404
+Fetched: 2026-10-27T06:09:14.042Z
+
+Page not found | Sanlam Cape Town Marathon
+Skip to content
+HOME
+Home
+Sponsors
+MARATHON
+Travel Program
+Run for charity
+Event Photos
+Route Landmarks
+Route
+FAQ
+Cape Town Marathon
+Results
+2026
+2024
+2023
+2022
+2021
+2019
+2018
+2017
+2016
+2015
+2014
+2013
+2012
+App All Results
+Android App
+Apple App
+Ts & Cs
+PEACE RUNS
+Event Finish Line Photos
+Peace Run Routes
+TRAIL
+EVENTS
+CONTACT
+Race Office
+Sponsorships
+Sponsors
+Media
+Elite Athletes
+Expo
+Hospitality
+Vendors
+NEWS
+Latest News
+Media Release
+General News
+Athlete Info
+ENTER
+PEACE RUNS
+TRAIL EVENTS
+MARATHON RUN FOR CHARITY
+MARATHON ITO TRAVEL PROGRAM
+PORTAL
+ENTER
+Run for Charity ENTRIES OPEN
+Travel Program OFFICIAL ITO'S
+BALLOT CLOSED 24 JUNE
+The page you are looking for is no longer here, or never existed in the first place (bummer). You can try searching for what you are looking for using the form below. If that still doesn't provide the results you are looking for, you can always start over from the home page.
+Search
+CONTACT
+FAQ
+(opens in a new tab) PORTAL
+All Terms and Conditions
+(opens in a new tab)
+(opens in a new tab)
+(opens in a new tab)
+&copy;2026 | Sanlam Cape Town Marathon | 1st African Major | Abbott World Marathon Majors | Supported by Faces
+Marathon Portal
+Login
+Dashboard
+Results
+Edit Profile
+Register
+Logout
+HOME
+Home
+Sponsors
+MARATHON
+Travel Program
+Run for charity
+Event Photos
+Route Landmarks
+Route
+FAQ
+Cape Town Marathon
+Results
+2026
+2024
+2023
+2022
+2021
+2019
+2018
+2017
+2016
+2015
+2014
+2013
+2012
+App All Results
+Android App
+Apple App
+Ts & Cs
+PEACE RUNS
+Event Finish Line Photos
+Peace Run Routes
+TRAIL
+EVENTS
+CONTACT
+Race Office
+Sponsorships
+Sponsors
+Media
+Elite Athletes
+Expo
+Hospitality
+Vendors
+NEWS
+Latest News
+Media Release
+General News
+Athlete Info
+
+--- embedded JSON ---
+{"baseUrl":"https://s.w.org/images/core/emoji/17.0.2/72x72/","ext":".png","svgUrl":"https://s.w.org/images/core/emoji/17.0.2/svg/","svgExt":".svg","source":{"concatemoji":"https://capetownmarathon.com/wp-includes/js/wp-emoji-release.min.js?ver=584c0d85a08bf6ea0852d3c60bda1245"}}

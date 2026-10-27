@@ -1,7 +1,7 @@
 Source: https://www.bmw-berlin-marathon.com/en/
 Final URL: https://www.bmw-berlin-marathon.com/en/
 HTTP 200
-Fetched: 2026-10-27T06:02:09.068Z
+Fetched: 2026-10-27T06:09:36.116Z
 
 BMW BERLIN-MARATHON 2026
 Skip to main content SCC EVENTS
@@ -34,7 +34,7 @@ BMW BERLIN-MARATHON 2026 content
 The FINISHER MAGAZINE is here!
 Tigst Assefa’s drama during the world record attempt, over 50,000 happy finishers, and Berlin in the grip of marathon fever. Here, you’ll find everything you need to relive your fantastic marathon weekend.
 To the magazines
-&times;
+×
 Results 2026
 Find all the results of the Events part of the BMW BERLIN-MARATHON weekend in one spot.
 To the results
@@ -44,9 +44,9 @@ To the image galleries
 Videos of 2026
 Here you can find the most beautiful videos to the BMW BERLIN-MARATHON 2026.
 To the videos
-&times;
-&times;
-&times;
+×
+×
+×
 AN EVENT BY THE
 ORGANIZED BY
 Contact

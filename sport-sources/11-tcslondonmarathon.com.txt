@@ -1,7 +1,7 @@
-Source: https://www.tcslondonmarathon.com/
+Source: https://www.tcslondonmarathon.com/the-event/start-times
 Final URL: https://www.londonmarathonevents.co.uk/london-marathon
 HTTP 200
-Fetched: 2026-10-27T06:02:03.764Z
+Fetched: 2026-10-27T06:09:14.793Z
 
 TCS London Marathon | London Marathon Events
 Skip to main content

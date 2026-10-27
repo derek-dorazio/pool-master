@@ -1,0 +1,116 @@
+Source: https://www.chicagomarathon.com/
+Final URL: https://www.chicagomarathon.com/
+HTTP 200
+Fetched: 2026-10-27T06:09:33.893Z
+
+Home - Bank of America Chicago Marathon
+Skip to main content
+Applications for the 2027 Bank of America Chicago Marathon are open! APPLY NOW
+Close Announcement
+Search
+Participant Account
+October 10, 2027
+Participant Account
+Menu
+EVENT INFO
+PARTICIPANT INFORMATION
+SPECTATOR INFORMATION
+VOLUNTEER INFORMATION
+RACE WEEKEND EVENTS
+TRANSPORTATION & PARKING
+MARATHON STORE
+EVENT FAQS
+RULES & SAFETY
+RESULTS
+RESULTS
+APPLY
+APPLY
+CHARITY PROGRAM
+TOUR PROGRAM
+CHICAGO DISTANCE SERIES
+CANCELLATION (BY YOU OR BY US)
+ABOUT
+ABOUT THE EVENT
+ABBOTT WORLD MARATHON MAJORS
+SUSTAINABILITY AND SOCIAL IMPACT
+SPONSORS
+MARKETING OPPORTUNITIES
+PRESS
+CONTACT US
+Participant Account
+Search for:
+Your Finish Line Starts Here.
+CHICAGO IS YOUR START LINE IN
+348 days, 6 hours, 20 minutes, and 28 seconds remaining.
+348
+days
+06
+hours
+20
+minutes
+27
+seconds
+Apply for the drawing
+Guaranteed entries
+Run for charity
+Share Your Story
+We have been inspired for years hearing your Bank of America Chicago Marathon experiences, whether you’re a runner, a volunteer or a spectator. Everyone has a story. We want to hear yours!
+Tell us your story
+Experience the Excitement
+Experience the excitement of the Bank of America Chicago Marathon by watching the sights and sounds of race day on the Chicago Distance Series YouTube channel.
+Visit Our YouTube Channel
+Stay in touch with the Bank of America Chicago Marathon
+Get all the latest news, tips, and inspiration you need sent straight to your inbox
+Asterisks (*) indicate required fields.
+First Name *
+Last Name *
+Email *
+The Bank of America Chicago Marathon is committed to protecting and respecting your privacy, and we’ll only use your personal information to administer your account and to provide the products and services you requested from us.
+Yes, I would like to receive updates about the latest news, information and exclusive offers from the Bank of America Chicago Marathon and related events: Bank of America Chicago 13.1, Bank of America Shamrock Shuffle and the Abbott Chicago 5K. You can unsubscribe from our recipient list at any time by clicking the unsubscribe link located at the bottom of any newsletter email message you receive. Learn more about the use and disclosure of your personally identifiable information in our Privacy Notice. *
+By clicking submit below, you consent to allow the Bank of America Chicago Marathon to store and process the personal information submitted above to provide you the content requested.
+Submit
+Like us on Facebook
+Follow us on Instagram
+Follow us on TikTok
+Subscribe to our channel on YouTube
+Privacy notice
+You are now leaving the Bank of America Chicago Marathon website
+By clicking Continue , you will be taken to a third party website. Chicago Event Management's privacy policy and level of security do not apply to their site as they may have their own privacy policy and security practices. You can click the Cancel button to return to the previous page, or you can use the back button on your browser after you leave.
+Continue
+Cancel
+This website uses cookies to enhance user experience and to analyze performance and traffic on our website. By clicking "Accept All Cookies" you are agreeing to our use of cookies.
+Cookies Settings Reject All Accept All Cookies
+Privacy Preference Center
+Privacy Preference Center
+Your Privacy
+Strictly Necessary Cookies
+Performance Cookies
+Functional Cookies
+Targeting and Advertising Cookies
+Your Privacy
+When you visit any website, it may store or retrieve information on your browser, mostly in the form of cookies. This information might be about you, your preferences or your device and is mostly used to make the site work as you expect it to. The information does not usually directly identify you, but it can give you a more personalized web experience. Because we respect your right to privacy, you can choose not to allow some types of cookies. Click on the different category headings to find out more and change our default settings. In addition to the cookie settings feature, you can disable cookies through your browser. However, blocking some types of cookies or disabling them on your browser may impact your experience of the site and the services we are able to offer.
+More information
+Strictly Necessary Cookies
+Always Active
+These cookies are necessary for the website to function and cannot be switched off in our systems. They are usually only set in response to actions made by you which amount to a request for services, such as setting your privacy preferences, logging in or filling in forms. You can set your browser to block or alert you about these cookies, but some parts of the site will not then work. These cookies do not store any personally identifiable information.
+Performance Cookies
+Performance Cookies
+These cookies allow us to count visits and traffic sources so we can measure and improve the performance of our site. They help us to know which pages are the most and least popular and see how visitors move around the site. All information these cookies collect is aggregated and therefore anonymous. If you do not allow these cookies we will not know when you have visited our site, and will not be able to monitor its performance.
+We use Google Analytics to collect information about how visitors use our website. For example, we collect details of the site where the visitor has come from and the total number of times a visitor has been to our website. If you want to use your browser instead of our cookie settings feature to opt-out of the Google Analytics tracking cookies, you can install the Google Analytics opt-out browser add-on.
+Functional Cookies
+Functional Cookies
+These cookies enable the website to provide enhanced functionality and personalization. They may be set by us or by third party providers whose services we have added to our pages. If you do not allow these cookies then some or all of these services may not function properly.
+Targeting and Advertising Cookies
+Targeting and Advertising Cookies
+These cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant advertisements on other sites. They do not directly store personal information, but are based on uniquely identifying your browser and internet device. We may share this information with advertisers or use it to better understand your interests. For example, advertising cookies may be used to share data with advertisers so that the ads you see are more relevant to you, allow you to share certain pages with social networks, or allow you to post comments on our site. If you do not allow these cookies, you will experience less targeted advertising.
+Cookie List
+Consent Leg.Interest
+checkbox label label
+checkbox label label
+checkbox label label
+Clear checkbox label label
+Apply Cancel
+Confirm My Choices Reject All Allow All
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/www.chicagomarathon.com\/","url":"https:\/\/www.chicagomarathon.com\/","name":"Home - Bank of America Chicago Marathon","isPartOf":{"@id":"https:\/\/www.chicagomarathon.com\/#website"},"primaryImageOfPage":{"@id":"https:\/\/www.chicagomarathon.com\/#primaryimage"},"image":{"@id":"https:\/\/www.chicagomarathon.com\/#primaryimage"},"thumbnailUrl":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","datePublished":"2025-04-11T15:19:30+00:00","dateModified":"2026-10-20T18:00:49+00:00","description":"The Bank of America Chicago Marathon is a world class running event returning to the streets of Chicago on Sunday, October 11, 2026.","breadcrumb":{"@id":"https:\/\/www.chicagomarathon.com\/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https:\/\/www.chicagomarathon.com\/"]}]},{"@type":"ImageObject","inLanguage":"en-US","@id":"https:\/\/www.chicagomarathon.com\/#primaryimage","url":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","contentUrl":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","width":2560,"height":1024,"caption":"Participants running on LaSalle Street during the 2025 Bank of America Chicago Marathon"},{"@type":"BreadcrumbList","@id":"https:\/\/www.chicagomarathon.com\/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home"}]},{"@type":"WebSite","@id":"https:\/\/www.chicagomarathon.com\/#website","url":"https:\/\/www.chicagomarathon.com\/","name":"Bank of America Chicago Marathon","description":"","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.chicagomarathon.com\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"}]}

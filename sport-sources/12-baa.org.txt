@@ -1,7 +1,7 @@
 Source: https://www.baa.org/races/boston-marathon
 Final URL: https://www.baa.org/races/boston-marathon/
 HTTP 200
-Fetched: 2026-10-27T06:02:03.331Z
+Fetched: 2026-10-27T06:09:15.830Z
 
 Boston Marathon - Boston Athletic Association
 Skip to content
@@ -110,15 +110,15 @@ From Hopkinton to Boston and Beyond
 News & Stories
 Record Field of Qualifiers Accepted into the 131st Boston Marathon presented by Bank of America
 September 29, 2026
-BOSTON—The Boston Athletic Association (B.A.A.) today began notifying qualified applicants of their acceptance into the 131st Boston Marathon presented by Bank of America. The race will be run&hellip;
+BOSTON—The Boston Athletic Association (B.A.A.) today began notifying qualified applicants of their acceptance into the 131st Boston Marathon presented by Bank of America. The race will be run…
 Boston Marathon
 2027 Boston Marathon presented by Bank of America Registration Update
 September 21, 2026
-33,656 qualifier applications received for 2027 Boston Marathon BOSTON – The Boston Athletic Association (B.A.A.) today announced a total of 33,656 qualifier entry applications were received during registration&hellip;
+33,656 qualifier applications received for 2027 Boston Marathon BOSTON – The Boston Athletic Association (B.A.A.) today announced a total of 33,656 qualifier entry applications were received during registration…
 Boston Marathon
 Boston Athletic Association and MarathonFoto Extend Historic Partnership Through 2033
 September 16, 2026
-Longstanding relationship that began at the Boston Marathon in 1984 now encompasses the full portfolio of B.A.A. events The Boston Athletic Association (B.A.A.) and MarathonFoto today announced an&hellip;
+Longstanding relationship that began at the Boston Marathon in 1984 now encompasses the full portfolio of B.A.A. events The Boston Athletic Association (B.A.A.) and MarathonFoto today announced an…
 B.A.A. 10K
 B.A.A. Distance Medley
 B.A.A. Invitational Mile
@@ -128,11 +128,11 @@ Boston Half
 Boston Marathon
 2027 Bank of America Boston Marathon Official Charity Program Members Announced
 September 15, 2026
-A record total of 215 organizations will participate in the 2027 program BOSTON (September 15, 2026 at 9:00 a.m. ET) – The Boston Athletic Association (B.A.A.) today announced&hellip;
+A record total of 215 organizations will participate in the 2027 program BOSTON (September 15, 2026 at 9:00 a.m. ET) – The Boston Athletic Association (B.A.A.) today announced…
 Boston Marathon
 Qualifier Registration for 131st Boston Marathon presented by Bank of America Begins Today
 September 14, 2026
-Athletes can submit a registration application between September 14-18 in Athletes’ Village BOSTON – The Boston Athletic Association (B.A.A.) reminds athletes that qualifier registration for the 131st Boston Marathon presented by Bank of America&hellip;
+Athletes can submit a registration application between September 14-18 in Athletes’ Village BOSTON – The Boston Athletic Association (B.A.A.) reminds athletes that qualifier registration for the 131st Boston Marathon presented by Bank of America…
 Boston Marathon
 Partners
 Learn More
@@ -157,7 +157,7 @@ Built by Radish Lab
 Privacy/Legal Policy
 Digital Accessibility
 Consent Preferences
-&copy; 2026 BAA All rights reserved.
+© 2026 BAA All rights reserved.
 
 --- embedded JSON ---
 {"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/www.baa.org\/races\/boston-marathon\/","url":"https:\/\/www.baa.org\/races\/boston-marathon\/","name":"Boston Marathon - Boston Athletic Association","isPartOf":{"@id":"https:\/\/www.baa.org\/#website"},"datePublished":"2025-08-12T16:47:59+00:00","dateModified":"2026-09-29T14:00:11+00:00","breadcrumb":{"@id":"https:\/\/www.baa.org\/races\/boston-marathon\/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https:\/\/www.baa.org\/races\/boston-marathon\/"]}]},{"@type":"BreadcrumbList","@id":"https:\/\/www.baa.org\/races\/boston-marathon\/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https:\/\/www.baa.org\/"},{"@type":"ListItem","position":2,"name":"Races","item":"https:\/\/www.baa.org\/races\/"},{"@type":"ListItem","position":3,"name":"Boston Marathon"}]},{"@type":"WebSite","@id":"https:\/\/www.baa.org\/#website","url":"https:\/\/www.baa.org\/","name":"Boston Athletic Association","description":"","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.baa.org\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"}]}
