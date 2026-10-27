@@ -132,8 +132,10 @@ their 12-hour or 24-hour clock, or en-US with the locale's own clock when they h
 An event's page is the active event page with an offer showing that event now
 (`EventPageService.pagesByEvent`, read once a run; the first page in display order when two do).
 
-Every email opens with a slim navy brand bar: the product name and tagline on the left, the
-league's name on the right when the email comes from a league. An email about one event (C1,
+The rules for how an email looks and what it may say are `rules/ux-rules.md` §14 *System
+Email*; adding one is the `add-email` skill. Every email opens with a slim navy brand bar: the
+product name and tagline on the left, the league's name on the right whenever the email comes
+from a league (invites, welcomes, member joined, squad owner and plan emails included). An email about one event (C1,
 C2) replaces its title heading with the event header: the sport's picture, then a navy band
 with the sport league and the email's title, the event's name and its day. The name is in the
 band, not the picture, so it still reads when a mail client blocks images. A default contest

@@ -1,7 +1,7 @@
 # Sport photos
 
 Every photo Derek has found for email headers and other marketing, kept for later use
-(`plans/email-redesign.md`). They are downscaled to 2400 pixels on the long side. These files
+(`rules/ux-rules.md` §14 *System Email*). They are downscaled to 2400 pixels on the long side. These files
 are not served. A photo that goes into use is cropped and copied into
 `clients/poolmaster/public/email/sports/`, with a source note beside it.
 

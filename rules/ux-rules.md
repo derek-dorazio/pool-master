@@ -362,3 +362,46 @@ offers it.
 8. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.
+
+## 14. System Email
+
+The emails the app sends are typed renderers in `system-email-templates.ts`, built from shared
+pieces so every email draws the same thing the same way. How they are sent, previewed and
+tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and may say.
+
+1. **The brand bar opens every email.** `PRODUCT_NAME` with `PRODUCT_TAGLINE` under it on the
+   left (§9), and the league's name on the right whenever the email comes from a league. There
+   is no other masthead, so the email's own subject is the first thing read.
+2. **One header for what the email is about.** An email about one event opens with its event:
+   the full header (the sport's picture, then a navy band with the sport league, the email's
+   title, the event's name and its day) on the emails that start something (coming up soon,
+   ready for contests, new contest, contest is live), and a strip (a small crop beside the band)
+   on the ones that follow up (picks close soon, standings, receipts, event changed). Final
+   results open with a trophy band naming the winner, or every winner on a tie. Account,
+   membership and plan emails have the brand bar only. The event's name sits in the band, never
+   in the picture, so the email still reads when a mail client blocks images.
+3. **One gold button per email**, for the one thing it wants done. Other links are plain text.
+4. **Shared pieces, not one-offs.** A default contest setup offered to a commissioner is a tile
+   (its way to play's How to Play picture, the format, the setup and its description, the whole
+   tile one link, one tile per row); a tile prefills Create contest with the setup and event and
+   never creates anything. One contest is a contest card (its format's picture, name, rules,
+   entry limit). In any leaderboard the reader's rows are tinted gold and marked "YOU", and the
+   reader's best place sits in a callout above the table ("3rd", "T2" on a tie). A new email
+   reuses these; a new piece is a renderer beside them, not markup inside one template.
+5. **Pictures are ours or generic.** Every picture is a JPG or PNG under the web app's
+   `public/email/` linked by absolute URL; never SVG, which Gmail and Outlook do not show. A
+   sport's picture is one generic licensed photo for every event of that sport, checked before
+   use for logos, sponsor decals, slogans, named venues, readable numbers and recognisable
+   faces, with its source and licence noted beside the file. Contest type pictures are drawn
+   from the How to Play illustrations, so the two never drift. No league, event or team logo,
+   no event slogan and no player photo appears in any email.
+6. **Real event names, and the disclaimer.** Emails name the real event, as our event pages do
+   (§13 item 5). Every email that names a sport league says in its footer "Not affiliated with
+   {league} or any sports league."
+7. **Built for mail clients.** Tables with inline styles, no flex, grid or media queries; every
+   image has a fixed size, `display:block` and empty alt text. The plain-text twin carries the
+   same facts and every link, one line each.
+8. **Dates, rarely times.** An email sent days ahead shows only the day. A time, with its zone
+   named, appears only when it matters that day (the reminder sent hours before picks close,
+   an event moved within its own day, an account email recording when something happened),
+   always in the reader's time zone, locale and clock.

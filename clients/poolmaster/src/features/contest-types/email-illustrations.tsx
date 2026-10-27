@@ -4,7 +4,7 @@ import themeCss from '@/styles/globals.css?raw';
 import { FormatIllustration, SportIllustration } from './illustrations';
 
 /**
- * The How to Play pictures as system email shows them (`plans/email-redesign.md`): email can't
+ * The How to Play pictures as system email shows them (`rules/ux-rules.md` §14 *System Email*): email can't
  * show SVG, so `scripts/render-email-images.mjs` draws each one to the file email links to, and a
  * test fails when a picture changed and its file was not drawn again. Not part of the app's
  * bundle: only that script and its test load it.

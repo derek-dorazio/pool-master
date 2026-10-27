@@ -463,7 +463,7 @@ export interface PreviousContestWinners {
 }
 
 /**
- * The top of an email about one event (`plans/email-redesign.md`): its sport's picture, then a
+ * The top of an email about one event (`rules/ux-rules.md` §14 *System Email*): its sport's picture, then a
  * band with its sport league, its name and when it starts.
  */
 export interface EmailEventHeader {
@@ -1122,6 +1122,7 @@ function renderLeagueMemberInviteEmail(
 
   return buildMessage(context, {
     templateKey: 'LEAGUE_MEMBER_INVITE',
+    leagueName: data.leagueName,
     subject,
     preheader: `Join ${data.leagueName} on ${PRODUCT_NAME}.`,
     title: 'League invitation',
@@ -1166,6 +1167,7 @@ function renderLeagueJoinSuccessEmail(
 
   return buildMessage(context, {
     templateKey: 'LEAGUE_JOIN_SUCCESS',
+    leagueName: data.leagueName,
     subject,
     preheader: `Your ${PRODUCT_NAME} account is ready.`,
     title: 'You are in',
@@ -1195,6 +1197,7 @@ function renderLeagueMemberJoinedEmail(
   const total = `The league has ${members} now.`;
   return buildMessage(context, {
     templateKey: 'LEAGUE_MEMBER_JOINED',
+    leagueName: data.leagueName,
     subject,
     preheader: `${intro} ${total}`,
     title: 'New member',
@@ -1225,6 +1228,7 @@ function renderContestExpandedEmail(
   const intro = `${data.contestName} was expanded to ${data.entriesPerContest} entries by ${data.expandedBy ?? PRODUCT_NAME}.`;
   return buildMessage(context, {
     templateKey: 'CONTEST_EXPANDED',
+    leagueName: data.leagueName,
     subject: `${data.contestName} now takes ${data.entriesPerContest} entries`,
     preheader: intro,
     title: 'Contest expanded',
@@ -1258,6 +1262,7 @@ function renderLeaguePlanPreviewEndingEmail(
   const enjoy = 'Enjoy the rest of your preview period.';
   return buildMessage(context, {
     templateKey: 'LEAGUE_PLAN_PREVIEW_ENDING',
+    leagueName: data.leagueName,
     subject: `${possessive(data.leagueName)} Premium preview period ends ${when}`,
     preheader: lead,
     title: 'Premium preview period',
@@ -1300,6 +1305,7 @@ function renderSquadOwnerInviteEmail(
   ];
   return buildMessage(context, {
     templateKey: 'SQUAD_OWNER_INVITE',
+    leagueName: data.leagueName,
     subject: `${data.inviterName} invited you to ${own} ${data.squadName}`,
     preheader: intro,
     title: data.soleOwner ? 'Squad invitation' : 'Co-owner invitation',
@@ -1327,6 +1333,7 @@ function renderSquadOwnerAddedEmail(
   const shared = data.soleOwner ? [] : ['You share the squad with its other owners: its entries, picks and results.'];
   return buildMessage(context, {
     templateKey: 'SQUAD_OWNER_ADDED',
+    leagueName: data.leagueName,
     subject: data.soleOwner ? `You own ${data.squadName}` : `You're a co-owner of ${data.squadName}`,
     preheader: added,
     title: data.soleOwner ? 'You own a squad' : 'You are a co-owner',
@@ -2184,6 +2191,7 @@ function renderContestNotOpenEmail(
   ];
   return buildMessage(context, {
     templateKey: 'CONTEST_NOT_OPEN',
+    leagueName: data.leagueName,
     subject: `Not open yet: ${data.contestName}`,
     preheader: sentences.join(' '),
     title: "Your contest isn't open yet",
@@ -2388,6 +2396,7 @@ function renderYearInReviewEmail(
   const buttonLabel = `See your ${year}`;
   return buildMessage(context, {
     templateKey: 'YEAR_IN_REVIEW',
+    leagueName: data.leagueName,
     subject: `${possessive(data.squadName)} ${year} in ${data.leagueName}`,
     preheader: lead,
     title: `Your ${year} year in review`,
