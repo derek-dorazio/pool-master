@@ -91,6 +91,21 @@ export class EventPageService {
     })));
   }
 
+  /**
+   * The active page each event is offered on, by sport event id: the event an offer shows now
+   * (its series' next edition still taking the contest). Where two pages offer one event, the
+   * first in display order wins. Emails about an event link to its page.
+   */
+  async pagesByEvent(): Promise<Map<string, EventPage>> {
+    const byEvent = new Map<string, EventPage>();
+    for (const view of await this.listPages()) {
+      for (const offer of view.offers) {
+        if (!byEvent.has(offer.edition.sportEventId)) byEvent.set(offer.edition.sportEventId, view.page);
+      }
+    }
+    return byEvent;
+  }
+
   private async showOffers(offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
     const shown = await Promise.all(offers.map((offer) => this.showOffer(offer)));
     return shown.filter((view): view is EventPageOfferView => view !== null);

@@ -1,7 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipantGolfRoundScore } from '@/lib/api';
-import { Alert, Button, DataGrid, Input, Select, Tile } from '@/features/shared/ui';
+import { Alert, Button, DataGrid, Input, Select, Tile, timeZoneGenericName, toDateTimeLocalValue, useDisplayPreferences } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -19,7 +19,6 @@ import {
   isStrokes,
   isThru,
   rowHasInvalid,
-  toDateTimeInput,
   type RowDraft,
 } from './golf-round-score-patch';
 
@@ -31,6 +30,10 @@ type CorrectionsMeta = {
   setDraft: Dispatch<SetStateAction<Partial<Record<string, RowDraft>>>>;
   savingId: string | null;
   onSave: (row: ScoreRow) => void;
+  /** The member's zone: the Completed at box holds its wall clock (#1061). */
+  timeZone: string;
+  /** Its everyday name, e.g. "ET", for the column header. */
+  timeZoneName: string;
 };
 
 const columnHelper = createColumnHelper<ScoreRow>();
@@ -179,11 +182,11 @@ const correctionColumns = [
   }),
   columnHelper.display({
     id: 'completedAt',
-    header: 'Completed at',
+    header: ({ table }) => `Completed at (${(table.options.meta as CorrectionsMeta).timeZoneName})`,
     cell: ({ row, table }) => {
-      const { draft, setDraft } = table.options.meta as CorrectionsMeta;
+      const { draft, setDraft, timeZone } = table.options.meta as CorrectionsMeta;
       const entry = row.original;
-      const raw = draft[entry.sportEventParticipantId]?.completedAt ?? toDateTimeInput(entry.completedAt);
+      const raw = draft[entry.sportEventParticipantId]?.completedAt ?? toDateTimeLocalValue(entry.completedAt, timeZone);
       return (
         <Input
           aria-invalid={draft[entry.sportEventParticipantId]?.completedAtIncomplete ? true : undefined}
@@ -215,8 +218,8 @@ const correctionColumns = [
       const meta = table.options.meta as CorrectionsMeta;
       const entry = row.original;
       const rowDraft = meta.draft[entry.sportEventParticipantId];
-      const dirty = buildRoundScorePatch(entry, rowDraft) !== null;
-      const invalid = rowHasInvalid(rowDraft);
+      const dirty = buildRoundScorePatch(entry, rowDraft, meta.timeZone) !== null;
+      const invalid = rowHasInvalid(rowDraft, meta.timeZone);
       return (
         <Button
           data-testid={`root-admin-golf-scores-save-${entry.sportEventParticipantId}`}
@@ -256,6 +259,7 @@ export function GolfRoundScoreCorrectionsCard({
   const logger = getLogger().child({
     feature: 'root-admin-golf-tournament-scores-page',
   });
+  const displayPreferences = useDisplayPreferences();
   const [draft, setDraft] = useState<Partial<Record<string, RowDraft>>>({});
   const [draftScope, setDraftScope] = useState(`${eventId}:${round}`);
 
@@ -311,13 +315,15 @@ export function GolfRoundScoreCorrectionsCard({
         ? saveMutation.variables.sportEventParticipantId
         : null,
       onSave: (row) => {
-        const body = buildRoundScorePatch(row, draft[row.sportEventParticipantId]);
+        const body = buildRoundScorePatch(row, draft[row.sportEventParticipantId], displayPreferences.timeZone);
         if (body) {
           saveMutation.mutate({ sportEventParticipantId: row.sportEventParticipantId, body });
         }
       },
+      timeZone: displayPreferences.timeZone,
+      timeZoneName: timeZoneGenericName(displayPreferences),
     }),
-    [draft, saveMutation],
+    [draft, saveMutation, displayPreferences],
   );
 
   return (

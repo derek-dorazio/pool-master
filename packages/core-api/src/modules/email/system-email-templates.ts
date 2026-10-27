@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { CupTrophy, EmailCategory, PRODUCT_NAME, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
+import { CupTrophy, DEFAULT_DISPLAY_LOCALE, EmailCategory, PRODUCT_NAME, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -446,36 +446,61 @@ export interface PreviousContestWinners {
   winners: string[];
 }
 
+/**
+ * The top of an email about one event (`plans/email-redesign.md`): its sport's picture, then a
+ * band with its sport league, its name and when it starts.
+ */
+export interface EmailEventHeader {
+  sportLeagueName: string;
+  eventName: string;
+  startsAt: Date;
+  /** The sport's picture, from buildEmailSportImageUrl. */
+  imageUrl: string;
+}
+
+/** A default contest setup offered on an event, drawn as a tile that is one link. */
+export interface ContestSetupTile {
+  /** Its way to play, as formatSelectionTypeName names it: "Tiered". */
+  formatName: string;
+  /** The setup's name, "Tiered: 1 golfer per tier, best 4 count"; the tile leaves out the format. */
+  name: string;
+  /** How an entry picks, then how it scores. */
+  description: string;
+  /** The way to play's How to Play picture, from buildEmailFormatImageUrl. */
+  imageUrl: string;
+  url: string;
+}
+
 /** C1: an event starts in about 10 days, for a commissioner to plan a contest on it. */
 export interface EventComingUpEmailData {
   userName: string;
   leagueName: string;
-  eventName: string;
-  startsAt: Date;
+  event: EmailEventHeader;
   /** Whether the event is open for contests yet; a DRAFT one is not. */
   released: boolean;
+  /** The default setups offered on it, each linking to the event's page, or to the league's contest types page when no page offers it (Q9). */
+  setups: ContestSetupTile[];
   /** The league's contests on last year's edition, with their winners. */
   lastYear: PreviousContestWinners[];
   /** The league's contests page for its commissioners. */
   contestsUrl: string;
 }
 
-/** A default contest setup offered on the event, with Create contest started on it. */
-export interface ContestSetupLink {
-  name: string;
-  url: string;
-}
-
 /** C2: an event is released and starts within 7 days, and the league has no contest on it. */
 export interface EventReadyForContestsEmailData {
   userName: string;
   leagueName: string;
-  eventName: string;
-  startsAt: Date;
+  event: EmailEventHeader;
   /** "89 golfers", or null while the field is empty. */
   field: string | null;
-  setups: ContestSetupLink[];
-  createContestUrl: string;
+  /** The default setups offered on it, each opening Create contest with it and the event chosen. */
+  setups: ContestSetupTile[];
+  /** The league's contests on last year's edition, with their winners. */
+  lastYear: PreviousContestWinners[];
+  /** The event page offering it, from buildEventPageUrl, or null when no page does. */
+  eventPageUrl: string | null;
+  /** The league's contest types page, where "See every way to play" goes without an event page. */
+  contestTypesUrl: string;
 }
 
 /**
@@ -556,6 +581,10 @@ export type WeeklyDigestEvent = {
   eventName: string;
   sportLeagueName: string;
   startsAt: Date;
+  /** Its sport's picture, from buildEmailSportImageUrl, shown small beside it. */
+  imageUrl: string;
+  /** The event page offering it, from buildEventPageUrl; its name links there. Null without one. */
+  eventPageUrl: string | null;
 } & (
   | { state: typeof DigestEventState.READY; createContestUrl: string }
   | { state: typeof DigestEventState.CONTEST_SET_UP | typeof DigestEventState.NOT_READY }
@@ -697,12 +726,19 @@ export interface SystemEmailTemplateDataByKey {
 export interface EmailRenderContext {
   /** IANA time zone dates are shown in: the recipient's, or US Eastern when they have none. */
   timeZone: string;
+  /** BCP 47 locale dates are written in: the recipient's, or en-US when absent. */
+  locale?: string;
+  /** True for a 12-hour clock, false for 24-hour, absent for the locale's own. */
+  hour12?: boolean;
   /**
    * The recipient's "Stop these emails" page for this email's category (#844 slice 5), on an
    * email a member can turn off; absent on the rest.
    */
   unsubscribeUrl?: string;
 }
+
+/** How an email writes dates and times for its recipient. */
+type EmailDateStyle = Pick<EmailRenderContext, 'timeZone' | 'locale' | 'hour12'>;
 
 type TemplateRenderer<Key extends SystemEmailTemplateKey> = (
   data: SystemEmailTemplateDataByKey[Key],
@@ -784,6 +820,9 @@ type EmailTemplateRegistry = {
 const NOT_MONITORED = 'Replies to this email aren\'t read.';
 const STOP_THESE_EMAILS = 'Stop these emails';
 
+/** The email's width; the event picture is drawn at twice it. */
+const EMAIL_WIDTH = 640;
+
 const EMAIL_THEME = {
   canvas: '#f5f5f2',
   raised: '#ffffff',
@@ -791,6 +830,7 @@ const EMAIL_THEME = {
   navyDeep: '#05122a',
   gold: '#f5b800',
   goldHover: '#ffc82e',
+  goldLight: '#ffd86b',
   red: '#a8202d',
   ink: '#0b0b0b',
   muted: '#6b6b64',
@@ -1024,7 +1064,7 @@ function renderLeagueMemberInviteEmail(
   data: LeagueMemberInviteEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const expiresLine = formatOptionalDay(data.expiresAt, context.timeZone);
+  const expiresLine = formatOptionalDay(data.expiresAt, context);
   const subject = `${data.inviterName} invited you to ${data.leagueName}`;
   const bodyBlocks = [
     paragraph(`${escapeHtml(data.inviterName)} invited you to join ${strong(data.leagueName)}.`),
@@ -1175,7 +1215,7 @@ function renderLeaguePlanPreviewEndingEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const when = data.daysLeft === 1 ? 'tomorrow' : `in ${String(data.daysLeft)} days`;
-  const lead = `${data.leagueName} was gifted Premium for its preview period. The preview period ends ${when}, on ${formatDay(data.endsAt, context.timeZone)}.`;
+  const lead = `${data.leagueName} was gifted Premium for its preview period. The preview period ends ${when}, on ${formatDay(data.endsAt, context)}.`;
   const limits = [
     ...(data.freeEntriesPerContest === null ? [] : [`up to ${data.freeEntriesPerContest.toLocaleString('en-US')} entries per contest`]),
     ...(data.freeSportsLeaguesPerYear === null ? [] : [`${data.freeSportsLeaguesPerYear.toLocaleString('en-US')} sports leagues a year`]),
@@ -1216,7 +1256,7 @@ function renderSquadOwnerInviteEmail(
   data: SquadOwnerInviteEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const expiresLine = formatOptionalDay(data.expiresAt, context.timeZone);
+  const expiresLine = formatOptionalDay(data.expiresAt, context);
   const own = data.soleOwner ? 'own' : 'co-own';
   const intro = `${data.inviterName} invited you to ${own} ${data.squadName} in ${data.leagueName}.`;
   const shared = data.soleOwner ? [] : ['Co-owners share the squad: its entries, picks and results.'];
@@ -1280,7 +1320,7 @@ function renderSquadOwnerAddedEmail(
  * receipt for an entry nobody submitted (a quick pick's draw, a squares draw) says what happened
  * instead of "was submitted".
  */
-function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
+function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {
   sections: Array<{ title: string; rows: Array<[string, string]> }>;
   changeLine: string;
   event?: { subject: string; lead: string };
@@ -1300,7 +1340,7 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
               : [['Salary', `${formatDollars(receipt.budget.spent)} of ${formatDollars(receipt.budget.salaryCap)}`] as [string, string]]),
           ],
         }],
-        changeLine: `You can change your picks until ${formatDay(receipt.changeUntil, timeZone)}.`,
+        changeLine: `You can change your picks until ${formatDay(receipt.changeUntil, dates)}.`,
       };
     case EntryReceiptKind.GAME_PICKS:
       return {
@@ -1319,16 +1359,16 @@ function entryReceiptContent(receipt: EntryReceipt, timeZone: string): {
           title: `${receipt.eventName} bracket`,
           rows: receipt.rounds.map((round): [string, string] => [round.name, round.picks.join(', ')]),
         }],
-        changeLine: `You can change your bracket until ${formatDay(receipt.changeUntil, timeZone)}.`,
+        changeLine: `You can change your bracket until ${formatDay(receipt.changeUntil, dates)}.`,
       };
     case EntryReceiptKind.SURVIVOR:
       return {
         sections: [{
           title: `${receipt.eventName} ${receipt.picks.length === 1 ? 'pick' : 'picks'}`,
-          rows: receipt.picks.map((pick): [string, string] => [pick.team, `${pick.matchup}, ${formatDay(pick.kickoff, timeZone)}`]),
+          rows: receipt.picks.map((pick): [string, string] => [pick.team, `${pick.matchup}, ${formatDay(pick.kickoff, dates)}`]),
         }],
         changeLine: receipt.picks.length === 1
-          ? `You can change your pick until ${formatDay(receipt.picks[0].kickoff, timeZone)}.`
+          ? `You can change your pick until ${formatDay(receipt.picks[0].kickoff, dates)}.`
           : 'You can change each pick until its game starts.',
       };
     case EntryReceiptKind.QUICK_PICK:
@@ -1356,8 +1396,8 @@ function renderContestEntryCompletedEmail(
   data: ContestEntryCompletedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const submittedLine = formatDateTime(data.submittedAt, context.timeZone);
-  const { sections, changeLine, event } = entryReceiptContent(data.receipt, context.timeZone);
+  const submittedLine = formatDateTime(data.submittedAt, context);
+  const { sections, changeLine, event } = entryReceiptContent(data.receipt, context);
   const subject = `${event?.subject ?? 'Entry submitted'}: ${data.contestName}`;
   const lead = event?.lead ?? 'was submitted for';
   const bodyBlocks = [
@@ -1407,7 +1447,7 @@ function renderContestStartedSummaryEmail(
     ['League', data.leagueName],
     ['Event', data.event.name],
     ...(data.event.venue ? ([['Venue', data.event.venue]] as Array<[string, string]>) : []),
-    ['Starts', formatDay(data.event.startsAt, context.timeZone)],
+    ['Starts', formatDay(data.event.startsAt, context)],
     ...(data.eventFormat ? ([['Format', data.eventFormat]] as Array<[string, string]>) : []),
     ['Rules', data.rules],
     ['Entries', String(data.entryCount)],
@@ -1443,15 +1483,15 @@ function renderContestOpenedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `New contest: ${data.contestName}`;
-  const closesLine = formatDay(data.closesAt, context.timeZone);
+  const closesLine = formatDay(data.closesAt, context);
   const onlyEvent = data.events.length === 1 ? data.events[0] : undefined;
   const eventRows: Array<[string, string]> = onlyEvent
     ? [
       ['Event', onlyEvent.name],
       ...(onlyEvent.venue ? ([['Venue', onlyEvent.venue]] as Array<[string, string]>) : []),
-      ['Starts', formatDay(onlyEvent.startsAt, context.timeZone)],
+      ['Starts', formatDay(onlyEvent.startsAt, context)],
     ]
-    : [['Events', data.events.map((event) => `${event.name} (${formatDay(event.startsAt, context.timeZone)})`).join(', ')]];
+    : [['Events', data.events.map((event) => `${event.name} (${formatDay(event.startsAt, context)})`).join(', ')]];
   const rows: Array<[string, string]> = [
     ['League', data.leagueName],
     ...eventRows,
@@ -1544,8 +1584,8 @@ function renderContestEntryReminderEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const closesLine = data.hoursBefore < SAME_DAY_HOURS
-    ? formatInstant(data.closesAt, context.timeZone)
-    : formatDay(data.closesAt, context.timeZone);
+    ? formatInstant(data.closesAt, context)
+    : formatDay(data.closesAt, context);
   const wording = entryReminderWording(data);
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.userName)},`),
@@ -1703,14 +1743,14 @@ function renderContestStandingsEmail(
   const nextRows: Array<[string, string]> = [];
   if (moment.kind === StandingsMomentKind.EVENT && moment.nextEvent) {
     const next = moment.nextEvent;
-    nextRows.push(['Next event', `${next.name}, ${formatDay(next.startsAt, context.timeZone)}`]);
-    if (next.picksCloseAt) nextRows.push(['Picks close', formatDay(next.picksCloseAt, context.timeZone)]);
+    nextRows.push(['Next event', `${next.name}, ${formatDay(next.startsAt, context)}`]);
+    if (next.picksCloseAt) nextRows.push(['Picks close', formatDay(next.picksCloseAt, context)]);
   }
   if (moment.kind === StandingsMomentKind.BRACKET_ROUND && moment.nextRound) {
-    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context.timeZone)}`]);
+    nextRows.push(['Next round', `${moment.nextRound.name}, ${formatDay(moment.nextRound.startsAt, context)}`]);
   }
   if ((moment.kind === StandingsMomentKind.PICK_EM_WEEK || moment.kind === StandingsMomentKind.SURVIVOR_WEEK) && moment.nextWeek) {
-    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context.timeZone)}`]);
+    nextRows.push(['Next week', `${moment.nextWeek.name}, first kickoff ${formatDay(moment.nextWeek.firstKickoffAt, context)}`]);
   }
   const weekLeaders = moment.kind === StandingsMomentKind.PICK_EM_WEEK ? moment.weekLeaders : [];
   const weekLeadersTitle = moment.kind === StandingsMomentKind.PICK_EM_WEEK
@@ -1827,7 +1867,7 @@ function renderContestResultsEmail(
 }
 
 /** The subject, title and sentences an event change email says, by what happened. */
-function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone: string): { subject: string; title: string; sentences: string[] } {
+function contestEventChangeWording(data: ContestEventChangedEmailData, dates: EmailDateStyle): { subject: string; title: string; sentences: string[] } {
   const { change } = data;
   const picksLine = `Picks for ${data.contestName} stay open until it starts.`;
   switch (change.kind) {
@@ -1845,7 +1885,7 @@ function contestEventChangeWording(data: ContestEventChangedEmailData, timeZone:
         subject: `New date: ${data.eventName}`,
         title: 'Event moved',
         sentences: [
-          `${data.eventName} has moved from ${formatMove(change.previousStart, change.newStart, timeZone)}.`,
+          `${data.eventName} has moved from ${formatMove(change.previousStart, change.newStart, dates)}.`,
           ...(change.picksOpen ? [`Picks for ${data.contestName} stay open until the new start.`] : []),
         ],
       };
@@ -1862,7 +1902,7 @@ function renderContestEventChangedEmail(
   data: ContestEventChangedEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const { subject, title, sentences } = contestEventChangeWording(data, context.timeZone);
+  const { subject, title, sentences } = contestEventChangeWording(data, context);
   return buildMessage(context, {
     templateKey: 'CONTEST_EVENT_CHANGED',
     subject,
@@ -1889,31 +1929,37 @@ function renderEventComingUpEmail(
   data: EventComingUpEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const startsLine = formatDay(data.startsAt, context.timeZone);
+  const { event } = data;
   const sentences = [
-    `${data.eventName} starts ${startsLine}. Get ready to set up ${data.leagueName}'s contest.`,
+    `${event.eventName} starts ${formatDay(event.startsAt, context)}. Get ready to set up ${data.leagueName}'s contest.`,
     ...(data.released ? [] : ["It isn't open for contests yet. We'll email you when it is."]),
   ];
+  const setupsTitle = 'Ways to play';
   const lastYear = data.lastYear.map(previousWinnersSentence);
-  const lastYearTitle = 'Last year';
+  const lastYearTitle = `Last year in ${data.leagueName}`;
   return buildMessage(context, {
     templateKey: 'EVENT_COMING_UP',
-    subject: `Coming up: ${data.eventName}`,
-    preheader: sentences[0] ?? data.eventName,
+    subject: `Coming up: ${event.eventName}`,
+    preheader: sentences[0] ?? event.eventName,
     title: 'Coming up soon',
+    leagueName: data.leagueName,
+    eventHeader: event,
+    notAffiliatedWith: [event.sportLeagueName],
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       ...sentences.map((sentence) => paragraph(escapeHtml(sentence))),
+      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'How it works'))] : []),
       ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
-      button('Your league\'s contests', data.contestsUrl),
+      button('Plan your contest', data.contestsUrl),
     ].join(''),
     textLines: [
       `Hi ${data.userName},`,
       '',
       ...sentences,
+      ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map(contestTypeTileLine)] : []),
       ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
       '',
-      `Your league's contests: ${data.contestsUrl}`,
+      `Plan your contest: ${data.contestsUrl}`,
     ],
   });
 }
@@ -1922,35 +1968,37 @@ function renderEventReadyForContestsEmail(
   data: EventReadyForContestsEmailData,
   context: EmailRenderContext,
 ): SystemEmailMessage {
-  const intro = `${data.eventName} is ready. Set up ${data.leagueName}'s contest.`;
-  const rows: Array<[string, string]> = [
-    ['Starts', formatDay(data.startsAt, context.timeZone)],
-    ...(data.field === null ? [] : [['Field', data.field] as [string, string]]),
-  ];
-  const setupsTitle = 'Contest setups for it';
-  const setupItems = data.setups.map((setup) => `<li style="margin:0 0 8px;"><a href="${escapeAttribute(setup.url)}" style="color:${EMAIL_THEME.navy};">${escapeHtml(setup.name)}</a></li>`);
+  const { event } = data;
+  const intro = `${event.eventName} is ready. Pick a way to play and set up ${data.leagueName}'s contest with it already chosen.`;
+  const setupsTitle = 'Choose a way to play';
+  const lastYear = data.lastYear.map(previousWinnersSentence);
+  const lastYearTitle = `Last year in ${data.leagueName}`;
+  const field = data.field === null ? null : `Field: ${data.field}`;
   return buildMessage(context, {
     templateKey: 'EVENT_READY_FOR_CONTESTS',
-    subject: `Ready for contests: ${data.eventName}`,
+    subject: `Ready for contests: ${event.eventName}`,
     preheader: intro,
     title: 'Ready for contests',
+    leagueName: data.leagueName,
+    eventHeader: event,
+    notAffiliatedWith: [event.sportLeagueName],
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       paragraph(escapeHtml(intro)),
-      detailList(rows),
-      ...(data.setups.length > 0
-        ? [sectionTitle(setupsTitle), `<ul style="margin:0 0 20px;padding-left:20px;font-size:16px;line-height:1.55;">${setupItems.join('')}</ul>`]
-        : []),
-      button('Create contest', data.createContestUrl),
+      ...(data.setups.length > 0 ? [sectionTitle(setupsTitle), ...data.setups.map((tile) => contestTypeTile(tile, 'Set up'))] : []),
+      ...(lastYear.length > 0 ? [sectionTitle(lastYearTitle), ...lastYear.map((sentence) => paragraph(escapeHtml(sentence)))] : []),
+      button(SEE_EVERY_WAY_TO_PLAY, data.eventPageUrl ?? data.contestTypesUrl),
+      ...(field === null ? [] : [smallPrint(field)]),
     ].join(''),
     textLines: [
       `Hi ${data.userName},`,
       '',
       intro,
-      ...rows.map(([label, value]) => `${label}: ${value}`),
-      ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map((setup) => `${setup.name}: ${setup.url}`)] : []),
+      ...(data.setups.length > 0 ? ['', `${setupsTitle}:`, ...data.setups.map(contestTypeTileLine)] : []),
+      ...(lastYear.length > 0 ? ['', `${lastYearTitle}:`, ...lastYear] : []),
       '',
-      `Create contest: ${data.createContestUrl}`,
+      `${SEE_EVERY_WAY_TO_PLAY}: ${data.eventPageUrl ?? data.contestTypesUrl}`,
+      ...(field === null ? [] : [field]),
     ],
   });
 }
@@ -1962,22 +2010,37 @@ const DIGEST_EVENT_STATE_LINE: Record<DigestEventState, string> = {
 };
 
 /** "Masters Tournament (PGA Tour), Apr 9, 2026, 8:00 AM EDT" */
-function digestEventHeading(event: WeeklyDigestEvent, timeZone: string): string {
-  return `${event.eventName} (${event.sportLeagueName}), ${formatDay(event.startsAt, timeZone)}`;
+function digestEventHeading(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
+  return `${eventWithSportLeague(event.eventName, event.sportLeagueName)}, ${formatDay(event.startsAt, dates)}`;
 }
 
-function digestEventBlock(event: WeeklyDigestEvent, timeZone: string): string {
+/** One digest event as a row: a small crop of its sport's picture, then its heading and state. */
+function digestEventBlock(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
   const state = event.state === DigestEventState.READY
     ? `${escapeHtml(DIGEST_EVENT_STATE_LINE.READY)}: <a href="${escapeAttribute(event.createContestUrl)}" style="color:${EMAIL_THEME.navy};">Create contest</a>`
     : escapeHtml(DIGEST_EVENT_STATE_LINE[event.state]);
-  return paragraph(`${strong(digestEventHeading(event, timeZone))}<br>${state}`);
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 16px;">
+    <tr>
+      <td width="120" style="width:120px;padding:0 16px 0 0;vertical-align:top;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="120" height="48" style="display:block;width:120px;height:48px;border:0;border-radius:6px;"></td>
+      <td style="vertical-align:top;font-size:15px;line-height:1.5;color:${EMAIL_THEME.ink};">${digestEventTitle(event, dates)}<br>${state}</td>
+    </tr>
+  </table>`;
 }
 
-function digestEventLines(event: WeeklyDigestEvent, timeZone: string): string[] {
+/** A digest event's heading in bold, a link to its event page when it has one. */
+function digestEventTitle(event: WeeklyDigestEvent, dates: EmailDateStyle): string {
+  const heading = strong(digestEventHeading(event, dates));
+  return event.eventPageUrl === null
+    ? heading
+    : `<a href="${escapeAttribute(event.eventPageUrl)}" style="color:${EMAIL_THEME.navy};text-decoration:none;">${heading}</a>`;
+}
+
+function digestEventLines(event: WeeklyDigestEvent, dates: EmailDateStyle): string[] {
   const state = event.state === DigestEventState.READY
     ? `${DIGEST_EVENT_STATE_LINE.READY}. Create contest: ${event.createContestUrl}`
     : DIGEST_EVENT_STATE_LINE[event.state];
-  return [digestEventHeading(event, timeZone), state];
+  const page = event.eventPageUrl === null ? [] : [`${SEE_EVERY_WAY_TO_PLAY}: ${event.eventPageUrl}`];
+  return [digestEventHeading(event, dates), state, ...page];
 }
 
 function renderEventWeeklyDigestEmail(
@@ -1995,17 +2058,19 @@ function renderEventWeeklyDigestEmail(
     subject: `Coming up for ${data.leagueName}: ${count === 1 ? '1 event' : `${count} events`}`,
     preheader: intro,
     title: 'Coming up',
+    leagueName: data.leagueName,
+    notAffiliatedWith: [...new Set([...data.thisWeek, ...data.nextWeek].map((event) => event.sportLeagueName))],
     bodyBlocks: [
       paragraph(`Hi ${escapeHtml(data.userName)},`),
       paragraph(escapeHtml(intro)),
-      ...weeks.flatMap((week) => [sectionTitle(week.title), ...week.events.map((event) => digestEventBlock(event, context.timeZone))]),
+      ...weeks.flatMap((week) => [sectionTitle(week.title), ...week.events.map((event) => digestEventBlock(event, context))]),
       button('Your league\'s contests', data.contestsUrl),
     ].join(''),
     textLines: [
       `Hi ${data.userName},`,
       '',
       intro,
-      ...weeks.flatMap((week) => ['', `${week.title}:`, ...week.events.flatMap((event) => ['', ...digestEventLines(event, context.timeZone)])]),
+      ...weeks.flatMap((week) => ['', `${week.title}:`, ...week.events.flatMap((event) => ['', ...digestEventLines(event, context)])]),
       '',
       `Your league's contests: ${data.contestsUrl}`,
     ],
@@ -2017,7 +2082,7 @@ function renderContestNotOpenEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const sentences = [
-    `${data.contestName} is still a draft, and its picks close ${formatInstant(data.closesAt, context.timeZone)}.`,
+    `${data.contestName} is still a draft, and its picks close ${formatInstant(data.closesAt, context)}.`,
     "Members can't enter until you open it.",
   ];
   return buildMessage(context, {
@@ -2039,7 +2104,7 @@ function renderEventStillDraftEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const startsIn = data.daysLeft === 1 ? 'within a day' : `in ${data.daysLeft} days`;
-  const intro = `${data.eventName} starts ${startsIn} (${formatDay(data.startsAt, context.timeZone)}) and is still a draft, so no league can set up a contest on it.`;
+  const intro = `${data.eventName} starts ${startsIn} (${formatDay(data.startsAt, context)}) and is still a draft, so no league can set up a contest on it.`;
   const neededTitle = 'Still needed before release';
   const ready = 'It has everything it needs: release it.';
   return buildMessage(context, {
@@ -2106,7 +2171,7 @@ function renderPasswordChangedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `Your ${PRODUCT_NAME} password was changed`;
-  const changedSentence = `The password for your ${PRODUCT_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context.timeZone)}.`;
+  const changedSentence = `The password for your ${PRODUCT_NAME} account (${data.username}) was changed on ${formatInstant(data.changedAt, context)}.`;
   const bodyBlocks = [
     paragraph(`Hi ${escapeHtml(data.firstName)},`),
     paragraph(escapeHtml(changedSentence)),
@@ -2137,7 +2202,7 @@ function renderEmailChangedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `Your ${PRODUCT_NAME} email address was changed`;
-  const when = formatInstant(data.changedAt, context.timeZone);
+  const when = formatInstant(data.changedAt, context);
   const changedSentence = data.changedBy === EmailChangedBy.ROOT_ADMIN
     ? `A ${PRODUCT_NAME} admin changed the email address for your account (${data.username}) to ${data.newEmail} on ${when}.`
     : `The email address for your ${PRODUCT_NAME} account (${data.username}) was changed to ${data.newEmail} on ${when}.`;
@@ -2177,7 +2242,7 @@ function renderEmailTestEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `${PRODUCT_NAME} test email (${data.environment})`;
-  const sentSentence = `${data.requestedBy} sent this test from the ${data.environment} Email settings on ${formatInstant(data.requestedAt, context.timeZone)}.`;
+  const sentSentence = `${data.requestedBy} sent this test from the ${data.environment} Email settings on ${formatInstant(data.requestedAt, context)}.`;
   const workingSentence = 'It reached you, so email from this site is working.';
   return buildMessage(context, {
     templateKey: 'EMAIL_TEST',
@@ -2260,7 +2325,16 @@ function buildMessage(context: EmailRenderContext, input: {
   title: string;
   bodyBlocks: string;
   textLines: string[];
+  /** The league the email comes from, on the right of the brand bar. */
+  leagueName?: string;
+  /** The event an email is about: its picture and band replace the title heading, which becomes the band's eyebrow. */
+  eventHeader?: EmailEventHeader;
+  /** The sport leagues an email names, for the footer's "Not affiliated with" line. */
+  notAffiliatedWith?: string[];
 }): SystemEmailMessage {
+  const notAffiliated = input.notAffiliatedWith
+    ? `Not affiliated with ${[...input.notAffiliatedWith.filter((name) => name !== ''), 'any sports league'].join(', ').replace(/, ([^,]*)$/, ' or $1')}.`
+    : undefined;
   return {
     templateKey: input.templateKey,
     subject: input.subject,
@@ -2269,16 +2343,21 @@ function buildMessage(context: EmailRenderContext, input: {
       PRODUCT_TAGLINE,
       '',
       input.title,
+      ...(input.eventHeader ? [eventHeaderLine(input.eventHeader, context)] : []),
       '',
       ...input.textLines,
       '',
       NOT_MONITORED,
+      ...(notAffiliated ? [notAffiliated] : []),
       ...(context.unsubscribeUrl ? [`${STOP_THESE_EMAILS}: ${context.unsubscribeUrl}`] : []),
     ].join('\n'),
     html: documentShell({
       preheader: input.preheader,
       title: input.title,
       bodyBlocks: input.bodyBlocks,
+      leagueName: input.leagueName,
+      header: input.eventHeader ? eventHeader(input.eventHeader, input.title, context) : undefined,
+      notAffiliated,
       unsubscribeUrl: context.unsubscribeUrl,
     }),
   };
@@ -2288,11 +2367,19 @@ function documentShell(input: {
   preheader: string;
   title: string;
   bodyBlocks: string;
+  leagueName?: string;
+  /** Table rows drawn between the brand bar and the body, in place of the title heading. */
+  header?: string;
+  notAffiliated?: string;
   unsubscribeUrl?: string;
 }): string {
   const unsubscribe = input.unsubscribeUrl
     ? `<br><a href="${escapeHtml(input.unsubscribeUrl)}" style="color:rgba(255,255,255,0.85);">${STOP_THESE_EMAILS}</a>`
     : '';
+  const notAffiliated = input.notAffiliated ? `<br>${escapeHtml(input.notAffiliated)}` : '';
+  const heading = input.header
+    ? ''
+    : `<h1 style="margin:0 0 20px;font-family:Archivo,Arial,sans-serif;font-size:28px;line-height:1.15;color:${EMAIL_THEME.navy};">${escapeHtml(input.title)}</h1>`;
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -2305,22 +2392,27 @@ function documentShell(input: {
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${EMAIL_THEME.canvas};padding:32px 16px;">
       <tr>
         <td align="center">
-          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;background:${EMAIL_THEME.raised};border:1px solid ${EMAIL_THEME.border};border-radius:16px;overflow:hidden;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${EMAIL_WIDTH}px;background:${EMAIL_THEME.raised};border:1px solid ${EMAIL_THEME.border};border-radius:16px;overflow:hidden;">
             <tr>
-              <td style="background:${EMAIL_THEME.navy};padding:28px 32px;color:#ffffff;">
-                <div style="font-family:Archivo,Arial,sans-serif;font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}</div>
-                <div style="margin-top:8px;font-size:14px;line-height:1.5;color:rgba(255,255,255,0.72);">${PRODUCT_TAGLINE}</div>
+              <td style="background:${EMAIL_THEME.navy};padding:14px 32px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td style="font-family:Archivo,Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}<div style="margin-top:2px;font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,0.70);">${PRODUCT_TAGLINE}</div></td>
+                    <td align="right" style="font-size:13px;color:rgba(255,255,255,0.78);">${escapeHtml(input.leagueName ?? '')}</td>
+                  </tr>
+                </table>
               </td>
             </tr>
+            ${input.header ?? ''}
             <tr>
               <td style="padding:32px;">
-                <h1 style="margin:0 0 20px;font-family:Archivo,Arial,sans-serif;font-size:28px;line-height:1.15;color:${EMAIL_THEME.navy};">${escapeHtml(input.title)}</h1>
+                ${heading}
                 ${input.bodyBlocks}
               </td>
             </tr>
             <tr>
               <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:rgba(255,255,255,0.70);font-size:12px;line-height:1.5;">
-                Sent by ${PRODUCT_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${unsubscribe}
+                Sent by ${PRODUCT_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${notAffiliated}${unsubscribe}
               </td>
             </tr>
           </table>
@@ -2329,6 +2421,83 @@ function documentShell(input: {
     </table>
   </body>
 </html>`;
+}
+
+/** "PGA Tour · Ready for contests": the band's eyebrow, the email's title after the sport league. */
+function eventEyebrow(event: EmailEventHeader, title: string): string {
+  return event.sportLeagueName === '' ? title : `${event.sportLeagueName} · ${title}`;
+}
+
+/** "The Masters (PGA Tour)", or the event alone when its sport league has no name. */
+function eventWithSportLeague(eventName: string, sportLeagueName: string): string {
+  return sportLeagueName === '' ? eventName : `${eventName} (${sportLeagueName})`;
+}
+
+/**
+ * An event's header: its sport's picture, then a navy band with its sport league and the email's
+ * title, its name, and the day it starts. The name sits in the band, not the picture, so it
+ * reads when images are blocked; the picture's alt text is empty, so a blocked one is a box.
+ */
+function eventHeader(event: EmailEventHeader, title: string, dates: EmailDateStyle): string {
+  return `<tr>
+              <td style="padding:0;line-height:0;font-size:0;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;"></td>
+            </tr>
+            <tr>
+              <td style="background:${EMAIL_THEME.navy};padding:20px 32px 24px;color:#ffffff;">
+                <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
+                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:34px;font-weight:800;line-height:1.1;color:#ffffff;">${escapeHtml(event.eventName)}</div>
+                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(formatDay(event.startsAt, dates))}</div>
+              </td>
+            </tr>`;
+}
+
+/** The header's plain-text twin: "The Masters (PGA Tour), Thu, Apr 8, 2027". */
+function eventHeaderLine(event: EmailEventHeader, dates: EmailDateStyle): string {
+  return `${eventWithSportLeague(event.eventName, event.sportLeagueName)}, ${formatDay(event.startsAt, dates)}`;
+}
+
+/** The setup's name without its leading format, which the tile shows above it. */
+function setupNameAfterFormat(tile: ContestSetupTile): string {
+  const prefix = `${tile.formatName}: `;
+  if (!tile.name.startsWith(prefix)) return tile.name;
+  // "full bracket, doubling points" heads the tile, so it starts with a capital.
+  const rest = tile.name.slice(prefix.length);
+  return `${rest.charAt(0).toUpperCase()}${rest.slice(1)}`;
+}
+
+/**
+ * A contest setup as a tile: its way to play's picture, format, name and description, all one
+ * link. `action` names where it goes: "Set up" for Create contest, "How it works" for the
+ * contest types page.
+ */
+function contestTypeTile(tile: ContestSetupTile, action: string): string {
+  const href = escapeAttribute(tile.url);
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 12px;border:1px solid ${EMAIL_THEME.border};border-radius:12px;border-collapse:separate;border-spacing:0;overflow:hidden;">
+    <tr>
+      <td width="150" style="width:150px;padding:0;line-height:0;vertical-align:middle;"><a href="${href}"><img src="${escapeAttribute(tile.imageUrl)}" alt="" width="150" height="94" style="display:block;width:150px;height:94px;border:0;"></a></td>
+      <td style="padding:12px 16px;vertical-align:middle;">
+        <a href="${href}" style="display:block;text-decoration:none;color:${EMAIL_THEME.navy};">
+          <span style="display:block;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${EMAIL_THEME.muted};">${escapeHtml(tile.formatName)}</span>
+          <span style="display:block;margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:17px;font-weight:700;line-height:1.2;color:${EMAIL_THEME.navy};">${escapeHtml(setupNameAfterFormat(tile))}</span>
+          <span style="display:block;margin-top:4px;font-size:13px;line-height:1.45;color:${EMAIL_THEME.ink};">${escapeHtml(tile.description)}</span>
+        </a>
+      </td>
+      <td width="80" style="width:80px;padding:0 16px 0 0;vertical-align:middle;white-space:nowrap;"><a href="${href}" style="font-size:14px;font-weight:700;color:${EMAIL_THEME.navy};text-decoration:none;">${escapeHtml(action)} &rarr;</a></td>
+    </tr>
+  </table>`;
+}
+
+/** A tile's plain-text twin: its name and link. */
+function contestTypeTileLine(tile: ContestSetupTile): string {
+  return `${tile.name}: ${tile.url}`;
+}
+
+/** Where an event email sends a reader to see every contest offered on the event. */
+const SEE_EVERY_WAY_TO_PLAY = 'See every way to play';
+
+/** A grey line under the button, for a fact that matters little: "Field: 89 golfers". */
+function smallPrint(content: string): string {
+  return `<p style="margin:16px 0 0;font-size:13px;line-height:1.5;color:${EMAIL_THEME.muted};">${escapeHtml(content)}</p>`;
 }
 
 function paragraph(content: string): string {
@@ -2366,26 +2535,26 @@ function strong(value: string): string {
 }
 
 /** A day in the recipient's time zone, e.g. "Thu, Oct 22, 2026": an email sent days ahead needs no time. */
-function formatDay(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-US', {
+function formatDay(date: Date, dates: EmailDateStyle): string {
+  return new Intl.DateTimeFormat(dates.locale ?? DEFAULT_DISPLAY_LOCALE, {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
     year: 'numeric',
-    timeZone,
+    timeZone: dates.timeZone,
   }).format(date);
 }
 
 /** formatDay for a date that may be missing or unparseable. */
-function formatOptionalDay(value: Date | string | undefined, timeZone: string): string | null {
+function formatOptionalDay(value: Date | string | undefined, dates: EmailDateStyle): string | null {
   const date = parseDate(value);
-  return date ? formatDay(date, timeZone) : null;
+  return date ? formatDay(date, dates) : null;
 }
 
 /** A date in the recipient's time zone, with the zone named, e.g. "Oct 22, 2026, 2:30 PM EDT". */
-function formatDateTime(value: Date | string | undefined, timeZone: string): string | null {
+function formatDateTime(value: Date | string | undefined, dates: EmailDateStyle): string | null {
   const date = parseDate(value);
-  return date ? formatInstant(date, timeZone) : null;
+  return date ? formatInstant(date, dates) : null;
 }
 
 function parseDate(value: Date | string | undefined): Date | null {
@@ -2395,23 +2564,24 @@ function parseDate(value: Date | string | undefined): Date | null {
 }
 
 /** A moment that is always present, with its time: formatDateTime's format. */
-function formatInstant(date: Date, timeZone: string): string {
-  return new Intl.DateTimeFormat('en-US', {
+function formatInstant(date: Date, dates: EmailDateStyle): string {
+  return new Intl.DateTimeFormat(dates.locale ?? DEFAULT_DISPLAY_LOCALE, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    timeZone,
+    hour12: dates.hour12,
+    timeZone: dates.timeZone,
     timeZoneName: 'short',
   }).format(date);
 }
 
 /** "<old> to <new>" for a moved start: the days, or the times when it moved within one day. */
-function formatMove(previousStart: Date, newStart: Date, timeZone: string): string {
-  const sameDay = formatDay(previousStart, timeZone) === formatDay(newStart, timeZone);
+function formatMove(previousStart: Date, newStart: Date, dates: EmailDateStyle): string {
+  const sameDay = formatDay(previousStart, dates) === formatDay(newStart, dates);
   const format = sameDay ? formatInstant : formatDay;
-  return `${format(previousStart, timeZone)} to ${format(newStart, timeZone)}`;
+  return `${format(previousStart, dates)} to ${format(newStart, dates)}`;
 }
 
 function escapeHtml(value: string): string {

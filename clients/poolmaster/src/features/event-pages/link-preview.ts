@@ -1,6 +1,5 @@
-import { PRODUCT_NAME, Sport } from '@poolmaster/shared/domain';
+import { buildEventPagePath, PRODUCT_NAME, Sport } from '@poolmaster/shared/domain';
 import { EVENT_PAGE_COPY, type EventPageCopy } from './event-page-copy';
-import { buildEventPagePath } from './event-page-paths';
 
 /** Where the preview images sit in `public/`, and so in each release. */
 export const LINK_PREVIEW_IMAGE_DIR = 'og';

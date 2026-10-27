@@ -324,6 +324,11 @@ An event page (`/play/<sport>/<slug>`) is the public page for one event a fan wo
 (Championship Weekend, the Super Bowl), whatever sport leagues and series run it. It is the
 landing page that ads, emails and shared links point at.
 
+`/play/clutch-card` sits beside them: the Clutch Card's own page, one contest type across
+every title round. It follows the same copy and button rules, and shows a round as available
+only while that round's stat pool sport league is active, linking it to the event page that
+offers it.
+
 1. **Hand-picked, not generated.** A page exists because someone chose it: its row and its
    offers are reference data in a migration (`rules/architecture-rules.md` §6 *Reference data
    goes in a migration*). Each offer is one contest setup (a template, found by its key in its
@@ -350,6 +355,10 @@ landing page that ads, emails and shared links point at.
    and kept small enough for WhatsApp (about 300 KB); a unit test fails while one is missing.
    The deploy writes the page's shell with its Open Graph tags, and CloudFront serves it only
    to link-preview crawlers. Search crawlers and people get the app.
-7. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
+7. **The hero shows the sport's photo.** A page opens with its sport's 1200 by 480 header
+   image, the same file the email about its events uses (`sportHeaderImagePath`), so one photo
+   per sport serves both and a new sport's photo arrives with its email header. No other
+   in-app page carries these photos: setup and league pages stay compact.
+8. **Addresses are forever.** A slug is never changed or reused, because it lives in emails,
    ads and other people's chats. A page that ends is made inactive, and may redirect to the
    page that replaces it.

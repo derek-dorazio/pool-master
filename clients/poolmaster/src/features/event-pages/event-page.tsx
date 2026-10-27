@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { EventPageOfferState, getSportDefinition } from '@poolmaster/shared/domain';
+import { buildEventPagePath, EventPageOfferState, getSportDefinition, sportHeaderImagePath } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -8,7 +8,7 @@ import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
 import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
 import { eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
-import { buildEventPagePath, buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
+import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
 import { buildStartPath, type StartRequest } from './start-path';
 import { useEventPageQuery, useEventPagesQuery } from './use-event-pages-query';
 
@@ -91,29 +91,33 @@ function EventPageContent({ page }: { page: EventPageDto }) {
 
   return (
     <section className="space-y-10 pb-20 md:pb-0" data-testid="event-page">
-      <Tile className="space-y-4" padding="lg" radius="lg">
-        <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
-        {copy.eyebrow ? <p className="text-xs font-semibold uppercase text-muted-foreground">{copy.eyebrow}</p> : null}
-        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
-        <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
-        {primary ? (
-          <div className="flex flex-wrap gap-2" data-testid="event-page-when">
-            <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
-            <Chip>{copy.picksClose}</Chip>
+      <Tile className="overflow-hidden" padding="none" radius="lg">
+        {/* The sport's photo, the same file that heads the email about its events. Decorative: the name below says what it shows. */}
+        <img alt="" className="aspect-[5/2] w-full object-cover" data-testid="event-page-photo" height={480} src={sportHeaderImagePath(page.sport)} width={1200} />
+        <div className="space-y-4 p-5 sm:p-8">
+          <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
+          {copy.eyebrow ? <p className="text-xs font-semibold uppercase text-muted-foreground">{copy.eyebrow}</p> : null}
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
+          <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
+          {primary ? (
+            <div className="flex flex-wrap gap-2" data-testid="event-page-when">
+              <Chip>{formatDateDisplay(primary.edition.startDate, displayPreferences)}</Chip>
+              <Chip>{copy.picksClose}</Chip>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground" data-testid="event-page-between-seasons">
+              The next one is not on the schedule yet. Start your league now and you&apos;ll be ready when it is.
+            </p>
+          )}
+          <div className="flex flex-wrap items-center gap-3" ref={hero}>
+            <StartButton request={startRequest} testId="event-page-start">Start a free league</StartButton>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground" data-testid="event-page-between-seasons">
-            The next one is not on the schedule yet. Start your league now and you&apos;ll be ready when it is.
-          </p>
-        )}
-        <div className="flex flex-wrap items-center gap-3" ref={hero}>
-          <StartButton request={startRequest} testId="event-page-start">Start a free league</StartButton>
+          {plansQuery.data ? (
+            <Chip data-testid="event-page-gift" tone="active">
+              {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
+            </Chip>
+          ) : null}
         </div>
-        {plansQuery.data ? (
-          <Chip data-testid="event-page-gift" tone="active">
-            {`Every new league gets Premium free for a ${plansQuery.data.previewPeriodMonths}-month preview period`}
-          </Chip>
-        ) : null}
       </Tile>
 
       {page.offers.length > 0 ? (

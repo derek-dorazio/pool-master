@@ -12,7 +12,7 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type { SportEventRepository, UserRepository } from '@poolmaster/shared/db';
 import { SportEventStatus, type SportEvent, type User } from '@poolmaster/shared/domain';
-import { buildSportEventAdminUrl, type EmailService } from '../email';
+import { emailRecipientOf, buildSportEventAdminUrl, type EmailService } from '../email';
 import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventService } from '../events/service';
 
@@ -63,7 +63,7 @@ export class DraftEventNotices implements DueNotifications {
     const eventAdminUrl = buildSportEventAdminUrl(this.deps.appBaseUrl, sportEvent.sport, sportEvent.id);
     for (const user of rootAdmins) {
       await this.deps.email.send('EVENT_STILL_DRAFT', {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about: `${sportEvent.id}:${sportEvent.startDate.toISOString()}:${daysLeft}-days`,
         data: {
           firstName: user.firstName || user.username,

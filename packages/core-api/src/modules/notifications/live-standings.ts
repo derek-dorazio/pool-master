@@ -61,6 +61,7 @@ import {
 import type { ContestLeaderboardEntryRow } from '../../mappers/contests.mapper';
 import type { ContestService } from '../contests/service';
 import {
+  emailRecipientOf,
   StandingsMomentKind,
   buildContestUrl,
   buildLeaderboardUrl,
@@ -545,7 +546,7 @@ export class LiveStandings implements DueNotifications {
       const lines = rows.map((row) => ({ ...row.line, isYours: ownsSquad(row.squadId) }));
       try {
         await this.deps.email.send('CONTEST_STANDINGS', {
-          to: { email: user.email, userId: user.id, timeZone: user.timezone },
+          to: emailRecipientOf(user),
           about: due.about,
           league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
           refs: { contestId: contest.id },

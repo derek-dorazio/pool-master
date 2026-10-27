@@ -67,12 +67,12 @@ describe('how a stat pool scores, in words', () => {
 });
 
 describe('a Clutch Card contest\'s suggested name', () => {
-  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship and NBA Conference Finals Stars', () => {
+  it('is the event\'s name and Stars, a single final without the word: World Series, NBA Finals, Stanley Cup, Super Bowl, Championship Weekend, CFP Semifinals, CFP National Championship, Men\'s Final Four, Men\'s National Championship, NBA Conference Finals and NHL Conference Finals Stars', () => {
     expect(['World Series', 'NBA Finals', 'Stanley Cup Final', 'Super Bowl', 'Championship Weekend', 'CFP Semifinals', 'CFP National Championship',
-      'Men\'s Final Four', 'Men\'s National Championship', 'NBA Conference Finals'].map(statPoolContestName)).toEqual([
+      'Men\'s Final Four', 'Men\'s National Championship', 'NBA Conference Finals', 'NHL Conference Finals'].map(statPoolContestName)).toEqual([
       'World Series Stars', 'NBA Finals Stars', 'Stanley Cup Stars', 'Super Bowl Stars', 'Championship Weekend Stars',
       'CFP Semifinals Stars', 'CFP National Championship Stars',
-      'Men\'s Final Four Stars', 'Men\'s National Championship Stars', 'NBA Conference Finals Stars',
+      'Men\'s Final Four Stars', 'Men\'s National Championship Stars', 'NBA Conference Finals Stars', 'NHL Conference Finals Stars',
     ]);
   });
 });

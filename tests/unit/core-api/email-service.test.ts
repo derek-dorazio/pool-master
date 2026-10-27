@@ -1,4 +1,4 @@
-import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
+import { LeaguePlan, PlanFeature, TimeFormat } from '@poolmaster/shared/domain';
 import type { EmailConfig, PlanConfig } from '@poolmaster/shared/dto';
 import {
   EMAIL_SETTINGS,
@@ -185,6 +185,56 @@ describe('email service: what it queues', () => {
     expect(outbox.rows[0].textBody).toContain('Expires: Thu, Oct 29, 2026');
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({ action: 'email.send.unknownTimeZone' }),
+      expect.any(String),
+    );
+  });
+
+  function passwordChanged(to: EmailSendInput<'PASSWORD_CHANGED'>['to']): EmailSendInput<'PASSWORD_CHANGED'> {
+    return {
+      to,
+      about: 'change-1',
+      data: {
+        firstName: 'Morgan',
+        username: 'morgan',
+        changedAt: new Date('2026-04-09T11:40:00.000Z'),
+        forgotPasswordUrl: 'https://qa.example.com/forgot-password',
+      },
+    };
+  }
+
+  it('writes times in the recipient\'s locale and clock, and en-US with the locale\'s clock when they have none', async () => {
+    const outbox = inMemoryEmailMessages();
+    const email = service({ outbox });
+
+    await email.send('PASSWORD_CHANGED', passwordChanged({
+      email: 'london@gmail.com',
+      userId: 'user-london',
+      timeZone: 'Europe/London',
+      locale: 'en-GB',
+      timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
+    }));
+    await email.send('PASSWORD_CHANGED', passwordChanged({
+      email: 'eastern24@gmail.com',
+      userId: 'user-eastern-24',
+      timeFormat: TimeFormat.TWENTY_FOUR_HOUR,
+    }));
+    await email.send('PASSWORD_CHANGED', passwordChanged({ email: 'plain@gmail.com', userId: 'user-plain' }));
+
+    expect(outbox.rows[0].textBody).toContain('changed on 9 Apr 2026, 12:40 BST');
+    expect(outbox.rows[1].textBody).toContain('changed on Apr 9, 2026, 07:40 EDT');
+    expect(outbox.rows[2].textBody).toContain('changed on Apr 9, 2026, 7:40 AM EDT');
+  });
+
+  it('writes dates in en-US, and logs it, when the recipient\'s stored locale is not a language tag', async () => {
+    const outbox = inMemoryEmailMessages();
+    const logger = fakeLogger();
+
+    await service({ outbox, logger })
+      .send('PASSWORD_CHANGED', passwordChanged({ email: 'member@gmail.com', userId: 'user-1', locale: 'not a locale!' }));
+
+    expect(outbox.rows[0].textBody).toContain('changed on Apr 9, 2026, 7:40 AM EDT');
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'email.send.unknownLocale' }),
       expect.any(String),
     );
   });

@@ -3,7 +3,16 @@
  * web app. One copy, so every email names people and links to a contest the same way.
  */
 
-import { sportPathSegment, type Sport, type User } from '@poolmaster/shared/domain';
+import {
+  buildEventPagePath,
+  emailFormatImagePath,
+  sportHeaderImagePath,
+  sportPathSegment,
+  type EventPage,
+  type SelectionType,
+  type Sport,
+  type User,
+} from '@poolmaster/shared/domain';
 
 /** The reader's full name, else their username, else their address. */
 export function formatUserName(user: Pick<User, 'firstName' | 'lastName' | 'username' | 'email'>): string {
@@ -59,10 +68,38 @@ export function buildLeaguePlanUrl(appBaseUrl: string, leagueCode: string): stri
   return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/admin/plan`;
 }
 
-/** Create contest, started on one contest template when given. */
-export function buildCreateContestUrl(appBaseUrl: string, leagueCode: string, templateId?: string): string {
+/** Create contest, started on one contest template and one event when given. */
+export function buildCreateContestUrl(
+  appBaseUrl: string,
+  leagueCode: string,
+  start: { templateId?: string; sportEventId?: string } = {},
+): string {
   const url = `${buildLeagueAdminContestsUrl(appBaseUrl, leagueCode)}/new`;
-  return templateId === undefined ? url : `${url}?template=${encodeURIComponent(templateId)}`;
+  const query = new URLSearchParams();
+  if (start.templateId !== undefined) query.set('template', start.templateId);
+  if (start.sportEventId !== undefined) query.set('event', start.sportEventId);
+  const search = query.toString();
+  return search === '' ? url : `${url}?${search}`;
+}
+
+/** An event page, where a fan sees every way to play the event. */
+export function buildEventPageUrl(appBaseUrl: string, page: Pick<EventPage, 'sport' | 'slug'>): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${buildEventPagePath(page.sport, page.slug)}`;
+}
+
+/** The league's contest types page: every way to play its sport leagues offer. */
+export function buildLeagueContestTypesUrl(appBaseUrl: string, leagueCode: string): string {
+  return `${buildLeagueHomeUrl(appBaseUrl, leagueCode)}/contest-types`;
+}
+
+/** A sport's picture at the top of an email about one of its events. */
+export function buildEmailSportImageUrl(appBaseUrl: string, sport: Sport): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${sportHeaderImagePath(sport)}`;
+}
+
+/** A way to play's How to Play picture, on its contest type tile. */
+export function buildEmailFormatImageUrl(appBaseUrl: string, selectionType: SelectionType): string {
+  return `${appBaseUrl.replace(/\/+$/, '')}${emailFormatImagePath(selectionType)}`;
 }
 
 /** One contest's commissioner page, where it is opened. */

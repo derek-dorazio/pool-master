@@ -424,7 +424,7 @@ describe('Loading a real horse racing schedule and field through the admin API',
     expect(field.get(`${prefix} Horse 1`)).toMatchObject({ seedNumber: 2, isActive: true });
   });
 
-  it('keeps a race ending no earlier than its start when an evening post time past 23:00 UTC moves later on the same day', async () => {
+  it('keeps a race ending after its start when an evening post time moves later on the same day', async () => {
     const race2 = (startsAt: string): SportDataFile => {
       const loaded = file(startsAt);
       loaded.sportLeagues[0].events[0] = { ...loaded.sportLeagues[0].events[0], key: 'classic', name: `${prefix} Classic`, startDate: '2027-11-06', endDate: '2027-11-06' };
@@ -436,7 +436,7 @@ describe('Loading a real horse racing schedule and field through the admin API',
     const league = expectDefined(await leagueNamed(circuit, Sport.HORSE_RACING));
     const classic = expectDefined((await eventsOf(league.id, 2027)).find((event) => event.name === `${prefix} Classic`));
     expect(classic.startDate).toBe('2027-11-06T23:50:00.000Z');
-    expect(Date.parse(expectDefined(classic.endDate))).toBeGreaterThanOrEqual(Date.parse(classic.startDate));
+    expect(Date.parse(expectDefined(classic.endDate))).toBeGreaterThan(Date.parse(classic.startDate));
   });
 
   it('turns automatic lifecycle off on a race an admin had already created with it on', async () => {

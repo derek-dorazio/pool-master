@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { PlanCap } from '@poolmaster/shared/domain';
+import { buildEventPagePath, PlanCap } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, LeagueDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -14,7 +14,6 @@ import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
 import { Button, EmptyState, ErrorState, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
 import { eventPageCopy, eventPageOfferCopy } from './event-page-copy';
-import { buildEventPagePath } from './event-page-paths';
 import { buildStartDestination, parseStartRequest, type StartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
 

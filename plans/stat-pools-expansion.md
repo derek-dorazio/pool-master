@@ -149,6 +149,7 @@ Semifinals** and **CFP National Championship**; #992 built
 NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 90 are left for
 the women's two leagues (#1052). #1043 built **NBA Conference Finals** (display 45, just before the
 NBA Finals): both conference finals series are one event, game N holding each series' Game N.
+#1045 built **NHL Conference Finals** the same way (display 45, before the Stanley Cup Final).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

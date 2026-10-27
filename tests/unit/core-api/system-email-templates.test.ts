@@ -302,6 +302,21 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Make your picks');
   });
 
+  it('writes the 3-hour reminder\'s closing time in the reader\'s locale and 24-hour clock', () => {
+    const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
+      userName: 'Morgan Member',
+      leagueName: 'Office League',
+      contestName: 'Masters Pick 6',
+      eventName: 'The Masters',
+      closesAt: new Date('2026-04-09T11:40:00.000Z'),
+      hoursBefore: 3,
+      standing: { kind: EntryReminderKind.NOT_ENTERED },
+      contestUrl: 'https://app.primetimecommissioner.com/league/OFFICE24/contests/contest-1',
+    }, { timeZone: 'Europe/London', locale: 'en-GB', hour12: false });
+
+    expect(message.text).toContain('Picks close: 9 Apr 2026, 12:40 BST');
+  });
+
   it('gives an entry reminder sent a day or more ahead the date picks close, without a time', () => {
     const message = renderSystemEmailTemplate('CONTEST_ENTRY_REMINDER', {
       userName: 'Morgan Member',
@@ -840,5 +855,81 @@ describe('the email template registry', () => {
       expect(message.html).toMatch(/^<!doctype html>/);
       expect(message.html).toContain('Replies to this email aren&#39;t read.');
     }
+  });
+});
+
+describe('the event emails\' header and contest type tiles', () => {
+  const data = EMAIL_TEMPLATE_FIXTURES.EVENT_READY_FOR_CONTESTS;
+
+  it("puts the sport's picture above a band naming the sport league, the email, the event and its day, so the event reads with images blocked", () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+
+    expect(message.html).toContain(`<img src="${data.event.imageUrl}" alt=""`);
+    expect(message.html).toContain('PGA Tour · Ready for contests');
+    expect(message.html).toContain('>The Masters</');
+    expect(message.html).toContain('Thu, Apr 8, 2027');
+    expect(message.text).toContain('Ready for contests\nThe Masters (PGA Tour), Thu, Apr 8, 2027');
+    expect(message.html).toContain('Office League</td>');
+  });
+
+  it('draws each setup as one linked tile with its way to play above the rest of its name, starting with a capital', () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+    const survivor = data.setups[1];
+
+    expect(message.html).toContain(`src="${survivor.imageUrl}"`);
+    expect(message.html).toContain('>Pick a golfer to make the cut<');
+    expect(message.html).not.toContain('>Survivor: pick a golfer');
+    expect(message.html).toContain(`href="${survivor.url.replace(/&/g, '&amp;')}"`);
+    expect(message.text).toContain(`Survivor: pick a golfer to make the cut: ${survivor.url}`);
+  });
+
+  it("labels C2's tiles \"Set up\" and C1's \"How it works\", since C1's open the contest types page rather than Create contest", () => {
+    const ready = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+    const comingUp = renderSystemEmailTemplate('EVENT_COMING_UP', EMAIL_TEMPLATE_FIXTURES.EVENT_COMING_UP, UTC);
+
+    expect(ready.html).toContain('Set up &rarr;');
+    expect(ready.html).not.toContain('How it works');
+    expect(comingUp.html).toContain('How it works &rarr;');
+    expect(comingUp.html).not.toContain('Set up &rarr;');
+  });
+
+  it('names the event once in the Ready for contests intro', () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+
+    expect(message.text).toContain("The Masters is ready. Pick a way to play and set up Office League's contest with it already chosen.");
+  });
+
+  it('leaves out an event without a sport league name from the eyebrow, the heading line and the footer instead of showing an empty name', () => {
+    const message = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', { ...data, event: { ...data.event, sportLeagueName: '' } }, UTC);
+
+    expect(message.html).toContain('>Ready for contests<');
+    expect(message.html).not.toContain(' · Ready for contests');
+    expect(message.text).toContain('Ready for contests\nThe Masters, Thu, Apr 8, 2027');
+    expect(message.text).toContain('Not affiliated with any sports league.');
+    expect(message.text).not.toContain('with  or');
+  });
+
+  it("points C2's button at the event page when there is one, and at the contest types page without one", () => {
+    const withPage = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', data, UTC);
+    const withoutPage = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', { ...data, eventPageUrl: null }, UTC);
+
+    expect(withPage.html).toContain(`href="${data.eventPageUrl}"`);
+    expect(withoutPage.html).toContain(`href="${data.contestTypesUrl}"`);
+    expect(withoutPage.text).toContain(`See every way to play: ${data.contestTypesUrl}`);
+  });
+
+  it("links a digest event's name to its event page when it has one, and leaves it plain otherwise", () => {
+    const digest = EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST;
+    const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', digest, UTC);
+
+    expect(message.html).toContain(`<a href="${digest.thisWeek[0].eventPageUrl}"`);
+    expect(message.html.match(/\/play\//g)).toHaveLength(1);
+  });
+
+  it('names every sport league the email mentions in the footer, saying we are affiliated with none of them', () => {
+    const message = renderSystemEmailTemplate('EVENT_WEEKLY_DIGEST', EMAIL_TEMPLATE_FIXTURES.EVENT_WEEKLY_DIGEST, UTC);
+
+    expect(message.text).toContain('Not affiliated with PGA Tour, Triple Crown or any sports league.');
+    expect(message.html).toContain('Not affiliated with PGA Tour, Triple Crown or any sports league.');
   });
 });

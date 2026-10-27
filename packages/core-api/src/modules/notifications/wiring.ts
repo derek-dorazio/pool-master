@@ -27,6 +27,7 @@ import {
   PrismaUserRepository,
 } from '../../adapters';
 import { createContestService } from '../contests/wiring';
+import { createEventPageService } from '../event-pages/wiring';
 import type { EmailService } from '../email';
 import { createSportEventParticipantService, createSportEventServices, createSportEventTierService } from '../events/wiring';
 import { CommissionerNotices } from './commissioner-notices';
@@ -105,6 +106,7 @@ export function createCommissionerNotices(prisma: PrismaClient, options: {
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     users: new PrismaUserRepository(prisma),
+    eventPages: createEventPageService(prisma, options.logger),
     finalStandings: createContestService(prisma, options.logger, { planEntitlements: options.planEntitlements }),
     ...options,
   });

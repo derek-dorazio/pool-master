@@ -39,7 +39,7 @@ describe('golf seed dates', () => {
     expect(offset).toBe(280);
     expect(shiftedEventDates({ startDate: '2026-01-15', endDate: '2026-01-18' }, offset)).toEqual({
       startDate: '2026-10-22T12:00:00.000Z',
-      endDate: '2026-10-25T23:00:00.000Z',
+      endDate: '2026-10-26T12:00:00.000Z',
     });
   });
 
@@ -49,21 +49,29 @@ describe('golf seed dates', () => {
 });
 
 describe('event dates for the API', () => {
-  it('starts an event at noon UTC on its start date and ends it by 23:00 UTC on its end date when no start time is given', () => {
+  it('starts an event at noon UTC on its start date and ends it at noon UTC the day after its end date when no start time is given', () => {
     expect(shiftedEventDates({ startDate: '2027-11-18', endDate: '2027-11-21' }, 0)).toEqual({
       startDate: '2027-11-18T12:00:00.000Z',
-      endDate: '2027-11-21T23:00:00.000Z',
+      endDate: '2027-11-22T12:00:00.000Z',
     });
   });
 
-  it('starts a race at its post time, and ends a one-day race no earlier than an evening post time', () => {
+  it('does not end a final round played into a US evening before it finishes (PGA Championship in Frisco ends near 00:00 UTC)', () => {
+    const lastPuttInFrisco = Date.parse('2027-05-23T19:00:00-05:00');
+    const lastPuttAtPebbleBeach = Date.parse('2027-06-20T18:30:00-07:00');
+
+    expect(Date.parse(shiftedEventDates({ startDate: '2027-05-20', endDate: '2027-05-23' }, 0).endDate)).toBeGreaterThan(lastPuttInFrisco);
+    expect(Date.parse(shiftedEventDates({ startDate: '2027-06-17', endDate: '2027-06-20' }, 0).endDate)).toBeGreaterThan(lastPuttAtPebbleBeach);
+  });
+
+  it('starts a race at its post time, and ends a one-day race at noon UTC the next day, after an evening post time', () => {
     expect(shiftedEventDates({ startDate: '2027-01-30', endDate: '2027-01-30', startsAt: '2027-01-30T17:40:00-05:00' }, 0)).toEqual({
       startDate: '2027-01-30T22:40:00.000Z',
-      endDate: '2027-01-30T23:00:00.000Z',
+      endDate: '2027-01-31T12:00:00.000Z',
     });
     expect(shiftedEventDates({ startDate: '2027-05-01', endDate: '2027-05-01', startsAt: '2027-05-01T19:30:00-04:00' }, 0)).toEqual({
       startDate: '2027-05-01T23:30:00.000Z',
-      endDate: '2027-05-01T23:30:00.000Z',
+      endDate: '2027-05-02T12:00:00.000Z',
     });
   });
 });
@@ -407,6 +415,32 @@ describe('basketball-2026-nba-conference-finals-test.json', () => {
     expect(lineIn(1, 'nba-victor-wembanyama')).toEqual({ POINTS: 41, REBOUNDS: 24, ASSISTS: 3 });
     expect(lineIn(3, 'nba-jalen-brunson')).toEqual({ POINTS: 30, REBOUNDS: 3, ASSISTS: 6 });
     expect(lineIn(7, 'nba-shai-gilgeous-alexander')).toEqual({ POINTS: 35, REBOUNDS: 4, ASSISTS: 9 });
+  });
+});
+
+describe('hockey-2026-nhl-conference-finals-test.json', () => {
+  const file = readDataFile('hockey-2026-nhl-conference-finals-test.json', true);
+  const [conferenceFinals] = file.sportLeagues;
+  const games = conferenceFinals.events[0].games ?? [];
+  const lineIn = (gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2026 NHL Conference Finals, both series one event of five games, the East going five and the West four', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.HOCKEY, 2026, ['NHL Conference Finals'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['NHL Conference Finals', '2026-05-20', '2026-05-29', 5, null]]);
+    expect(games.map((game) => game.gameNumber)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('fields the skaters of all four conference finalists, and only the East\'s two teams play Game 5', () => {
+    const teamOf = new Map(conferenceFinals.players.map((player) => [player.key, player.team]));
+    expect(new Set(teamOf.values())).toEqual(new Set(['Carolina Hurricanes', 'Montreal Canadiens', 'Vegas Golden Knights', 'Colorado Avalanche']));
+    expect(new Set(games[4].lines.map((line) => teamOf.get(line.player)))).toEqual(new Set(['Carolina Hurricanes', 'Montreal Canadiens']));
+  });
+
+  it('carries both series as played: Jack Eichel\'s goal and assist in the West\'s Game 2, Seth Jarvis\'s goal and assist in the East\'s Game 5', () => {
+    expect(lineIn(2, 'nhl-jack-eichel')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_GOAL: 2 });
+    expect(lineIn(5, 'nhl-seth-jarvis')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_GOAL: 2 });
   });
 });
 

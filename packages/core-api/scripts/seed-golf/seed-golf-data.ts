@@ -20,13 +20,15 @@ export function seedDateOffsetDays(file: Pick<SportDataFile, 'sportLeagues'>, no
 
 /**
  * An event's dates after the offset (0 for real data): it starts at `startsAt` when the file
- * gives one (a race's post time), else at 12:00 UTC, and ends by 23:00 UTC on its end date, or
- * at its start if that is later (an evening post time on a one-day race).
+ * gives one (a race's post time), else at 12:00 UTC, and ends at 12:00 UTC the day after its
+ * end date. The end is when automatic lifecycle completes the event and settles its contests,
+ * so it falls after any US finish on the end date, Hawaii's evening included (#1068). A
+ * `startsAt` is on the start date in its own offset, so it is always before that end.
  */
 export function shiftedEventDates(event: Pick<SportDataEvent, 'startDate' | 'endDate' | 'startsAt'>, offsetDays: number): { startDate: string; endDate: string } {
   const shift = (instant: number) => new Date(instant + offsetDays * DAY_MS).toISOString();
   const start = event.startsAt === undefined ? Date.parse(`${event.startDate}T12:00:00Z`) : Date.parse(event.startsAt);
-  const end = Math.max(Date.parse(`${event.endDate}T23:00:00Z`), start);
+  const end = Date.parse(`${event.endDate}T12:00:00Z`) + DAY_MS;
   return { startDate: shift(start), endDate: shift(end) };
 }
 

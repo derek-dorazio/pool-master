@@ -19,7 +19,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { PASSWORD_RESET_LINK_MINUTES, type ApiErrorCode } from '@poolmaster/shared/dto';
 import { EmailMessageStatus, EmailTemplateKey } from '@poolmaster/shared/domain';
-import type { EmailService } from '../email';
+import { emailRecipientOf, type EmailService } from '../email';
 import { cancelOpenPasswordResetTokens, revokeUserSessions } from '../users/user-lifecycle';
 import { SlidingWindowRateLimiter } from '../../core/sliding-window-rate-limiter';
 import { PasswordChangedNotifier } from './password-changed-notifier';
@@ -169,7 +169,7 @@ export class PasswordResetService {
 
       // Queuing wakes the sender, so the email goes out at once; the link is dead in 10 minutes.
       const email = await this.deps.email.send(EmailTemplateKey.PASSWORD_RESET, {
-        to: { email: user.email, userId: user.id, timeZone: user.timezone },
+        to: emailRecipientOf(user),
         about: issued.id,
         data: {
           firstName: user.firstName,
