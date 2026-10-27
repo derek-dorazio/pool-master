@@ -794,6 +794,7 @@ describe('The seeded NFL league and its knockout templates', () => {
     }
     expect(namesBySport.get(Sport.AMERICAN_FOOTBALL)).toEqual(['NFL', 'College Football Playoff', 'Championship Weekend', 'Super Bowl', 'CFP Semifinals', 'CFP National Championship']);
     expect(namesBySport.get(Sport.BASKETBALL)).toEqual(['NBA', 'WNBA', 'NCAA Division I Men', 'NCAA Division I Women', 'NBA Conference Finals', 'NBA Finals', 'Men\'s Final Four', 'Men\'s National Championship']);
+    expect(namesBySport.get(Sport.BASEBALL)).toEqual(['MLB', 'League Championship Series', 'World Series']);
     expect(namesBySport.get(Sport.GOLF)).toEqual(['PGA TOUR', 'LPGA Tour']);
     expect(namesBySport.get(Sport.HOCKEY)).toEqual(['NHL', 'PWHL', 'NCAA Division I Men', 'NCAA Division I Women', 'NHL Conference Finals', 'Stanley Cup Final']);
   });
@@ -1170,9 +1171,10 @@ describe('The seeded championship stat pool leagues and their templates', () => 
     { sport: Sport.BASKETBALL, league: 'Men\'s National Championship', prefix: 'mens-national-championship', composite: 'triple-threat' },
     { sport: Sport.BASKETBALL, league: 'NBA Conference Finals', prefix: 'nba-conference-finals', composite: 'triple-threat' },
     { sport: Sport.HOCKEY, league: 'NHL Conference Finals', prefix: 'nhl-conference-finals', composite: 'power-play' },
+    { sport: Sport.BASEBALL, league: 'League Championship Series', prefix: 'league-championship-series', composite: 'box-score' },
   ];
 
-  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games and the NBA\'s and NHL\'s conference finals among them', async () => {
+  it('seeds exactly the championships as composite leagues of players, the College Football Playoff\'s and the men\'s Final Four\'s semifinals and title games, the NBA\'s and NHL\'s conference finals and MLB\'s League Championship Series among them', async () => {
     const leagues = await getPrisma().sportLeague.findMany({ where: { scoringFamily: { not: null } }, include: { sport: true }, orderBy: { name: 'asc' } });
 
     expect(leagues.map((league) => [league.sport.sport, league.name, league.participantType, league.scoringFamily])).toEqual(
