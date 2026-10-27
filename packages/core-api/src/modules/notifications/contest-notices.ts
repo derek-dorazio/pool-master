@@ -32,6 +32,8 @@ import {
   ContestEventChangeKind,
   ContestResultsKind,
   buildContestUrl,
+  buildEmailContestFormat,
+  buildEmailEventHeader,
   buildLeaderboardUrl,
   formatUserName,
   type ContestEmailEvent,
@@ -116,7 +118,9 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         userName: formatUserName(user),
         leagueName: league.name,
         contestName: contest.name,
+        event: buildEmailEventHeader(this.deps.appBaseUrl, summary.firstEvent, summary.sportLeagueName),
         events: summary.sportEvents.map(toEmailEvent),
+        format: buildEmailContestFormat(this.deps.appBaseUrl, contest.selectionType),
         rules: summary.rules,
         entriesPerMember: summary.entriesPerMember,
         closesAt: summary.closesAt,
@@ -153,7 +157,10 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         userName: formatUserName(user),
         leagueName: league.name,
         contestName: contest.name,
-        event: toEmailEvent(sportEvent),
+        // A season contest's events are all in one sport league, the first event's.
+        event: buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, summary.sportLeagueName),
+        ...(sportEvent.venue !== undefined && { venue: sportEvent.venue }),
+        format: buildEmailContestFormat(this.deps.appBaseUrl, contest.selectionType),
         ...(eventFormat !== null && { eventFormat }),
         rules: summary.rules,
         entryCount: submitted.length,
@@ -254,6 +261,9 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
       ? `${sportEvent.id}:moved-${change.previousStart.toISOString()}-to-${sportEvent.startDate.toISOString()}`
       : `${sportEvent.id}:${change.kind.toLowerCase()}-${sportEvent.startDate.toISOString()}`;
     const now = this.deps.now?.() ?? new Date();
+    if (contests.length === 0) return;
+    const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
     await Promise.all(contests.map(async (contest) => {
       const [league, members, entrants] = await Promise.all([
         this.deps.leagues.findById(contest.leagueId),
@@ -279,7 +289,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
         about: `${contest.id}:${about}`,
         league: { id: league.id, name: league.name, leagueCode: league.leagueCode, plan: league.plan },
         refs: { contestId: contest.id },
-        data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, eventName: sportEvent.name, change: contestChange, contestUrl },
+        data: { userName: formatUserName(user), leagueName: league.name, contestName: contest.name, event, change: contestChange, contestUrl },
       }));
     }));
   }

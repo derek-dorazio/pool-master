@@ -28,6 +28,7 @@ import type {
   LeagueRepository,
   ParticipantContestScoringRuleRepository,
   SportEventRepository,
+  SportLeagueRepository,
   SquadMembershipRepository,
   SquadRepository,
   UserRepository,
@@ -41,6 +42,7 @@ import type {
   LeagueMembership,
   SportEvent,
   SportEventTier,
+  SportLeague,
   Squad,
   SquadMembership,
   User,
@@ -627,6 +629,11 @@ export class InMemoryContestWorld {
     });
   }
 
+  /** Every sport league, named by its id: the emails about an event name its sport league. */
+  sportLeagueRepo(): Pick<SportLeagueRepository, 'findById'> {
+    return { findById: async (id) => ({ id, name: id }) as SportLeague };
+  }
+
   sportEventRepo(): SportEventRepository {
     return fakeSportEventRepo({
       findById: async (id) => this.sportEvents.get(id) ?? null,
@@ -703,6 +710,7 @@ export class InMemoryContestWorld {
       leagues: this.leagueRepo(),
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
+      sportLeagues: this.sportLeagueRepo(),
       eventParticipants: { listEventParticipants: async () => [] },
       tiers: {
         getEffectiveValuationsForSportEvent: async () => [],

@@ -34,6 +34,7 @@ import type {
   LeagueRepository,
   SportEventMatchRepository,
   SportEventRepository,
+  SportLeagueRepository,
   SquadMembershipRepository,
 } from '@poolmaster/shared/db';
 import type { EmailConfig } from '@poolmaster/shared/dto';
@@ -65,6 +66,8 @@ import {
   emailRecipientOf,
   EntryReminderKind,
   buildContestUrl,
+  buildEmailContestFormat,
+  buildEmailEventHeader,
   formatUserName,
   type DraftProgress,
   type EmailService,
@@ -75,6 +78,7 @@ import type { DueNotifications } from '../events/event-lifecycle-scheduler';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestBracketGames } from '../scoring-families/head-to-head/bracket-picks';
 import { survivorRun } from '../scoring-families/head-to-head/survivor';
+import { summarizeContest } from './contest-summary';
 import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
 
 /**
@@ -118,8 +122,10 @@ export interface EntryReminderDeps extends LeagueMemberDeps {
   picks: Pick<ContestEntryPickRepository, 'findByEntriesWithParticipant'>;
   /** A pick'em or bracket draft's picks, for its progress, and a survivor season's, for who is out. */
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent' | 'findByEntriesAndEvents'>;
-  /** A tiered draft's roster size. */
+  /** A tiered draft's roster size, and the tier count in the contest's rules. */
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
+  /** The event's sport league, named on the email. */
+  sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   /** Who holds a box on a squares grid. */
   squares: Pick<ContestSquaresRepository, 'findSquares'>;
   leagues: Pick<LeagueRepository, 'findById'>;
@@ -202,10 +208,24 @@ export class EntryReminders implements DueNotifications {
 
   private async queueReminder(due: DueReminder): Promise<void> {
     const { contest, sportEvent } = due;
-    const league = await this.deps.leagues.findById(contest.leagueId);
+    const [league, summary, entries] = await Promise.all([
+      this.deps.leagues.findById(contest.leagueId),
+      summarizeContest(this.deps, contest),
+      this.deps.entries.findByContest(contest.id),
+    ]);
     if (!league) return;
-    const recipients = await this.recipients(due, league);
+    if (!summary) {
+      this.deps.logger?.warn({
+        action: 'email.entryReminders.skipped',
+        data: { contestId: contest.id, leagueId: league.id, sportEventId: sportEvent.id },
+      }, 'Skipped an entry reminder because the contest\'s rules or events are gone');
+      return;
+    }
+    const recipients = await this.recipients(due, league, entries);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, summary.sportLeagueName);
+    const format = buildEmailContestFormat(this.deps.appBaseUrl, contest.selectionType);
+    const entryCount = entries.filter((entry) => contestEntryEventStatus(entry, sportEvent.id) === ContestEntryStatus.SUBMITTED).length;
     for (const { user, standing } of recipients) {
       await this.deps.email.send('CONTEST_ENTRY_REMINDER', {
         to: emailRecipientOf(user),
@@ -216,7 +236,10 @@ export class EntryReminders implements DueNotifications {
           userName: formatUserName(user),
           leagueName: league.name,
           contestName: contest.name,
-          eventName: sportEvent.name,
+          event,
+          format,
+          rules: summary.rules,
+          entryCount,
           closesAt: due.closesAt,
           hoursBefore: due.hours,
           standing,
@@ -233,11 +256,8 @@ export class EntryReminders implements DueNotifications {
   }
 
   /** The active members to remind, each once, with why they are told. */
-  private async recipients(due: DueReminder, league: League): Promise<Recipient[]> {
-    const [members, entries] = await Promise.all([
-      activeLeagueMembers(this.deps, league.id),
-      this.deps.entries.findByContest(due.contest.id),
-    ]);
+  private async recipients(due: DueReminder, league: League, entries: ContestEntry[]): Promise<Recipient[]> {
+    const members = await activeLeagueMembers(this.deps, league.id);
     const owners = await this.deps.squadMemberships.findBySquads([...new Set(entries.map((entry) => entry.squadId))]);
     const ownersBySquad = new Map<string, string[]>();
     for (const owner of owners) {

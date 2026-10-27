@@ -36,6 +36,7 @@ import {
 import {
   emailRecipientOf,
   EntryReceiptKind,
+  buildEmailEventHeader,
   buildEntryUrl,
   formatUserName,
   type ContestEntryCompletedEmailData,
@@ -56,7 +57,7 @@ export interface EntryReceiptDeps {
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquad'>;
   users: Pick<UserRepository, 'findById'>;
   sportEvents: Pick<SportEventRepository, 'findById'>;
-  /** A bracket's round names ("Sweet 16"). */
+  /** The event's sport league, named on the receipt, and a bracket's round names ("Sweet 16"). */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   email: Pick<EmailService, 'send'>;
   appBaseUrl: string;
@@ -117,6 +118,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
       contest,
       league,
       entry,
+      sportEvent,
       about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
       data: { submittedAt, ...(tiebreaker !== null && { tiebreaker }), receipt },
     });
@@ -129,9 +131,13 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
   async squaresDrawn(board: DrawnSquaresBoard): Promise<void> {
     const { contest, digits } = board;
     try {
-      const league = await this.deps.leagues.findById(contest.leagueId);
-      if (!league || digits === null) {
-        this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league or the draw is gone');
+      const [league, sportEvent] = await Promise.all([
+        this.deps.leagues.findById(contest.leagueId),
+        // A squares grid is on one game, of the contest's one event.
+        this.deps.sportEvents.findById(contest.sportEventIds[0] ?? ''),
+      ]);
+      if (!league || !sportEvent || digits === null) {
+        this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league, the event or the draw is gone');
         return;
       }
       const entryIds = [...new Set(board.boxes.map((box) => box.contestEntryId))];
@@ -146,6 +152,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
           contest,
           league,
           entry,
+          sportEvent,
           // The draw is final: one receipt per entry.
           about: `${entry.id}:squares-draw`,
           data: {
@@ -171,11 +178,14 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     contest: Contest;
     league: League;
     entry: ContestEntryWithSquad;
+    sportEvent: SportEvent;
     about: string;
     data: Pick<ContestEntryCompletedEmailData, 'submittedAt' | 'tiebreaker' | 'receipt'>;
   }): Promise<void> {
-    const { contest, league, entry } = input;
+    const { contest, league, entry, sportEvent } = input;
     const entryUrl = buildEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entry.id);
+    const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
     for (const user of await this.activeOwners(entry.squadId)) {
       try {
         await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
@@ -186,6 +196,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
           data: {
             userName: formatUserName(user),
             leagueName: league.name,
+            event,
             contestName: contest.name,
             teamName: entry.squadName,
             entryName: entry.name,

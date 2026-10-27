@@ -25,6 +25,10 @@ const MASTERS_HEADER = {
   startsAt: new Date('2027-04-08T12:00:00.000Z'),
   imageUrl: GOLF_IMAGE_URL,
 };
+/** The Masters a contest is on, in the member contest emails. */
+const MASTERS_CONTEST_EVENT = { ...MASTERS_HEADER, startsAt: new Date('2026-04-09T11:40:00.000Z') };
+const TIERED_FORMAT = { name: 'Tiered', imageUrl: `${IMAGE_HOST}/email/formats/tiered.png` };
+const MASTERS_RULES = 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.';
 const MASTERS_SETUPS = [
   {
     formatName: 'Tiered',
@@ -86,6 +90,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
   CONTEST_ENTRY_COMPLETED: {
     userName: 'Morgan Member',
     leagueName: 'Office League',
+    event: MASTERS_CONTEST_EVENT,
     contestName: 'Masters Pick 6',
     teamName: 'Morgan\'s Squad',
     entryName: 'Entry 1',
@@ -106,9 +111,11 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
-    event: { name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' },
+    event: MASTERS_CONTEST_EVENT,
+    venue: 'Augusta National Golf Club',
+    format: TIERED_FORMAT,
     eventFormat: '4 rounds',
-    rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
+    rules: MASTERS_RULES,
     entryCount: 12,
     hasEntry: false,
     leaderboardUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1/leaderboard',
@@ -117,7 +124,10 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
-    eventName: 'The Masters',
+    event: MASTERS_CONTEST_EVENT,
+    format: TIERED_FORMAT,
+    rules: MASTERS_RULES,
+    entryCount: 14,
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
     hoursBefore: 3,
     standing: { kind: EntryReminderKind.DRAFT, drafts: 1, progress: { made: 4, of: 6 } },
@@ -127,8 +137,10 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
+    event: MASTERS_CONTEST_EVENT,
     events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z'), venue: 'Augusta National Golf Club' }],
-    rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
+    format: TIERED_FORMAT,
+    rules: MASTERS_RULES,
     entriesPerMember: '1 entry per member',
     closesAt: new Date('2026-04-09T11:40:00.000Z'),
     contestUrl: 'http://localhost:5173/league/OFFICE24/contests/contest-1',
@@ -137,6 +149,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
+    event: MASTERS_CONTEST_EVENT,
     moment: { kind: StandingsMomentKind.ROUND, eventName: 'The Masters', roundNumber: 2 },
     top: [
       { place: '1', entryName: 'Amen Corner', squadName: 'Casey & Co', score: '-12', movement: 2, isYours: false },
@@ -177,7 +190,7 @@ export const EMAIL_TEMPLATE_FIXTURES: { [Key in SystemEmailTemplateKey]: SystemE
     userName: 'Morgan Member',
     leagueName: 'Office League',
     contestName: 'Masters Pick 6',
-    eventName: 'The Masters',
+    event: { ...MASTERS_HEADER, startsAt: new Date('2027-04-15T12:00:00.000Z') },
     change: {
       kind: ContestEventChangeKind.RESCHEDULED,
       previousStart: new Date('2027-04-08T12:00:00.000Z'),

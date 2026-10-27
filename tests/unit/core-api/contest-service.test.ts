@@ -183,6 +183,8 @@ function createMockSquadMembershipRepo(
 /** The default contest event: a golf event already under way, so a live contest's picks are revealed. */
 const STARTED_EVENT = {
   id: 'event-1',
+  name: 'The Masters',
+  sportLeagueId: 'pga-tour',
   sport: Sport.GOLF,
   status: SportEventStatus.IN_PROGRESS,
   startDate: new Date('2026-01-01T12:00:00.000Z'),
@@ -220,6 +222,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       findByIds: jest.fn().mockImplementation(async (ids: readonly string[]) => (ids.includes(STARTED_EVENT.id) ? [STARTED_EVENT] : [])),
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
+    sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
     eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]) },
     tiers: {
       getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),

@@ -104,7 +104,7 @@ describe('EntryReceipts', () => {
       squadMemberships: world.squadMembershipRepo(),
       users: world.userRepo(),
       sportEvents: world.sportEventRepo(),
-      sportLeagues: { findById: async () => ({ roundNames } as unknown as SportLeague) },
+      sportLeagues: { findById: async () => ({ name: 'NFL', roundNames } as unknown as SportLeague) },
       email,
       appBaseUrl: 'https://app.example.test/',
       logger,
@@ -160,7 +160,7 @@ describe('EntryReceipts', () => {
     return outbox.rows.find((row) => row.recipientUserId === userId)?.textBody ?? '';
   }
 
-  it('sends each active owner a pick\'em receipt with every pick at its spread and confidence and the tiebreaker in points, from the contest\'s league', async () => {
+  it('sends each active owner a pick\'em receipt under the week\'s header with every pick at its spread and confidence and the tiebreaker in points, from the contest\'s league', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.AMERICAN_FOOTBALL, startDate: KICKOFF });
 
     await receipts().gamePicksSubmitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
@@ -179,6 +179,7 @@ describe('EntryReceipts', () => {
       .toEqual(owners.map((owner) => owner.id).sort((left, right) => left.localeCompare(right)));
     expect(outbox.rows.every((row) => row.templateKey === 'CONTEST_ENTRY_COMPLETED' && row.fromName === 'Office League')).toBe(true);
     const text = textTo(owners[0].id);
+    expect(text).toContain('Entry completed\nWeek 1 (NFL), ');
     expect(text).toContain('Week 1 picks:');
     expect(text).toContain('- Bills at Chiefs: Chiefs -3.5 (2)');
     expect(text).toContain('- Bears at Lions: Bears +7 (1)');
