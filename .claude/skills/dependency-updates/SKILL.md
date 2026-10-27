@@ -37,10 +37,16 @@ stop. A quiet week is silent.
 Take the PRs one at a time, security PRs first. Each PR you finish rebases the others, so
 working them in parallel only produces conflicts.
 
+A failed "Dependabot Updates" run in Actions usually still opened its PR. Read the job log for
+the error table: `security_update_not_possible` means one advisory had no fix Dependabot
+could reach (its `explanation` names the package holding it back), and the PR carries the
+others. That advisory goes in the note to the owner with the PR's.
+
 ## Step 2 — check it out and run the gates
 
-1. Fetch the PR's branch (`dependabot/...`) and check it out. Dependabot regenerated
-   `package-lock.json`; run `npm ci`, then
+1. Fetch the PR's branch (`dependabot/...`) and check it out. Run everything on the Node
+   version in `.nvmrc`, which a fresh container may not have as its default
+   (`nvm install $(cat .nvmrc)`). Dependabot regenerated `package-lock.json`; run `npm ci`, then
    `npx prisma generate --schema packages/core-api/prisma/schema.prisma`.
 2. Run the whole gate set, `rules/workflow-rules.md` §3 *Required Local Validation Before
    Push*. A dependency bump is not "docs only": a minor of a code generator, a linter or a
@@ -59,6 +65,15 @@ working them in parallel only produces conflicts.
 4. **A Docker PR that moves Node** also needs `.nvmrc` set to the same version, in the same
    PR: CI installs Node from `.nvmrc` and Dependabot does not touch it. Both Dockerfiles and
    `.nvmrc` name one version.
+5. **A GitHub Actions PR** changes only workflow files, so the local gates exercise nothing
+   it touches; the PR's own CI is its gate. What CI cannot show is the review's job (Step 4).
+6. **A security PR can carry majors.** When an advisory's only fixed version is a new major,
+   the group takes it (zod 3 to 4, react-router 6 to 7). A major is planned as its own ticket
+   (see the top of this skill), so take it out of the PR as in Step 3 and put it to the owner
+   with its advisory, even when the gates pass.
+   An update that an open ticket already owns is taken out too and left to that ticket, so the
+   two PRs do not conflict. `npm audit --json --package-lock-only` on `main` lists each
+   advisory with its severity, the vulnerable range and the version that fixes it.
 
 ## Step 3 — when a gate fails
 
@@ -68,10 +83,15 @@ Read the failure as for any other change (the `release-check` skill). Then:
   that tightened): fix it on the branch, run the gates again, push.
 - **Larger than a small fix, or the library changed behaviour we rely on**: put that one
   package back to its previous version on the branch (`npm install <name>@<old version>` in
-  the workspace that declares it), add an `ignore` entry for it to `.github/dependabot.yml`
-  with a comment naming the new ticket, file the ticket with the failure and the release
-  notes, and land the rest of the group. Tell the owner in one line. The ticket's PR removes
-  the `ignore` entry.
+  the workspace that declares it). A dependency of ours can keep the new version hoisted at
+  the root (zod 4 stayed under `zod-to-json-schema` with zod 3 back in both workspaces), so
+  check `npm ls <name>`; if it is still there, delete that package's entries from
+  `package-lock.json` and `node_modules`, and run `npm install` again. Add an `ignore` entry
+  for it to `.github/dependabot.yml` with a comment naming the new ticket, file the ticket with
+  the failure and the release notes, and land the rest of the group. Tell the owner in one
+  line. The ticket's PR removes the `ignore` entry. A package that is still vulnerable gets no
+  `ignore` entry, because it would also hide the advisory's next security PR. Set it aside
+  again each time until its ticket lands.
 - **A PR with a single update that breaks** (a security PR, often): close it with a comment
   saying why and naming the ticket. A security fix that cannot land goes to the owner at once,
   with the advisory's severity and whether our code reaches the vulnerable path.
@@ -88,12 +108,22 @@ asks for (gates run, anything fixed or set aside, the ticket for it) in a PR com
 The review reads the changelogs of the minors, not just the diff: a minor that changes
 behaviour passes every gate when no test covers that behaviour.
 
+For a GitHub Actions PR the review reads, for each action, the release notes and the
+`action.yml` at the new major: changed input defaults, removed inputs and `runs.using`. It
+checks that no reference is left on the old major, and that `download-artifact` stays on the
+same major as `upload-artifact`. It lists the jobs that the PR's CI cannot run (the deploy jobs
+that run only on a push to `main`, and the workflows that run only on dispatch); the first
+`main` run after the merge is their test, and the run watches it (Step 5).
+
+A review finding that needs a change is not pushed to the Dependabot branch for a nit: a push
+stops Dependabot rebasing it (Step 3). Note it in a PR comment, or carry it to a follow-up.
+
 ## Step 5 — merge
 
-On the go, land it with the `land-a-pr` skill. Squash with the PR's title; the body names
-the run's ticket only if this PR finishes one. Keep to the merge spacing in
-`rules/workflow-rules.md` §6 *Slices in a series*: two Dependabot merges close together are
-fine, a third waits for `main`'s run.
+On the go, land it with the `land-a-pr` skill, and watch the `main` run the merge starts.
+Squash with the PR's title; the body names the run's ticket only if this PR finishes one.
+Keep to the merge spacing in `rules/workflow-rules.md` §6 *Slices in a series*: two
+Dependabot merges close together are fine, a third waits for `main`'s run.
 
 ## Step 6 — new major versions
 
