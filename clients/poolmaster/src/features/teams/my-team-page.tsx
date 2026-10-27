@@ -49,7 +49,7 @@ export function MyTeamPage() {
     );
   }, [leagueCode, leagueQuery.error, leagueQuery.isError, logger]);
 
-  const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading...' });
+  const leagueContext = useLeagueContextGuard(leagueQuery);
   if (leagueContext.state === 'blocked' || !league) {
     return leagueContext.element;
   }
@@ -57,7 +57,7 @@ export function MyTeamPage() {
   // Until the teams load, "no team" is unknown, not true: offering Create team here would invite
   // a viewer who already has a team to create a second one.
   if (teamsQuery.isLoading) {
-    return <LoadingState body="Loading..." testId="my-team-loading" />;
+    return <LoadingState testId="my-team-loading" />;
   }
   if (teamsQuery.isError) {
     return (

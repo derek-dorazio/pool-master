@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Select, Tile } from '@/features/shared/ui';
+import { Button, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -98,7 +98,7 @@ export function WithdrawalsCard({
               onChange={(change) => setReplacementId(change.target.value)}
               value={replacementId}
             >
-              <option value={NONE}>{candidatesQuery.data ? `Choose a ${participant.one}` : 'Loading…'}</option>
+              <option value={NONE}>{candidatesQuery.data ? `Choose a ${participant.one}` : LOADING_TEXT}</option>
               {candidates.map((candidate) => (
                 <option key={candidate.id} value={candidate.id}>{candidate.name}</option>
               ))}

@@ -9,6 +9,7 @@ import {
   formatDateTimeDisplay,
   IconAvatar,
   LinkButton,
+  LOADING_TEXT,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
@@ -274,7 +275,7 @@ export function YourTeamCard({
       title="Yours"
     >
       {isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">Loading...</p>
+        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">{LOADING_TEXT}</p>
       ) : team ? (
         <div className="flex items-center gap-3 px-4 py-4">
           <IconAvatar className={getTeamIconOption(team.iconKey).themeClass} size="sm">
