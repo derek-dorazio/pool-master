@@ -1,5 +1,6 @@
 import { BRAND_COLORS, colorWithAlpha } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
+import faviconSvg from '../../public/favicon.svg?raw';
 import indexHtml from '../../index.html?raw';
 import themeCss from './globals.css?raw';
 
@@ -40,6 +41,11 @@ describe('brand colours', () => {
 
   it('writes a brand colour at an alpha as rgba, the form email clients read', () => {
     expect(colorWithAlpha(BRAND_COLORS.navy, 0.1)).toBe('rgba(11, 30, 63, 0.10)');
+  });
+
+  it('draws the browser icon in the brand navy and gold', () => {
+    expect(faviconSvg).toContain(`fill="${BRAND_COLORS.navy}"`);
+    expect(faviconSvg).toContain(`fill="${BRAND_COLORS.gold}"`);
   });
 
   it("sets the browser's tab colour to the brand navy", () => {
