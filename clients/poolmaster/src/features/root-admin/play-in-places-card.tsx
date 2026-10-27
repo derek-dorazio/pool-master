@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { SportEventStatus, type SportVocabulary } from '@poolmaster/shared/domain';
 import { setEventPlayInWinner, updateEventParticipants } from '@/lib/api';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, Select, Tile } from '@/features/shared/ui';
+import { Button, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -205,7 +205,7 @@ function PlayInWinnerPicker({
         onChange={(change) => setParticipantId(change.target.value)}
         value={participantId}
       >
-        <option value={NONE}>{teamsQuery.data ? `Choose the winning ${vocabulary.participant.one}` : 'Loading…'}</option>
+        <option value={NONE}>{teamsQuery.data ? `Choose the winning ${vocabulary.participant.one}` : LOADING_TEXT}</option>
         {candidates.map((participant) => (
           <option key={participant.id} value={participant.id}>{participant.name}</option>
         ))}

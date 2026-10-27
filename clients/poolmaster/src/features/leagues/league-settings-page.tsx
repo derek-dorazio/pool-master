@@ -7,6 +7,7 @@ import {
   formatDateDisplay,
   IconAvatar,
   LinkButton,
+  LOADING_TEXT,
   SettingsRow,
   SettingsSection,
   SettingsSectionHeader,
@@ -134,7 +135,7 @@ export function LeagueSettingsPage() {
           label="Commissioners"
           testId="league-settings-commissioners"
           value={squadsQuery.isLoading || !members
-            ? <span className="text-muted-foreground">Loading...</span>
+            ? <span className="text-muted-foreground">{LOADING_TEXT}</span>
             : commissionerNames.join(', ')}
         />
       </SettingsSection>
@@ -210,7 +211,7 @@ export function LeagueSettingsPage() {
             testId="league-settings-event-emails-sport-leagues"
             value={sportLeaguesQuery.data
               ? describeEventEmailSportLeagues(sportLeaguesQuery.data, league.mutedSportLeagueIds)
-              : <span className="text-muted-foreground">{sportLeaguesQuery.isError ? 'Unavailable' : 'Loading...'}</span>}
+              : <span className="text-muted-foreground">{sportLeaguesQuery.isError ? 'Unavailable' : LOADING_TEXT}</span>}
           />
           {hasWeeklyDigest(league) ? (
             <SettingsRow

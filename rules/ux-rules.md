@@ -171,7 +171,17 @@ Use those conventions as the starting point, but bias toward a consumer app:
 - The product's name on screen, in the browser tab, in every email and in link previews is
   `PRODUCT_NAME` ("Primetime Commissioner"), with `PRODUCT_TAGLINE` under it, both in
   `packages/shared/domain/brand.ts`. Copy reads them rather than typing the name, so a rename
-  is one edit. `poolmaster` stays the name of code, packages, infrastructure and the repository.
+  is one edit; that covers code comments too, which say "the product". `rules:check:brand-copy`
+  fails when either string is typed out in tracked source outside `brand.ts`; tests and
+  markdown are exempt. A link preview image draws the name into a committed picture, so a rename
+  re-renders those (the `update-pictures` skill). `poolmaster` stays the name of code, packages,
+  infrastructure and the repository.
+- **Repeated words come from one place.** A button or call to action that reads the same on
+  several screens comes from its feature's copy file (the event pages' `EVENT_PAGE_ACTIONS`),
+  and a loading spot with nothing specific to say uses `LOADING_TEXT` or `LoadingState`'s
+  default. Loading text ends in three dots, "Loading members...", never the single "…"
+  character. Other screen text stays inline in its component; the site is English only and
+  has no translation layer.
 - The header league switcher is the only way to move between leagues — there
   is no separate "My Leagues" grid/list page. Keep the switcher compact:
   - league avatar/icon

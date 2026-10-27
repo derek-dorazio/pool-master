@@ -1,4 +1,5 @@
 import type { AriaRole, ReactNode } from "react";
+import { LOADING_TEXT } from "./state-copy";
 import { Tile } from "./tile";
 
 type StateProps = {
@@ -39,7 +40,7 @@ export function EmptyState(props: StateProps) {
   return <StateTile {...props} />;
 }
 
-export function LoadingState({ body = "Loading...", ...props }: StateProps) {
+export function LoadingState({ body = LOADING_TEXT, ...props }: StateProps) {
   return <StateTile ariaLive="polite" body={body} role="status" {...props} />;
 }
 

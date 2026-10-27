@@ -6,6 +6,7 @@ import { DetailsActionsLayout } from "./details-actions-layout";
 import { PageHeader } from "./page-header";
 import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
+import { LOADING_TEXT } from "./state-copy";
 import { Tile } from "./tile";
 
 type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
@@ -62,7 +63,7 @@ function renderAsyncState({
   state = "ready",
 }: AsyncPageStateProps) {
   if (state === "loading") {
-    return <LoadingState body={loadingBody ?? "Loading..."} />;
+    return <LoadingState body={loadingBody ?? LOADING_TEXT} />;
   }
 
   if (state === "error") {

@@ -20,7 +20,7 @@ export class PaymentHistoryService {
   async listForLeague(leagueId: string): Promise<LeaguePaymentRecord[]> {
     const payments = await this.deps.payments.listForLeague(leagueId);
     this.deps.logger.debug({ action: 'paymentHistory.league', data: { leagueId, count: payments.length } }, 'Listed league payments');
-    // A grant reads "given free by Primetime Commissioner"; the staff member who gave it isn't league data.
+    // A grant reads "given free by" the product name; the staff member who gave it isn't league data.
     return payments.map((payment) => (payment.kind === LeaguePaymentKind.CONTEST_EXPANSION_GRANT ? { ...payment, payer: null } : payment));
   }
 
