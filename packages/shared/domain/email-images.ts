@@ -1,5 +1,5 @@
 /**
- * The pictures in system email (`plans/email-redesign.md`), and the sport header on event
+ * The pictures in system email (`rules/ux-rules.md` §14 *System Email*), and the sport header on event
  * pages, served from the web app's public folder. Gmail and Outlook show no SVG, so each one is a
  * JPG or PNG file, and email links to it by absolute URL on the web host. One copy of each path,
  * so the web app's render script, the email renderers and the event page cannot disagree.

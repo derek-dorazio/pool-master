@@ -37,6 +37,7 @@ The **Non-Negotiables** above apply to every slice regardless of what it touches
 | Changes the Prisma schema, a domain type, or an enum | `domain-model-concepts.md`, `model-change-rules.md`, `domain-model-conventions-rules.md`, then the backend row above |
 | Adds a sport, a sport league or a contest template (setup) | the `add-sport` skill; `ux-rules.md` §12 *League Pages and Commissioner Tools* item 12 (setup names, defaults, the How to Play and Contest types pages); `architecture-rules.md` §4 *Sport extension*, §6 *Manual-testing seed data goes through the admin API* (each league's last-season test data file) |
 | Adds or changes an event page (`/play/...`) or its link preview | the `add-event-page` skill; `ux-rules.md` §13 *Event Pages* |
+| Adds or changes a system email | the `add-email` skill; `ux-rules.md` §14 *System Email*; `docs/EMAIL-DELIVERY.md` |
 | Touches domain entities, or the ask uses domain words (squad, team, entry, pick, field, release, submit, settle) | `domain-model-concepts.md` — what each entity is, what it is called on screen, and what the verb means in the model |
 | Touches `clients/poolmaster` | `react-ui-rules.md` — §3 *API Integration*, §4 *TanStack Query*, §5 *State, Effect, Form*; `ux-rules.md`; `poolmaster-webapp-rules.md` |
 | Adds or changes tests | `testing-rules.md` §1A–§1C and §3 always, plus the section for your layer: §4 contract verification, §5 MSW, §6 functional/browser E2E, §9/§9A integration depth and isolation |
@@ -73,6 +74,7 @@ tells an agent what it is not allowed to know; a task tells it what order to do 
 | `add-frontend-feature` | Building anything in `clients/poolmaster` |
 | `add-sport` | Making contests possible for a new sport or scoring family: refine, registry entry, scoring family, then reflect on the skill |
 | `add-event-page` | Adding an event page and its link preview: settle the offers, seed them by migration, write the copy, draw the preview image, check it on QA |
+| `add-email` | Adding or redesigning a system email: settle audience and timing, the key and migration, the renderer from the shared pieces, the notice that queues it, tests, and a preview in a real inbox |
 | `load-sport-data` | Putting a sport league's real schedule or fields on a site from public sources: gather, cross-check, write the data file, dry run, apply on the user's yes |
 | `load-new-season` | Next season's schedules for every sport league at once: take stock of what has published, one file per sport, dry-run together, apply on the user's yes |
 | `clutch-card-round` | One playoff round's Clutch Card: load the event and both teams' stars when the matchups are announced, then each game's box score so standings settle |
