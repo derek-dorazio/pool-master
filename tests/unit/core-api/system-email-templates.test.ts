@@ -876,7 +876,7 @@ describe('the email template registry', () => {
   });
 
   it('names the league on the right of the brand bar in every email sent from a league, and leaves it empty in account and root admin email', () => {
-    const brandBarLeague = (html: string) => /<td align="right" style="font-size:13px;color:rgba\(255,255,255,0\.78\);">([^<]*)<\/td>/.exec(html)?.[1];
+    const brandBarLeague = (html: string) => /<td align="right" style="font-size:13px;color:[^"]*">([^<]*)<\/td>/.exec(html)?.[1];
     for (const templateKey of Object.keys(EMAIL_TEMPLATES) as SystemEmailTemplateKey[]) {
       const data: object = EMAIL_TEMPLATE_FIXTURES[templateKey];
       const leagueName = 'leagueName' in data && typeof data.leagueName === 'string' ? data.leagueName : '';

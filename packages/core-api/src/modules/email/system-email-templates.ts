@@ -1,6 +1,6 @@
 import type { EmailTemplateKey, SwitchableEmailTemplateKey } from '@poolmaster/shared/domain';
 import { EMAIL_CHANGE_UNDO_LINK_DAYS, PASSWORD_RESET_LINK_MINUTES } from '@poolmaster/shared/dto';
-import { CupTrophy, DEFAULT_DISPLAY_LOCALE, EmailCategory, PRODUCT_NAME, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
+import { CupTrophy, DEFAULT_DISPLAY_LOCALE, EmailCategory, BRAND_COLORS, PRODUCT_NAME, colorWithAlpha, PRODUCT_TAGLINE, PlanFeature, formatDollars } from '@poolmaster/shared/domain';
 
 export type SystemEmailTemplateKey = EmailTemplateKey;
 
@@ -851,24 +851,31 @@ const EMAIL_WIDTH = 640;
 const STRIP_IMAGE_WIDTH = 200;
 const STRIP_IMAGE_HEIGHT = 80;
 
+/** Email's colours: the brand's, from `BRAND_COLORS`, plus the few only email draws. */
 const EMAIL_THEME = {
-  canvas: '#f5f5f2',
-  raised: '#ffffff',
-  navy: '#0b1e3f',
-  navyDeep: '#05122a',
-  gold: '#f5b800',
-  goldHover: '#ffc82e',
-  goldLight: '#ffd86b',
-  /** The reader's own rows and callouts. */
+  canvas: BRAND_COLORS.paper,
+  raised: BRAND_COLORS.raised,
+  navy: BRAND_COLORS.navy,
+  navyDeep: BRAND_COLORS.navyDeep,
+  gold: BRAND_COLORS.gold,
+  goldLight: BRAND_COLORS.goldLight,
+  /** The reader's own rows and callouts. Email only. */
   goldTint: '#fff6d6',
-  /** Text on goldTint. */
+  /** Text on goldTint. Email only. */
   goldInk: '#5c4600',
+  /** A rise in the standings. Email only. */
   green: '#1f7a3a',
-  red: '#a8202d',
-  ink: '#0b0b0b',
-  muted: '#6b6b64',
-  border: 'rgba(11, 30, 63, 0.18)',
-  subtleBorder: 'rgba(11, 30, 63, 0.10)',
+  red: BRAND_COLORS.red,
+  ink: BRAND_COLORS.ink,
+  muted: BRAND_COLORS.muted,
+  border: colorWithAlpha(BRAND_COLORS.navy, 0.18),
+  subtleBorder: colorWithAlpha(BRAND_COLORS.navy, 0.1),
+  /** Text on navy. */
+  onInverse: BRAND_COLORS.onInverse,
+  /** Second lines on navy: an event's day, a trophy's line. */
+  onInverseSoft: colorWithAlpha(BRAND_COLORS.onInverse, 0.86),
+  /** Quiet text on navy: the tagline, the footer, the league's name. */
+  onInverseMuted: colorWithAlpha(BRAND_COLORS.onInverse, 0.7),
 } as const;
 
 /** Whether EMAIL_CONFIG has a switch for `templateKey`, as the registry says. */
@@ -2486,7 +2493,7 @@ function documentShell(input: {
   unsubscribeUrl?: string;
 }): string {
   const unsubscribe = input.unsubscribeUrl
-    ? `<br><a href="${escapeHtml(input.unsubscribeUrl)}" style="color:rgba(255,255,255,0.85);">${STOP_THESE_EMAILS}</a>`
+    ? `<br><a href="${escapeHtml(input.unsubscribeUrl)}" style="color:${EMAIL_THEME.onInverseSoft};">${STOP_THESE_EMAILS}</a>`
     : '';
   const notAffiliated = input.notAffiliated ? `<br>${escapeHtml(input.notAffiliated)}` : '';
   const heading = input.header
@@ -2509,8 +2516,8 @@ function documentShell(input: {
               <td style="background:${EMAIL_THEME.navy};padding:14px 32px;">
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
-                    <td style="font-family:Archivo,Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}<div style="margin-top:2px;font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,0.70);">${PRODUCT_TAGLINE}</div></td>
-                    <td align="right" style="font-size:13px;color:rgba(255,255,255,0.78);">${escapeHtml(input.leagueName ?? '')}</td>
+                    <td style="font-family:Archivo,Arial,sans-serif;font-size:12px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${EMAIL_THEME.gold};">${PRODUCT_NAME}<div style="margin-top:2px;font-family:Inter,Arial,sans-serif;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;color:${EMAIL_THEME.onInverseMuted};">${PRODUCT_TAGLINE}</div></td>
+                    <td align="right" style="font-size:13px;color:${EMAIL_THEME.onInverseMuted};">${escapeHtml(input.leagueName ?? '')}</td>
                   </tr>
                 </table>
               </td>
@@ -2523,7 +2530,7 @@ function documentShell(input: {
               </td>
             </tr>
             <tr>
-              <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:rgba(255,255,255,0.70);font-size:12px;line-height:1.5;">
+              <td style="background:${EMAIL_THEME.navyDeep};padding:20px 32px;color:${EMAIL_THEME.onInverseMuted};font-size:12px;line-height:1.5;">
                 Sent by ${PRODUCT_NAME}. Keep the office pool moving.<br>${escapeHtml(NOT_MONITORED)}${notAffiliated}${unsubscribe}
               </td>
             </tr>
@@ -2566,10 +2573,10 @@ function eventHeader(event: EmailEventHeader, title: string, dates: EmailDateSty
               <td style="padding:0;line-height:0;font-size:0;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${EMAIL_WIDTH}" style="display:block;width:100%;max-width:${EMAIL_WIDTH}px;height:auto;border:0;"></td>
             </tr>
             <tr>
-              <td style="background:${EMAIL_THEME.navy};padding:20px 32px 24px;color:#ffffff;">
+              <td style="background:${EMAIL_THEME.navy};padding:20px 32px 24px;color:${EMAIL_THEME.onInverse};">
                 <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
-                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:34px;font-weight:800;line-height:1.1;color:#ffffff;">${escapeHtml(event.eventName)}</div>
-                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(formatDay(event.startsAt, dates))}</div>
+                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:34px;font-weight:800;line-height:1.1;color:${EMAIL_THEME.onInverse};">${escapeHtml(event.eventName)}</div>
+                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(formatDay(event.startsAt, dates))}</div>
               </td>
             </tr>`;
 }
@@ -2584,10 +2591,10 @@ function eventStrip(event: EmailEventHeader, title: string, line: string | null)
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                   <tr>
                     <td width="${STRIP_IMAGE_WIDTH}" style="width:${STRIP_IMAGE_WIDTH}px;padding:0;line-height:0;font-size:0;vertical-align:middle;"><img src="${escapeAttribute(event.imageUrl)}" alt="" width="${STRIP_IMAGE_WIDTH}" height="${STRIP_IMAGE_HEIGHT}" style="display:block;width:${STRIP_IMAGE_WIDTH}px;height:${STRIP_IMAGE_HEIGHT}px;border:0;"></td>
-                    <td style="padding:14px 24px;vertical-align:middle;color:#ffffff;">
+                    <td style="padding:14px 24px;vertical-align:middle;color:${EMAIL_THEME.onInverse};">
                       <div style="font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(eventEyebrow(event, title))}</div>
-                      <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:21px;font-weight:800;line-height:1.15;color:#ffffff;">${escapeHtml(event.eventName)}</div>
-                      ${line === null ? '' : `<div style="margin-top:4px;font-size:15px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(line)}</div>`}
+                      <div style="margin-top:4px;font-family:Archivo,Arial,sans-serif;font-size:21px;font-weight:800;line-height:1.15;color:${EMAIL_THEME.onInverse};">${escapeHtml(event.eventName)}</div>
+                      ${line === null ? '' : `<div style="margin-top:4px;font-size:15px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(line)}</div>`}
                     </td>
                   </tr>
                 </table>
@@ -2604,11 +2611,11 @@ function eventStripLine(event: EmailEventHeader, line: string | null): string {
 /** The final results' header: a trophy, then the contest and the winner on a navy band. */
 function trophyBand(trophy: { eyebrow: string; headline: string; line: string }): string {
   return `<tr>
-              <td align="center" style="background:${EMAIL_THEME.navy};padding:24px 32px 28px;color:#ffffff;text-align:center;">
+              <td align="center" style="background:${EMAIL_THEME.navy};padding:24px 32px 28px;color:${EMAIL_THEME.onInverse};text-align:center;">
                 <div style="font-size:40px;line-height:1;">&#127942;</div>
                 <div style="margin-top:10px;font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${EMAIL_THEME.goldLight};">${escapeHtml(trophy.eyebrow)}</div>
-                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;color:#ffffff;">${escapeHtml(trophy.headline)}</div>
-                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:rgba(255,255,255,0.86);">${escapeHtml(trophy.line)}</div>
+                <div style="margin-top:6px;font-family:Archivo,Arial,sans-serif;font-size:32px;font-weight:800;line-height:1.1;color:${EMAIL_THEME.onInverse};">${escapeHtml(trophy.headline)}</div>
+                <div style="margin-top:6px;font-size:16px;line-height:1.4;color:${EMAIL_THEME.onInverseSoft};">${escapeHtml(trophy.line)}</div>
               </td>
             </tr>`;
 }
