@@ -15,6 +15,7 @@ import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
 import { Pager } from "./pager";
+import { Tile } from "./tile";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -222,7 +223,7 @@ export function DataGrid<TData>({
           ) : null}
         </div>
       ) : null}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <Tile className="overflow-x-auto" padding="none" radius="md">
         <table
           className="min-w-full border-collapse text-left text-sm"
           data-testid={tableTestId}
@@ -348,7 +349,7 @@ export function DataGrid<TData>({
             )}
           </tbody>
         </table>
-      </div>
+      </Tile>
       {pageSize ? (
         <Pager
           onNext={() => table.nextPage()}

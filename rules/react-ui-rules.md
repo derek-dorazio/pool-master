@@ -374,6 +374,9 @@ state, stale actions, and unthemeable markup accumulate.
   code consumes them.
 - The `poolmaster/no-raw-theme-colors` ESLint rule guards raw Tailwind colour-scale
   classes and literal colours in feature code outside `features/shared/ui/`.
+- The `poolmaster/no-arbitrary-type-sizes` ESLint rule guards hand-typed `tracking-[…]` and
+  `text-[Npx]` in the same scope: letter spacing and text size come from the theme
+  (`tracking-eyebrow`, `tracking-label`, the `text-*` steps) or from `Eyebrow`.
 - The `poolmaster/no-inline-theme-styles` ESLint rule guards literal inline theme
   styles for color, border, shadow, and typography properties.
 - The brand's colours have one home per medium, kept in step by a test:

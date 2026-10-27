@@ -64,11 +64,11 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
           return (
             <tbody data-testid={`plan-comparison-section-${section.key}`} key={section.key}>
               <tr className="bg-muted">
-                <th className="sticky left-0 bg-muted px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="colgroup">
+                <th className="sticky left-0 bg-muted px-3 py-2 text-left text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground" colSpan={isFolded ? 1 : plans.length + 1} scope="colgroup">
                   {group === null ? section.title : (
                     <Button
                       aria-expanded={!isFolded}
-                      className="h-auto gap-1 p-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                      className="h-auto gap-1 p-0 text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground"
                       data-testid={`plan-comparison-toggle-${section.key}`}
                       onClick={() => toggle(group)}
                       size="auto"

@@ -14,6 +14,7 @@ import {
   Button,
   ConfirmDialog,
   ErrorState,
+  Eyebrow,
   FormField,
   LoadingState,
   Select,
@@ -174,7 +175,7 @@ export function SquaresBoardView({
                 data-testid={`squares-winner-${moment.periodNumber}`}
                 key={moment.periodNumber}
               >
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{moment.label}</div>
+                <Eyebrow tone="muted">{moment.label}</Eyebrow>
                 {moment.winner ? (
                   <>
                     <div className="font-semibold">{moment.winner.entryName ?? 'No winner'}</div>
