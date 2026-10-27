@@ -5,7 +5,7 @@
  * from `PRODUCT_NAME` and `PRODUCT_TAGLINE`, so a rename is one edit. This check fails when
  * either is typed out anywhere else in tracked source. Tests are exempt: they check that the
  * name and tagline show up, so they spell them out on purpose. Markdown is exempt too, since
- * rules and docs name the product in prose.
+ * rules and docs name the product in prose, and binary files are skipped.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -14,7 +14,9 @@ import { pathToFileURL } from 'node:url';
 
 export const BRAND_FILE = 'packages/shared/domain/brand.ts';
 
-const SOURCE_EXTENSION = /\.(ts|tsx|js|jsx|mjs|cjs|html|sql|json|yml|yaml)$/;
+// Everything tracked is read except prose and binary files, so a new text file type is covered
+// by default.
+const SKIPPED_EXTENSION = /\.(md|png|jpe?g|gif|webp|ico|avif|woff2?|ttf|otf|pdf|zip|gz)$/i;
 const TEST_PATH = /(\.(test|spec|functional|e2e)\.[a-z]+$)|(^|\/)(tests|e2e|__tests__)\//;
 
 /** The name and tagline as `brand.ts` declares them. */
@@ -27,21 +29,29 @@ export function readBrandStrings(brandSource) {
   return [read('PRODUCT_NAME'), read('PRODUCT_TAGLINE')];
 }
 
-/** Whether a tracked file is source this check reads: not brand.ts, a test or prose. */
+/** Whether a tracked file is one this check reads: not brand.ts, a test, prose or binary. */
 export function isCheckedSource(path) {
-  return path !== BRAND_FILE && SOURCE_EXTENSION.test(path) && !TEST_PATH.test(path);
+  return path !== BRAND_FILE && !SKIPPED_EXTENSION.test(path) && !TEST_PATH.test(path);
 }
 
-/** Every line in the given files that types out a brand string, as `path:line`. */
+/** A brand string as a pattern that also matches it wrapped across lines by a formatter. */
+function wrappedPattern(brand) {
+  const words = brand.split(/\s+/).map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(words.join('\\s+'), 'g');
+}
+
+/** Every place in the given files that types out a brand string, as `path:line` of its start. */
 export function findBrandLiterals({ files, brandStrings }) {
   const hits = [];
   for (const { path, text } of files) {
-    text.split('\n').forEach((line, index) => {
-      const found = brandStrings.find((brand) => line.includes(brand));
-      if (found) hits.push({ location: `${path}:${index + 1}`, brand: found });
-    });
+    for (const brand of brandStrings) {
+      for (const match of text.matchAll(wrappedPattern(brand))) {
+        const line = text.slice(0, match.index).split('\n').length;
+        hits.push({ location: `${path}:${line}`, brand });
+      }
+    }
   }
-  return hits;
+  return hits.sort((a, b) => a.location.localeCompare(b.location, 'en', { numeric: true }));
 }
 
 function main() {
@@ -55,7 +65,8 @@ function main() {
   const files = listed.stdout
     .split('\n')
     .filter((path) => path && isCheckedSource(path))
-    .map((path) => ({ path, text: readFileSync(join(repoRoot, path), 'utf8') }));
+    .map((path) => ({ path, text: readFileSync(join(repoRoot, path), 'utf8') }))
+    .filter(({ text }) => !text.includes('\0'));
   const hits = findBrandLiterals({ files, brandStrings });
   if (hits.length > 0) {
     for (const { location, brand } of hits) console.error(`${location} types "${brand}".`);

@@ -18,7 +18,13 @@ describe('check-brand-copy (#1119)', () => {
     assert.throws(() => readBrandStrings(`export const PRODUCT_NAME = 'Acme Pools';`), /PRODUCT_TAGLINE/);
   });
 
-  it('reads app, API, script and HTML source but skips brand.ts, tests and markdown', () => {
+  it('reads every tracked text file, including ones like svg, css, shell and Terraform, but skips brand.ts, tests, markdown and images', () => {
+    assert.equal(isCheckedSource('clients/poolmaster/public/favicon.svg'), true);
+    assert.equal(isCheckedSource('clients/poolmaster/src/index.css'), true);
+    assert.equal(isCheckedSource('scripts/dev-start.sh'), true);
+    assert.equal(isCheckedSource('infrastructure/terraform/ses.tf'), true);
+    assert.equal(isCheckedSource('clients/poolmaster/public/og/american-football-championship-weekend.jpg'), false);
+    assert.equal(isCheckedSource('clients/poolmaster/public/apple-touch-icon.png'), false);
     assert.equal(isCheckedSource('clients/poolmaster/src/features/app-shell/app-shell.tsx'), true);
     assert.equal(isCheckedSource('packages/core-api/src/modules/email/system-email-templates.ts'), true);
     assert.equal(isCheckedSource('clients/poolmaster/index.html'), true);
@@ -39,6 +45,11 @@ describe('check-brand-copy (#1119)', () => {
       { location: 'a.tsx:2', brand: 'Acme Pools' },
       { location: 'b.ts:1', brand: 'Pools for everyone' },
     ]);
+  });
+
+  it('fails a tagline that a formatter wrapped across lines, naming the line it starts on', () => {
+    const files = [{ path: 'c.tsx', text: `<p>\n  Pools for\n  everyone\n</p>` }];
+    assert.deepEqual(findBrandLiterals({ files, brandStrings }), [{ location: 'c.tsx:2', brand: 'Pools for everyone' }]);
   });
 
   it('passes source that reads the constants', () => {
