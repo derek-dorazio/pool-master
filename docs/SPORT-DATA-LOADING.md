@@ -66,12 +66,14 @@ write.
 sport league of players scored by the composite family (the League Championship Series, World
 Series, NBA Conference Finals, NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL
 Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four,
-Men's National Championship (basketball's and hockey's) and Men's Frozen Four leagues the migrations create). Its players
+Men's National Championship (basketball's and hockey's), Men's Frozen Four, Champions League Semifinals,
+Champions League Final, Women's World Cup Semifinals and Women's World Cup Final leagues the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
 and its box score, one `lines` row per field player who played, with that player's count of each
 stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
 `STOLEN_BASES` for baseball's Box Score; `POINTS`, `REBOUNDS`, `ASSISTS` for basketball's Triple
-Threat; `GOALS`, `ASSISTS`, `SHOTS_ON_GOAL` for hockey's Power Play; touchdowns, receptions and
+Threat; `GOALS`, `ASSISTS`, `SHOTS_ON_GOAL` for hockey's Power Play; `GOALS`, `ASSISTS`, `SHOTS_ON_TARGET` for
+soccer's Hat Trick; touchdowns, receptions and
 yards for football's Redzone). A stat left out counts 0. The run refuses a game beyond the
 event's games, a player off the field, a stat the composite does not count, and a `STATS` file
 for a league that is not a stat pool on the site. Box scores are results, so unlike the rest of a
@@ -338,7 +340,12 @@ Playoff's semifinals, both played as one event of one game, and Indiana over Mia
 National Championship) and `basketball-2026-mens-final-four-test.json` (the 2026 men's semifinals, both
 one event of one game, and Michigan over UConn in the title game) and
 `hockey-2026-mens-frozen-four-test.json` (the 2026 men's Frozen Four semifinals, both one event of
-one game, and Denver over Wisconsin in the title game). The field is both teams' players who
+one game, and Denver over Wisconsin in the title game) and
+`soccer-2026-champions-league-semifinals-and-final-test.json` (the 2025-26 Champions League
+semifinals as one event of two games, game 1 the first legs and game 2 the second legs, and Paris
+Saint-Germain over Arsenal on penalties in the final) and
+`soccer-2023-womens-world-cup-semifinals-and-final-test.json` (the 2023 Women's World Cup
+semifinals, both one event of one game, and Spain over England in the final). The field is both teams' players who
 can score the sport's composite, ranked by their regular-season composite total; tiers come
 from that ranking and prices are the default curve, so no odds are made up. Each box score was
 checked player by player against a second source, named in the file's provenance. A test load
@@ -347,7 +354,7 @@ creates each event with its field, writes every game's lines and releases it.
 ## Seeded soccer knockouts
 
 Eight test seeds hold soccer knockout stages as they went, one event per sport league, in the
-nine soccer sport leagues the migrations create:
+nine soccer bracket leagues the migrations create:
 
 - `soccer-2022-fifa-world-cup-test.json`: the 2022 World Cup's 16-team knockout stage.
   Argentina beat France 4-2 on penalties after a 3-3 final.

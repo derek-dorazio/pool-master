@@ -75,9 +75,26 @@ describe('Redzone (American football)', () => {
   });
 });
 
+describe('Hat Trick (soccer)', () => {
+  const hatTrick = compositeOf(Sport.SOCCER);
+
+  it('is named Hat Trick and counts goals, assists and shots on target', () => {
+    expect([hatTrick.name, hatTrick.stats]).toEqual(['Hat Trick', [SportStat.GOALS, SportStat.ASSISTS, SportStat.SHOTS_ON_TARGET]]);
+  });
+
+  it('counts a goal three times and an assist twice: a goal, an assist and four shots on target score 3 + 2 + 4 = 9', () => {
+    expect(hatTrick.score({ GOALS: 1, ASSISTS: 1, SHOTS_ON_TARGET: 4 })).toBe(9);
+  });
+
+  it('scores a hat trick from three shots on target 3 x 3 + 3 = 12, and ignores hockey\'s shots on goal', () => {
+    expect(hatTrick.score({ GOALS: 3, SHOTS_ON_TARGET: 3 })).toBe(12);
+    expect(hatTrick.score({ SHOTS_ON_GOAL: 5 })).toBe(0);
+  });
+});
+
 describe('Every sport\'s composite', () => {
-  it('belongs only to the four championship stat pool sports, each scheduled for its games', () => {
+  it('belongs only to the five championship stat pool sports, each scheduled for its games, a soccer knockout round one match', () => {
     expect(Object.values(Sport).filter((sport) => getSportDefinition(sport).composite !== null).map((sport) => [sport, compositeOf(sport).defaultGames]))
-      .toEqual([[Sport.BASKETBALL, 7], [Sport.AMERICAN_FOOTBALL, 1], [Sport.HOCKEY, 7], [Sport.BASEBALL, 7]]);
+      .toEqual([[Sport.BASKETBALL, 7], [Sport.AMERICAN_FOOTBALL, 1], [Sport.HOCKEY, 7], [Sport.BASEBALL, 7], [Sport.SOCCER, 1]]);
   });
 });

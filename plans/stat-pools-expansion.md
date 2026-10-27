@@ -154,6 +154,10 @@ NBA Finals): both conference finals series are one event, game N holding each se
 the World Series): the ALCS and NLCS are one event.
 #1047 built **Men's Frozen Four** (display 60, after the Stanley Cup Final) and hockey's **Men's
 National Championship** (display 70), the same name as basketball's title-game league.
+#994 built soccer's **Hat Trick** (3 per goal + 2 per assist + shots on target, a new
+`SHOTS_ON_TARGET` stat) and four leagues of outfield players: **Champions League Semifinals**
+(both legs one event of two games), **Champions League Final**, **Women's World Cup Semifinals**
+and **Women's World Cup Final** (display 110 to 140, after the soccer bracket leagues).
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).

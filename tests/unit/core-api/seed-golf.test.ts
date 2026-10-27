@@ -472,6 +472,64 @@ describe('hockey-2026-mens-frozen-four-test.json', () => {
   });
 });
 
+describe('soccer-2026-champions-league-semifinals-and-final-test.json', () => {
+  const file = readDataFile('soccer-2026-champions-league-semifinals-and-final-test.json', true);
+  const [semifinals, final] = file.sportLeagues;
+  const semifinalGames = semifinals.events[0].games ?? [];
+  const lineIn = (games: typeof semifinalGames, gameNumber: number, player: string) => games[gameNumber - 1].lines.find((line) => line.player === player)?.stats;
+
+  it('is a stat pool seed of the 2025-26 Champions League\'s semifinals, one event of two legs, and its final, one game', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.SOCCER, 2026, ['Champions League Semifinals', 'Champions League Final'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['Champions League Semifinals', '2026-04-28', '2026-05-06', 2, null]]);
+    expect(eventRows(file, 1)).toEqual([['Champions League Final', '2026-05-30', '2026-05-30', 1, null]]);
+    expect(semifinalGames.map((game) => game.gameNumber)).toEqual([1, 2]);
+  });
+
+  it('fields the four semifinalists\' outfield players for both legs and only the two finalists\' for the final, and no goalkeepers', () => {
+    const teamOf = new Map(semifinals.players.map((player) => [player.key, player.team]));
+    const semifinalists = new Set(['Paris Saint-Germain', 'Bayern Munich', 'Atlético Madrid', 'Arsenal']);
+    expect(new Set(teamOf.values())).toEqual(semifinalists);
+    for (const game of semifinalGames) expect(new Set(game.lines.map((line) => teamOf.get(line.player)))).toEqual(semifinalists);
+    expect(new Set(final.players.map((player) => player.team))).toEqual(new Set(['Paris Saint-Germain', 'Arsenal']));
+    expect(new Set([...semifinals.players, ...final.players].map((player) => player.position))).toEqual(new Set(['DF', 'MF', 'FW']));
+  });
+
+  it('carries both rounds as played: Ousmane Dembélé\'s two goals and an assist in the 5-4 first leg in Paris, Kai Havertz\'s goal in the final', () => {
+    expect(lineIn(semifinalGames, 1, 'clp-ousmane-dembele')).toEqual({ GOALS: 2, ASSISTS: 1, SHOTS_ON_TARGET: 2 });
+    expect(lineIn(semifinalGames, 2, 'clp-bukayo-saka')).toEqual({ GOALS: 1, SHOTS_ON_TARGET: 1 });
+    expect(lineIn(final.events[0].games ?? [], 1, 'clp-kai-havertz')).toEqual({ GOALS: 1, SHOTS_ON_TARGET: 1 });
+  });
+});
+
+describe('soccer-2023-womens-world-cup-semifinals-and-final-test.json', () => {
+  const file = readDataFile('soccer-2023-womens-world-cup-semifinals-and-final-test.json', true);
+  const [semifinals, final] = file.sportLeagues;
+
+  it('is a stat pool seed of the 2023 Women\'s World Cup\'s semifinals and final, each one game for each side', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.SOCCER, 2023, ['Women\'s World Cup Semifinals', 'Women\'s World Cup Final'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['Women\'s World Cup Semifinals', '2023-08-15', '2023-08-16', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['Women\'s World Cup Final', '2023-08-20', '2023-08-20', 1, null]]);
+  });
+
+  it('fields the four semifinalists\' outfield players for the semifinals and only Spain\'s and England\'s for the final, and no goalkeepers', () => {
+    expect(new Set(semifinals.players.map((player) => player.team))).toEqual(new Set(['Spain', 'Sweden', 'Australia', 'England']));
+    expect(new Set(final.players.map((player) => player.team))).toEqual(new Set(['Spain', 'England']));
+    expect(new Set([...semifinals.players, ...final.players].map((player) => player.position))).toEqual(new Set(['DF', 'MF', 'FW']));
+  });
+
+  it('carries both rounds as played: Lauren Hemp\'s goal and assist against Australia, Olga Carmona\'s winner in the final from Mariona Caldentey\'s pass', () => {
+    const semifinalLines = new Map((semifinals.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    const finalLines = new Map((final.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    expect(semifinalLines.get('wwcp-lauren-hemp')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_TARGET: 2 });
+    expect(finalLines.get('wwcp-olga-carmona')).toEqual({ GOALS: 1, SHOTS_ON_TARGET: 1 });
+    expect(finalLines.get('wwcp-mariona-caldentey')).toEqual({ ASSISTS: 1, SHOTS_ON_TARGET: 1 });
+  });
+});
+
 describe('baseball-2026-league-championship-series-test.json', () => {
   const file = readDataFile('baseball-2026-league-championship-series-test.json', true);
   const [championshipSeries] = file.sportLeagues;

@@ -7,14 +7,6 @@ import { STAT_POOL_CONTEST_TYPE } from '@/features/contests/scoring-family-ui/st
  * (`STAT_POOL_CONTEST_TYPE`, `STAT_POOL_FORMULAS`), so a rename or a formula change reaches here.
  */
 
-/** A sport whose stat line is promised but not built yet: shown dashed, as "Coming". */
-export interface ComingStatLine {
-  sport: Sport;
-  name: string;
-  formula: string;
-  line: string;
-}
-
 /** One title round on the calendar, by the name of the sport league its Clutch Card is played on. */
 export interface ClutchCardRound {
   /** The stat pool sport league's name; the round shows as available while that league exists. */
@@ -68,10 +60,8 @@ export const CLUTCH_CARD_PAGE = {
       [Sport.BASKETBALL]: 'The stuff of triple-doubles. Men\'s, women\'s and college.',
       [Sport.HOCKEY]: 'Skaters only. Shooters keep scoring even when the goalie stands tall.',
       [Sport.AMERICAN_FOOTBALL]: 'Passing, rushing and receiving yards all count. Pro and college.',
+      [Sport.SOCCER]: 'Outfield players. For the knockout rounds of the biggest tournaments.',
     } as Readonly<Partial<Record<Sport, string>>>,
-    coming: [
-      { sport: Sport.SOCCER, name: 'Hat Trick', formula: '3 × goals + 2 × assists + shots on target', line: 'Outfield players. For the knockout rounds of the biggest tournaments.' },
-    ] as readonly ComingStatLine[],
   },
   calendar: {
     eyebrow: 'Championship calendar',
@@ -94,11 +84,16 @@ export const CLUTCH_CARD_PAGE = {
       { month: 'May', rounds: [
         { sportLeague: 'NBA Conference Finals', sport: Sport.BASKETBALL },
         { sportLeague: 'NHL Conference Finals', sport: Sport.HOCKEY },
-        { sportLeague: 'Soccer knockouts', sport: Sport.SOCCER },
+        { sportLeague: 'Champions League Semifinals', sport: Sport.SOCCER },
+        { sportLeague: 'Champions League Final', sport: Sport.SOCCER },
       ] },
       { month: 'June', rounds: [
         { sportLeague: 'NBA Finals', sport: Sport.BASKETBALL },
         { sportLeague: 'Stanley Cup Final', sport: Sport.HOCKEY },
+      ] },
+      { month: 'July', rounds: [
+        { sportLeague: 'Women\'s World Cup Semifinals', sport: Sport.SOCCER },
+        { sportLeague: 'Women\'s World Cup Final', sport: Sport.SOCCER },
       ] },
       { month: 'Sept – Oct', rounds: [
         { sportLeague: 'WNBA Semifinals', sport: Sport.BASKETBALL },

@@ -44,7 +44,7 @@ export const STAT_POOL_FORMULAS: Readonly<Record<Sport, string | null>> = {
   [Sport.AMERICAN_FOOTBALL]: '6 × touchdowns + receptions + passing, rushing and receiving yards ÷ 10, rounded down',
   [Sport.HOCKEY]: '2 × goals + assists + shots on goal',
   [Sport.BASEBALL]: 'total bases + runs + RBI + walks + stolen bases',
-  [Sport.SOCCER]: null,
+  [Sport.SOCCER]: '3 × goals + 2 × assists + shots on target',
   [Sport.TENNIS]: null,
 };
 

@@ -10613,7 +10613,7 @@ export interface components {
                  * @description One of the stats the sport's composite counts.
                  * @enum {string}
                  */
-                stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                 /** @description The player's count of it in the game; below 0 only for yards. */
                 value: number;
             }[];
@@ -10792,7 +10792,7 @@ export interface components {
                      * @description One of the stats the sport's composite counts.
                      * @enum {string}
                      */
-                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                     /** @description The player's count of it in the game; below 0 only for yards. */
                     value: number;
                 }[];
@@ -11002,7 +11002,7 @@ export interface components {
                          * @description One of the stats the sport's composite counts.
                          * @enum {string}
                          */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                         /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
@@ -11253,7 +11253,7 @@ export interface components {
                          * @description One of the stats the sport's composite counts.
                          * @enum {string}
                          */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                         /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
@@ -12369,7 +12369,7 @@ export interface components {
                          * @description One of the stats the sport's composite counts.
                          * @enum {string}
                          */
-                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                        stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                         /** @description The player's count of it in the game; below 0 only for yards. */
                         value: number;
                     }[];
@@ -17245,7 +17245,7 @@ export interface components {
                      * @description One of the stats the sport's composite counts.
                      * @enum {string}
                      */
-                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
+                    stat: "TOTAL_BASES" | "RUNS" | "RUNS_BATTED_IN" | "WALKS" | "STOLEN_BASES" | "POINTS" | "REBOUNDS" | "ASSISTS" | "GOALS" | "SHOTS_ON_GOAL" | "SHOTS_ON_TARGET" | "PASSING_TOUCHDOWNS" | "RUSHING_TOUCHDOWNS" | "RECEIVING_TOUCHDOWNS" | "RECEPTIONS" | "PASSING_YARDS" | "RUSHING_YARDS" | "RECEIVING_YARDS";
                     /** @description The player's count of it in the game; below 0 only for yards. */
                     value: number;
                 }[];

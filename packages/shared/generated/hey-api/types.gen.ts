@@ -9669,7 +9669,7 @@ export type SportEventParticipantRoundDto = {
         /**
          * One of the stats the sport's composite counts.
          */
-        stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+        stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
         /**
          * The player's count of it in the game; below 0 only for yards.
          */
@@ -9889,7 +9889,7 @@ export type SportEventParticipantDto = {
             /**
              * One of the stats the sport's composite counts.
              */
-            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
             /**
              * The player's count of it in the game; below 0 only for yards.
              */
@@ -10151,7 +10151,7 @@ export type SportEventParticipantListResponse = {
                 /**
                  * One of the stats the sport's composite counts.
                  */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
                 /**
                  * The player's count of it in the game; below 0 only for yards.
                  */
@@ -10478,7 +10478,7 @@ export type SportEventParticipantResponse = {
                 /**
                  * One of the stats the sport's composite counts.
                  */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
                 /**
                  * The player's count of it in the game; below 0 only for yards.
                  */
@@ -12001,7 +12001,7 @@ export type ContestLeaderboardResponse = {
                 /**
                  * One of the stats the sport's composite counts.
                  */
-                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+                stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
                 /**
                  * The player's count of it in the game; below 0 only for yards.
                  */
@@ -18802,7 +18802,7 @@ export type GameStatLineUploadRequest = {
             /**
              * One of the stats the sport's composite counts.
              */
-            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
+            stat: 'TOTAL_BASES' | 'RUNS' | 'RUNS_BATTED_IN' | 'WALKS' | 'STOLEN_BASES' | 'POINTS' | 'REBOUNDS' | 'ASSISTS' | 'GOALS' | 'SHOTS_ON_GOAL' | 'SHOTS_ON_TARGET' | 'PASSING_TOUCHDOWNS' | 'RUSHING_TOUCHDOWNS' | 'RECEIVING_TOUCHDOWNS' | 'RECEPTIONS' | 'PASSING_YARDS' | 'RUSHING_YARDS' | 'RECEIVING_YARDS';
             /**
              * The player's count of it in the game; below 0 only for yards.
              */
