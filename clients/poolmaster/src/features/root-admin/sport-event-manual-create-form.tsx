@@ -1,7 +1,7 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { z } from 'zod';
 import { createEvent } from '@/lib/api';
 import {
@@ -100,7 +100,7 @@ export function SportEventManualCreateForm({
         { action: 'event.create.manual', data: { id: tournament.id } },
         'Created event manually',
       );
-      navigate(buildSportEventPath(sport, tournament.id));
+      void navigate(buildSportEventPath(sport, tournament.id));
     },
     onError: (error) => {
       logger.warn(

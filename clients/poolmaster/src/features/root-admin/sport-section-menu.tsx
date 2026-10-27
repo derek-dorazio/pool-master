@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { SegmentedControl } from '@/features/shared/ui';
 import {
   buildSportEventListPath,
@@ -33,7 +33,7 @@ export function SportSectionMenu({ current }: { current: SportList }) {
         onChange={(next) => {
           const list = SPORT_LISTS.find((candidate) => candidate === next);
           if (list) {
-            navigate(lists[list].path);
+            void navigate(lists[list].path);
           }
         }}
         options={SPORT_LISTS.map((list) => ({

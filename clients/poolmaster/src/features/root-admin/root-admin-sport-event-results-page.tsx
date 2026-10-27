@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { AsyncPage } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';

@@ -7,7 +7,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { listEvents, setContestSportEvents, type ContestDto, type SportEventDto } from '@/lib/api';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -139,7 +139,7 @@ function ContestEventsForm({
     },
     onSuccess: () => {
       logger.info({ action: 'contest.events.save.succeeded', data: { leagueCode, contestId: contest.id } }, 'Saved contest events');
-      navigate(contestPath);
+      void navigate(contestPath);
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),

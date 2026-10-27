@@ -1,5 +1,5 @@
 import { useEffect, useMemo, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { buildEventPagePath, EventPageOfferState, getSportDefinition, ScoringFamily, Sport } from '@poolmaster/shared/domain';
 import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api';
 import { getLogger } from '@/lib/logger';

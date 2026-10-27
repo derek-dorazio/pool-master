@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { buildLeagueHistoryPath, buildLeagueTeamEditPath, buildLeagueTeamsPath } from '@/features/leagues/league-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';

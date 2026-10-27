@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { leaveLeague, type LeagueDto } from '@/lib/api';
 import {
   Alert,
@@ -53,7 +53,7 @@ export function LeaveLeagueSection({ league }: { league: LeagueDto }) {
     setHasLeft(false);
     // With no active league left the viewer is still signed in: welcome either lands them on a
     // league they can select or shows the zero-league page.
-    navigate(nextLeague ? buildLeaguePath(nextLeague.leagueCode) : '/welcome', { replace: true });
+    void navigate(nextLeague ? buildLeaguePath(nextLeague.leagueCode) : '/welcome', { replace: true });
   }
 
   return (

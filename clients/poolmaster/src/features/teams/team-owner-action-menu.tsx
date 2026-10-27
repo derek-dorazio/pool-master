@@ -1,6 +1,6 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
 import { Button } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';

@@ -1,7 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { ContestStatus, SportEventStatus, SurvivorWeekOutcome, describeSurvivorRules, pluralize  } from '@poolmaster/shared/domain';
 import type { ContestDto, SurvivorLeaderboardResponse } from '@/lib/api';
 import { buildLeagueContestEntryPath } from '@/features/leagues/league-routing';

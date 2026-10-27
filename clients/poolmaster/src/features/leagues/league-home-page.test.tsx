@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { bindApiMocks } from '@/test/msw-api';
@@ -52,7 +52,7 @@ function GoToOtherLeague() {
   const navigate = useNavigate();
   return (
     <button onClick={() => {
-        navigate('/league/NEWDOGS');
+        void navigate('/league/NEWDOGS');
       }} type="button">
       Other league
     </button>

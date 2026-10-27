@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
 import { apiSuccess, buildLeague, buildLeagueMembership, listLeaguesData } from '@/features/leagues/test/fixtures';

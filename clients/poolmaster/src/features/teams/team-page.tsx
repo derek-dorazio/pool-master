@@ -1,5 +1,5 @@
 import { LeagueRole } from '@poolmaster/shared/domain';
-import { Link, Navigate, useParams } from 'react-router-dom';
+import { Link, Navigate, useParams } from 'react-router';
 import { formatUserName } from '@/features/account/user-name';
 import { buildUserPath } from '@/features/account/user-routing';
 import { SquadHistorySection } from '@/features/championships/squad-history-section';

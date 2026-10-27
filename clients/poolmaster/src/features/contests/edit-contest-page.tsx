@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import {
   updateContest,
@@ -150,7 +150,7 @@ function EditContestForm({
     },
     onSuccess: () => {
       logger.info({ action: 'contest.save.succeeded', data: { leagueCode, contestId: contest.id } }, 'Saved contest');
-      navigate(contestPath);
+      void navigate(contestPath);
     },
     invalidates: [
       QueryKeys.contests.list({ leagueId }),

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { FormPage } from "./form-page";
 

@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { buildSportEventListPath } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 

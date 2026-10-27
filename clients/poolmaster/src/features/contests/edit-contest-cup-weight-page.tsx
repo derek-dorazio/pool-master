@@ -1,6 +1,6 @@
 import { ContestStatus, PlanFeature, type CupWeight } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { setContestCupWeight, type ContestManagementDetailDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';

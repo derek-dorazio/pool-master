@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { buildLeagueContestLeaderboardPath, buildLeaguePointsRacePath } from '@/features/leagues/league-routing';
 import {

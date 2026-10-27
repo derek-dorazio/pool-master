@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { type SquadDto, updateLeagueSquad } from '@/lib/api';
 import { FormPage } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -45,7 +45,7 @@ export function EditTeamForm({
       return response.data.squad;
     },
     onSuccess: () => {
-      navigate(returnTo);
+      void navigate(returnTo);
     },
     invalidates: [QueryKeys.leagueTeams.byLeague(leagueId)],
   });

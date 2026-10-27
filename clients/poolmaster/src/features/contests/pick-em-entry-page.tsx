@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import {
   ContestEntryStatus,
   PickEmMode,

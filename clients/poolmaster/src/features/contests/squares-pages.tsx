@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useQuery } from '@tanstack/react-query';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import { ContestStatus, describeSquaresRules  } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
 import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';

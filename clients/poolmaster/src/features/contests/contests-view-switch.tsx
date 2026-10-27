@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { SegmentedControl } from '@/features/shared/ui';
 import {
   buildLeagueContestHistoryPath,
@@ -20,7 +20,7 @@ export function ContestsViewSwitch({ leagueCode, value }: { leagueCode: string; 
   return (
     <SegmentedControl
       aria-label="Contests to show"
-      onChange={(next) => navigate(paths[next as ContestsView])}
+      onChange={(next) => void navigate(paths[next as ContestsView])}
       options={[
         { label: 'Active', testId: 'contests-view-active', value: 'active' },
         { label: 'My contests', testId: 'contests-view-mine', value: 'mine' },

@@ -7,7 +7,7 @@
  * reloaded the whole app. Here they are ordinary component modules.
  */
 import { Sport } from '@poolmaster/shared/domain';
-import { Navigate, useLocation, useParams } from 'react-router-dom';
+import { Navigate, useLocation, useParams } from 'react-router';
 import {
   buildLeagueAdminContestCreatePath,
   buildLeagueAdminContestPath,

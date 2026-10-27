@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { PlanCap, PlanFeatureGroup, pluralize, type LeaguePlan } from '@poolmaster/shared/domain';
 import { updateLeaguePlan, type LeagueDto, type LeaguePlanUsageResponse, type PlanEntitlementsDto } from '@/lib/api';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';

@@ -1,7 +1,7 @@
 import { findSportRow } from '@poolmaster/shared/domain';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   bindParticipantProviderMapping,
   listParticipants,

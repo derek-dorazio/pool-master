@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import { Navigate, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { LeagueIconKey } from '@poolmaster/shared/domain';
 import { updateLeagueDetails, type LeagueDto } from '@/lib/api';
@@ -81,7 +81,7 @@ function EditLeagueForm({ league }: { league: LeagueDto }) {
     },
     onSuccess: (updated) => {
       syncLeagueCaches(queryClient, updated);
-      navigate(settingsPath);
+      void navigate(settingsPath);
     },
     invalidates: [],
   });

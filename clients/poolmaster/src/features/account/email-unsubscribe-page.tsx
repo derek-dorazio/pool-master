@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { unsubscribeFromEmail } from '@/lib/api';
 import { extractErrorMessage, hasErrorCode, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';

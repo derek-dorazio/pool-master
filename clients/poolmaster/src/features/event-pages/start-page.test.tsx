@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LeagueRole } from '@poolmaster/shared/domain';
 import { bindApiMocks } from '@/test/msw-api';

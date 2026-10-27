@@ -3,7 +3,7 @@ import type {
   HTMLAttributes,
   ReactNode,
 } from "react";
-import { Link, type LinkProps } from "react-router-dom";
+import { Link, type LinkProps } from "react-router";
 import { cn } from "./class-names";
 
 type ListStackProps = HTMLAttributes<HTMLDivElement>;

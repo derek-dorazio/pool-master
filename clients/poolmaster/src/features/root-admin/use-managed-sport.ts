@@ -1,5 +1,5 @@
 import { getSportDefinition, type Sport, type SportDefinition } from '@poolmaster/shared/domain';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { parseSportPathSegment } from './manage-navigation';
 
 export type ManagedSport = {

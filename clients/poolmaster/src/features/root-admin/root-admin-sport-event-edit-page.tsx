@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
 import { getSportDefinition } from '@poolmaster/shared/domain';
 import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';

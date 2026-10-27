@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { Trophy } from 'lucide-react';
 import { PlanFeature } from '@poolmaster/shared/domain';
 import { hasPlanFeature } from '@/features/plans/plan-features';

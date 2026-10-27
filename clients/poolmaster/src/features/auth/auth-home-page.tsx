@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router";
 import {
   LoginRequestSchema,
   RegisterRequestSchema,
@@ -259,7 +259,7 @@ export function AuthHomePage() {
         },
         "Completed login flow",
       );
-      navigate(loginDestination, { replace: true });
+      void navigate(loginDestination, { replace: true });
     } catch (error) {
       const logPayload = {
         action: "auth.login.failed",
@@ -326,7 +326,7 @@ export function AuthHomePage() {
         },
         "Completed registration flow",
       );
-      navigate(registerDestination, { replace: true });
+      void navigate(registerDestination, { replace: true });
     } catch (error) {
       const logPayload = {
         action: "auth.register.failed",

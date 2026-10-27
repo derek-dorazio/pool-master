@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { AsyncPage, Button } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { SportEventHeader } from './sport-event-header';

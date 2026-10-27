@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trophy } from 'lucide-react';
 import { Fragment, useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router';
 import {
   getContest,
   type ContestDto,

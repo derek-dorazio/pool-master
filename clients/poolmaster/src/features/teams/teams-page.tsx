@@ -1,6 +1,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
 import { DataGrid, ErrorState, formatDateDisplay, LoadingState, PageHeader, useDisplayPreferences } from '@/features/shared/ui';

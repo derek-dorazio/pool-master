@@ -1,5 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router";
 import { undoEmailChange } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
@@ -44,7 +44,7 @@ export function UndoEmailChangePage() {
   // the URL. Synchronises with the browser's location, an external system.
   useEffect(() => {
     if (location.hash) {
-      navigate({ pathname: location.pathname, search: location.search }, { replace: true });
+      void navigate({ pathname: location.pathname, search: location.search }, { replace: true });
     }
   }, [location.hash, location.pathname, location.search, navigate]);
 

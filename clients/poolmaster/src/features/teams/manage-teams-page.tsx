@@ -1,7 +1,7 @@
 import { LeagueRole } from '@poolmaster/shared/domain';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import {
   buildLeagueAdminInvitesPath,
   buildLeagueAdminTeamPath,

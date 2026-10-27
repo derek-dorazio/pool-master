@@ -1,5 +1,5 @@
 import { Settings } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { LeagueMenu, LinkButton } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { buildLeagueMenuItems } from './league-menu-items';
