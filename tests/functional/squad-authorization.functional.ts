@@ -87,7 +87,7 @@ describe('SDK Functional: squad route authorization (#292)', () => {
       path: { id: league.id, squadId: ownerSquad.id },
       body: { name: 'Renamed By Owner' },
     });
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     await expectSquadName(ownerSquad.id, 'Renamed By Owner');
   });
 
@@ -98,7 +98,7 @@ describe('SDK Functional: squad route authorization (#292)', () => {
       path: { id: league.id, squadId: ownerSquad.id },
       body: { name: 'Renamed By Commissioner' },
     });
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     await expectSquadName(ownerSquad.id, 'Renamed By Commissioner');
   });
 
@@ -151,7 +151,7 @@ describe('SDK Functional: squad route authorization (#292)', () => {
   it('lets a member read another member\'s squad', async () => {
     const { league, otherOwner, ownerSquad } = await buildLeagueWithTwoOwners();
     const response = await getLeagueSquad({ client: otherOwner.client, path: { id: league.id, squadId: ownerSquad.id } });
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     expect(response.data?.squad.id).toBe(ownerSquad.id);
   });
 

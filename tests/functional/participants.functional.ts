@@ -74,7 +74,7 @@ describe('SDK Functional: Participants', () => {
       client: admin.client,
       body: { sportId, name, participantType: 'INDIVIDUAL' },
     });
-    expect(created.response.status).toBe(201);
+    expect(created.response?.status).toBe(201);
     const participantId = created.data?.participant.id as string;
     createdParticipantIds.push(participantId);
     expect(created.data?.participant).toMatchObject({ name, sportId });
@@ -84,7 +84,7 @@ describe('SDK Functional: Participants', () => {
       path: { id: participantId },
       body: { name: `${name} (renamed)` },
     });
-    expect(updated.response.status).toBe(200);
+    expect(updated.response?.status).toBe(200);
     expect(updated.data?.participant.name).toBe(`${name} (renamed)`);
   });
 
@@ -110,7 +110,7 @@ describe('SDK Functional: Participants', () => {
       },
     });
 
-    expect(updated.response.status).toBe(200);
+    expect(updated.response?.status).toBe(200);
     expect(updated.data?.participant).toMatchObject({
       externalId,
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn: '2026-11-01T00:00:00.000Z' },

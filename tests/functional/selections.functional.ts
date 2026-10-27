@@ -652,9 +652,9 @@ describe('SDK Functional: Roster Selection', () => {
       body: { entryId: fixture.commissionerEntryId, participantId },
     });
 
-    expect((await pickFor(fixture.secondEventParticipantId)).response.status).toBe(200);
+    expect((await pickFor(fixture.secondEventParticipantId)).response?.status).toBe(200);
     const fullRoom = await pickFor(fixture.firstEventParticipantId);
-    expect(fullRoom.response.status).toBe(200);
+    expect(fullRoom.response?.status).toBe(200);
     expect(fullRoom.data?.lineupSummary).toEqual({
       selectionType: SelectionType.BUDGET_PICK,
       salaryCap,
@@ -671,7 +671,7 @@ describe('SDK Functional: Roster Selection', () => {
     });
 
     if (expectSubmitted) {
-      expect(submitted.response.status).toBe(200);
+      expect(submitted.response?.status).toBe(200);
       expect(submitted.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('SUBMITTED');
     } else {
       expectFunctionalError(submitted, { status: 409, code: 'ENTRY_OVER_BUDGET' });
@@ -699,13 +699,13 @@ describe('SDK Functional: Roster Selection', () => {
       where: { contestEntryId_sportEventId: { contestEntryId: fixture.commissionerEntryId, sportEventId: fixture.sportEventId } },
     })).status;
 
-    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
-    expect((await submit()).response.status).toBe(200);
+    expect((await pickFor(fixture.firstEventParticipantId)).response?.status).toBe(200);
+    expect((await submit()).response?.status).toBe(200);
     expect(await entryStatus()).toBe('SUBMITTED');
 
-    expect((await pickFor(fixture.firstEventParticipantId)).response.status).toBe(200);
+    expect((await pickFor(fixture.firstEventParticipantId)).response?.status).toBe(200);
     const overCapRoom = await pickFor(fixture.secondEventParticipantId);
-    expect(overCapRoom.response.status).toBe(200);
+    expect(overCapRoom.response?.status).toBe(200);
     expect(overCapRoom.data?.lineupSummary).toMatchObject({ spent: 5100, isOverBudget: true, openSlots: 0 });
     expect(overCapRoom.data?.entries.find((entry) => entry.id === fixture.commissionerEntryId)?.status).toBe('DRAFT');
     expect(await entryStatus()).toBe('DRAFT');
@@ -866,11 +866,11 @@ describe('SDK Functional: Roster Selection', () => {
         configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 },
       },
     });
-    expect(created.response.status).toBe(201);
+    expect(created.response?.status).toBe(201);
     const contestId = created.data?.contest.id as string;
 
     const opened = await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
-    expect(opened.response.status).toBe(200);
+    expect(opened.response?.status).toBe(200);
     const entered = await enterContest({ client: commissioner.client, path: { contestId } });
     const entryId = entered.data?.entry.id as string;
     expect(entryId).toBeTruthy();

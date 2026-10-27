@@ -256,7 +256,7 @@ describe('SDK Functional: Root Admin', () => {
     });
     // #202 step 3.4 — 200 with the user, not 204. The admin half used to return no content
     // while the self-service half returned the account; one operation, one response shape.
-    expect(disableResponse.response.status).toBe(200);
+    expect(disableResponse.response?.status).toBe(200);
     expect(disableResponse.data?.user.isActive).toBe(false);
 
     const enableResponse = await enableUser({
@@ -265,7 +265,7 @@ describe('SDK Functional: Root Admin', () => {
         userId: targetUser.userId,
       },
     });
-    expect(enableResponse.response.status).toBe(200);
+    expect(enableResponse.response?.status).toBe(200);
     expect(enableResponse.data?.user.isActive).toBe(true);
 
     await getFunctionalPrisma().user.update({
@@ -496,7 +496,7 @@ describe('SDK Functional: Root Admin', () => {
         description: 'A plain user may not write a global template.',
       },
     });
-    expect(plainUpdateResponse.response.status).toBe(403);
+    expect(plainUpdateResponse.response?.status).toBe(403);
 
     try {
       const updateResponse = await updateContestConfigTemplate({

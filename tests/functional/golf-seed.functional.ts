@@ -608,9 +608,9 @@ describe('Loading a real basketball bracket through the admin API', () => {
       client: admin.client,
       path: { eventId },
       body: { participants: rows.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 5 })) },
-    })).response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: admin.client, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: admin.client, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: admin.client, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: admin.client, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: admin.client, path: { eventId } })).error).toBeUndefined();
 
     // The First Four is played: Texas takes the pairing's place.

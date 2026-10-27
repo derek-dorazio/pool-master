@@ -152,9 +152,9 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
-    })).response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
     const loaded = await loadEventBracket({
@@ -172,7 +172,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
         })),
       },
     });
-    expect([loaded.error, loaded.response.status]).toEqual([undefined, 200]);
+    expect([loaded.error, loaded.response?.status]).toEqual([undefined, 200]);
     const released = await releaseEvent({ client: a, path: { eventId } });
     expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
@@ -214,7 +214,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     expectFunctionalError(await createAts(), { status: 422, code: 'CONTEST_EVENT_SPREAD_MISSING' });
     expect((await setSpread(4, 0)).data?.match.homeSpread).toBe(0);
     const contest = await createAts();
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: alice.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const entryOf = async (client: Client) => expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
@@ -244,7 +244,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
         path: { eventId, matchNumber },
         body: { winnerSide: homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY, homeScore, awayScore },
       });
-      expect([recorded.error, recorded.response.status]).toEqual([undefined, 200]);
+      expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
     }
     // A week has no winner of its own (#768): every team's game is played, none is ranked.
     const weekField = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

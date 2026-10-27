@@ -100,7 +100,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
 
     // --- A tour, a draw in it, its field, tiers and prices --------------------------------------
     const tour = await createSportLeague({ client: a, body: { sport: Sport.TENNIS, name: `Harbour Tour ${RUN}` } });
-    expect(tour.response.status).toBe(201);
+    expect(tour.response?.status).toBe(201);
     const sportLeagueId = expectDefined(tour.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
@@ -108,7 +108,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
       client: a,
       body: { sportLeagueId, eventYear: 2099, name: `Harbour Open ${RUN}`, startDate: '2099-08-30T15:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
-    expect(draw.response.status).toBe(201);
+    expect(draw.response?.status).toBe(201);
     const eventId = expectDefined(draw.data).event.id;
     created.sportEventIds.add(eventId);
 
@@ -131,9 +131,9 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
       path: { eventId },
       body: { tiers: [1, 2].map((n) => ({ tierKey: `tier-${n}`, label: `Tier ${n}`, tierNumber: n })) },
     });
-    expect(twoTiers.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(twoTiers.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`));
@@ -152,7 +152,7 @@ describe('SDK Functional: Tennis withdrawal after the draw', () => {
         ],
       },
     });
-    expect(loaded.response.status).toBe(200);
+    expect(loaded.response?.status).toBe(200);
     const released = await releaseEvent({ client: a, path: { eventId } });
     expect([released.data?.event.status, released.error]).toEqual(['SCHEDULED', undefined]);
 

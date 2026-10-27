@@ -274,7 +274,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     // #245 — create answers with the canonical contest read; the template's configuration is the
     // contest's when none is supplied.
-    expect(createResponse.response.status).toBe(201);
+    expect(createResponse.response?.status).toBe(201);
     expect(createResponse.data?.contest.id).toBeTruthy();
     expect(createResponse.data?.contest.status).toBe(ContestStatus.DRAFT);
     expect(createResponse.data?.contest.selectionType).toBe(SelectionType.TIERED);
@@ -462,7 +462,7 @@ describe('SDK Functional: Contests and Entries', () => {
   it('lets a signed-out visitor read the active contest templates, each with its name and description, for the How to Play page', async () => {
     const response = await listContestConfigTemplates({ client: getSdkClient(), query: { active: true } });
 
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     const templates = expectDefined(response.data).templates;
     expect(new Set(templates.map((template) => template.sport))).toEqual(new Set(Object.values(Sport)));
     expect(templates.every((template) => template.active && template.name.length > 0 && template.description.length > 0)).toBe(true);
@@ -471,7 +471,7 @@ describe('SDK Functional: Contests and Entries', () => {
   it('lets a signed-out visitor list the sport leagues, each with its sport and the name screens show beside other sports\' leagues', async () => {
     const response = await listSportLeagues({ client: getSdkClient() });
 
-    expect(response.response.status).toBe(200);
+    expect(response.response?.status).toBe(200);
     const sportLeagues = expectDefined(response.data).sportLeagues;
     const named = (sport: Sport, name: string) => sportLeagues.find((sportLeague) => sportLeague.sport === sport && sportLeague.name === name);
     expect(named(Sport.AMERICAN_FOOTBALL, 'NFL')?.displayName).toBeNull();
@@ -483,7 +483,7 @@ describe('SDK Functional: Contests and Entries', () => {
     const list = expectDefined((await listSportLeagues({ client: getSdkClient() })).data).sportLeagues;
     const response = await getSportLeague({ client: getSdkClient(), path: { sportLeagueId: expectDefined(list[0]).id } });
 
-    expect(response.response.status).toBe(401);
+    expect(response.response?.status).toBe(401);
   });
 
   it('rejects invalid contest creation requests through the generated SDK', async () => {
@@ -607,7 +607,7 @@ describe('SDK Functional: Contests and Entries', () => {
       },
     });
 
-    expect(deleteResponse.response.status).toBe(204);
+    expect(deleteResponse.response?.status).toBe(204);
 
     const deletedContest = await getContest({
       client: commissioner.client,
@@ -738,7 +738,7 @@ describe('SDK Functional: Contests and Entries', () => {
 
     const reenterResponse = await enterContest({ client: commissioner.client, path: { contestId } });
 
-    expect(reenterResponse.response.status).toBe(201);
+    expect(reenterResponse.response?.status).toBe(201);
     expect(reenterResponse.data?.entry.entryNumber).toBe(3);
     const entries = await listContestEntries({ client: commissioner.client, path: { contestId } });
     expect(entries.data?.entries.map((entry) => entry.entryNumber).sort()).toEqual([2, 3]);

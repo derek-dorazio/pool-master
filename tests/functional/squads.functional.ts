@@ -184,7 +184,7 @@ describe('SDK Functional: Squads', () => {
         client: commissioner.client,
         path: { id: league.id, uid: member.userId },
       });
-      expect(removed.response.status).toBeLessThan(300);
+      expect(removed.response?.status).toBeLessThan(300);
       const inactive = await getFunctionalPrisma().squad.findUniqueOrThrow({ where: { id: memberSquad.id } });
       expect(inactive.isActive).toBe(false);
 
@@ -219,7 +219,7 @@ describe('SDK Functional: Squads', () => {
         body: { email: inviteEmail },
       });
 
-      expect(reinvite.response.status).toBe(201);
+      expect(reinvite.response?.status).toBe(201);
       expect(reinvite.data?.invitation.status).toBe('PENDING');
       expect(reinvite.data?.invitation.squadId).toBe(otherSquad.id);
     });

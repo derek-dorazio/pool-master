@@ -37,9 +37,9 @@ const YEAR = championshipYear(new Date());
 const UNKNOWN_CUP = '00000000-0000-4000-8000-000000000948';
 
 /** The status of a response, and the feature a 403 names. */
-function outcome(result: { response: Response; error?: unknown }) {
-  if (result.response.status !== 403) {
-    return { status: result.response.status };
+function outcome(result: { response?: Response; error?: unknown }) {
+  if (result.response?.status !== 403) {
+    return { status: result.response?.status };
   }
   const envelope = ErrorEnvelopeSchema.parse(result.error);
   return { status: 403, code: envelope.error.code, feature: (envelope.error.details as { feature?: string } | undefined)?.feature };
@@ -56,7 +56,7 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
     const path = { id: league.id };
     const squadId = expectDefined(expectDefined((await listLeagueSquads({ client, path })).data).squads[0]).id;
     const moveTo = async (plan: LeaguePlan) => {
-      expect((await updateLeaguePlan({ client, path, body: { plan } })).response.status).toBe(200);
+      expect((await updateLeaguePlan({ client, path, body: { plan } })).response?.status).toBe(200);
     };
     const cupSettings = (hallOfLameVisible: boolean) => updateLeagueCupSettings({
       client,

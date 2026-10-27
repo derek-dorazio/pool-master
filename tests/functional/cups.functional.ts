@@ -163,7 +163,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         for (const runner of lineup) {
           await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(runner) } });
         }
-        expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+        expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       }
     };
 
@@ -176,7 +176,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         startPosition: null,
         riderName: null,
       }));
-      expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response.status).toBe(200);
+      expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response?.status).toBe(200);
     };
 
     /** A contest on the race, both squads entered, settled on `finish` (runner to place). */
@@ -279,10 +279,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     ]);
     expect((await yearContests({ squadId: memberSquadId, place: 1 })).map((row) => row.contestId)).toEqual([harbourContest]);
     const placeAlone = await listContestResults({ client: member.client, path: { id: league.id }, query: { year, place: 1 } });
-    expect(placeAlone.response.status).toBe(400);
+    expect(placeAlone.response?.status).toBe(400);
     expect(placeAlone.error?.error.code).toBe('SQUAD_ID_REQUIRED');
     const strangerSquad = await listContestResults({ client: member.client, path: { id: league.id }, query: { year, squadId: randomUUID() } });
-    expect(strangerSquad.response.status).toBe(404);
+    expect(strangerSquad.response?.status).toBe(404);
     expect(strangerSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
 
     // --- Cup weight: an open contest takes one; a final contest refuses it -------------------
@@ -304,14 +304,14 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       path: { id: league.id, contestId: harbourContest },
       body: { cupWeight: CupWeight.NOT_COUNTED },
     });
-    expect(settledWeight.response.status).toBe(409);
+    expect(settledWeight.response?.status).toBe(409);
     expect(settledWeight.error?.error.code).toBe('CONTEST_FINAL');
     const memberWeight = await setContestCupWeight({
       client: member.client,
       path: { id: league.id, contestId: coastContest },
       body: { cupWeight: CupWeight.NORMAL },
     });
-    expect(memberWeight.response.status).toBe(403);
+    expect(memberWeight.response?.status).toBe(403);
 
     // --- Points table: CUSTOM 10 for 1st, 5 for 2nd; each squad has one of each -------------
     const custom = await updateLeagueCupSettings({
@@ -353,9 +353,9 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
 
     // --- Crowning: only the commissioner, and not while the counted Coast contest is live ------
     const crown = (client: typeof member.client) => crownCup({ client, path: { id: league.id, cupId } });
-    expect((await crown(member.client)).response.status).toBe(403);
+    expect((await crown(member.client)).response?.status).toBe(403);
     const early = await crown(commissioner.client);
-    expect(early.response.status).toBe(409);
+    expect(early.response?.status).toBe(409);
     expect(early.error?.error).toMatchObject({
       code: 'CUP_HAS_UNFINISHED_CONTESTS',
       details: { contests: [{ contestId: coastContest, name: `Coast Picks ${RUN}`, status: 'ACTIVE' }] },
@@ -370,11 +370,11 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       ['T1', 150, CupTrophy.CHAMPION, null],
     ]);
     const twice = await crown(commissioner.client);
-    expect(twice.response.status).toBe(409);
+    expect(twice.response?.status).toBe(409);
     expect(twice.error?.error.code).toBe('CUP_CROWNED');
     // A crowned cup's standings are final, so it has no projection.
     const crownedProjection = await getCupProjection({ client: member.client, path: { id: league.id, cupId } });
-    expect(crownedProjection.response.status).toBe(409);
+    expect(crownedProjection.response?.status).toBe(409);
     expect(crownedProjection.error?.error.code).toBe('CUP_CROWNED');
 
     // A crowned cup keeps the points it was crowned with.
@@ -453,7 +453,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       [TrophyKind.CUP, SEASON, CupTrophy.CHAMPION, `${SEASON} World Marathon Majors (men) Cup`],
     ]);
     const unknownSquad = await getSquadYear({ client: member.client, path: { id: league.id, squadId: randomUUID() }, query: { year } });
-    expect(unknownSquad.response.status).toBe(404);
+    expect(unknownSquad.response?.status).toBe(404);
     expect(unknownSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
 
     // --- Perpetual trophies (#874): the Harbour Marathon picks, run again the next year, make one ---
@@ -480,12 +480,12 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const update = (client: typeof member.client, cupPointsScale: CupPointsScale, cupCustomPoints: number[]) =>
       updateLeagueCupSettings({ client, path: { id: league.id }, body: { cupName: 'Rules Cup', cupPointsScale, cupCustomPoints, hallOfLameVisible: true } });
 
-    expect((await update(member.client, CupPointsScale.TOP_TEN, [])).response.status).toBe(403);
+    expect((await update(member.client, CupPointsScale.TOP_TEN, [])).response?.status).toBe(403);
     const empty = await update(commissioner.client, CupPointsScale.CUSTOM, []);
-    expect(empty.response.status).toBe(400);
+    expect(empty.response?.status).toBe(400);
     expect(empty.error?.error.code).toBe('CUP_CUSTOM_POINTS_INVALID');
     const tooLong = await update(commissioner.client, CupPointsScale.CUSTOM, Array.from({ length: 51 }, () => 1));
-    expect(tooLong.response.status).toBe(400);
+    expect(tooLong.response?.status).toBe(400);
     const stored = await update(commissioner.client, CupPointsScale.TOP_TEN, []);
     expect(LeagueResponseSchema.parse(expectDefined(stored.data)).league).toMatchObject({ cupName: 'Rules Cup', cupPointsScale: CupPointsScale.TOP_TEN });
   });

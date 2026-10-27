@@ -95,7 +95,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       client: a,
       body: { sportLeagueId: worldTour.id, eventYear: 2099, name: `Tour of the Harbour ${RUN}`, startDate: '2099-07-03T10:00:00.000Z', autoLifecycleEnabled: false },
     });
-    expect(race.response.status).toBe(201);
+    expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A stage race is one round: its result is the final overall classification, not one per stage.
@@ -116,9 +116,9 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       path: { eventId },
       body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, oddsToWin: 2 + index * 3 })) },
     });
-    expect(upload.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(upload.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -157,7 +157,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
         templateId: tieredTemplate.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     // The template's Top 10 points table is the contest's scoring rule.
     const scoringRule = await getFunctionalPrisma().participantContestScoringRule.findFirstOrThrow({
@@ -173,9 +173,9 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const rider of lineup) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(rider) } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Pogacar', 'Vingegaard', 'Evenepoel', 'Ayuso', 'Roglic']);
@@ -191,7 +191,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       riderName: null,
     }));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
-    expect(official.response.status).toBe(200);
+    expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [riderOf(row.id), row.race?.finishPosition ?? null])))
       .toEqual(FINISH);
 

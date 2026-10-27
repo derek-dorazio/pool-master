@@ -176,8 +176,7 @@ class ParticipantLoader {
 
     const found = await getLeagueByCode({ client, path: { leagueCode: code } });
     let leagueId = found.data?.league.id ?? null;
-    // Typed as always present, but hey-api leaves it undefined when the fetch itself throws.
-    const status = (found.response as Response | undefined)?.status;
+    const status = found.response?.status;
     if (leagueId === null && status !== 404) {
       throw new Error(`Look up league ${code} failed (HTTP ${status ?? 'none'}): ${JSON.stringify(found.error)}`);
     }

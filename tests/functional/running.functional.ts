@@ -99,7 +99,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       client: a,
       body: { sportLeagueId: majorsMen.id, eventYear: 2099, name: `Harbour Marathon ${RUN}`, startDate: '2099-04-19T13:30:00.000Z', autoLifecycleEnabled: false },
     });
-    expect(race.response.status).toBe(201);
+    expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     expect(expectDefined(race.data).event.rounds).toBe(1);
@@ -120,9 +120,9 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       path: { eventId },
       body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
     });
-    expect(upload.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(upload.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'RANKING', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -171,7 +171,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
         templateId: tieredTemplate.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     // The template's Top 10 points table is the contest's scoring rule.
     const scoringRule = await getFunctionalPrisma().participantContestScoringRule.findFirstOrThrow({
@@ -187,9 +187,9 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       const entryId = expectDefined((await enterContest({ client, path: { contestId } })).data).entry.id;
       for (const runner of lineup) {
         const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId, participantId: fieldRowOf(runner) } });
-        expect(pick.response.status).toBe(200);
+        expect(pick.response?.status).toBe(200);
       }
-      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response.status).toBe(200);
+      expect((await submitContestEntry({ client, path: { contestId, entryId, sportEventId: eventId } })).response?.status).toBe(200);
       return entryId;
     };
     const commissionerEntryId = await enterWith(commissioner.client, ['Kiplimo', 'Lemma', 'Kipruto', 'Tola']);
@@ -205,7 +205,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       riderName: null,
     }));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
-    expect(official.response.status).toBe(200);
+    expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [runnerOf(row.id), row.race?.finishPosition ?? null])))
       .toEqual(FINISH);
 
