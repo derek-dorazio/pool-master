@@ -117,8 +117,10 @@ Work down this list; each step is in `docs/EMAIL-DELIVERY.md` under the section 
 2. **A real send on QA.** Ask the user to press *Send a test email* on `/manage/settings`: its
    answer names the skip reason or the provider's error (*Sending a Test Email*). Settings
    changes take up to 30 seconds to reach every task.
-3. **The outbox row.** Every email is a row with a status: `SKIPPED` with its reason (switched
-   off, not on "Only send to", `SUPPRESSED`, the member's category switch), `FAILED` with its
+3. **The outbox row.** Every email is a row with a status: `SKIPPED` with its reason
+   (`EMAIL_DISABLED`, all email off; `TEMPLATE_DISABLED`, that one email's switch off;
+   `NOT_ALLOWED_IN_ENVIRONMENT`, not on "Only send to"; `SUPPRESSED`; `OPTED_OUT`, the member's
+   category switch; `NOT_IN_PLAN`, the league's plan leaves the email out), `FAILED` with its
    last error after the retries, or `SENT` and then a delivery status (*Outbox*, *Bounces and
    Complaints*).
 4. **No row at all.** The notice never queued it: check the logs for `email.send.skip` and for

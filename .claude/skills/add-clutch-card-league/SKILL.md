@@ -13,9 +13,16 @@ round*). Adding one needs no new code when its sport already has a composite: it
 a last-season data file, and the lists of rounds that copy and tests keep. Running a round once
 the league exists is the `clutch-card-round` skill; this skill makes the league.
 
-A sport with no composite yet (as soccer's Hat Trick once was) needs the composite first: its
-stats, its definition in the sport's registry file, its labels and copy. That is the `add-sport`
-skill's *Scoring family* step, and it rides in the same PR as the sport's first leagues.
+A sport with no composite yet (as soccer's Hat Trick once was) needs the composite first, in the
+same PR as its first leagues. The composite family already exists, so this is not a new scoring
+family, but it usually needs a new stat:
+
+- a new `SportStat` value is an enum change in `schema.prisma`, a migration and regenerated API
+  types (the `model-change` skill);
+- the composite in `packages/shared/domain/sports/<sport>.ts` and the stat in `sport-stats.ts`;
+- the stat's label in `stat-labels.ts` and the composite's words in `stat-pool-copy.ts`;
+- `tests/unit/shared/sport-composites.test.ts`;
+- the Clutch Card page's list of composites and its test (`clutch-card-page.tsx`).
 
 ## Step 1 — settle the round with the user
 
@@ -29,9 +36,9 @@ Write this in the ticket, each open point a question with a recommendation:
 | Display order | Its `display_order` among the sport's leagues: after the sport's existing stat pool leagues, in the calendar order of their rounds |
 | Last season | Which season the test data is: the latest one fully played. A round still being played is not "as played" yet, so use the year before |
 
-Men's and women's competitions are always separate leagues. Two sports can have rounds of the
-same name (basketball's and hockey's Men's National Championship); everything that lists rounds
-keys them by sport and name, so a same-named round is fine, but say it in the ticket.
+Men's and women's competitions are always separate leagues. Two sports could have a round of the
+same name; everything that lists rounds keys them by sport and name, so that works, but a name
+that says its sport is clearer to members, so recommend one in the ticket.
 
 ## Step 2 — the migration
 
@@ -39,8 +46,8 @@ Reference data (`rules/architecture-rules.md` §6 *Reference data goes in a migr
 
 1. Name it after main's latest migration, with a timestamp no open branch is using
    (`npm run rules:check:migration-timestamps` checks the order).
-2. Insert the sport league as the other stat pool leagues' migrations do (find them with
-   `grep -l "'COMPOSITE'" packages/core-api/prisma/migrations/*/migration.sql`): `FIXED`
+2. Insert the sport league as the most recent stat pool league migration does (copy the
+   latest `*_stat_pool_leagues` migration under `packages/core-api/prisma/migrations/`): `FIXED`
    advancement, `INDIVIDUAL` participants, `COMPOSITE` scoring, idempotent on
    `("sport_id", "name")`.
 3. Insert its three default setups, one per format, in this order: Tiered (six tiers, one pick
