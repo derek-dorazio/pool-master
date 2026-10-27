@@ -1,141 +1,141 @@
 {
-  "fetchedAt": "2026-10-27T18:09:02.854Z",
+  "fetchedAt": "2026-10-27T18:17:15.294Z",
   "results": [
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/2998928",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3058895",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "01-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4683006",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5017721",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "02-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/2999101",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3058893",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "03-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4066533",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4682855",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "04-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5345320",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5220104",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "05-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4337216",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4609797",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "06-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/2327695",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/2529622",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "07-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3102133",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3142328",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "08-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4038379",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4257500",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "09-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4790260",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4398935",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "10-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4281930",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4790264",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "11-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4790258",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5447776",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "12-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4398915",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/1054",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "13-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4433402",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4065780",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "14-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3058901",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4899328",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "15-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3142250",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4432834",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "16-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4398674",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4433634",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "17-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5108587",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4398577",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "18-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/4433431",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5277552",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
       "file": "19-sports.core.api.espn.com.txt"
     },
     {
-      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/5208983",
+      "url": "https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons/2026/athletes/3099736",
       "rendered": false,
       "status": "OK",
       "httpStatus": 200,
