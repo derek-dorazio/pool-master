@@ -1,0 +1,145 @@
+{
+  "fetchedAt": "2026-10-27T06:02:17.298Z",
+  "results": [
+    {
+      "url": "https://api.jolpi.ca/ergast/f1/2027.json",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "01-api.jolpi.ca.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2027_Formula_One_World_Championship&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "02-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://en.wikipedia.org/w/index.php?title=2027_NASCAR_Cup_Series&action=raw",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "03-en.wikipedia.org.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/f1/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "04-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://site.api.espn.com/apis/site/v2/sports/racing/nascar-premier/scoreboard?dates=2027",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "05-site.api.espn.com.txt"
+    },
+    {
+      "url": "https://www.pegasusworldcup.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "06-pegasusworldcup.com.txt"
+    },
+    {
+      "url": "https://www.kentuckyderby.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "07-kentuckyderby.com.txt"
+    },
+    {
+      "url": "https://www.preakness.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "08-preakness.com.txt"
+    },
+    {
+      "url": "https://www.belmontstakes.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "09-belmontstakes.com.txt"
+    },
+    {
+      "url": "https://www.marathon.tokyo/en/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "10-marathon.tokyo.txt"
+    },
+    {
+      "url": "https://www.baa.org/races/boston-marathon",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "11-baa.org.txt"
+    },
+    {
+      "url": "https://www.tcslondonmarathon.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "12-tcslondonmarathon.com.txt"
+    },
+    {
+      "url": "https://www.capetownmarathon.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "13-capetownmarathon.com.txt"
+    },
+    {
+      "url": "https://www.bmw-berlin-marathon.com/en/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "14-bmw-berlin-marathon.com.txt"
+    },
+    {
+      "url": "https://www.chicagomarathon.com/",
+      "rendered": false,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "15-chicagomarathon.com.txt"
+    },
+    {
+      "url": "https://www.sydneymarathon.com/",
+      "rendered": false,
+      "status": "FAILED",
+      "reason": "fetch failed",
+      "file": null
+    },
+    {
+      "url": "https://www.formula1.com/en/racing/2027",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "17-formula1.com.txt"
+    },
+    {
+      "url": "https://www.worldmarathonmajors.com/races",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "18-worldmarathonmajors.com.txt"
+    },
+    {
+      "url": "https://www.masters.com/en_US/tournament/index.html",
+      "rendered": true,
+      "status": "FAILED",
+      "reason": "page.goto: net::ERR_HTTP2_PROTOCOL_ERROR at https://www.masters.com/en_US/tournament/index.html\nCall log:\n  - navigating to \"https://www.masters.com/en_US/tournament/index.html\", waiting until \"domcontentloaded\"\n",
+      "file": null
+    },
+    {
+      "url": "https://www.letour.fr/en/",
+      "rendered": true,
+      "status": "OK",
+      "httpStatus": 200,
+      "file": "20-letour.fr.txt"
+    }
+  ]
+}

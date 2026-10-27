@@ -1,0 +1,75 @@
+Source: https://www.chicagomarathon.com/
+Final URL: https://www.chicagomarathon.com/
+HTTP 200
+Fetched: 2026-10-27T06:02:09.170Z
+
+Home - Bank of America Chicago Marathon
+Skip to main content
+Applications for the 2027 Bank of America Chicago Marathon are open! APPLY NOW
+Close Announcement
+Search
+Participant Account
+October 10, 2027
+Participant Account
+Menu
+EVENT INFO
+PARTICIPANT INFORMATION
+SPECTATOR INFORMATION
+VOLUNTEER INFORMATION
+RACE WEEKEND EVENTS
+TRANSPORTATION & PARKING
+MARATHON STORE
+EVENT FAQS
+RULES & SAFETY
+RESULTS
+RESULTS
+APPLY
+APPLY
+CHARITY PROGRAM
+TOUR PROGRAM
+CHICAGO DISTANCE SERIES
+CANCELLATION (BY YOU OR BY US)
+ABOUT
+ABOUT THE EVENT
+ABBOTT WORLD MARATHON MAJORS
+SUSTAINABILITY AND SOCIAL IMPACT
+SPONSORS
+MARKETING OPPORTUNITIES
+PRESS
+CONTACT US
+Participant Account
+{ if (value) { $nextTick(() => $refs.searchInput && $refs.searchInput.focus()); } })"
+>
+Search for:
+$refs.searchInput.focus())"
+>
+Your Finish Line Starts Here.
+CHICAGO IS YOUR START LINE IN
+days
+hours
+minutes
+seconds
+Apply for the drawing
+Guaranteed entries
+Run for charity
+Share Your Story
+We have been inspired for years hearing your Bank of America Chicago Marathon experiences, whether you’re a runner, a volunteer or a spectator. Everyone has a story. We want to hear yours!
+Tell us your story
+Experience the Excitement
+Experience the excitement of the Bank of America Chicago Marathon by watching the sights and sounds of race day on the Chicago Distance Series YouTube channel.
+Visit Our YouTube Channel
+Stay in touch with the Bank of America Chicago Marathon
+Get all the latest news, tips, and inspiration you need sent straight to your inbox
+Asterisks (*) indicate required fields.
+Like us on Facebook
+Follow us on Instagram
+Follow us on TikTok
+Subscribe to our channel on YouTube
+Privacy notice
+You are now leaving the Bank of America Chicago Marathon website
+By clicking Continue , you will be taken to a third party website. Chicago Event Management's privacy policy and level of security do not apply to their site as they may have their own privacy policy and security practices. You can click the Cancel button to return to the previous page, or you can use the back button on your browser after you leave.
+Continue
+Cancel
+
+--- embedded JSON ---
+{"@context":"https:\/\/schema.org","@graph":[{"@type":"WebPage","@id":"https:\/\/www.chicagomarathon.com\/","url":"https:\/\/www.chicagomarathon.com\/","name":"Home - Bank of America Chicago Marathon","isPartOf":{"@id":"https:\/\/www.chicagomarathon.com\/#website"},"primaryImageOfPage":{"@id":"https:\/\/www.chicagomarathon.com\/#primaryimage"},"image":{"@id":"https:\/\/www.chicagomarathon.com\/#primaryimage"},"thumbnailUrl":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","datePublished":"2025-04-11T15:19:30+00:00","dateModified":"2026-10-20T18:00:49+00:00","description":"The Bank of America Chicago Marathon is a world class running event returning to the streets of Chicago on Sunday, October 11, 2026.","breadcrumb":{"@id":"https:\/\/www.chicagomarathon.com\/#breadcrumb"},"inLanguage":"en-US","potentialAction":[{"@type":"ReadAction","target":["https:\/\/www.chicagomarathon.com\/"]}]},{"@type":"ImageObject","inLanguage":"en-US","@id":"https:\/\/www.chicagomarathon.com\/#primaryimage","url":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","contentUrl":"https:\/\/cdn.chicagomarathon.com\/app\/uploads\/2025\/12\/24120417\/Home-Page-25_BACM_JDC_ALL-101-scaled.jpg","width":2560,"height":1024,"caption":"Participants running on LaSalle Street during the 2025 Bank of America Chicago Marathon"},{"@type":"BreadcrumbList","@id":"https:\/\/www.chicagomarathon.com\/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Home"}]},{"@type":"WebSite","@id":"https:\/\/www.chicagomarathon.com\/#website","url":"https:\/\/www.chicagomarathon.com\/","name":"Bank of America Chicago Marathon","description":"","potentialAction":[{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https:\/\/www.chicagomarathon.com\/?s={search_term_string}"},"query-input":{"@type":"PropertyValueSpecification","valueRequired":true,"valueName":"search_term_string"}}],"inLanguage":"en-US"}]}

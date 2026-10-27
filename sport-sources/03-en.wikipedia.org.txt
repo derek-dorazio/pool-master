@@ -1,0 +1,587 @@
+Source: https://en.wikipedia.org/w/index.php?title=2027_NASCAR_Cup_Series&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2027_NASCAR_Cup_Series&action=raw
+HTTP 200
+Fetched: 2026-10-27T06:01:58.155Z
+
+{{Short description|American motorsport season}}
+{{Motorsport season
+| series = NASCAR Cup Series
+| link = NASCAR Cup Series
+| year = 2027
+| previouslink = 2026 NASCAR Cup Series
+| nextlink = 2028 NASCAR Cup Series
+| footer = [[List of NASCAR Cup Series champions|Champions]] {{!}} [[List of NASCAR seasons|Seasons]]|
+}}
+The '''2027 NASCAR Cup Series''' will be the 79th season for [[NASCAR]] professional stock car racing in the United States and the 56th season for the modern-era Cup Series. The preseason will feature the [[Wheatley Vodka Clash]] at [[Daytona International Speedway]], the first time back for the event since [[2021 Busch Clash|2021]], on February 13. It will be followed by the season-opening 69th running of the [[Daytona 500]] on February 21, and will end at [[Homestead–Miami Speedway]] on November 14. {{Cite web |date=August 26, 2026 |title=2027 NASCAR Cup Series Schedule - Dates, Tracks & TV |url=https://www.jayski.com/nascar-cup-series/2027-nascar-cup-series-schedule/ |access-date=August 26, 2026 |website=[[Jayski's Silly Season Site]]}}
+The season will mark the first full time season without [[Kyle Busch]] starting a race since the [[2002 NASCAR Winston Cup Series|2002]] season, following his death on May 21, 2026. {{cite news |title=Kyle Busch, two-time NASCAR Cup Series champion, dies at age 41 |url=https://www.nascar.com/news-media/2026/05/21/kyle-busch-two-time-nascar-cup-series-champion-dies-at-age-41/ |access-date=August 4, 2026 |publisher=NASCAR}} {{cite news |title=Family says Kyle Busch died from severe pneumonia, sepsis |url=https://www.espn.com/racing/nascar/story/_/id/48852216/family-says-kyle-busch-died-severe-pneumonia-sepsis |access-date=August 4, 2026 |publisher=ESPN}} {{cite news |title=Kyle Busch, 2-time NASCAR champion, dies at 41 after illness |url=https://www.nbcnews.com/sports/nascar/kyle-busch-hospitalized-rcna346366 |access-date=August 4, 2026 |publisher=NBC}}
+==Teams and drivers==
+The following teams and drivers are confirmed to be returning in 2027:
+===Full-time chartered teams===
+{| class="wikitable" style="font-size: 95%;"
+! Manufacturer
+! Team
+! {{Tooltip|No.|Car number}}
+! Driver
+! Crew chief
+! Notes
+|-
+! rowspan=17| [[Chevrolet]]
+| style="text-align:center;" | '''[[Haas Factory Team]]'''
+| 41
+| [[Cole Custer]]
+| Aaron Kramer
+| Cole Custer will return to HFT in 2027. {{Cite web |last=Page |first=Scott |date=October 9, 2026 |title=Cole Custer to return to the No. 41 in 2027 |url=https://www.jayski.com/2026/10/09/cole-custer-to-return-to-the-no-41-in-2027/ |access-date=October 9, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+|-
+| rowspan=4 style="text-align:center;" | '''[[Hendrick Motorsports]]'''
+| 5
+| [[Kyle Larson]]
+| [[Cliff Daniels]]
+| Larson is signed through 2031. {{cite web |url=https://www.nascar.com/news-media/2026/02/11/kyle-larson-hendrick-motorsports-agree-to-multiyear-contract-extension/ |title=Kyle Larson, Hendrick Motorsports agree to multiyear contract extension |website=[[NASCAR]] |date=February 11, 2026 |access-date=May 2, 2026}}
+|-
+| 9
+| [[Chase Elliott]]
+| [[Alan Gustafson]]
+| Elliott is signed through 2027. {{cite web |url=https://www.jayski.com/2022/02/20/chase-elliott-signs-contract-extension-with-hendrick-motorsports/ |title=Chase Elliott signs contract extension with Hendrick Motorsports |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=February 20, 2022 |access-date=July 2, 2025}}
+|-
+| 24
+| [[William Byron (racing driver)|William Byron]]
+| [[Rudy Fugle]]
+| Byron is signed through 2029. {{cite web |url=https://www.jayski.com/2025/05/23/hendrick-motorsports-william-byron-agree-to-four-year-contract-extension/ |title=Hendrick Motorsports, William Byron agree to four year contract extension |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=May 23, 2025 |access-date=July 2, 2025}}
+|-
+| {{Tooltip|TBA/48|Ran as No. TBD for the Daytona 500}}
+| [[Alex Bowman]]
+| Blake Harris
+| Bowman is returning to HMS for 2027 for his final full-time season. {{Cite news |last=Sturniolo |first=Zach |date=July 23, 2026 |title=Alex Bowman to retire from full-time competition after 2027 season |url=https://www.nascar.com/news-media/2026/07/23/alex-bowman-to-retire-from-full-time-competition-after-2027-season/ |access-date=July 23, 2026 |work=Nascar |issn=0362-4331}} With [[Jimmie Johnson]] running the No. 48 at the Daytona 500, Bowman will run a different number for the race. {{Cite web |date=July 26, 2026 |title=Jimmie Johnson to run No. 48 for 2027 Daytona 500 |url=https://www.jayski.com/2026/07/26/jimmie-johnson-to-run-no-48-for-2027-daytona-500/ |access-date=July 26, 2026 |website=[[Jayski's Silly Season Site]]}}
+|-
+| style="text-align:center;" | '''[[Hyak Motorsports]]'''
+| 47
+| [[Ricky Stenhouse Jr.]]
+| Mike Kelley
+| Stenhouse will return to Hyak in 2027. {{cite web |url=https://www.jayski.com/2026/05/11/hyak-motorsports-announces-multi-year-contract-extension-with-ricky-stenhouse-jr/ | title=Hyak Motorsports announces multi-year contract extension with Ricky Stenhouse Jr. |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=May 11, 2026}}
+|-
+| rowspan=2 style="text-align: center;" | '''[[Kaulig Racing]]'''
+| 10
+| [[Ty Dillon]]
+| Andrew Dickeson
+| [[Ty Dillon]] is likely to return to Kaulig in 2027.
+|-
+| 16
+| [[A. J. Allmendinger]]
+| [[Trent Owens]]
+| Allmendinger will return to Kaulig in 2027. {{Cite web |last=Sturniolo |first=Zach |date=June 20, 2026 |title=AJ Allmendinger to continue racing for Kaulig Racing: 'I'm not going anywhere' |url=https://www.nascar.com/news-media/2026/06/20/cup-series-aj-allmendinger-kaulig-racing-return-2027/ |access-date=June 20, 2026 |website=[[NASCAR]]}}
+|-
+| rowspan=2 style="text-align: center;" | '''[[Richard Childress Racing]]'''
+| 3
+| [[Austin Dillon]]
+| TBA
+| Dillon is likely to return to RCR in 2027. {{Cite web |title=2027 NASCAR Cup Series Team & Driver Chart |url=https://www.jayski.com/2027-nascar-cup-series-team-driver-chart/ |access-date=May 19, 2026 |website=[[Jayski's Silly Season Site]]}}
+|-
+| 33
+| [[Austin Hill]]
+| Andy Street
+| Kyle Busch had a contract to drive for RCR in 2027, {{Cite web |title=NASCAR Silly Season Tracker: RFK Picks Up Ryan Preece's Option For 2027 |url=https://www.foxsports.com/stories/nascar/nascar-silly-season-tracker-2026-2027 |access-date=July 31, 2026 |website=foxsports.com}} before his passing in May 2026. {{Cite news |last=Gluck |first=Jeff |date=May 21, 2026 |title=Kyle Busch, NASCAR great and 2-time Cup Series champion, dies at 41 after illness |url=https://www.nytimes.com/athletic/7298580/2026/05/21/kyle-busch-dies-illness-nascar-obituary/ |access-date=May 21, 2026 |work=The New York Times |issn=0362-4331}} [[Austin Hill]] is signed for 2027. {{Cite web |last=Albino |first=Dustin |date=August 24, 2026 |title=Austin Hill to drive Richard Childress Racing's #33 full-time in 2027 |url=https://www.jayski.com/2026/08/24/austin-hill-to-drive-richard-childress-racings-no-33-chevrolet-full-time-in-nascar-cup-series-in-2027/ |access-date=August 24, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+|-
+|style="text-align:center;" | '''[[Rick Ware Racing]]'''
+| 51
+| [[Cody Ware]]
+| Billy Plourde
+| Cody Ware is likely to return to RWR in 2027.
+|-
+| rowspan=3 style="text-align: center;" | '''[[Spire Motorsports]]'''
+| 7
+| [[Daniel Suárez]]
+| Ryan Sparks
+| Suárez is returning to Spire in 2027. {{Cite web |last=Page |first=Scott |date=October 13, 2026 |title=Daniel Suarez signs extension with Spire Motorsports for 2027 |url=https://www.jayski.com/2026/10/13/daniel-suarez-signs-extension-with-spire-motorsports-for-2027/ |access-date=October 14, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+|-
+| 71
+| [[Michael McDowell (racing driver)|Michael McDowell]]
+| Travis Peterson
+| McDowell is likely to return to Spire in 2027.
+|-
+| 77
+| [[Carson Hocevar]]
+| [[Luke Lambert]]
+| Hocevar is signed through 2030. {{cite web |url=https://www.spire-motorsports.com/news/2026/february/05/spire-motorsports-inks-carson-hocevar-to-long-term-contract-extension |title=Spire Motorsports Inks Carson Hocevar to Long-Term Contract Extension |website=[[Spire Motorsports]] |publisher=NASCAR Digital Media |date=February 5, 2026 |access-date=May 3, 2026}}
+|-
+| rowspan=3 style="text-align: center;" | '''[[Trackhouse Racing]]'''
+| 1
+| [[Ross Chastain]]
+| Brandon McSwain
+| Chastain is likely returning to Trackhouse in 2027.
+|-
+| 88
+| [[Connor Zilisch]]
+| Randall Burnett
+| Zilisch will stay at Trackhouse for one more year before his planned departure to Hendrick. {{cite web |url=https://www.jayski.com/2025/08/23/connor-zilisch-to-drive-trackhouse-chevy-in-the-2026-nascar-cup-series/ |title=Connor Zilisch to drive Trackhouse Chevy in the 2026 NASCAR Cup Series |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=August 23, 2025 |access-date=August 23, 2025}}
+|-
+| 97
+| [[Shane van Gisbergen]]
+| Stephen Doran
+| Van Gisbergen signed a multi-year extension with Trackhouse during 2025. {{Cite web |date=August 8, 2025 |title=Shane van Gisbergen, Trackhouse Racing announce multiyear contract extension |url=https://www.jayski.com/2025/08/08/shane-van-gisbergen-trackhouse-racing-announce-multiyear-contract-extension/ |access-date=August 8, 2025 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media}}
+|-
+! rowspan=9| [[Ford Motor Company|Ford]]
+| rowspan=3 style="text-align: center;" | '''[[Front Row Motorsports]]'''
+| 4
+| [[Noah Gragson]]
+| Grant Hutchens
+| Gragson signed a multi-year extension with FRM during 2026. {{cite web |url=https://www.nascar.com/news-media/2026/08/14/noah-gragson-front-row-motorsports-agree-to-contract-extension/ |title=Noah Gragson, Front Row Motorsports agree to contract extension |website=[[NASCAR]] |date=August 14, 2026 |access-date=August 14, 2026}}
+|-
+| 34
+| [[Todd Gilliland]]
+| [[Chris Lawson (NASCAR)|Chris Lawson]]
+| Gilliland signed a multi-year extension with FRM during 2026. {{cite web |url=https://www.nascar.com/news-media/2026/07/17/todd-gilliland-signs-contract-extension-to-remain-at-front-row-motorsports-in-cup-series/ |title=Todd Gilliland signs contract extension to remain at Front Row Motorsports in Cup Series |website=[[NASCAR]] |date=July 18, 2026 |access-date=July 18, 2026}}
+|-
+| 38
+| [[Zane Smith]]
+| Ryan Bergenty
+| Smith signed a multi-year extension in 2025. {{cite web |url=https://www.jayski.com/2025/10/23/zane-smith-returning-to-front-row-motorsports-in-multi-year-deal/ |title=Zane Smith returning to Front Row Motorsports in multi-year deal |website=[[Jayski's Silly Season Site]] |date=October 25, 2025 |access-date=May 28, 2026}}
+|-
+| rowspan=2 style="text-align:center;" |'''[[RFK Racing]]'''
+| 6
+| TBA
+| TBA
+| [[Brad Keselowski]] will leave RFK Racing as both driver and owner after 2026. {{Cite web |last=Page |first=Scott |date=September 29, 2026 |title=RFK Racing and Brad Keselowski to part ways at end of season |url=https://www.jayski.com/2026/09/29/rfk-racing-and-brad-keselowski-to-part-ways-at-end-of-season/ |access-date=September 29, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+|-
+| 17
+| [[Chris Buescher]]
+| TBA
+| Buescher signed a multi-year extension in 2026. {{Cite web |date=June 16, 2026 |title=Chris Buescher signs multi-year extension with RFK Racing |url=https://www.jayski.com/2026/06/16/chris-buescher-signs-multi-year-extension-with-rfk-racing/ |access-date=June 16, 2026 |website=[[Jayski's Silly Season Site]]}}
+|-
+| rowspan=3 style="text-align: center;" | '''[[NASCAR operations of Team Penske|Team Penske]]'''
+| 2
+| [[Austin Cindric]]
+| [[Brian Wilson (NASCAR)|Brian Wilson]]
+| Cindric will return to Penske in 2027. {{cite web |date=October 10, 2026 |title=Austin Cindric returning to Team Penske in 2027 |url=https://www.jayski.com/2026/10/10/austin-cindric-returning-to-team-penske-in-2027/ |access-date=October 10, 2026 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media}}
+|-
+| 12
+| [[Ryan Blaney]]
+| [[Jonathan Hassler]]
+| Blaney signed a long-term contract extension with Penske during 2026. {{cite web |url=https://www.jayski.com/2026/05/06/team-penske-and-ryan-blaney-announce-long-term-driver-contract-extension/ |title=Team Penske and Ryan Blaney announce long-term driver contract extension |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=May 6, 2026 |access-date=May 6, 2026}}
+|-
+| 22
+| [[Joey Logano]]
+| [[Paul Wolfe]]
+| Logano will return to Penske in 2027. {{cite web |date=August 24, 2022 |title=NASCAR Champion Joey Logano and Team Penske Agree to Contract Extension |url=https://www.jayski.com/2022/08/24/nascar-champion-joey-logano-and-team-penske-agree-to-contract-extension/ |access-date=July 2, 2025 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media}}
+|-
+| style="text-align: center;" | '''[[Wood Brothers Racing]]'''
+| 21
+| [[Jesse Love]] '''(R)'''
+| TBA
+| [[Josh Berry]] will not return to WBR in 2027. {{Cite web |date=June 10, 2026 |title=Josh Berry will not return to Wood Brothers Racing in 2027 |url=https://www.jayski.com/2026/06/10/josh-berry-will-not-return-to-wood-brothers-racing-in-2027/ |access-date=June 10, 2026 |website=[[Jayski's Silly Season Site]]}} Love signed a deal with the team to replace him. {{Cite web |date=June 17, 2026 |title=Jesse Love joining Wood Brothers Racing in 2027 |url=https://www.jayski.com/2026/06/17/jesse-love-joining-wood-brothers-racing-in-2027/ |access-date=June 17, 2026 |website=[[Jayski's Silly Season Site]]}}
+|-
+! rowspan=10| [[Toyota]]
+| rowspan=3 style="text-align:center;" | '''[[23XI Racing]]'''
+| 23
+| [[Bubba Wallace]]
+| Charles Denike
+| Wallace is likely to return to 23XI.
+|-
+| 35
+| [[Corey Heim]]
+| TBA
+| Heim will replace [[Riley Herbst]] for his first full-time season. {{cite web |date=May 30, 2026 |title= Corey Heim to compete full time for 23XI Racing in 2027 |url= https://www.jayski.com/2026/05/30/corey-heim-to-compete-full-time-for-23xi-racing-in-2027/ |access-date=May 30, 2026 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media}}
+|-
+| 45
+| [[Tyler Reddick]]
+| [[Billy Scott (NASCAR)|Billy Scott]]
+| Reddick signed a multi-year extension with 23XI during 2026. {{cite web |url=https://www.nascar.com/news-media/2026/04/26/cup-series-tyler-reddick-23xi-racing-multiyear-contract-extension/ |title=Tyler Reddick signs multiyear contract extension to remain with 23XI Racing |website=[[NASCAR]] |date=April 26, 2026 |access-date=May 2, 2026}}
+|-
+| rowspan=4 style="text-align:center;" | '''[[Joe Gibbs Racing]]'''
+| 11
+| [[Denny Hamlin]]
+| Chris Gayle
+| Hamlin will return to JGR in 2027 for what is expected to be his final full-time season. {{cite news |last=Weaver |first=Matt |date=July 25, 2025 |title=Denny Hamlin inks multi-year NASCAR extension with Joe Gibbs Racing |url=https://www.sportingnews.com/us/nascar/news/denny-hamlin-inks-multi-year-nascar-extension-joe-gibbs-racing/4bb8f865cfed449eed427d0c |access-date=July 25, 2025 |website=[[The Sporting News]]}}
+|-
+| 19
+| [[Chase Briscoe]]
+| James Small
+| Briscoe is likely to return to JGR in 2027.
+|-
+| 20
+| [[Christopher Bell (racing driver)|Christopher Bell]]
+| [[Adam Stevens (NASCAR)|Adam Stevens]]
+| Bell will most likely return to JGR in 2027.
+|-
+| 54
+| [[Ty Gibbs]]
+| [[Tyler Allen]]
+| Gibbs is likely to return to JGR in 2027.
+|-
+| rowspan=3 style="text-align: center;" | '''[[Legacy Motor Club]]'''
+| 42
+| [[Josh Berry]]
+| Chais Eliason
+| [[John Hunter Nemechek]] was originally announced to return in 2027, {{Cite web |date=May 19, 2026 |title=Rexel renews sponsorship with Legacy Motor Club for 2027 |url=https://www.jayski.com/2026/05/19/rexel-renews-sponsorship-with-legacy-motor-club-for-2027/ |access-date=May 19, 2026 |website=[[Jayski's Silly Season Site]]}} however news broke on September 1 that he will not return to LMC. {{cite web |url=https://www.nytimes.com/athletic/7554000/2026/09/01/legacy-motor-club-john-hunter-nemechek-josh-berry-contract/ |title=Legacy Motor Club to release John Hunter Nemechek; Josh Berry top candidate: Sources |date=September 1, 2026 |access-date=September 1, 2026}} A week later, LMC announced that Berry would replace JHN. {{Cite web |last=Page |first=Scott |date=September 8, 2026 |title=Josh Berry joins Legacy Motor Club in 2027 |url=https://www.jayski.com/2026/09/08/josh-berry-joins-legacy-motor-club-in-2027/ |access-date=September 8, 2026 |website=[[Jayski's Silly Season Site]]}}
+|-
+| 43
+| [[Erik Jones]]
+| Justin Alexander
+| Jones will return to LMC in 2027. {{cite web |url=https://www.jayski.com/2024/08/13/erik-jones-signs-multi-year-contract-extension-with-legacy-motor-club/ |title=Erik Jones signs multi-year contract extension with Legacy Motor Club |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=August 13, 2024 |access-date=July 2, 2025}} {{cite web |url=https://www.jayski.com/2026/09/27/erik-jones-signs-multi-year-extension-with-legacy-motor-club/ |title=Erik Jones signs multi-year extension with Legacy Motor Club |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=September 27, 2026 |access-date=September 27, 2026}}
+|-
+| 84
+| [[Riley Herbst]]
+| [[Jeremy Bullins]]
+| LMC will add a third chartered car in 2027. Herbst was announced the driver on September 3. {{cite web |url=https://www.jayski.com/2026/09/03/riley-herbst-joins-legacy-motor-club-in-multi-year-deal/ |title=Riley Herbst joins Legacy Motor Club in multi-year deal |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Digital Media |date=September 3, 2026 |access-date=September 3, 2026}} Bullins was announced to be the crew chief on September 23. {{Cite web |last=Page |first=Scott |date=September 23, 2026 |title=Jeremy Bullins to crew chief Riley Herbst in 2027 |url=https://www.jayski.com/2026/09/23/jeremy-bullins-to-crew-chief-riley-herbst-in-2027/ |access-date=September 23, 2026 |website=[[Jayski's Silly Season Site]] |language=en-US}}
+|}
+===Full-time non-chartered teams===
+{| class="wikitable" style="font-size: 95%;"
+! Manufacturer
+! Team
+! {{Tooltip|No.|Car number}}
+! Driver
+! Crew chief
+! Notes
+|-
+! [[Ford Motor Company|Ford]]
+| style="text-align:center;" | '''[[RFK Racing]]'''
+| 60
+| [[Ryan Preece]]
+| TBA
+| Preece has a multi-year contract with RFK. {{cite web |url=https://www.nascar.com/news-media/2026/07/25/2026-cup-series-ryan-preece-returning-to-rfk-racing/ |title=Keselowski: Ryan Preece will return to RFK Racing in 2027 |date=July 25, 2026 |website=[[NASCAR]] |access-date=October 10, 2026}}
+|}
+===Part-time non-chartered teams===
+{| class="wikitable" style="font-size: 95%;"
+! Manufacturer
+! Team
+! {{Tooltip|No.|Car number}}
+! Driver
+! Crew chief
+! Races
+! References
+|-
+! [[Chevrolet]]
+| style="text-align:center;" | '''[[Spire Motorsports]]'''
+| TBA
+| [[Corey Day]]
+| TBA
+| {{Tooltip|TBA|TBA}}
+| {{Cite web |date=September 10, 2026 |title=Corey Day signs long-term contract extension with Hendrick Motorsports |url=https://www.jayski.com/2026/09/10/corey-day-signs-long-term-contract-extension-with-hendrick-motorsports/ |access-date=September 10, 2026 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Wire Service}} {{Cite web |last=Weaver |first=Matt |date=September 12, 2026 |title=Hendrick Motorsports details 'The Corey Day Plan' |url=https://www.motorsport.com/nascar-cup/news/hendrick-motorsports-details-the-corey-day-plan-/10855106/ |access-date=September 12, 2026 |website=[[motorsport.com]] |language=en}}
+|-
+! [[Ford Motor Company|Ford]]
+| style="text-align:center;" | '''[[MBM Motorsports|Garage 66]]'''
+| 66
+| [[Josh Bilicki]]
+| TBA
+| {{Tooltip|1|1}}
+| {{Cite web |date=August 31, 2026 |title=Josh Bilicki to enter 2027 Daytona 500 in Protection Technologies car for Garage 66 |url=https://www.jayski.com/2026/08/31/josh-bilicki-to-enter-2027-daytona-500-in-protection-technologies-car-for-garage-66/ |access-date=August 31, 2026 |website=[[Jayski's Silly Season Site]] |publisher=NASCAR Wire Service}}
+|-
+! [[Toyota]]
+| style="text-align:center;" | '''[[Legacy Motor Club]]'''
+| 48
+| [[Jimmie Johnson]]
+| [[Chad Johnston]]
+| {{Tooltip|1|1}}
+| {{Cite web |last=Sturniolo |first=Zach |date=February 14, 2026 |title=Jimmie Johnson announces 2027 Daytona 500 as final Cup Series race |url=https://www.nascar.com/news-media/2026/02/14/cup-series-jimmie-johnson-final-race-2027-daytona-500/ |access-date=May 11, 2026 |website=[[NASCAR]]}}
+|}
+===Changes===
+====Team changes====
+On January 16, 2026, [[Ford Motor Company|Ford]] announced their Mustang Dark Horse SC will be debuted this season for all of its teams. {{cite web |url=https://www.nascar.com/news-media/2026/01/16/ford-racing-mustang-dark-horse-sc-set-for-2027-nascar-season/ |title=Ford Racing announces Mustang Dark Horse SC will make NASCAR debut in 2027 |website=[[NASCAR]] |date=January 16, 2026 |access-date=August 12, 2026}}
+On September 29, 2026, [[Brad Keselowski]] announced that he will leave the [[RFK Racing]] ownership group.
+===Driver changes===
+Following the death of [[Kyle Busch]] on May 21, 2026, [[Richard Childress Racing]]'s No. 8, now renumbered to the No. 33, was left without a driver. {{cite news|title=NASCAR Champion Kyle Busch Dies at 41|publisher=Wall Street Journal|url=https://www.wsj.com/sports/nascar-champion-kyle-busch-dies-at-41-34848994|access-date=August 4, 2026}} [[Austin Hill]] would take his place for that weekend's [[2026 Coca-Cola 600|Coca-Cola 600]], as was announced just hours before his passing, and later the remainder of the season. {{cite news|title=Austin Hill to continue driving No. 33 for Richard Childress Racing in 2026|publisher=Jayski|url=https://www.jayski.com/2026/06/06/austin-hill-to-continue-driving-no-33-for-richard-childress-racing-in-2026/|access-date=August 4, 2026}} Hill was announced to pilot the car in 2027 on August 24.
+[[Riley Herbst]] would not return to [[23XI Racing]] for 2027, with [[Corey Heim]] stepping up to fill his slot at the team. {{cite news|title=Heim's Time Has Come: 23XI Racing Signs Corey Heim to Race Full-Time in 2027|publisher=Road & Track|url=https://www.roadandtrack.com/news/a71449773/corey-heim-signs-23xi-racing-to-race-full-time-in-2027/|access-date=August 4, 2026}} On September 3, 2026, it was confirmed Herbst would be driving for [[Legacy Motor Club]] in their newly opened third team.
+[[Josh Berry]] would not return to [[Wood Brothers Racing]] for 2027, with [[Jesse Love]] stepping up to fill his slot at the team. Berry would move to LMC replacing [[John Hunter Nemechek]].
+[[Brad Keselowski]] announced on September 29, 2026, that he will be leaving RFK Racing as driver and owner in 2026.
+====Rookies====
+{{See also|NASCAR Rookie of the Year#Cup Series}}
+[[Jesse Love]] is the only expected rookie for 2027 so far, having signed a deal to race with [[Wood Brothers Racing]] in place of the outgoing [[Josh Berry]]. [[Austin Hill]] and [[Corey Heim]] will both be racing in their first full time Cup Series season in 2027, but will not be eligible for Rookie of the Year due to them both having already surpassed the 12 race limit.
+==Schedule==
+The 2027 schedule was fully unveiled on August 26, 2026, and consists of 32 ovals, 3 road courses, and 1 street course, as well as 3 non-championship races to be held on ovals.
+'''Notes:''' Race names and title sponsors are subject to change. Not all title sponsors/names of races have been announced for 2027. For the races where a 2027 name and title sponsor has yet to be announced, the title sponsors/names of those races in 2026 are listed.
+'''Bolded''' races indicate an event generally known as a [[Crown Jewel (NASCAR)|Crown Jewel race]].
+{{Color box|white|O|border=silver}} Oval track
+{{Color box|lightblue|R|border=silver}} Road course
+{{Color box|peachpuff|S|border=silver}} Street course
+{|class="wikitable" style="font-size:85%"
+! No
+! Race name {{Cite web |date=August 4, 2026 |title=2027 NASCAR schedule: Confirmed dates, tracks for all three national series |url=https://www.nascar.com/news-media/2026/08/04/2027-nascar-schedule-confirmed-dates-tracks-for-all-three-national-series/ |access-date=August 4, 2026 |website=[[NASCAR]]}}
+! [[List of NASCAR tracks|Track]]
+! Location
+! Date
+! TV
+! Radio
+|-
+! colspan=7| Regular Season
+|-
+! rowspan=2|
+| [[Wheatley Vodka Clash]] {{Cite web |date=August 4, 2026 |title=Clash returns to Daytona in 2027 as Saturday night race |url=https://www.nascar.com/news-media/2026/08/04/clash-returns-to-daytona-in-2027-as-saturday-night-race/ |access-date=August 4, 2026 |website=[[NASCAR]]}}
+| rowspan=3| {{Color box|white|O|border=silver}} [[Daytona International Speedway]]
+| rowspan=3| [[Daytona Beach, Florida]]
+| February 13
+| rowspan=15| [[NASCAR on FOX|FOX Sports]]
+| rowspan=3| [[Motor Racing Network|MRN]]
+|-
+| [[The Duel at Daytona]]
+| February 18
+|-
+! 1
+| '''[[Daytona 500]]'''
+| February 21
+|-
+! 2
+| [[NASCAR Cup Series at Atlanta Motor Speedway#Spring race|Autotrader 400]]
+| {{Color box|white|O|border=silver}} [[Atlanta Motor Speedway|EchoPark Speedway]]
+| [[Hampton, Georgia]]
+| February 28
+| rowspan=2| [[Performance Racing Network|PRN]]
+|-
+! 3
+| [[NASCAR Cup Series at Circuit of the Americas|DuraMAX Grand Prix]]
+| {{Color box|lightblue|R|border=silver}} [[Circuit of the Americas]]
+| [[Austin, Texas]]
+| March 7
+|-
+! 4
+| [[NASCAR Cup Series at Phoenix Raceway#Spring race|Straight Talk Wireless 500]]
+| {{Color box|white|O|border=silver}} [[Phoenix Raceway]]
+| [[Avondale, Arizona]]
+| March 14
+| MRN
+|-
+! 5
+| [[NASCAR Cup Series at Las Vegas Motor Speedway#Spring race|Pennzoil 400]]
+| {{Color box|white|O|border=silver}} [[Las Vegas Motor Speedway]]
+| [[Las Vegas, Nevada]]
+| March 21
+| PRN
+|-
+! 6
+| [[Goodyear 400]]
+| {{Color box|white|O|border=silver}} [[Darlington Raceway]]
+| [[Darlington, South Carolina]]
+| April 4
+| MRN
+|-
+! 7
+| [[Food City 500]]
+| {{Color box|white|O|border=silver}} [[Bristol Motor Speedway]]
+| [[Bristol, Tennessee]]
+| April 11
+| PRN
+|-
+! 8
+| [[Cook Out 400 (Martinsville)|Cook Out 400]]
+| {{Color box|white|O|border=silver}} [[Martinsville Speedway]]
+| [[Ridgeway, Virginia]]
+| April 18
+| rowspan=2| MRN
+|-
+! 9
+| '''[[Jack Link's 500]]'''
+| {{Color box|white|O|border=silver}} [[Talladega Superspeedway]]
+| [[Lincoln, Alabama]]
+| April 25
+|-
+! 10
+| [[NASCAR Cup Series at Texas Motor Speedway#Current race|Würth 400]]
+| {{Color box|white|O|border=silver}} [[Texas Motor Speedway]]
+| [[Fort Worth, Texas]]
+| May 2
+| PRN
+|-
+! 11
+| [[NASCAR Cup Series at Kansas Speedway#Spring race|AdventHealth 400]]
+| {{Color box|white|O|border=silver}} [[Kansas Speedway]]
+| [[Kansas City, Kansas]]
+| May 9
+| MRN
+|-
+! 12
+| [[NASCAR Cup Series at Dover Motor Speedway#Current race|Ecosave 400]] {{cite web |url=https://www.jayski.com/2026/10/22/ecosave-named-entitlement-partner-of-dover-2027-nascar-cup-series-race/ |title=Ecosave named entitlement partner of Dover 2027 NASCAR Cup Series Race |website=[[Jayski's Silly Season Site]] |date=October 22, 2026 |access-date=October 22, 2026}}
+| {{Color box|white|O|border=silver}} [[Dover Motor Speedway]]
+| [[Dover, Delaware]]
+| May 16
+| PRN
+|-
+!
+| [[NASCAR All-Star Race]]
+| {{Color box|white|O|border=silver}} [[North Wilkesboro Speedway]]
+| [[North Wilkesboro, North Carolina]]
+| May 23
+| MRN
+|-
+! 13
+| '''[[Coca-Cola 600]]'''
+| {{Color box|white|O|border=silver}} [[Charlotte Motor Speedway]]
+| [[Concord, North Carolina]]
+| May 30
+| rowspan=5| [[NASCAR on Prime Video|Prime]]
+| rowspan=2| PRN
+|-
+! 14
+| [[NASCAR Cup Series at Nashville Superspeedway|Cracker Barrel 400]]
+| {{Color box|white|O|border=silver}} [[Nashville Superspeedway]]
+| [[Lebanon, Tennessee]]
+| June 6
+|-
+! 15
+| [[NASCAR Cup Series at Pocono Raceway#Current race|The Great American Getaway 400]]
+| {{Color box|white|O|border=silver}} [[Pocono Raceway]]
+| [[Blakeslee, Pennsylvania]]
+| June 13
+| rowspan=3| MRN
+|-
+! 16
+| [[NASCAR Cup Series at Michigan International Speedway#Current race|FireKeepers Casino 400]]
+| {{Color box|white|O|border=silver}} [[Michigan International Speedway]]
+| [[Brooklyn, Michigan]]
+| June 20
+|-
+! 17
+| [[NASCAR Cup Series at Chicagoland Speedway|eero 400]]
+| {{Color box|white|O|border=silver}} [[Chicagoland Speedway]]
+| [[Joliet, Illinois]]
+| June 27
+|-
+! colspan=7| In-Season Challenge
+|-
+! 18
+| [[Iowa Corn 350]]
+| {{Color box|white|O|border=silver}} [[Iowa Speedway]]
+| [[Newton, Iowa]]
+| July 4
+| rowspan=5| [[NASCAR on TNT Sports|TNT]]
+| MRN
+|-
+! 19
+| [[Toyota/Save Mart 350]]
+| {{Color box|lightblue|R|border=silver}} [[Sonoma Raceway]]
+| [[Sonoma, California]]
+| July 11
+| rowspan=2| PRN
+|-
+! 20
+| [[NASCAR Cup Series at Atlanta Motor Speedway#Summer race|Dollar Tree 400]] {{cite web |url=https://www.jayski.com/2026/07/13/dollar-tree-named-entitlement-sponsor-for-echopark-speedways-summer-2027-nascar-cup-series-race/ |title=Dollar Tree named entitlement sponsor for EchoPark Speedway's summer 2027 NASCAR Cup Series race |website=[[Jayski's Silly Season Site]] |date=July 13, 2026 |access-date=August 20, 2026}}
+| {{Color box|white|O|border=silver}} [[Atlanta Motor Speedway|EchoPark Speedway]]
+| [[Hampton, Georgia]]
+| July 18
+|-
+! 21
+| '''[[Brickyard 400]]'''
+| {{Color box|white|O|border=silver}} [[Indianapolis Motor Speedway]]
+| [[Speedway, Indiana]]
+| July 25
+| [[Indianapolis Motor Speedway Radio Network|IMS]]
+|-
+! 22
+| [[NASCAR Cup Series at the Coronado Street Course|Anduril 250]]
+| {{Color box|peachpuff|S|border=silver}} [[Coronado Street Course]]
+| [[San Diego, California]]
+| August 1
+| MRN
+|-
+! colspan=7| Regular Season
+|-
+! 23
+| [[Bass Pro Shops Night Race]]
+| {{Color box|white|O|border=silver}} [[Bristol Motor Speedway]]
+| [[Bristol, Tennessee]]
+| August 14
+| rowspan=4| [[NASCAR on USA Sports|USA Sports]]
+| PRN
+|-
+! 24
+| [[Enjoy Illinois 300]]
+| {{Color box|white|O|border=silver}} [[Gateway Motorsports Park|World Wide Technology Raceway]]
+| [[Madison, Illinois]]
+| August 22
+| rowspan=3| MRN
+|-
+! 25
+| [[Coke Zero Sugar 400]]
+| {{Color box|white|O|border=silver}} [[Daytona International Speedway]]
+| [[Daytona Beach, Florida]]
+| August 28
+|-
+! 26
+| '''[[Southern 500|Cook Out Southern 500]]'''
+| {{Color box|white|O|border=silver}} [[Darlington Raceway]]
+| [[Darlington, South Carolina]]
+| September 5
+|-
+! colspan=7| [[The Chase (NASCAR)#2026|Cup Series Chase]]
+|-
+! 27
+| [[NASCAR Cup Series at Richmond Raceway#Current race|Cook Out 400]]
+| {{Color box|white|O|border=silver}} [[Richmond Raceway]]
+| [[Richmond, Virginia]]
+| September 11
+| rowspan=10| [[NASCAR on USA Sports|USA Sports]]
+| rowspan=2| MRN
+|-
+! 28
+| [[NASCAR Cup Series at Watkins Glen International|Go Bowling at The Glen]]
+| {{Color box|lightblue|R|border=silver}} [[Watkins Glen International]]
+| [[Watkins Glen, New York]]
+| September 19
+|-
+! 29
+| [[NASCAR Cup Series at New Hampshire Motor Speedway#Current race|Dollar Tree 301]]
+| {{Color box|white|O|border=silver}} [[New Hampshire Motor Speedway]]
+| [[Loudon, New Hampshire]]
+| September 26
+| PRN
+|-
+! 30
+| [[NASCAR Cup Series at Kansas Speedway#Fall race|Hollywood Casino 400]]
+| {{Color box|white|O|border=silver}} [[Kansas Speedway]]
+| [[Kansas City, Kansas]]
+| October 3
+| MRN
+|-
+! 31
+| [[NASCAR Cup Series at Las Vegas Motor Speedway#Fall race|South Point 400]]
+| {{Color box|white|O|border=silver}} [[Las Vegas Motor Speedway]]
+| [[Las Vegas, Nevada]]
+| October 10
+| rowspan=2| PRN
+|-
+! 32
+| [[Bank of America 400]]
+| {{Color box|white|O|border=silver}} [[Charlotte Motor Speedway]]
+| [[Concord, North Carolina]]
+| October 17
+|-
+! 33
+| [[NASCAR Cup Series at Phoenix Raceway#Fall race|Freeway Insurance 500]]
+| {{Color box|white|O|border=silver}} [[Phoenix Raceway]]
+| [[Avondale, Arizona]]
+| October 24
+| rowspan=4| MRN
+|-
+! 34
+| [[YellaWood 500]]
+| {{Color box|white|O|border=silver}} [[Talladega Superspeedway]]
+| [[Lincoln, Alabama]]
+| October 31
+|-
+! 35
+| [[Xfinity 500]]
+| {{Color box|white|O|border=silver}} [[Martinsville Speedway]]
+| [[Ridgeway, Virginia]]
+| November 7
+|-
+! 36
+| [[NASCAR Cup Series at Homestead–Miami Speedway|Straight Talk Wireless 400]]
+| {{Color box|white|O|border=silver}} [[Homestead–Miami Speedway]]
+| [[Homestead, Florida]]
+| November 14
+|}
+=== Notes ===
+{{Notelist}}
+===Schedule changes===
+The races at [[Richmond Raceway]], [[Watkins Glen International]] and [[New Hampshire Motor Speedway]] return to "[[The Chase (NASCAR)|The Chase]]" for the first time since [[2021 NASCAR Cup Series|2021]], [[2024 NASCAR Cup Series|2024]] and [[2025 NASCAR Cup Series|2025]] respectively. {{cite web |url=https://www.jayski.com/2026/08/13/richmond-raceway-announces-2027-date-oreilly-auto-parts-series-returning/ |title=Richmond Raceway announces 2027 date, O'Reilly Auto Parts Series returning |website=[[Jayski's Silly Season Site]] |date=August 13, 2026 |access-date=August 13, 2026}} {{cite web |url=https://www.nhms.com/media/news/chase-back-new-england-nascar-weekend-magic-mile-returns-september-2027.html |title=The Chase is Back in New England: NASCAR Weekend at "The Magic Mile" Returns to September in 2027 |website=[[New Hampshire Motor Speedway]] |date=August 6, 2026 |access-date=August 6, 2026}} {{Cite web |date=May 7, 2026 |title=Watkins Glen races to move to September in 2027 |url=https://www.jayski.com/2026/05/07/watkins-glen-races-to-move-to-september-in-2027/ |access-date=May 11, 2026 |website=[[Jayski's Silly Season Site]]}} The [[Wheatley Vodka Clash]] will return to [[Daytona International Speedway]] for the first time since [[2020 Busch Clash|2020]], replacing [[Bowman Gray Stadium]]. {{Cite news |last=Bianchi |first=Jordan |date=July 24, 2026 |title=NASCAR's season-opening Clash race is going back to Daytona in 2027: Sources |url=https://www.nytimes.com/athletic/7468416/2026/07/24/nascar-clash-daytona-international-speedway-2027/ |access-date=August 4, 2026 |work=The New York Times |issn=0362-4331}} [[Bristol Motor Speedway]]'s [[Bass Pro Shops Night Race]] returns to its traditional August weekend, after six years in The Chase. {{cite web |url=https://www.bristolmotorspeedway.com/media/news/best-bristol-returns-2027.html |title=The Best Of Bristol Return In 2027 |website=[[Bristol Motor Speedway]] |date=August 6, 2026 |access-date=August 6, 2026}} The [[NASCAR All-Star Race]] returns to [[North Wilkesboro Speedway]] as it was from [[2023 NASCAR Cup Series|2023]] to [[2025 NASCAR Cup Series|2025]]. {{cite web |url=https://www.jayski.com/2026/08/12/nascar-tripleheader-headlines-biggest-race-week-ever-at-north-wilkesboro/ |title=NASCAR tripleheader headlines biggest race week ever at North Wilkesboro for 2027 |website=[[Jayski's Silly Season Site]] |date=August 12, 2026 |access-date=August 12, 2026}} Due to that change, [[Dover Motor Speedway]] regained its points race after a one year-hiatus. {{Cite web |url=https://www.jayski.com/2026/08/12/cup-oreilly-returning-to-dover-motor-speedway-in-2027/ |title=Cup, O'Reilly returning to Dover Motor Speedway in 2027 |website=[[Jayski's Silly Season Site]] |date=August 12, 2026 |access-date=August 18, 2026}}
+== See also==
+* [[2027 NASCAR O'Reilly Auto Parts Series]]
+* [[2027 NASCAR Truck Series]]
+* [[2027 ARCA Menards Series]]
+* [[2027 ARCA Menards Series East]]
+* [[2027 ARCA Menards Series West]]
+* [[2027 NASCAR Whelen Modified Tour]]
+==References==
+{{Reflist}}
+{{2027 NASCAR Cup Series}}
+{{NASCAR Cup Series Championship}}
+[[Category:NASCAR Cup Series seasons]]
+[[Category:2027 in motorsport|NASCAR Cup]]
+[[Category:Scheduled motorsport seasons|NASCAR Cup]]

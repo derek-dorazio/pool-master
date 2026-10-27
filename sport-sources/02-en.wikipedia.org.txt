@@ -1,0 +1,318 @@
+Source: https://en.wikipedia.org/w/index.php?title=2027_Formula_One_World_Championship&action=raw
+Final URL: https://en.wikipedia.org/w/index.php?title=2027_Formula_One_World_Championship&action=raw
+HTTP 200
+Fetched: 2026-10-27T06:01:58.085Z
+
+{{Short description|Scheduled Formula One season}}
+{{Use dmy dates|date=August 2026}}
+{{F1 season
+| year = 2027
+| support_series = {{UBL| [[2027 Formula 2 Championship|Formula 2 Championship]] | [[2027 FIA Formula 3 Championship|FIA Formula 3 Championship]] | [[2027 F1 Academy season|F1 Academy]] | [[2027 Porsche Supercup|Porsche Supercup]] }}
+}}
+The '''2027 FIA Formula One World Championship''' is a planned motor racing championship for [[Formula One cars]] which will be the 78th running of the [[Formula One World Championship]]. It is recognised by the [[Fédération Internationale de l'Automobile]] (FIA), the governing body of international [[motorsport]], as the highest class of competition for [[open-wheel racing car]]s. The championship is scheduled to be contested over twenty-four Grands Prix held around the world. Drivers and teams are set to compete for the titles of [[List of Formula One World Drivers' Champions|World Drivers' Champion]] and [[List of Formula One World Constructors' Champions|World Constructors' Champion]], respectively.
+== Entries ==
+The following constructors and drivers are under contract to compete in the 2027 World Championship. All teams are due to compete with tyres supplied by [[Pirelli]]. {{cite news |title=Pirelli to continue as Formula 1's exclusive tyre supplier until 2027 |url=https://www.formula1.com/en/latest/article/pirelli-to-continue-as-formula-1s-exclusive-tyre-supplier-until-2027.7xJIxJyMe84N3p7k4iIMjK |access-date=30 April 2024 |work=Formula1.com |date=10 October 2023 |language=en}} Each team is required to enter at least two drivers, one for each of the two mandatory cars.
+{|class="wikitable sortable" style="font-size:85%"
+|+ Teams and drivers that are contracted to compete in the 2027 World Championship
+! scope="col" rowspan="2"|Entrant
+! scope="col" rowspan="2"|[[List of Formula One constructors|Constructor]]
+! rowspan="2" class="unsortable" |Chassis
+! scope="col" rowspan="2" nowrap|[[Formula One engines|Power unit]]
+! scope="col" colspan="2" class="unsortable" |Race drivers
+|-
+! scope="col" class="unsortable"|[[List of Formula One driver numbers|No.]]
+! scope="col" class="unsortable"|[[List of Formula One drivers|Driver name]]
+|-
+| rowspan="2" | {{flagg|cnxa|France}}[[Gucci|Gucci Racing]] Alpine F1 Team {{cite web|url=https://media.alpinecars.com/luxury-takes-the-grid-gucci-enters-formula-one-with-alpine-becoming-its-title-partner/?lang=eng&fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQPNTY3MDY3MzQzMzUyNDI3AAGnPoAiAC-gzxZXMtskfpRwnjKn7aokdYE1qNXl8tKL6UU3ibWciXpHoHV8pzw_aem_INZnzymp9jE_ol0LsKW-rw |last=Mallinson |first=Sam |title=Luxury takes the grid: Gucci enters Formula One with Alpine, becoming its Title Partner |website=Alpine Cars |date=27 May 2026 |access-date=27 May 2026 |archive-url=https://web.archive.org/web/20260527124455/https://media.alpinecars.com/luxury-takes-the-grid-gucci-enters-formula-one-with-alpine-becoming-its-title-partner/?lang=eng&fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQPNTY3MDY3MzQzMzUyNDI3AAGnPoAiAC-gzxZXMtskfpRwnjKn7aokdYE1qNXl8tKL6UU3ibWciXpHoHV8pzw_aem_INZnzymp9jE_ol0LsKW-rw |archive-date=27 May 2026 |url-status=live}}
+! rowspan="2" | [[Alpine F1 Team|Alpine]]-[[Mercedes AMG High Performance Powertrains|Mercedes]]
+| rowspan="2" | TBA
+| rowspan="2"|Mercedes {{cite web|url=https://www.formula1.com/en/latest/article/alpine-confirm-they-are-to-shut-down-works-engine-programme-at-the-end-of.2Bcubn03U8oaIOMFVggZDl|title=Alpine confirm they are to shut down works engine programme at the end of 2025|website=Formula 1.com|date=30 September 2024|access-date=30 September 2024}} {{Cite web |date=12 November 2024|title=Alpine to use Mercedes power units and gearboxes from 2026 |url=https://www.formula1.com/en/latest/article/alpine-to-use-mercedes-power-units-and-gearbox-from-2026.5jzzbQeHx7aPT3hoP5hRtc |language=en-US|website=Formula 1.com|access-date=12 November 2024}}
+|style="text-align:center"|10
+|{{flagg|cnxa|France}}[[Pierre Gasly]] {{Cite web |title=Gasly signs new contract extension with Alpine |url=https://www.formula1.com/en/latest/article/gasly-commits-long-term-future-to-alpine-as-he-signs-new-contract-extension.wgdUGA4Xzo6fWpo6JK7eg |access-date=11 September 2025 |website=www.formula1.com |language=en}}
+|-
+|style="text-align:center"|43
+|{{flagg|cnxa|Argentina}}[[Franco Colapinto]] {{Cite web |title=Alpine confirmó a Franco Colapinto como piloto para 2027 |trans-title=Alpine confirmed Franco Colapinto as a driver for 2027 |url=https://www.lanacion.com.ar/deportes/automovilismo/alpine-confirmo-a-franco-colapinto-como-piloto-para-2027-nid27082026/ |access-date=27 August 2026 |website=[[La Nación]] |language=es}}
+|-
+| rowspan="2" | {{flagg|cnxa|United Kingdom}}Aston Martin [[Saudi Aramco|Aramco]] F1 Team {{Cite web |title=Honda to make full-scale F1 return in 2026 as they join forces with Aston Martin|url=https://www.formula1.com/en/latest/article/breaking-honda-to-make-full-scale-f1-return-in-2026-as-they-join-forces-with.WlzHSedIbSrZpXEXdC5QQ |access-date=5 July 2024 |website=Formula 1}}
+! rowspan="2" | [[Aston Martin in Formula One|Aston Martin Aramco]]-[[Honda in Formula One|Honda]]
+| rowspan="2" | TBA
+| rowspan="2" | Honda {{cite news |title=Aston Martin confirm Honda as F1 engine partner from 2026 as Japanese manufacturer makes official return to sport |url=https://www.skysports.com/f1/news/12477/12887654/aston-martin-confirm-honda-as-f1-engine-partner-from-2026-as-japanese-manufacturer-makes-official-return-to-sport |access-date=8 February 2024 |work=Sky Sports |date=24 May 2023 |language=en}}
+|style="text-align:center"|14
+|{{flagg|cnxa|Spain}}[[Fernando Alonso]] {{Cite web |title=Lance Stroll and Fernando Alonso commit to Aston Martin Aramco as 2027 driver line-up is confirmed |url=https://www.astonmartinf1.com/en-GB/news/announcement/lance-stroll-and-fernando-alonso-commit-to-aston-martin-aramco |access-date=29 September 2026 |website=www.astonmartinf1.com |language=en}}
+|-
+|style="text-align:center"|18
+|{{flagg|cnxa|Canada}}[[Lance Stroll]]
+|-
+| rowspan="2" | {{flagg|cnxa|United Kingdom}}[[Atlassian]] Williams F1 Team {{cite news |last1=Mann-Bryans |first1=Mark |title=Record title sponsorship for Williams F1 as Atlassian deal announced |url=https://www.autosport.com/f1/news/record-title-sponsorship-for-williams-f1-as-atlassian-deal-announced/10695069/ |access-date=11 February 2025 |work=[[Autosport]] |date=11 February 2025}}
+!rowspan="2"|[[Williams Racing|Atlassian Williams]]-[[Mercedes AMG High Performance Powertrains|Mercedes]]
+| rowspan="2" | FW50 {{cite news |last1=Noble |first1=Jon |title=Why Williams is set to 'skip a year' with 2027 F1 car |url=https://www.the-race.com/formula-1/williams-2027-f1-car-name-change/ |access-date=15 October 2026 |work=The Race |date=15 October 2026}}
+|rowspan="2"| Mercedes {{cite news |title=Williams F1 team to use Mercedes engines until at least 2030 |url=https://www.reuters.com/sports/motor-sports/williams-f1-team-use-mercedes-engines-until-least-2030-2024-01-08/#:~:text=LONDON%2C%20Jan%208%20(Reuters),both%20parties%20announced%20on%20Monday. |access-date=8 February 2024 |work=Reuters |date=8 January 2024}}
+|style="text-align:center"|23
+|{{nowrap|{{flagg|cnxa|Thailand}}[[Alexander Albon]]}} {{cite web |title=Williams confirm Albon will remain with the team in 2027 |url=https://www.formula1.com/en/latest/article/williams-confirm-albon-will-remain-with-the-team-in-2027.3ZwdrAmEY4MGL5Ce1eXHIQ |website=www.formula1.com |access-date=18 August 2026 |language=en}}
+|-
+|style="text-align:center"|55
+|{{flagicon image|Flag of Spain.svg}} [[Carlos Sainz Jr.]] {{Cite web |title=Carlos Sainz commits to Atlassian Williams F1 Team, completing 2027 driver line-up {{!}} Atlassian Williams F1 Team |url=https://www.williamsf1.com/articles/48004fab-7ad8-46c4-bf49-7a6a0e6d7e83/carlos-sainz-commits-to-atlassian-williams-f1-team-completing-2027-driver-line-up |access-date=2026-08-19 |website=williamsf1 |language=en}}
+|-
+| rowspan="2" | {{flagg|cnxa|Germany}}Audi [[Revolut]] F1 Team {{cite news |title=Audi expands commitment to Formula 1 with 100% takeover of Sauber {{!}} Formula 1® |url=https://www.formula1.com/en/latest/article/audi-expands-commitment-to-formula-1-with-100-takeover-of-sauber.4g5fNv9jl03sw5btt4LuSw |access-date=7 May 2024 |work=Formula1.com |date=8 March 2024 |language=en}} {{cite news |last1=van Denderen |first1=Ludo |title=Bad news for Swiss F1 fans: Audi opts for German national anthem |url=https://www.gpblog.com/en/news/267805/audi-lets-sauber-race-under-german-flag.html |access-date=14 May 2024 |work=GPblog.com |date=2 April 2024 |language=en}} {{cite news |last=Noble |first=Jon |title= Audi reveals new title sponsor for its F1 debut |url= https://www.the-race.com/formula-1/audi-reveals-new-title-sponsor-for-its-f1-debut/ |website=The Race |date= 30 July 2025 |access-date=30 July 2025}}
+! rowspan="2" | [[Audi in Formula One|Audi]]
+| rowspan="2" | TBA
+| rowspan="2"|Audi
+|style="text-align:center"|5
+|{{nowrap|{{flagicon image|Flag of Brazil.svg}} [[Gabriel Bortoleto]] }}
+|-
+|style="text-align:center"|27
+|{{flagicon image|Flag of Germany.svg}} [[Nico Hülkenberg]]
+|-
+| rowspan="2" | {{flagg|cnxa|United States}} Cadillac Formula 1 Team {{Cite web |title=Statement on General Motors application to join FIA Formula One World Championship in 2026|url=https://www.formula1.com/en/latest/article/statement-on-general-motors-application-to-join-fia-formula-one-world.69uoRF1uwHwXkr4efkpnhc |access-date=25 November 2024|date=25 November 2024|website=Formula 1.com|language=en}} {{Cite web |date=25 November 2024 |title=General Motors launches Cadillac Formula 1 Team and power unit |url=https://news.gm.com/home.detail.html/Pages/news/us/en/2024/nov/1125-f1.html |url-status=live |access-date=25 November 2024 |website=news.gm.com|archive-url=https://web.archive.org/web/20241126112427/https://news.gm.com/home.detail.html/Pages/news/us/en/2024/nov/1125-f1.html|archive-date=26 November 2024}}
+! rowspan="2" |[[Cadillac in Formula One|Cadillac]]-[[Scuderia Ferrari|Ferrari]]
+| rowspan="2" | TBA
+| rowspan="2" |Ferrari {{Cite web |title=Ferrari enters a multi-year agreement with Andretti Formula Racing |url=https://www.ferrari.com/en-EN/corporate/articles/ferrari-enters-a-multi-year-agreement-with-andretti-formula-racing |date=10 December 2024 |access-date=10 December 2024 |website=Ferrari |url-status=live |archive-url=https://web.archive.org/web/20241210145151/https://www.ferrari.com/en-EN/corporate/articles/ferrari-enters-a-multi-year-agreement-with-andretti-formula-racing |archive-date=10 December 2024 }}
+|style="text-align:center"|11
+|{{flagicon image|Flag of Mexico.svg}} [[Sergio Pérez]] {{Cite tweet |author=Formula 1 |author-link=Formula One |user=F1 |number=2090382081155379622 |date=August 20, 2026 |title=Another piece of the 2027 puzzle 🧩 Max is confirmed at Red Bull Racing for 2027 and beyond 🤝 |access-date=August 20, 2026 |link=https://x.com/F1/status/2090382081155379622 |url-status=live}}
+|-
+|style="text-align:center"|77
+|{{flagicon image|Flag of Finland.svg}} [[Valtteri Bottas]]
+|-
+| rowspan=2| {{flagg|cnxa|Italy}}Scuderia Ferrari [[HP Inc.|HP]] {{cite web |title=Ferrari and HP Announce a Title Partnership |url=https://press.hp.com/us/en/press-kits/2024/scuderia-ferrari-hp.html |website=press.hp.com |access-date=24 April 2024}}
+! rowspan="2" | [[Scuderia Ferrari|Ferrari]]
+| rowspan="2" | TBA
+| rowspan="2" | Ferrari {{cite news |title=What engine every F1 team is using for 2026 rules |url=https://www.the-race.com/formula-1/2026-f1-team-engines/ |access-date=16 October 2025 |work=The Race |date=26 August 2025 |url-status=live |archive-url=https://web.archive.org/web/20250920181834/https://www.the-race.com/formula-1/2026-f1-team-engines |archive-date=20 September 2025}}
+|style="text-align:center"|16
+|{{flagg|cnxa|Monaco}}[[Charles Leclerc]] {{Cite web |title=Charles Leclerc and Scuderia Ferrari HP: the story continues |url=https://www.ferrari.com/en-EN/formula1/articles/scuderia-ferrari-renewal-agreement-leclerc-2026 |access-date=3 June 2026 |website=www.ferrari.com |language=en}}
+|-
+|style="text-align:center"|44
+|{{flagicon image|Flag of United Kingdom.svg}} [[Lewis Hamilton]]
+|-
+| rowspan="2" | {{flagg|cnxa|United States}}[[Toyota Gazoo Racing|TGR]] Haas F1 Team {{cite web|url=https://www.formula1.com/en/latest/article.haas-sign-new-title-sponsor-for-2023-in-multi-year-deal.4YFZ3bryxIowvBi64hvnTO.html|title=Haas sign new title sponsor for 2023 in multi-year deal|website=Formula1.com|date=20 October 2022|access-date=22 October 2022}}
+! rowspan="2" |[[Haas F1 Team|Haas]]-[[Scuderia Ferrari|Ferrari]]
+| rowspan="2" | TBA
+| rowspan="2"|Ferrari {{Cite web|last=Grandprix.com|title=Haas to stick with Ferrari amid engine crisis|url=http://www.grandprix.com//news/haas-to-stick-with-ferrari-amid-engine-crisis.html|access-date=30 August 2020|website=grandprix.com|archive-date=30 August 2020|archive-url=https://web.archive.org/web/20200830231958/http://www.grandprix.com//news/haas-to-stick-with-ferrari-amid-engine-crisis.html|url-status=live}} {{cite news |last1=McDonagh |first1=Connor |title=Haas extend Ferrari technical partnership until the end of 2028 F1 season {{!}} F1 {{!}} Crash |url=https://www.crash.net/f1/news/1052251/1/haas-extend-ferrari-technical-partnership-until-end-2028-f1-season |access-date=16 July 2024 |work=Crash.net |date=16 July 2024 |language=en}}
+|style="text-align:center"|50
+|nowrap|{{flagicon image|Flag of Brazil.svg}} [[Rafael Câmara]] {{Cite web |last=Benson |first=Andrew |date=2026-10-15 |title=Rafael Camara: Haas sign Brazilian for F1 debut in 2027 season |url=https://www.bbc.co.uk/sport/formula1/articles/cr15jn74l0pdo |access-date=2026-10-15 |website=BBC Sport |language=en-GB}} {{cite web|last=Chambenoit|first=Mathieu|url=https://www.autohebdof1.com/news/f1/Rafael-Camara-confirms-the-number-chosen-for-his-arrival-in-F1-in-2027.html|title=Rafael Câmara confirms the number chosen for his arrival in F1 in 2027|publisher=Autohebdof1.com|date=15 October 2026|access-date=15 October 2026}}
+|-
+|style="text-align:center"|TBC
+|{{flagicon image|Flag of None.svg}} TBA
+|-
+| rowspan="2" nowrap | {{flagg|cnxa|United Kingdom}}McLaren [[Mastercard]] F1 Team {{Cite news |last=Smith |first=Luke |date=27 August 2025 |title=Why McLaren F1 finally said yes to Mastercard after a decade without a title sponsor |url=https://www.nytimes.com/athletic/6578523/2025/08/27/mclaren-mastercard-f1-title-sponsor/ |url-access=registration |access-date=27 August 2025 |work=[[The New York Times]] |department=[[The Athletic]] |language=en-US |issn=0362-4331}}
+! rowspan="2" scope="row" nowrap | [[McLaren]]-[[Mercedes AMG High Performance Powertrains|Mercedes]]
+| rowspan="2" | MCL41 {{cite news |last1=Cobb |first1=Haydn |last2=Boxall-Legge |first2=Jake |title=Why McLaren cannot fix its F1 car handling until 2027 |url=https://www.motorsport.com/f1/news/why-mclaren-cannot-fix-its-f1-car-handling-for-its-driver-until-2027/10864907/ |access-date=15 October 2026 |work=www.motorsport.com |date=15 October 2026 |language=en}}
+|rowspan="2"|Mercedes {{Cite web |title=McLaren Formula 1 Team and Mercedes-Benz renew power unit agreement until 2030 |url=https://www.mclaren.com/racing/formula-1/2023/mclaren-formula-1-team-and-mercedes-benz-renew-power-unit-agreement-until-2030/ |access-date=22 December 2025 |website=[[McLaren]] |date=24 November 2023}}
+|style="text-align:center"|4
+|{{flagg|cnxa|United Kingdom}}[[Lando Norris]] {{cite web|access-date=26 January 2024|date=26 January 2024|title=F1: Norris assina extensão de contrato multianual com a McLaren|trans-title=F1: Norris signs multi-year contract extension with McLaren|url=https://motorsport.uol.com.br/f1/news/f1-norris-assina-extensao-de-contrato-multianual-com-a-mclaren/10569454/|website=motorsport.uol.com.br|language=pt}}
+|-
+|style="text-align:center"|81
+|{{flagg|cnxa|Australia}}[[Oscar Piastri]] {{Cite magazine |url=https://www.si.com/formula1/mclaren-signs-oscar-piastri-multi-year-contract-extension |title=McLaren Locks Up Budding Star Driver With Multi-Year Contract Extension |last=Phillips |first=Ryan |date=11 March 2025 |magazine=[[Sports Illustrated]] |publisher=[[Minute Media]] |access-date=27 April 2025 |issn=0038-822X |archive-url=https://web.archive.org/web/20250312051717/https://www.si.com/formula1/mclaren-signs-oscar-piastri-multi-year-contract-extension |archive-date=12 March 2025 |url-status=live}}
+|-
+| rowspan=2| {{nowrap|{{flagg|cnxa|Germany}}Mercedes-AMG [[Petronas]] F1 Team}} {{cite news |last1=Noble |first1=Jonathan |title=Mercedes signs early Petronas deal extension ahead of new F1 2026 rules |url=https://us.motorsport.com/f1/news/mercedes-signs-early-petronas-deal-extension-ahead-of-new-f1-2026-rules/10375423/ |access-date=24 April 2024 |work=us.motorsport.com |date=28 September 2022 |language=en}}
+! rowspan="2" | [[Mercedes-Benz in Formula One|Mercedes]]
+| rowspan="2" | TBA
+|rowspan="2"| Mercedes
+|style="text-align:center"|12
+|{{flagicon image|Flag of Italy.svg}} [[Kimi Antonelli]]
+|-
+|style="text-align:center"|63
+|{{flagicon image|Flag of United Kingdom.svg}} [[George Russell (racing driver)|George Russell]]
+|-
+| rowspan="2" | {{nowrap|{{flagg|cnxa|Italy}}[[Visa Inc.|Visa]] [[Cash App]] Racing Bulls F1 Team}} {{cite web|access-date=25 January 2024|date=24 January 2024|language=en|title=AlphaTauri's new name for 2024 is confirmed|url=https://www.formula1.com/en/latest/article.alphatauri-rebrand-confirmed-for-2024-season-as-new-team-name-revealed.4xAWHWI66d5L9mFELLGb6J.html|website=www.formula1.com}}
+!rowspan=2|[[Racing Bulls]]-[[Red Bull Powertrains|Red Bull Ford]]
+| rowspan="2" | TBA
+|rowspan="2"|Red Bull Ford {{Cite web |title=Ford Returns To Formula 1; Strategic Partner To Oracle Red Bull Racing For 2026 Season And Beyond {{!}} Ford Media Center |url=https://media.ford.com/content/fordmedia/fna/us/en/news/2023/01/03/ford-returns-to-formula-1--strategic-partner-to-oracle-red-bull-.html |access-date=8 May 2024 |website=media.ford.com |quote=Red Bull Ford will provide the power units for both the Oracle Red Bull Racing and Scuderia AlphaTauri teams from 2026 to at least 2030.}}
+|style="text-align:center"|TBC
+|{{flagicon image|Flag of None.svg}} TBA
+|-
+|style="text-align:center"|TBC
+|{{flagicon image|Flag of None.svg}} TBA
+|-
+| rowspan="2" | {{flagg|cnxa|Austria}}[[Oracle Corporation|Oracle]] Red Bull Racing {{cite web|access-date=25 January 2024|date=10 February 2022|publisher=www.autoracing.com.br|title=Acordo Red Bull/Oracle é "o maior na história da F1"|trans-title=The Red Bull/Oracle deal is "the biggest in F1 history"|url=https://www.autoracing.com.br/acordo-red-bull-oracle-e-o-maior-na-historia-da-f1/|language=pt}}
+!rowspan="2"|{{nowrap|[[Red Bull Racing]]-[[Red Bull Powertrains|Red Bull Ford]]}}
+| rowspan="2" | TBA
+|rowspan="2"|{{nowrap|Red Bull Ford}}
+|style="text-align:center"|3
+|{{nowrap|{{flagg|cnxa|Netherlands}}[[Max Verstappen]] {{cite web |url=https://www.bbc.com/sport/formula1/articles/c20j3j2mnpxo |title=Verstappen extends Red Bull deal to 2030 |website=bbc.com |date=20 August 2026 |access-date=16 September 2026}}
+|-
+|style="text-align:center"|6
+|{{flagg|cnxa|France}}[[Isack Hadjar]] {{cite web|url=https://www.formula1.com/en/latest/article/red-bull-announce-new-deal-with-hadjar-for-2027-ahead-of-his-return-in-azerbaijan.3QcucG3BkfbWJNk4M5dWme|title=Red Bull announce new deal with Hadjar for 2027 ahead of his return in Azerbaijan|publisher=Formula 1.com|date=23 September 2026|access-date=23 September 2026}}
+|}
+=== Driver changes ===
+{{Multiple image
+| total_width = 300
+| align = right
+| image1 = Rafael Câmara in 2022.jpg
+| image2 = Esteban Ocon 2024 Suzuka (cropped).jpg
+| footer = [[Rafael Câmara]] (left) will make his Formula One debut, replacing [[Esteban Ocon]] (right) at [[Haas F1 Team|Haas]].
+}}
+[[Esteban Ocon]] is set to depart [[Haas F1 Team|Haas]] at the end of the {{F1|2026}} season after two seasons. {{cite web|url=https://www.formula1.com/en/latest/article/ocon-confirms-he-will-leave-haas-at-end-of-2026-season.cJjg9W9Om5ZW6Mn9GZ75v|title=Ocon confirms he will leave Haas at end of 2026 season|publisher=Formula 1.com|date=30 September 2026|access-date=30 September 2026}} He is set to be replaced by [[Rafael Câmara]], graduating from [[FIA Formula 2 Championship|Formula 2]].
+== Calendar ==
+[[File:Formula 1 all over the world-2027.svg|thumb|upright=1.3|Nations that are scheduled to host a [[list of Formula One Grands Prix|Grand Prix]] in 2027 are highlighted in green, with circuit locations marked with a black dot. Former host nations are shown in dark grey, and former host circuits are marked with a white dot. De facto borders are shown.]]
+The 2027 calendar is scheduled to comprise twenty-four Grands Prix. {{cite news|url=https://www.formula1.com/en/latest/article/formula-1-reveals-calendar-for-2027-season-with-10-sprint-events.5J8ePLyjRuMyWEIDNUKgY4|title=Formula 1 reveals calendar for 2027 season with 10 Sprint events|work=Formula 1|date=16 September 2026|access-date=16 September 2026}} The [[Bahrain Grand Prix|Bahrain]], [[Australian Grand Prix|Australian]], [[Japanese Grand Prix|Japanese]], [[Canadian Grand Prix|Canadian]], [[Monaco Grand Prix|Monaco]], [[British Grand Prix|British]], [[Italian Grand Prix|Italian]], [[São Paulo Grand Prix|São Paulo]], [[Qatar Grand Prix|Qatar]], and [[Abu Dhabi Grand Prix|Abu Dhabi]] Grands Prix will feature the [[Formula One racing#Sprint|sprint format]]. {{cite news|last=Barretto|first=Lawrence|url=https://www.formula1.com/en/latest/article/whats-new-with-the-f1-sprint-in-2027.6UiqFIVYRoMSgPvAA8yiiZ|title=What's new with the F1 Sprint in 2027?|work=Formula 1|date=16 September 2026|access-date=29 September 2026}}
+{| class="sortable wikitable" style="font-size: 85%;"
+! data-sort-type="number" |Round
+![[List of Formula One Grands Prix|Grand Prix]]
+![[List of Formula One circuits|Circuit]]
+! class="unsortable" |Race date
+|-
+!1
+|[[Bahrain Grand Prix]]
+|{{flagicon|BHR}} [[Bahrain International Circuit]], [[Sakhir]]
+|14 March
+|-
+!2
+|{{nowrap|[[Saudi Arabian Grand Prix]]}}
+|{{flagicon|SAU}} [[Jeddah Corniche Circuit]], [[Jeddah]]
+|21 March
+|-
+!3
+|[[Australian Grand Prix]]
+|{{flagicon|AUS}} [[Albert Park Circuit]], [[Melbourne]]
+|4 April
+|-
+!4
+|[[Japanese Grand Prix]]
+|{{flagicon|JPN}} [[Suzuka Circuit]], [[Suzuka, Mie|Suzuka]]
+|11 April
+|-
+!5
+|[[Chinese Grand Prix]]
+|{{flagicon|CHN}} [[Shanghai International Circuit]], [[Shanghai]]
+|18 April
+|-
+!6
+|[[Miami Grand Prix]]
+|nowrap|{{flagicon|USA}} [[Miami International Autodrome]], [[Miami Gardens, Florida]]
+|2 May
+|-
+!7
+|[[Canadian Grand Prix]]
+|{{flagicon|CAN}} [[Circuit Gilles Villeneuve]], [[Montreal]]
+|23 May
+|-
+!8
+|[[Monaco Grand Prix]]
+|{{flagicon|MON}} [[Circuit de Monaco]], [[Municipality of Monaco|Monaco]]
+|6 June
+|-
+!9
+|[[Portuguese Grand Prix]]
+|{{flagicon|POR}} [[Algarve International Circuit]], [[Portimão]]
+|20 June
+|-
+!10
+|[[British Grand Prix]]
+|{{flagicon|GBR}} [[Silverstone Circuit]], [[Silverstone]]
+|4 July
+|-
+!11
+|[[Austrian Grand Prix]]
+|{{flagicon|AUT}} [[Red Bull Ring]], [[Spielberg, Styria|Spielberg]]
+|11 July
+|-
+!12
+|[[Belgian Grand Prix]]
+|{{flagicon|BEL}} [[Circuit de Spa-Francorchamps]], [[Stavelot]]
+|25 July
+|-
+!13
+|[[Hungarian Grand Prix]]
+|{{flagicon|HUN}} [[Hungaroring]], [[Mogyoród]]
+|1 August
+|-
+!14
+|[[Italian Grand Prix]]
+|{{flagicon|ITA}} [[Monza Circuit]], [[Monza]]
+|5 September
+|-
+!15
+|[[Spanish Grand Prix]]
+|{{flagicon|ESP}} [[Madring]], [[Madrid]]
+|12 September
+|-
+!16
+|[[Azerbaijan Grand Prix]]
+|{{flagicon|AZE}} [[Baku City Circuit]], [[Baku]]
+|26 September
+|-
+!17
+|[[Turkish Grand Prix]]
+|{{flagicon|TUR}} [[Istanbul Park]], [[Istanbul]]
+|3 October
+|-
+!18
+|[[Singapore Grand Prix]]
+|{{flagicon|SIN}} [[Marina Bay Street Circuit]], [[Singapore]]
+|10 October
+|-
+!19
+|[[United States Grand Prix]]
+|{{flagicon|USA}} [[Circuit of the Americas]], [[Austin, Texas]]
+|24 October
+|-
+!20
+|[[Mexico City Grand Prix]]
+|{{flagicon|MEX}} [[Autódromo Hermanos Rodríguez]], [[Mexico City]]
+|31 October
+|-
+!21
+|[[São Paulo Grand Prix]]
+|{{flagicon|BRA}} [[Interlagos Circuit]], [[São Paulo]]
+|7 November
+|-
+!22
+|[[Las Vegas Grand Prix]]
+|{{flagicon|USA}} [[Las Vegas Strip Circuit]], [[Paradise, Nevada]]
+| nowrap="" |20 November{{efn|Saturday race.|name=Saturday race}}
+|-
+!23
+|[[Qatar Grand Prix]]
+|{{flagicon|QAT}} [[Lusail International Circuit]], [[Lusail]]
+|5 December
+|-
+!24
+|[[Abu Dhabi Grand Prix]]
+|{{flagicon|UAE}} [[Yas Marina Circuit]], [[Abu Dhabi]]
+|12 December
+|-
+! colspan="4" |Source:
+|}
+=== Calendar changes ===
+The [[Dutch Grand Prix]] will not be held in 2027, as the organisers announced that the 2026 edition would be the final running of the Grand Prix. {{Cite news |title=Formula 1 to celebrate final Dutch Grand Prix in 2026 |url=https://www.formula1.com/en/latest/article/formula-1-to-celebrate-final-dutch-grand-prix-in-2026-after-one-year.7EYLHSMGIJyqefI5tMjLrZ |url-status=live |archive-url=https://web.archive.org/web/20241204080926/https://www.formula1.com/en/latest/article/formula-1-to-celebrate-final-dutch-grand-prix-in-2026-after-one-year.7EYLHSMGIJyqefI5tMjLrZ |archive-date=4 December 2024 |access-date=4 December 2024 |work=Formula 1}} The [[Portuguese Grand Prix|Portuguese]] and [[Turkish Grand Prix|Turkish]] Grands Prix will return to the calendar for the first time since [[2021 Formula One World Championship|2021]]. The [[Barcelona-Catalunya Grand Prix]] will be absent from the 2027 calendar and will be held in 2028, 2030 and 2032 as part of a rotation agreement with the [[Belgian Grand Prix]], which will be held in 2027, 2029 and 2031. {{cite web|url=https://www.formula1.com/en/latest/article/f1-announces-multi-year-extension-with-the-circuit-de-barcelona-catalunya-to.34PBcnuzB9vYVzFIwdEgf4|title=F1 announces multi-year extension with the Circuit de Barcelona-Catalunya to race in rotation with Circuit de Spa-Francorchamps|website=Formula One|date=16 February 2026|access-date=16 February 2026}} The [[Bahrain Grand Prix]] is set to return to the [[Bahrain International Circuit]] after its [[2026 Bahrain Grand Prix|2026 edition]] was relocated to the [[Sepang International Circuit]] in [[Malaysia]] due to the [[2026 Iran war]], while the [[Saudi Arabian Grand Prix]] is scheduled to return after its [[2026 Saudi Arabian Grand Prix|2026 edition]] was cancelled. {{cite web |date=29 July 2026 |last=Noble |first=Jon |title=The latest on F1 calendar chaos and 2027 season opener |url=https://www.the-race.com/formula-1/f1-calendar-chaos-2027-2026-middle-east-imola-planned-dates/ |website=The Race |access-date=20 August 2026}}
+== Regulation changes ==
+===Technical regulations===
+The engine regulations introduced in {{F1|2026}} will be amended to increase internal combustion engine power from 400kW to 420kW while reducing maximum electrical power deployment in the MGU-K from 350kW to 300kW. This changes the ratio of power from 53:47 to 58:42, before changing to 60:40 in 2028. {{cite web
+|title=FIA's WMSC ratifies F1 regulatory changes for 2027 and 2028
+|url=https://www.formula1.com/en/latest/article/fias-wmsc-ratifies-f1-regulatory-changes-for-2027-and-2028.ACyRcPvBKo8LRiOleCSJU
+|website=Formula 1
+|date=23 June 2026
+|access-date=13 September 2026
+}} As a result, fuel flow will increase 5%, which in turn has required overall race distance to be shortened from {{cvt|305|km|mi|abbr=on}} to {{cvt|290|km|mi|abbr=on}} to allow teams to continue to use elements of their 2026 chassis designs which can include the fuel tank. {{cite web
+|title=F1 Grand Prix distances set to be reduced for 2027 season along with introduction of 'hard stop' time on race days
+|url=https://www.skysports.com/f1/news/13590496/f1-grand-prix-distances-set-to-be-reduced-for-2027-season-along-with-introduction-of-hard-stop-time-on-race-days
+|website=Sky Sports
+|date=21 September 2026
+|access-date=22 September 2026
+}} Harvesting will be increased from 350kW to 375kW. Together, these regulation changes are intended to reduce electrical energy exhaustion and decrease the need for lift-and-coast or 'super clipping' on long straights. {{cite web
+|last=Nichol
+|first=Jake
+|title=What is super clipping in F1 and how does it work?
+|url=https://racingnews365.com/what-is-super-clipping-in-f1-and-how-does-it-work
+|website=RacingNews365
+|date=3 March 2026
+|access-date=13 September 2026
+}}
+In addition to engine changes, gearbox homologation will also be scrapped starting in 2027, allowing teams to alter their design in-season as they see fit. {{cite web|url=https://www.formula1.com/en/latest/article/regulatory-changes-for-2026-and-2027-agreed-at-latest-f1-commission-meeting.2wFfaMinLUT40dRVw3FeCC|title=Regulatory changes for 2026 and 2027 agreed at latest F1 Commission meeting |publisher=Formula One Management |date=21 September 2026 |access-date=21 September 2026}}
+===Sporting regulations===
+Due to changes to the fuel flow regulations for 2027, all races except for the [[Monaco Grand Prix]] will have a distance of {{cvt|290|km|mi|abbr=on}} instead of {{cvt|305|km|mi|abbr=on}}. This change will be implemented for the 2027 season only; from 2028 the distance will revert back to 305 km. {{cite news |title=F1 races to return to standard distance in 2028 |url=https://www.bbc.co.uk/sport/formula1/articles/c69wzvr14xlxo |publisher=BBC News |date=21 October 2026 |access-date=26 October 2026}}
+The FIA will gain more flexibility in extending free practice sessions in case of interruptions. Additionally, the three hour clock which was used to determine the length of a race when including stoppages has been scrapped and will be replaced by a hard stop time for racing activity. The two hour race limit will remain the same.
+== Season summary ==
+On 4 September 2026, the second ''F1 Live'' event following ''[[2025 Formula One World Championship#Pre-season|F1 75 Live]]'' in {{F1|2025}} was announced for 18 February 2027. It will be held in [[Milan]], Italy. {{cite web |url=https://www.formula1.com/en/latest/article/f1-live-to-return-in-2027-with-unmissable-three-day-fan-event-in-milan.wf1XGQ4qkl3Md7Q7o7sX1 |title=F1 Live to return in 2027 with unmissable three-day fan event in Milan |publisher=Formula One Management |date=4 September 2026 |access-date=19 September 2026}} A single pre-season test is scheduled to be held at the [[Bahrain International Circuit]] in [[Sakhir]] on 24–27 February.
+== Notes ==
+{{notelist}}
+== References ==
+{{Reflist}}
+== External links ==
+{{Portal|Formula One}}
+{{Formula One Championship}}
+{{World championships in 2027}}
+[[Category:2027 in Formula One| ]]
+[[Category:2027 in formula racing|Formula One]]
+[[Category:Formula One seasons]]
+[[Category:Scheduled motorsport seasons|Formula One]]
