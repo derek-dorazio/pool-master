@@ -152,7 +152,8 @@ Gmail and Outlook show no SVG, so every picture is a JPG or PNG in
 The rest of the build is uploaded under `releases/<sha>/`, but these pictures are linked by
 `/email/` on every release, so the deploy also copies `dist/email/` to the bucket root, never
 deleting a file there, since emails already sent still link to it. Without that copy CloudFront
-returns S3's `AccessDenied` for every picture.
+returns S3's `AccessDenied` for every picture. Browsers and Gmail's image proxy keep a picture
+for up to a day, so a sport's photo replaced under its same name can show the old one until then.
 
 The drawn pictures come from the app's illustrations: `node scripts/render-email-images.mjs`
 from `clients/poolmaster` draws each one in Chromium and records a fingerprint of what it drew in

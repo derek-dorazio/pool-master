@@ -1608,10 +1608,10 @@ jobs:
             aws s3 sync clients/poolmaster/dist/play/ "s3://${BUCKET}/play/" --delete --cache-control "no-store, no-cache, max-age=0, must-revalidate" --content-type "text/html"
             # Email pictures and event page photos, linked by /email/ on every release and from emails
             # already sent, so they live at the root too, and nothing deletes an old one.
-            aws s3 sync clients/poolmaster/dist/email/ "s3://${BUCKET}/email/" --cache-control "public, max-age=86400"
+            aws s3 sync clients/poolmaster/dist/email/ "s3://${BUCKET}/email/" --exclude "*.source.md" --cache-control "public, max-age=86400"
             aws s3api head-object --bucket "${BUCKET}" --key "${RELEASE_PREFIX}/index.html" >/dev/null
             aws s3api head-object --bucket "${BUCKET}" --key "index.html" >/dev/null
-            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/american-football.jpg" >/dev/null
+            aws s3api head-object --bucket "${BUCKET}" --key "email/sports/american-football.jpg" >/dev/null || { echo "::error::email/ photos missing at the bucket root"; exit 1; }
             if [ -n "$CF_ID" ]; then
               aws cloudfront create-invalidation --distribution-id "$CF_ID" --paths "/*" --no-cli-pager
             fi
