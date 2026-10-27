@@ -6,16 +6,17 @@ import { updateEventRounds } from '@/lib/api';
 import type { SportEventDto, SportEventRoundDto } from '@/lib/api';
 import {
   AsyncPage,
+  DateTimeField,
+  dateTimeLocalValueToIso,
   FormField,
   FormPage,
-  Input,
   toDateTimeLocalValue,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { localDateTimeInputToIso } from './sport-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
@@ -36,14 +37,12 @@ const roundsFormSchema = z.object({
 
 type RoundsFormValues = z.infer<typeof roundsFormSchema>;
 
-function toDefaults(rounds: readonly SportEventRoundDto[]): RoundsFormValues {
+function toDefaults(rounds: readonly SportEventRoundDto[], timeZone: string): RoundsFormValues {
   return {
     rounds: rounds.map((round) => ({
       roundNumber: round.roundNumber,
-      scheduledDate: toDateTimeLocalValue(round.scheduledDate),
-      scheduledEndAt: round.scheduledEndAt
-        ? toDateTimeLocalValue(round.scheduledEndAt)
-        : '',
+      scheduledDate: toDateTimeLocalValue(round.scheduledDate, timeZone),
+      scheduledEndAt: toDateTimeLocalValue(round.scheduledEndAt, timeZone),
     })),
   };
 }
@@ -69,10 +68,11 @@ function SportEventScheduleForm({
   const { event, round } = definition.vocabulary;
   const roundLabel = useEventRoundLabel(sportEvent);
   const homePath = buildSportEventPath(sport, eventId);
+  const { timeZone } = useDisplayPreferences();
 
   const form = useForm<RoundsFormValues>({
     resolver: zodResolver(roundsFormSchema),
-    defaultValues: toDefaults(rounds),
+    defaultValues: toDefaults(rounds, timeZone),
     mode: 'onChange',
   });
   const { fields } = useFieldArray({ control: form.control, name: 'rounds' });
@@ -85,9 +85,9 @@ function SportEventScheduleForm({
           rounds: values.rounds.map((row) => ({
             roundNumber: row.roundNumber,
             scheduledDate:
-              localDateTimeInputToIso(row.scheduledDate) ?? row.scheduledDate,
+              dateTimeLocalValueToIso(row.scheduledDate, timeZone) ?? row.scheduledDate,
             // A blank end clears it (null), rather than keeping the old one.
-            scheduledEndAt: localDateTimeInputToIso(row.scheduledEndAt) ?? null,
+            scheduledEndAt: dateTimeLocalValueToIso(row.scheduledEndAt, timeZone) ?? null,
           })),
         },
       });
@@ -128,16 +128,14 @@ function SportEventScheduleForm({
             error={form.formState.errors.rounds?.[index]?.scheduledDate?.message}
             label={`${roundLabel(field.roundNumber, fields.length)} date`}
           >
-            <Input
+            <DateTimeField
               data-testid={`root-admin-sport-event-round-${field.roundNumber}-date`}
-              type="datetime-local"
               {...form.register(`rounds.${index}.scheduledDate`)}
             />
           </FormField>
           <FormField label={`${roundLabel(field.roundNumber, fields.length)} end`}>
-            <Input
+            <DateTimeField
               data-testid={`root-admin-sport-event-round-${field.roundNumber}-end`}
-              type="datetime-local"
               {...form.register(`rounds.${index}.scheduledEndAt`)}
             />
           </FormField>

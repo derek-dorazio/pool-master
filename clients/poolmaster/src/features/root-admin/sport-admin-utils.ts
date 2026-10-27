@@ -307,22 +307,6 @@ export function deriveSportEventReadiness(
   return { label: 'Ready to release', tone: 'info', reasons: [] };
 }
 
-// --- datetime-local <input> <-> ISO ---
-
-/**
- * A `<input type="datetime-local">` value ("2026-03-12T13:00", local, no zone) to
- * the ISO string the golf admin API expects, or undefined when blank/invalid.
- */
-export function localDateTimeInputToIso(
-  value: string | null | undefined,
-): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
-}
-
 // --- Provider resolution (plans/124 §4.4) ---
 //
 // listProviderCatalogEvents needs a providerId. There is no dedicated

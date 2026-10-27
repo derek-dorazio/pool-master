@@ -8,16 +8,18 @@ import { updateEvent } from '@/lib/api';
 import type { SportEventDto, UpdateSportEventRequest } from '@/lib/api';
 import {
   AsyncPage,
+  DateTimeField,
+  dateTimeLocalValueToIso,
   FormField,
   FormPage,
   Input,
   toDateTimeLocalValue,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
-import { localDateTimeInputToIso } from './sport-admin-utils';
 import { useManageBreadcrumbOverride } from './manage-breadcrumb-context';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { getScoringFamilyAdminUi } from './scoring-family-admin';
@@ -41,13 +43,13 @@ const editFormSchema = z.object({
 
 type EditFormValues = z.infer<typeof editFormSchema>;
 
-function toDefaults(tournament: SportEventDto): EditFormValues {
+function toDefaults(tournament: SportEventDto, timeZone: string): EditFormValues {
   return {
     name: tournament.name,
     venue: tournament.venue || '',
     location: tournament.location || '',
-    startDate: toDateTimeLocalValue(tournament.startDate),
-    endDate: tournament.endDate ? toDateTimeLocalValue(tournament.endDate) : '',
+    startDate: toDateTimeLocalValue(tournament.startDate, timeZone),
+    endDate: toDateTimeLocalValue(tournament.endDate, timeZone),
     rounds: tournament.rounds ?? 1,
     roundsPar: tournament.roundsPar === null ? '' : String(tournament.roundsPar),
   };
@@ -57,14 +59,14 @@ function toDefaults(tournament: SportEventDto): EditFormValues {
  * The details as an update. Par per round is sent only when the event's scoring family reads it;
  * otherwise the field is not shown, and the stored value is left as it is.
  */
-function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean): UpdateSportEventRequest {
+function toRequestBody(values: EditFormValues, sendsRoundsPar: boolean, timeZone: string): UpdateSportEventRequest {
   return {
     name: values.name,
     // A blank field clears the value (null), rather than storing an empty string.
     venue: values.venue?.trim() || null,
     location: values.location?.trim() || null,
-    startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
-    endDate: localDateTimeInputToIso(values.endDate) ?? null,
+    startDate: dateTimeLocalValueToIso(values.startDate, timeZone) ?? values.startDate,
+    endDate: dateTimeLocalValueToIso(values.endDate, timeZone) ?? null,
     rounds: values.rounds,
     ...(sendsRoundsPar
       ? { roundsPar: values.roundsPar === '' ? null : Number(values.roundsPar) }
@@ -81,10 +83,11 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
   const { vocabulary } = getSportDefinition(tournament.sport);
   const sportLeagueNoun = useSportLeagueNoun(tournament.sport, tournament.sportLeagueId);
   const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(tournament);
+  const { timeZone } = useDisplayPreferences();
 
   const form = useForm<EditFormValues>({
     resolver: zodResolver(editFormSchema),
-    defaultValues: toDefaults(tournament),
+    defaultValues: toDefaults(tournament, timeZone),
     mode: 'onChange',
   });
 
@@ -92,7 +95,7 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
     mutationFn: async (values: EditFormValues) => {
       const response = await updateEvent({
         path: { eventId: tournament.id },
-        body: toRequestBody(values, scoresUnplayedRoundsAgainstPar),
+        body: toRequestBody(values, scoresUnplayedRoundsAgainstPar, timeZone),
       });
       if (!response.data?.event) {
         throwApiError(response.error, `The ${vocabulary.event.one} update response is missing data.`);
@@ -142,14 +145,10 @@ function SportEventEditForm({ tournament }: { tournament: SportEventDto }) {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <FormField error={form.formState.errors.startDate?.message} label="Starts">
-          <Input type="datetime-local" {...form.register('startDate')} />
+          <DateTimeField {...form.register('startDate')} />
         </FormField>
         <FormField label="Ends">
-          <Input
-            data-testid="root-admin-sport-event-edit-end"
-            type="datetime-local"
-            {...form.register('endDate')}
-          />
+          <DateTimeField data-testid="root-admin-sport-event-edit-end" {...form.register('endDate')} />
         </FormField>
       </div>
       <FormField error={form.formState.errors.rounds?.message} label={capitalize(vocabulary.round.many)}>

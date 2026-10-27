@@ -47,15 +47,88 @@ export function normalizeDate(value: Date | string | null | undefined) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
-export function toDateTimeLocalValue(value: Date | string | null | undefined) {
-  const date = normalizeDate(value);
+const WALL_CLOCK = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/;
 
+/** The wall clock in `timeZone` at `date`, field by field. */
+function wallClockParts(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const field = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "00";
+  return {
+    year: field("year"),
+    month: field("month"),
+    day: field("day"),
+    hour: field("hour"),
+    minute: field("minute"),
+    second: field("second"),
+  };
+}
+
+/** How far `timeZone`'s wall clock is ahead of UTC at `date`, in milliseconds. */
+function zoneOffsetMs(date: Date, timeZone: string): number {
+  const wall = wallClockParts(date, timeZone);
+  const wallAsUtc = Date.UTC(
+    Number(wall.year),
+    Number(wall.month) - 1,
+    Number(wall.day),
+    Number(wall.hour),
+    Number(wall.minute),
+    Number(wall.second),
+  );
+  return wallAsUtc - Math.floor(date.getTime() / 1000) * 1000;
+}
+
+/**
+ * `value` as a `datetime-local` input holds it: the wall clock in the member's zone (#1061),
+ * e.g. "2026-03-12T13:00"; '' for none.
+ */
+export function toDateTimeLocalValue(value: Date | string | null | undefined, timeZone: string) {
+  const date = normalizeDate(value);
   if (!date) {
     return "";
   }
+  const wall = wallClockParts(date, timeZone);
+  return `${wall.year}-${wall.month}-${wall.day}T${wall.hour}:${wall.minute}`;
+}
 
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+/**
+ * A `datetime-local` value, read as the wall clock in the member's zone (#1061), as the ISO
+ * instant the API takes; undefined when blank or not a date and time. The zone's offset is
+ * taken at the instant itself, so a time on the far side of a daylight saving change converts
+ * with that side's offset.
+ */
+export function dateTimeLocalValueToIso(value: string | null | undefined, timeZone: string): string | undefined {
+  const match = value ? WALL_CLOCK.exec(value) : null;
+  if (!match) {
+    return undefined;
+  }
+  const [, year, month, day, hour, minute, second = "0"] = match;
+  const wallAsUtc = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+  if (Number.isNaN(wallAsUtc)) {
+    return undefined;
+  }
+  const firstGuess = wallAsUtc - zoneOffsetMs(new Date(wallAsUtc), timeZone);
+  return new Date(wallAsUtc - zoneOffsetMs(new Date(firstGuess), timeZone)).toISOString();
+}
+
+/** The zone's everyday name in the member's locale, e.g. "ET" or "Germany Time", for an entry box. */
+export function timeZoneGenericName(preferences: DisplayPreferences) {
+  return (
+    new Intl.DateTimeFormat(preferences.locale, {
+      timeZone: preferences.timeZone,
+      timeZoneName: "shortGeneric",
+    })
+      .formatToParts(new Date())
+      .find((part) => part.type === "timeZoneName")?.value ?? preferences.timeZone
+  );
 }
 
 /** The day `value` falls on in the member's zone, e.g. "10/26/2026". */

@@ -109,6 +109,7 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
     // Completing the round leaves completed at blank; the admin sets it.
     const completedAt = screen.getByLabelText('Completed at for Rory McIlroy');
     expect(completedAt).toHaveValue('');
+    expect(screen.getByRole('columnheader', { name: 'Completed at (ET)' })).toBeInTheDocument();
     await userEvent.type(completedAt, '2026-04-10T15:30');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));
 
@@ -120,7 +121,8 @@ describe('pool-master-r11 GolfRoundScoreCorrectionsCard', () => {
           strokes: 73,
           scoreToPar: 1,
           status: 'COMPLETED',
-          completedAt: new Date('2026-04-10T15:30').toISOString(),
+          // Typed as US Eastern wall clock, the zone of a member with none set (#1061).
+          completedAt: '2026-04-10T19:30:00.000Z',
         },
       }),
     );

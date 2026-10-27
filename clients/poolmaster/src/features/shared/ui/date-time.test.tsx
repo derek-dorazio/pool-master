@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { DateDisplay, DateTimeField } from "./date-time";
 import type { UserDto } from "@/lib/api";
 import {
+  dateTimeLocalValueToIso,
   DEFAULT_DISPLAY_PREFERENCES,
   displayPreferencesOf,
   formatDateDisplay,
@@ -34,22 +35,29 @@ describe("pool-master-3lo.18: shared DateTimeField and DateDisplay primitives", 
     expect(screen.getByText("Unavailable")).toBeInTheDocument();
   });
 
-  it("rule: renders datetime-local inputs and converts ISO values", () => {
-    const value = toDateTimeLocalValue("2026-04-30T12:30:00.000Z");
+  it("fills an entry box with the wall clock in the member's zone and names the zone beside it", () => {
+    const pacific = displayPreferencesOf({ ...user, timezone: "America/Los_Angeles" });
+    const value = toDateTimeLocalValue("2026-04-30T12:30:00.000Z", pacific.timeZone);
 
     render(
-      <DateTimeField
-        aria-label="Starts at"
-        onChange={() => undefined}
-        value={value}
-      />,
+      <DisplayPreferencesContext.Provider value={pacific}>
+        <DateTimeField aria-label="Starts at" onChange={() => undefined} value={value} />
+      </DisplayPreferencesContext.Provider>,
     );
 
-    expect(screen.getByLabelText("Starts at")).toHaveAttribute(
-      "type",
-      "datetime-local",
-    );
-    expect(screen.getByLabelText("Starts at")).toHaveValue(value);
+    expect(screen.getByLabelText("Starts at")).toHaveAttribute("type", "datetime-local");
+    expect(screen.getByLabelText("Starts at")).toHaveValue("2026-04-30T05:30");
+    expect(screen.getByText("PT")).toBeInTheDocument();
+  });
+
+  it("reads an entry box as the wall clock in the member's zone, whatever the computer's zone, on each side of a daylight saving change", () => {
+    expect(dateTimeLocalValueToIso("2026-04-30T20:00", "America/New_York")).toBe("2026-05-01T00:00:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-01-15T20:00", "America/New_York")).toBe("2026-01-16T01:00:00.000Z");
+    expect(dateTimeLocalValueToIso("2026-04-30T20:00", "Asia/Tokyo")).toBe("2026-04-30T11:00:00.000Z");
+    expect(toDateTimeLocalValue("2026-05-01T00:00:00.000Z", "America/New_York")).toBe("2026-04-30T20:00");
+    expect(toDateTimeLocalValue(null, "America/New_York")).toBe("");
+    expect(dateTimeLocalValueToIso("", "America/New_York")).toBeUndefined();
+    expect(dateTimeLocalValueToIso("not-a-date", "America/New_York")).toBeUndefined();
   });
 
   it("shows a date and time in the member's zone with the zone named, and US Eastern for someone with none", () => {
