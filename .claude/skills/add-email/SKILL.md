@@ -22,7 +22,7 @@ the code as guesses:
 | Decision | What to settle |
 |---|---|
 | Audience | Who receives it: every active league member, commissioners only, the squad's owners, the account holder, root admins |
-| Trigger and timing | What causes it, and whether it goes at once or at the overnight hour every scheduled league email shares |
+| Trigger and timing | What causes it, and whether it goes at once or at the overnight hour every scheduled league email shares (`EMAIL_CONFIG.weeklyDigestHour`, 3:00 AM US Eastern; `notifications/overnight-day.ts`), never an hour of its own |
 | Frequency | Once per what (event, contest, league and day); this becomes the outbox idempotency key |
 | Category | Which `EmailCategory` it belongs to, and so which profile switch turns it off; account and membership emails have none |
 | Plan | Whether a plan can leave it out (a `PlanFeature` in the Emails group) or every league gets it |

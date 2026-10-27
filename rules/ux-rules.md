@@ -377,14 +377,17 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    title, the event's name and its day) on the emails that start something (coming up soon,
    ready for contests, new contest, contest is live), and a strip (a small crop beside the band)
    on the ones that follow up (picks close soon, standings, receipts, event changed). Final
-   results open with a trophy band naming the winner, or every winner on a tie. Account,
-   membership and plan emails have the brand bar only. The event's name sits in the band, never
-   in the picture, so the email still reads when a mail client blocks images.
+   results open with a trophy band naming the winner, or every winner on a tie. The weekly
+   digest has the brand bar only, with a small crop of each event's sport picture beside its
+   row. Every other email has the brand bar only. The event's name sits in the band, never in
+   the picture, so the email still reads when a mail client blocks images.
 3. **One gold button per email**, for the one thing it wants done. Other links are plain text.
 4. **Shared pieces, not one-offs.** A default contest setup offered to a commissioner is a tile
    (its way to play's How to Play picture, the format, the setup and its description, the whole
-   tile one link, one tile per row); a tile prefills Create contest with the setup and event and
-   never creates anything. One contest is a contest card (its format's picture, name, rules,
+   tile one link, one tile per row). On the email the commissioner acts on (Ready for contests)
+   a tile prefills Create contest with the setup and event and never creates anything; before
+   the event is released (Coming up soon) it links to the event's page, else the league's
+   contest types page. One contest is a contest card (its format's picture, name, rules,
    entry limit). In any leaderboard the reader's rows are tinted gold and marked "YOU", and the
    reader's best place sits in a callout above the table ("3rd", "T2" on a tie). A new email
    reuses these; a new piece is a renderer beside them, not markup inside one template.
@@ -394,7 +397,8 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    use for logos, sponsor decals, slogans, named venues, readable numbers and recognisable
    faces, with its source and licence noted beside the file. Contest type pictures are drawn
    from the How to Play illustrations, so the two never drift. No league, event or team logo,
-   no event slogan and no player photo appears in any email.
+   no event slogan and no player photo appears in any email. The trademark check before the
+   first paid ad or production launch covers these emails too.
 6. **Real event names, and the disclaimer.** Emails name the real event, as our event pages do
    (§13 item 5). Every email that names a sport league says in its footer "Not affiliated with
    {league} or any sports league."
@@ -402,6 +406,7 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    image has a fixed size, `display:block` and empty alt text. The plain-text twin carries the
    same facts and every link, one line each.
 8. **Dates, rarely times.** An email sent days ahead shows only the day. A time, with its zone
-   named, appears only when it matters that day (the reminder sent hours before picks close,
-   an event moved within its own day, an account email recording when something happened),
+   named, appears only when it matters that day: the entry reminder sent less than a day before
+   picks close, the commissioner's "contest isn't open yet" email, an event moved within its own
+   day, and an email recording when something happened (account emails, entry receipts). It is
    always in the reader's time zone, locale and clock.
