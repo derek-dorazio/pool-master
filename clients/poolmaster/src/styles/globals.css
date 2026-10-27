@@ -76,7 +76,7 @@
     --status-info-text: var(--color-navy-600);
     --status-neutral-surface: rgba(11, 30, 63, 0.04);
     --status-neutral-border: rgba(11, 30, 63, 0.16);
-    --status-neutral-text: var(--color-neutral-500);
+    --status-neutral-text: var(--text-muted);
     --status-warning-surface: rgba(245, 184, 0, 0.12);
     --status-warning-border: rgba(245, 184, 0, 0.46);
     --status-warning-text: var(--color-navy-600);
