@@ -114,10 +114,10 @@ describe('SDK Functional: American football', () => {
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(3), body: { homeScore: 14, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_SCORE_INVALID');
     expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(4), body: { homeScore: 0, awayScore: 12 } })).error?.error.code).toBe('MATCH_PERIOD_INVALID');
     const outsider = await buildRegisteredUser({ displayName: 'Scoreboard Stranger' });
-    expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response.status).toBe(403);
+    expect((await recordEventMatchPeriodScore({ client: outsider.client, path: superBowlQuarter(1), body: { homeScore: 0, awayScore: 3 } })).response?.status).toBe(403);
     // Cleared and entered again, the half's score reads as before.
     expect(expectDefined((await clearEventMatchPeriodScore({ client: a, path: superBowlQuarter(2) })).data).matches[12].periodScores.map((score) => score.periodNumber)).toEqual([1, 3]);
-    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response.status).toBe(200);
+    expect((await recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: { homeScore: 0, awayScore: 9 } })).response?.status).toBe(200);
     expect((await superBowlOf()).periodScores).toEqual(asLoaded);
 
     // --- A contest from the NFL's default template ----------------------------------------------
@@ -144,7 +144,7 @@ describe('SDK Functional: American football', () => {
       path: { id: league.id },
       body: { name: `Playoff Pool ${RUN}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tiered.id },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -152,9 +152,9 @@ describe('SDK Functional: American football', () => {
     const lineup = ['Seattle Seahawks', 'New England Patriots', 'Jacksonville Jaguars', 'Pittsburgh Steelers', 'Los Angeles Rams', 'Buffalo Bills', 'Los Angeles Chargers'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
-      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response.status).toBe(200);
+      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response?.status).toBe(200);
     }
-    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response.status).toBe(200);
+    expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response?.status).toBe(200);
 
     // --- Kickoff, then settled ----------------------------------------------------------------------
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');

@@ -118,7 +118,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
         configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
     const entries = {} as Record<keyof typeof players, string>;

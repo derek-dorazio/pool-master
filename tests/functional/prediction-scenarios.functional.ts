@@ -212,7 +212,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
             : { selectionType, maxEntriesPerSquad: 1 },
         },
       });
-      expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+      expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
       const contestId = expectDefined(contest.data).contest.id;
       expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
       const perfect = { client: commissioner.client, entryId: expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id };
@@ -337,7 +337,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
         configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false, maxEntriesPerSquad: 1 },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -416,7 +416,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
           configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false, maxEntriesPerSquad: 1 },
         },
       });
-      expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+      expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
       const contestId = expectDefined(contest.data).contest.id;
       expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
@@ -467,7 +467,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
         configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 1 },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 

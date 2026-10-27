@@ -100,7 +100,7 @@ describe('SDK Functional: Basketball bracket', () => {
 
     // --- A league, a tournament in it, and its field --------------------------------------------
     const conference = await createSportLeague({ client: a, body: { sport: Sport.BASKETBALL, name: `Harbour Conference ${RUN}` } });
-    expect(conference.response.status).toBe(201);
+    expect(conference.response?.status).toBe(201);
     const sportLeagueId = expectDefined(conference.data).sportLeague.id;
     created.sportLeagueIds.add(sportLeagueId);
 
@@ -108,7 +108,7 @@ describe('SDK Functional: Basketball bracket', () => {
       client: a,
       body: { sportLeagueId, eventYear: 2099, name: `Harbour Classic ${RUN}`, startDate: '2099-03-19T16:00:00.000Z', rounds: 2, autoLifecycleEnabled: false },
     });
-    expect(tournament.response.status).toBe(201);
+    expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
 
@@ -128,9 +128,9 @@ describe('SDK Functional: Basketball bracket', () => {
       path: { eventId },
       body: { rows: FIELD.map((team, index) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed, oddsToWin: 2 + index * 5 })) },
     });
-    expect(upload.response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    expect(upload.response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;
@@ -182,7 +182,7 @@ describe('SDK Functional: Basketball bracket', () => {
         ],
       },
     });
-    expect(loaded.response.status).toBe(200);
+    expect(loaded.response?.status).toBe(200);
     const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(bracket.map((match) => [match.matchNumber, match.roundNumber, match.status])).toEqual([
       [1, 1, MatchStatus.SCHEDULED], [2, 1, MatchStatus.SCHEDULED], [3, 2, MatchStatus.SCHEDULED],
@@ -236,7 +236,7 @@ describe('SDK Functional: Basketball bracket', () => {
       path: { eventId, sportEventParticipantId: rowOf(PAIRING) },
       body: { participantId: expectDefined(teamIdOf.get('Texas')) },
     });
-    expect(filled.response.status).toBe(200);
+    expect(filled.response?.status).toBe(200);
     expect(expectMatchesSchema(SportEventParticipantResponseSchema, filled.data).participant).toMatchObject({ id: rowOf(PAIRING), seedNumber: 16, participant: { name: `Texas ${RUN}` } });
     const afterFill = expectDefined((await getEventBracket({ client: a, path: { eventId } })).data).matches;
     expect(expectDefined(afterFill.find((match) => match.matchNumber === 1)).awaySportEventParticipantId).toBe(rowOf(PAIRING));

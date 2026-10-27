@@ -129,7 +129,7 @@ describe('SDK Functional: Super Bowl squares', () => {
         templateId: preset.id,
       },
     });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     // Rules sent as the configuration, as Create contest sends them, are taken as they are: the
     // request's rules union must not strip the box limit while it tries the other selection types.
@@ -145,9 +145,9 @@ describe('SDK Functional: Super Bowl squares', () => {
         configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 7, maxEntriesPerSquad: 1 },
       },
     });
-    expect([configured.response.status, configured.error?.error.message]).toEqual([201, undefined]);
+    expect([configured.response?.status, configured.error?.error.message]).toEqual([201, undefined]);
     // A draft is the commissioner's alone.
-    expect((await getSquaresBoard({ client: alice.client, path: { contestId } })).response.status).toBe(404);
+    expect((await getSquaresBoard({ client: alice.client, path: { contestId } })).response?.status).toBe(404);
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
 
     // --- Claiming boxes ------------------------------------------------------------------------------
@@ -156,24 +156,24 @@ describe('SDK Functional: Super Bowl squares', () => {
     const box = (rowIndex: number, columnIndex: number) => ({ contestId, rowIndex, columnIndex });
     // Alice holds the whole top row, Bob the whole left column but its top box.
     for (let column = 0; column < 10; column += 1) {
-      expect((await claimSquaresBox({ client: alice.client, path: box(0, column), body: { contestEntryId: aliceEntry } })).response.status).toBe(200);
+      expect((await claimSquaresBox({ client: alice.client, path: box(0, column), body: { contestEntryId: aliceEntry } })).response?.status).toBe(200);
     }
     expect((await claimSquaresBox({ client: alice.client, path: box(1, 1), body: { contestEntryId: aliceEntry } })).error?.error.code).toBe('SQUARES_BOX_LIMIT_REACHED');
     expect((await claimSquaresBox({ client: bob.client, path: box(0, 0), body: { contestEntryId: bobEntry } })).error?.error.code).toBe('SQUARES_BOX_TAKEN');
-    expect((await claimSquaresBox({ client: bob.client, path: box(1, 0), body: { contestEntryId: aliceEntry } })).response.status).toBe(403);
+    expect((await claimSquaresBox({ client: bob.client, path: box(1, 0), body: { contestEntryId: aliceEntry } })).response?.status).toBe(403);
     for (let row = 1; row < 10; row += 1) {
       // The commissioner claims Bob's last box for him.
       const claimant = row === 9 ? commissioner.client : bob.client;
-      expect((await claimSquaresBox({ client: claimant, path: box(row, 0), body: { contestEntryId: bobEntry } })).response.status).toBe(200);
+      expect((await claimSquaresBox({ client: claimant, path: box(row, 0), body: { contestEntryId: bobEntry } })).response?.status).toBe(200);
     }
     // Cleared and claimed again, the box is Bob's as before.
-    expect((await clearSquaresBox({ client: bob.client, path: box(5, 0) })).response.status).toBe(200);
+    expect((await clearSquaresBox({ client: bob.client, path: box(5, 0) })).response?.status).toBe(200);
     const claimed = expectMatchesSchema(SquaresBoardResponseSchema, (await claimSquaresBox({ client: bob.client, path: box(5, 0), body: { contestEntryId: bobEntry } })).data);
     expect(claimed.boxes).toHaveLength(19);
     expect([claimed.claimsOpen, claimed.drawOpen, claimed.digits]).toEqual([true, true, null]);
 
     // --- The draw ------------------------------------------------------------------------------------
-    expect((await drawSquaresNumbers({ client: alice.client, path: { contestId } })).response.status).toBe(403);
+    expect((await drawSquaresNumbers({ client: alice.client, path: { contestId } })).response?.status).toBe(403);
     const drawn = expectMatchesSchema(SquaresBoardResponseSchema, (await drawSquaresNumbers({ client: commissioner.client, path: { contestId } })).data);
     const digits = expectDefined(drawn.digits ?? undefined);
     expect([...digits.rowDigits].sort((left, right) => left - right)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
@@ -192,9 +192,9 @@ describe('SDK Functional: Super Bowl squares', () => {
       { periodNumber: 3, homeScore: 20 + homeFor(5), awayScore: 20 + awayFor(5) },
     ];
     const final = { homeScore: 30 + homeFor(7), awayScore: 40 + awayFor(0) };
-    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).response.status).toBe(200);
+    expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).response?.status).toBe(200);
     for (const { periodNumber, ...score } of quarters) {
-      expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: event.id, matchNumber: SUPER_BOWL, periodNumber }, body: score })).response.status).toBe(200);
+      expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: event.id, matchNumber: SUPER_BOWL, periodNumber }, body: score })).response?.status).toBe(200);
     }
     const live = expectMatchesSchema(SquaresBoardResponseSchema, (await getSquaresBoard({ client: bob.client, path: { contestId } })).data);
     expect(live.contestStatus).toBe(ContestStatus.ACTIVE);
@@ -205,7 +205,7 @@ describe('SDK Functional: Super Bowl squares', () => {
       client: a,
       path: { eventId: event.id, matchNumber: SUPER_BOWL },
       body: { winnerSide: 'AWAY', ...final },
-    })).response.status).toBe(200);
+    })).response?.status).toBe(200);
 
     // --- Settled with its game, though the playoffs event is still under way -----------------------
     expect(expectDefined((await getContest({ client: alice.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
@@ -278,7 +278,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
           templateId: preset.id,
         },
       });
-      expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+      expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
       const contestId = expectDefined(contest.data).contest.id;
       await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
 
@@ -297,10 +297,10 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
 
       // Every moment lands in the top row: the away score's last digit is row 0's, each period in a new column.
       const { count } = MATCH_PERIOD_LAYOUTS[layout];
-      expect((await transitionEvent({ client: a, path: { eventId: final.sportEventId }, body: { toStatus: 'IN_PROGRESS' } })).response.status).toBe(200);
+      expect((await transitionEvent({ client: a, path: { eventId: final.sportEventId }, body: { toStatus: 'IN_PROGRESS' } })).response?.status).toBe(200);
       for (let periodNumber = 1; periodNumber < count; periodNumber += 1) {
         const score = { homeScore: 10 * periodNumber + homeFor(periodNumber), awayScore: 10 * periodNumber + awayFor(0) };
-        expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, matchNumber: finalNumber, periodNumber }, body: score })).response.status).toBe(200);
+        expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: final.sportEventId, matchNumber: finalNumber, periodNumber }, body: score })).response?.status).toBe(200);
       }
       // The last period's score is the final result, never a period score of its own.
       expectFunctionalError(
@@ -311,7 +311,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
         client: a,
         path: { eventId: final.sportEventId, matchNumber: finalNumber },
         body: { winnerSide: 'HOME', homeScore: 100 + homeFor(0), awayScore: 90 + awayFor(0) },
-      })).response.status).toBe(200);
+      })).response?.status).toBe(200);
 
       expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
       const settled = expectMatchesSchema(SquaresBoardResponseSchema, (await getSquaresBoard({ client: member.client, path: { contestId } })).data);

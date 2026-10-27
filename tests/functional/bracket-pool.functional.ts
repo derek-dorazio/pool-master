@@ -173,9 +173,9 @@ async function releasedKnockout(options: {
     client: a,
     path: { eventId },
     body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed, oddsToWin: 2 + seed * 3 })) },
-  })).response.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: options.tierSize } })).response.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+  })).response?.status).toBe(200);
+  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: options.tierSize } })).response?.status).toBe(200);
+  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
 
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const row = (seed: number) => expectDefined(field.find((each) => each.participant.name === `Seed ${seed} ${options.label} ${RUN}`), `seed ${seed}`).id;
@@ -197,7 +197,7 @@ async function releasedKnockout(options: {
       })),
     },
   });
-  expect([loaded.error, loaded.response.status]).toEqual([undefined, 200]);
+  expect([loaded.error, loaded.response?.status]).toEqual([undefined, 200]);
   const released = await releaseEvent({ client: a, path: { eventId } });
   expect([released.error, released.data?.event.status]).toEqual([undefined, 'SCHEDULED']);
 
@@ -265,7 +265,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       { status: 422, code: 'CONTEST_FORMAT_NOT_ALLOWED' },
     );
     const contest = await createContest({ client: alice.client, path: { id: league.id }, body: contestBody() });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     expect(expectDefined(contest.data).contest).toMatchObject({ contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET });
     expect((await openContest({ client: alice.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
@@ -375,7 +375,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
       const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
-      expect([result.error, result.response.status]).toEqual([undefined, 200]);
+      expect([result.error, result.response?.status]).toEqual([undefined, 200]);
     };
     // Round 1: chalk, except 9 beats 8 in game 2.
     for (const [matchNumber, seed] of [[1, 1], [2, 9], [3, 5], [4, 4], [5, 6], [6, 3], [7, 7], [8, 2]]) await win(matchNumber, seed);
@@ -472,7 +472,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
         },
       },
     });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
     const aliceEntry = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
@@ -509,7 +509,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 2 }, body: { winnerSide: MatchSide.HOME, homeScore: 31, awayScore: 10 } });
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 20, awayScore: 23 } });
     const proposal = expectMatchesSchema(SportEventRoundMatchupsResponseSchema, (await proposeEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 } })).data).matches;
-    expect((await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } })).response.status).toBe(200);
+    expect((await setEventRoundMatchups({ client: a, path: { eventId, roundNumber: 2 }, body: { matches: proposal } })).response?.status).toBe(200);
     // The 1 beats the 7; the 5 beats the 3; the 5 wins the final 23 to 20.
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 4 }, body: { winnerSide: MatchSide.HOME, homeScore: 27, awayScore: 14 } });
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 5 }, body: { winnerSide: MatchSide.AWAY, homeScore: 16, awayScore: 19 } });
@@ -572,7 +572,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       expect([game.homeSportEventParticipantId, game.awaySportEventParticipantId]).toContain(row(seed));
       const [homeScore, awayScore] = winnerSide === MatchSide.HOME ? [winnerScore, loserScore] : [loserScore, winnerScore];
       const result = await recordEventMatchResult({ client: a, path: { eventId, matchNumber }, body: { winnerSide, homeScore, awayScore } });
-      expect([result.error, result.response.status]).toEqual([undefined, 200]);
+      expect([result.error, result.response?.status]).toEqual([undefined, 200]);
     };
 
     // --- Tip-off: no full bracket can be made now, and round 2 is not yet decided ---------------
@@ -590,13 +590,13 @@ describe('SDK Functional: a bracket pool (#721)', () => {
 
     // --- The second-chance bracket, made, opened and entered while the event is under way -------
     const contest = await createContest({ client: alice.client, path: { id: league.id }, body: contestBody(2) });
-    expect([contest.error, contest.response.status]).toEqual([undefined, 201]);
+    expect([contest.error, contest.response?.status]).toEqual([undefined, 201]);
     const contestId = expectDefined(contest.data).contest.id;
     const opened = await openContest({ client: alice.client, path: { id: league.id, contestId } });
     expect([opened.error, opened.data?.contest.status]).toEqual([undefined, ContestStatus.OPEN]);
     const entryOf = async (client: Client) => {
       const entered = await enterContest({ client, path: { contestId } });
-      expect([entered.error, entered.response.status]).toEqual([undefined, 201]);
+      expect([entered.error, entered.response?.status]).toEqual([undefined, 201]);
       return expectDefined(entered.data).entry.id;
     };
     const entries = { alice: await entryOf(alice.client), bob: await entryOf(bob.client), cara: await entryOf(cara.client) };

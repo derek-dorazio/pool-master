@@ -121,7 +121,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       client: a,
       body: { sportLeagueId, eventYear: 2099, name: `Pickem Classic ${RUN}`, startDate: firstKickoff.toISOString(), rounds: 2, autoLifecycleEnabled: false },
     });
-    expect(tournament.response.status).toBe(201);
+    expect(tournament.response?.status).toBe(201);
     const eventId = expectDefined(tournament.data).event.id;
     created.sportEventIds.add(eventId);
 
@@ -138,9 +138,9 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((name, index) => ({ playerName: `${name} ${RUN}`, seedNumber: index + 1, oddsToWin: 2 + index * 5 })) },
-    })).response.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response.status).toBe(200);
+    })).response?.status).toBe(200);
+    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { source: 'ODDS', tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`), name).id;
 
@@ -155,7 +155,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
         ],
       },
     });
-    expect(loaded.response.status).toBe(200);
+    expect(loaded.response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     // The final is called off, so it is not one of the week's games.
     await db.sportEventMatch.updateMany({ where: { sportEventId: eventId, matchNumber: 3 }, data: { status: MatchStatus.CANCELLED } });
@@ -186,7 +186,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       { status: 422, code: 'CONTEST_FORMAT_NOT_ALLOWED' },
     );
     const contest = await createContest({ client: commissioner.client, path: { id: league.id }, body: contestBody });
-    expect(contest.response.status).toBe(201);
+    expect(contest.response?.status).toBe(201);
     const contestId = expectDefined(contest.data).contest.id;
     expect(expectDefined(contest.data).contest.contestFormat).toBe(ContestFormat.PREDICTION);
     expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
