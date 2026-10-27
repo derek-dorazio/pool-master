@@ -150,6 +150,8 @@ NBA Finals; "NCAA Division I Men" is the bracket league's name). Display 80 and 
 the women's two leagues (#1052). #1043 built **NBA Conference Finals** (display 45, just before the
 NBA Finals): both conference finals series are one event, game N holding each series' Game N.
 #1045 built **NHL Conference Finals** the same way (display 45, before the Stanley Cup Final).
+#1048 built **League Championship Series** the same way under BASEBALL (display 15, between MLB and
+the World Series): the ALCS and NLCS are one event.
 
 **Soccer name. Decided for now (Derek 2026-10-24):** **Hat Trick**, with **Golden Boot** also
 considered. Derek may change it once he sees the contest (#994).
