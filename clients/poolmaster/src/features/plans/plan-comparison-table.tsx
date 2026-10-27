@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Check, ChevronRight, Minus } from 'lucide-react';
 import type { LeaguePlan, PlanCap, PlanFeatureGroup } from '@poolmaster/shared/domain';
-import { Button, cn } from '@/features/shared/ui';
+import { Button, Tile, cn } from '@/features/shared/ui';
 import { LEAGUE_PLAN_LABEL } from './plan-labels';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
 
@@ -44,7 +44,7 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
   });
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-border bg-card" data-testid="plan-comparison-table">
+    <Tile className="overflow-x-auto" data-testid="plan-comparison-table" padding="none" radius="md">
       <table className="w-full text-xs sm:text-sm">
         <thead>
           <tr className="border-b border-border text-left">
@@ -111,6 +111,6 @@ export function PlanComparisonTable({ plans, initiallyFolded = [], currentPlan, 
           );
         })}
       </table>
-    </div>
+    </Tile>
   );
 }

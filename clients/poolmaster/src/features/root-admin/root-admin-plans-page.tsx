@@ -190,7 +190,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
         description="The most each plan allows. Entries per contest counts drafts; sports leagues a year counts the different sports leagues of the league's contests this calendar year."
         title="Caps"
       />
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card" data-testid="root-admin-plans-caps">
+      <Tile className="overflow-x-auto" data-testid="root-admin-plans-caps" padding="none" radius="md">
         <table className="min-w-full text-left text-sm">
           <thead className={tableHeaderClassName}>
             <tr>
@@ -240,7 +240,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
             ))}
           </tbody>
         </table>
-      </div>
+      </Tile>
     </section>
   );
 }

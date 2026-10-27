@@ -169,8 +169,10 @@ export function SportEventProviderBrowse({
               </p>
             ) : (
               catalog.events.map((event) => (
-                <div
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-card px-4 py-3"
+                <Tile
+                  className="flex items-center justify-between gap-3 px-4 py-3"
+                  padding="none"
+                  radius="md"
                   key={event.externalId}
                 >
                   <div className="min-w-0">
@@ -189,7 +191,7 @@ export function SportEventProviderBrowse({
                   >
                     Select
                   </Button>
-                </div>
+                </Tile>
               ))
             )}
           </div>

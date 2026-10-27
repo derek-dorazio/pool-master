@@ -110,6 +110,10 @@ const config: Config = {
         display: ["var(--font-display)"],
         mono: ["var(--font-mono)"],
       },
+      letterSpacing: {
+        eyebrow: "var(--tracking-eyebrow)",
+        label: "var(--tracking-label)",
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

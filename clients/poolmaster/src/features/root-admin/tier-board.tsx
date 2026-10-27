@@ -214,8 +214,10 @@ export function TierBoard({
       (card.price == null ? '' : String(card.price));
     const priceBad = priceRaw.trim() !== '' && !isValidPrice(priceRaw);
     return (
-      <div
-        className="rounded-2xl border border-border bg-card p-3"
+      <Tile
+        className="p-3"
+        padding="none"
+        radius="md"
         data-testid={`root-admin-tier-card-${card.sportEventParticipantId}`}
       >
         <p className="truncate font-medium text-foreground">{card.name}</p>
@@ -290,7 +292,7 @@ export function TierBoard({
             <span aria-hidden>↓</span>
           </Button>
         </div>
-      </div>
+      </Tile>
     );
   }
 

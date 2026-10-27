@@ -6,6 +6,7 @@ import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
+  Eyebrow,
   formatDateTimeDisplay,
   IconAvatar,
   LinkButton,
@@ -102,7 +103,7 @@ export function UpNextCard({
       className="grid gap-4 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse"
       data-testid="league-home-up-next"
     >
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Up next · Open for entries</div>
+      <Eyebrow>Up next · Open for entries</Eyebrow>
       <h2 className="font-display text-2xl font-black" id="league-home-up-next-title">
         {upNext.contest.name}
       </h2>
@@ -121,7 +122,7 @@ export function UpNextCard({
             key={part.label}
           >
             <b className="block font-display text-xl tabular-nums">{String(part.value).padStart(2, '0')}</b>
-            <span className="text-[11px] uppercase tracking-[0.12em] text-on-inverse-muted">{part.label}</span>
+            <span className="text-xs uppercase tracking-label text-on-inverse-muted">{part.label}</span>
           </div>
         ))}
       </div>

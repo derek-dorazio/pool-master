@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "./class-names";
+import { Eyebrow } from "./eyebrow";
 
 export type NavMenuItem = {
   /** A side-menu heading this item sits under; consecutive items share one heading. */
@@ -82,9 +83,7 @@ export function AdminAreaLayout({
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-inverse-border bg-surface-inverse-deep px-5 py-3 text-on-inverse">
         {icon ? <span className="text-primary">{icon}</span> : null}
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-            {eyebrow}
-          </div>
+          <Eyebrow>{eyebrow}</Eyebrow>
           <div className="truncate font-semibold">{title}</div>
         </div>
         <Link
@@ -101,9 +100,9 @@ export function AdminAreaLayout({
           {menuItems.map((item, index) => (
             <Fragment key={item.testId}>
               {item.group && item.group !== menuItems[index - 1]?.group ? (
-                <div className="hidden px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground first:pt-0 md:block">
+                <Eyebrow className="hidden px-3 pb-1 pt-3 first:pt-0 md:block" tone="muted">
                   {item.group}
-                </div>
+                </Eyebrow>
               ) : null}
               <Link
                 aria-current={item.isActive ? "page" : undefined}

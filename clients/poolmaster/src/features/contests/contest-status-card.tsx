@@ -8,7 +8,7 @@ import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
-import { DateDisplay, formatDateTimeDisplay, LinkButton, useDisplayPreferences } from '@/features/shared/ui';
+import { DateDisplay, Eyebrow, formatDateTimeDisplay, LinkButton, useDisplayPreferences } from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
@@ -30,7 +30,7 @@ function StatusCardFrame({
       className="grid gap-3 rounded-2xl border border-inverse-border bg-surface-inverse px-5 py-5 text-on-inverse"
       data-testid="contest-status-card"
     >
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">{eyebrow}</div>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <h2 className="font-display text-xl font-extrabold" data-testid="contest-status-card-title">
         {title}
       </h2>
@@ -43,7 +43,7 @@ function Stat({ label, testId, value }: { label: string; testId: string; value: 
   return (
     <div className="min-w-24 rounded-xl border border-inverse-border bg-on-inverse-subtle px-3 py-2" data-testid={testId}>
       <div className="font-display text-xl font-extrabold tabular-nums">{value}</div>
-      <div className="text-xs uppercase tracking-[0.12em] text-on-inverse-muted">{label}</div>
+      <div className="text-xs uppercase tracking-label text-on-inverse-muted">{label}</div>
     </div>
   );
 }
