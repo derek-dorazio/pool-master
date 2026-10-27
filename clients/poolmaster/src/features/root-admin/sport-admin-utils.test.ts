@@ -9,7 +9,6 @@ import {
   syncScopeTone,
   sportEventStatusTone,
   participantFieldActionLabel,
-  localDateTimeInputToIso,
   parseRosterUpload,
   parseGolfRoundScoreUpload,
   resolveEventLifecycleStage,
@@ -242,24 +241,6 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     expect(deriveSportEventReadiness({ ...base, status: 'SCHEDULED' }).label).toBe('Released');
     expect(deriveSportEventReadiness({ ...base, status: 'IN_PROGRESS' }).label).toBe('Live');
     expect(deriveSportEventReadiness({ ...base, status: 'COMPLETED' }).label).toBe('Completed');
-  });
-});
-
-describe('pool-master-3dg sport-admin-utils: localDateTimeInputToIso', () => {
-  it('pool-master-3dg returns undefined for a blank or missing value', () => {
-    expect(localDateTimeInputToIso('')).toBeUndefined();
-    expect(localDateTimeInputToIso(undefined)).toBeUndefined();
-    expect(localDateTimeInputToIso(null)).toBeUndefined();
-  });
-
-  it('pool-master-3dg returns undefined for an unparseable value', () => {
-    expect(localDateTimeInputToIso('not-a-date')).toBeUndefined();
-  });
-
-  it('pool-master-3dg converts a datetime-local value to an ISO string', () => {
-    const iso = localDateTimeInputToIso('2026-03-12T13:00');
-    expect(iso).toMatch(/^2026-03-12T\d{2}:00:00\.000Z$/);
-    expect(new Date(iso ?? '').getMinutes()).toBe(0);
   });
 });
 

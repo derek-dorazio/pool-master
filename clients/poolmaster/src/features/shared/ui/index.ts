@@ -13,9 +13,11 @@ export { Pager } from "./pager";
 export { DateDisplay, DateTimeField } from "./date-time";
 export {
   DEFAULT_DISPLAY_PREFERENCES,
+  dateTimeLocalValueToIso,
   displayPreferencesOf,
   formatDateDisplay,
   formatDateTimeDisplay,
+  timeZoneGenericName,
   toDateTimeLocalValue,
   type DisplayPreferences,
 } from "./date-time-format";
