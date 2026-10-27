@@ -2040,7 +2040,7 @@ export interface paths {
         head?: never;
         /**
          * Update a sport event
-         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.
+         * @description Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. 400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.
          */
         patch: operations["updateEvent"];
         trace?: never;
@@ -10355,7 +10355,7 @@ export interface components {
             /** @description Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field. */
             roundsPar?: number | null;
             autoLifecycleEnabled?: boolean;
-            /** @description false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Defaults to true. */
+            /** @description false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true. */
             tellMembers?: boolean;
         };
         /** @description Moves an event to its next lifecycle status, activating or settling its contests as that status requires. */
@@ -28658,6 +28658,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */

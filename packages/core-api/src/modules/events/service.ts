@@ -122,6 +122,11 @@ export interface SportEventServiceDeps {
 /** The statuses whose start moving is told to the leagues on the event (#845 C6). */
 const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
 
+/** An event loaded with only its date starts at noon UTC until its real start time is filled in. */
+function isDateOnlyPlaceholder(start: Date): boolean {
+  return start.getUTCHours() === 12 && start.getUTCMinutes() === 0 && start.getUTCSeconds() === 0 && start.getUTCMilliseconds() === 0;
+}
+
 export class SportEventService {
   constructor(private readonly deps: SportEventServiceDeps) {}
 
@@ -343,15 +348,29 @@ export class SportEventService {
    * schedule follows the edit: a new start date moves every round by the same amount, and a
    * higher round count schedules the added rounds, so automatic lifecycle and live scores
    * read the schedule the admin now sees. A released event's moved start is told to its leagues
-   * unless the edit is a data correction (`tellMembers: false`, #1042), such as filling in the
-   * real start time of an event loaded with only its date.
+   * unless the edit is a data correction (`tellMembers: false`, #1042): filling in the real
+   * start time of an event loaded with only its date. 400 SPORT_EVENT_START_NOT_PLACEHOLDER
+   * when such an edit moves a start that is not the date-only placeholder, so a real start
+   * never moves without telling the leagues.
    */
   async updateEvent(
     sportEventId: string,
     updates: SportEventUpdate,
-    options: { tellMembers: boolean } = { tellMembers: true },
+    options: { tellMembers: boolean },
   ): Promise<SportEventSummary> {
     const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
+    const movesStart = updates.startDate !== undefined && updates.startDate.getTime() !== startedAt.getTime();
+    if (movesStart && !options.tellMembers && !isDateOnlyPlaceholder(startedAt)) {
+      this.deps.logger?.warn(
+        { sportEventId, startDate: startedAt.toISOString() },
+        'Refused to move a sport event start quietly: it is not the date-only placeholder',
+      );
+      throw new SportEventError(
+        `Sport event ${sportEventId} already has a real start time, so moving it must tell its leagues.`,
+        'SPORT_EVENT_START_NOT_PLACEHOLDER',
+        400,
+      );
+    }
     // Three writes, not one transaction: a failure after the first leaves the rounds behind the
     // event's new dates. The round writes only reject a round the event lacks, and they read the
     // event's rounds first, so in practice they don't fail here.

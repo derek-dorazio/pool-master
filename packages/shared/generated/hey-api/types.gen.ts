@@ -9322,7 +9322,7 @@ export type UpdateSportEventRequest = {
     roundsPar?: number | null;
     autoLifecycleEnabled?: boolean;
     /**
-     * false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Defaults to true.
+     * false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true.
      */
     tellMembers?: boolean;
 };
@@ -30425,6 +30425,10 @@ export type UpdateEventData = {
 };
 
 export type UpdateEventErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
     /**
      * Standard API error envelope.
      */

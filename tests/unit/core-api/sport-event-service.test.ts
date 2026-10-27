@@ -6,6 +6,17 @@ import { SportEventService } from '../../../packages/core-api/src/modules/events
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
+import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { EventScoreSourceService } from '../../../packages/core-api/src/modules/events/event-score-source-service';
+import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
+import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { RaceResultService } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
+import { StatLineService } from '../../../packages/core-api/src/modules/scoring-families/composite/stat-line-service';
+import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { SportLeagueService } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
+import { asFastifyRequest } from '../../support/fastify-doubles';
+import { stubInstance } from '../../support/stub-instance';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
 import {
@@ -62,8 +73,11 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
     lifecycle,
     now: () => NOW,
   });
-  return { store, service, sportLeague };
+  return { store, service, sportLeague, lifecycle };
 }
+
+/** An ordinary edit: a moved start of a released event is told to its leagues. */
+const TELL = { tellMembers: true };
 
 const MANUAL_INPUT = {
   name: 'Harbour Open',
@@ -445,7 +459,7 @@ describe('SportEventService — read, update, delete', () => {
     const { store, service } = setup();
     const event = store.addEvent({ venue: 'Old Course' });
 
-    const updated = await service.updateEvent(event.id, { name: 'Renamed', venue: null });
+    const updated = await service.updateEvent(event.id, { name: 'Renamed', venue: null }, TELL);
 
     expect(updated.event).toMatchObject({ name: 'Renamed', venue: undefined });
   });
@@ -454,8 +468,8 @@ describe('SportEventService — read, update, delete', () => {
     const { store, service } = setup();
     const linked = store.addEvent({ syncScope: 'SCORES_ONLY' });
 
-    await expect(service.updateEvent(linked.id, { name: 'Renamed Open' })).resolves.toMatchObject({ event: { name: 'Renamed Open' } });
-    await expect(service.updateEvent('missing', { name: 'x' })).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    await expect(service.updateEvent(linked.id, { name: 'Renamed Open' }, TELL)).resolves.toMatchObject({ event: { name: 'Renamed Open' } });
+    await expect(service.updateEvent('missing', { name: 'x' }, TELL)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 
   it('deletes an event with no contests, and refuses one with contests with 409 EVENT_HAS_CONTESTS', async () => {
@@ -486,7 +500,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     const { store, service, sportLeague } = setup();
     const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 3 });
 
-    await service.updateEvent(event.id, { rounds: 4 });
+    await service.updateEvent(event.id, { rounds: 4 }, TELL);
 
     expect(roundsOf(store, event.id)).toEqual([
       { roundNumber: 1, scheduledDate: '2026-06-04T12:00:00.000Z' },
@@ -504,7 +518,7 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
       { roundNumber: 2, scheduledDate: new Date(MANUAL_INPUT.startDate.getTime() + 2 * DAY) },
     ]);
 
-    await service.updateEvent(event.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) });
+    await service.updateEvent(event.id, { startDate: new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY) }, TELL);
 
     expect(roundsOf(store, event.id)).toEqual([
       { roundNumber: 1, scheduledDate: '2026-06-11T12:00:00.000Z' },
@@ -520,9 +534,9 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
     const moved = new Date(MANUAL_INPUT.startDate.getTime() + 7 * DAY);
 
-    await service.updateEvent(draft.id, { startDate: moved });
-    await service.updateEvent(released.id, { startDate: MANUAL_INPUT.startDate, name: 'Renamed Open' });
-    await service.updateEvent(released.id, { startDate: moved });
+    await service.updateEvent(draft.id, { startDate: moved }, TELL);
+    await service.updateEvent(released.id, { startDate: MANUAL_INPUT.startDate, name: 'Renamed Open' }, TELL);
+    await service.updateEvent(released.id, { startDate: moved }, TELL);
 
     expect(notice.sportEventChanged).toHaveBeenCalledTimes(1);
     expect(notice.sportEventChanged).toHaveBeenCalledWith(
@@ -545,13 +559,88 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
   });
 
+  it('refuses a quiet move of a released event that already has a real start time, so its leagues are never left out of a real reschedule', async () => {
+    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const { store, service, sportLeague } = setup(Sport.GOLF, notice);
+    const realStart = new Date('2026-06-04T11:45:00.000Z');
+    const { event: released } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, startDate: realStart, rounds: 1 });
+    await store.sportEventRepo().update(released.id, { status: SportEventStatus.SCHEDULED });
+
+    await expect(service.updateEvent(released.id, { startDate: new Date(realStart.getTime() + DAY) }, { tellMembers: false }))
+      .rejects.toMatchObject({ code: 'SPORT_EVENT_START_NOT_PLACEHOLDER', statusCode: 400 });
+
+    expect(notice.sportEventChanged).not.toHaveBeenCalled();
+    expect(roundsOf(store, released.id)).toEqual([{ roundNumber: 1, scheduledDate: '2026-06-04T11:45:00.000Z' }]);
+  });
+
   it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
     const { store, service, sportLeague } = setup();
     const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT, rounds: 2 });
     const before = roundsOf(store, event.id);
 
-    await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 });
+    await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 }, TELL);
 
     expect(roundsOf(store, event.id)).toEqual(before);
+  });
+});
+
+describe('PATCH /events/:eventId handler passes tellMembers on to the event service', () => {
+  type UpdateEventRequest = Parameters<ReturnType<typeof createEventHandlers>['updateEvent']>[0];
+
+  function setupHandlers() {
+    const notice = { sportEventChanged: mockFn<SportEventChangedNotice['sportEventChanged']>(async () => undefined) };
+    const { store, service, sportLeague, lifecycle } = setup(Sport.GOLF, notice);
+    const handlers = createEventHandlers({
+      services: {
+        sportEvents: service,
+        rounds: stubInstance(SportEventRoundService, {}),
+        bracket: stubInstance(SportEventBracketService, {}),
+        tiers: stubInstance(SportEventTierService, {}),
+        field: stubInstance(SportEventParticipantService, {}),
+        golfScores: stubInstance(GolfScoreService, {}),
+        raceResults: stubInstance(RaceResultService, {}),
+        statLines: stubInstance(StatLineService, {}),
+        matchResults: stubInstance(MatchResultService, {}),
+        sportLeagues: stubInstance(SportLeagueService, {}),
+      },
+      eventLifecycle: lifecycle,
+      scoreSource: stubInstance(EventScoreSourceService, {}),
+      ingestion: stubInstance(IngestionService, {}),
+    });
+    return { store, service, sportLeague, notice, handlers };
+  }
+
+  async function releasedPlaceholderEvent({ store, service, sportLeague }: ReturnType<typeof setupHandlers>) {
+    const { event } = await service.createEvent({ sportLeagueId: sportLeague.id, eventYear: 2026, ...MANUAL_INPUT });
+    await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
+    return event;
+  }
+
+  it('fills in a released event\'s real start time without telling its leagues when the body says tellMembers false', async () => {
+    const context = setupHandlers();
+    const event = await releasedPlaceholderEvent(context);
+
+    const response = await context.handlers.updateEvent(asFastifyRequest<UpdateEventRequest>({
+      params: { eventId: event.id },
+      body: { startDate: '2026-06-04T11:45:00.000Z', tellMembers: false },
+    }));
+
+    expect(response.event.startDate).toBe('2026-06-04T11:45:00.000Z');
+    expect(context.notice.sportEventChanged).not.toHaveBeenCalled();
+  });
+
+  it('tells a released event\'s leagues about a moved start when the body leaves tellMembers out', async () => {
+    const context = setupHandlers();
+    const event = await releasedPlaceholderEvent(context);
+
+    await context.handlers.updateEvent(asFastifyRequest<UpdateEventRequest>({
+      params: { eventId: event.id },
+      body: { startDate: '2026-06-04T11:45:00.000Z' },
+    }));
+
+    expect(context.notice.sportEventChanged).toHaveBeenCalledWith(
+      expect.objectContaining({ id: event.id, startDate: new Date('2026-06-04T11:45:00.000Z') }),
+      { kind: 'RESCHEDULED', previousStart: MANUAL_INPUT.startDate },
+    );
   });
 });

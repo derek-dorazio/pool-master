@@ -164,11 +164,12 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     schema: {
       tags: TAGS,
       summary: 'Update a sport event',
-      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. Root admin only.',
+      description: 'Edits any event, linked to a provider or not; a provider never overwrites these fields. A new startDate moves every round by the same amount; a higher rounds count adds rounds, each a day after the one before. '
+        + '400 SPORT_EVENT_START_NOT_PLACEHOLDER when tellMembers is false and the start being moved is not the noon-UTC date-only placeholder. Root admin only.',
       operationId: 'updateEvent',
       params: EVENT_PARAMS,
       body: schemaRef('UpdateSportEventRequest'),
-      response: { 200: schemaRef('SportEventResponse'), ...errors(401, 403, 404) },
+      response: { 200: schemaRef('SportEventResponse'), ...errors(400, 401, 403, 404) },
     },
     handler: handler.updateEvent,
   });
