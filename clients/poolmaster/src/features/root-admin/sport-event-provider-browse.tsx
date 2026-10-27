@@ -11,6 +11,7 @@ import {
   StatusBadge,
   Tile,
   formatDateTimeDisplay,
+  dateTimeLocalValueToIso,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -25,7 +26,6 @@ import {
   parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
-import { localDateTimeInputToIso } from './sport-admin-utils';
 import {
   useProviderCatalog,
   type ProviderCatalogEvent,
@@ -34,10 +34,10 @@ import { buildSportEventPath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 
 
-function defaultWindowValue(offsetDays: number): string {
+function defaultWindowValue(offsetDays: number, timeZone: string): string {
   const date = new Date();
   date.setDate(date.getDate() + offsetDays);
-  return toDateTimeLocalValue(date);
+  return toDateTimeLocalValue(date, timeZone);
 }
 
 export function SportEventProviderBrowse({
@@ -58,8 +58,8 @@ export function SportEventProviderBrowse({
   const { sport, definition } = useManagedSport();
   const { event: eventNoun, round } = definition.vocabulary;
 
-  const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0));
-  const [browseTo, setBrowseTo] = useState(() => defaultWindowValue(45));
+  const [browseFrom, setBrowseFrom] = useState(() => defaultWindowValue(0, displayPreferences.timeZone));
+  const [browseTo, setBrowseTo] = useState(() => defaultWindowValue(45, displayPreferences.timeZone));
   const [browseSearch, setBrowseSearch] = useState('');
   const [selectedEvent, setSelectedEvent] =
     useState<ProviderCatalogEvent | null>(null);
@@ -68,8 +68,8 @@ export function SportEventProviderBrowse({
   const catalog = useProviderCatalog({
     enabled: true,
     sport,
-    from: localDateTimeInputToIso(browseFrom),
-    to: localDateTimeInputToIso(browseTo),
+    from: dateTimeLocalValueToIso(browseFrom, displayPreferences.timeZone),
+    to: dateTimeLocalValueToIso(browseTo, displayPreferences.timeZone),
     sportLeagueId: scopedSportLeague?.id,
     search: browseSearch,
   });

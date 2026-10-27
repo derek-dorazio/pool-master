@@ -7,9 +7,12 @@ import { createEvent } from '@/lib/api';
 import {
   Button,
   Checkbox,
+  DateTimeField,
+  dateTimeLocalValueToIso,
   FormField,
   Input,
   Tile,
+  useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
@@ -22,7 +25,6 @@ import {
   parseEventYear,
   type SportEventEdition,
 } from './sport-event-edition';
-import { localDateTimeInputToIso } from './sport-admin-utils';
 import { buildSportEventPath, capitalize } from './manage-navigation';
 import { useManagedSport } from './use-managed-sport';
 
@@ -53,6 +55,7 @@ export function SportEventManualCreateForm({
   });
   const navigate = useNavigate();
   const { sport, definition } = useManagedSport();
+  const { timeZone } = useDisplayPreferences();
   const { event, participant, round } = definition.vocabulary;
   const sportLeagueNoun = sportLeagueNounOf(sport, sportLeagues.find((sportLeague) => sportLeague.id === edition.sportLeagueId)?.noun ?? null);
 
@@ -71,15 +74,14 @@ export function SportEventManualCreateForm({
 
   const createMutation = useInvalidatingMutation({
     mutationFn: async (values: ManualFormValues) => {
+      const endDate = dateTimeLocalValueToIso(values.endDate, timeZone);
       const response = await createEvent({
         body: {
           name: values.name,
           ...(values.venue?.trim() ? { venue: values.venue.trim() } : {}),
           ...(values.location?.trim() ? { location: values.location.trim() } : {}),
-          startDate: localDateTimeInputToIso(values.startDate) ?? values.startDate,
-          ...(localDateTimeInputToIso(values.endDate)
-            ? { endDate: localDateTimeInputToIso(values.endDate) }
-            : {}),
+          startDate: dateTimeLocalValueToIso(values.startDate, timeZone) ?? values.startDate,
+          ...(endDate ? { endDate } : {}),
           rounds: values.rounds,
           sportLeagueId: edition.sportLeagueId,
           eventYear: parseEventYear(edition.eventYear) as number,
@@ -132,14 +134,10 @@ export function SportEventManualCreateForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField error={form.formState.errors.startDate?.message} label="Starts">
-            <Input
-              data-testid="root-admin-sport-event-create-start"
-              type="datetime-local"
-              {...form.register('startDate')}
-            />
+            <DateTimeField data-testid="root-admin-sport-event-create-start" {...form.register('startDate')} />
           </FormField>
           <FormField label="Ends (optional)">
-            <Input type="datetime-local" {...form.register('endDate')} />
+            <DateTimeField {...form.register('endDate')} />
           </FormField>
         </div>
 
