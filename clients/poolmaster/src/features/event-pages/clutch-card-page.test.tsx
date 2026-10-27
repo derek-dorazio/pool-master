@@ -107,15 +107,31 @@ describe('Clutch Card page', () => {
     listEventPagesMock.mockResolvedValue({ data: { eventPages: [championshipWeekendPage('NOT_YET')] } });
     renderPage();
 
-    const championshipWeekend = await screen.findByTestId('clutch-card-round-Championship Weekend');
+    const championshipWeekend = await screen.findByTestId('clutch-card-round-AMERICAN_FOOTBALL:Championship Weekend');
     expect(championshipWeekend).toHaveAttribute('href', '/play/american-football/championship-weekend');
     expect(championshipWeekend).toHaveTextContent('Redzone');
-    const nbaFinals = screen.getByTestId('clutch-card-round-NBA Finals');
+    const nbaFinals = screen.getByTestId('clutch-card-round-BASKETBALL:NBA Finals');
     expect(nbaFinals.tagName).toBe('SPAN');
     expect(nbaFinals).toHaveClass('border-primary');
-    expect(screen.getByTestId('clutch-card-round-Stanley Cup Final')).toHaveClass('border-dashed');
-    expect(screen.getByTestId('clutch-card-round-WNBA Finals')).toHaveClass('border-dashed');
-    expect(screen.getByTestId('clutch-card-round-World Series')).toHaveClass('border-dashed');
+    expect(screen.getByTestId('clutch-card-round-HOCKEY:Stanley Cup Final')).toHaveClass('border-dashed');
+    expect(screen.getByTestId('clutch-card-round-BASKETBALL:WNBA Finals')).toHaveClass('border-dashed');
+    expect(screen.getByTestId('clutch-card-round-BASEBALL:World Series')).toHaveClass('border-dashed');
+  });
+
+  it('keeps two sports\' title rounds of the same name apart: basketball\'s Men\'s National Championship available, hockey\'s still coming', async () => {
+    listSportLeaguesMock.mockResolvedValue({ data: { sportLeagues: [
+      ...STAT_POOL_LEAGUES,
+      sportLeagueFixture({ id: 'mbb-title', sport: 'BASKETBALL', name: 'Men\'s National Championship', scoringFamily: 'COMPOSITE' }),
+    ] } });
+    listEventPagesMock.mockResolvedValue({ data: { eventPages: [] } });
+    renderPage();
+
+    const basketball = await screen.findByTestId('clutch-card-round-BASKETBALL:Men\'s National Championship');
+    expect(basketball).toHaveClass('border-primary');
+    expect(basketball).toHaveTextContent('Triple Threat');
+    const hockey = screen.getByTestId('clutch-card-round-HOCKEY:Men\'s National Championship');
+    expect(hockey).toHaveClass('border-dashed');
+    expect(hockey).toHaveTextContent('Power Play');
   });
 
   it('starts a pool on the open Clutch Card offer before one that opens later', async () => {
@@ -149,7 +165,7 @@ describe('Clutch Card page', () => {
 
     const calendar = await screen.findByTestId('clutch-card-calendar');
     expect(await within(calendar).findByText('Calendar unavailable')).toBeInTheDocument();
-    expect(screen.queryByTestId('clutch-card-round-NBA Finals')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('clutch-card-round-BASKETBALL:NBA Finals')).not.toBeInTheDocument();
     expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'clutchCardPage.sportLeagues.failed' }), 'Sport leagues failed to load');
   });
 });

@@ -89,6 +89,7 @@ export const CLUTCH_CARD_PAGE = {
         { sportLeague: 'Men\'s National Championship', sport: Sport.BASKETBALL },
         { sportLeague: 'Women\'s Final Four', sport: Sport.BASKETBALL },
         { sportLeague: 'Men\'s Frozen Four', sport: Sport.HOCKEY },
+        { sportLeague: 'Men\'s National Championship', sport: Sport.HOCKEY },
       ] },
       { month: 'May', rounds: [
         { sportLeague: 'NBA Conference Finals', sport: Sport.BASKETBALL },

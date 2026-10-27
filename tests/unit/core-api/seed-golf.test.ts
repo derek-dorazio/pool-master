@@ -444,6 +444,34 @@ describe('hockey-2026-nhl-conference-finals-test.json', () => {
   });
 });
 
+describe('hockey-2026-mens-frozen-four-test.json', () => {
+  const file = readDataFile('hockey-2026-mens-frozen-four-test.json', true);
+  const [semifinals, championship] = file.sportLeagues;
+
+  it('is a stat pool seed of the 2026 men\'s Frozen Four\'s semifinals and National Championship, each one round of skaters\' box scores', () => {
+    expect([file.scope.sport, file.scope.season, file.scope.sportLeagues, file.scope.contents]).toEqual([
+      Sport.HOCKEY, 2026, ['Men\'s Frozen Four', 'Men\'s National Championship'], ['SCHEDULE', 'PLAYERS', 'FIELDS', 'STATS', 'RESULTS'],
+    ]);
+    expect(eventRows(file, 0)).toEqual([['Men\'s Frozen Four', '2026-04-09', '2026-04-09', 1, null]]);
+    expect(eventRows(file, 1)).toEqual([['Men\'s National Championship', '2026-04-11', '2026-04-11', 1, null]]);
+  });
+
+  it('fields the four semifinalists\' skaters for the semifinals and only the two finalists\' for the title game, forwards and defensemen and no goalies', () => {
+    expect(new Set(semifinals.players.map((player) => player.team))).toEqual(
+      new Set(['Wisconsin Badgers', 'North Dakota Fighting Hawks', 'Denver Pioneers', 'Michigan Wolverines']),
+    );
+    expect(new Set(championship.players.map((player) => player.team))).toEqual(new Set(['Denver Pioneers', 'Wisconsin Badgers']));
+    expect(new Set([...semifinals.players, ...championship.players].map((player) => player.position))).toEqual(new Set(['F', 'D']));
+  });
+
+  it('carries both rounds as played: Clarke Caswell\'s goal and assist in Denver\'s double-overtime semifinal, Vasily Zelenov\'s goal for Wisconsin in the title game', () => {
+    const semifinalLines = new Map((semifinals.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    const titleLines = new Map((championship.events[0].games ?? [])[0].lines.map((line) => [line.player, line.stats]));
+    expect(semifinalLines.get('mch-clarke-caswell')).toEqual({ GOALS: 1, ASSISTS: 1, SHOTS_ON_GOAL: 1 });
+    expect(titleLines.get('mch-vasily-zelenov')).toEqual({ GOALS: 1, SHOTS_ON_GOAL: 1 });
+  });
+});
+
 describe('baseball-2026-league-championship-series-test.json', () => {
   const file = readDataFile('baseball-2026-league-championship-series-test.json', true);
   const [championshipSeries] = file.sportLeagues;

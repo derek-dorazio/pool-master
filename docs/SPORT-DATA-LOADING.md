@@ -65,8 +65,8 @@ write.
 **Box scores.** A file of a championship stat pool, with `STATS` in its `contents`, loads a
 sport league of players scored by the composite family (the League Championship Series, World
 Series, NBA Conference Finals, NBA Finals, NHL Conference Finals, Stanley Cup Final, NFL
-Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four and
-Men's National Championship leagues the migrations create). Its players
+Championship Weekend, Super Bowl, CFP Semifinals, CFP National Championship, Men's Final Four,
+Men's National Championship (basketball's and hockey's) and Men's Frozen Four leagues the migrations create). Its players
 may give their `team` and `position`, and each event may give its `games`: each game's number
 and its box score, one `lines` row per field player who played, with that player's count of each
 stat the sport's composite counts (`TOTAL_BASES`, `RUNS`, `RUNS_BATTED_IN`, `WALKS` and
@@ -332,7 +332,9 @@ Championship weekend and Super Bowl LX, one game each) and
 `american-football-2026-cfp-semifinals-and-championship-test.json` (the 2025-26 College Football
 Playoff's semifinals, both played as one event of one game, and Indiana over Miami in the
 National Championship) and `basketball-2026-mens-final-four-test.json` (the 2026 men's semifinals, both
-one event of one game, and Michigan over UConn in the title game). The field is both teams' players who
+one event of one game, and Michigan over UConn in the title game) and
+`hockey-2026-mens-frozen-four-test.json` (the 2026 men's Frozen Four semifinals, both one event of
+one game, and Denver over Wisconsin in the title game). The field is both teams' players who
 can score the sport's composite, ranked by their regular-season composite total; tiers come
 from that ranking and prices are the default curve, so no odds are made up. Each box score was
 checked player by player against a second source, named in the file's provenance. A test load

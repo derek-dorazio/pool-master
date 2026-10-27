@@ -192,7 +192,7 @@ function CardTypes() {
 }
 
 function RoundChip({ round }: { round: CalendarRound }) {
-  const testId = `clutch-card-round-${round.round.sportLeague}`;
+  const testId = `clutch-card-round-${roundKey(round.round.sport, round.round.sportLeague)}`;
   const label = (
     <>
       {round.round.sportLeague}
@@ -222,8 +222,9 @@ function Calendar({ rounds }: { rounds: ReadonlyMap<string, CalendarRound> | nul
                 <p className="font-display font-bold text-foreground">{month.month}</p>
                 <div className="flex flex-wrap gap-2">
                   {month.rounds.map((round) => {
-                    const calendarRound = rounds.get(round.sportLeague);
-                    return calendarRound ? <RoundChip key={round.sportLeague} round={calendarRound} /> : null;
+                    const key = roundKey(round.sport, round.sportLeague);
+                    const calendarRound = rounds.get(key);
+                    return calendarRound ? <RoundChip key={key} round={calendarRound} /> : null;
                   })}
                 </div>
               </li>
@@ -339,7 +340,7 @@ export function ClutchCardPage() {
     }
     return new Map(CLUTCH_CARD_PAGE.calendar.months.flatMap((month) => month.rounds).map((round) => {
       const league = statPoolLeagues.get(roundKey(round.sport, round.sportLeague));
-      return [round.sportLeague, { round, isAvailable: league !== undefined, eventPage: eventPageFor(league, pages) }];
+      return [roundKey(round.sport, round.sportLeague), { round, isAvailable: league !== undefined, eventPage: eventPageFor(league, pages) }];
     }));
   }, [eventPagesQuery.isError, pages, sportLeaguesQuery.isError, statPoolLeagues]);
 
