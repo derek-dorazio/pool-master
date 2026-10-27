@@ -11,13 +11,13 @@
  * ones on their account, or US Eastern, en-US and the locale's clock when they have
  * none. Components read them with `useDisplayPreferences`.
  */
-import { DEFAULT_DISPLAY_LOCALE, DEFAULT_DISPLAY_TIME_ZONE, TimeFormat } from "@poolmaster/shared/domain";
+import { DEFAULT_DISPLAY_LOCALE, DEFAULT_DISPLAY_TIME_ZONE, TimeFormat, englishLocaleFor } from "@poolmaster/shared/domain";
 import type { UserDto } from "@/lib/api";
 
 export type DisplayPreferences = {
   /** IANA zone, e.g. "America/Chicago". */
   timeZone: string;
-  /** BCP 47 locale, e.g. "en-US". */
+  /** BCP 47 locale, always English in the member's region, e.g. "en-US" or "en-DE". */
   locale: string;
   /** True for a 12-hour clock, false for 24-hour, undefined for the locale's own. */
   hour12: boolean | undefined;
@@ -29,11 +29,14 @@ export const DEFAULT_DISPLAY_PREFERENCES: DisplayPreferences = {
   hour12: undefined,
 };
 
-/** The display preferences on a member's account, with the defaults for what they haven't set. */
+/**
+ * The display preferences on a member's account, with the defaults for what they haven't set.
+ * Dates are written in English in their locale's region (#1088).
+ */
 export function displayPreferencesOf(user: UserDto | null | undefined): DisplayPreferences {
   return {
     timeZone: user?.timezone ?? DEFAULT_DISPLAY_PREFERENCES.timeZone,
-    locale: user?.locale ?? DEFAULT_DISPLAY_PREFERENCES.locale,
+    locale: englishLocaleFor(user?.locale),
     hour12: user?.timeFormat === undefined ? undefined : user.timeFormat === TimeFormat.TWELVE_HOUR,
   };
 }

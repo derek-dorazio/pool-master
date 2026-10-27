@@ -123,9 +123,11 @@ from the browser at signup), or in US Eastern when they have none (#1039). An em
 ahead gives only the day ("Thu, Apr 9, 2026"); a time, with its zone named, appears only when it
 matters that day: the entry reminder sent less than a day before picks close, the commissioner's
 "contest isn't open yet" email, an event moved within its own day, and an email recording when
-something happened (account emails, entry receipts). Dates and times are written in the recipient's locale and with
-their 12-hour or 24-hour clock, or en-US with the locale's own clock when they have none
-(#1055); `emailRecipientOf(user)` carries all three into a send.
+something happened (account emails, entry receipts). Dates and times are written in English in the
+region of the recipient's locale (de-DE writes en-DE, "9 Apr 2026, 13:40 CEST", #1088), with their
+12-hour or 24-hour clock; en-US with the region's own clock when they have no locale or one with no
+region (#1055). `emailRecipientOf(user)` carries all three into a send, and `englishLocaleFor` in
+`@poolmaster/shared/domain` maps the locale, for the app as well.
 
 ### Layout and Pictures
 

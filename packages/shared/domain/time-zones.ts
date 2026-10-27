@@ -27,3 +27,14 @@ export function isKnownLocale(locale: string): boolean {
     return false;
   }
 }
+
+/**
+ * The locale a member's dates are written in (#1088): English words in the region of the locale
+ * on their account, so "de-DE" writes "Thu, 9 Apr 2026, 19:40" rather than German date words in
+ * English copy. A locale with no region, none at all, or one that isn't a language tag writes en-US.
+ */
+export function englishLocaleFor(locale: string | null | undefined): string {
+  if (!locale || !isKnownLocale(locale)) return DEFAULT_DISPLAY_LOCALE;
+  const { region } = new Intl.Locale(locale);
+  return region === undefined ? DEFAULT_DISPLAY_LOCALE : `en-${region}`;
+}
