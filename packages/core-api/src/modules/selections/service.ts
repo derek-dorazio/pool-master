@@ -58,7 +58,7 @@ import {
   ContestDrawEntriesChangedError,
   type ContestEntryPickService,
 } from '../contest-entry-picks';
-import type { ContestService } from '../contests/service';
+import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
 import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { selectionErrors, type SelectionError } from './selection-errors';
@@ -113,7 +113,7 @@ export interface SelectionServiceDeps {
    * Sends the "Entry submitted" confirmation once an entry is submitted (#481). Optional so the
    * room can be built without mail; the contests module owns the email.
    */
-  entryReceipts?: Pick<ContestService, 'sendEntrySubmittedEmail'>;
+  entryReceipts?: Pick<ContestService, 'sendEntrySubmittedEmails'>;
   /** Read for the contest's events' start times, the cutoff for each event's pick changes. */
   sportEvents: Pick<SportEventRepository, 'findByIds'>;
   now?: () => Date;
@@ -384,7 +384,7 @@ export class SelectionService {
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entryId, context.sportEvent.id);
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId]));
     }
 
     return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
@@ -436,15 +436,16 @@ export class SelectionService {
       picksPerEntry,
     });
 
+    let drawnAt: Date;
     try {
-      await this.deps.pickWrites.recordDraw({
+      ({ drawnAt } = await this.deps.pickWrites.recordDraw({
         contestId,
         seed,
         fieldOrder: deal.fieldOrder,
         entryOrder: deal.entryOrder,
         drawnByUserId: actorUserId ?? null,
         entries: deal.entries,
-      });
+      }));
     } catch (error) {
       if (error instanceof ContestDrawAlreadyRunError) throw selectionErrors.drawAlreadyRun(contestId);
       if (error instanceof ContestDrawEntriesChangedError) throw selectionErrors.drawEntriesChanged(contestId);
@@ -458,30 +459,31 @@ export class SelectionService {
       },
       'Ran a random draw',
     );
+    // The draw changed only what `recordDraw` wrote: the contest is drawn and every entry
+    // submitted at the draw's time. The dealt picks are read fresh by the room (#1196).
+    const drawnContext = withDraw(context, drawnAt, this.now());
+
     // Every entry's owners get a receipt of the picks the draw dealt it (#867). The draw is
     // already recorded, so a receipt that fails is logged and never fails it.
-    for (const entry of context.entries) {
-      try {
-        await this.deps.entryReceipts?.sendEntrySubmittedEmail(contestId, entry.id, context.sportEvent.id);
-      } catch (error) {
-        this.deps.logger?.error(
-          { action: 'selection.runDraw.receiptFailed', data: { contestId, entryId: entry.id, error: error instanceof Error ? error.message : String(error) } },
-          'Failed to send a quick pick entry its receipt',
-        );
-      }
+    const entryIds = context.entries.map((entry) => entry.id);
+    try {
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds));
+    } catch (error) {
+      this.deps.logger?.error(
+        { action: 'selection.runDraw.receiptFailed', data: { contestId, entryIds, error: error instanceof Error ? error.message : String(error) } },
+        'Failed to send the quick pick entries their receipts',
+      );
     }
 
-    const drawnContext = await this.loadContext(contestId, context.sportEvent.id);
     return this.buildRoomView({ context: drawnContext, engine, actorUserId });
   }
 
   /** The entries' picks in the context's event (#713): a lineup is one event's picks. */
-  private async findEventPicks(
+  private findEventPicks(
     context: SelectionContext,
     entryIds: readonly string[],
   ): Promise<ContestEntryPickWithParticipant[]> {
-    const picks = await this.deps.picks.findByEntriesWithParticipant(entryIds);
-    return picks.filter((pick) => pick.sportEventId === context.sportEvent.id);
+    return this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: context.sportEvent.id });
   }
 
   /** What stops the entry's lineup being submitted as of now, read fresh so it sees the latest pick write. */
@@ -551,8 +553,9 @@ export class SelectionService {
    * Everything one operation reads about a contest and one of its events (#713): the event
    * named, else the contest's next event not yet started, else its last. An event the contest
    * does not cover answers 404, unless `fallBackToCurrent` (a pick names its event through its
-   * field row, which is refused with its own error). Six parallel reads plus the squad
-   * memberships, which need the entries' squad ids first.
+   * field row, which is refused with its own error). Three parallel reads, then the squad
+   * memberships, the field's participants and the event's tiers and valuations, which need the
+   * entries and the field first. The field is read once and handed to the tier read (#1196).
    */
   private async loadContext(
     contestId: string,
@@ -584,18 +587,17 @@ export class SelectionService {
     }
 
     const sportEventId = sportEvent.id;
-    const [configuration, entries, field, tierGroups, valuations] = await Promise.all([
+    const [configuration, entries, field] = await Promise.all([
       this.deps.configurations.findByContest(contestId),
       this.deps.entries.findByContest(contestId),
       this.deps.field.findBySportEvent(sportEventId),
-      this.deps.tiers.getEffectiveTiersForSportEvent(sportEventId),
-      this.deps.tiers.getEffectiveValuationsForSportEvent(sportEventId),
     ]);
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
-    const [squadMemberships, participants] = await Promise.all([
+    const [squadMemberships, participants, { tiers: tierGroups, valuations }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
+      this.deps.tiers.getEffectiveTiersAndValuations(sportEventId, field),
     ]);
 
     return {
@@ -605,6 +607,7 @@ export class SelectionService {
       configuration,
       entries,
       squadMemberships,
+      valuations,
       // A configuration without typed settings takes no picks per tier: its roster is 0, and the
       // room refuses picks with SELECTION_CONFIG_INVALID rather than guessing a number.
       tiers: configuration?.configJson?.selectionType === SelectionType.TIERED
@@ -871,6 +874,37 @@ function lockedSelectionError(context: SelectionContext, contestId: string): Sel
 /** Whether the contest's status takes picks, so a refusal can only be its event's start (#713). */
 function takesPicks(status: ContestStatus): boolean {
   return status === ContestStatus.OPEN || status === ContestStatus.ACTIVE;
+}
+
+/** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
+function receiptInput(context: SelectionContext, entryIds: readonly string[]): EntrySubmittedReceiptInput {
+  return {
+    contest: context.contest,
+    sportEvent: context.sportEvent,
+    configuration: context.configuration,
+    valuations: context.valuations,
+    squadMemberships: context.squadMemberships,
+    entryIds,
+  };
+}
+
+/**
+ * The context as `recordDraw` leaves it: the contest drawn, and every event row of every entry
+ * submitted at the draw's time, as its one update writes them. The pick window and the reveal
+ * follow from the drawn contest.
+ */
+function withDraw(context: SelectionContext, drawnAt: Date, now: Date): SelectionContext {
+  const contest = { ...context.contest, drawnAt };
+  return {
+    ...context,
+    contest,
+    entries: context.entries.map((entry) => ({
+      ...entry,
+      events: entry.events.map((event) => ({ ...event, status: ContestEntryStatus.SUBMITTED, submittedAt: drawnAt })),
+    })),
+    acceptsPicks: areEventPicksOpen(contest, context.sportEvent, now),
+    picksRevealed: areEventPicksRevealed(contest, context.sportEvent, now),
+  };
 }
 
 /** The context with one entry replaced by its freshly written row. */

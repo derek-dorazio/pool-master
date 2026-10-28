@@ -517,8 +517,9 @@ export class InMemoryContestWorld {
       left.pickedAt.getTime() - right.pickedAt.getTime() || left.id.localeCompare(right.id));
     return {
       findByEntries: async (entryIds) => ordered().filter((pick) => entryIds.includes(pick.entryId)),
-      findByEntriesWithParticipant: async (entryIds) =>
-        ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesWithParticipant: async (entryIds, options) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId)
+          && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
       countByEntries: async (entryIds) => {
         const counts = new Map<string, number>();
         for (const pick of this.picks.values()) {
@@ -713,7 +714,6 @@ export class InMemoryContestWorld {
       sportLeagues: this.sportLeagueRepo(),
       eventParticipants: { listEventParticipants: async () => [] },
       tiers: {
-        getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },
       planEntitlements: this.planEntitlements(),

@@ -1095,6 +1095,28 @@ describe('ContestEntryPickRepository — read-only', () => {
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
   });
 
+  it('reads only the named event\'s picks when given one, and every event\'s without (#1196)', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Season Picks');
+    const entry = await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Season' } });
+    const first = await prisma.contestEntryPick.create({
+      data: { entryId: entry.id, sportEventParticipantId: field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-06-01T12:00:00.000Z') },
+    });
+    const second = await prisma.contestEntryPick.create({
+      data: { entryId: entry.id, sportEventParticipantId: later.field[0].id, contestFormat: 'ROSTER', pickedAt: new Date('2026-07-01T12:00:00.000Z') },
+    });
+
+    const inFirst = await repos().picks.findByEntriesWithParticipant([entry.id], { sportEventId: event.id });
+    const inLater = await repos().picks.findByEntriesWithParticipant([entry.id], { sportEventId: later.event.id });
+    const all = await repos().picks.findByEntriesWithParticipant([entry.id]);
+
+    expect(inFirst.map((pick) => [pick.id, pick.sportEventId])).toEqual([[first.id, event.id]]);
+    expect(inLater.map((pick) => [pick.id, pick.sportEventId])).toEqual([[second.id, later.event.id]]);
+    expect(all.map((pick) => pick.id)).toEqual([first.id, second.id]);
+  });
+
   it('counts picks across one contest\'s entries, ignoring other contests', async () => {
     const prisma = getPrisma();
     const { league, squads, event, field } = await createLeagueAndEvent();

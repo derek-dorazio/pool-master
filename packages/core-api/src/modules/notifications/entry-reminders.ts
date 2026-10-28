@@ -360,7 +360,7 @@ export class EntryReminders implements DueNotifications {
     switch (rules.selectionType) {
       case SelectionType.TIERED:
       case SelectionType.BUDGET_PICK: {
-        const picks = (await this.deps.picks.findByEntriesWithParticipant(ids)).filter((pick) => pick.sportEventId === sportEvent.id);
+        const picks = await this.deps.picks.findByEntriesWithParticipant(ids, { sportEventId: sportEvent.id });
         made = countBy(picks.map((pick) => pick.entryId));
         of = rules.selectionType === SelectionType.TIERED
           ? getTieredRosterSize(

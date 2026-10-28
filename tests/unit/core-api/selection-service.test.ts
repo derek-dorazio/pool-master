@@ -11,7 +11,7 @@ import type {
   SportEventParticipant,
   SquadMembership,
 } from '@poolmaster/shared/domain';
-import type { ContestEntryPickWithParticipant, ContestEntryRepository } from '@poolmaster/shared/db';
+import type { ContestEntryPickRepository, ContestEntryPickWithParticipant, ContestEntryRepository } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
 import { SelectionService } from '../../../packages/core-api/src/modules/selections/service';
 import { dealRandomDraw } from '../../../packages/core-api/src/modules/selections/selection-engines/random-draw';
@@ -20,6 +20,7 @@ import {
   ContestDrawEntriesChangedError,
 } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import type { SelectionServiceDeps } from '../../../packages/core-api/src/modules/selections/service';
+import type { EntrySubmittedReceiptInput } from '../../../packages/core-api/src/modules/contests/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import {
   fakeContestConfigurationRepo,
@@ -53,6 +54,8 @@ const ENTRY_ID = 'entry-1';
 const OTHER_ENTRY_ID = 'entry-2';
 const OWNER_USER_ID = 'user-owner';
 const SQUAD_ID = 'squad-1';
+/** When every test's `recordDraw` says the draw was recorded. */
+const RECORDED_DRAW_AT = new Date('2026-04-01T12:00:05.000Z');
 
 const TIER_GROUPS = [
   {
@@ -221,7 +224,7 @@ interface SetupOptions {
 function setup(options: SetupOptions = {}) {
   const createPick = jest.fn().mockResolvedValue({ id: 'new-pick' });
   const deletePick = jest.fn().mockResolvedValue(undefined);
-  const recordDraw = jest.fn().mockResolvedValue(undefined);
+  const recordDraw = jest.fn().mockResolvedValue({ drawnAt: RECORDED_DRAW_AT });
 
   const deps: SelectionServiceDeps = {
     contests: fakeContestRepo({
@@ -268,17 +271,16 @@ function setup(options: SetupOptions = {}) {
       findByIds: jest.fn().mockResolvedValue(PARTICIPANTS),
     }),
     picks: fakeContestEntryPickRepo({
-      findByEntriesWithParticipant: jest.fn().mockResolvedValue(options.picks ?? []),
+      // Filters by event as the adapter's query does; a test that stubs its own answer takes over.
+      findByEntriesWithParticipant: mockFn<ContestEntryPickRepository['findByEntriesWithParticipant']>(async (_entryIds, read) =>
+        (options.picks ?? []).filter((row) => read?.sportEventId === undefined || row.sportEventId === read.sportEventId)),
       countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
     }),
     pickWrites: { createPick, deletePick, recordDraw } as never,
     tiers: {
-      getEffectiveTiersForSportEvent: jest
+      getEffectiveTiersAndValuations: jest
         .fn()
-        .mockResolvedValue(options.tierGroups ?? TIER_GROUPS),
-      getEffectiveValuationsForSportEvent: jest
-        .fn()
-        .mockResolvedValue(options.valuations ?? VALUATIONS),
+        .mockResolvedValue({ tiers: options.tierGroups ?? TIER_GROUPS, valuations: options.valuations ?? VALUATIONS }),
     } as unknown as SportEventTierService,
     // An event that starts long after every test's clock, so only contest status gates picks.
     sportEvents: {
@@ -866,17 +868,33 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
   });
 
   it('sends the Entry submitted confirmation once, when a draft is submitted, and not on a repeat submit', async () => {
-    const sendEntrySubmittedEmail = jest.fn().mockResolvedValue(undefined);
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
     const first = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
-    first.deps.entryReceipts = { sendEntrySubmittedEmail };
+    first.deps.entryReceipts = { sendEntrySubmittedEmails };
 
     await first.service.submitEntry(submitEntryInput());
-    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, EVENT_ID);
+    expect(sendEntrySubmittedEmails).toHaveBeenCalledWith(expect.objectContaining({ entryIds: [ENTRY_ID] }));
 
     const repeat = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
-    repeat.deps.entryReceipts = { sendEntrySubmittedEmail };
+    repeat.deps.entryReceipts = { sendEntrySubmittedEmails };
     await repeat.service.submitEntry(submitEntryInput());
-    expect(sendEntrySubmittedEmail).toHaveBeenCalledTimes(1);
+    expect(sendEntrySubmittedEmails).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands the confirmation the contest, event, rules, valuations and owners the submit already read, so the email reads none of them again', async () => {
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    await service.submitEntry(submitEntryInput());
+
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.contest.id).toBe(CONTEST_ID);
+    expect(receipt.sportEvent.id).toBe(EVENT_ID);
+    expect(receipt.configuration?.configJson).toEqual(ONE_PER_TIER.configJson);
+    expect(receipt.valuations).toEqual(VALUATIONS);
+    expect(receipt.squadMemberships).toEqual([squadMembership(SQUAD_ID, OWNER_USER_ID)]);
+    expect(receipt.entryIds).toEqual([ENTRY_ID]);
   });
 
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
@@ -1175,18 +1193,46 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(new Set(dealt).size).toBe(4);
   });
 
-  it('sends every dealt entry its quick pick receipt once the draw is recorded, and still answers when one receipt fails', async () => {
+  it('sends every dealt entry its quick pick receipt in one batch once the draw is recorded, from the drawn contest', async () => {
     const context = setup({ ...DRAW, entries: [...DRAW.entries] });
-    const sendEntrySubmittedEmail = jest.fn()
-      .mockRejectedValueOnce(new Error('database unavailable'))
-      .mockResolvedValue(undefined);
-    context.deps.entryReceipts = { sendEntrySubmittedEmail };
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    context.deps.entryReceipts = { sendEntrySubmittedEmails };
 
     await context.service.runDraw(runDraw);
 
-    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, ENTRY_ID, EVENT_ID);
-    expect(sendEntrySubmittedEmail).toHaveBeenCalledWith(CONTEST_ID, OTHER_ENTRY_ID, EVENT_ID);
+    expect(sendEntrySubmittedEmails).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.contest.id).toBe(CONTEST_ID);
+    expect(receipt.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
+    expect(receipt.entryIds).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
+  });
+
+  it('still answers with the dealt room when sending the receipts fails, because the draw is already recorded', async () => {
+    const context = setup({ ...DRAW, entries: [...DRAW.entries] });
+    context.deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+
+    const view = await context.service.runDraw(runDraw);
+
     expect(context.recordDraw).toHaveBeenCalledTimes(1);
+    expect(view.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
+  });
+
+  it('answers with the room as dealt without reloading the contest: drawn at the recorded time, every entry submitted, picks closed and revealed', async () => {
+    const dealt = [
+      pick('pick-1', 'p-a', 'sep-a', { lineupSlot: 1 }),
+      pick('pick-2', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
+    ];
+    const { service, deps } = setup({ ...DRAW, entries: [...DRAW.entries], picks: dealt });
+
+    const view = await service.runDraw(runDraw);
+
+    expect(deps.contests.findById).toHaveBeenCalledTimes(1);
+    expect(deps.entries.findByContest).toHaveBeenCalledTimes(1);
+    expect(deps.field.findBySportEvent).toHaveBeenCalledTimes(1);
+    expect(view.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
+    expect(view.entries.map((row) => row.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
+    expect(view.acceptsPicks).toBe(false);
+    expect(view.picks.map((row) => row.entryId)).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
   });
 
   it('never deals a golfer who is out of the field', async () => {
@@ -1267,5 +1313,41 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
 
     expect(view.picks.map((row) => row.entryId)).toEqual([OTHER_ENTRY_ID]);
     expect(view.selectedEntryId).toBe(OTHER_ENTRY_ID);
+  });
+});
+
+describe('SelectionService — what one pick reads (#1196)', () => {
+  it('reads the event\'s field once per pick, and hands it to the one read of the tiers and valuations', async () => {
+    const { service, deps } = setup();
+
+    await service.submitSelection(submit({ participantId: 'sep-a' }));
+
+    expect(deps.field.findBySportEvent).toHaveBeenCalledTimes(1);
+    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledTimes(1);
+    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledWith(EVENT_ID, FIELD);
+  });
+
+  it('asks for only the event\'s picks on every pick read, so other events\' picks are filtered in the query', async () => {
+    const { service, deps } = setup({ entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
+
+    await service.submitSelection(submit({ participantId: 'sep-a' }));
+
+    const reads = (deps.picks.findByEntriesWithParticipant as jest.Mock).mock.calls as Array<[string[], { sportEventId?: string } | undefined]>;
+    expect(reads.length).toBeGreaterThan(0);
+    expect(reads.every(([, read]) => read?.sportEventId === EVENT_ID)).toBe(true);
+  });
+
+  it('leaves another event\'s picks out of the room\'s pick history and pick counts', async () => {
+    const { service } = setup({
+      picks: [
+        pick('pick-here', 'p-a', 'sep-a'),
+        { ...pick('pick-elsewhere', 'p-b', 'sep-b'), sportEventId: 'event-elsewhere' },
+      ],
+    });
+
+    const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
+
+    expect(view.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a']);
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(1);
   });
 });

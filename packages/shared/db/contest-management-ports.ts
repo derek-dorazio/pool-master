@@ -79,7 +79,15 @@ export interface ContestEntryPickWithParticipant extends ContestEntryPick {
  */
 export interface ContestEntryPickRepository {
   findByEntries(entryIds: readonly string[]): Promise<ContestEntryPick[]>;
-  findByEntriesWithParticipant(entryIds: readonly string[]): Promise<ContestEntryPickWithParticipant[]>;
+  /**
+   * The entries' picks with their field rows. With a `sportEventId`, only the picks in that one
+   * event, filtered in the query (#1196): a lineup is one event's picks (#713), and a season
+   * contest holds every week's.
+   */
+  findByEntriesWithParticipant(
+    entryIds: readonly string[],
+    options?: { sportEventId?: string },
+  ): Promise<ContestEntryPickWithParticipant[]>;
   /** Picks per entry; an entry with none is absent from the map. */
   countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
   /** How many picks the whole contest holds — the source of a pick's contest-wide pick number. */
