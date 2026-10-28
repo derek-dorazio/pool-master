@@ -56,8 +56,8 @@ function golfer(sportEventParticipantId: string, eventScoreToPar: number) {
   };
 }
 
-function pick(id: string, entryId: string, sportEventParticipantId: string) {
-  return { id, entryId, sportEventParticipantId, pickedAt: new Date('2026-04-01T12:00:00.000Z'), slot: undefined };
+function pick(id: string, entryId: string, sportEventId: string, sportEventParticipantId: string) {
+  return { id, entryId, sportEventId, sportEventParticipantId, pickedAt: new Date('2026-04-01T12:00:00.000Z'), slot: undefined };
 }
 
 function entry(id: string, entryNumber: number, submitted: readonly string[]): ContestEntryWithSquad {
@@ -98,10 +98,10 @@ function world({
   ]);
   const entries = [entry('entry-a', 1, [MASTERS, PGA]), entry('entry-b', 2, [MASTERS, PGA])];
   const picks = [
-    pick('pick-a-m', 'entry-a', 'sep-m1'),
-    pick('pick-a-p', 'entry-a', 'sep-p1'),
-    pick('pick-b-m', 'entry-b', 'sep-m2'),
-    pick('pick-b-p', 'entry-b', 'sep-p2'),
+    pick('pick-a-m', 'entry-a', MASTERS, 'sep-m1'),
+    pick('pick-a-p', 'entry-a', PGA, 'sep-p1'),
+    pick('pick-b-m', 'entry-b', MASTERS, 'sep-m2'),
+    pick('pick-b-p', 'entry-b', PGA, 'sep-p2'),
   ];
   const eventStandings: ContestEntryEventStandingResult[] = [];
   const standings: ContestEntryStandingResult[] = [];
@@ -162,8 +162,8 @@ function world({
           || row.events.some((event) => event.sportEventId === options.submittedFor && event.status === 'SUBMITTED'))),
     }),
     picks: fakeContestEntryPickRepo({
-      findByEntries: jest.fn().mockImplementation(async (entryIds: readonly string[]) =>
-        picks.filter((row) => entryIds.includes(row.entryId))),
+      findByEntriesAndEvents: jest.fn().mockImplementation(async (entryIds: readonly string[], sportEventIds: readonly string[]) =>
+        picks.filter((row) => entryIds.includes(row.entryId) && sportEventIds.includes(row.sportEventId))),
     }),
     eventParticipants: {
       listEventParticipants: jest.fn().mockImplementation(async (sportEventId: string) => fields.get(sportEventId) ?? []),

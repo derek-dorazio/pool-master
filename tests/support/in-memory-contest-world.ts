@@ -516,7 +516,8 @@ export class InMemoryContestWorld {
     const ordered = () => [...this.picks.values()].sort((left, right) =>
       left.pickedAt.getTime() - right.pickedAt.getTime() || left.id.localeCompare(right.id));
     return {
-      findByEntries: async (entryIds) => ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesAndEvents: async (entryIds, sportEventIds) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
       findByEntriesWithParticipant: async (entryIds) =>
         ordered().filter((pick) => entryIds.includes(pick.entryId)),
       countByEntries: async (entryIds) => {
