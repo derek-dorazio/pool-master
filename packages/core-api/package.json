@@ -13,7 +13,7 @@
     "@aws-sdk/client-sesv2": "^3.1156.0",
     "@aws-sdk/client-sns": "^3.1156.0",
     "@aws-sdk/client-sqs": "^3.1156.0",
-    "@fastify/fast-json-stringify-compiler": "^5.1.1",
+    "@fastify/fast-json-stringify-compiler": "~5.0.3",
     "@fastify/swagger": "9.9.2",
     "@fastify/swagger-ui": "^6.1.2",
     "@poolmaster/mock-contest-feed-provider": "*",
