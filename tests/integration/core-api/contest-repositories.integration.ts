@@ -1053,7 +1053,7 @@ describe('SportEventRepository.findAll start bounds (#893)', () => {
 });
 
 describe('ContestEntryPickRepository — read-only', () => {
-  it('reads picks in pick order, with their golfer, and counts them per entry', async () => {
+  it('reads picks in pick order, with their golfer and their event, only in the events asked for, and counts them per entry', async () => {
     const prisma = getPrisma();
     const { league, squads, event, field, suffix } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Picks');
@@ -1078,14 +1078,16 @@ describe('ContestEntryPickRepository — read-only', () => {
       },
     });
 
-    const picks = await repos().picks.findByEntries([picked.id, empty.id]);
+    const picks = await repos().picks.findByEntriesAndEvents([picked.id, empty.id], [event.id]);
     const withParticipant = await repos().picks.findByEntriesWithParticipant([picked.id]);
     const counts = await repos().picks.countByEntries([picked.id, empty.id]);
 
-    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat])).toEqual([
-      [earlier.id, 1, 'ROSTER'],
-      [later.id, 2, 'ROSTER'],
+    expect(picks.map((pick) => [pick.id, pick.slot, pick.contestFormat, pick.sportEventId])).toEqual([
+      [earlier.id, 1, 'ROSTER', event.id],
+      [later.id, 2, 'ROSTER', event.id],
     ]);
+    // Only the events asked for (#1162): the entry's picks are all in `event`, so another reads none.
+    await expect(repos().picks.findByEntriesAndEvents([picked.id], [randomUUID()])).resolves.toEqual([]);
     expect(withParticipant.map((pick) => pick.participant)).toEqual([
       {
         participantId: field[0].participantId,
@@ -1108,7 +1110,7 @@ describe('ContestEntryPickRepository — read-only', () => {
     expect(withParticipant.map((pick) => pick.sportEventId)).toEqual([event.id, event.id]);
     // An entry with no picks is absent from the map, not zero.
     expect(counts).toEqual(new Map([[picked.id, 2]]));
-    await expect(repos().picks.findByEntries([])).resolves.toEqual([]);
+    await expect(repos().picks.findByEntriesAndEvents([], [event.id])).resolves.toEqual([]);
     await expect(repos().picks.countByEntries([])).resolves.toEqual(new Map());
   });
 
