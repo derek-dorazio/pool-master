@@ -187,8 +187,20 @@ fresh rather than copying the old database (Derek, 2026-10-28):
    settings above all, re-saved from the root admin settings screen) and the hand-made
    `poolmaster_readonly` role for the IDE (`docs/DATABASE-ACCESS.md` has the statement).
 
-Leagues, contests and accounts made by hand on QA are gone afterwards; the ticket lists them for
-Derek before the apply.
+Before the apply, the ticket checks nothing is lost:
+
+- **Sport data.** Every data file, test file and test slate under
+  `packages/core-api/scripts/seed-golf/` reloads. Anything that is only on QA does not: data
+  loaded from a file that was never checked in (the 2026 WNBA Semifinals and Finals data, as of
+  2026-10-28, is being checked), and events entered by hand on the Manage pages. Derek exports a
+  count of events per sport league from QA with the read-only IDE connection before the apply,
+  and the same count after the reload must match.
+- **App settings.** Every setting's default is in code; QA's database holds only what a root
+  admin saved there. They do not belong in migrations, which run on every environment, so QA's
+  allow list would reach prod. The ticket lists QA's saved settings, and any Derek wants back
+  after every reset becomes the QA default in code, as "email off on QA" already is.
+- Leagues, contests and accounts made by hand on QA are gone afterwards; "Load all test data"
+  with test participants rebuilds the test leagues.
 
 **Squashing the migrations in the same move.** With no prod database yet and QA starting empty,
 nothing anywhere needs the 207 migrations' history, so they become one baseline migration
