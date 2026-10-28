@@ -247,7 +247,7 @@ function ContestEventsForm({
       </ul>
 
       <div className="space-y-2" data-testid="contest-events-chosen">
-        <h3 className="text-base font-semibold">
+        <h3 className="title-card text-base">
           {chosen.length === 1 ? '1 event, in order' : `${chosen.length} events, in order`}
         </h3>
         {chosen.length ? (

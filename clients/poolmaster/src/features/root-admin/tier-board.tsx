@@ -299,7 +299,7 @@ export function TierBoard({
   return (
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-base font-semibold text-foreground">Tier assignments</h3>
+        <h3 className="title-card text-base text-foreground">Tier assignments</h3>
         {dirty || priceInvalid ? (
           <div
             className="flex items-center gap-2"

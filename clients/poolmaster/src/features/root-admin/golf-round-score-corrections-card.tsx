@@ -328,7 +328,7 @@ export function GolfRoundScoreCorrectionsCard({
 
   return (
     <Tile>
-      <h3 className="text-base font-semibold text-foreground">Corrections</h3>
+      <h3 className="title-card text-base text-foreground">Corrections</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>

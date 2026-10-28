@@ -15,6 +15,7 @@
   --color-navy-300: #5673a1;
   --color-navy-400: #294b80;
   --color-navy-500: #16325e;   /* navy-light */
+  --color-navy-550: #192e4d;   /* dark mode: quiet fills */
   --color-navy-600: #0b1e3f;   /* navy — primary brand */
   --color-navy-700: #091832;
   --color-navy-800: #05122a;   /* navy-deep */
@@ -48,8 +49,10 @@
   /* Neutrals — borders, muted text, subtle fills */
   --color-neutral-50:  #fafafa;
   --color-neutral-100: #f2f2f0;
+  --color-neutral-150: #eaeae6;
   --color-neutral-200: #e5e5e1;
   --color-neutral-300: #cfcfc8;
+  --color-neutral-350: #c8c8b7;
   --color-neutral-400: #9a9a93;
   --color-neutral-500: #6b6b64;
   --color-neutral-600: #3f3f3a;

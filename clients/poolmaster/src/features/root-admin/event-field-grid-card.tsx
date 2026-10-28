@@ -259,7 +259,7 @@ export function EventFieldGridCard({
     <Tile>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">
+          <h3 className="title-card text-base text-foreground">
             Field ({entries.length})
           </h3>
           <p className="mt-1 text-sm text-muted-foreground">

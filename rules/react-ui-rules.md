@@ -374,6 +374,9 @@ state, stale actions, and unthemeable markup accumulate.
   code consumes them.
 - The `poolmaster/no-raw-theme-colors` ESLint rule guards raw Tailwind colour-scale
   classes and literal colours in feature code outside `features/shared/ui/`.
+- The `poolmaster/no-arbitrary-type-sizes` ESLint rule guards hand-typed `tracking-[…]` and
+  `text-[Npx]` in the same scope: letter spacing and text size come from the theme
+  (`tracking-eyebrow`, `tracking-label`, the `text-*` steps) or from `Eyebrow`.
 - The `poolmaster/no-inline-theme-styles` ESLint rule guards literal inline theme
   styles for color, border, shadow, and typography properties.
 - The brand's colours have one home per medium, kept in step by a test:
@@ -381,6 +384,13 @@ state, stale actions, and unthemeable markup accumulate.
   `packages/shared/domain/brand.ts` for everything outside it (system email, link preview
   images, the browser's tab colour). Those read `BRAND_COLORS`, never a hex of their own, and
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
+- The house type style is set once in the shared layer, not per page. The wordmark, card and
+  tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
+  titles are also italic. Page titles and section titles that sit on the page stay normal case. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
+  or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
+  `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
+  (navy header, gold column names). A `Button` used as a row or card, not as a button, adds
+  `normal-case tracking-normal`.
 
 ### Frontend Logging Discipline
 

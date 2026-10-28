@@ -12,7 +12,7 @@ import { LeagueIcon } from '@/features/leagues/league-icon';
 import { buildLeagueAdminContestPath, buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
-import { Button, EmptyState, ErrorState, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
+import { Button, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy } from './event-page-copy';
 import { buildStartDestination, parseStartRequest, type StartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
@@ -154,7 +154,7 @@ function StartForUser({ request }: { request: StartRequest }) {
   return (
     <section className="mx-auto max-w-2xl space-y-6" data-testid="start-page">
       <Tile className="space-y-4" padding="lg" radius="lg">
-        <p className="text-xs font-semibold uppercase text-muted-foreground">{`You're starting a ${copy.name} pool`}</p>
+        <Eyebrow>{`You're starting a ${copy.name} pool`}</Eyebrow>
         <h1 className="font-display text-3xl font-bold text-foreground">
           {runs.length ? 'Which league is it for?' : 'Start your own league'}
         </h1>

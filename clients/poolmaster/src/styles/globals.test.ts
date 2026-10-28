@@ -10,4 +10,10 @@ describe('theme file', () => {
 
     expect(undefinedTokens).toEqual([]);
   });
+
+  it('gives small labels the light navy haze in dark mode, since label blue on navy is too dark to read', () => {
+    const darkBlock = /\.dark \{([^}]*)\}/.exec(themeCss)?.[1] ?? '';
+
+    expect(darkBlock).toMatch(/--text-label: var\(--color-navy-200\);/);
+  });
 });

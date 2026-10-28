@@ -1,69 +1,89 @@
 # Sports Data Providers — Open Questions
 
-These question IDs are intended to stay stable as the discussion evolves.
+These question IDs are intended to stay stable as the discussion evolves. Each open question
+carries a recommendation; Derek answers by ID. Refreshed 2026-10-28 with the
+[brief](./overview.md).
 
-## Blocking Questions
+## Open
 
-- None currently blocking the integration plan; the plan can begin against
-  the recommended pair (Data Golf + The Odds API) for golf.
+- `SDP-007` Which providers to ask for a quote
+  - Ask SportsDataIO and Sportradar now, both for production real-time on golf, NFL,
+    college football, men's and women's college basketball, NBA, WNBA, MLB, NHL, NASCAR,
+    soccer and tennis, with display rights on a commercial contest site. Ask each whether
+    LPGA, LIV, DP World, F1, IndyCar, the PWHL, college baseball and softball are in.
+  - **Recommendation:** ask both now. The quote is the only number in the brief we cannot
+    look up, a sales cycle takes weeks, and two quotes are leverage. Derek sends the
+    requests (it needs a company name and contact); signing waits for the production plan.
 
-## Non-Blocking Questions
+- `SDP-008` First adapter
+  - **Recommendation:** SportsDataIO golf live scores, built on the free trial key and
+    tested on Replay of a real 2026 tournament. Golf already has live sync and a scheduler,
+    so it proves the port with the least new product work. Then Clutch Card box scores,
+    then team-sport game scores. One ticket each, filed when Derek agrees.
 
-- `SDP-001` Sport-agnostic odds adapter
-  - Should the odds adapter be one shared adapter that accepts a sport key
-    on each call, or one registered adapter instance per sport?
-  - Affects `provider-bindings.ts` shape and per-sport configuration.
+- `SDP-009` The public-source pipeline's job from here
+  - **Recommendation:** test data, season schedules, and results for sports no affordable
+    provider covers (horse racing, cycling, marathons, the PWHL, NCAA tennis). Live scores,
+    box scores and fields for provider-covered sports move to the provider as each adapter
+    lands. Until then the pipeline keeps doing what it does now on QA.
 
-- `SDP-002` Legal acceptability of The Odds API
-  - Confirm The Odds API's bookmaker aggregation is acceptable for our use
-    (contest tier derivation, not betting).
-  - Owner: legal/compliance review before we depend on it.
+- `SDP-010` Where the trial key lives
+  - **Recommendation:** an AWS Secrets Manager secret through Terraform, like the other
+    secrets, set on QA only; staging and prod get the production key later. Never in the
+    repo or a workflow file.
 
-- `SDP-004` API-Tennis production-readiness
-  - Tennis API is currently flagged as beta on api-sports.io.
-  - Confirm SLA / breaking-change posture before we depend on it for a
-    Grand Slam window.
+- `SDP-003` Odds
+  - Odds are not loaded today; tiers come from rankings and admin judgement.
+  - **Recommendation:** keep it that way. Revisit only if a contest needs live odds; then
+    The Odds API (free tier to build on, $30 a month and up) is the cheapest add-on, and
+    the legal check in `SDP-002` comes first.
 
-- `SDP-005` World Cup depth on API-Football
-  - Confirm API-Football covers everything we want for World Cup contests
-    (lineups, fixtures, group → knockout brackets, live scoring, results).
-  - If gaps exist, evaluate Sportmonks World Cup add-on.
+- `SDP-002` Legal acceptability of an odds aggregator
+  - Only matters if `SDP-003` changes. **Recommendation:** parked with it.
 
-- `SDP-006` Premium upgrade trigger
-  - When should we move primary feeds from Data Golf / CFBD / API-Football
-    to SportsDataIO or SportRadar?
-  - Likely triggers: redistribution licensing, official-feed contractual
-    requirement, or rate-limit ceilings.
+- `SDP-011` Horse racing feed
+  - **Recommendation:** none for now; the pipeline loads each race's field and result.
+    Before the 2027 Triple Crown, one evaluation of Goalserve's horse racing package on its
+    30-day free trial, the only self-serve US entries and results feed found.
+
+- `SDP-001` Sport-agnostic adapter shape
+  - Should one provider adapter take a sport on each call, or one instance per sport?
+  - **Recommendation:** one adapter per provider taking the sport on each call, since
+    SportsDataIO and Sportradar each use one API shape across sports; per-sport bindings
+    stay configuration. Settle in the first adapter's ticket.
+
+## Withdrawn
+
+- `SDP-004` API-Tennis readiness: tennis now comes from the primary provider.
+- `SDP-005` World Cup depth on API-Football: soccer now comes from the primary provider;
+  API-Sports stays the cheaper fallback.
+- `SDP-006` When to move to a premium provider: answered by the brief. There is no paid
+  provider yet, and the recommendation starts with a premium one on its free test tiers.
 
 ## Resolved Decisions
 
-- `SDP-R1` First-pass golf provider `(Resolved — tracked by active Golf sync/live-scoring epics)`
-  - **Data Golf alone** covers events, field, rankings, scoring, results,
-    and odds for golf — single subscription, single key, $30/mo.
-  - The Odds API is **not** required for first-pass golf; it earns its
-    place only when non-golf sports are activated.
+- `SDP-R1` First-pass golf provider `(Reversed 2026-10-28)`
+  - Was: Data Golf alone at $30 a month.
+  - Now: Data Golf's terms limit its site and API to personal, non-commercial use, so it
+    cannot back the site. Golf comes from the primary provider (`SDP-008`).
 
-- `SDP-R2` Cross-sport odds spine `(Resolved — future non-Golf provider work)`
-  - When NCAA, soccer, or tennis is activated, The Odds API is the
-    cross-sport odds adapter for those three sports. One subscription,
-    one key, three sports. Golf odds remain on Data Golf.
+- `SDP-R2` Cross-sport odds spine `(Superseded by SDP-003)`
 
-- `SDP-R3` No single-vendor lock-in `(Resolved)`
-  - PoolMaster integrates each provider behind the existing
-    `SportDataProvider` port. Adapters are interchangeable per sport per
-    feed via configuration.
+- `SDP-R3` No single-vendor lock-in `(Resolved, still holds)`
+  - PoolMaster integrates each provider behind the existing `SportDataProvider` port.
+    Adapters are interchangeable per sport per feed via configuration.
 
-- `SDP-R4` SportsDataIO and SportRadar are deferred `(Resolved)`
-  - Sales-gated pricing and procurement friction make them poor first-pass
-    choices. Both are kept as upgrade paths and can be added behind the
-    same port without product or contract changes.
+- `SDP-R4` SportsDataIO and Sportradar are deferred `(Reversed 2026-10-28)`
+  - Was: sales-gated pricing made them poor first choices.
+  - Now: both have free test environments, which is what the first pass needs; pricing
+    only matters at production, and the cheap self-serve alternatives either forbid
+    commercial use (Data Golf) or need several adapters.
 
-- `SDP-R5` Data Golf live polling rate-limit headroom `(Resolved — plan 119)`
-  - Data Golf documents a shared 45 requests/minute rate limit.
-  - PoolMaster's first production live-score cadence is 5 minutes, with QA
-    scheduled cadence at 15 minutes and manual event sync used for most
-    scenario testing.
-  - This cadence is comfortably inside the documented rate limit for the
-    first Golf implementation. If future fanout expands to many concurrent
-    provider calls, that expansion needs its own rate-budget story before
-    enabling it.
+- `SDP-R5` Live polling rate-limit headroom `(Resolved, carries over)`
+  - Production live-score cadence is 5 minutes, QA 15 minutes, manual event sync for most
+    scenario testing. Re-check against the chosen provider's production limits in the
+    first adapter's ticket.
+
+- `SDP-R6` Events are admin-authored `(Resolved, ADR 0009)`
+  - A provider supplies scores, fields and an event lookup to events an admin has linked.
+    It never creates events or moves their status. Provider choice does not change this.

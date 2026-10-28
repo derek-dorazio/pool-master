@@ -53,6 +53,7 @@ import {
   Alert,
   ChoiceCard,
   ErrorState,
+  Eyebrow,
   FormField,
   FormPage,
   Input,
@@ -867,7 +868,7 @@ export function CreateContestPage() {
         </FormField>
         {selectedEvent && parsedRules.configuration ? (
           <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm" data-testid="contest-members-will-see">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Members will see</div>
+            <Eyebrow tone="muted">Members will see</Eyebrow>
             <div className="font-semibold">{`${contestName.trim() || 'Untitled contest'} · ${selectedEvent.name}`}</div>
             <div>
               {[

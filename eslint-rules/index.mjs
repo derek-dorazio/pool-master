@@ -24,6 +24,7 @@ import noMockedApi from './no-mocked-api.mjs';
 import noNodeEnvReads from './no-node-env-reads.mjs';
 import noPlanBranching from './no-plan-branching.mjs';
 import noSportBranching from './no-sport-branching.mjs';
+import noArbitraryTypeSizes from './no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from './no-raw-theme-colors.mjs';
 import noUnawaitedSendError from './no-unawaited-send-error.mjs';
 
@@ -44,6 +45,7 @@ export default {
     'no-plan-branching': noPlanBranching,
     'no-sport-branching': noSportBranching,
     'no-raw-theme-colors': noRawThemeColors,
+    'no-arbitrary-type-sizes': noArbitraryTypeSizes,
     'no-unawaited-send-error': noUnawaitedSendError,
   },
 };

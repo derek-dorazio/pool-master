@@ -1,11 +1,11 @@
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { forwardRef, type ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { Link, type LinkProps } from "react-router";
 import { cn } from "./class-names";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 rounded-2xl text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-semibold uppercase tracking-button transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
   {
     variants: {
       variant: {
@@ -35,42 +35,36 @@ const buttonVariants = cva(
   },
 );
 
-export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
+export type ButtonProps = ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
     isLoading?: boolean;
   };
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  function Button(
-    {
-      asChild = false,
-      children,
-      className,
-      disabled,
-      isLoading = false,
-      size,
-      type = "button",
-      variant,
-      ...props
-    },
-    ref,
-  ) {
-    const Component = asChild ? Slot : "button";
+export function Button({
+  asChild = false,
+  children,
+  className,
+  disabled,
+  isLoading = false,
+  size,
+  type = "button",
+  variant,
+  ...props
+}: ButtonProps) {
+  const Component = asChild ? Slot : "button";
 
-    return (
-      <Component
-        className={cn(buttonVariants({ className, size, variant }))}
-        disabled={disabled || isLoading}
-        ref={ref}
-        type={asChild ? undefined : type}
-        {...props}
-      >
-        {children}
-      </Component>
-    );
-  },
-);
+  return (
+    <Component
+      className={cn(buttonVariants({ className, size, variant }))}
+      disabled={disabled || isLoading}
+      type={asChild ? undefined : type}
+      {...props}
+    >
+      {children}
+    </Component>
+  );
+}
 
 export type LinkButtonProps = LinkProps &
   VariantProps<typeof buttonVariants> & {

@@ -30,7 +30,7 @@ export function RecordBook({ leagueId }: { leagueId: string }) {
 function RecordList({ records, testId, title }: { records: RecordDto[]; testId: string; title: string }) {
   return (
     <Tile className="space-y-3" data-testid={testId} padding="sm" radius="lg">
-      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <h2 className="title-card text-lg text-foreground">{title}</h2>
       <ul className="space-y-3 text-sm">
         {records.map((record) => (
           <li className="space-y-0.5" data-testid={`record-${record.type}`} key={record.type}>
@@ -68,7 +68,7 @@ export function SquadRecords({ leagueId, squadId }: { leagueId: string; squadId:
 
   return (
     <Tile className="space-y-3" data-testid="squad-records" padding="sm" radius="lg">
-      <h2 className="text-lg font-semibold text-foreground">Records</h2>
+      <h2 className="title-card text-lg text-foreground">Records</h2>
       <ul className="space-y-2 text-sm">
         {held.map((record) => (
           <li className="flex flex-wrap justify-between gap-2" data-testid={`squad-record-${record.type}`} key={record.type}>

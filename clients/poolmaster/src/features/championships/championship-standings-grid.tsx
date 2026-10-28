@@ -56,7 +56,7 @@ export function ChampionshipStandingsGrid({
         header: 'Points',
         accessorFn: (row) => row.points,
         enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-semibold tabular-nums">{formatCupPoints(row.original.points)}</span>,
+        cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
       },
       ...Array.from({ length: FINISH_MATRIX_PLACES }, (_, index): ColumnDef<ChampionshipStandingRowDto, string | number> => ({
         id: `finish-${index + 1}`,
@@ -103,6 +103,7 @@ export function ChampionshipStandingsGrid({
 
   return (
     <DataGrid
+      headerTone="scoreboard"
       columns={columns}
       data={rows}
       emptyMessage={rows.length ? 'No squad matches that search.' : 'No squads in this league yet.'}

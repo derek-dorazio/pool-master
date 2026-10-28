@@ -109,7 +109,7 @@ export function PublicPlansPage() {
       {auth.isAuthenticated ? null : (
         <Tile className="flex flex-wrap items-center justify-between gap-4" padding="md" radius="md">
           <div>
-            <h3 className="font-semibold text-foreground">Start your league today</h3>
+            <h3 className="title-card text-foreground">Start your league today</h3>
             <p className="text-sm text-muted-foreground">Set up a league, invite your office, and open your first contest in minutes.</p>
           </div>
           {action('public-plans-start-footer')}

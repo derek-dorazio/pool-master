@@ -99,7 +99,7 @@ export function LeagueContestHistoryPage() {
         <Tile data-testid="league-contests-history">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Completed in {year}</h2>
+              <h2 className="title-card text-xl text-foreground">Completed in {year}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 Open a completed contest to view final standings and revealed picks.
               </p>

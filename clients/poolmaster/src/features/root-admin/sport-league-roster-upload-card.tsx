@@ -97,7 +97,7 @@ export function SportLeagueRosterUploadCard({ leagueId }: { leagueId: string }) 
 
   return (
     <Tile>
-      <h3 className="text-base font-semibold text-foreground">
+      <h3 className="title-card text-base text-foreground">
         Bulk-update rankings
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">

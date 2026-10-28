@@ -316,7 +316,7 @@ export function JoinLeaguePage() {
         </div>
 
         <div className="rounded-3xl border border-border bg-background p-4 sm:p-5">
-          <h3 className="text-base font-semibold text-foreground">Your name and icon</h3>
+          <h3 className="title-card text-base text-foreground">Your name and icon</h3>
           <p className="mt-2 text-sm text-muted-foreground">
             Every member plays in the league under a name and an icon. Choose yours now; you can change both later.
           </p>

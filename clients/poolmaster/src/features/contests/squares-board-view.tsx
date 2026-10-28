@@ -14,6 +14,7 @@ import {
   Button,
   ConfirmDialog,
   ErrorState,
+  Eyebrow,
   FormField,
   LoadingState,
   Select,
@@ -166,7 +167,7 @@ export function SquaresBoardView({
     <div className="space-y-6" data-testid="squares-board">
       {board.digits ? (
         <Tile data-testid="squares-winners">
-          <h3 className="mb-3 text-lg font-semibold">{isFinal ? 'Winners' : 'Winners so far'}</h3>
+          <h3 className="title-card mb-3 text-lg">{isFinal ? 'Winners' : 'Winners so far'}</h3>
           <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
             {moments.map((moment) => (
               <li
@@ -174,7 +175,7 @@ export function SquaresBoardView({
                 data-testid={`squares-winner-${moment.periodNumber}`}
                 key={moment.periodNumber}
               >
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{moment.label}</div>
+                <Eyebrow tone="muted">{moment.label}</Eyebrow>
                 {moment.winner ? (
                   <>
                     <div className="font-semibold">{moment.winner.entryName ?? 'No winner'}</div>
@@ -194,7 +195,7 @@ export function SquaresBoardView({
       <Tile>
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="text-xl font-semibold">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</h3>
+            <h3 className="title-card text-xl">{board.claimsOpen ? 'Claim your boxes' : 'The grid'}</h3>
             <p className="text-sm text-muted-foreground" data-testid="squares-claim-help">
               {board.claimsOpen
                 ? claimingEntryId === null

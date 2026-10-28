@@ -32,7 +32,7 @@ export function SetupSection({
       data-testid={testId}
     >
       <div>
-        <h3 className="flex items-baseline gap-2 text-base font-semibold" id={`${testId}-title`}>
+        <h3 className="title-card flex items-baseline gap-2 text-base" id={`${testId}-title`}>
           <span className="font-display text-sm text-muted-foreground">{step}</span>
           {title}
         </h3>

@@ -71,7 +71,7 @@ export function WithdrawalsCard({
 
   return (
     <Tile data-testid="root-admin-withdrawals">
-      <h3 className="text-base font-semibold text-foreground">Withdrawals</h3>
+      <h3 className="title-card text-base text-foreground">Withdrawals</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>

@@ -41,7 +41,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
     <Tile data-testid="root-admin-sport-league-calendar">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">{`${capitalize(eventNoun.one)} calendar`}</h3>
+          <h3 className="title-card text-base text-foreground">{`${capitalize(eventNoun.one)} calendar`}</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
           </p>

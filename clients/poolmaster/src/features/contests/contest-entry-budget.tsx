@@ -116,7 +116,7 @@ function BudgetParticipantRow({
   return (
     <Button
       className={cn(
-        'h-auto w-full items-center justify-start gap-3 px-4 py-3 text-left whitespace-normal',
+        'normal-case tracking-normal h-auto w-full items-center justify-start gap-3 px-4 py-3 text-left whitespace-normal',
         isSelected ? 'border-primary bg-primary/5 hover:bg-primary/5' : 'hover:border-foreground/30',
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}

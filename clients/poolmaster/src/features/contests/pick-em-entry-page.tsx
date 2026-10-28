@@ -409,7 +409,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {pickError ? <Alert data-testid="pick-em-pick-error" tone="danger">{pickError}</Alert> : null}
 
       <Tile>
-        <h3 className="mb-2 text-xl font-semibold" data-testid="contest-entry-builder-heading">
+        <h3 className="title-card mb-2 text-xl" data-testid="contest-entry-builder-heading">
           {canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
         </h3>
         {canChange ? (
@@ -441,7 +441,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {gamePicks.ownEntry && (canChange || isSubmitted) ? (
         <Tile className="space-y-3" data-testid="pick-em-submit-panel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="text-xl font-semibold">Submit</h3>
+            <h3 className="title-card text-xl">Submit</h3>
             <span className="text-sm text-muted-foreground" data-testid="pick-em-progress">
               {isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
             </span>

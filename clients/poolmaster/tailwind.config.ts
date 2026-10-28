@@ -73,6 +73,9 @@ const config: Config = {
           inverse: "var(--surface-inverse)",
           "inverse-deep": "var(--surface-inverse-deep)",
         },
+        label: "var(--text-label)",
+        "label-on-inverse": "var(--text-label-on-inverse)",
+        selected: "var(--surface-selected)",
         "on-inverse": "var(--text-on-inverse)",
         "on-inverse-muted": "var(--text-on-inverse-muted)",
         "on-inverse-subtle": "var(--surface-on-inverse-subtle)",
@@ -116,10 +119,12 @@ const config: Config = {
         body: ["var(--font-body)"],
         display: ["var(--font-display)"],
         mono: ["var(--font-mono)"],
+        numeric: ["var(--font-numeric)"],
       },
       letterSpacing: {
         eyebrow: "var(--tracking-eyebrow)",
         label: "var(--tracking-label)",
+        button: "var(--tracking-button)",
       },
       borderRadius: {
         lg: "var(--radius)",

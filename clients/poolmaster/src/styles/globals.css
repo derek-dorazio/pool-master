@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,600;0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,600;0,700;0,900;1,800;1,900&family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -13,6 +13,7 @@
     --color-navy-300: #5673a1;
     --color-navy-400: #294b80;
     --color-navy-500: #16325e;
+    --color-navy-550: #192e4d;
     --color-navy-600: #0b1e3f;
     --color-navy-700: #091832;
     --color-navy-800: #05122a;
@@ -35,7 +36,13 @@
     --color-red-500: #851923;
     --color-red-600: #5e0f17;
     --color-paper: #f5f5f2;
+    /* The one quiet second colour: small labels over titles and the selected tab. */
+    --color-field-blue: #3d64a8;
     --color-paper-warm: #fafaf7;
+    /* The brand's warm neutral steps (brand/theme/tokens.css): quiet fills and, on navy, quiet text. */
+    --color-neutral-150: #eaeae6;
+    --color-neutral-200: #e5e5e1;
+    --color-neutral-350: #c8c8b7;
     --color-ink: #0b0b0b;
     --color-ink-soft: #2b2b2b;
 
@@ -51,6 +58,9 @@
     --surface-on-inverse-subtle: color-mix(in srgb, var(--text-on-inverse) 10%, transparent);
     --surface-on-inverse-hover: color-mix(in srgb, var(--text-on-inverse) 15%, transparent);
     --text-accent: var(--color-gold-400);
+    --text-label: var(--color-field-blue);
+    --text-label-on-inverse: var(--color-navy-200);
+    --surface-selected: var(--color-field-blue);
     --text-danger: var(--color-red-400);
     --border-subtle: color-mix(in srgb, var(--color-navy-600) 10%, transparent);
     --border-default: color-mix(in srgb, var(--color-navy-600) 18%, transparent);
@@ -123,9 +133,9 @@
     --popover-foreground: var(--color-navy-600);
     --primary: var(--color-gold-400);
     --primary-foreground: var(--color-navy-600);
-    --secondary: hsl(60 7% 89%);
+    --secondary: var(--color-neutral-200);
     --secondary-foreground: var(--color-navy-600);
-    --muted: hsl(60 8% 91%);
+    --muted: var(--color-neutral-150);
     --muted-foreground: var(--text-muted);
     --accent: var(--color-gold-400);
     --accent-foreground: var(--color-navy-600);
@@ -138,9 +148,13 @@
     --font-display: "Archivo", ui-sans-serif, system-ui, sans-serif;
     --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    /* Leaderboard totals: condensed, so big numbers fit a phone row. */
+    --font-numeric: "Barlow Condensed", "Arial Narrow", ui-sans-serif, sans-serif;
     /* Uppercase small text: an eyebrow over a title or a status badge, and a caption under a number. */
     --tracking-eyebrow: 0.14em;
     --tracking-label: 0.12em;
+    /* Button text and header links: uppercase, opened a little. */
+    --tracking-button: 0.06em;
     --shadow-sm: 0 1px 2px color-mix(in srgb, var(--color-navy-600) 6%, transparent);
     --shadow-md: 0 4px 12px color-mix(in srgb, var(--color-navy-600) 8%, transparent);
     --shadow-lg: 0 12px 28px color-mix(in srgb, var(--color-navy-600) 12%, transparent);
@@ -183,6 +197,8 @@
   }
 
   .dark {
+    /* Label blue is too dark to read on navy; labels take navy haze, as on the light theme's navy panels. */
+    --text-label: var(--color-navy-200);
     --background: var(--color-navy-800);
     --foreground: var(--color-paper);
     --card: var(--color-navy-600);
@@ -191,10 +207,10 @@
     --popover-foreground: var(--color-paper);
     --primary: var(--color-gold-400);
     --primary-foreground: var(--color-navy-800);
-    --secondary: hsl(216 50% 20%);
+    --secondary: var(--color-navy-550);
     --secondary-foreground: var(--color-paper);
-    --muted: hsl(216 50% 20%);
-    --muted-foreground: hsl(60 13% 75%);
+    --muted: var(--color-navy-550);
+    --muted-foreground: var(--color-neutral-350);
     --accent: var(--color-gold-400);
     --accent-foreground: var(--color-navy-800);
     --destructive: var(--color-red-400);
@@ -236,6 +252,24 @@
 }
 
 @layer components {
+  /* Card and tile titles: the brand face in italic caps. Size and colour stay with the caller.
+     Page titles and section titles that sit on the page stay normal case. */
+  .title-card {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-style: italic;
+    text-transform: uppercase;
+  }
+
+  /* A leaderboard's total: the condensed number face, large and in even-width digits. */
+  .score-total {
+    font-family: var(--font-numeric);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
   .team-icon-theme-sunset {
     background-color: var(--team-icon-sunset-surface);
     color: var(--team-icon-sunset-text);

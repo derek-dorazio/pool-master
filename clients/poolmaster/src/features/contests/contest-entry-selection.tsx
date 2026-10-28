@@ -103,7 +103,7 @@ export function SelectionParticipantCard({
   return (
     <Button
       className={cn(
-        "h-auto w-full items-start justify-start gap-3 px-4 py-3 text-left whitespace-normal",
+        "normal-case tracking-normal h-auto w-full items-start justify-start gap-3 px-4 py-3 text-left whitespace-normal",
         isSelected
           ? "border-primary bg-primary/5 hover:bg-primary/5"
           : "hover:border-foreground/30",
@@ -201,7 +201,7 @@ export function EditableSelectionGroup({
       variant="subtle"
     >
       <Button
-        className="h-auto w-full flex-wrap items-start justify-between gap-3 p-0 text-left whitespace-normal hover:bg-transparent"
+        className="normal-case tracking-normal h-auto w-full flex-wrap items-start justify-between gap-3 p-0 text-left whitespace-normal hover:bg-transparent"
         data-testid={`contest-entry-group-toggle-${group.groupId}`}
         onClick={onToggle}
         ref={setToggleRef}

@@ -15,6 +15,7 @@ import { Button } from "./button";
 import { cn } from "./class-names";
 import { Input } from "./form-field";
 import { Pager } from "./pager";
+import { Tile } from "./tile";
 
 /** One search box across the grid's text columns (rules/ux-rules.md §12 rule 7). */
 export type DataGridSearch = {
@@ -66,6 +67,8 @@ type DataGridProps<TData> = {
   /** Whether each filterable column gets its own filter box. On by default. */
   showColumnFilters?: boolean;
   jumpToRow?: DataGridJumpToRow;
+  /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
+  headerTone?: "plain" | "scoreboard";
 };
 
 function getSortIndicator(direction: false | "asc" | "desc") {
@@ -95,6 +98,7 @@ export function DataGrid<TData>({
   pageSize,
   showColumnFilters = true,
   jumpToRow,
+  headerTone = "plain",
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -222,7 +226,7 @@ export function DataGrid<TData>({
           ) : null}
         </div>
       ) : null}
-      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+      <Tile className="overflow-x-auto" padding="none" radius="md">
         <table
           className="min-w-full border-collapse text-left text-sm"
           data-testid={tableTestId}
@@ -231,7 +235,12 @@ export function DataGrid<TData>({
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr
-                className="border-b border-border bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground"
+                className={cn(
+                  "border-b border-border text-xs uppercase",
+                  headerTone === "scoreboard"
+                    ? "bg-surface-inverse text-primary"
+                    : "bg-[var(--table-header-surface)] text-muted-foreground",
+                )}
                 key={headerGroup.id}
               >
                 {headerGroup.headers.map((header) => {
@@ -241,7 +250,10 @@ export function DataGrid<TData>({
                     <th className="px-4 py-3 font-medium" key={header.id}>
                       {header.isPlaceholder ? null : canSort ? (
                         <button
-                          className="inline-flex items-center gap-2 text-left text-inherit transition hover:text-foreground"
+                          className={cn(
+                            "inline-flex items-center gap-2 text-left text-inherit transition",
+                            headerTone === "scoreboard" ? "hover:text-on-inverse" : "hover:text-foreground",
+                          )}
                           onClick={header.column.getToggleSortingHandler()}
                           type="button"
                         >
@@ -348,7 +360,7 @@ export function DataGrid<TData>({
             )}
           </tbody>
         </table>
-      </div>
+      </Tile>
       {pageSize ? (
         <Pager
           onNext={() => table.nextPage()}
