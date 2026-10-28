@@ -190,9 +190,8 @@ fresh rather than copying the old database (Derek, 2026-10-28):
 Before the apply, the ticket checks nothing is lost:
 
 - **Sport data.** Every data file, test file and test slate under
-  `packages/core-api/scripts/seed-golf/` reloads. Anything that is only on QA does not: data
-  loaded from a file that was never checked in (the 2026 WNBA Semifinals and Finals data, as of
-  2026-10-28, is being checked), and events entered by hand on the Manage pages. Derek exports a
+  `packages/core-api/scripts/seed-golf/` reloads (checked 2026-10-28: every file loaded on QA is in
+  the repo). What does not come back is events entered by hand on the Manage pages. Derek exports a
   count of events per sport league from QA with the read-only IDE connection before the apply,
   and the same count after the reload must match.
 - **App settings.** Every setting's default is in code; QA's database holds only what a root
