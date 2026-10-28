@@ -191,9 +191,7 @@ Before the apply, the ticket checks nothing is lost:
 
 - **Sport data.** Every data file, test file and test slate under
   `packages/core-api/scripts/seed-golf/` reloads (checked 2026-10-28: every file loaded on QA is in
-  the repo). What does not come back is events entered by hand on the Manage pages. Derek exports a
-  count of events per sport league from QA with the read-only IDE connection before the apply,
-  and the same count after the reload must match.
+  the repo). Events entered by hand on the Manage pages are not kept (Derek, 2026-10-28).
 - **App settings.** Every setting's default is in code; QA's database holds only what a root
   admin saved there. They do not belong in migrations, which run on every environment, so QA's
   allow list would reach prod. The ticket lists QA's saved settings, and any Derek wants back
