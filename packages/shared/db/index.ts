@@ -130,6 +130,7 @@ export type {
 } from './email-ports';
 export type {
   CupContest,
+  LeagueCupContest,
   CupContestFinish,
   CupKey,
   CupRankedEntry,

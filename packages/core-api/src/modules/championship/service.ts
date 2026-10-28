@@ -125,57 +125,49 @@ export class ChampionshipService {
 
   /** One year of the league championship: its standings, medal tiles and progress. */
   async getYear(leagueId: string, year: number): Promise<ChampionshipYearView> {
-    const cupName = await this.deps.finishes.findCupName(leagueId);
-    if (cupName === null) {
-      this.deps.logger?.warn({ action: 'championship.year.leagueNotFound', data: { leagueId, year } }, 'Championship asked for a league that does not exist');
-      throw new ChampionshipLeagueNotFoundError(`League ${leagueId} was not found.`);
-    }
+    const cupName = await this.requireCupName(leagueId, year);
     const currentYear = championshipYear(this.now());
     const [finishes, leagueSquads, unfinished] = await Promise.all([
       this.deps.finishes.findByLeagueYear(leagueId, year),
       this.deps.squads.findByLeague(leagueId, true),
       year === currentYear ? this.deps.finishes.countUnfinishedContests(leagueId) : Promise.resolve(0),
     ]);
-    const counted = finishes.filter((finish) => finish.weight !== CupWeight.NOT_COUNTED);
-    const placed = new Set(counted.map((finish) => finish.squadId));
-    // Every active squad shows, at 0 until it places; an inactive one shows once it has placed.
-    const squads = leagueSquads
-      .filter((squad) => squad.isActive || placed.has(squad.id))
-      .sort((left, right) => left.name.localeCompare(right.name));
-    const squadById = new Map(squads.map((squad) => [squad.id, squad]));
-    const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
-    const ranked = rankChampionshipTallies(tallies);
-    // A year that is over is final, as a crowned cup is: no movement.
-    const before = year < currentYear ? null : positionsBeforeLatest(squads.map((squad) => squad.id), counted);
     this.deps.logger?.debug({ action: 'championship.year', data: { leagueId, year, finishCount: finishes.length } }, 'Read a championship year');
-    return {
-      leagueId,
-      year,
-      cupName,
-      isOver: year < currentYear,
-      contestsCounted: new Set(counted.map((finish) => finish.contestId)).size,
-      contestsToGo: unfinished,
-      standings: ranked.flatMap((row) => {
-        const squad = squadById.get(row.squadId);
-        return squad === undefined ? [] : [{
-          squad,
-          position: row.position,
-          displayPosition: row.displayPosition,
-          points: row.points,
-          finishes: row.finishes,
-          podiums: row.podiums,
-          topTens: row.topTens,
-          played: row.played,
-          movement: before === null ? null : (before.get(row.squadId) ?? row.position) - row.position,
-        }];
-      }),
-      // Tiles name leaders in standings order.
-      tiles: championshipTiles(ranked).map((tile) => ({
-        tile: tile.tile,
-        count: tile.count,
-        squads: tile.squadIds.flatMap((squadId) => squadById.get(squadId) ?? []),
-      })),
-    };
+    return yearView({ leagueId, year, cupName, currentYear, unfinished }, finishes, leagueSquads);
+  }
+
+  /**
+   * Every year the league has a counted finish in, and each of `alsoYears`, newest first, each as
+   * `getYear` reads it, from one read of the league's finishes: a squad's whole history reads
+   * every year at once.
+   */
+  async getAllYears(leagueId: string, alsoYears: readonly number[] = []): Promise<ChampionshipYearView[]> {
+    const cupName = await this.requireCupName(leagueId, null);
+    const currentYear = championshipYear(this.now());
+    const [finishes, leagueSquads, unfinished] = await Promise.all([
+      this.deps.finishes.findByLeague(leagueId),
+      this.deps.squads.findByLeague(leagueId, true),
+      this.deps.finishes.countUnfinishedContests(leagueId),
+    ]);
+    const byYear = new Map<number, LeagueYearFinish[]>();
+    for (const finish of finishes) {
+      byYear.set(finish.year, [...(byYear.get(finish.year) ?? []), finish]);
+    }
+    const years = [...new Set([
+      ...finishes.filter((finish) => finish.weight !== CupWeight.NOT_COUNTED).map((finish) => finish.year),
+      ...alsoYears,
+    ])].sort((left, right) => right - left);
+    this.deps.logger?.debug({ action: 'championship.allYears', data: { leagueId, yearCount: years.length, finishCount: finishes.length } }, 'Read every championship year');
+    return years.map((year) => yearView({ leagueId, year, cupName, currentYear, unfinished: year === currentYear ? unfinished : 0 }, byYear.get(year) ?? [], leagueSquads));
+  }
+
+  private async requireCupName(leagueId: string, year: number | null): Promise<string> {
+    const cupName = await this.deps.finishes.findCupName(leagueId);
+    if (cupName === null) {
+      this.deps.logger?.warn({ action: 'championship.year.leagueNotFound', data: { leagueId, year } }, 'Championship asked for a league that does not exist');
+      throw new ChampionshipLeagueNotFoundError(`League ${leagueId} was not found.`);
+    }
+    return cupName;
   }
 
   /** Every year the league has a counted finish in, newest first, with who leads or won it. */
@@ -202,6 +194,54 @@ export class ChampionshipService {
     this.deps.logger?.debug({ action: 'championship.years', data: { leagueId, yearCount: years.length } }, 'Listed championship years');
     return years;
   }
+}
+
+/** A championship year from its finishes (in the order they were settled) and the league's squads. */
+function yearView(
+  year: { leagueId: string; year: number; cupName: string; currentYear: number; unfinished: number },
+  finishes: readonly LeagueYearFinish[],
+  leagueSquads: readonly Squad[],
+): ChampionshipYearView {
+  const counted = finishes.filter((finish) => finish.weight !== CupWeight.NOT_COUNTED);
+  const placed = new Set(counted.map((finish) => finish.squadId));
+  // Every active squad shows, at 0 until it places; an inactive one shows once it has placed.
+  const squads = leagueSquads
+    .filter((squad) => squad.isActive || placed.has(squad.id))
+    .sort((left, right) => left.name.localeCompare(right.name));
+  const squadById = new Map(squads.map((squad) => [squad.id, squad]));
+  const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
+  const ranked = rankChampionshipTallies(tallies);
+  const isOver = year.year < year.currentYear;
+  // A year that is over is final, as a crowned cup is: no movement.
+  const before = isOver ? null : positionsBeforeLatest(squads.map((squad) => squad.id), counted);
+  return {
+    leagueId: year.leagueId,
+    year: year.year,
+    cupName: year.cupName,
+    isOver,
+    contestsCounted: new Set(counted.map((finish) => finish.contestId)).size,
+    contestsToGo: year.unfinished,
+    standings: ranked.flatMap((row) => {
+      const squad = squadById.get(row.squadId);
+      return squad === undefined ? [] : [{
+        squad,
+        position: row.position,
+        displayPosition: row.displayPosition,
+        points: row.points,
+        finishes: row.finishes,
+        podiums: row.podiums,
+        topTens: row.topTens,
+        played: row.played,
+        movement: before === null ? null : (before.get(row.squadId) ?? row.position) - row.position,
+      }];
+    }),
+    // Tiles name leaders in standings order.
+    tiles: championshipTiles(ranked).map((tile) => ({
+      tile: tile.tile,
+      count: tile.count,
+      squads: tile.squadIds.flatMap((squadId) => squadById.get(squadId) ?? []),
+    })),
+  };
 }
 
 /** Each squad's place before the year's latest counted contest went final; null until two have counted. */

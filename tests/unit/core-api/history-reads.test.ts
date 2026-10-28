@@ -66,6 +66,7 @@ async function leagueWithSeasons(seasonCount: number) {
   });
   const sportLeagues = fakeSportLeagueRepo({
     findById: jest.fn((id: string) => Promise.resolve({ id, name: SPORT_LEAGUES.get(id) ?? id } as never)),
+    findByIds: jest.fn((ids: readonly string[]) => Promise.resolve(ids.map((id) => ({ id, name: SPORT_LEAGUES.get(id) ?? id })) as never)),
   });
   const reads = { count: 0 };
   const cupService = new CupService({

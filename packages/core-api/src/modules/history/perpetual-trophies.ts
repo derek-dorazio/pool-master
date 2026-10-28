@@ -6,7 +6,6 @@
 
 import type { SeriesContest } from '@poolmaster/shared/db';
 import { CupWeight, type LeagueYearFinish, type SelectionType } from '@poolmaster/shared/domain';
-import { formsNoBracket } from '../events/sport-event-bracket-service';
 
 /** A trophy shows once the league has run its contest in this many years. */
 export const PERPETUAL_TROPHY_MIN_YEARS = 2;
@@ -34,7 +33,8 @@ export interface PerpetualTrophy {
  * game (a Super Bowl), a bracket and an event without games (a golf tournament, a race) do.
  */
 export function isWeekOfGames(games: SeriesContest['games']): boolean {
-  return games.length > 1 && formsNoBracket(games, (game) => game.sendsWinnerOn);
+  // `formsNoBracket` over the games' counts: one round, none linking anywhere.
+  return games.count > 1 && games.roundCount === 1 && games.sendingWinnerOn === 0;
 }
 
 /**

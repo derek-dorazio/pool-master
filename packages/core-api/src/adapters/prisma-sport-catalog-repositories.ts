@@ -85,6 +85,14 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
     return row ? toSportLeague(row) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<SportLeague[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...ids] } } });
+    return rows.map(toSportLeague);
+  }
+
   async findAll(filters: SportLeagueFilters): Promise<SportLeague[]> {
     const rows = await this.prisma.sportLeague.findMany({
       where: {
