@@ -183,21 +183,14 @@ fresh rather than copying the old database (Derek, 2026-10-28):
    reference data, such as sports, contest setups and event pages) and creates the fixture users,
    root admin included.
 3. Run **Load sport data** for the events and fields QA should carry.
-4. Redo the two things that lived only in the old database: QA's app settings (the email
-   settings above all, re-saved from the root admin settings screen) and the hand-made
-   `poolmaster_readonly` role for the IDE (`docs/DATABASE-ACCESS.md` has the statement).
+4. Recreate the hand-made `poolmaster_readonly` role for the IDE (`docs/DATABASE-ACCESS.md` has
+   the statement).
 
-Before the apply, the ticket checks nothing is lost:
-
-- **Sport data.** Every data file, test file and test slate under
-  `packages/core-api/scripts/seed-golf/` reloads (checked 2026-10-28: every file loaded on QA is in
-  the repo). Events entered by hand on the Manage pages are not kept (Derek, 2026-10-28).
-- **App settings.** Every setting's default is in code; QA's database holds only what a root
-  admin saved there. They do not belong in migrations, which run on every environment, so QA's
-  allow list would reach prod. The ticket lists QA's saved settings, and any Derek wants back
-  after every reset becomes the QA default in code, as "email off on QA" already is.
-- Leagues, contests and accounts made by hand on QA are gone afterwards; "Load all test data"
-  with test participants rebuilds the test leagues.
+QA is only for testing (Derek, 2026-10-28), so nothing else carries over: QA starts on the code
+defaults for every app setting (a root admin turns email on again when a test needs it), and
+leagues, contests, accounts and events made by hand are not kept. Every sport data file loaded
+on QA is in the repo (checked 2026-10-28), and "Load all test data" with test participants
+rebuilds the test leagues.
 
 **Squashing the migrations in the same move.** With no prod database yet and QA starting empty,
 nothing anywhere needs the 207 migrations' history, so they become one baseline migration
