@@ -783,7 +783,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     await expect(repos().contests.findJoinableByReleasedEdition({ ...edition, eventSeriesId: randomUUID() })).resolves.toEqual([]);
   });
 
-  it('leaves out a COMPLETED pool, a drawn pool, a pool that already has the edition and a pool of another year\'s events, keeping the rest oldest first', async () => {
+  it('leaves out a COMPLETED pool, a drawn pool, a squares-drawn pool, a pool that already has the edition and a pool of another year\'s events, keeping the rest (one with no events yet among them) oldest first', async () => {
     const prisma = getPrisma();
     const { league, event, suffix, covering, edition } = await seriesWithTemplate();
     const first = await contestFromTemplate(league.id, event.id, 'Live Pool', covering.id, ContestStatus.ACTIVE);
@@ -791,6 +791,11 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
     await contestFromTemplate(league.id, event.id, 'Finished Pool', covering.id, ContestStatus.COMPLETED);
     const drawn = await contestFromTemplate(league.id, event.id, 'Drawn Pool', covering.id);
     await prisma.contestDraw.create({ data: { contestId: drawn.id, seed: 'seed', fieldOrder: [], entryOrder: [] } });
+    const squaresDrawn = await contestFromTemplate(league.id, event.id, 'Squares Drawn Pool', covering.id);
+    await prisma.contestSquaresDraw.create({
+      data: { contestId: squaresDrawn.id, seed: 'seed', rowDigits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], columnDigits: [9, 8, 7, 6, 5, 4, 3, 2, 1, 0] },
+    });
+    const noEvents = await contestFromTemplate(league.id, [], 'No Events Yet Pool', covering.id);
     const { event: released } = await createLaterEvent(suffix);
     await contestFromTemplate(league.id, [event.id, released.id], 'Already Has It', covering.id);
     const { event: lastYear } = await createLaterEvent(suffix, new Date('2025-07-16T12:00:00.000Z'));
@@ -799,7 +804,7 @@ describe('ContestRepository.findJoinableByReleasedEdition (#714, #1179)', () => 
 
     const found = await repos().contests.findJoinableByReleasedEdition({ ...edition, id: released.id });
 
-    expect(found.map((contest) => contest.name)).toEqual([first.name, second.name]);
+    expect(found.map((contest) => contest.name)).toEqual([first.name, second.name, noEvents.name]);
   });
 });
 

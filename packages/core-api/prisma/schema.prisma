@@ -1336,7 +1336,6 @@ model ContestConfiguration {
   participantScoringRules ParticipantContestScoringRule[]
   prizeDefinitions        ContestPrizeDefinition[]
 
-  @@index([templateId])
   @@map("contest_configurations")
 }
 
