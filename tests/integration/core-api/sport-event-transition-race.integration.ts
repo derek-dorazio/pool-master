@@ -80,4 +80,24 @@ describe('a sport event status change made by two callers at once', () => {
     expect(settled).toEqual([event.id]);
     expect((await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } })).status).toBe('COMPLETED');
   });
+
+  it('does not settle the event again when the scheduler completes it after an admin already has', async () => {
+    const event = await createInProgressEvent();
+    const { service, settled } = lifecycleCountingSettlements();
+    await service.applySportEventStatusTransition({
+      sportEventId: event.id,
+      toStatus: SportEventStatus.COMPLETED,
+      actor: { type: 'ROOT_ADMIN' },
+    });
+
+    // The scheduler read the event as IN_PROGRESS before the admin's change landed.
+    await service.applySportEventStatusTransition({
+      sportEventId: event.id,
+      toStatus: SportEventStatus.COMPLETED,
+      actor: { type: 'SYSTEM' },
+      fromStatus: SportEventStatus.IN_PROGRESS,
+    });
+
+    expect(settled).toEqual([event.id]);
+  });
 });

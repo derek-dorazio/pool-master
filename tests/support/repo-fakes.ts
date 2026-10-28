@@ -285,6 +285,7 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findAll: many(),
     create: echoCreate('sport-event'),
     update: echoUpdate(),
+    transitionStatus: one(),
     delete: nothing(),
     countParticipants: noCounts(),
     countUntieredActiveParticipants: noCounts(),
