@@ -3,6 +3,15 @@
 -- and dropping the indexes nothing reads or another index already leads with.
 
 -- DropIndex
+DROP INDEX "contest_prize_definitions_contest_configuration_id_idx";
+
+-- DropIndex
+DROP INDEX "contests_league_id_idx";
+
+-- DropIndex
+DROP INDEX "participant_contest_scoring_rules_contest_configuration_id_idx";
+
+-- DropIndex
 DROP INDEX "participants_sport_id_idx";
 
 -- DropIndex
@@ -16,15 +25,6 @@ DROP INDEX "sport_event_participant_standings_status_idx";
 
 -- DropIndex
 DROP INDEX "sport_event_participants_sport_event_id_idx";
-
--- DropIndex
-DROP INDEX "contest_prize_definitions_contest_configuration_id_idx";
-
--- DropIndex
-DROP INDEX "contests_league_id_idx";
-
--- DropIndex
-DROP INDEX "participant_contest_scoring_rules_contest_configuration_id_idx";
 
 -- CreateIndex
 CREATE INDEX "contest_configurations_template_id_idx" ON "contest_configurations"("template_id");
@@ -54,10 +54,10 @@ CREATE INDEX "cups_sport_league_id_idx" ON "cups"("sport_league_id");
 CREATE INDEX "email_messages_entry_id_idx" ON "email_messages"("entry_id");
 
 -- CreateIndex
-CREATE INDEX "email_messages_league_id_created_at_idx" ON "email_messages"("league_id", "created_at");
+CREATE INDEX "email_messages_league_id_idx" ON "email_messages"("league_id");
 
 -- CreateIndex
-CREATE INDEX "email_messages_recipient_user_id_created_at_idx" ON "email_messages"("recipient_user_id", "created_at");
+CREATE INDEX "email_messages_recipient_user_id_idx" ON "email_messages"("recipient_user_id");
 
 -- CreateIndex
 CREATE INDEX "email_suppressions_email_message_id_idx" ON "email_suppressions"("email_message_id");

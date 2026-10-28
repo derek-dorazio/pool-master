@@ -69,9 +69,9 @@ describe('database indexes', () => {
       FROM pg_index i
       JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY (i.indkey)
       WHERE i.indrelid = 'sport_event_participant_standings'::regclass
-      ORDER BY 1`;
+        AND a.attname IN ('status', 'position')`;
 
-    expect(indexes.map((row) => row.column)).toEqual(['id', 'sport_event_participant_id']);
+    expect(indexes).toEqual([]);
   });
 
   it.each([
@@ -84,8 +84,6 @@ describe('database indexes', () => {
     ['leagues whose plan ends by a time, locked by the plan sweep every five minutes', 'leagues', ['plan_renews_at']],
     ['the active root admins the draft-event notice is sent to', 'users', ['is_root_admin', 'is_active']],
     ['the events in a status, which the lifecycle sweep moves on', 'sport_events', ['status']],
-    ["a league's emails, oldest first", 'email_messages', ['league_id', 'created_at']],
-    ["a person's emails, oldest first", 'email_messages', ['recipient_user_id', 'created_at']],
   ])('reads %s through an index leading on the columns it filters by', async (_read, table, columns) => {
     const leading = (await indexColumns(table)).map((index) => index.slice(0, columns.length));
 

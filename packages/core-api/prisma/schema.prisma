@@ -938,8 +938,8 @@ model EmailMessage {
   @@index([contestId, templateKey])
   @@index([templateKey, leagueId])
   @@index([entryId])
-  @@index([leagueId, createdAt])
-  @@index([recipientUserId, createdAt])
+  @@index([leagueId])
+  @@index([recipientUserId])
   @@map("email_messages")
 }
 
