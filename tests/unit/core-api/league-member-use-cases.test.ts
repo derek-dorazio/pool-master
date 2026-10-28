@@ -186,12 +186,12 @@ describe('MemberService — removing a member', () => {
     expect(world.tables.ownerInvitations.get(invitation.id)?.status).toBe(SquadOwnerInvitationStatus.PENDING);
   });
 
-  it('leaves the member, their team and its pending invitations untouched when revoking the invitations fails part way', async () => {
+  it('leaves the member, their team and its pending invitations untouched when revoking the invitations fails', async () => {
     const { world, league } = leagueWithCommissioner();
     const member = world.addUser();
     const { squad } = world.addMember({ league, user: member });
     const invitation = pendingInvitationFor(world, league, squad, member.id);
-    jest.spyOn(world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+    jest.spyOn(world.ownerInvitations, 'revokePendingBySquad').mockRejectedValue(new Error('database unavailable'));
 
     await expect(memberService(world).removeMember(league.id, member.id)).rejects.toThrow('database unavailable');
 

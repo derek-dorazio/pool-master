@@ -6,7 +6,7 @@ import type {
   UserTimeFormat as PrismaUserTimeFormat,
 } from '@prisma/client';
 import type { UserRepository, UserSearchFilters, UserUpdate } from '@poolmaster/shared/db';
-import { AuthProvider, TimeFormat, type User } from '@poolmaster/shared/domain';
+import { AuthProvider, LeagueMembershipStatus, TimeFormat, type User } from '@poolmaster/shared/domain';
 
 /**
  * Prisma adapter for `UserRepository`.
@@ -46,10 +46,10 @@ export class PrismaUserRepository implements UserRepository {
     return rows.map(mapToUser);
   }
 
-  async findByLeague(leagueId: string): Promise<User[]> {
+  async findActiveByLeague(leagueId: string): Promise<User[]> {
     // The league join IS the scope (A4 + A6) — there is no way to call this unscoped.
     const rows = await this.prisma.user.findMany({
-      where: { memberships: { some: { leagueId } } },
+      where: { memberships: { some: { leagueId, status: LeagueMembershipStatus.ACTIVE } } },
       orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
     });
     return rows.map(mapToUser);

@@ -112,7 +112,7 @@ export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepos
     findById: one(),
     findByEmail: one(),
     findAll: many(),
-    findByLeague: many(),
+    findActiveByLeague: many(),
     findByIdentifier: one(),
     findHolderOtherThan: one(),
     countActiveRootAdmins: jest.fn().mockResolvedValue(0),
@@ -192,6 +192,7 @@ export function fakeSquadOwnerInvitationRepo(
     findByLeague: many(),
     findByCode: one(),
     findPendingByLeagueAndEmail: one(),
+    revokePendingBySquad: jest.fn().mockResolvedValue(0),
     create: echoCreate('squad-owner-invitation'),
     update: echoUpdate(),
     ...overrides,
@@ -224,7 +225,7 @@ export function fakeLeagueInvitationRepo(
 ): LeagueInvitationRepository {
   return {
     findById: one(),
-    findByLeague: many(),
+    findOutstandingByLeague: many(),
     findByCode: one(),
     // Single row despite the plural-sounding name — the port declares
     // `Promise<LeagueInvitation | null>`. Defaulting this to [] made every email look

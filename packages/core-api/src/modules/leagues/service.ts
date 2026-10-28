@@ -200,7 +200,7 @@ export class LeagueService {
     const [leagues, viewerMemberships] = await Promise.all([
       scope === 'all'
         ? this.deps.leagues.findAll(filters)
-        : this.findLeaguesForUser(userId, filters),
+        : this.deps.leagues.findByUser(userId, filters),
       this.deps.memberships.findByUser(userId),
     ]);
 
@@ -221,25 +221,6 @@ export class LeagueService {
       data: { scope, userId, leagueCount: rows.length },
     }, 'Listed leagues');
     return rows;
-  }
-
-  /** `findByUser` narrowed by the same filters the unscoped read accepts. */
-  private async findLeaguesForUser(
-    userId: string,
-    filters?: LeagueSearchFilters,
-  ): Promise<League[]> {
-    const leagues = await this.deps.leagues.findByUser(userId);
-    const search = filters?.search?.trim().toLowerCase();
-
-    return leagues.filter((league) => {
-      if (filters?.isActive !== undefined && league.isActive !== filters.isActive) {
-        return false;
-      }
-      if (search && !league.name.toLowerCase().includes(search)) {
-        return false;
-      }
-      return true;
-    });
   }
 
   /**

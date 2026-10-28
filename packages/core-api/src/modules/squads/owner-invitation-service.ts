@@ -109,7 +109,7 @@ export class SquadOwnerInvitationService {
     const visibleInvitations = isRootAdmin || isCommissioner
       ? invitations
       : invitations.filter((invitation) => invitation.squadId === actorSquadMembership?.squadId);
-    return this.mapInvitationDtos(visibleInvitations);
+    return this.mapInvitationDtos(leagueId, visibleInvitations);
   }
 
   async inviteOwner(input: InviteOwnerInput): Promise<TeamOwnerInvitationDto> {
@@ -681,43 +681,55 @@ export class SquadOwnerInvitationService {
     return membership;
   }
 
+  /** One read of the league's squads for the whole list, not one per invitation (#1182). */
   private async mapInvitationDtos(
+    leagueId: string,
     invitations: SquadOwnerInvitation[],
   ): Promise<TeamOwnerInvitationDto[]> {
-    return Promise.all(invitations.map((invitation) => this.mapInvitationDto(invitation)));
+    if (invitations.length === 0) {
+      return [];
+    }
+    const squads = new Map((await this.squadRepo.findByLeague(leagueId, true)).map((squad) => [squad.id, squad]));
+    return invitations.map((invitation) => toInvitationDto(invitation, squads.get(invitation.squadId)));
   }
 
   private async mapInvitationDto(
     invitation: SquadOwnerInvitation,
   ): Promise<TeamOwnerInvitationDto> {
-    const squad = await this.squadRepo.findById(invitation.squadId);
-    if (!squad) {
-      throw new SquadOwnerInvitationOperationError(
-        'This invitation is no longer available',
-        'SQUAD_OWNER_INVITATION_TARGET_MISSING',
-      );
-    }
-    return {
-      id: invitation.id,
-      leagueId: invitation.leagueId,
-      squadId: invitation.squadId,
-      email: invitation.email,
-      inviteCode: invitation.inviteCode,
-      status: invitation.status,
-      invitedBy: invitation.invitedBy,
-      acceptedBy: invitation.acceptedBy ?? null,
-      acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
-      expiresAt: invitation.expiresAt?.toISOString() ?? null,
-      replacementForUserId: invitation.replacementForUserId ?? null,
-      createdAt: invitation.createdAt.toISOString(),
-      updatedAt: invitation.updatedAt.toISOString(),
-      team: {
-        id: squad.id,
-        name: squad.name,
-        iconKey: squad.iconKey,
-      },
-    };
+    return toInvitationDto(invitation, (await this.squadRepo.findById(invitation.squadId)) ?? undefined);
   }
+}
+
+function toInvitationDto(
+  invitation: SquadOwnerInvitation,
+  squad: Squad | undefined,
+): TeamOwnerInvitationDto {
+  if (!squad) {
+    throw new SquadOwnerInvitationOperationError(
+      'This invitation is no longer available',
+      'SQUAD_OWNER_INVITATION_TARGET_MISSING',
+    );
+  }
+  return {
+    id: invitation.id,
+    leagueId: invitation.leagueId,
+    squadId: invitation.squadId,
+    email: invitation.email,
+    inviteCode: invitation.inviteCode,
+    status: invitation.status,
+    invitedBy: invitation.invitedBy,
+    acceptedBy: invitation.acceptedBy ?? null,
+    acceptedAt: invitation.acceptedAt?.toISOString() ?? null,
+    expiresAt: invitation.expiresAt?.toISOString() ?? null,
+    replacementForUserId: invitation.replacementForUserId ?? null,
+    createdAt: invitation.createdAt.toISOString(),
+    updatedAt: invitation.updatedAt.toISOString(),
+    team: {
+      id: squad.id,
+      name: squad.name,
+      iconKey: squad.iconKey,
+    },
+  };
 }
 
 function normalizeEmail(email: string): string {
