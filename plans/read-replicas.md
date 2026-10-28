@@ -175,11 +175,34 @@ Derek applies from his Mac with the `apply-terraform` skill.
   read-only IDE connection reads a reader and leaves the writer alone. `docs/DATABASE-ACCESS.md`
   and the Terraform README follow.
 
-**Moving QA.** QA's data is test data, but Derek has events and settings loaded there. The move
-keeps it: snapshot the RDS instance, restore the snapshot into the new Aurora cluster (Aurora
-restores from an RDS Postgres snapshot directly), point the URLs at the cluster, then delete the
-old instance. About 20 minutes of QA downtime. The QA reset script and the read-only
-`poolmaster_readonly` role come across in the snapshot.
+**Moving QA.** QA holds no real data, and its events and fields are all checked in, so QA starts
+fresh rather than copying the old database (Derek, 2026-10-28):
+
+1. Apply the Terraform: it creates the empty Aurora cluster and deletes the RDS instance.
+2. Run the **Reset QA database** workflow: it runs every migration (which also load the
+   reference data, such as sports, contest setups and event pages) and creates the fixture users,
+   root admin included.
+3. Run **Load sport data** for the events and fields QA should carry.
+4. Redo the two things that lived only in the old database: QA's app settings (the email
+   settings above all, re-saved from the root admin settings screen) and the hand-made
+   `poolmaster_readonly` role for the IDE (`docs/DATABASE-ACCESS.md` has the statement).
+
+Leagues, contests and accounts made by hand on QA are gone afterwards; the ticket lists them for
+Derek before the apply.
+
+**Squashing the migrations in the same move.** With no prod database yet and QA starting empty,
+nothing anywhere needs the 207 migrations' history, so they become one baseline migration
+(Derek, 2026-10-28). It must keep the reference data the migrations insert (sports, sport leagues,
+contest setups, event pages, email templates), not just the tables. The proof: run the old chain
+on one empty database and the baseline on another, then compare `pg_dump` of both, schema and
+data, which must match exactly. `rules:check:migration-timestamps` and the schema drift check
+pass on the result.
+
+The baseline cannot deploy onto the old QA database (its migration history would not match), so
+the order is: apply the Terraform (QA's database is now empty), merge the squash (the deploy's
+migrate step builds the empty cluster from the baseline), then Reset QA and Load sport data.
+Any open PR that adds a migration rebases onto the baseline, so the squash merges when no such PR
+is mid-review.
 
 **Prod** starts on Aurora when the production epic (#917) is applied; the production plan's
 database rows change to match in the same PR as the Terraform.
@@ -218,29 +241,33 @@ Sub-issues of #1156, created once Derek answers the questions.
 
 1. **Aurora in Terraform, and the QA move.** The cluster, writer, readers, both URLs, alarms,
    outputs, the tunnel flag, README, `docs/DATABASE-ACCESS.md`, the production plan's database
-   rows, and the snapshot-restore steps for QA. Derek applies; nothing in the app changes yet
+   rows, and the fresh-start steps for QA. Derek applies; nothing in the app changes yet
    (`DATABASE_READ_URL` is set but unread).
-2. **The read pool and the router.** `DATABASE_READ_URL` required (in `types/process-env.d.ts`,
+2. **Squash the migrations into one baseline.** The `pg_dump` comparison above in the PR body.
+   Merges right after ticket 1 is applied to QA, then Reset QA and Load sport data.
+3. **The read pool and the router.** `DATABASE_READ_URL` required (in `types/process-env.d.ts`,
    `.env.example`, CI and the npm scripts), the second client, the routing proxy, `ReadSource`
    and `readFromReader`, the unit tests and the read-only integration test. New sections in
    `rules/architecture-rules.md` (how reads are routed) and `rules/service-rules.md` (when a
-   flow may opt in: it never writes). No route opts in yet. Merges after ticket 1 is applied.
-3. **Marketing, catalog and history on the reader.** The first two rows of the table.
-4. **Completed contests and events on the reader.** The status-then-reader rule.
-5. **Email and notification content on the reader.** The sweeps' build steps.
+   flow may opt in: it never writes). No route opts in yet. Can be built beside tickets 1 and 2;
+   merges after ticket 1 is applied.
+4. **Marketing, catalog and history on the reader.** The first two rows of the table.
+5. **Completed contests and events on the reader.** The status-then-reader rule.
+6. **Email and notification content on the reader.** The sweeps' build steps.
 
-Tickets 3 to 5 can run in parallel once ticket 2 merges.
+Tickets 4 to 6 can run in parallel once ticket 3 merges.
 
 ## Questions, with the answer this plan takes
 
-Settled with Derek: Aurora, Serverless v2 on QA and prod, QA single-AZ with no reader, no
+Settled with Derek: Aurora, Serverless v2 on QA and prod, QA single-AZ with no reader and a fresh start (no snapshot), the migrations squashed in the same
+move, no
 read-your-writes or fallback machinery, write-then-read flows on the writer.
 
 1. **How high may prod's capacity go?** The ceiling caps both performance and the bill.
    *Recommendation: 4 ACU per instance to start* (about 8 GB of memory each, at most about $350 a
    month per instance flat out), raised when CloudWatch shows instances sitting at it.
 2. **Move live leaderboards to the reader too?** They never write and are the heaviest game-day
-   read. *Recommendation: yes, as ticket 6 after tickets 3 to 5,* once QA shows the reader
+   read. *Recommendation: yes, as ticket 7 after tickets 4 to 6,* once QA shows the reader
    working.
 3. **Automatic reader scaling (Aurora adds readers under load)?** *Recommendation: not now.*
    Serverless v2 already grows each reader; add readers by hand with `db_reader_count`, and
