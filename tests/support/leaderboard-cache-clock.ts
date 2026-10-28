@@ -5,7 +5,7 @@
  * and Fastify run as usual. Call `restoreLeaderboardCacheClock` after the test.
  */
 import { jest } from '@jest/globals';
-import { CONTEST_LEADERBOARD_CACHE_TTL_MS } from '../../packages/core-api/src/modules/contests/contest-leaderboard-cache';
+import { readLeaderboardCacheTtlMs } from '../../packages/core-api/src/modules/contests/contest-leaderboard-cache';
 
 export function passLeaderboardCacheTtl(): void {
   jest.useFakeTimers({
@@ -14,7 +14,7 @@ export function passLeaderboardCacheTtl(): void {
       'requestIdleCallback', 'cancelIdleCallback', 'setImmediate', 'clearImmediate', 'setInterval', 'clearInterval',
       'setTimeout', 'clearTimeout',
     ],
-    now: Date.now() + CONTEST_LEADERBOARD_CACHE_TTL_MS + 1,
+    now: Date.now() + readLeaderboardCacheTtlMs(process.env) + 1,
   });
 }
 
