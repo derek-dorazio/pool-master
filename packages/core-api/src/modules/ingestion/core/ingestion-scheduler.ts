@@ -8,11 +8,15 @@
  *
  * Every feed is event-scoped. There is no scheduled event discovery: an admin creates each
  * event and moves its lifecycle by hand (#126).
+ *
+ * Every server task runs this scheduler, and each provider loop runs on one of them (#1159): the
+ * task holding that loop's job lock.
  */
 
 import { SUPPORTED_SPORTS, type IngestionJobStatus, type Sport } from '@poolmaster/shared/domain';
 import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { FastifyBaseLogger } from 'fastify';
+import type { JobLock } from '../../../core/job-lock';
 import type { ProviderRegistry } from './provider-registry';
 import { SyncOrchestrator } from './sync-orchestrator';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
@@ -117,6 +121,8 @@ export interface IngestionSchedulerOptions {
   now?: () => Date;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
   syncRunLedger?: Pick<ProviderSyncRunLedger, 'createSubmissions' | 'executeFeedRun'>;
+  /** Keeps each provider loop to one server task; omitted, each loop runs on this task. */
+  jobLock?: JobLock;
 }
 
 const SCHEDULED_SYNC_SOURCE: SyncRequestSource = 'SCHEDULED';
@@ -154,6 +160,7 @@ export class IngestionScheduler {
       'health checks',
       async () => this.runHealthChecks(),
       async () => this.getGlobalDelayMs('healthCheck'),
+      'ingestion:health-checks',
     );
 
     this.startRecurringLoop(
@@ -181,11 +188,13 @@ export class IngestionScheduler {
           `${sport} participant sync`,
           async () => this.runConfiguredSportFieldSync(sport),
           async () => this.getSportDelayMs(sport, 'eventParticipants'),
+          `ingestion:${sport}:participants`,
         );
         this.startRecurringLoop(
           `${sport} live score sync`,
           async () => this.runConfiguredLiveScoreSweep(sport),
           async () => this.getSportDelayMs(sport, 'eventLiveScores'),
+          `ingestion:${sport}:live-scores`,
         );
         this.startedSportLoops.add(sport);
       }
@@ -612,10 +621,12 @@ export class IngestionScheduler {
     return job;
   }
 
+  /** `lockKey` names the job lock a loop that calls a provider holds; a local loop has none. */
   private startRecurringLoop(
     label: string,
     runner: () => Promise<void>,
     resolveDelayMs: () => Promise<number>,
+    lockKey?: string,
   ): void {
     const tick = async () => {
       if (!this.running) {
@@ -624,7 +635,7 @@ export class IngestionScheduler {
 
       try {
         this.logger?.debug({ label }, 'Recurring ingestion loop tick started');
-        await runner();
+        await (lockKey ? this.runExclusive(label, lockKey, runner) : runner());
       } catch (error) {
         this.logger?.error({ error, label }, 'Recurring ingestion loop failed');
       }
@@ -644,6 +655,17 @@ export class IngestionScheduler {
     };
 
     void tick();
+  }
+
+  private async runExclusive(label: string, lockKey: string, runner: () => Promise<void>): Promise<void> {
+    const jobLock = this.options.jobLock;
+    if (!jobLock) {
+      await runner();
+      return;
+    }
+    if (!(await jobLock.runExclusive(lockKey, runner))) {
+      this.logger?.debug({ label }, 'Skipped a recurring ingestion loop tick because another server task runs it');
+    }
   }
 
   private async getGlobalDelayMs(

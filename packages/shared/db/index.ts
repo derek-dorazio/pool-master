@@ -105,6 +105,7 @@ export type {
   SportEventRoundSchedule,
   SportEventTierDefinition,
   SportEventTierRepository,
+  SportEventStatusTransition,
   SportEventUpdate,
   SportLeagueFilters,
   SportLeagueRepository,
