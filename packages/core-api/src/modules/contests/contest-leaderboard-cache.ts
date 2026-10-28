@@ -10,8 +10,23 @@
  */
 import type { ContestLeaderboardModel } from '../../mappers/contests.mapper';
 
-/** How long a computed leaderboard answers for its contest. */
+/** How long a computed leaderboard answers for its contest, unless the environment sets another. */
 export const CONTEST_LEADERBOARD_CACHE_TTL_MS = 30_000;
+
+/**
+ * The TTL from `CONTEST_LEADERBOARD_CACHE_TTL_MS`, in milliseconds, else 30 seconds. 0 keeps no
+ * board past its computation, as the functional API lane runs, where a test reads a board right
+ * after the write it checks. Anything but a whole number of 0 or more refuses to start.
+ */
+export function readLeaderboardCacheTtlMs(env: NodeJS.ProcessEnv): number {
+  const raw = env['CONTEST_LEADERBOARD_CACHE_TTL_MS'];
+  if (raw === undefined || raw === '') return CONTEST_LEADERBOARD_CACHE_TTL_MS;
+  const ttlMs = Number(raw);
+  if (!Number.isInteger(ttlMs) || ttlMs < 0) {
+    throw new Error(`CONTEST_LEADERBOARD_CACHE_TTL_MS must be a whole number of milliseconds, 0 or more; got "${raw}"`);
+  }
+  return ttlMs;
+}
 
 interface CachedLeaderboard {
   expiresAt: number;

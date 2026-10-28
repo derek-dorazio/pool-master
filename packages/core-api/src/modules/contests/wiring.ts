@@ -31,7 +31,7 @@ import { createSportEventParticipantService, createSportEventTierService } from 
 import { ContestSettlementService } from './contest-settlement-service';
 import type { BracketStandingsReadDeps } from './bracket-standings';
 import { ContestService } from './service';
-import { ContestLeaderboardCache } from './contest-leaderboard-cache';
+import { ContestLeaderboardCache, readLeaderboardCacheTtlMs } from './contest-leaderboard-cache';
 import { createChampionshipService } from '../championship/wiring';
 import type { ContestSettledNotice } from '../notifications/contest-notices';
 
@@ -52,7 +52,7 @@ function createContestLeaderboardReadDeps(
 }
 
 /** One leaderboard cache for the container (#1162): the contest page and a cup's projection share it. */
-const leaderboardCache = new ContestLeaderboardCache();
+const leaderboardCache = new ContestLeaderboardCache(readLeaderboardCacheTtlMs(process.env));
 
 export function createContestService(
   prisma: PrismaClient,

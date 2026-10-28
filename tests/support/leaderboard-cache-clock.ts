@@ -22,10 +22,3 @@ export function restoreLeaderboardCacheClock(): void {
   jest.useRealTimers();
 }
 
-/**
- * The functional API runs in its own process, whose clock a test cannot move: a functional test
- * that reads a board, changes it and reads it again waits the TTL out, as a viewer's next poll would.
- */
-export function waitOutLeaderboardCache(): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, CONTEST_LEADERBOARD_CACHE_TTL_MS + 500));
-}

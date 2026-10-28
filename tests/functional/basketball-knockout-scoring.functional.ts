@@ -44,7 +44,6 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { waitOutLeaderboardCache } from '../support/leaderboard-cache-clock';
 import { standardEventPricing } from '../support/budget-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 
@@ -254,8 +253,6 @@ describe('SDK Functional: Basketball knockout scoring', () => {
 
     // Vermont beats Duke in the final: 2 + (15 - 1) = 16 more.
     await recordEventMatchResult({ client: a, path: { eventId, matchNumber: 3 }, body: { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 72 } });
-    // A viewer's next poll once the first-round board has expired (#1162).
-    await waitOutLeaderboardCache();
     const board = expectMatchesSchema(ContestLeaderboardResponseSchema, (await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('KNOCKOUT_ROUND_POINTS');
     const picks = Object.fromEntries(board.entries.flatMap((entry) => entry.picks).map((pick) => [nameOf(pick.sportEventParticipantId), pick.knockout]));
@@ -286,5 +283,5 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     expect(await totalsOf()).toEqual({ [entryId]: 31 });
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
     expect([settled.totalScore, settled.displayPosition]).toEqual([31, '1']);
-  }, 90_000);
+  });
 });

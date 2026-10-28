@@ -32,7 +32,6 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { waitOutLeaderboardCache } from '../support/leaderboard-cache-clock';
 import { standardEventPricing } from '../support/budget-pricing';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
@@ -225,16 +224,13 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     };
     const standingsOf = (entries: Array<{ entryId: string; displayPosition: string | null; totalScore: number | null }>) =>
       Object.fromEntries(entries.map((entry) => [entry.entryId, { totalScore: entry.totalScore, displayPosition: entry.displayPosition }]));
-    // A viewer's next poll once the provisional board has expired (#1162).
-    await waitOutLeaderboardCache();
     const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(board.scoringDefinitionId).toBe('FINISH_POSITION_POINTS');
     expect(standingsOf(board.entries)).toEqual(expected);
 
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
-    await waitOutLeaderboardCache();
     const settled = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId } })).data);
     expect(standingsOf(settled.entries)).toEqual(expected);
-  }, 120_000);
+  });
 });

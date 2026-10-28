@@ -1,4 +1,4 @@
-import { ContestLeaderboardCache } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-cache';
+import { ContestLeaderboardCache, readLeaderboardCacheTtlMs } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-cache';
 import type { ContestLeaderboardModel } from '../../../packages/core-api/src/mappers/contests.mapper';
 
 // The contest leaderboard cache (#1162): a board computed for a contest answers for it for 30
@@ -67,5 +67,27 @@ describe('ContestLeaderboardCache', () => {
       .rejects.toThrow('database unavailable');
 
     await expect(cache.get('contest-1', undefined, at(1), async () => computed)).resolves.toBe(computed);
+  });
+});
+
+describe('readLeaderboardCacheTtlMs', () => {
+  it('keeps boards 30 seconds when CONTEST_LEADERBOARD_CACHE_TTL_MS is unset or empty', () => {
+    expect(readLeaderboardCacheTtlMs({})).toBe(30_000);
+    expect(readLeaderboardCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: '' })).toBe(30_000);
+  });
+
+  it('keeps boards for the milliseconds set, and none at 0, so every read computes afresh', async () => {
+    expect(readLeaderboardCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: '15000' })).toBe(15_000);
+    const cache = new ContestLeaderboardCache(readLeaderboardCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: '0' }));
+    const first = board('2026-10-28T20:00:00.000Z');
+    const second = board('2026-10-28T20:00:01.000Z');
+
+    await cache.get('contest-1', undefined, at(0), async () => first);
+
+    await expect(cache.get('contest-1', undefined, at(0), async () => second)).resolves.toBe(second);
+  });
+
+  it.each(['-1', '1.5', 'thirty'])('refuses to start with CONTEST_LEADERBOARD_CACHE_TTL_MS=%s rather than guess a TTL', (raw) => {
+    expect(() => readLeaderboardCacheTtlMs({ CONTEST_LEADERBOARD_CACHE_TTL_MS: raw })).toThrow('CONTEST_LEADERBOARD_CACHE_TTL_MS must be a whole number');
   });
 });
