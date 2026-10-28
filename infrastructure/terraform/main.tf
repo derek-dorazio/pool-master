@@ -747,7 +747,9 @@ resource "aws_cloudwatch_log_group" "services" {
 # =============================================================================
 
 locals {
-  db_url = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}"
+  # #1160: Prisma's pool is sized explicitly rather than from the CPUs the container reports
+  # (README, Database Connection Pool).
+  db_url = "postgresql://${var.db_username}:${var.db_password}@${aws_db_instance.postgres.endpoint}/${var.db_name}?connection_limit=${var.db_connection_limit}&pool_timeout=${var.db_pool_timeout_seconds}"
 
   # #184: NODE_ENV is the Node ecosystem's variable and is always "production" when deployed.
   # Which environment this is (qa, staging, prod) is POOLMASTER_ENVIRONMENT, and only that.

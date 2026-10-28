@@ -101,6 +101,28 @@ variable "jwt_secret" {
   }
 }
 
+variable "db_connection_limit" {
+  description = "Prisma connection pool size per core-api task (connection_limit on DATABASE_URL). Every task, the migrate task and the operator tunnel share the instance's max_connections; size it so all of them fit with deploy overlap (README, Database Connection Pool)."
+  type        = number
+  default     = 10
+
+  validation {
+    condition     = var.db_connection_limit >= 1 && floor(var.db_connection_limit) == var.db_connection_limit
+    error_message = "db_connection_limit must be a whole number of at least 1."
+  }
+}
+
+variable "db_pool_timeout_seconds" {
+  description = "Seconds a query waits for a free pooled connection before Prisma fails it (pool_timeout on DATABASE_URL)."
+  type        = number
+  default     = 20
+
+  validation {
+    condition     = var.db_pool_timeout_seconds >= 1 && floor(var.db_pool_timeout_seconds) == var.db_pool_timeout_seconds
+    error_message = "db_pool_timeout_seconds must be a whole number of at least 1."
+  }
+}
+
 variable "db_publicly_accessible" {
   description = "Whether the RDS instance should expose a public endpoint. Keep false by default; only enable intentionally for environments that require direct operator access."
   type        = bool
