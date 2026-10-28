@@ -21,6 +21,9 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Set aside until #1184: 8.72 reports 131 new findings. That ticket's PR removes these.
+      - dependency-name: "typescript-eslint"
+      - dependency-name: "@typescript-eslint/*"
     groups:
       npm-minor-and-patch:
         applies-to: version-updates
