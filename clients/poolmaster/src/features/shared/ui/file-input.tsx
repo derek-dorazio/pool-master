@@ -1,14 +1,13 @@
 import {
-  forwardRef,
   useId,
   useRef,
   type ChangeEvent,
-  type InputHTMLAttributes,
+  type ComponentProps,
 } from "react";
 import { cn } from "./class-names";
 
 export type FileInputProps = Omit<
-  InputHTMLAttributes<HTMLInputElement>,
+  ComponentProps<"input">,
   "type" | "value"
 > & {
   /**
@@ -24,41 +23,38 @@ export type FileInputProps = Omit<
  * `<input type="file">` in feature code; the golf-admin bulk-upload panels
  * (plans/124 §6.3/§6.4 — league roster, round scores) are the first consumers.
  */
-export const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
-  function FileInput({ className, onChange, onFileText, ...props }, ref) {
-    const generatedId = useId();
-    const fieldId = props.id ?? generatedId;
-    const readerRef = useRef<FileReader | null>(null);
+export function FileInput({ className, onChange, onFileText, ...props }: FileInputProps) {
+  const generatedId = useId();
+  const fieldId = props.id ?? generatedId;
+  const readerRef = useRef<FileReader | null>(null);
 
-    function handleChange(event: ChangeEvent<HTMLInputElement>) {
-      onChange?.(event);
+  function handleChange(event: ChangeEvent<HTMLInputElement>) {
+    onChange?.(event);
 
-      const file = event.target.files?.[0];
-      if (!file || !onFileText) {
-        return;
-      }
-
-      readerRef.current?.abort();
-      const reader = new FileReader();
-      readerRef.current = reader;
-      reader.addEventListener("load", () => {
-        onFileText(typeof reader.result === "string" ? reader.result : "", file);
-      });
-      reader.readAsText(file);
+    const file = event.target.files?.[0];
+    if (!file || !onFileText) {
+      return;
     }
 
-    return (
-      <input
-        className={cn(
-          "block w-full cursor-pointer rounded-2xl border border-border bg-background text-sm text-foreground outline-none transition file:mr-4 file:cursor-pointer file:border-0 file:bg-muted file:px-4 file:py-3 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80 focus:border-primary disabled:cursor-not-allowed disabled:opacity-70",
-          className,
-        )}
-        id={fieldId}
-        onChange={handleChange}
-        ref={ref}
-        type="file"
-        {...props}
-      />
-    );
-  },
-);
+    readerRef.current?.abort();
+    const reader = new FileReader();
+    readerRef.current = reader;
+    reader.addEventListener("load", () => {
+      onFileText(typeof reader.result === "string" ? reader.result : "", file);
+    });
+    reader.readAsText(file);
+  }
+
+  return (
+    <input
+      className={cn(
+        "block w-full cursor-pointer rounded-2xl border border-border bg-background text-sm text-foreground outline-none transition file:mr-4 file:cursor-pointer file:border-0 file:bg-muted file:px-4 file:py-3 file:text-sm file:font-medium file:text-foreground hover:file:bg-muted/80 focus:border-primary disabled:cursor-not-allowed disabled:opacity-70",
+        className,
+      )}
+      id={fieldId}
+      onChange={handleChange}
+      type="file"
+      {...props}
+    />
+  );
+}
