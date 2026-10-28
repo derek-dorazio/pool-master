@@ -644,18 +644,11 @@ export class ContestManagementService {
   async addReleasedEditionToTemplateContests(
     sportEvent: Pick<SportEvent, 'id' | 'eventSeriesId' | 'eventYear'>,
   ): Promise<string[]> {
-    const configurations = await this.contestConfigurationRepo.findByTemplateEventSeries(sportEvent.eventSeriesId);
+    // The repository filters status, draw, the edition and the year in one query (#1179), so a
+    // series' years of finished pools are never read back.
+    const contests = await this.contestRepo.findJoinableByReleasedEdition(sportEvent);
     const joined: string[] = [];
-    for (const configuration of configurations) {
-      const contest = await this.contestRepo.findById(configuration.contestId);
-      if (!contest || contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined
-        || contest.sportEventIds.includes(sportEvent.id)) {
-        continue;
-      }
-      const current = await this.findContestSportEvents(contest);
-      if (current.some((event) => event.eventYear !== sportEvent.eventYear)) {
-        continue;
-      }
+    for (const contest of contests) {
       try {
         await this.setContestSportEvents(contest.leagueId, contest.id, [...contest.sportEventIds, sportEvent.id]);
         joined.push(contest.id);
