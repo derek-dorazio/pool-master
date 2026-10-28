@@ -101,6 +101,13 @@ export interface SportEventUpdate {
   syncScope?: SportEventSyncScope;
 }
 
+export interface SportEventStatusTransition {
+  from: SportEvent['status'];
+  to: SportEvent['status'];
+  /** Written with the status, for an event that completes without an end date of its own. */
+  endDate?: Date;
+}
+
 export interface SportEventProviderSummary {
   activeEventCount: number;
   lastChangedAt: Date | null;
@@ -120,6 +127,12 @@ export interface SportEventRepository {
    */
   create(input: SportEventCreate): Promise<SportEvent>;
   update(id: string, updates: SportEventUpdate): Promise<SportEvent>;
+  /**
+   * Moves the event to `to`, but only while it is still in `from`: a guarded single write, so of
+   * two callers making the same change at once exactly one wins (#1159). Returns the event as
+   * written, or null when its status had already moved on and nothing was written.
+   */
+  transitionStatus(id: string, transition: SportEventStatusTransition): Promise<SportEvent | null>;
   /** Deletes the event with its rounds, tiers and field. Refuses nothing: the caller guards contests. */
   delete(id: string): Promise<void>;
   /** Event participants per event, for each id asked about (0 where none). */

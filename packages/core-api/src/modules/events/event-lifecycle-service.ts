@@ -65,6 +65,12 @@ export interface SportEventStatusTransitionInput {
   actor: SportEventStatusTransitionActor;
   /** Set only by the release action, which has checked the event is ready (#431). */
   release?: boolean;
+  /**
+   * The status the caller saw the event in. Set, the change applies only from it: the lifecycle
+   * scheduler that saw an event in progress does not complete it a second time after an admin or
+   * another server task already has (#1159).
+   */
+  fromStatus?: SportEventStatus;
 }
 
 export interface SportEventStatusTransitionResult {
@@ -118,6 +124,13 @@ export class EventLifecycleService {
       throw new EventLifecycleError(`Sport event ${input.sportEventId} not found`, 'SPORT_EVENT_NOT_FOUND', 404);
     }
     const fromStatus = before.status;
+    if (input.fromStatus !== undefined && input.fromStatus !== fromStatus) {
+      this.logger?.info(
+        { sportEventId: input.sportEventId, expectedStatus: input.fromStatus, status: fromStatus, toStatus: input.toStatus },
+        'Skipped a sport event status change because the event had already moved on',
+      );
+      return { sportEvent: before, fromStatus, toStatus: input.toStatus };
+    }
     if (fromStatus !== input.toStatus && !isDeclaredSportEventTransition(fromStatus, input.toStatus)) {
       throw new EventLifecycleError(
         `Sport event ${input.sportEventId} cannot transition from ${fromStatus} to ${input.toStatus}`,
@@ -136,12 +149,32 @@ export class EventLifecycleService {
       );
     }
 
-    const updated = await this.sportEvents.update(input.sportEventId, {
-      status: input.toStatus,
+    // Written only while the event is still where it was read (#1159): of two callers making the
+    // change at once, one writes it and runs the side effects below, and the other stops here.
+    const updated = await this.sportEvents.transitionStatus(input.sportEventId, {
+      from: fromStatus,
+      to: input.toStatus,
       ...(input.toStatus === SportEventStatus.COMPLETED && !before.endDate
         ? { endDate: new Date() }
         : {}),
     });
+    if (!updated) {
+      const current = (await this.sportEvents.findById(input.sportEventId)) ?? before;
+      this.logger?.info(
+        { sportEventId: input.sportEventId, fromStatus, status: current.status, toStatus: input.toStatus, actor: input.actor.type },
+        'Skipped a sport event status change because another caller changed the status first',
+      );
+      // A caller that named the status it saw expects to lose such a race; an admin who did not
+      // is told the change did not land, unless the event ended where they asked anyway.
+      if (input.fromStatus === undefined && current.status !== input.toStatus) {
+        throw new EventLifecycleError(
+          `Sport event ${input.sportEventId} moved from ${fromStatus} to ${current.status} while this change to ${input.toStatus} was made`,
+          'SPORT_EVENT_INVALID_TRANSITION',
+          409,
+        );
+      }
+      return { sportEvent: current, fromStatus, toStatus: input.toStatus };
+    }
 
     // A released edition joins the contests made to cover its series, a majors pool's major (#714).
     // It runs after the release is written, outside a transaction: a contest whose rules refuse the

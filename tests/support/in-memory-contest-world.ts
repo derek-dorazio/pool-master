@@ -650,6 +650,13 @@ export class InMemoryContestWorld {
         .sort((a, b) => a.startDate.getTime() - b.startDate.getTime()),
       countParticipants: async (ids) =>
         new Map(ids.map((id) => [id, this.fieldSizes.get(id) ?? 0])),
+      transitionStatus: async (id, transition) => {
+        const existing = this.sportEvents.get(id);
+        if (!existing || existing.status !== transition.from) return null;
+        const next: SportEvent = { ...existing, status: transition.to, ...(transition.endDate && { endDate: transition.endDate }) };
+        this.sportEvents.set(id, next);
+        return next;
+      },
     });
   }
 
