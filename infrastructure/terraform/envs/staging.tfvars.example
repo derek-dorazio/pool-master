@@ -6,6 +6,10 @@ region      = "us-east-2"
 # Database
 db_instance_class    = "db.t3.micro"
 db_allocated_storage = 20
+# Prisma pool per core-api task, and how long a query waits for a connection (README, Database
+# Connection Pool)
+db_connection_limit     = 10
+db_pool_timeout_seconds = 20
 # db_password and jwt_secret: deliberately not assigned in this file. Set via
 # TF_VAR_db_password and TF_VAR_jwt_secret
 # in your shell so the value never lands in a committed file. Do NOT add a

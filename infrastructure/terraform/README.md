@@ -76,6 +76,26 @@ revision and overrides only the image, `NODE_ENV`, `LOG_LEVEL` and `POOLMASTER_E
 variables) registers a newer revision, and the next deploy (any merge to `main`) carries that env
 to the running service. Nothing reaches the service until that deploy.
 
+## Database Connection Pool
+
+`DATABASE_URL` carries `connection_limit` and `pool_timeout`, from the `db_connection_limit`
+(default 10) and `db_pool_timeout_seconds` (default 20) variables, set per environment in
+`envs/<env>.tfvars`. Without them Prisma sizes its pool from the CPUs the container reports,
+which on Fargate is 3 to 5 connections, and a burst of queries stalls every other request.
+
+10 per task fits the smallest instance with room to spare. A `db.t3.micro` allows roughly 80
+connections and a `db.t3.small` roughly 180. Prod's two core-api tasks, doubled for the minutes a
+deploy runs old and new tasks side by side, take 40; the migrate task, which shares the URL but
+uses one or two, and the operator tunnel fit in what is left. Raise the limit only after
+checking the instance's `max_connections` against that sum. Past that scale the next step is RDS
+Proxy, not bigger pools.
+
+`pool_timeout` is how long a query waits for a free connection before Prisma fails it with
+P2024. A query that hits it is a sign of a fan-out to fix, not a timeout to raise.
+
+The URL reaches the running service on the next deploy after an apply (*How Terraform's Task
+Definition Env Reaches the Service*).
+
 ## Direct QA Database Access
 
 RDS lives in the private subnets, whose only route out is the NAT gateway, so nothing outside the
