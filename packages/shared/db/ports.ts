@@ -258,9 +258,30 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
+/** One owner of a squad: the membership, any status, with the member's user. */
+export interface SquadMemberDetails {
+  membership: SquadMembership;
+  user: User;
+}
+
+/**
+ * A squad with its owners (#1165): every membership, any status, in join order, each with its
+ * user. What a team page and the team list show, read in one go rather than squad, then
+ * memberships, then every user in the league.
+ */
+export interface SquadDetails extends Squad {
+  members: SquadMemberDetails[];
+}
+
 export interface SquadRepository {
   findById(id: string): Promise<Squad | null>;
   findByLeague(leagueId: string, includeInactive?: boolean): Promise<Squad[]>;
+  findDetailsById(id: string): Promise<SquadDetails | null>;
+  /** Every squad in the league, active and inactive, oldest first, with its owners. */
+  findDetailsByLeague(leagueId: string): Promise<SquadDetails[]>;
+  /** The squad holding the user's membership in the league, any status, or null (#1165). */
+  findByLeagueAndMember(leagueId: string, userId: string): Promise<Squad | null>;
+  countActiveByLeague(leagueId: string): Promise<number>;
   /**
    * Resolves a squad by its name within a league. Squad names are unique per league
    * (`@@unique([leagueId, name])`, #202), so this returns at most one row, and it

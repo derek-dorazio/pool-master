@@ -12,9 +12,7 @@ import {
   buildCurrentUser,
   buildLeague,
   buildLeagueMembership,
-  buildLeagueSquad,
   getLeagueByCodeData,
-  listLeagueSquadsData,
 } from '@/features/leagues/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { CommissionerRouteGuard, MemberRouteGuard } from '@/routes/route-guards';
@@ -132,13 +130,8 @@ function primeMocks({
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague({ planEntitlements: buildPlanEntitlements({ features }) }),
-    { membership: buildLeagueMembership() },
+    { membership: buildLeagueMembership(), activeTeamCount: 3 },
   )));
-  listLeagueSquadsMock.mockResolvedValue(apiSuccess(listLeagueSquadsData([
-    buildLeagueSquad({ id: 'team-1' }),
-    buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
-    buildLeagueSquad({ id: 'team-3', name: 'Third Team' }),
-  ])));
   listContestsMock.mockResolvedValue(apiSuccess({ contests: [contest] }));
   getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: managedContest }));
   getEventMock.mockResolvedValue(apiSuccess({ event }));
@@ -312,6 +305,8 @@ describe('Commissioner tools › Contests › one contest', () => {
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByText('1 of 3 members have entered')).toBeInTheDocument();
+    // The active team count comes with the league context, not from the team list.
+    expect(listLeagueSquadsMock).not.toHaveBeenCalled();
     expect(screen.getByTestId('contest-stat-entries')).toHaveTextContent('2');
     expect(screen.getByTestId('contest-stat-teams-to-go')).toHaveTextContent('2');
     expect(screen.getByRole('link', { name: 'View in league' })).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-1');

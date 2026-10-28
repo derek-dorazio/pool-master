@@ -21,7 +21,7 @@ import { TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
 import { TeamIcon } from './team-icon';
 import { TeamOwnersSection } from './team-owners-section';
-import { useLeagueSquadsQuery } from './use-league-squads-query';
+import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamOwners } from './use-my-team-owners';
 
 /**
@@ -34,8 +34,8 @@ export function MyTeamPage() {
   const logger = getLogger().child({ feature: 'my-team-page' });
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const myTeam = teamsQuery.data?.find((team) => team.id === viewer.mySquadId) ?? null;
+  const myTeamQuery = useLeagueSquadQuery(leagueId, viewer.mySquadId);
+  const myTeam = myTeamQuery.data ?? null;
   const owners = useMyTeamOwners({ leagueCode, leagueId, selectedTeam: myTeam });
 
   useEffect(() => {
@@ -54,15 +54,15 @@ export function MyTeamPage() {
     return leagueContext.element;
   }
 
-  // Until the teams load, "no team" is unknown, not true: offering Create team here would invite
+  // Until the team loads, "no team" is unknown, not true: offering Create team here would invite
   // a viewer who already has a team to create a second one.
-  if (teamsQuery.isLoading) {
+  if (myTeamQuery.isLoading) {
     return <LoadingState testId="my-team-loading" />;
   }
-  if (teamsQuery.isError) {
+  if (myTeamQuery.isError) {
     return (
       <ErrorState
-        body={extractErrorMessage(teamsQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
+        body={extractErrorMessage(myTeamQuery.error, { fallback: TEAM_PAGE_FALLBACK_ERROR })}
         testId="my-team-error"
         title="This page is unavailable"
       />

@@ -159,6 +159,10 @@ export function fakeSquadRepo(overrides: Partial<SquadRepository> = {}): SquadRe
   return {
     findById: one(),
     findByLeague: many(),
+    findDetailsById: one(),
+    findDetailsByLeague: many(),
+    findByLeagueAndMember: one(),
+    countActiveByLeague: jest.fn().mockResolvedValue(0),
     findByLeagueAndName: one(),
     create: echoCreate('squad'),
     update: echoUpdate(),

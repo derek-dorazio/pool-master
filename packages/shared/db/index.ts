@@ -42,6 +42,8 @@ export type {
   ParticipantProviderMappingRepository,
   ParticipantRepository,
   ParticipantSearchFilters,
+  SquadDetails,
+  SquadMemberDetails,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
   SquadRepository,

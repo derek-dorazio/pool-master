@@ -72,7 +72,7 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
 
 }
 
-function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {
+export function mapToSquadMembership(row: PrismaSquadMembership): SquadMembership {
   return {
     id: row.id,
     squadId: row.squadId,

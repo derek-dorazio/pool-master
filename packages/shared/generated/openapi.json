@@ -6223,12 +6223,27 @@
               "updatedAt"
             ],
             "additionalProperties": false
+          },
+          "squadName": {
+            "description": "The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "activeTeamCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "How many of the league's teams are active: the most entries an open contest can expect, one per team."
           }
         },
         "required": [
           "league",
           "membership",
-          "squadMembership"
+          "squadMembership",
+          "squadName",
+          "activeTeamCount"
         ],
         "additionalProperties": false,
         "description": "A league together with the viewer's own membership edges in it. Fetched once per league; nothing else repeats this context."
@@ -66948,7 +66963,7 @@
         "tags": [
           "Leagues"
         ],
-        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.",
+        "description": "Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.\n\nThe same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.",
         "requestBody": {
           "required": true,
           "content": {
@@ -68732,7 +68747,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.",
         "parameters": [
           {
             "schema": {
@@ -68884,7 +68899,7 @@
         "tags": [
           "Squads"
         ],
-        "description": "Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.",
+        "description": "Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.",
         "parameters": [
           {
             "schema": {

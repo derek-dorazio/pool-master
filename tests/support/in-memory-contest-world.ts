@@ -30,6 +30,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -559,11 +560,34 @@ export class InMemoryContestWorld {
   }
 
   squadRepo(): SquadRepository {
+    const details = (squad: Squad): SquadDetails => ({
+      ...squad,
+      members: [...this.squadMemberships.values()]
+        .filter((row) => row.squadId === squad.id)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+        .flatMap((membership) => {
+          const user = this.users.get(membership.userId);
+          return user ? [{ membership, user }] : [];
+        }),
+    });
     return {
       findById: async (id) => this.squads.get(id) ?? null,
       findByLeague: async (leagueId, includeInactive = false) =>
         [...this.squads.values()].filter((squad) =>
           squad.leagueId === leagueId && (includeInactive || squad.isActive)),
+      findDetailsById: async (id) => {
+        const squad = this.squads.get(id);
+        return squad ? details(squad) : null;
+      },
+      findDetailsByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
+      findByLeagueAndMember: async (leagueId, userId) => {
+        const membership = [...this.squadMemberships.values()].find((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        return membership ? this.squads.get(membership.squadId) ?? null : null;
+      },
+      countActiveByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
         [...this.squads.values()].find((squad) =>
           squad.leagueId === leagueId && squad.name === name) ?? null,

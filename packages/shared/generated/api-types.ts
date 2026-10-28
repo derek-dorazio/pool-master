@@ -506,7 +506,7 @@ export interface paths {
          * Create a new league
          * @description Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.
          *
-         *     The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.
+         *     The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.
          */
         post: operations["createLeague"];
         delete?: never;
@@ -1004,7 +1004,7 @@ export interface paths {
         };
         /**
          * List squads in a league
-         * @description Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.
          */
         get: operations["listLeagueSquads"];
         put?: never;
@@ -1028,7 +1028,7 @@ export interface paths {
         };
         /**
          * Get squad details
-         * @description Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+         * @description Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.
          */
         get: operations["getLeagueSquad"];
         put?: never;
@@ -5690,6 +5690,10 @@ export interface components {
                  */
                 updatedAt: string;
             } | null;
+            /** @description The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it. */
+            squadName: string | null;
+            /** @description How many of the league's teams are active: the most entries an open contest can expect, one per team. */
+            activeTeamCount: number;
         };
         /** @description League-list response, with the viewer's memberships once as an array. */
         LeagueListResponse: {

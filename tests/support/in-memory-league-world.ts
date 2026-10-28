@@ -31,6 +31,7 @@ import type {
   MembershipTransaction,
   SquadMembershipRepository,
   SquadOwnerInvitationRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -295,10 +296,30 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
     update: async (id, updates) => memberships.patch(id, updates),
   };
 
+  const squadDetails = (squad: Squad): SquadDetails => ({
+    ...squad,
+    members: squadMemberships.where((row) => row.squadId === squad.id)
+      .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+      .flatMap((membership) => {
+        const user = users.get(membership.userId);
+        return user ? [{ membership, user }] : [];
+      }),
+  });
+
   const squadRepo: SquadRepository = {
     findById: async (id) => squads.get(id),
     findByLeague: async (leagueId, includeInactive = false) =>
       squads.where((row) => row.leagueId === leagueId && (includeInactive || row.isActive)),
+    findDetailsById: async (id) => {
+      const squad = squads.get(id);
+      return squad ? squadDetails(squad) : null;
+    },
+    findDetailsByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId).map(squadDetails),
+    findByLeagueAndMember: async (leagueId, userId) => {
+      const membership = one(squadMemberships.where((row) => row.leagueId === leagueId && row.userId === userId));
+      return membership ? squads.get(membership.squadId) : null;
+    },
+    countActiveByLeague: async (leagueId) => squads.where((row) => row.leagueId === leagueId && row.isActive).length,
     findByLeagueAndName: async (leagueId, name) =>
       one(squads.where((row) => row.leagueId === leagueId && row.name === name)),
     create: async (row) => squads.insert(row),

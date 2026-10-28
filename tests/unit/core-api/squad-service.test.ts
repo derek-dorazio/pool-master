@@ -5,6 +5,7 @@ import {
 } from '../../../packages/shared/domain';
 import type {
   LeagueMembershipRepository,
+  SquadDetails,
   SquadMembershipRepository,
   SquadRepository,
 } from '../../../packages/shared/db';
@@ -20,7 +21,7 @@ import {
 } from '../../support/repo-fakes';
 import { asPrismaClient } from '../../support/prisma-double';
 import { mockFn } from '../../support/mock-fn';
-import type { User } from '../../../packages/shared/domain';
+import type { Squad, SquadMembership, User } from '../../../packages/shared/domain';
 
 /**
  * #202 step 3.4 — members come off `UserRepository` now, not a raw `prisma.user` select of
@@ -38,6 +39,14 @@ function buildUser(overrides: Partial<User> & { id: string }): User {
     updatedAt: new Date('2026-04-07T00:00:00Z'),
     ...overrides,
   };
+}
+
+/** A squad as `findDetailsById` returns it: the row with its owners (#1165). */
+function squadDetails(
+  squad: Squad,
+  members: Array<{ membership: SquadMembership; user: User }> = [],
+): SquadDetails {
+  return { ...squad, members };
 }
 
 function createLeagueMembershipRepo(
@@ -84,9 +93,8 @@ describe('SquadService', () => {
   };
   const prisma = asPrismaClient(prismaDouble);
 
-  const userRepo = fakeUserRepo({ findById: jest.fn(), findByLeague: jest.fn() });
+  const userRepo = fakeUserRepo({ findById: jest.fn() });
   const userFindById = userRepo.findById as jest.Mock;
-  const userFindByLeague = userRepo.findByLeague as jest.Mock;
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -104,7 +112,7 @@ describe('SquadService', () => {
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
       }),
-      findById: jest.fn().mockResolvedValue({
+      findDetailsById: jest.fn().mockResolvedValue(squadDetails({
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-1',
@@ -113,12 +121,8 @@ describe('SquadService', () => {
         isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
-      }),
-    });
-    const squadMembershipRepo = createSquadMembershipRepo({
-      findByLeagueAndUser: jest.fn().mockResolvedValue(null),
-      findBySquad: jest.fn().mockResolvedValue([
-        {
+      }, [{
+        membership: {
           id: 'squad-membership-1',
           squadId: 'squad-1',
           leagueId: 'league-1',
@@ -128,7 +132,11 @@ describe('SquadService', () => {
           createdAt: new Date('2026-04-07T00:00:00Z'),
           updatedAt: new Date('2026-04-07T00:00:00Z'),
         },
-      ]),
+        user: buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }),
+      }])),
+    });
+    const squadMembershipRepo = createSquadMembershipRepo({
+      findByLeagueAndUser: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockResolvedValue({
         id: 'squad-membership-1',
         squadId: 'squad-1',
@@ -144,7 +152,6 @@ describe('SquadService', () => {
       findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
     });
     userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
-    userFindByLeague.mockResolvedValue([buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' })]);
 
     const service = new SquadService(passThroughMembershipTransaction({
       squads: squadRepo,
@@ -194,19 +201,7 @@ describe('SquadService', () => {
 
   it('lets a root admin who is not a league member list its squads, with no viewer fields on them', async () => {
     const squadRepo = createSquadRepo({
-      findByLeague: jest.fn().mockResolvedValue([
-        {
-          id: 'squad-1',
-          leagueId: 'league-1',
-          createdBy: 'user-2',
-          name: 'Ace Squad',
-          iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
-          isActive: true,
-          createdAt: new Date('2026-04-07T00:00:00Z'),
-          updatedAt: new Date('2026-04-07T00:00:00Z'),
-        },
-      ]),
-      findById: jest.fn().mockResolvedValue({
+      findDetailsByLeague: jest.fn().mockResolvedValue([squadDetails({
         id: 'squad-1',
         leagueId: 'league-1',
         createdBy: 'user-2',
@@ -215,11 +210,8 @@ describe('SquadService', () => {
         isActive: true,
         createdAt: new Date('2026-04-07T00:00:00Z'),
         updatedAt: new Date('2026-04-07T00:00:00Z'),
-      }),
-    });
-    const squadMembershipRepo = createSquadMembershipRepo({
-      findBySquad: jest.fn().mockResolvedValue([
-        {
+      }, [{
+        membership: {
           id: 'membership-2',
           squadId: 'squad-1',
           leagueId: 'league-1',
@@ -229,12 +221,13 @@ describe('SquadService', () => {
           createdAt: new Date('2026-04-07T00:00:00Z'),
           updatedAt: new Date('2026-04-07T00:00:00Z'),
         },
-      ]),
+        user: buildUser({ id: 'user-2', firstName: 'Fran', lastName: 'Lane' }),
+      }])]),
     });
+    const squadMembershipRepo = createSquadMembershipRepo();
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue(null),
     });
-    userFindByLeague.mockResolvedValue([buildUser({ id: 'user-2', firstName: 'Fran', lastName: 'Lane' })]);
 
     const service = new SquadService(passThroughMembershipTransaction({
       squads: squadRepo,
@@ -257,6 +250,102 @@ describe('SquadService', () => {
     // for them.
     expect(result[0]).not.toHaveProperty('teamRelationship');
     expect(result[0]).not.toHaveProperty('isRootAdmin');
+  });
+
+  // #1165 — the team list and a team page each read their squads with owners in one
+  // repository call, rather than the squad, its memberships and every league user per team.
+  describe('reading squads with their owners', () => {
+    const owner = (squadId: string, userId: string, status: SquadMembershipStatus = SquadMembershipStatus.ACTIVE) => ({
+      membership: {
+        id: `membership-${userId}`,
+        squadId,
+        leagueId: 'league-1',
+        userId,
+        status,
+        joinedAt: new Date('2026-04-07T00:00:00Z'),
+        createdAt: new Date('2026-04-07T00:00:00Z'),
+        updatedAt: new Date('2026-04-07T00:00:00Z'),
+      },
+      user: buildUser({ id: userId, firstName: 'Owner', lastName: userId }),
+    });
+    const squadRow = (id: string, leagueId = 'league-1'): Squad => ({
+      id,
+      leagueId,
+      createdBy: 'user-1',
+      name: `Team ${id}`,
+      iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+      isActive: true,
+      createdAt: new Date('2026-04-07T00:00:00Z'),
+      updatedAt: new Date('2026-04-07T00:00:00Z'),
+    });
+
+    function buildService(squadRepo: SquadRepository, squadMembershipRepo = createSquadMembershipRepo()) {
+      return new SquadService(passThroughMembershipTransaction({
+        squads: squadRepo,
+        squadMemberships: squadMembershipRepo,
+        leagueMemberships: createLeagueMembershipRepo({
+          findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
+        }),
+        users: userRepo,
+        prisma,
+        squadOwnerInvitations: fakeSquadOwnerInvitationRepo(),
+      }));
+    }
+
+    it('lists every team with its owners from one repository read, however many teams there are', async () => {
+      const squadRepo = createSquadRepo({
+        findDetailsByLeague: jest.fn().mockResolvedValue([
+          squadDetails(squadRow('squad-1'), [owner('squad-1', 'user-1'), owner('squad-1', 'user-2', SquadMembershipStatus.INACTIVE)]),
+          squadDetails(squadRow('squad-2'), [owner('squad-2', 'user-3')]),
+          squadDetails(squadRow('squad-3')),
+        ]),
+      });
+      const squadMembershipRepo = createSquadMembershipRepo();
+
+      const result = await buildService(squadRepo, squadMembershipRepo).listSquads('league-1', 'user-1');
+
+      expect(squadRepo.findDetailsByLeague).toHaveBeenCalledTimes(1);
+      expect(squadRepo.findDetailsByLeague).toHaveBeenCalledWith('league-1');
+      expect(squadRepo.findById).not.toHaveBeenCalled();
+      expect(squadMembershipRepo.findBySquad).not.toHaveBeenCalled();
+      expect(userRepo.findByLeague).not.toHaveBeenCalled();
+      expect(result.map((squad) => [squad.id, squad.memberCount, squad.members?.map((member) => member.userId)])).toEqual([
+        ['squad-1', 1, ['user-1', 'user-2']],
+        ['squad-2', 1, ['user-3']],
+        ['squad-3', 0, []],
+      ]);
+      expect(result[0]?.members?.[0]?.user.lastName).toBe('user-1');
+    });
+
+    it('returns one team with its owners from a single read', async () => {
+      const squadRepo = createSquadRepo({
+        findDetailsById: jest.fn().mockResolvedValue(squadDetails(squadRow('squad-2'), [owner('squad-2', 'user-3')])),
+      });
+
+      const result = await buildService(squadRepo).getSquad('league-1', 'squad-2', 'user-1');
+
+      expect(squadRepo.findDetailsById).toHaveBeenCalledTimes(1);
+      expect(squadRepo.findById).not.toHaveBeenCalled();
+      expect(userRepo.findByLeague).not.toHaveBeenCalled();
+      expect(result.id).toBe('squad-2');
+      expect(result.members?.map((member) => member.user.id)).toEqual(['user-3']);
+    });
+
+    it('answers not found for a team that belongs to another league', async () => {
+      const squadRepo = createSquadRepo({
+        findDetailsById: jest.fn().mockResolvedValue(squadDetails(squadRow('squad-9', 'league-2'))),
+      });
+
+      await expect(buildService(squadRepo).getSquad('league-1', 'squad-9', 'user-1'))
+        .rejects.toMatchObject({ code: 'SQUAD_NOT_FOUND' });
+    });
+
+    it('answers not found for a team that does not exist', async () => {
+      const squadRepo = createSquadRepo({ findDetailsById: jest.fn().mockResolvedValue(null) });
+
+      await expect(buildService(squadRepo).getSquad('league-1', 'missing', 'user-1'))
+        .rejects.toMatchObject({ code: 'SQUAD_NOT_FOUND' });
+    });
   });
 
   it('rejects removing the last active owner and requires team inactivation instead', async () => {
@@ -494,10 +583,18 @@ describe('SquadService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       }),
+      findDetailsById: jest.fn().mockResolvedValue(squadDetails({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-2',
+        name: 'Updated Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
     });
-    const squadMembershipRepo = createSquadMembershipRepo({
-      findBySquad: jest.fn().mockResolvedValue([]),
-    });
+    const squadMembershipRepo = createSquadMembershipRepo();
     const leagueMembershipRepo = createLeagueMembershipRepo({
       findByLeagueAndUser: jest.fn().mockResolvedValue({
         ...baseMembership,
@@ -573,7 +670,7 @@ describe('SquadService', () => {
       const squadRepo = createSquadRepo({
         findByLeagueAndName,
         create: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio 2" })),
-        findById: jest.fn().mockResolvedValue(buildSquadRow({ name: "Derek Dorazio 2" })),
+        findDetailsById: jest.fn().mockResolvedValue(squadDetails(buildSquadRow({ name: "Derek Dorazio 2" }))),
       });
       const squadMembershipRepo = createSquadMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue(null),
@@ -593,7 +690,6 @@ describe('SquadService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(baseMembership),
       });
       userFindById.mockResolvedValue(buildUser({ id: 'user-1', firstName: 'Derek', lastName: 'Dorazio' }));
-      userFindByLeague.mockResolvedValue([]);
 
       const service = new SquadService(passThroughMembershipTransaction({
         squads: squadRepo,
@@ -647,6 +743,7 @@ describe('SquadService', () => {
         findById: jest.fn().mockResolvedValue(buildSquadRow()),
         findByLeagueAndName: jest.fn().mockResolvedValue(buildSquadRow({ id: 'squad-1' })),
         update: jest.fn().mockResolvedValue(buildSquadRow()),
+        findDetailsById: jest.fn().mockResolvedValue(squadDetails(buildSquadRow())),
       });
       const squadMembershipRepo = createSquadMembershipRepo({
         findBySquad: jest.fn().mockResolvedValue([]),
@@ -757,6 +854,16 @@ describe('SquadService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       })),
+      findDetailsById: jest.fn().mockResolvedValue(squadDetails({
+        id: 'squad-1',
+        leagueId: 'league-1',
+        createdBy: 'user-1',
+        name: 'Shared Team',
+        iconKey: TeamIconKey.CAPTAIN_SMILE_FIELD,
+        isActive: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })),
       create: jest.fn(),
     });
     const activeTeamMemberships = [
@@ -826,8 +933,6 @@ describe('SquadService', () => {
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]),
     });
-    userFindByLeague.mockResolvedValue([]);
-
     const service = new SquadService(passThroughMembershipTransaction({
       squads: squadRepo,
       squadMemberships: squadMembershipRepo,

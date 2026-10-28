@@ -22,16 +22,14 @@ import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
 import type {
-  LeagueMembershipRepository,
   SquadMembershipRepository,
+  SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
 
 export function createLeagueHandlers(
   leagueService: LeagueService,
-  // Positional slot kept: routes.ts:100 passes it, and the other three repos are
-  // read. Underscore rather than deletion so the factory's shape stays stable.
-  _membershipRepo: LeagueMembershipRepository,
+  squadRepo: SquadRepository,
   squadMembershipRepo: SquadMembershipRepository,
   userRepo: UserRepository,
   planEntitlements: PlanEntitlementsService,
@@ -181,17 +179,41 @@ export function createLeagueHandlers(
     // `QueryKeys.leagues.detail(leagueCode)` from this response instead of fetching it again.
     // The alternative — the client assembling the membership itself — is the shadow projection
     // this epic exists to remove.
-    const viewer = await userRepo.findById(userId);
+    // Creating the league also gave the creator their default squad, so their squad edge is
+    // read back like the two league reads do (#1165): it used to be sent as null.
+    const squadContext = await loadViewerSquadContext(result.league.id, userId);
     logger.info({
       action: 'leagueRoute.create.success',
       data: { leagueId: result.league.id, userId },
     }, 'Created league');
     return reply.status(201).send({
       league: leagueDto(result.league, { memberCount: 1, activeContestCount: 0 }),
-      membership: viewer ? mapLeagueMembershipToDto(result.membership, viewer) : null,
-      // Null by construction: a league has no squads the instant it is created.
-      squadMembership: null,
+      membership: squadContext.viewer ? mapLeagueMembershipToDto(result.membership, squadContext.viewer) : null,
+      squadMembership: squadContext.squadMembership,
+      squadName: squadContext.squadName,
+      activeTeamCount: squadContext.activeTeamCount,
     });
+  }
+
+  /**
+   * The viewer, their squad edge in the league with that squad's name, and the league's active
+   * team count: the part of `LeagueContextResponse` the league row does not carry.
+   */
+  async function loadViewerSquadContext(leagueId: string, userId: string) {
+    const [squadMembership, squad, viewer, activeTeamCount] = await Promise.all([
+      squadMembershipRepo.findByLeagueAndUser(leagueId, userId),
+      squadRepo.findByLeagueAndMember(leagueId, userId),
+      userRepo.findById(userId),
+      squadRepo.countActiveByLeague(leagueId),
+    ]);
+    // The edge is the viewer's own, so the embedded member is the viewer.
+    const hasSquadEdge = squadMembership !== null && viewer !== null;
+    return {
+      viewer,
+      squadMembership: hasSquadEdge ? toSquadMembershipDto(squadMembership, viewer) : null,
+      squadName: hasSquadEdge ? squad?.name ?? null : null,
+      activeTeamCount,
+    };
   }
 
   /**
@@ -308,9 +330,8 @@ export function createLeagueHandlers(
       );
     }
 
-    const [squadMembership, viewer, counts] = await Promise.all([
-      squadMembershipRepo.findByLeagueAndUser(result.league.id, userId),
-      userRepo.findById(userId),
+    const [squadContext, counts] = await Promise.all([
+      loadViewerSquadContext(result.league.id, userId),
       leagueService.countLeagueActivity([result.league.id]),
     ]);
 
@@ -324,10 +345,10 @@ export function createLeagueHandlers(
         activeContestCount: counts.activeContestCounts.get(result.league.id) ?? 0,
       }),
       // Both edges are the viewer's own, so the embedded member is the viewer.
-      membership: membership && viewer ? mapLeagueMembershipToDto(membership, viewer) : null,
-      squadMembership: squadMembership && viewer
-        ? toSquadMembershipDto(squadMembership, viewer)
-        : null,
+      membership: membership && squadContext.viewer ? mapLeagueMembershipToDto(membership, squadContext.viewer) : null,
+      squadMembership: squadContext.squadMembership,
+      squadName: squadContext.squadName,
+      activeTeamCount: squadContext.activeTeamCount,
     });
   }
 

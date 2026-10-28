@@ -356,7 +356,7 @@ export const listLeagues = <ThrowOnError extends boolean = false>(options?: Opti
  *
  * Creates a new private league for the authenticated commissioner using the submitted unique `leagueCode`, then returns the new league together with the creator's own membership edges in it.
  *
- * The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). `squadMembership` is null by construction — a league has no squads the instant it is created.
+ * The same `LeagueContextResponse` as `getLeague` and `getLeagueByCode`, because creating a league also creates the creator's COMMISSIONER membership: the client navigates straight into the league and seeds its context cache from this response rather than issuing a second read (access rule A8). Creating a league also gives the creator their default squad, so `squadMembership`, `squadName` and `activeTeamCount` describe it.
  */
 export const createLeague = <ThrowOnError extends boolean = false>(options: Options<CreateLeagueData, ThrowOnError>): RequestResult<CreateLeagueResponses, CreateLeagueErrors, ThrowOnError> => (options.client ?? client).post<CreateLeagueResponses, CreateLeagueErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -717,7 +717,7 @@ export const grantContestExpansion = <ThrowOnError extends boolean = false>(opti
 /**
  * List squads in a league
  *
- * Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+ * Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.
  */
 export const listLeagueSquads = <ThrowOnError extends boolean = false>(options: Options<ListLeagueSquadsData, ThrowOnError>): RequestResult<ListLeagueSquadsResponses, ListLeagueSquadsErrors, ThrowOnError> => (options.client ?? client).get<ListLeagueSquadsResponses, ListLeagueSquadsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -754,7 +754,7 @@ export const deleteLeagueSquad = <ThrowOnError extends boolean = false>(options:
 /**
  * Get squad details
  *
- * Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.
+ * Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.
  */
 export const getLeagueSquad = <ThrowOnError extends boolean = false>(options: Options<GetLeagueSquadData, ThrowOnError>): RequestResult<GetLeagueSquadResponses, GetLeagueSquadErrors, ThrowOnError> => (options.client ?? client).get<GetLeagueSquadResponses, GetLeagueSquadErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

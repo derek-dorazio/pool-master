@@ -8,6 +8,7 @@ import {
   getInvitationPreview,
   getLeagueByCode,
   getLeague,
+  getLeagueSquad,
   inactivateLeague,
   leaveLeague,
   listLeagueInvitations,
@@ -74,8 +75,12 @@ describe('SDK Functional: Leagues', () => {
     expect(createResponse.data?.membership?.role).toBe('COMMISSIONER');
     expect(createResponse.data?.membership?.status).toBe('ACTIVE');
     expect(createResponse.data?.membership?.user.id).toBe(commissioner.userId);
-    // Null by construction: a league has no squads the instant it is created.
-    expect(createResponse.data?.squadMembership).toBeNull();
+    // Creating the league gives the creator their default squad, so the 201 carries that edge
+    // and its name, as the league reads do; it used to send null.
+    expect(createResponse.data?.squadMembership?.userId).toBe(commissioner.userId);
+    expect(createResponse.data?.squadMembership?.status).toBe('ACTIVE');
+    expect(createResponse.data?.squadName).toBeTruthy();
+    expect(createResponse.data?.activeTeamCount).toBe(1);
 
     const listResponse = await listLeagues({
       client: commissioner.client,
@@ -944,6 +949,15 @@ describe('SDK Functional: Leagues', () => {
     // which is what replaced scanning every squad in the league for a per-row `owner` flag.
     expect(memberLeagueResponse.data?.squadMembership?.userId).toBe(member.userId);
     expect(memberLeagueResponse.data?.league).not.toHaveProperty('leagueRelationship');
+    // #1165 — it names that squad and counts the league's active teams (the commissioner's
+    // and the member's), so the league menu and Manage contests read no team list.
+    const memberSquad = await getLeagueSquad({
+      client: member.client,
+      path: { id: leagueId, squadId: memberLeagueResponse.data?.squadMembership?.squadId as string },
+    });
+    expect(memberLeagueResponse.data?.squadName).toBe(memberSquad.data?.squad.name);
+    expect(memberLeagueResponse.data?.activeTeamCount).toBe(2);
+    expect(memberSquad.data?.squad.members?.map((owner) => owner.userId)).toEqual([member.userId]);
 
     const outsiderLeagueResponse = await getLeagueByCode({
       client: outsider.client,

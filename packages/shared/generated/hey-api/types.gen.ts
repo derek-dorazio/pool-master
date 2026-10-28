@@ -3086,6 +3086,14 @@ export type LeagueContextResponse = {
          */
         updatedAt: string;
     } | null;
+    /**
+     * The name of the squad in squadMembership, or null when squadMembership is null. The league menu names the viewer's team from it.
+     */
+    squadName: string | null;
+    /**
+     * How many of the league's teams are active: the most entries an open contest can expect, one per team.
+     */
+    activeTeamCount: number;
 };
 
 /**
