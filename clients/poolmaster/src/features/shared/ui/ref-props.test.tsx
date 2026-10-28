@@ -15,6 +15,16 @@ describe("shared UI controls take a ref as an ordinary prop", () => {
     expect(ref.current).toBeInstanceOf(HTMLButtonElement);
   });
 
+  it("hands an asChild Button's ref through to the child element", () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(
+      <Button asChild ref={ref}>
+        <a href="/x">Go</a>
+      </Button>,
+    );
+    expect(ref.current).toBeInstanceOf(HTMLAnchorElement);
+  });
+
   it("hands Input, DateTimeField and FileInput refs to their input elements", () => {
     const input = createRef<HTMLInputElement>();
     const dateTime = createRef<HTMLInputElement>();
