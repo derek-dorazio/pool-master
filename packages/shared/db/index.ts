@@ -1,6 +1,7 @@
 export type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
+  ContestEntryEventPick,
   ContestEntryPickParticipant,
   ContestEntryPickRepository,
   ContestEntryPickWithParticipant,
