@@ -90,6 +90,12 @@ uses one or two, and the operator tunnel fit in what is left. Raise the limit on
 checking the instance's `max_connections` against that sum. Past that scale the next step is RDS
 Proxy, not bigger pools.
 
+Each core-api task also opens one more connection of its own, whatever `connection_limit` says:
+the background job locks (`packages/core-api/src/core/job-lock.ts`) are Postgres session locks,
+held on one connection for as long as the task runs. That makes 11 per task. A pooler in front of
+`DATABASE_URL` that hands a session's queries to different server connections (pgbouncer in
+transaction mode) would break those locks, so the lock connection has to bypass it.
+
 `pool_timeout` is how long a query waits for a free connection before Prisma fails it with
 P2024. A query that hits it is a sign of a fan-out to fix, not a timeout to raise.
 
