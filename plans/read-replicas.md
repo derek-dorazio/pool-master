@@ -2,34 +2,67 @@
 
 **Tracking issue:** #1156
 
-Written 2026-10-28 for Derek's review. No code yet. The questions at the end each carry the
-answer this plan takes; a "yes" to all of them is enough to start.
+Written 2026-10-28; revised the same day after Derek's review (Aurora; no lag or fallback
+machinery; only flows that never write go to the reader). No code yet. The questions at the end
+each carry the answer this plan takes.
 
 ## What we want
 
 Much of the product only reads: the trophy room and league history, completed contests and
 events, the marketing and event pages, the sport catalog, and the content of every email and
-notification. As customer data piles up, those reads are what grow. A read replica is a second
-database that Postgres keeps as a live copy of the main one. Sending those reads to it takes load
-off the main database, and later we add more replicas (or move to Aurora) to scale out further
-without touching the code again.
+notification. As customer data piles up, those reads are what grow. We move the database to
+**Aurora PostgreSQL**: one writer instance and one or more reader instances over the same shared
+storage. Aurora gives a **reader endpoint** that spreads connections over every reader, so adding
+readers later scales reads out with no change to the app.
 
-The plan gives core-api a second connection pool, the **read pool**, and a small, explicit way
-for code to say "this read can come from the replica".
+core-api gets a second connection pool, the **read pool**, on the reader endpoint, and a small,
+explicit way for a read-only flow to say "read this from the reader".
+
+## Decided with Derek
+
+- **Aurora, not RDS read replicas.** Readers share the writer's storage, so they trail it by
+  milliseconds (AWS quotes typically under 100 ms) instead of seconds, and one reader endpoint
+  covers as many readers as we add.
+- **No read-your-writes window and no fallback.** No cookie, no lag check, no retry on the
+  writer. A reader that is down is Aurora's to replace, as with any database outage.
+- **Only flows that never write go to the reader.** Any workflow that writes and then reads stays
+  entirely on the writer. That is what makes the millisecond lag invisible: no reader flow ever
+  looks for a change it just made itself.
 
 ## How core-api reaches the database today
 
 - One `PrismaClient` (Prisma 6.19), built in `buildApp` in `packages/core-api/src/index.ts` and
-  shared through the `fastify.prisma` decoration. Every module gets it through `getAppPrisma`
-  (about 40 call sites), and every repository adapter in `src/adapters` takes it in its
-  constructor.
-- One `DATABASE_URL`, set by Terraform in the task definition's `common_env`.
+  shared through the `fastify.prisma` decoration. Modules get it through `getAppPrisma` (about
+  40 call sites), and every repository adapter in `src/adapters` takes it in its constructor.
+- One `DATABASE_URL`, set by Terraform in the task definition's `common_env`, pointing at a plain
+  RDS instance (`aws_db_instance.postgres`).
 - Services often mix reads and writes. The cup service both lists cups and crowns them; the
   history service builds on it. Splitting the code into "read" and "write" services would touch
   most of the backend.
-- Background work (the lifecycle scheduler's notification sweeps, the email sender, ingestion)
-  runs outside any request, on the same client.
-- Every email goes through the outbox, whose `idempotency_key` is unique. That matters below.
+- Background work (the notification sweeps, the email sender, ingestion) runs outside any
+  request, on the same client.
+
+## What Aurora needs from the app
+
+Aurora PostgreSQL speaks the same protocol as Postgres 16, and the schema uses no extensions, so
+Prisma, the migrations and every query run unchanged against the writer. Beyond Terraform, the
+app needs only three things:
+
+1. **The read pool and the opt-in** (next section). Without it, everything keeps working on the
+   writer and the readers sit idle: Aurora does not send reads to a reader by itself.
+2. **Sized pools.** Each URL sets `connection_limit` and `application_name` (`core-api`,
+   `core-api-read`). Today the pool size is Prisma's default, about 3 connections on a Fargate
+   task; ticket #1160 of the performance audit sets it, and this plan reuses that setting for the
+   read pool.
+3. **Nothing for failover.** When the writer fails, Aurora promotes a reader and moves the
+   cluster endpoint to it in about 30 seconds. Queries in flight fail and Prisma reconnects, the
+   same as a Multi-AZ failover on RDS today.
+
+One property to know about: the reader endpoint balances **connections**, not queries. Prisma
+opens its pool when the task starts and keeps those connections, so a reader added later gets
+traffic only as tasks restart (every deploy restarts them). That is fine while readers are added
+by hand. If we later want Aurora to add readers automatically under load, RDS Proxy in front of
+the reader endpoint rebalances on its own; question 4 parks that for later.
 
 ## The design
 
@@ -37,236 +70,163 @@ for code to say "this read can come from the replica".
 
 core-api builds two Prisma clients:
 
-- the **primary**, from `DATABASE_URL`, as today;
-- the **reader**, from a new `DATABASE_READ_URL`, through Prisma's `datasourceUrl` option.
+- the **writer**, from `DATABASE_URL` (the cluster endpoint), as today;
+- the **reader**, from a new `DATABASE_READ_URL` (the reader endpoint), through Prisma's
+  `datasourceUrl` option.
 
 `fastify.prisma` stays one object of type `PrismaClient`, so no adapter, service or wiring file
 changes. It is a thin routing wrapper (a JavaScript `Proxy`) over the two clients:
 
-- **Writes always go to the primary.** `create`, `update`, `upsert`, `delete`, the `...Many`
-  forms and `$executeRaw`.
-- **Transactions always run on the primary.** `$transaction` goes straight to the primary client,
-  and the `tx` its callback receives is the primary's own, so every read inside a transaction is
-  on the primary too.
-- **Reads go to the primary unless the code around them asked for the replica.** `findUnique`,
-  `findFirst`, `findMany`, `count`, `aggregate`, `groupBy` and `$queryRaw` check a request-scoped
-  context (Node's `AsyncLocalStorage`), which holds a `ReadSource` enum value, `PRIMARY` or
-  `REPLICA`. With no context, the answer is `PRIMARY`.
-- **Once code writes inside a replica scope, the rest of that scope reads the primary**, so a
-  read that follows its own write always sees it.
+- **Writes and transactions always go to the writer.** `create`, `update`, `upsert`, `delete`,
+  the `...Many` forms, `$executeRaw` and `$transaction` (whose `tx` is the writer's own).
+- **Reads go to the writer unless the code around them asked for the reader.** `findUnique`,
+  `findFirst`, `findMany`, `count`, `aggregate`, `groupBy` and `$queryRaw` check a scope held in
+  Node's `AsyncLocalStorage`, a `ReadSource` enum value, `WRITER` or `READER`. With no scope, the
+  answer is `WRITER`.
 
-The default is the primary everywhere. Nothing moves to the replica until a ticket below opts it
-in, which keeps each move small, reviewable and easy to back out.
-
-We considered Prisma's official `@prisma/extension-read-replicas`. It does the opposite: it sends
-every read to the replica unless code asks for the primary. In this codebase that would move
-login, permission checks, the entry form right after a save, and every scheduler's "already
-done?" check onto a copy that can lag. Question 1 asks Derek to confirm opt-in.
+Nothing moves to the reader until a ticket below opts it in.
 
 ### How code opts in
 
 One function, in `src/core/read-source.ts`:
 
 ```ts
-readFromReplica(request, () => history.getSummary(leagueId))
+readFromReader(() => history.getSummary(leagueId))
 ```
 
-- A **route handler** wraps the service call it wants on the replica. Permission checks run in
-  `preHandler` hooks before the handler, so they still read the primary: a member removed a
-  moment ago is refused at once, not after the replica catches up.
-- **Background work** passes `null` for the request and wraps only its read-heavy part, such as
-  assembling a standings email's leaderboard and recipient list.
-- The function is the one place that decides. It returns `PRIMARY` when the read-your-writes
-  window is open (below), when the replica is unhealthy, or when the kill switch is off. Every
-  call logs the source it chose at debug level, and the request log line carries `readSource`
-  (`rules/service-rules.md` §11 *Backend Logging*).
+- A **route handler** of a read-only flow wraps its service call. Permission checks run in
+  `preHandler` hooks before the handler, so they stay on the writer.
+- **Background work** wraps only its read-only part, such as assembling a standings email's
+  leaderboard and recipients.
+- The request log line carries `readSource` (`rules/service-rules.md` §11 *Backend Logging*).
 
-A lint rule keeps `readFromReplica` out of `$transaction` callbacks, where it would mean nothing.
+**A write inside `readFromReader` is a bug, and it fails loudly.** The reader endpoint only takes
+reads, so Postgres rejects the write with "cannot execute ... in a read-only transaction". That
+is how the "never writes" rule is kept without anyone having to remember it.
 
-### Read your own writes
+### The read pool is read-only in every environment
 
-A replica usually trails the primary by well under a second, but "usually" is not good enough
-right after a person changes something. A commissioner crowns a cup and the page refetches it; it
-must not show the cup uncrowned.
+Aurora readers refuse writes on their own. Local runs and CI have no reader, so there
+`DATABASE_READ_URL` is the same database with `options=-c default_transaction_read_only=on`, and
+Postgres rejects writes on that pool the same way. (Ticket 1 confirms Prisma 6 passes `options`
+through; if it does not, a reader role with `ALTER ROLE ... SET default_transaction_read_only =
+on` does the same.)
 
-After any successful `POST`, `PUT`, `PATCH` or `DELETE`, core-api sets a cookie,
-`poolmaster_recent_write`, with `Max-Age` of 5 seconds (the `readYourWritesSeconds` setting).
-While a request carries it, `readFromReplica` reads the primary. The browser drops the cookie on
-its own, so no clocks are compared. It carries no secret: forging it only sends that person's
-reads to the primary.
+`DATABASE_READ_URL` is required: core-api refuses to start without it, as it does without
+`DATABASE_URL`. There is no single-pool mode, so every environment runs the same code. Pointing
+`DATABASE_READ_URL` at the writer is the off switch if we ever need one, with no code change.
 
-### Replica health and the kill switch
+## What moves to the reader
 
-- **Lag check.** Every 10 seconds core-api reads the primary's `pg_current_wal_lsn()` and the
-  replica's `pg_last_wal_replay_lsn()`. If the replica has not yet replayed a position the
-  primary reached more than `maxLagSeconds` ago (10 by default), the replica is unhealthy and
-  every read goes to the primary until it catches up. Each change of state logs one warning.
-  When the read pool points at the primary itself (no replica), `pg_last_wal_replay_lsn()` is
-  null and the check reports healthy with no lag.
-- **Unreachable replica.** A query on the replica that fails because the connection failed
-  (Prisma `P1001`, `P1017`) marks the replica unhealthy and runs once more on the primary, with a
-  warning. Other errors are raised as usual. This is a real answer from the real database, not a
-  substitute, so it sits inside `rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*.
-  Question 7 asks Derek to confirm it.
-- **Kill switch.** A new app settings group, `READ_REPLICA_CONFIG` in `platform_runtime_configs`
-  (`routingEnabled`, `maxLagSeconds`, `readYourWritesSeconds`), editable from the root admin
-  settings screen. Turning `routingEnabled` off sends every read to the primary within one
-  settings refresh, with no deploy.
-
-### The read pool is read-only everywhere, including tests
-
-A real replica refuses writes on its own. So that a write in a replica scope fails in every other
-environment too, `DATABASE_READ_URL` always opens read-only sessions:
-
-- with a replica: the replica's endpoint;
-- without one (local, CI, and any environment that has not turned a replica on): the primary's
-  endpoint with `options=-c default_transaction_read_only=on`, so Postgres rejects any write on
-  that pool. (Ticket 1 confirms Prisma 6 passes `options` through; if it does not, the same
-  effect comes from a reader role created with `ALTER ROLE ... SET default_transaction_read_only
-  = on`.)
-
-`DATABASE_READ_URL` is required. core-api refuses to start without it, as it does without
-`DATABASE_URL`. There is no "single pool" mode, so every environment runs the same code path, and
-adding a replica later is only a change to where that URL points.
-
-Each URL sets `connection_limit` and `application_name` (`core-api` and `core-api-read`) so the
-pools are sized on purpose and visible in `pg_stat_activity`.
-
-## What moves to the replica
-
-The first moves are the ones Derek named, where a second of staleness cannot be seen:
+Only flows that never write:
 
 | Area | Routes or work | Notes |
 |---|---|---|
 | Marketing and catalog | `GET /event-pages`, `/event-pages/:sport/:pageSlug`, `/sports`, `/sport-leagues` (list, detail, affiliations), `/contest-config-templates`, `/plans` | Changed only by root admins and migrations. |
-| Trophy room and history | `GET /history/summary`, `/trophies`, `/records`, `/squads/:squadId`, `/squads/:squadId/years`, `/contests`; `GET /championship`, `/championship/:year`; `GET /cups` list, seasons, detail, squad points, projection | Not `GET /history/year-review`: the commissioner sends it and the page reads it back. |
-| Completed contests | `GET /contests/:contestId`, its entries and all four leaderboards, **when the contest is settled** | The handler reads the contest's status on the primary (one row by key), then reads the heavy part from the replica only if it is settled. Open and live contests stay on the primary. |
-| Completed events | event detail, matches, results and participants for events that are final | Same rule: status on the primary, the rest from the replica once final. |
-| Email and notification content | the notification sweeps' assembly: leaderboards, member lists, contest summaries, the weekly digest, year in review | See below. |
+| Trophy room and history | `GET /history/summary`, `/trophies`, `/records`, `/squads/:squadId`, `/squads/:squadId/years`, `/contests`; `GET /championship`, `/championship/:year` | Not `GET /history/year-review`: the commissioner sends it and the page reads it back. |
+| Completed contests | `GET /contests/:contestId`, its entries and all four leaderboards, **when the contest is settled** | The handler reads the contest's status on the writer (one row by key), and reads the heavy part from the reader only if it is settled. Open and live contests stay on the writer. |
+| Completed events | event detail, matches, results and participants for events that are final | Same rule: status on the writer, the rest from the reader once final. |
+| Email and notification content | the notification sweeps' assembly: leaderboards, member lists, contest summaries, the weekly digest, year in review | Only the build of the email. Deciding what is due and queueing it stay on the writer. |
 
-**What stays on the primary:** sign-in and sessions, permission checks, anything the person is
-editing (entries, picks, squads, invitations, settings), open and live contests, the email
-sender's claim of outbox rows, ingestion, and every scheduler's decision about what is due.
+**What stays on the writer:** sign-in and sessions, permission checks, anything a person edits
+and then sees (entries, picks, squads, invitations, settings), cups (a commissioner crowns one and
+the page reads it back), open and live contests, the email sender, ingestion, and every
+scheduler's decision about what is due.
 
-**Notifications in detail.** A sweep first decides what is due ("this round finished, no email
-yet"), then builds the email, then queues it. Only the build moves to the replica. If a lagging
-replica made a sweep think an email was not yet queued, queueing it again hits the outbox's unique
-`idempotency_key` on the primary and is skipped; ticket 4 adds a test that proves a duplicate
-queue is a quiet no-op, not an error. Standings emails already wait
-`EMAIL_CONFIG.standingsBufferMinutes` after their moment, far longer than any healthy lag.
+**Live leaderboards** are probably the biggest read load on a busy Sunday. They never write, so
+with Aurora's lag they could move too; question 3 asks.
 
-**Live leaderboards** are probably the biggest read load of all on a busy Sunday, but they are
-not on Derek's list and a live board is where staleness would show. Question 8 proposes moving
-them only after a week of QA lag numbers.
-
-**The replica does not fix slow queries.** It is a physical copy with the same indexes. N+1
-patterns and missing indexes, which the parallel performance scan is looking for, cost the same on
-a replica; fixing them comes first and helps both.
+**The reader does not fix slow queries.** It reads the same storage with the same indexes. The
+N+1 patterns and missing indexes the performance audit (#1158) found cost the same on a reader;
+fixing them comes first and helps both.
 
 ## Terraform
 
 Derek applies from his Mac with the `apply-terraform` skill.
 
-- New variables `db_read_replica_enabled` (default false) and `db_read_replica_instance_class`.
-- `aws_db_instance.postgres_replica`, `count = var.db_read_replica_enabled ? 1 : 0`, with
-  `replicate_source_db = aws_db_instance.postgres.identifier`, the same security group, encrypted,
-  no backups of its own, `skip_final_snapshot = true`. It needs no name, user or password; those
-  come from the primary. The source keeps backups on (QA already keeps 1 day), which RDS
-  requires.
-- `local.db_read_url`: the replica's endpoint when enabled, otherwise the primary's endpoint with
-  the read-only option. It goes into `common_env` as `DATABASE_READ_URL` beside `DATABASE_URL`.
-  When the production plan moves `DATABASE_URL` into Secrets Manager, `DATABASE_READ_URL` moves
-  with it.
-- Alarms in `monitoring.tf`: `ReplicaLag` over 30 seconds for 5 minutes, and replica CPU and
-  connections, matching the primary's.
-- An output with the replica endpoint, and `scripts/db-tunnel.sh` learns a `--replica` flag so
-  Derek's read-only IDE connection can use the replica and leave the primary alone.
+- `aws_rds_cluster.postgres` (engine `aurora-postgresql`, version 16, encrypted, the same subnet
+  group and security group, deletion protection and final snapshot on prod) replaces
+  `aws_db_instance.postgres`.
+- `aws_rds_cluster_instance` for the writer, and `var.db_reader_count` more for the readers
+  (`count`), each with `var.db_instance_class`. Readers go in a different availability zone from
+  the writer. **On prod the reader is also the failover target**, so it replaces the Multi-AZ
+  standby the production plan budgets for rather than adding to it.
+- `local.db_url` uses the cluster endpoint; a new `local.db_read_url` uses the reader endpoint
+  with the read-only option (with no readers, Aurora's reader endpoint lands on the writer, and the
+  option keeps that pool read-only all the same). Both go in `common_env`; when the production plan moves `DATABASE_URL` into Secrets Manager,
+  `DATABASE_READ_URL` moves with it.
+- `monitoring.tf`: the CPU, storage and connections alarms move from the instance to the cluster
+  and instances (`FreeLocalStorage` in place of `FreeStorageSpace`, since Aurora storage grows by
+  itself), plus `AuroraReplicaLag` over 1 second as a health signal.
+- `outputs.tf` gives both endpoints. `scripts/db-tunnel.sh` gets a `--reader` flag, so Derek's
+  read-only IDE connection reads a reader and leaves the writer alone. `docs/DATABASE-ACCESS.md`
+  and the Terraform README follow.
 
-**Order matters once.** The core-api change that requires `DATABASE_READ_URL` can deploy only
-after the task definition has it. So ticket 1's Terraform part (the variable pointing at the
-primary, read-only) is applied to QA before ticket 1 merges. Turning on the replica afterwards is
-one `tfvars` line and an apply; core-api picks up the new URL on its next deploy.
+**Moving QA.** QA's data is test data, but Derek has events and settings loaded there. The move
+keeps it: snapshot the RDS instance, restore the snapshot into the new Aurora cluster (Aurora
+restores from an RDS Postgres snapshot directly), point the URLs at the cluster, then delete the
+old instance. About 20 minutes of QA downtime. The QA reset script and the read-only
+`poolmaster_readonly` role come across in the snapshot.
 
-Creating a replica from a single-AZ source takes a snapshot, which briefly slows the primary's
-disk; on QA nobody will notice. On Multi-AZ prod the snapshot comes from the standby.
+**Prod** starts on Aurora when the production epic (#917) is applied; the production plan's
+database rows change to match in the same PR as the Terraform.
 
-**Cost.** A `db.t4g.micro` replica on QA is about $12 a month; a `db.t4g.small` on prod about $25
-to $30, the same as its primary.
+**Order matters once.** The core-api change that requires `DATABASE_READ_URL` deploys only after
+the task definition has it, so the Terraform ticket is applied to QA before ticket 1 merges.
+
+**Cost.** Aurora's smallest provisioned instance is `db.t4g.medium`, about $55 a month each, plus
+storage and I/O. QA today is one `db.t3.micro` at about $13. A writer and one reader on QA comes to
+about $110 to $120; on prod the same, against about $60 for the Multi-AZ RDS the production plan
+assumed. Aurora Serverless v2 is the cheaper way to run QA (question 2).
 
 ## Testing
 
 Per `rules/testing-rules.md` §1A–§1C; nothing below changes application code for a test.
 
-- **Unit, the router.** With two fake clients (test code only): a read inside `readFromReplica`
-  reaches the replica; outside it, the primary; a write always the primary; a read after a write
-  in the same scope, the primary; `$transaction` and its `tx`, the primary; the cookie, an
-  unhealthy replica and the kill switch each send reads to the primary.
-- **Unit, the health check.** Lag computed from the two positions; null replay position on a
-  non-replica counts as healthy; a connection error marks unhealthy and retries once on the
-  primary.
+- **Unit, the router.** With two fake clients (test code only): a read inside `readFromReader`
+  reaches the reader; outside it, the writer; a write and a `$transaction` always the writer.
 - **Integration and functional, every opted-in route.** CI and local runs set
-  `DATABASE_READ_URL` to the test database with `default_transaction_read_only=on`. Every
-  existing integration and functional test of an opted-in route therefore runs its reads through
-  a read-only pool: one write slipping into a replica scope fails the suite with Postgres's
-  "cannot execute ... in a read-only transaction". One integration test proves exactly that
-  failure, so the guard cannot quietly stop working.
+  `DATABASE_READ_URL` to the test database read-only. Every existing test of an opted-in route
+  therefore reads through a read-only pool, and a write that slips into a reader scope fails the
+  suite. One integration test proves that failure, so the guard cannot quietly stop working.
 - **Integration, settled versus live.** A settled contest's leaderboard reads the read pool
-  (asserted by `application_name` in the query log), a live contest's reads the primary.
-- **QA, a real replica.** After the replica is on, watch `ReplicaLag` for a week of game days and
-  check the read pool in `pg_stat_activity`. The browser E2E suite runs against it unchanged.
+  (asserted by `application_name`), a live contest's reads the writer.
+- **QA on Aurora.** The browser E2E suite runs unchanged; `pg_stat_activity` on the reader shows
+  `core-api-read` connections.
 
 ## Tickets
 
 Sub-issues of #1156, created once Derek answers the questions.
 
-1. **The read pool and the router.** `DATABASE_READ_URL` (required, in `types/process-env.d.ts`,
-   `.env.example`, CI and the npm scripts), the second client, the routing proxy,
-   `AsyncLocalStorage` and `ReadSource`, `readFromReplica`, the read-your-writes cookie, the lint
-   rule, the router's unit tests and the read-only integration test, plus the Terraform variable
-   pointing at the primary read-only (applied to QA before merge). New sections in
-   `rules/architecture-rules.md` (how reads are routed) and `rules/service-rules.md` (how a
-   route opts in). No route opts in yet.
-2. **Marketing, catalog, trophy room and history on the replica.** The first two rows of the
-   table. Small, and the first real use.
-3. **Completed contests and events on the replica.** The status-then-replica rule for contest,
-   entries, leaderboards and final events.
-4. **Email and notification content on the replica.** The sweeps' assembly steps, and the
-   duplicate-queue test.
-5. **Replica health and the kill switch.** The lag check, the connection-error retry, the
-   `READ_REPLICA_CONFIG` settings group on the root admin screen.
-6. **The replica in Terraform.** The resource, the URL switch, alarms, output, the tunnel flag,
-   README and `docs/DATABASE-ACCESS.md`; Derek applies to QA.
+1. **Aurora in Terraform, and the QA move.** The cluster, writer, readers, both URLs, alarms,
+   outputs, the tunnel flag, README, `docs/DATABASE-ACCESS.md`, the production plan's database
+   rows, and the snapshot-restore steps for QA. Derek applies; nothing in the app changes yet
+   (`DATABASE_READ_URL` is set but unread).
+2. **The read pool and the router.** `DATABASE_READ_URL` required (in `types/process-env.d.ts`,
+   `.env.example`, CI and the npm scripts), the second client, the routing proxy, `ReadSource`
+   and `readFromReader`, the unit tests and the read-only integration test. New sections in
+   `rules/architecture-rules.md` (how reads are routed) and `rules/service-rules.md` (when a
+   flow may opt in: it never writes). No route opts in yet. Merges after ticket 1 is applied.
+3. **Marketing, catalog and history on the reader.** The first two rows of the table.
+4. **Completed contests and events on the reader.** The status-then-reader rule.
+5. **Email and notification content on the reader.** The sweeps' build steps.
 
-Ticket 1 goes first. Tickets 5 and 6 can run beside 2 to 4. Ticket 5 must merge before ticket 6 is
-applied, so a lagging real replica is never read without the lag check in place.
+Tickets 3 to 5 can run in parallel once ticket 2 merges.
 
 ## Questions, with the answer this plan takes
 
-1. **Opt in, or everything reads the replica by default?** *Recommendation: opt in.* Default to
-   the primary and move named reads over. Defaulting to the replica (Prisma's official extension)
-   gets more load off sooner but makes every read in the app a possible stale read, including
-   permission checks and "already sent?" checks.
-2. **RDS read replica or Aurora?** *Recommendation: an RDS read replica now.* It is cheap, prod
-   is not deployed, and the code only knows one read URL. Aurora gives one reader endpoint over
-   up to 15 replicas, lag in milliseconds and automatic reader scaling, but its smallest instance
-   costs about twice ours. Revisit when we need a second replica; moving then is a snapshot
-   restore and a URL change, no code.
-3. **Does QA get a real replica?** *Recommendation: yes,* about $12 a month, so routing and lag
-   are proven on real replication before prod. Without one, QA's read pool points at the primary
-   read-only, which still proves no write slips through but not the lag handling.
-4. **Does prod launch with a replica?** *Recommendation: no.* Launch with the read pool on the
-   primary (read-only), and turn the replica on with one `tfvars` line when the primary's CPU or
-   connections approach their alarms. Saves about $25 to $30 a month until traffic needs it. If
-   you would rather have the headroom from day one, it is the same line at launch.
-5. **How long after a person's own change do their reads stay on the primary?**
-   *Recommendation: 5 seconds,* as an app setting.
-6. **How far behind may the replica fall before reads go back to the primary?**
-   *Recommendation: 10 seconds,* as an app setting.
-7. **If the replica cannot be reached, retry on the primary?** *Recommendation: yes,* once, with
-   a warning, and mark the replica unhealthy. The alternative is an error page for history and
-   marketing pages while the replica restarts.
-8. **Move live leaderboards to the replica later?** *Recommendation: yes, but as a separate
-   ticket after a week of QA lag numbers,* since a live board is where staleness would show and
-   probably the biggest read load on a game day.
-9. **Point your read-only IDE connection at the replica once it exists?** *Recommendation: yes,*
-   so a heavy ad-hoc query never slows the live site.
+1. **Is the Aurora cost fine?** About $110 to $120 a month on prod for a writer and a reader,
+   against about $60 for the Multi-AZ RDS the production plan assumed. *Recommendation: yes;* the
+   reader doubles as the failover target, so the extra buys read scaling, not just a standby.
+2. **QA on Aurora Serverless v2 instead of provisioned instances?** It scales between 0.5 and a
+   few capacity units (or pauses at 0 when idle), so QA's mostly idle database costs well under
+   the provisioned $110. *Recommendation: yes, Serverless v2 for QA* with a minimum of 0.5, so it
+   never pauses mid-test; prod uses provisioned `db.t4g.medium` instances, whose cost is
+   predictable.
+3. **Move live leaderboards to the reader too?** They never write and are the heaviest game-day
+   read. *Recommendation: yes, as ticket 6 after tickets 3 to 5,* once QA shows the reader
+   working.
+4. **Automatic reader scaling (Aurora adds readers under load)?** *Recommendation: not now.* Add
+   readers by hand with `db_reader_count`; revisit with RDS Proxy when traffic calls for it.
+5. **Point your read-only IDE connection at the reader?** *Recommendation: yes,* so a heavy
+   ad-hoc query never slows the writer.
