@@ -24,6 +24,7 @@ import {
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
+import { readEventsOnce, readMatchesOnce, readOncePerKey } from '../events/event-reads';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 
 export interface ContestSummaryDeps {
@@ -47,6 +48,24 @@ export interface ContestSummary {
   entriesPerMember: string;
   /** When the first event's picks close: its start, a second-chance bracket's round or a squares game's kickoff. */
   closesAt: Date;
+}
+
+/**
+ * The summary's event reads, each made once however many contests a fan-out summarizes (#1199):
+ * the events (`known` ones are not read at all), their matches, sport leagues and tiers. Build it
+ * before the fan-out's loop and summarize each contest with it.
+ */
+export function shareSummaryReads(
+  deps: ContestSummaryDeps,
+  known: readonly SportEvent[] = [],
+): ContestSummaryDeps {
+  return {
+    configurations: deps.configurations,
+    sportEvents: readEventsOnce(deps.sportEvents, known),
+    sportLeagues: { findById: readOncePerKey((id) => deps.sportLeagues.findById(id)) },
+    matches: readMatchesOnce(deps.matches),
+    tiers: { getEffectiveTiersForSportEvent: readOncePerKey((id) => deps.tiers.getEffectiveTiersForSportEvent(id)) },
+  };
 }
 
 /** The contest's summary, or null when its configuration or events are gone. */

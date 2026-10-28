@@ -42,7 +42,7 @@ import {
   type EmailService,
   type StandingsLine,
 } from '../email';
-import { describeEventFormat, summarizeContest, type ContestSummaryDeps } from './contest-summary';
+import { describeEventFormat, shareSummaryReads, summarizeContest, type ContestSummaryDeps } from './contest-summary';
 import { activeLeagueMembers, activeLeagueMembersWithRoles, type LeagueMemberDeps } from './league-members';
 import { leaderCount } from './live-standings';
 
@@ -65,9 +65,9 @@ export interface ContestOpenedNotice {
   contestOpened(contestId: string): Promise<void>;
 }
 
-/** The contest-started seam EventLifecycleService calls. */
+/** The contest-started seam EventLifecycleService calls, once for all of an event's contests that just went live. */
 export interface ContestStartedNotice {
-  contestStarted(contest: Contest, sportEvent: SportEvent): Promise<void>;
+  contestsStarted(contests: readonly Contest[], sportEvent: SportEvent): Promise<void>;
 }
 
 function toEmailEvent(sportEvent: SportEvent): ContestEmailEvent {
@@ -130,13 +130,32 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
   }
 
   /**
+   * E1 for each contest that just went live for `sportEvent`. The event's matches, sport league
+   * and tiers are read once for all of them (#1199), and one contest failing to queue doesn't
+   * stop the rest.
+   */
+  async contestsStarted(contests: readonly Contest[], sportEvent: SportEvent): Promise<void> {
+    const shared = shareSummaryReads(this.deps, [sportEvent]);
+    for (const contest of contests) {
+      try {
+        await this.contestStarted(contest, sportEvent, shared);
+      } catch (err) {
+        this.deps.logger?.error({
+          action: 'email.contestStarted.failed',
+          data: { contestId: contest.id, leagueId: contest.leagueId, error: err instanceof Error ? err.message : String(err) },
+        }, 'Failed to queue contest started emails');
+      }
+    }
+  }
+
+  /**
    * E1: wishes every active member good luck as the contest goes live for `sportEvent`, with the
    * event, the rules and how many entries are in. No entry list: the leaderboard has it.
    */
-  async contestStarted(contest: Contest, sportEvent: SportEvent): Promise<void> {
+  private async contestStarted(contest: Contest, sportEvent: SportEvent, shared: ContestSummaryDeps): Promise<void> {
     const [league, summary, entries] = await Promise.all([
       this.deps.leagues.findById(contest.leagueId),
-      summarizeContest(this.deps, contest),
+      summarizeContest(shared, contest),
       this.deps.entries.findByContest(contest.id),
     ]);
     if (!league || !summary) {
@@ -146,7 +165,7 @@ export class ContestNotices implements ContestOpenedNotice, ContestStartedNotice
     const submitted = entries.filter((entry) => contestEntryEventStatus(entry, sportEvent.id) === ContestEntryStatus.SUBMITTED);
     const entrants = new Set((await this.deps.squadMemberships.findBySquads([...new Set(submitted.map((entry) => entry.squadId))]))
       .map((owner) => owner.userId));
-    const eventFormat = await describeEventFormat(this.deps, sportEvent);
+    const eventFormat = await describeEventFormat(shared, sportEvent);
     const leaderboardUrl = buildLeaderboardUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);
     await this.sendEach('CONTEST_STARTED_SUMMARY', contest, league, await activeLeagueMembers(this.deps, league.id), (user) => this.deps.email.send('CONTEST_STARTED_SUMMARY', {
       to: emailRecipientOf(user),

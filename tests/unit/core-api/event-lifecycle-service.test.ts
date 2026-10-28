@@ -42,8 +42,8 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
 }
 
 /** A contest-started notice that records whom it was asked to tell. */
-function startedNotice(): ContestStartedNotice & { contestStarted: jest.Mock } {
-  return { contestStarted: mockFn<ContestStartedNotice['contestStarted']>(async () => undefined) };
+function startedNotice(): ContestStartedNotice & { contestsStarted: jest.Mock } {
+  return { contestsStarted: mockFn<ContestStartedNotice['contestsStarted']>(async () => undefined) };
 }
 
 /** An in-memory store holding the one event under test, and the port over it. */
@@ -351,8 +351,28 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       to: ContestStatus.ACTIVE,
       startsAt: STARTED_EVENT_START,
     });
-    expect(notice.contestStarted).toHaveBeenCalledTimes(1);
-    expect(notice.contestStarted).toHaveBeenCalledWith(STARTED_CONTEST, expect.objectContaining({ id: 'sport-event-1' }));
+    expect(notice.contestsStarted).toHaveBeenCalledTimes(1);
+    expect(notice.contestsStarted).toHaveBeenCalledWith([STARTED_CONTEST], expect.objectContaining({ id: 'sport-event-1' }));
+  });
+
+  it('asks once for the contest-started emails of every contest the event starts, so their shared event reads are made once', async () => {
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
+    const second = buildContest({ ...STARTED_CONTEST, id: 'contest-2', leagueId: 'league-2' });
+    const alreadyLive = buildContest({ ...STARTED_CONTEST, id: 'contest-3', leagueId: 'league-3' });
+    const contests = contestDeps();
+    contests.contests.findBySportEvent = jest.fn().mockResolvedValue([STARTED_CONTEST, second, alreadyLive]);
+    contests.contests.transitionStatus = jest.fn().mockImplementation(async (contestId: string) => contestId !== alreadyLive.id);
+    const notice = startedNotice();
+    const service = new EventLifecycleService(contests, sportEvents, fakeLogger(), notice);
+
+    await service.applySportEventStatusTransition({
+      sportEventId: 'sport-event-1',
+      toStatus: SportEventStatus.IN_PROGRESS,
+      actor: { type: 'SYSTEM' },
+    });
+
+    expect(notice.contestsStarted).toHaveBeenCalledTimes(1);
+    expect(notice.contestsStarted).toHaveBeenCalledWith([STARTED_CONTEST, second], expect.objectContaining({ id: 'sport-event-1' }));
   });
 
   it('pool-master-9ya does not ask for contest-started emails again when the contest is already active', async () => {
@@ -366,13 +386,13 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       actor: { type: 'SYSTEM' },
     });
 
-    expect(notice.contestStarted).not.toHaveBeenCalled();
+    expect(notice.contestsStarted).not.toHaveBeenCalled();
   });
 
   it('keeps the transition successful, and logs it, when the contest-started emails cannot be queued', async () => {
     const logger = fakeLogger();
     const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const notice = { contestStarted: jest.fn().mockRejectedValue(new Error('database unavailable')) };
+    const notice = { contestsStarted: jest.fn().mockRejectedValue(new Error('database unavailable')) };
     const service = new EventLifecycleService(contestDeps({ startedContest: true }), sportEvents, logger, notice);
 
     await expect(
@@ -384,7 +404,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     ).resolves.toMatchObject({ toStatus: SportEventStatus.IN_PROGRESS });
 
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ contestId: 'contest-1', error: 'database unavailable' }),
+      expect.objectContaining({ contestIds: ['contest-1'], error: 'database unavailable' }),
       'Failed to queue contest started emails',
     );
   });

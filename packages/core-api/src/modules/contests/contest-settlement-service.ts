@@ -46,6 +46,7 @@ import {
   toParticipantScores,
 } from './contest-leaderboard-reads';
 import { FINISHED_EVENT_STATUSES } from './entry-window';
+import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
 import type { ChampionshipService } from '../championship/service';
 import type { ContestSettledNotice } from '../notifications/contest-notices';
 
@@ -101,6 +102,14 @@ export interface ContestSettlementDeps extends BracketStandingsReadDeps {
   logger?: LifecycleLogger;
 }
 
+/**
+ * The reads a settlement fan-out shares across its contests (#1199): the events, their matches
+ * and fields, each read once however many contests are on the event.
+ */
+type SettlementReads = Omit<ContestSettlementDeps, 'sportEvents'> & {
+  sportEvents: Pick<SportEventRepository, 'findByIds'>;
+};
+
 export class ContestSettlementService {
   private readonly logger: LifecycleLogger;
 
@@ -125,9 +134,10 @@ export class ContestSettlementService {
 
     const completedAt = input?.completedAt ?? sportEvent.endDate ?? sportEvent.startDate;
     const cancelled = sportEvent.status === SportEventStatus.CANCELLED;
+    const reads = this.sharedReads(sportEvent);
     // The field is the event's, read once; each contest scores it under its own settings below.
     // A cancelled event is never scored, whatever scores it holds.
-    const field = cancelled ? [] : await loadEventField(this.deps, sportEventId);
+    const field = cancelled ? [] : await loadEventField(reads, sportEventId);
     // A COMPLETED contest is already settled: its standing is the frozen result, and re-running
     // settlement (the event re-sent as COMPLETED, or a late score correction) must not rewrite
     // it. Only a contest moved back out of COMPLETED would be settled again, and no route does
@@ -143,7 +153,7 @@ export class ContestSettlementService {
     let contestsSettled = 0;
     for (const contest of contests) {
       if (contest.selectionType === SelectionType.BRACKET) {
-        const settled = await this.settleBracketContest(contest, sportEvent, completedAt);
+        const settled = await this.settleBracketContest(reads, contest, sportEvent, completedAt);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -152,7 +162,7 @@ export class ContestSettlementService {
         continue;
       }
       if (contest.selectionType === SelectionType.SURVIVOR) {
-        const settled = await this.settleSurvivorWeek(contest, sportEvent, completedAt);
+        const settled = await this.settleSurvivorWeek(reads, contest, sportEvent, completedAt);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
@@ -161,14 +171,14 @@ export class ContestSettlementService {
       if (contest.selectionType === SelectionType.SQUARES) {
         // Its game normally settles it first (`settleFinishedGame`); an event finished without
         // that game's result leaves it Final with no scores.
-        const settled = await this.settleSquaresContest(contest, sportEvent, completedAt);
+        const settled = await this.settleSquaresContest(reads, contest, sportEvent, completedAt);
         contestsSettled++;
         standingsUpserted += settled.standingsUpserted;
         if (settled.completed) contestsCompleted++;
         continue;
       }
       if (contest.selectionType === SelectionType.PICK_EM) {
-        const settled = await this.settlePickEmWeek(contest, sportEvent, completedAt);
+        const settled = await this.settlePickEmWeek(reads, contest, sportEvent, completedAt);
         if (settled) {
           contestsSettled++;
           standingsUpserted += settled.standingsUpserted;
@@ -244,7 +254,7 @@ export class ContestSettlementService {
       }
       contestsSettled++;
 
-      if (!(await this.allEventsFinished(contest))) {
+      if (!(await this.allEventsFinished(reads, contest))) {
         this.logger.info({
           contestId: contest.id,
           sportEventId,
@@ -286,9 +296,10 @@ export class ContestSettlementService {
     if (!sportEvent) return 0;
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
       .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventMatchId);
+    const reads = this.sharedReads(sportEvent);
     let completed = 0;
     for (const contest of contests) {
-      const settled = await this.settleSquaresContest(contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
+      const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
       if (settled.completed) completed++;
     }
     return completed;
@@ -303,13 +314,14 @@ export class ContestSettlementService {
    * is, so the contest settles once that score is entered, with all four winners.
    */
   private async settleSquaresContest(
+    reads: SettlementReads,
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
     options?: { waitForEveryPeriod?: boolean },
   ): Promise<{ standingsUpserted: number; completed: boolean }> {
     const [games, draw] = await Promise.all([
-      this.deps.matches.findBySportEvent(sportEvent.id),
+      reads.matches.findBySportEvent(sportEvent.id),
       this.deps.squares.findDraw(contest.id),
     ]);
     const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
@@ -376,6 +388,7 @@ export class ContestSettlementService {
    * event is its only event, so the bracket completes with no standings (#743).
    */
   private async settleBracketContest(
+    reads: SettlementReads,
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
@@ -388,7 +401,7 @@ export class ContestSettlementService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(this.deps, contest.id, sportEvent);
+      standings = await loadBracketStandings(reads, contest.id, sportEvent);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');
@@ -426,6 +439,7 @@ export class ContestSettlementService {
    * pick'em rules, which is skipped and logged.
    */
   private async settlePickEmWeek(
+    reads: SettlementReads,
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
@@ -441,7 +455,7 @@ export class ContestSettlementService {
     }
     const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
     if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
-      const week = await loadPickEmWeekStandings(this.deps, contest.id, sportEvent, scoring);
+      const week = await loadPickEmWeekStandings(reads, contest.id, sportEvent, scoring);
       for (const standing of week.entries) {
         // poolmaster-allow-query-in-loop: #1172
         await this.deps.eventStandings.upsert({
@@ -460,7 +474,7 @@ export class ContestSettlementService {
       }
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: week.entries.length }, 'Settled one week of a pick\'em contest');
     }
-    if (!(await this.allEventsFinished(contest))) {
+    if (!(await this.allEventsFinished(reads, contest))) {
       return { standingsUpserted: 0, completed: false };
     }
     const weeks = await this.deps.eventStandings.findByContest(contest.id);
@@ -483,6 +497,7 @@ export class ContestSettlementService {
    * entries out in the same week sharing a place), and the contest is COMPLETED.
    */
   private async settleSurvivorWeek(
+    reads: SettlementReads,
     contest: Contest,
     sportEvent: SportEvent,
     completedAt: Date,
@@ -490,7 +505,7 @@ export class ContestSettlementService {
     const sportEventId = sportEvent.id;
     const settledWeeks = await this.deps.eventStandings.findByContest(contest.id);
     if (sportEvent.status !== SportEventStatus.CANCELLED && !settledWeeks.some((standing) => standing.sportEventId === sportEventId)) {
-      const season = await loadSurvivorSeason(this.deps, contest, completedAt);
+      const season = await loadSurvivorSeason(reads, contest, completedAt);
       // A playoff event is several weeks, one per round (#785): its standing counts the rounds survived in it.
       const weekIndexes = season.weeks.flatMap((week, index) => (week.event.id === sportEventId ? [index] : []));
       const decided = season.entries.flatMap(({ entry, run }) => {
@@ -523,12 +538,12 @@ export class ContestSettlementService {
       const survivorCount = decided.filter(({ survived, decidedCount }) => survived === decidedCount).length;
       this.logger.info({ contestId: contest.id, sportEventId, entryCount: decided.length, survivorCount }, 'Settled one week of a survivor contest');
     }
-    if (!(await this.allEventsFinished(contest))) {
+    if (!(await this.allEventsFinished(reads, contest))) {
       return { standingsUpserted: 0, completed: false };
     }
     // Ranked from the season's run, as the live board is, not from the weekly snapshots: a week
     // settled before an earlier week's result was in froze an entry the run later puts out.
-    const season = await loadSurvivorSeason(this.deps, contest, completedAt);
+    const season = await loadSurvivorSeason(reads, contest, completedAt);
     const playedWeeks = season.weeks.filter((week) => !week.cancelled).length;
     const standingsUpserted = await this.writeContestTotals(contest, season.entries.map(({ entry, run, position, displayPosition }) => ({
       entryId: entry.id,
@@ -540,6 +555,19 @@ export class ContestSettlementService {
     const completed = await this.complete(contest, completedAt);
     this.logger.info({ contestId: contest.id, sportEventId, standingsUpserted, completed }, 'Settled a survivor contest\'s season after its last week');
     return { standingsUpserted, completed };
+  }
+
+  /**
+   * The reads of one event's settlement, shared by its contests (#1199). Settlement writes
+   * standings and contest statuses, never the events, matches or fields these hold.
+   */
+  private sharedReads(sportEvent: SportEvent): SettlementReads {
+    return {
+      ...this.deps,
+      sportEvents: readEventsOnce(this.deps.sportEvents, [sportEvent]),
+      matches: readEventMatchesOnce(this.deps.matches),
+      eventParticipants: { listEventParticipants: readOncePerKey((id) => this.deps.eventParticipants.listEventParticipants(id)) },
+    };
   }
 
   /**
@@ -572,8 +600,8 @@ export class ContestSettlementService {
   }
 
   /** Whether every event the contest covers has completed or been cancelled: then the contest itself settles. */
-  private async allEventsFinished(contest: Contest): Promise<boolean> {
-    const events = await this.deps.sportEvents.findByIds(contest.sportEventIds);
+  private async allEventsFinished(reads: SettlementReads, contest: Contest): Promise<boolean> {
+    const events = await reads.sportEvents.findByIds(contest.sportEventIds);
     return events.length === contest.sportEventIds.length
       && events.every((event) => FINISHED_EVENT_STATUSES.includes(event.status));
   }

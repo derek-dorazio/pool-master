@@ -227,6 +227,54 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     expect(summary).toEqual({ sportEventId: context.sportEvent.id, contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 3 });
   });
 
+  it('reads the bracket\'s games and field once for every bracket contest on the event, and settles each of them', async () => {
+    const context = setup();
+    const second = context.world.addContest(context.world.addLeague().id, {
+      name: 'Second bracket pool',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.BRACKET,
+      sportEventIds: [context.sportEvent.id],
+    });
+    context.world.addConfiguration(second.id, {
+      selectionType: SelectionType.BRACKET,
+      configJson: { selectionType: SelectionType.BRACKET, startsAtRound: 1 },
+    });
+    context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
+    context.completeEvent();
+    const reads: string[] = [];
+    const matches = context.games.matchRepo();
+    const field = context.games.fieldService();
+    const settlement = new ContestSettlementService({
+      ...context.deps,
+      matches: {
+        findBySportEvent: async (sportEventId) => {
+          reads.push(`matches:${sportEventId}`);
+          return matches.findBySportEvent(sportEventId);
+        },
+        findBySportEvents: async (sportEventIds) => {
+          reads.push(...sportEventIds.map((sportEventId) => `matches:${sportEventId}`));
+          return matches.findBySportEvents(sportEventIds);
+        },
+      },
+      eventParticipants: {
+        listEventParticipants: async (sportEventId) => {
+          reads.push(`field:${sportEventId}`);
+          return field.listEventParticipants(sportEventId);
+        },
+      },
+      contests: context.world.contestRepo(),
+      sportEvents: context.world.sportEventRepo(),
+      squares: fakeSquaresRepo(),
+      championship: { recordContest: async () => 0 },
+    });
+
+    const summary = await settlement.settleFinishedSportEvent(context.sportEvent.id, { completedAt: SETTLED_AT });
+
+    expect(summary).toMatchObject({ contestsSettled: 2, contestsCompleted: 2, standingsUpserted: 3 });
+    expect(reads.sort()).toEqual([`field:${context.sportEvent.id}`, `matches:${context.sportEvent.id}`]);
+  });
+
   it('settles nothing for a bracket whose event has not completed', async () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK);

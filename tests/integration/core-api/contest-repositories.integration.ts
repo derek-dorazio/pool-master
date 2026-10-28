@@ -674,6 +674,30 @@ describe('ContestConfigurationRepository', () => {
       salaryCap: 50_000,
     });
   });
+
+  it('reads several contests\' rules in one read, leaving out a contest with none and contests not asked for', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const tiered = await createContest(league.id, event.id, 'Tiered rules', ContestStatus.OPEN);
+    const pickEm = await createContest(league.id, event.id, 'Pick\'em rules', ContestStatus.OPEN);
+    const noRules = await createContest(league.id, event.id, 'No rules', ContestStatus.OPEN);
+    const notAsked = await createContest(league.id, event.id, 'Not asked', ContestStatus.OPEN);
+    for (const [contest, configJson] of [
+      [tiered, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }],
+      [pickEm, { selectionType: SelectionType.PICK_EM, mode: 'STRAIGHT_UP', againstTheSpread: false }],
+      [notAsked, { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }],
+    ] as const) {
+      await getPrisma().contestConfiguration.create({
+        data: { contestId: contest.id, selectionType: configJson.selectionType, configJson },
+      });
+    }
+    const repository = new PrismaContestConfigurationRepository(getPrisma());
+
+    const found = await repository.findByContests([tiered.id, pickEm.id, noRules.id]);
+
+    expect(new Map(found.map((configuration) => [configuration.contestId, configuration.configJson?.selectionType])))
+      .toEqual(new Map([[pickEm.id, SelectionType.PICK_EM], [tiered.id, SelectionType.TIERED]]));
+    await expect(repository.findByContests([])).resolves.toEqual([]);
+  });
 });
 
 describe('ParticipantContestScoringRuleRepository', () => {

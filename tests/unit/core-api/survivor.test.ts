@@ -172,7 +172,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
   };
   const viewerId = expectDefined(users.get('Alice'));
   return {
-    world, games, contest, week1, week2, week3, team, contestService, settlement, predictions, seasonReads,
+    world, games, contest, week1, week2, week3, team, deps, contestService, settlement, predictions, seasonReads,
     gamesByNumber: { g1, g2, g3, g4, g5, g6 },
     sideOf, play, cancel, setEventStatus,
     userOf: (name: string) => expectDefined(users.get(name)),
@@ -607,6 +607,63 @@ describe('ContestSettlementService — a survivor contest', () => {
       .sort((left, right) => String(left[0]).localeCompare(String(right[0])));
     expect(totals).toEqual([['entry-alice', 3, '1'], ['entry-bob', 1, 'T2'], ['entry-cara', 0, '4'], ['entry-dan', 1, 'T2']]);
     expect(expectDefined(context.world.contests.get(context.contest.id)).status).toBe(ContestStatus.COMPLETED);
+  });
+
+  it('reads the season\'s weeks and games once for every survivor contest on the last week, and completes each of them', async () => {
+    const context = setup();
+    const second = context.world.addContest(context.world.addLeague().id, {
+      name: 'Second survivor',
+      status: ContestStatus.ACTIVE,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.SURVIVOR,
+      sportEventIds: [context.week1.id, context.week2.id, context.week3.id],
+    });
+    context.world.addConfiguration(second.id, {
+      selectionType: SelectionType.SURVIVOR,
+      configJson: { selectionType: SelectionType.SURVIVOR },
+    });
+    context.playWeek1();
+    await settle(context, context.week1.id, later(WEEK_1, 48));
+    context.playWeek2();
+    await settle(context, context.week2.id, later(WEEK_2, 48));
+    context.playWeek3();
+    context.setEventStatus(context.week3.id, SportEventStatus.COMPLETED);
+    const reads: string[] = [];
+    const matches = context.games.matchRepo();
+    const sportEvents = context.world.sportEventRepo();
+    const settlement = new ContestSettlementService({
+      ...context.deps,
+      matches: {
+        findBySportEvent: async (sportEventId) => {
+          reads.push(`matches:${sportEventId}`);
+          return matches.findBySportEvent(sportEventId);
+        },
+        findBySportEvents: async (sportEventIds) => {
+          reads.push(...sportEventIds.map((sportEventId) => `matches:${sportEventId}`));
+          return matches.findBySportEvents(sportEventIds);
+        },
+      },
+      sportEvents: {
+        ...sportEvents,
+        findByIds: async (ids) => {
+          reads.push(...ids.map((id) => `event:${id}`));
+          return sportEvents.findByIds(ids);
+        },
+      },
+      contests: context.world.contestRepo(),
+      squares: fakeSquaresRepo(),
+      championship: { recordContest: async () => 0 },
+    });
+
+    const summary = await settlement.settleFinishedSportEvent(context.week3.id, { completedAt: later(WEEK_3, 48) });
+
+    expect(summary).toMatchObject({ contestsSettled: 2, contestsCompleted: 2 });
+    const weeks = [context.week1.id, context.week2.id, context.week3.id];
+    // The week being settled is already in hand, so only the other two are read.
+    expect(reads.sort()).toEqual([
+      ...[context.week1.id, context.week2.id].map((id) => `event:${id}`),
+      ...weeks.map((id) => `matches:${id}`),
+    ].sort());
   });
 
   it('ranks the settled season by the run, not the weekly snapshots, when a postponed week 1 game is played after week 2 settled', async () => {
