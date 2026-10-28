@@ -209,7 +209,7 @@ describe('ManageContestsPage', () => {
     expect(await screen.findByTestId('manage-contests-row-contest-open')).toBeInTheDocument();
     expect(screen.queryByTestId('manage-contests-row-contest-final')).not.toBeInTheDocument();
     expect(screen.getByTestId('manage-contests-filter-active')).toHaveTextContent('Active · 1');
-    expect(listContestsMock.mock.calls.every(([options]: [{ query?: unknown }]) => options.query === undefined)).toBe(true);
+    expect(listContestsMock.mock.calls.map((call: unknown[]) => (call[0] as { query?: unknown }).query)).toEqual([undefined]);
 
     fireEvent.click(screen.getByTestId('manage-contests-filter-history'));
 
