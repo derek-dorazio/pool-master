@@ -579,7 +579,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const squadMembershipRepo = createMockSquadMembershipRepo({
         findByLeagueAndUser: jest.fn().mockResolvedValue({
@@ -619,7 +619,7 @@ describe('ContestService', () => {
     it('refuses an entry in a DRAFT contest with CONTEST_ENTRY_LOCKED and writes nothing, until the commissioner opens it', async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.DRAFT });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const service = buildService({
         contests: createMockContestRepo({
@@ -687,7 +687,7 @@ describe('ContestService', () => {
 
       it('refuses the new entry with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
         const service = serviceWithEntries(createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([]),
           create: jest.fn().mockResolvedValue({ status: 'contestDrawn' }),
         }));
 
@@ -697,7 +697,7 @@ describe('ContestService', () => {
 
       it('refuses to leave with CONTEST_ENTRY_LOCKED when the repository finds the contest drawn', async () => {
         const service = serviceWithEntries(createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([{
+          findByContestAndSquad: jest.fn().mockResolvedValue([{
             id: 'entry-1',
             contestId: 'contest-1',
             squadId: 'squad-1',
@@ -762,7 +762,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -819,7 +819,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([]),
       });
       const sportEventRepo = fakeSportEventRepo({
         countParticipants: jest.fn().mockResolvedValue(new Map([['sport-event-1', 0]])),
@@ -842,7 +842,7 @@ describe('ContestService', () => {
       expect(entryRepo.create).not.toHaveBeenCalled();
     });
 
-    it('allows additional entry creation when the contest configuration is unlimited', async () => {
+    it("allows additional entry creation when the contest configuration is unlimited, numbering it from one read of the squad's entries in that contest (#1167)", async () => {
       const contest = buildContest({ id: 'contest-1', leagueId: 'league-1', status: ContestStatus.OPEN });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const contestRepo = createMockContestRepo({
@@ -864,7 +864,7 @@ describe('ContestService', () => {
         }),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -906,6 +906,8 @@ describe('ContestService', () => {
         entryNumber: 2,
         name: "Derek's Squad Entry 2",
       }), expect.anything());
+      expect(entryRepo.findByContestAndSquad).toHaveBeenCalledTimes(1);
+      expect(entryRepo.findByContestAndSquad).toHaveBeenCalledWith('contest-1', 'squad-1');
       // A Platinum league's contest takes 500 entries, or more once expanded past that.
       const limits: ContestEntryCreateLimits = jest.mocked(entryRepo.create).mock.calls[0][1];
       expect([limits.entriesPerContest(null), limits.entriesPerContest(200), limits.entriesPerContest(1000)]).toEqual([500, 500, 1000]);
@@ -1096,7 +1098,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1149,7 +1151,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1225,7 +1227,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1324,7 +1326,7 @@ describe('ContestService', () => {
         findByLeagueAndUser: jest.fn().mockResolvedValue(membership),
       });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([
+        findByContestAndSquad: jest.fn().mockResolvedValue([
           {
             id: 'entry-1',
             contestId: 'contest-1',
@@ -1396,7 +1398,7 @@ describe('ContestService', () => {
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
           findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(271)),
         }),
         picks: fakeContestEntryPickRepo({
@@ -1554,7 +1556,7 @@ describe('ContestService', () => {
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
@@ -1599,7 +1601,7 @@ describe('ContestService', () => {
       });
       const membership = buildMembership({ id: 'membership-1', leagueId: 'league-1', userId: 'user-1' });
       const entryRepo = createMockEntryRepo({
-        findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+        findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(-12)),
       });
       const mailDelivery = {
@@ -1764,7 +1766,7 @@ describe('ContestService', () => {
           findByLeagueAndUser: jest.fn().mockResolvedValue(options.squad),
         }),
         entries: options.entries ?? createMockEntryRepo({
-          findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
+          findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]),
         }),
       });
     }
@@ -1777,7 +1779,7 @@ describe('ContestService', () => {
       ['deleteMyEntry', (service: ContestService) => service.deleteMyEntry('contest-1', 'user-1')],
       ['createEntry', (service: ContestService) => service.createEntry('contest-1', 'user-1')],
     ])('%s refuses a former league member with LEAGUE_MEMBERSHIP_INACTIVE and writes nothing', async (_name, act) => {
-      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const entries = createMockEntryRepo({ findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
       const service = serviceFor({ league: inactiveLeague, squad: inactiveSquad, entries });
 
       await expect(act(service)).rejects.toMatchObject({
@@ -1797,7 +1799,7 @@ describe('ContestService', () => {
     });
 
     it('refuses an active league member whose squad membership has ended with SQUAD_MEMBERSHIP_INACTIVE', async () => {
-      const entries = createMockEntryRepo({ findBySquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
+      const entries = createMockEntryRepo({ findByContestAndSquad: jest.fn().mockResolvedValue([UNSUBMITTED_ENTRY]) });
       const service = serviceFor({ league: buildMembership(), squad: inactiveSquad, entries });
 
       await expect(service.updateEntry('contest-1', 'entry-1', 'user-1', { name: 'Renamed' }))

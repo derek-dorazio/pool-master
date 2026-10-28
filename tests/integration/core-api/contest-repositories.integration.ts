@@ -890,6 +890,23 @@ describe('ContestEntryRepository', () => {
     await expect(repos().entries.findByIdWithSquad(randomUUID())).resolves.toBeNull();
   });
 
+  it("finds a squad's entries in one contest only, drafts included, by entry number, leaving out its entries in other contests and other squads' (#1167)", async () => {
+    const { league, squads, event } = await createLeagueAndEvent();
+    const contest = await createContest(league.id, event.id, 'Squad Entries');
+    const otherContest = await createContest(league.id, event.id, 'Other Contest');
+    // Created out of order, so the order below is the adapter's, not insertion order.
+    const third = await createEntry(contest.id, squads[0].id, 3, 'Third');
+    const first = await createEntry(contest.id, squads[0].id, 1, 'First');
+    await createEntry(otherContest.id, squads[0].id, 2, 'Elsewhere');
+    await createEntry(contest.id, squads[1].id, 2, 'Other Squad');
+
+    const found = await repos().entries.findByContestAndSquad(contest.id, squads[0].id);
+
+    expect(found.map((entry) => [entry.id, entry.entryNumber])).toEqual([[first.id, 1], [third.id, 3]]);
+    expect(found[0].events).toEqual([expect.objectContaining({ sportEventId: event.id, status: 'DRAFT' })]);
+    await expect(repos().entries.findByContestAndSquad(otherContest.id, squads[1].id)).resolves.toEqual([]);
+  });
+
   it('updates only the entry fields given, leaving the others and its event statuses as stored', async () => {
     const { league, squads, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Entry Update');

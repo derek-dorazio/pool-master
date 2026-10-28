@@ -610,6 +610,7 @@ model User {
   leaguePlanRenewalChanges LeaguePlanRenewalChange[] @relation("LeaguePlanRenewalChangedBy")
   leaguePayments           LeaguePayment[]           @relation("LeaguePaymentPayer")
 
+  @@index([isRootAdmin, isActive])
   @@map("users")
 }
 
@@ -712,6 +713,7 @@ model League {
   planRenewalChanges    LeaguePlanRenewalChange[]
   payments              LeaguePayment[]
 
+  @@index([planRenewsAt])
   @@map("leagues")
 }
 
@@ -737,6 +739,7 @@ model LeaguePayment {
 
   @@index([leagueId, paidAt(sort: Desc)])
   @@index([payerId, paidAt(sort: Desc)])
+  @@index([contestId])
   @@map("league_payments")
 }
 
@@ -775,6 +778,7 @@ model LeaguePlanChange {
   changedBy User?  @relation("LeaguePlanChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
 
   @@index([leagueId, changedAt(sort: Desc)])
+  @@index([changedById])
   @@map("league_plan_changes")
 }
 
@@ -792,6 +796,7 @@ model LeaguePlanRenewalChange {
   changedBy User?  @relation("LeaguePlanRenewalChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
 
   @@index([leagueId, changedAt(sort: Desc)])
+  @@index([changedById])
   @@map("league_plan_renewal_changes")
 }
 
@@ -810,6 +815,8 @@ model LeagueMembership {
 
   @@unique([leagueId, userId])
   @@index([leagueId, status])
+  @@index([userId, status])
+  @@index([status, joinedAt])
   @@map("league_memberships")
 }
 
@@ -833,6 +840,7 @@ model Squad {
 
   @@unique([leagueId, name])
   @@index([leagueId, isActive])
+  @@index([createdBy])
   @@map("squads")
 }
 
@@ -853,6 +861,7 @@ model SquadMembership {
   @@unique([squadId, userId])
   @@unique([leagueId, userId])
   @@index([squadId, status])
+  @@index([userId])
   @@map("squad_memberships")
 }
 
@@ -879,6 +888,8 @@ model LeagueInvitation {
   emailMessages EmailMessage[]
 
   @@index([leagueId, status])
+  @@index([invitedBy])
+  @@index([acceptedBy])
   @@map("league_invitations")
 }
 
@@ -926,6 +937,9 @@ model EmailMessage {
   @@index([providerMessageId])
   @@index([contestId, templateKey])
   @@index([templateKey, leagueId])
+  @@index([entryId])
+  @@index([leagueId, createdAt])
+  @@index([recipientUserId, createdAt])
   @@map("email_messages")
 }
 
@@ -941,6 +955,7 @@ model EmailSuppression {
 
   emailMessage EmailMessage? @relation(fields: [emailMessageId], references: [id], onDelete: SetNull)
 
+  @@index([emailMessageId])
   @@map("email_suppressions")
 }
 
@@ -966,6 +981,8 @@ model SquadOwnerInvitation {
 
   @@index([leagueId, status])
   @@index([squadId, status])
+  @@index([invitedBy])
+  @@index([acceptedBy])
   @@map("squad_owner_invitations")
 }
 
@@ -1134,7 +1151,6 @@ model Participant {
   sportEventParticipants SportEventParticipant[]
   leagueAffiliations     ParticipantLeagueAffiliation[]
 
-  @@index([sportId])
   @@index([sportId, status])
   @@map("participants")
 }
@@ -1194,7 +1210,6 @@ model Contest {
   expansions          ContestExpansion[]
   payments            LeaguePayment[]
 
-  @@index([leagueId])
   @@index([leagueId, seasonYear])
   @@index([status])
   @@map("contests")
@@ -1222,6 +1237,7 @@ model Cup {
   standings   CupStanding[]
 
   @@unique([leagueId, seasonYear, sportLeagueId])
+  @@index([sportLeagueId])
   @@map("cups")
 }
 
@@ -1279,6 +1295,7 @@ model LeagueYearFinish {
 
   @@unique([contestId, squadId])
   @@index([leagueId, year])
+  @@index([squadId])
   @@map("league_year_finishes")
 }
 
@@ -1296,6 +1313,7 @@ model LeagueYearReview {
   sentBy User?  @relation(fields: [sentByUserId], references: [id], onDelete: SetNull)
 
   @@unique([leagueId, year])
+  @@index([sentByUserId])
   @@map("league_year_reviews")
 }
 
@@ -1336,6 +1354,7 @@ model ContestConfiguration {
   participantScoringRules ParticipantContestScoringRule[]
   prizeDefinitions        ContestPrizeDefinition[]
 
+  @@index([templateId])
   @@map("contest_configurations")
 }
 
@@ -1402,6 +1421,7 @@ model EventPage {
   offers       EventPageOffer[]
 
   @@unique([sport, slug])
+  @@index([redirectToPageId])
   @@map("event_pages")
 }
 
@@ -1450,7 +1470,6 @@ model ParticipantContestScoringRule {
   contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
 
   @@unique([contestConfigurationId, sortOrder])
-  @@index([contestConfigurationId])
   @@map("participant_contest_scoring_rules")
 }
 
@@ -1471,7 +1490,6 @@ model ContestPrizeDefinition {
   contestConfiguration ContestConfiguration @relation(fields: [contestConfigurationId], references: [id])
 
   @@unique([contestConfigurationId, sortOrder])
-  @@index([contestConfigurationId])
   @@map("contest_prize_definitions")
 }
 
@@ -1507,6 +1525,7 @@ model ContestEntry {
   @@unique([contestId, squadId, entryNumber])
   // The key a claimed box's (contest, entry) foreign key names, so a box's entry is its contest's.
   @@unique([id, contestId])
+  @@index([squadId])
   @@map("contest_entries")
 }
 
@@ -1621,6 +1640,7 @@ model ContestEntryEventStanding {
 
   @@unique([contestEntryId, sportEventId])
   @@index([contestId, sportEventId, position])
+  @@index([sportEventId])
   @@map("contest_entry_event_standings")
 }
 
@@ -1643,6 +1663,7 @@ model ContestDraw {
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
   drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
 
+  @@index([drawnByUserId])
   @@map("contest_draws")
 }
 
@@ -1681,6 +1702,7 @@ model ContestEntrySquare {
 
   @@unique([contestId, rowIndex, columnIndex])
   @@index([contestEntryId])
+  @@index([claimedByUserId])
   @@map("contest_entry_squares")
 }
 
@@ -1699,6 +1721,7 @@ model ContestSquaresDraw {
   contest Contest @relation(fields: [contestId], references: [id], onDelete: Cascade)
   drawnBy User?   @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
 
+  @@index([drawnByUserId])
   @@map("contest_squares_draws")
 }
 
@@ -1749,6 +1772,7 @@ model ContestEntryPick {
   sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
 
   @@index([entryId])
+  @@index([sportEventParticipantId])
   @@map("contest_entry_picks")
 }
 
@@ -1816,6 +1840,7 @@ model SportEvent {
   @@unique([eventSeriesId, eventYear])
   @@index([sport, status])
   @@index([startDate, endDate])
+  @@index([status])
   @@map("sport_events")
 }
 
@@ -1849,7 +1874,6 @@ model SportEventParticipant {
   predictions ContestEntryMatchPrediction[]
 
   @@unique([sportEventId, participantId])
-  @@index([sportEventId])
   @@index([participantId])
   @@map("sport_event_participants")
 }
@@ -1973,7 +1997,7 @@ model SportEventParticipantRound {
   statLines             SportEventParticipantStatLine[]
 
   @@unique([sportEventParticipantId, sportEventRoundId])
-  @@index([sportEventParticipantId])
+  @@index([sportEventRoundId])
   @@map("sport_event_participant_rounds")
 }
 
@@ -2033,8 +2057,6 @@ model SportEventParticipantStanding {
   sportEventParticipant SportEventParticipant              @relation(fields: [sportEventParticipantId], references: [id])
   golf                  SportEventParticipantGolfStanding?
 
-  @@index([status])
-  @@index([position])
   @@map("sport_event_participant_standings")
 }
 
