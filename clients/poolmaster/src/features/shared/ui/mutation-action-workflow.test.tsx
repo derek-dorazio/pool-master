@@ -80,7 +80,7 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith({ id: "updated" }, "payload"));
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(navigate).toHaveBeenCalledWith({ id: "updated" }, "payload");
-    expect(screen.getByText("Saved")).toBeInTheDocument();
+    expect(await screen.findByText("Saved")).toBeInTheDocument();
     expect(screen.getByText("The action completed.")).toBeInTheDocument();
     expect(screen.getByTestId("pending")).toHaveTextContent("idle");
   });
@@ -110,7 +110,7 @@ describe("pool-master-pjr.4: shared mutation action workflow", () => {
     await waitFor(() => expect(onError).toHaveBeenCalledWith(actionError, "payload"));
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent("Action failed");
-    expect(screen.getByText("Try again.")).toBeInTheDocument();
+    expect(await screen.findByText("Try again.")).toBeInTheDocument();
     expect(screen.getByTestId("pending")).toHaveTextContent("idle");
   });
 });
