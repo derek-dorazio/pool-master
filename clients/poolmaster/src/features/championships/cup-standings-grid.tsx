@@ -79,7 +79,7 @@ export function CupStandingsGrid({
         header: 'Points',
         accessorFn: (row) => row.points,
         enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums">{formatCupPoints(row.original.points)}</span>,
+        cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
       },
       {
         id: 'wins',

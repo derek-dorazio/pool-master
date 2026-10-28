@@ -255,7 +255,7 @@ function EntryBlock({
           ) : null}
         </span>
         <span
-          className="font-numeric text-2xl font-extrabold leading-none tabular-nums text-foreground"
+          className="score-total text-foreground"
           data-testid={`contest-leaderboard-total-${entry.entryId}`}
         >
           {entry.total ?? NO_SCORE}

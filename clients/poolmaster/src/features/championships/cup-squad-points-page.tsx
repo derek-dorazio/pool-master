@@ -51,7 +51,7 @@ export function CupSquadPointsPage() {
         ]}
       />
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="title-card text-xl text-foreground">{squadPoints.squadName}</h2>
+        <h2 className="text-xl font-semibold text-foreground">{squadPoints.squadName}</h2>
         <p className="text-lg font-semibold tabular-nums text-foreground" data-testid="cup-squad-points-total">
           {formatCupPoints(squadPoints.points)} pts
         </p>

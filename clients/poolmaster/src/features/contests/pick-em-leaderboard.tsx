@@ -97,7 +97,7 @@ function pickEmColumns(
       header: 'Season',
       accessorFn: (row) => row.totalPoints,
       cell: ({ row }) => (
-        <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums" data-testid={`pick-em-leaderboard-total-${row.original.entryId}`}>
+        <span className="score-total" data-testid={`pick-em-leaderboard-total-${row.original.entryId}`}>
           {formatPoints(row.original.totalPoints)}
         </span>
       ),

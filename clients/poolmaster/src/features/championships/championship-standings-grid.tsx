@@ -56,7 +56,7 @@ export function ChampionshipStandingsGrid({
         header: 'Points',
         accessorFn: (row) => row.points,
         enableGlobalFilter: false,
-        cell: ({ row }) => <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums">{formatCupPoints(row.original.points)}</span>,
+        cell: ({ row }) => <span className="score-total">{formatCupPoints(row.original.points)}</span>,
       },
       ...Array.from({ length: FINISH_MATRIX_PLACES }, (_, index): ColumnDef<ChampionshipStandingRowDto, string | number> => ({
         id: `finish-${index + 1}`,

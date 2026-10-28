@@ -35,7 +35,7 @@ export function SettingsSectionHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className={cn("title-card text-lg", tone === "danger" ? "text-destructive" : "text-foreground")}>
+        <h2 className={cn("font-display text-lg font-extrabold", tone === "danger" ? "text-destructive" : "text-foreground")}>
           {title}
         </h2>
         {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}

@@ -385,10 +385,10 @@ state, stale actions, and unthemeable markup accumulate.
   images, the browser's tab colour). Those read `BRAND_COLORS`, never a hex of their own, and
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
 - The house type style is set once in the shared layer, not per page. The wordmark, card and
-  section titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
-  titles are also italic. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
+  tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
+  titles are also italic. Page titles and section titles that sit on the page stay normal case. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
   or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
-  `font-numeric` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
+  `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
   (navy header, gold column names). A `Button` used as a row or card, not as a button, adds
   `normal-case tracking-normal`.
 

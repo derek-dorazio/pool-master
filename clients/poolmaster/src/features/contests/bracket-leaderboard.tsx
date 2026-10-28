@@ -66,7 +66,7 @@ function bracketColumns(contestId: string, leagueCode: string | null, mySquadId:
       id: 'points',
       header: 'Points',
       accessorFn: (row) => row.points,
-      cell: ({ row }) => <span className="font-numeric text-2xl font-extrabold leading-none tabular-nums" data-testid={`bracket-leaderboard-points-${row.original.entryId}`}>{formatPoints(row.original.points)}</span>,
+      cell: ({ row }) => <span className="score-total" data-testid={`bracket-leaderboard-points-${row.original.entryId}`}>{formatPoints(row.original.points)}</span>,
     },
     {
       id: 'max-possible',

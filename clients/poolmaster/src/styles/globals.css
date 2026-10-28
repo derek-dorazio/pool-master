@@ -197,6 +197,8 @@
   }
 
   .dark {
+    /* Label blue is too dark to read on navy; labels take navy haze, as on the light theme's navy panels. */
+    --text-label: var(--color-navy-200);
     --background: var(--color-navy-800);
     --foreground: var(--color-paper);
     --card: var(--color-navy-600);
@@ -250,12 +252,22 @@
 }
 
 @layer components {
-  /* Card and section titles: the brand face in italic caps. Size and colour stay with the caller. */
+  /* Card and tile titles: the brand face in italic caps. Size and colour stay with the caller.
+     Page titles and section titles that sit on the page stay normal case. */
   .title-card {
     font-family: var(--font-display);
     font-weight: 800;
     font-style: italic;
     text-transform: uppercase;
+  }
+
+  /* A leaderboard's total: the condensed number face, large and in even-width digits. */
+  .score-total {
+    font-family: var(--font-numeric);
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
   }
 
   .team-icon-theme-sunset {
