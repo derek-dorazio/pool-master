@@ -2,8 +2,8 @@
 
 **Tracking issue:** #1156
 
-Written 2026-10-28; revised the same day after Derek's review (Aurora; no lag or fallback
-machinery; only flows that never write go to the reader). No code yet. The questions at the end
+Written 2026-10-28; revised the same day after Derek's review (Aurora Serverless v2; no lag or
+fallback machinery; only flows that never write go to the reader). No code yet. The questions at the end
 each carry the answer this plan takes.
 
 ## What we want
@@ -23,6 +23,9 @@ explicit way for a read-only flow to say "read this from the reader".
 - **Aurora, not RDS read replicas.** Readers share the writer's storage, so they trail it by
   milliseconds (AWS quotes typically under 100 ms) instead of seconds, and one reader endpoint
   covers as many readers as we add.
+- **Aurora Serverless v2 on QA and prod.** Each instance grows and shrinks its capacity with
+  load, between a floor and a ceiling we set, instead of being a fixed size.
+- **QA is single-AZ with no reader.** It is only for testing; prod gets the reader.
 - **No read-your-writes window and no fallback.** No cookie, no lag check, no retry on the
   writer. A reader that is down is Aurora's to replace, as with any database outage.
 - **Only flows that never write go to the reader.** Any workflow that writes and then reads stays
@@ -62,7 +65,7 @@ One property to know about: the reader endpoint balances **connections**, not qu
 opens its pool when the task starts and keeps those connections, so a reader added later gets
 traffic only as tasks restart (every deploy restarts them). That is fine while readers are added
 by hand. If we later want Aurora to add readers automatically under load, RDS Proxy in front of
-the reader endpoint rebalances on its own; question 4 parks that for later.
+the reader endpoint rebalances on its own; question 3 parks that for later.
 
 ## The design
 
@@ -134,7 +137,7 @@ the page reads it back), open and live contests, the email sender, ingestion, an
 scheduler's decision about what is due.
 
 **Live leaderboards** are probably the biggest read load on a busy Sunday. They never write, so
-with Aurora's lag they could move too; question 3 asks.
+with Aurora's lag they could move too; question 2 asks.
 
 **The reader does not fix slow queries.** It reads the same storage with the same indexes. The
 N+1 patterns and missing indexes the performance audit (#1158) found cost the same on a reader;
@@ -147,10 +150,20 @@ Derek applies from his Mac with the `apply-terraform` skill.
 - `aws_rds_cluster.postgres` (engine `aurora-postgresql`, version 16, encrypted, the same subnet
   group and security group, deletion protection and final snapshot on prod) replaces
   `aws_db_instance.postgres`.
+- Serverless v2: the cluster's `serverlessv2_scaling_configuration` sets the floor and ceiling
+  in Aurora capacity units (one ACU is about 2 GB of memory and matching CPU), from new variables
+  `db_min_capacity` and `db_max_capacity`. QA: 0.5 to 2. Prod: 0.5 to 4 to start (question 1).
+- **QA has no reader** (`db_reader_count = 0`): it is for testing, so it stays in one availability
+  zone with the writer alone. Its reader endpoint then lands on the writer, and the read-only
+  option on `DATABASE_READ_URL` still makes every reader flow fail on a write, which is what the
+  tests need. To try a real reader on QA for a day, set `db_reader_count = 1` and apply.
 - `aws_rds_cluster_instance` for the writer, and `var.db_reader_count` more for the readers
-  (`count`), each with `var.db_instance_class`. Readers go in a different availability zone from
+  (`count`), each with instance class `db.serverless`. `db_instance_class` and
+  `db_allocated_storage` go away: Aurora storage grows by itself. On prod the reader goes in a different availability zone from
   the writer. **On prod the reader is also the failover target**, so it replaces the Multi-AZ
-  standby the production plan budgets for rather than adding to it.
+  standby the production plan budgets for rather than adding to it. The reader sits in promotion
+  tier 1, so its capacity never drops below the writer's and it is ready to take over at full
+  size.
 - `local.db_url` uses the cluster endpoint; a new `local.db_read_url` uses the reader endpoint
   with the read-only option (with no readers, Aurora's reader endpoint lands on the writer, and the
   option keeps that pool read-only all the same). Both go in `common_env`; when the production plan moves `DATABASE_URL` into Secrets Manager,
@@ -174,10 +187,15 @@ database rows change to match in the same PR as the Terraform.
 **Order matters once.** The core-api change that requires `DATABASE_READ_URL` deploys only after
 the task definition has it, so the Terraform ticket is applied to QA before ticket 1 merges.
 
-**Cost.** Aurora's smallest provisioned instance is `db.t4g.medium`, about $55 a month each, plus
-storage and I/O. QA today is one `db.t3.micro` at about $13. A writer and one reader on QA comes to
-about $110 to $120; on prod the same, against about $60 for the Multi-AZ RDS the production plan
-assumed. Aurora Serverless v2 is the cheaper way to run QA (question 2).
+**Cost.** Serverless v2 bills about $0.12 per ACU per hour, plus storage and I/O. At the floor
+of 0.5 ACU an instance costs about $44 a month: QA, with its writer alone, idles at about $44,
+and prod's writer and reader at about $90, rising only while load needs more. Each ACU held around the clock adds about $88 a
+month per instance; the ceiling caps the bill (at 4 ACU, about $350 a month per instance flat
+out). QA today is one `db.t3.micro` at about $13; the production plan assumed about $60 for
+Multi-AZ RDS on prod.
+
+Aurora can also pause an instance at 0 ACU when nothing is connected, but core-api's schedulers
+and email sender keep connections open all day, so QA would never pause; the floor is 0.5.
 
 ## Testing
 
@@ -191,8 +209,8 @@ Per `rules/testing-rules.md` §1A–§1C; nothing below changes application code
   suite. One integration test proves that failure, so the guard cannot quietly stop working.
 - **Integration, settled versus live.** A settled contest's leaderboard reads the read pool
   (asserted by `application_name`), a live contest's reads the writer.
-- **QA on Aurora.** The browser E2E suite runs unchanged; `pg_stat_activity` on the reader shows
-  `core-api-read` connections.
+- **QA on Aurora.** The browser E2E suite runs unchanged; `pg_stat_activity` shows the
+  `core-api-read` connections on the read-only pool.
 
 ## Tickets
 
@@ -215,18 +233,17 @@ Tickets 3 to 5 can run in parallel once ticket 2 merges.
 
 ## Questions, with the answer this plan takes
 
-1. **Is the Aurora cost fine?** About $110 to $120 a month on prod for a writer and a reader,
-   against about $60 for the Multi-AZ RDS the production plan assumed. *Recommendation: yes;* the
-   reader doubles as the failover target, so the extra buys read scaling, not just a standby.
-2. **QA on Aurora Serverless v2 instead of provisioned instances?** It scales between 0.5 and a
-   few capacity units (or pauses at 0 when idle), so QA's mostly idle database costs well under
-   the provisioned $110. *Recommendation: yes, Serverless v2 for QA* with a minimum of 0.5, so it
-   never pauses mid-test; prod uses provisioned `db.t4g.medium` instances, whose cost is
-   predictable.
-3. **Move live leaderboards to the reader too?** They never write and are the heaviest game-day
+Settled with Derek: Aurora, Serverless v2 on QA and prod, QA single-AZ with no reader, no
+read-your-writes or fallback machinery, write-then-read flows on the writer.
+
+1. **How high may prod's capacity go?** The ceiling caps both performance and the bill.
+   *Recommendation: 4 ACU per instance to start* (about 8 GB of memory each, at most about $350 a
+   month per instance flat out), raised when CloudWatch shows instances sitting at it.
+2. **Move live leaderboards to the reader too?** They never write and are the heaviest game-day
    read. *Recommendation: yes, as ticket 6 after tickets 3 to 5,* once QA shows the reader
    working.
-4. **Automatic reader scaling (Aurora adds readers under load)?** *Recommendation: not now.* Add
-   readers by hand with `db_reader_count`; revisit with RDS Proxy when traffic calls for it.
-5. **Point your read-only IDE connection at the reader?** *Recommendation: yes,* so a heavy
+3. **Automatic reader scaling (Aurora adds readers under load)?** *Recommendation: not now.*
+   Serverless v2 already grows each reader; add readers by hand with `db_reader_count`, and
+   revisit with RDS Proxy when one reader at its ceiling is not enough.
+4. **Point your read-only IDE connection at the reader?** *Recommendation: yes,* so a heavy
    ad-hoc query never slows the writer.
