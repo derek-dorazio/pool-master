@@ -349,6 +349,8 @@ Rules:
 - Keep Prisma row shapes from leaking directly into API responses.
 - When Prisma models change, update DTOs, mappers, route schemas, and tests in the same work.
 - Prefer explicit mapping from persistence models to domain/DTO models.
+- Repository list reads take the filters their callers need (status, year, squad, event) and
+  apply them in SQL, instead of returning every row for the caller to filter in JS.
 
 ---
 
