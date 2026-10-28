@@ -42,13 +42,49 @@ export class PrismaContestRepository implements ContestRepository {
     return row ? mapToContest(row) : null;
   }
 
-  async findByLeague(leagueId: string): Promise<Contest[]> {
+  async findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
-      where: { leagueId },
+      where: { leagueId, status: { in: [...statuses] } },
       orderBy: { createdAt: 'desc' },
       include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);
+  }
+
+  async findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        leagueId,
+        status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
+        // A draft whose every event has started can never open (#1161).
+        NOT: {
+          status: ContestStatus.DRAFT,
+          sportEvents: { some: {}, every: { sportEvent: { startDate: { lte: now } } } },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
+  async findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { gte: endedFrom, lt: endedBefore } },
+      orderBy: [{ endsAt: 'desc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
+  async findFinishedYearsByLeague(leagueId: string): Promise<number[]> {
+    // The championship year is the US Eastern calendar year (`championshipYear`).
+    const rows = await this.prisma.$queryRaw<Array<{ year: number }>>`
+      SELECT DISTINCT EXTRACT(YEAR FROM ends_at AT TIME ZONE 'America/New_York')::int AS year
+      FROM contests
+      WHERE league_id = ${leagueId}::uuid AND status = 'COMPLETED' AND ends_at IS NOT NULL
+      ORDER BY year DESC`;
+    return rows.map((row) => row.year);
   }
 
   async findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>> {

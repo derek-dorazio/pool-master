@@ -22,6 +22,7 @@ import { buildContest, buildSportEvent } from './test/contest-admin-fixtures';
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
+const listContestFinishedYearsMock = vi.fn();
 const listContestsMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const refreshTokenMock = vi.fn();
@@ -30,6 +31,7 @@ bindApiMocks({
   getEvent: getEventMock,
   getUser: getCurrentUserMock,
   getLeagueByCode: getLeagueByCodeMock,
+  listContestFinishedYears: listContestFinishedYearsMock,
   listContests: listContestsMock,
   listLeagueSquads: listLeagueSquadsMock,
   refreshToken: refreshTokenMock,
@@ -90,6 +92,17 @@ function primeCommonMocks({
     buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
     buildLeagueSquad({ id: 'team-3', name: 'Retired Rockets', isActive: false }),
   ])));
+  listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years: [] }));
+}
+
+/** The server's current contests, and its finished ones by the year they went final in. */
+function primeContests(current: ContestDto[], finishedByYear: Record<number, ContestDto[]> = {}) {
+  listContestsMock.mockImplementation(({ query }: { query?: { finishedYear?: number } }) => Promise.resolve(apiSuccess({
+    contests: query?.finishedYear === undefined ? current : finishedByYear[query.finishedYear] ?? [],
+  })));
+  listContestFinishedYearsMock.mockResolvedValue(apiSuccess({
+    years: Object.keys(finishedByYear).map(Number).sort((left, right) => right - left),
+  }));
 }
 
 function rowOrder() {
@@ -101,7 +114,7 @@ function rowOrder() {
 
 describe('ManageContestsPage', () => {
   afterEach(() => {
-    for (const mock of [getCurrentUserMock, getEventMock, getLeagueByCodeMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock]) {
+    for (const mock of [getCurrentUserMock, getEventMock, getLeagueByCodeMock, listContestFinishedYearsMock, listContestsMock, listLeagueSquadsMock, refreshTokenMock]) {
       mock.mockReset();
     }
   });
@@ -158,12 +171,10 @@ describe('ManageContestsPage', () => {
 
   it('lists contests from the contest list alone, without reading each contest\'s event', async () => {
     primeCommonMocks();
-    listContestsMock.mockResolvedValue(apiSuccess({
-      contests: [
-        buildContest({ id: 'draft-heritage', status: 'DRAFT', ...onEvent(heritage) }),
-        buildContest({ id: 'final-players', status: 'COMPLETED', ...onEvent(players) }),
-      ],
-    }));
+    primeContests(
+      [buildContest({ id: 'draft-heritage', status: 'DRAFT', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'final-players', status: 'COMPLETED', ...onEvent(players) })] },
+    );
 
     renderManageContestsPage();
 
@@ -186,26 +197,59 @@ describe('ManageContestsPage', () => {
     expect(row.getByText('Bare Pool')).toBeInTheDocument();
   });
 
-  it('keeps finished contests under History, with each switch counting its contests', async () => {
+  it('keeps finished contests under History, one year at a time, asking for a year only once History is chosen', async () => {
     primeCommonMocks();
-    listContestsMock.mockResolvedValue(apiSuccess({
-      contests: [
-        buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) }),
-        buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', ...onEvent(players) }),
-      ],
-    }));
+    primeContests(
+      [buildContest({ id: 'contest-open', name: 'Heritage Tiers', status: 'OPEN', ...onEvent(heritage) })],
+      { 2099: [buildContest({ id: 'contest-final', name: 'Players Pick 6', status: 'COMPLETED', ...onEvent(players) })] },
+    );
 
     renderManageContestsPage();
 
     expect(await screen.findByTestId('manage-contests-row-contest-open')).toBeInTheDocument();
     expect(screen.queryByTestId('manage-contests-row-contest-final')).not.toBeInTheDocument();
     expect(screen.getByTestId('manage-contests-filter-active')).toHaveTextContent('Active · 1');
+    expect(listContestsMock.mock.calls.every(([options]: [{ query?: unknown }]) => options.query === undefined)).toBe(true);
 
     fireEvent.click(screen.getByTestId('manage-contests-filter-history'));
 
     expect(await screen.findByTestId('manage-contests-row-contest-final')).toHaveTextContent('Final');
     expect(screen.queryByTestId('manage-contests-row-contest-open')).not.toBeInTheDocument();
-    expect(screen.getByTestId('manage-contests-filter-history')).toHaveTextContent('History · 1');
+    expect(listContestsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { finishedYear: 2099 } }));
+  });
+
+  it('opens History on the newest year with finished contests and shows another year when it is picked', async () => {
+    primeCommonMocks();
+    primeContests([], {
+      2098: [buildContest({ id: 'contest-older', name: 'Older Pool', status: 'COMPLETED', ...onEvent(masters) })],
+      2099: [buildContest({ id: 'contest-newer', name: 'Newer Pool', status: 'COMPLETED', ...onEvent(players) })],
+    });
+
+    renderManageContestsPage();
+
+    fireEvent.click(await screen.findByTestId('manage-contests-filter-history'));
+    const picker = await screen.findByTestId('manage-contests-history-year');
+    expect(within(picker).getAllByRole('option').map((option) => option.textContent)).toEqual(['2099', '2098']);
+    expect(await screen.findByTestId('manage-contests-row-contest-newer')).toBeInTheDocument();
+
+    fireEvent.change(picker, { target: { value: '2098' } });
+
+    expect(await screen.findByTestId('manage-contests-row-contest-older')).toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contests-row-contest-newer')).not.toBeInTheDocument();
+  });
+
+  it('says a year\'s finished contests could not be loaded rather than showing none', async () => {
+    primeCommonMocks();
+    primeContests([buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })], { 2099: [] });
+    listContestsMock.mockImplementation(({ query }: { query?: { finishedYear?: number } }) => Promise.resolve(query?.finishedYear === undefined
+      ? apiSuccess({ contests: [buildContest({ id: 'contest-open', status: 'OPEN', ...onEvent(heritage) })] })
+      : { error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } }));
+
+    renderManageContestsPage();
+
+    fireEvent.click(await screen.findByTestId('manage-contests-filter-history'));
+
+    expect(await screen.findByTestId('manage-contests-history-error')).toHaveTextContent('We couldn\'t load the contests finished in 2099.');
   });
 
   it('finds a contest by its event\'s name as well as its own', async () => {

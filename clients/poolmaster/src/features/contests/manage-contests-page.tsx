@@ -1,7 +1,7 @@
 import { ContestStatus, formatSelectionTypeName  } from '@poolmaster/shared/domain';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo, useState } from 'react';
-import { useParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import type { ContestDto } from '@/lib/api';
 import {
   buildLeagueAdminContestCreatePath,
@@ -19,12 +19,17 @@ import {
   LoadingState,
   PageHeader,
   SegmentedControl,
+  Select,
 } from '@/features/shared/ui';
 import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { firstContestEvent, type ContestSportEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
-import { isHistoricalContest } from './contest-status';
-import { useLeagueContestsQuery } from './use-league-contests-query';
+import { chooseContestHistoryYear } from './contest-history';
+import {
+  useContestFinishedYearsQuery,
+  useLeagueContestsQuery,
+  useLeagueFinishedContestsQuery,
+} from './use-league-contests-query';
 
 const CONTESTS_PER_PAGE = 25;
 
@@ -89,8 +94,9 @@ function EntriesCell({ contest, teamCount }: { contest: ContestDto; teamCount: n
 }
 
 /**
- * Commissioner tools › Contests: every contest in the league in one table with search, an Active
- * / History switch and paging, and one action per row naming the next step.
+ * Commissioner tools › Contests: the league's contests in one table with search, an Active /
+ * History switch and paging, and one action per row naming the next step. History shows one
+ * year's finished contests at a time (#1161), the year in the link (`?year=2025`), else the newest.
  */
 export function ManageContestsPage() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
@@ -98,12 +104,16 @@ export function ManageContestsPage() {
   const { league } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
+  const yearsQuery = useContestFinishedYearsQuery(leagueId);
   const teamsQuery = useLeagueSquadsQuery(leagueId);
   const [filter, setFilter] = useState<ContestFilter>('active');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const years = useMemo(() => yearsQuery.data ?? [], [yearsQuery.data]);
+  const year = chooseContestHistoryYear(years, searchParams.get('year'));
+  const historyQuery = useLeagueFinishedContestsQuery(leagueId, filter === 'history' ? year : null);
 
-  const contests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
-  const activeContests = useMemo(() => contests.filter((contest) => !isHistoricalContest(contest.status)), [contests]);
-  const historyContests = useMemo(() => contests.filter((contest) => isHistoricalContest(contest.status)), [contests]);
+  const activeContests = useMemo(() => contestsQuery.data ?? [], [contestsQuery.data]);
+  const historyContests = useMemo(() => historyQuery.data ?? [], [historyQuery.data]);
   const shownContests = filter === 'active' ? activeContests : historyContests;
 
   // The first event's name and start sort and search the table; the contest list carries them (#577).
@@ -213,11 +223,11 @@ export function ManageContestsPage() {
         title="Contests"
       />
 
-      {contestsQuery.isLoading ? (
+      {contestsQuery.isLoading || yearsQuery.isLoading ? (
         <LoadingState body="Loading contests..." />
-      ) : contestsQuery.isError ? (
+      ) : contestsQuery.isError || yearsQuery.isError ? (
         <ErrorState body="We couldn't load contests for this league." />
-      ) : !contests.length ? (
+      ) : !activeContests.length && !years.length ? (
         <EmptyState
           action={
             league.isActive ? (
@@ -237,10 +247,26 @@ export function ManageContestsPage() {
             onChange={(value) => setFilter(value === 'history' ? 'history' : 'active')}
             options={[
               { label: `Active · ${activeContests.length}`, testId: 'manage-contests-filter-active', value: 'active' },
-              { label: `History · ${historyContests.length}`, testId: 'manage-contests-filter-history', value: 'history' },
+              { label: 'History', testId: 'manage-contests-filter-history', value: 'history' },
             ]}
             value={filter}
           />
+          {filter === 'history' && year !== null ? (
+            <Select
+              aria-label="Year"
+              className="w-auto justify-self-start"
+              data-testid="manage-contests-history-year"
+              onChange={(event) => setSearchParams({ year: event.target.value }, { replace: true })}
+              value={year}
+            >
+              {years.map((option) => <option key={option} value={option}>{option}</option>)}
+            </Select>
+          ) : null}
+          {filter === 'history' && historyQuery.isError ? (
+            <ErrorState body={`We couldn't load the contests finished in ${year}.`} testId="manage-contests-history-error" />
+          ) : filter === 'history' && historyQuery.isLoading ? (
+            <LoadingState body="Loading finished contests..." />
+          ) : (
           <DataGrid
             columns={columns}
             data={rows}
@@ -248,13 +274,14 @@ export function ManageContestsPage() {
               ? 'No contest matches.'
               : filter === 'active' ? 'No contests are in setup, open or live.' : 'No contest has finished yet.'}
             getRowId={(row) => row.contest.id}
-            key={filter}
+            key={filter === 'active' ? filter : `${filter}-${year}`}
             pageSize={CONTESTS_PER_PAGE}
             rowTestId={(row) => `manage-contests-row-${row.contest.id}`}
             search={{ label: 'Find a contest or event', testId: 'manage-contests-search' }}
             showColumnFilters={false}
             tableTestId="manage-contests-table"
           />
+          )}
         </div>
       )}
     </section>

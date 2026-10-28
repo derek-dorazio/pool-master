@@ -44,7 +44,7 @@ const getSportLeagueMock = vi.fn();
 const runContestDrawMock = vi.fn();
 const setContestCupWeightMock = vi.fn();
 const listContestEntriesMock = vi.fn();
-const listContestsMock = vi.fn();
+const getContestMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const openContestMock = vi.fn();
 const refreshTokenMock = vi.fn();
@@ -65,7 +65,7 @@ bindApiMocks({
   runContestDraw: runContestDrawMock,
   setContestCupWeight: setContestCupWeightMock,
   listContestEntries: listContestEntriesMock,
-  listContests: listContestsMock,
+  getContest: getContestMock,
   listLeagueSquads: listLeagueSquadsMock,
   openContest: openContestMock,
   refreshToken: refreshTokenMock,
@@ -139,7 +139,7 @@ function primeMocks({
     buildLeagueSquad({ id: 'team-2', name: 'Second Team' }),
     buildLeagueSquad({ id: 'team-3', name: 'Third Team' }),
   ])));
-  listContestsMock.mockResolvedValue(apiSuccess({ contests: [contest] }));
+  getContestMock.mockResolvedValue(apiSuccess({ contest }));
   getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: managedContest }));
   getEventMock.mockResolvedValue(apiSuccess({ event }));
   getContestExpansionMock.mockResolvedValue(apiSuccess(expansion));
@@ -155,7 +155,7 @@ afterEach(() => {
   for (const mock of [
     deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
     getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
-    listContestEntriesMock, listContestsMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
+    listContestEntriesMock, getContestMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
     mock.mockReset();
@@ -251,7 +251,7 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(await screen.findByTestId('contest-open-dialog')).toBeInTheDocument();
     expect(openContestMock).not.toHaveBeenCalled();
 
-    listContestsMock.mockResolvedValue(apiSuccess({ contests: [buildContest({ status: 'OPEN' })] }));
+    getContestMock.mockResolvedValue(apiSuccess({ contest: buildContest({ status: 'OPEN' }) }));
     getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest({ status: 'OPEN' }) }));
     fireEvent.click(screen.getByTestId('contest-open-confirm'));
 
@@ -333,13 +333,31 @@ describe('Commissioner tools › Contests › one contest', () => {
     expect(screen.getByTestId('manage-contest-locked')).toBeInTheDocument();
   });
 
-  it('says the contest is not in the league when the list has no such contest', async () => {
+  it('says the contest is not in the league when the contest read answers CONTEST_NOT_FOUND', async () => {
     primeMocks();
-    listContestsMock.mockResolvedValue(apiSuccess({ contests: [] }));
+    getContestMock.mockResolvedValue({ error: { error: { code: 'CONTEST_NOT_FOUND', message: 'Contest not found' } } });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByTestId('manage-contest-not-found')).toHaveTextContent("This contest isn't in this league");
+  });
+
+  it('says the contest is not in the league when it belongs to another league', async () => {
+    primeMocks();
+    getContestMock.mockResolvedValue(apiSuccess({ contest: buildContest({ leagueId: 'league-elsewhere' }) }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('manage-contest-not-found')).toHaveTextContent("This contest isn't in this league");
+  });
+
+  it('reads the one contest by id, never the league\'s contest list', async () => {
+    primeMocks();
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    expect(await screen.findByTestId('contest-open-to-league')).toBeInTheDocument();
+    expect(getContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1' } }));
   });
 });
 
@@ -481,9 +499,9 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
     expect(dialog.getByText(/It’s final: it can’t be undone or run again. Entries close/)).toBeInTheDocument();
     expect(runContestDrawMock).not.toHaveBeenCalled();
 
-    listContestsMock.mockResolvedValue(apiSuccess({ contests: [buildContest({
+    getContestMock.mockResolvedValue(apiSuccess({ contest: buildContest({
       name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN', drawnAt: DRAWN_AT,
-    })] }));
+    }) }));
     fireEvent.click(dialog.getByTestId('contest-run-draw-confirm'));
 
     await waitFor(() => expect(runContestDrawMock).toHaveBeenCalledWith(

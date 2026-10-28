@@ -25,7 +25,7 @@ import {
 const getCurrentUserMock = vi.fn();
 const getEventMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
-const listContestsMock = vi.fn();
+const getContestMock = vi.fn();
 const listEventsMock = vi.fn();
 const refreshTokenMock = vi.fn();
 const setContestSportEventsMock = vi.fn();
@@ -34,7 +34,7 @@ bindApiMocks({
   getEvent: getEventMock,
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
-  listContests: listContestsMock,
+  getContest: getContestMock,
   listEvents: listEventsMock,
   refreshToken: refreshTokenMock,
   setContestSportEvents: setContestSportEventsMock,
@@ -96,7 +96,7 @@ function primeMocks({
     buildLeague(),
     { membership: buildLeagueMembership() },
   )));
-  listContestsMock.mockResolvedValue(apiSuccess({ contests: [contest] }));
+  getContestMock.mockResolvedValue(apiSuccess({ contest }));
   getEventMock.mockResolvedValue(apiSuccess({ event: firstEvent }));
   listEventsMock.mockResolvedValue(apiSuccess({ events: leagueEvents }));
 }
@@ -109,7 +109,7 @@ function option(eventId: string) {
 
 afterEach(() => {
   for (const mock of [
-    getCurrentUserMock, getEventMock, getLeagueByCodeMock, listContestsMock, listEventsMock,
+    getCurrentUserMock, getEventMock, getLeagueByCodeMock, getContestMock, listEventsMock,
     refreshTokenMock, setContestSportEventsMock,
   ]) {
     mock.mockReset();
@@ -134,6 +134,15 @@ describe('Commissioner tools › Contests › one contest › Events', () => {
     // An event whose field is not loaded can't be added yet, and says why.
     expect(option('event-4')).toBeDisabled();
     expect(options.getByText(/Field not loaded yet/)).toBeInTheDocument();
+  });
+
+  it('reads the one contest by id and goes back to the contest page for a contest of another league', async () => {
+    primeMocks({ contest: { ...contestOnMasters, leagueId: 'league-elsewhere' } });
+
+    renderAt(EVENTS_PATH);
+
+    expect(await screen.findByTestId('manage-contest-destination')).toBeInTheDocument();
+    expect(getContestMock).toHaveBeenCalledWith(expect.objectContaining({ path: { contestId: 'contest-1' } }));
   });
 
   it('adds every contest-eligible event of the season not yet chosen on "Add all", leaving the ineligible one out', async () => {

@@ -67,6 +67,14 @@ describe('pool-master-rop.78.9: PoolMaster query key factory', () => {
     ]);
   });
 
+  it('keeps a league\'s finished contests and finished years under its contest list key, so invalidating the list refreshes them too', () => {
+    const list = QueryKeys.contests.list({ leagueId: 'league-1' });
+
+    expect(QueryKeys.contests.finished('league-1', 2025).slice(0, list.length)).toEqual(list);
+    expect(QueryKeys.contests.finishedYears('league-1').slice(0, list.length)).toEqual(list);
+    expect(QueryKeys.contests.finished('league-1', 2025)).not.toEqual(QueryKeys.contests.finished('league-1', 2024));
+  });
+
   it('#134: the inline-queryKey rule is on for feature code and off for the factory itself', () => {
     // The rule's own logic is covered by RuleTester in eslint-rules/__tests__/.
     // What only the config can express is the scope: lib/query-keys.ts is where

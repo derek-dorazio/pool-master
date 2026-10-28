@@ -347,6 +347,9 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
   return {
     findById: one(),
     findByLeague: many(),
+    findCurrentByLeague: many(),
+    findFinishedByLeague: many(),
+    findFinishedYearsByLeague: many(),
     findOpenByLeague: many(),
     findSportLeagueIdsBySeason: many(),
     findBySportEvent: many(),
@@ -371,6 +374,7 @@ export function fakeContestEntryRepo(
     findByContestWithSquad: many(),
     findBySquad: many(),
     countByContests: jest.fn().mockResolvedValue(new Map()),
+    countSubmittedByContests: jest.fn().mockResolvedValue(new Map()),
     create: createdEntry(echoCreate('contest-entry')),
     update: echoUpdate(),
     setEventStatus: echoEventStatus(),

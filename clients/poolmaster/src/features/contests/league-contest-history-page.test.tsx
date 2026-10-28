@@ -14,13 +14,12 @@ import {
   getLeagueByCodeData,
 } from '@/features/leagues/test/fixtures';
 import { LeagueContestHistoryPage } from './league-contest-history-page';
-import { buildContest } from './test/contest-admin-fixtures';
 
-const { getCurrentUserMock, getLeagueByCodeMock, listContestResultsMock, listContestsMock, refreshTokenMock } = vi.hoisted(() => ({
+const { getCurrentUserMock, getLeagueByCodeMock, listContestFinishedYearsMock, listContestResultsMock, refreshTokenMock } = vi.hoisted(() => ({
   getCurrentUserMock: vi.fn(),
   getLeagueByCodeMock: vi.fn(),
   listContestResultsMock: vi.fn(),
-  listContestsMock: vi.fn(),
+  listContestFinishedYearsMock: vi.fn(),
   refreshTokenMock: vi.fn(),
 }));
 
@@ -28,7 +27,7 @@ bindApiMocks({
   getLeagueByCode: getLeagueByCodeMock,
   getUser: getCurrentUserMock,
   listContestResults: listContestResultsMock,
-  listContests: listContestsMock,
+  listContestFinishedYears: listContestFinishedYearsMock,
   refreshToken: refreshTokenMock,
 });
 
@@ -54,21 +53,17 @@ function renderHistory(path = '/league/BIGDAWGS/contests/history') {
   );
 }
 
-/** Completed contests in 2026 and 2025 (the 2025 one final at 11pm New York on New Year's Eve), and one still open. */
-const CONTESTS = [
-  buildContest({ id: 'contest-open', status: 'OPEN', endsAt: null }),
-  buildContest({ id: 'contest-1', status: 'COMPLETED', endsAt: '2026-04-13T22:00:00.000Z' }),
-  buildContest({ id: 'contest-0', status: 'COMPLETED', endsAt: '2026-01-01T04:00:00.000Z' }),
-];
+/** The server's years with a finished contest: 2026, and 2025 (one final at 11pm New York on New Year's Eve). */
+const YEARS = [2026, 2025];
 
-function prime(contests = CONTESTS) {
+function prime(years = YEARS) {
   getCurrentUserMock.mockResolvedValue(apiSuccess({ user: buildCurrentUser() }));
   refreshTokenMock.mockResolvedValue({ data: null });
   getLeagueByCodeMock.mockResolvedValue(apiSuccess(getLeagueByCodeData(
     buildLeague(),
     { membership: buildLeagueMembership(), squadMembership: buildLeagueSquadMember() },
   )));
-  listContestsMock.mockResolvedValue(apiSuccess({ contests }));
+  listContestFinishedYearsMock.mockResolvedValue(apiSuccess({ years }));
   listContestResultsMock.mockImplementation(({ query }: { query: { year: number } }) => Promise.resolve(apiSuccess({
     contests: query.year === 2026
       ? [buildContestResult({ contestId: 'contest-1' })]
@@ -90,7 +85,7 @@ describe('LeagueContestHistoryPage', () => {
     expect(listContestResultsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { year: 2026 } }));
   });
 
-  it('offers each year a contest went final in, US Eastern, newest first, and shows the year chosen, kept in the link', async () => {
+  it('offers the years the server names as having finished contests, in its order, and shows the year chosen, kept in the link', async () => {
     prime();
     renderHistory();
     const picker = await screen.findByTestId('league-contests-history-year');
@@ -117,7 +112,7 @@ describe('LeagueContestHistoryPage', () => {
   });
 
   it('says the league has no completed contests yet, and asks for no year', async () => {
-    prime([CONTESTS[0] ?? buildContest()]);
+    prime([]);
 
     renderHistory();
 
@@ -132,5 +127,15 @@ describe('LeagueContestHistoryPage', () => {
     renderHistory();
 
     await waitFor(() => expect(screen.getByTestId('league-contests-history-error')).toHaveTextContent('We couldn\'t load the contests completed in 2026.'));
+  });
+
+  it('says contest history cannot be loaded when the years cannot be', async () => {
+    prime();
+    listContestFinishedYearsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } } });
+
+    renderHistory();
+
+    expect(await screen.findByText('We couldn\'t load contest history for this league.')).toBeInTheDocument();
+    expect(listContestResultsMock).not.toHaveBeenCalled();
   });
 });
