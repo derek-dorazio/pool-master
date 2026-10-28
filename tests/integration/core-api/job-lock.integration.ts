@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { PrismaClient } from '@prisma/client';
 import { PostgresJobLock } from '../../../packages/core-api/src/core/job-lock';
 import { fakeLogger } from '../../support/fake-logger';
 
@@ -13,9 +14,26 @@ function serverTask(): PostgresJobLock {
   return task;
 }
 
+/** A third session, standing in for an operator or a network fault. */
+const outsider = new PrismaClient();
+
 afterEach(async () => {
   await Promise.all(tasks.splice(0).map((task) => task.close()));
 });
+
+afterAll(async () => {
+  await outsider.$disconnect();
+});
+
+/** Kills the session holding the job's lock, as a crashed task or a dropped connection would. */
+async function killHolderSession(key: string): Promise<void> {
+  const holders = await outsider.$queryRaw<Array<{ pid: number }>>`
+    SELECT pid FROM pg_locks
+    WHERE locktype = 'advisory' AND objsubid = 1 AND granted
+      AND ((classid::bigint << 32) | objid::bigint) = hashtextextended(${key}, 0)`;
+  expect(holders).toHaveLength(1);
+  await outsider.$queryRaw`SELECT pg_terminate_backend(${holders[0].pid}::int)`;
+}
 
 /** Runs one tick of the job on the task, and says whether the job ran there. */
 async function tick(task: PostgresJobLock, key: string): Promise<boolean> {
@@ -38,15 +56,34 @@ describe('the background job lock shared by two server tasks', () => {
   });
 
   it('keeps the job on the task that holds its lock for every later tick, not only the first', async () => {
-    const key = `job-${randomUUID()}`;
     const first = serverTask();
     const second = serverTask();
 
-    await tick(first, key);
-    for (let i = 0; i < 3; i += 1) {
-      expect(await tick(second, key)).toBe(false);
-      expect(await tick(first, key)).toBe(true);
+    // Several keys, so lock ids with the high bit set and clear are both covered.
+    for (const key of Array.from({ length: 6 }, () => `job-${randomUUID()}`)) {
+      await tick(first, key);
+      for (let i = 0; i < 3; i += 1) {
+        expect(await tick(second, key)).toBe(false);
+        expect(await tick(first, key)).toBe(true);
+      }
     }
+  });
+
+  it('frees the lock with the holder\'s session however many ticks it ran, so repeat ticks never stack up the lock', async () => {
+    const key = `job-${randomUUID()}`;
+    const first = serverTask();
+    const second = serverTask();
+    for (let i = 0; i < 5; i += 1) {
+      await tick(first, key);
+    }
+
+    const [count] = await outsider.$queryRaw<Array<{ held: bigint }>>`
+      SELECT count(*) AS held FROM pg_locks
+      WHERE locktype = 'advisory' AND objsubid = 1 AND granted
+        AND ((classid::bigint << 32) | objid::bigint) = hashtextextended(${key}, 0)`;
+    expect(count.held).toBe(1n);
+    await first.close();
+    expect(await tick(second, key)).toBe(true);
   });
 
   it('skips a job on the other task while its holder is still in the middle of a tick', async () => {
@@ -70,6 +107,21 @@ describe('the background job lock shared by two server tasks', () => {
 
     await first.close();
 
+    expect(await tick(second, key)).toBe(true);
+  });
+
+  it('hands the job to the other task when the holder\'s connection dies, and the old holder no longer runs it', async () => {
+    const key = `job-${randomUUID()}`;
+    const first = serverTask();
+    const second = serverTask();
+    await tick(first, key);
+
+    await killHolderSession(key);
+
+    expect(await tick(second, key)).toBe(true);
+    // The old holder's next tick finds its connection gone; the tick after reconnects and skips.
+    await expect(tick(first, key)).rejects.toThrow();
+    expect(await tick(first, key)).toBe(false);
     expect(await tick(second, key)).toBe(true);
   });
 

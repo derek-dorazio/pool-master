@@ -159,11 +159,21 @@ export class EventLifecycleService {
         : {}),
     });
     if (!updated) {
+      const current = (await this.sportEvents.findById(input.sportEventId)) ?? before;
       this.logger?.info(
-        { sportEventId: input.sportEventId, fromStatus, toStatus: input.toStatus, actor: input.actor.type },
+        { sportEventId: input.sportEventId, fromStatus, status: current.status, toStatus: input.toStatus, actor: input.actor.type },
         'Skipped a sport event status change because another caller changed the status first',
       );
-      return { sportEvent: (await this.sportEvents.findById(input.sportEventId)) ?? before, fromStatus, toStatus: input.toStatus };
+      // A caller that named the status it saw expects to lose such a race; an admin who did not
+      // is told the change did not land, unless the event ended where they asked anyway.
+      if (input.fromStatus === undefined && current.status !== input.toStatus) {
+        throw new EventLifecycleError(
+          `Sport event ${input.sportEventId} moved from ${fromStatus} to ${current.status} while this change to ${input.toStatus} was made`,
+          'SPORT_EVENT_INVALID_TRANSITION',
+          409,
+        );
+      }
+      return { sportEvent: current, fromStatus, toStatus: input.toStatus };
     }
 
     // A released edition joins the contests made to cover its series, a majors pool's major (#714).

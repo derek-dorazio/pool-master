@@ -25,12 +25,12 @@ export interface JobLock {
  * The locks live on a connection of their own: a session lock belongs to the connection that
  * took it, and the app's client hands each query whichever pooled connection is free. That
  * connection is never closed for idling. Should it drop and reconnect all the same, its locks
- * are gone, and the backend id each lock was taken on tells this task so at its next tick.
+ * are gone, and Postgres's own lock table tells this task so at its next tick.
  */
 export class PostgresJobLock implements JobLock {
   private client?: PrismaClient;
-  /** The backend (session) each held lock was taken on. */
-  private readonly heldOn = new Map<string, number>();
+  /** The locks this task held at its last tick, so taking or losing one is logged once. */
+  private readonly held = new Set<string>();
 
   constructor(
     private readonly databaseUrl: string | undefined,
@@ -47,23 +47,26 @@ export class PostgresJobLock implements JobLock {
 
   /** Disconnecting ends the session, which releases every lock this task holds. */
   async close(): Promise<void> {
-    this.heldOn.clear();
+    this.held.clear();
     await this.client?.$disconnect();
   }
 
   private async hold(key: string): Promise<boolean> {
-    const heldOn = this.heldOn.get(key) ?? 0;
-    // A lock already held on this same session is still held, and is not taken again: Postgres
-    // counts each repeat take of a session lock, and one release would no longer free it.
-    const [row] = await this.connection().$queryRaw<Array<{ backend: number; held: boolean }>>`
-      SELECT pg_backend_pid() AS backend,
-        CASE WHEN pg_backend_pid() = ${heldOn} THEN true
-          ELSE pg_try_advisory_lock(hashtextextended(${key}, 0)) END AS held`;
+    // A lock this session already holds is not taken again: Postgres counts each repeat take of a
+    // session lock, and one release would no longer free it. pg_locks splits a bigint key into
+    // classid (high 32 bits) and objid (low 32 bits); CASE fixes the order, which OR would not.
+    const [row] = await this.connection().$queryRaw<Array<{ held: boolean }>>`
+      SELECT CASE WHEN EXISTS (
+          SELECT 1 FROM pg_locks
+          WHERE locktype = 'advisory' AND objsubid = 1 AND granted AND pid = pg_backend_pid()
+            AND ((classid::bigint << 32) | objid::bigint) = hashtextextended(${key}, 0)
+        ) THEN true
+        ELSE pg_try_advisory_lock(hashtextextended(${key}, 0)) END AS held`;
     const held = row.held;
-    if (held && heldOn !== row.backend) {
-      this.heldOn.set(key, row.backend);
+    if (held && !this.held.has(key)) {
+      this.held.add(key);
       this.logger?.info({ key }, 'This task took a background job lock and now runs the job');
-    } else if (!held && this.heldOn.delete(key)) {
+    } else if (!held && this.held.delete(key)) {
       this.logger?.warn({ key }, 'This task lost a background job lock and no longer runs the job');
     }
     return held;
