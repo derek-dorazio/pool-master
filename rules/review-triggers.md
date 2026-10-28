@@ -170,7 +170,7 @@ Ordered roughly by how often they bite here.
 
 | Category | The question to ask the diff |
 |---|---|
-| **N+1** | Does anything run a query per row where a batch or `include` was available? Look for a `.map()` or loop containing an `await` on a repository call. |
+| **N+1** | Does anything run a query per row where a batch or `include` was available? Look for a `.map()` or loop containing an `await` on a repository call, and for `Promise.all(rows.map(...))` (see below). |
 | **INDEX** | Does a new `where` / `orderBy` shape have index support? A new filter column, sort, or composite ordering is the common miss. |
 | **BLOCKING** | Synchronous or slow work on a request path — file, network, crypto, or a large in-memory transform inside a handler. |
 | **PAYLOAD** | Did a list or detail response grow materially? Does a list endpoint have an upper bound on what it returns? |
@@ -178,6 +178,16 @@ Ordered roughly by how often they bite here.
 | **BUNDLE** | Does a new dependency increase shipped JS where a local primitive already exists? |
 | **CACHE** | Polling and refetch intervals, cache invalidation breadth. A mutation invalidating far more than it changed is load, not incorrectness. |
 | **HOTPATH** | Repeated work inside ingestion, scoring, sync, or event-bus loops, where the multiplier is data volume rather than request count. |
+
+**A fan-out is an N+1 that also drains the pool.** A repository or Prisma call per row inside
+`Promise.all(rows.map(...))`, or in a loop over a customer-sized list (entries, squads,
+members, picks, contests), is a finding. Running the queries at once does not make them one
+query: each takes a connection from a pool of about ten per task, so a few hundred rows queue
+every other request behind them until `pool_timeout` fails them. The fix is one `IN` query
+(`findMany` with `where: { id: { in: ids } }`, then a map), a set-based write (`createMany`,
+`updateMany`, one `UPDATE ... FROM`), or, where per-row calls are unavoidable, a bounded
+concurrency cap with the reason stated beside it. A fan-out over a list with a small fixed
+bound (a sport's handful of scoring periods) is not a finding.
 
 Backend shapes are governed by `service-rules.md` §5 *Prisma and Persistence*; frontend
 shapes by `react-ui-rules.md` §4 *TanStack Query Rules* and §5 *State, Effect, Form, And
