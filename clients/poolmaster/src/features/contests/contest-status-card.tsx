@@ -30,8 +30,8 @@ function StatusCardFrame({
       className="grid gap-3 rounded-2xl border border-inverse-border bg-surface-inverse px-5 py-5 text-on-inverse"
       data-testid="contest-status-card"
     >
-      <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="font-display text-xl font-extrabold" data-testid="contest-status-card-title">
+      <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
+      <h2 className="title-card text-xl" data-testid="contest-status-card-title">
         {title}
       </h2>
       {children}

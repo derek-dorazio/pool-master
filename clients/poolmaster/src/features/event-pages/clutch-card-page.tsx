@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto, SportLeagueDto } from '@/lib/api'
 import { getLogger } from '@/lib/logger';
 import { STAT_POOL_CONTEST_TYPE, STAT_POOL_FORMULAS } from '@/features/contests/scoring-family-ui/stat-pool-copy';
 import { useSportLeaguesQuery } from '@/features/contest-types/use-sport-leagues-query';
-import { ErrorState, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
+import { ErrorState, Eyebrow, LinkButton, LoadingState, Tile, cn } from '@/features/shared/ui';
 import { EVENT_PAGE_ACTIONS } from './event-page-copy';
 import { CLUTCH_CARD_EXAMPLE, CLUTCH_CARD_PAGE, CLUTCH_CARD_SECTIONS, type ClutchCardRound, type ClutchCardSectionId } from './clutch-card-copy';
 import { buildStartPath, type StartRequest } from './start-path';
@@ -30,7 +30,7 @@ function Section({ id, eyebrow, title, intro, testId, children }: {
 }) {
   return (
     <section className="scroll-mt-6 space-y-4" data-testid={testId} id={id}>
-      <p className="text-xs font-semibold uppercase text-muted-foreground">{eyebrow}</p>
+      <Eyebrow>{eyebrow}</Eyebrow>
       <div className="space-y-2">
         <h2 className="font-display text-3xl font-bold tracking-tight text-foreground">{title}</h2>
         {intro ? <p className="max-w-2xl text-base text-muted-foreground">{intro}</p> : null}
@@ -142,7 +142,7 @@ function Hero({ startRequest }: { startRequest: StartRequest | null }) {
       <div className="space-y-3 lg:col-span-2">
         <div className="flex items-center gap-2">
           <span className="rounded-pill bg-primary px-2.5 py-0.5 text-xs font-bold text-primary-foreground">{hero.badge}</span>
-          <p className="text-xs font-semibold uppercase text-primary">{hero.eyebrow}</p>
+          <Eyebrow tone="inverse">{hero.eyebrow}</Eyebrow>
         </div>
         <h1 className="font-display text-3xl font-black italic leading-tight tracking-tight sm:text-4xl lg:text-5xl" data-testid="clutch-card-tagline">
           {hero.tagline[0]}
@@ -170,8 +170,8 @@ function CardTypes() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {BUILT_STAT_LINE_SPORTS.map((sport) => (
           <div className="rounded-2xl border border-inverse-border bg-surface-inverse p-5 text-on-inverse" data-testid={`clutch-card-type-${sport}`} key={sport}>
-            <p className="text-xs font-semibold uppercase text-on-inverse-muted">{getSportDefinition(sport).name}</p>
-            <h3 className="font-display text-xl font-bold text-primary">{statLineName(sport)}</h3>
+            <Eyebrow tone="inverse">{getSportDefinition(sport).name}</Eyebrow>
+            <h3 className="title-card text-xl text-primary">{statLineName(sport)}</h3>
             <p className="mt-2 font-mono text-sm">{STAT_POOL_FORMULAS[sport]}</p>
             <p className="mt-2 text-sm text-on-inverse-muted">{copy.lines[sport]}</p>
           </div>
@@ -239,7 +239,7 @@ function Why() {
       <div className="grid gap-4 md:grid-cols-2">
         {copy.points.map((point) => (
           <Tile key={point.title} padding="md" radius="md">
-            <h3 className="font-semibold text-foreground">{point.title}</h3>
+            <h3 className="title-card text-foreground">{point.title}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{point.body}</p>
           </Tile>
         ))}
@@ -257,7 +257,7 @@ function HowItPlays() {
           <li className="list-none" key={step.title}>
             <Tile className="h-full" padding="md" radius="md">
               <p className="font-display text-2xl font-bold text-muted-foreground">{index + 1}</p>
-              <h3 className="font-semibold text-foreground">{step.title}</h3>
+              <h3 className="title-card text-foreground">{step.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
             </Tile>
           </li>
@@ -266,7 +266,7 @@ function HowItPlays() {
       <div className="grid gap-4 md:grid-cols-3">
         {copy.modes.map((mode) => (
           <div className="rounded-xl border border-border p-4" key={mode.title}>
-            <h3 className="font-semibold text-foreground">{mode.title}</h3>
+            <h3 className="title-card text-foreground">{mode.title}</h3>
             <p className="mt-1 text-sm text-muted-foreground">{mode.body}</p>
           </div>
         ))}

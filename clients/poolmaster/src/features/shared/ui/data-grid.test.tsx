@@ -54,6 +54,19 @@ describe("pool-master-dn4.1: shared DataGrid primitive", () => {
     expect(screen.getByText("No rows matched.")).toBeInTheDocument();
   });
 
+  it("draws a leaderboard's header row navy with gold column names, and other grids' headers plain", () => {
+    const rows = [{ id: "row-1", lifecycle: "Active", name: "Alpha" }];
+    const { unmount } = render(
+      <DataGrid columns={columns} data={rows} emptyMessage="None" headerTone="scoreboard" showColumnFilters={false} />,
+    );
+
+    expect(screen.getAllByRole("row")[0]).toHaveClass("bg-surface-inverse", "text-primary");
+    unmount();
+
+    render(<DataGrid columns={columns} data={rows} emptyMessage="None" showColumnFilters={false} />);
+    expect(screen.getAllByRole("row")[0]).not.toHaveClass("bg-surface-inverse");
+  });
+
   it("renders the first cell as a row link with optional link props", () => {
     const handleClick = vi.fn();
 

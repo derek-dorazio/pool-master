@@ -23,7 +23,7 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
       <h2 className="text-lg font-semibold text-foreground">Perpetual trophies</h2>
       {trophies.map((trophy) => (
         <Tile className="space-y-2" data-testid={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`} key={`${trophy.eventSeriesId}-${trophy.selectionType}`} padding="sm" radius="lg">
-          <h3 className="flex items-center gap-2 font-semibold text-foreground">
+          <h3 className="title-card flex items-center gap-2 text-foreground">
             <Award aria-hidden className="text-primary" size={18} />
             {perpetualTrophyName(trophy)}
           </h3>

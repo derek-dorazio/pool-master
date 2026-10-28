@@ -276,7 +276,7 @@ export function JoinTeamOwnerPage() {
                   </div>
                 ) : null}
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">What you&apos;re joining</h3>
+                  <h3 className="title-card text-sm text-foreground">What you&apos;re joining</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     You&apos;ll join <span className="font-medium text-foreground">{invitationQuery.data.team.name}</span> as a co-owner inside{' '}
                     <span className="font-medium text-foreground">{invitationQuery.data.league.name}</span>.
@@ -298,7 +298,7 @@ export function JoinTeamOwnerPage() {
             }}
           >
             <div>
-              <h3 className="text-sm font-semibold text-foreground">Create your account</h3>
+              <h3 className="title-card text-sm text-foreground">Create your account</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Your account uses the email this invitation was sent to, so there is nothing to
                 confirm — you&apos;ll land straight in the league.

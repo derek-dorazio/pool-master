@@ -24,7 +24,7 @@ const THEME_TOKEN_OF: Record<keyof typeof BRAND_COLORS, string> = {
   navyMist: '--color-navy-100',
   navyHaze: '--color-navy-200',
   gold: '--color-gold-400',
-  goldLight: '--color-gold-200',
+  fieldBlue: '--color-field-blue',
   red: '--color-red-400',
   paper: '--color-paper',
   raised: '--surface-raised',

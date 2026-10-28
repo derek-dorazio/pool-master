@@ -102,7 +102,7 @@ export function SportEventWorkflowCard({
   return (
     <Tile>
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">Workflow</h2>
+        <h2 className="title-card text-lg text-foreground">Workflow</h2>
         <StatusBadge tone={sportEventStatusTone(tournament.status)}>
           {formatSportEventStatus(tournament.status)}
         </StatusBadge>

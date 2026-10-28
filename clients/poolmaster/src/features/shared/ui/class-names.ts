@@ -3,7 +3,7 @@ import { extendTailwindMerge } from "tailwind-merge";
 
 /** Knows the theme's own letter spacing names, so `tracking-normal` replaces `tracking-eyebrow`. */
 const twMerge = extendTailwindMerge({
-  extend: { classGroups: { tracking: [{ tracking: ["eyebrow", "label"] }] } },
+  extend: { classGroups: { tracking: [{ tracking: ["eyebrow", "label", "button"] }] } },
 });
 
 export function cn(...inputs: ClassValue[]) {

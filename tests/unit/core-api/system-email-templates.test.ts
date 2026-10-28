@@ -1,4 +1,4 @@
-import { EmailCategory, EmailTemplateKey, PLAN_FEATURE_GROUP, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
+import { BRAND_COLORS, EmailCategory, EmailTemplateKey, PLAN_FEATURE_GROUP, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import {
   EMAIL_SETTINGS,
   ContestEventChangeKind,
@@ -884,6 +884,24 @@ describe('the email template registry', () => {
       expect({ templateKey, league: brandBarLeague(renderSystemEmailTemplate(templateKey, EMAIL_TEMPLATE_FIXTURES[templateKey], UTC).html) })
         .toEqual({ templateKey, league: leagueName.replace(/'/g, '&#39;').replace(/&(?!#39;)/g, '&amp;') });
     }
+  });
+});
+
+describe('the site\'s type in email', () => {
+  it('sets the wordmark in the brand bar in italic caps, as the site header does', () => {
+    const { html } = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', EMAIL_TEMPLATE_FIXTURES.EVENT_READY_FOR_CONTESTS, UTC);
+
+    expect(html).toMatch(/font-style:italic;[^"]*text-transform:uppercase;[^"]*">Primetime Commissioner</);
+  });
+
+  it('sets small uppercase labels in label blue on white and navy haze on a navy band, never the old grey or light gold', () => {
+    const { html } = renderSystemEmailTemplate('EVENT_READY_FOR_CONTESTS', EMAIL_TEMPLATE_FIXTURES.EVENT_READY_FOR_CONTESTS, UTC);
+    const labelColours = [...html.matchAll(/letter-spacing:0\.1[24]em;text-transform:uppercase;color:([^;"]+)/g)].map((match) => match[1]);
+
+    expect(labelColours).toContain(BRAND_COLORS.fieldBlue);
+    expect(labelColours).toContain(BRAND_COLORS.navyHaze);
+    expect(labelColours).not.toContain(BRAND_COLORS.muted);
+    expect(labelColours).not.toContain('#ffd86b');
   });
 });
 

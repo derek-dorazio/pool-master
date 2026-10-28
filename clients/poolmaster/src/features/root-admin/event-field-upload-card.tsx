@@ -93,7 +93,7 @@ export function EventFieldUploadCard({
     <Tile data-testid="root-admin-event-field-upload-card">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-foreground">Bulk upload</h3>
+          <h3 className="title-card text-base text-foreground">Bulk upload</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Adjust rankings, odds, seeds and withdrawals for {participant.many} already on this
             field. {capitalize(participant.many)} must be on the field first — add them to the field to adjust them.

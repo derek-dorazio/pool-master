@@ -47,7 +47,7 @@ export function PlayInPlacesCard({
 
   return (
     <Tile data-testid="root-admin-play-in-places">
-      <h3 className="text-base font-semibold text-foreground">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</h3>
+      <h3 className="title-card text-base text-foreground">{`${word.charAt(0).toUpperCase()}${word.slice(1)} places`}</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {released
           ? `Name the ${team.one} in each ${word} place. It takes over the place's seed, picks and bracket spot.`

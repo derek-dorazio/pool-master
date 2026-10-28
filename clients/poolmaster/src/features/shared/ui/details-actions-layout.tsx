@@ -33,7 +33,7 @@ export function DetailsActionsLayout({
       <div className={cn("space-y-6", detailsClassName)}>{details}</div>
       <Tile className={actionsClassName} data-testid={actionsTestId} padding="md" radius="xl">
         {actionsTitle ? (
-          <h3 className="text-xl font-semibold">{actionsTitle}</h3>
+          <h3 className="title-card text-xl">{actionsTitle}</h3>
         ) : null}
         <div
           className={cn(actionsTitle ? "mt-5 space-y-3" : "space-y-3", actionsListClassName)}

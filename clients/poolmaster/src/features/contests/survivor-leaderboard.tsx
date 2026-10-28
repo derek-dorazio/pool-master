@@ -247,6 +247,7 @@ export function SurvivorLeaderboard({ contest, leagueCode: hintedLeagueCode }: {
 
       <Tile>
         <DataGrid
+          headerTone="scoreboard"
           columns={survivorColumns(contestId, leagueCode, mySquadId, board.weeks, weekName)}
           data={board.entries}
           emptyMessage="No entry has submitted a week yet."

@@ -123,7 +123,7 @@ export function LeagueContestsPage() {
         <Tile data-testid="league-contests-active">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">
+              <h2 className="title-card text-xl text-foreground">
                 {isMyEntriesFilter ? "My active contests" : "Active contests"}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">

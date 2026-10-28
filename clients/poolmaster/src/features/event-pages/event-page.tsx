@@ -5,7 +5,7 @@ import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 import { hasErrorCode } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useLeaguePlansQuery } from '@/features/plans/use-league-plans-query';
-import { Breadcrumbs, Chip, EmptyState, ErrorState, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
+import { Breadcrumbs, Chip, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, SectionHeader, Tile, cn, formatDateDisplay, useDisplayPreferences } from '@/features/shared/ui';
 import { upcomingEventPages } from './event-page-offers';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy, type EventPageCopy } from './event-page-copy';
 import { buildHowToPlaySportPath, sportFromPathSegment } from './event-page-paths';
@@ -37,7 +37,7 @@ function OfferCard({ copy, offer, page, testId }: { copy: EventPageCopy; offer: 
   return (
     <Tile className={cn('flex flex-col gap-3', offer.isPrimary ? 'border-primary' : null)} data-testid={testId} padding="md" radius="md">
       {offerCopy.isNew ? <Chip className="self-start" tone="active">New</Chip> : null}
-      <h3 className="font-display text-xl font-bold text-foreground">{offerCopy.contestType}</h3>
+      <h3 className="title-card text-xl text-foreground">{offerCopy.contestType}</h3>
       <p className="text-sm font-semibold text-foreground">{`Starts as: ${offer.template.name}`}</p>
       <p className="text-sm text-muted-foreground">{offerCopy.line}</p>
       {offerCopy.facts.length > 0 ? (
@@ -96,7 +96,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
         <img alt="" className="aspect-[5/2] w-full object-cover" data-testid="event-page-photo" height={480} src={sportHeaderImagePath(page.sport)} width={1200} />
         <div className="space-y-4 p-5 sm:p-8">
           <Breadcrumbs items={[{ label: 'How to Play', href: '/how-to-play' }, { label: sportName, href: buildHowToPlaySportPath(page.sport) }, { label: copy.name }]} />
-          {copy.eyebrow ? <p className="text-xs font-semibold uppercase text-muted-foreground">{copy.eyebrow}</p> : null}
+          {copy.eyebrow ? <Eyebrow>{copy.eyebrow}</Eyebrow> : null}
           <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-5xl" data-testid="event-page-name">{copy.name}</h1>
           <p className="max-w-2xl text-base text-muted-foreground" data-testid="event-page-hook">{copy.hook}</p>
           {primary ? (
@@ -138,7 +138,7 @@ function EventPageContent({ page }: { page: EventPageDto }) {
             <li className="list-none" key={step.title}>
               <Tile className="h-full" padding="md" radius="md">
                 <p className="font-display text-2xl font-bold text-primary">{index + 1}</p>
-                <h3 className="font-semibold text-foreground">{step.title}</h3>
+                <h3 className="title-card text-foreground">{step.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
               </Tile>
             </li>
@@ -149,8 +149,8 @@ function EventPageContent({ page }: { page: EventPageDto }) {
       {nextUp ? (
         <Tile className="flex flex-wrap items-center justify-between gap-4" data-testid="event-page-next-up" padding="md" radius="md">
           <div>
-            <p className="text-xs font-semibold uppercase text-muted-foreground">Next up</p>
-            <h2 className="font-display text-xl font-bold text-foreground">{eventPageCopy(nextUp.page).name}</h2>
+            <Eyebrow>Next up</Eyebrow>
+            <h2 className="title-card text-xl text-foreground">{eventPageCopy(nextUp.page).name}</h2>
           </div>
           <LinkButton to={buildEventPagePath(nextUp.page.sport, nextUp.page.slug)} variant="secondary">See ways to play</LinkButton>
         </Tile>

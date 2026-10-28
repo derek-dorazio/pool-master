@@ -167,7 +167,7 @@ export function TeamOwnerActionMenu({
           >
             {canPromote ? (
               <Button
-                className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+                className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
                 data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
                 onClick={() => {
                   setActiveAction('promote');
@@ -180,7 +180,7 @@ export function TeamOwnerActionMenu({
             ) : null}
             {canDemote ? (
               <Button
-                className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+                className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
                 data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
                 onClick={() => {
                   setActiveAction('demote');
@@ -192,7 +192,7 @@ export function TeamOwnerActionMenu({
               </Button>
             ) : null}
             <Button
-              className="w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+              className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
               data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
               onClick={() => {
                 setActiveAction('remove');

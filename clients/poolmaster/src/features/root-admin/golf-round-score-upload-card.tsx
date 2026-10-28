@@ -120,7 +120,7 @@ export function GolfRoundScoreUploadCard({
 
   return (
     <Tile>
-      <h3 className="text-base font-semibold text-foreground">Bulk load</h3>
+      <h3 className="title-card text-base text-foreground">Bulk load</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         Paste or upload this round&rsquo;s scores, preview how each row resolves and
         changes, then apply.

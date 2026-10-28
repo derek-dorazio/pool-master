@@ -44,7 +44,7 @@ export function ForgotPasswordPage() {
   if (requestMutation.isSuccess) {
     return (
       <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-        <h2 className="font-display text-lg font-extrabold text-foreground">Check your email</h2>
+        <h2 className="title-card text-lg text-foreground">Check your email</h2>
         <p className="text-sm text-muted-foreground" data-testid="forgot-password-sent">
           If an account matches, we&apos;ve sent a link to reset your password. The link works
           once and expires in {PASSWORD_RESET_LINK_MINUTES} minutes.

@@ -58,7 +58,7 @@ export function BracketPanel({ event }: { event: SportEventDto }) {
   return (
     <div className="space-y-6">
       <Tile>
-        <h3 className="text-base font-semibold text-foreground">Bracket</h3>
+        <h3 className="title-card text-base text-foreground">Bracket</h3>
         {bracket.length > 0 ? (
           <p className="mt-1 text-sm text-muted-foreground" data-testid="root-admin-bracket-help">
             {released

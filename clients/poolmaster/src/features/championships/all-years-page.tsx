@@ -98,7 +98,7 @@ export function AllYearsPage() {
                     data-testid={`all-years-year-link-${year.year}`}
                     to={buildLeagueChampionshipsPath(leagueCode, year.year)}
                   >
-                    <h2 className="text-lg font-semibold text-foreground">{historyYearTitle(year)}</h2>
+                    <h2 className="title-card text-lg text-foreground">{historyYearTitle(year)}</h2>
                     <span className="text-sm text-muted-foreground">{describeHistoryChampions(year)}</span>
                   </Link>
                   {year.cups.length ? (

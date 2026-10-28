@@ -160,7 +160,7 @@ export function PointsRacePage() {
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
       <Tile className="space-y-5" padding="sm" radius="lg">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">{cup.name}</h2>
+          <h2 className="title-card text-xl text-foreground">{cup.name}</h2>
           <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
               ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
@@ -193,13 +193,13 @@ export function PointsRacePage() {
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">The race so far</h2>
+          <h2 className="title-card text-lg text-foreground">The race so far</h2>
           <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
         </div>
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
-        <h2 className="text-lg font-semibold text-foreground">Contests in this cup</h2>
+        <h2 className="title-card text-lg text-foreground">Contests in this cup</h2>
         <CupContestList contests={cup.contests} leagueCode={leagueCode} />
       </Tile>
     </div>

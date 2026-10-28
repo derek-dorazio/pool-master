@@ -67,6 +67,8 @@ type DataGridProps<TData> = {
   /** Whether each filterable column gets its own filter box. On by default. */
   showColumnFilters?: boolean;
   jumpToRow?: DataGridJumpToRow;
+  /** `scoreboard`: a leaderboard's header row, navy with gold column names. */
+  headerTone?: "plain" | "scoreboard";
 };
 
 function getSortIndicator(direction: false | "asc" | "desc") {
@@ -96,6 +98,7 @@ export function DataGrid<TData>({
   pageSize,
   showColumnFilters = true,
   jumpToRow,
+  headerTone = "plain",
 }: DataGridProps<TData>) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -232,7 +235,12 @@ export function DataGrid<TData>({
           <thead>
             {headerGroups.map((headerGroup) => (
               <tr
-                className="border-b border-border bg-[var(--table-header-surface)] text-xs uppercase text-muted-foreground"
+                className={cn(
+                  "border-b border-border text-xs uppercase",
+                  headerTone === "scoreboard"
+                    ? "bg-surface-inverse text-primary"
+                    : "bg-[var(--table-header-surface)] text-muted-foreground",
+                )}
                 key={headerGroup.id}
               >
                 {headerGroup.headers.map((header) => {
@@ -242,7 +250,10 @@ export function DataGrid<TData>({
                     <th className="px-4 py-3 font-medium" key={header.id}>
                       {header.isPlaceholder ? null : canSort ? (
                         <button
-                          className="inline-flex items-center gap-2 text-left text-inherit transition hover:text-foreground"
+                          className={cn(
+                            "inline-flex items-center gap-2 text-left text-inherit transition",
+                            headerTone === "scoreboard" ? "hover:text-on-inverse" : "hover:text-foreground",
+                          )}
                           onClick={header.column.getToggleSortingHandler()}
                           type="button"
                         >

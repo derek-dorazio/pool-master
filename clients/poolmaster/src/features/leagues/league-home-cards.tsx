@@ -54,13 +54,13 @@ function HomeCard({
   return (
     <section aria-label={title} className="overflow-hidden rounded-2xl border border-border bg-card" data-testid={testId}>
       <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3">
-        <h2 className="text-sm font-bold text-foreground">{title}</h2>
+        <h2 className="title-card text-sm text-foreground">{title}</h2>
         {trailing}
       </div>
       {children}
       {footer ? (
         <LinkButton
-          className="w-full justify-start rounded-none border-t border-border"
+          className="normal-case tracking-normal w-full justify-start rounded-none border-t border-border"
           data-testid={footer.testId}
           size="sm"
           to={footer.to}
@@ -103,8 +103,8 @@ export function UpNextCard({
       className="grid gap-4 rounded-2xl border border-inverse-border bg-surface-inverse p-6 text-on-inverse"
       data-testid="league-home-up-next"
     >
-      <Eyebrow>Up next · Open for entries</Eyebrow>
-      <h2 className="font-display text-2xl font-black" id="league-home-up-next-title">
+      <Eyebrow tone="inverse">Up next · Open for entries</Eyebrow>
+      <h2 className="title-card text-2xl" id="league-home-up-next-title">
         {upNext.contest.name}
       </h2>
       <p className="text-sm text-on-inverse-muted">
@@ -329,7 +329,7 @@ export function CupsCard({
           return (
             <li className="border-t border-border first:border-t-0" key={cup.id}>
               <LinkButton
-                className="h-auto w-full flex-col items-start gap-0.5 rounded-none px-4 py-3 text-left"
+                className="normal-case tracking-normal h-auto w-full flex-col items-start gap-0.5 rounded-none px-4 py-3 text-left"
                 data-testid={`league-home-cup-${cup.id}`}
                 to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
                 variant="ghost"

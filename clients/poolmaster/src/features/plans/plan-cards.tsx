@@ -31,7 +31,7 @@ export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
       {highlights.map((card, index) => (
         <Tile className="flex flex-col gap-4" data-testid={`plan-card-${card.plan}`} key={card.plan} padding="md" radius="md">
           <div className="space-y-1">
-            <h3 className="font-display text-2xl font-bold italic text-foreground">{LEAGUE_PLAN_LABEL[card.plan]}</h3>
+            <h3 className="title-card text-2xl text-foreground">{LEAGUE_PLAN_LABEL[card.plan]}</h3>
             <p className="min-h-10 text-sm text-muted-foreground">{LEAGUE_PLAN_TAGLINE[card.plan]}</p>
           </div>
           <p className="flex items-baseline gap-1.5" data-testid={`plan-card-${card.plan}-price`}>

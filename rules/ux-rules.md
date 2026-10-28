@@ -426,3 +426,7 @@ tested is `docs/EMAIL-DELIVERY.md`; this section is what an email looks like and
    picks close, the commissioner's "contest isn't open yet" email, an event moved within its own
    day, and an email recording when something happened (account emails, entry receipts). It is
    always in the reader's time zone, locale and clock.
+9. **The site's type, without its fonts.** The brand bar's `PRODUCT_NAME` is italic caps, as
+   the site's wordmark is. Small uppercase labels are label blue on white and navy haze on a
+   navy band, as the site's eyebrows are. Email keeps to Archivo and Inter with Arial behind
+   them; the site's condensed number face is not used, since most mail clients would fall back.

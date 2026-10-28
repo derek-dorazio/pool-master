@@ -133,7 +133,7 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-inverse-border bg-surface-inverse text-on-inverse shadow-lg">
+      <header className="border-b-4 border-primary bg-surface-inverse text-on-inverse shadow-lg">
         {/* On a phone the title and account share the first row and the league selector takes
             the full second row, so the header never runs wider than the screen. */}
         <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-4 sm:px-6 sm:py-5 lg:flex lg:justify-between">
@@ -142,7 +142,7 @@ export function AppShell() {
               <span className="hidden rounded-pill border border-inverse-border px-3 py-1 font-display text-xs font-bold uppercase text-primary sm:inline-flex">
                 {PRODUCT_TAGLINE}
               </span>
-              <h1 className="font-display text-xl font-black tracking-normal text-on-inverse sm:text-2xl">
+              <h1 className="font-display text-xl font-black uppercase italic tracking-normal text-on-inverse sm:text-2xl">
                 {PRODUCT_NAME}
               </h1>
             </div>
@@ -211,14 +211,14 @@ export function AppShell() {
             ) : (
               <>
                 <Link
-                  className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
+                  className="font-display text-sm font-bold uppercase tracking-button text-on-inverse hover:text-primary"
                   data-testid="app-shell-how-to-play"
                   to={HOW_TO_PLAY_PATH}
                 >
                   How to Play
                 </Link>
                 <Link
-                  className="font-display text-sm font-bold uppercase text-on-inverse hover:text-primary"
+                  className="font-display text-sm font-bold uppercase tracking-button text-on-inverse hover:text-primary"
                   data-testid="app-shell-plans"
                   to={PLANS_PATH}
                 >

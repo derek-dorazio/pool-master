@@ -56,7 +56,7 @@ export function ChampionshipPage() {
     <div className="space-y-6" data-testid="championship">
       <Tile className="flex flex-col items-center gap-3 text-center" padding="sm" radius="lg">
         {championship.isOver ? <Trophy aria-hidden className="text-primary" size={56} /> : null}
-        <h2 className="text-xl font-black italic text-foreground" data-testid="championship-name">{championship.name}</h2>
+        <h2 className="title-card text-xl text-foreground" data-testid="championship-name">{championship.name}</h2>
         {championship.isOver && podium.length ? (
           <Eyebrow tone="muted">
             {(podium[0]?.squads.length ?? 0) > 1 ? 'Champions' : 'Champion'}
@@ -89,7 +89,7 @@ export function ChampionshipPage() {
 
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground">Finishes in {year}</h2>
+          <h2 className="title-card text-lg text-foreground">Finishes in {year}</h2>
           <span className="text-xs text-muted-foreground" data-testid="championship-progress">
             {championship.contestsCounted} {championship.contestsCounted === 1 ? 'contest' : 'contests'} final
           </span>
@@ -105,7 +105,7 @@ export function ChampionshipPage() {
 
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-foreground" data-testid="championship-contests-heading">
+          <h2 className="title-card text-lg text-foreground" data-testid="championship-contests-heading">
             {describeContestResultFilter(filter, filteredSquadName, year)}
           </h2>
           {filter ? (

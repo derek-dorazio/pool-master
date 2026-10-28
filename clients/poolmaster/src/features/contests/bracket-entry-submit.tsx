@@ -58,7 +58,7 @@ export function BracketSubmitPanel({
   return (
     <Tile className="space-y-4" data-testid="bracket-submit-panel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="text-xl font-semibold">Tiebreaker and submit</h3>
+        <h3 className="title-card text-xl">Tiebreaker and submit</h3>
         <span className="text-sm text-muted-foreground" data-testid="bracket-progress">
           {formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
         </span>

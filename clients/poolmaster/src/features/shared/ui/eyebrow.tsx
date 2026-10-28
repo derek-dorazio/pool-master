@@ -5,8 +5,10 @@ import { cn } from "./class-names";
 const eyebrowVariants = cva("text-xs font-semibold uppercase tracking-eyebrow", {
   variants: {
     tone: {
-      accent: "text-primary",
+      accent: "text-label",
       muted: "text-muted-foreground",
+      /** On a navy panel, where the label blue would be too dark to read. */
+      inverse: "text-label-on-inverse",
     },
   },
   defaultVariants: {
