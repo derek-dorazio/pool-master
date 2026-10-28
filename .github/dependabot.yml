@@ -21,6 +21,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # Set aside until #1184: 8.72 reports 131 new findings. That ticket's PR removes these.
+      - dependency-name: "typescript-eslint"
+      - dependency-name: "@typescript-eslint/*"
+      # Set aside until #1185: 5.1 brings fast-json-stringify 7, which slows app startup past test timeouts.
+      - dependency-name: "@fastify/fast-json-stringify-compiler"
     groups:
       npm-minor-and-patch:
         applies-to: version-updates
