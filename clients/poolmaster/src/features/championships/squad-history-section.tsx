@@ -62,7 +62,7 @@ export function SquadHistorySection({
             {years.map((option) => <option key={option} value={option}>{option}</option>)}
           </Select>
         </div>
-        <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} squad={squad} year={year} />
+        <SquadYearSection key={year} leagueCode={leagueCode} leagueId={leagueId} mySquadId={viewer.mySquadId} squad={squad} year={year} />
       </div>
 
       {!hasShelf ? (

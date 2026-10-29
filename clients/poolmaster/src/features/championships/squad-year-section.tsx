@@ -20,11 +20,14 @@ import { useChampionshipContestsQuery, useSquadYearQuery } from './use-champions
 export function SquadYearSection({
   leagueCode,
   leagueId,
+  mySquadId,
   squad,
   year,
 }: {
   leagueCode: string;
   leagueId: string;
+  /** The viewer's own squad, marked You; null when they have none. */
+  mySquadId: string | null;
   squad: Pick<SquadDto, 'id' | 'name'>;
   year: number;
 }) {
@@ -72,7 +75,7 @@ export function SquadYearSection({
 
               <ChampionshipStandingsGrid
                 filter={filter}
-                focusSquadId={squad.id}
+                focusSquadId={mySquadId}
                 onFilter={(next) => setPlace(next.place)}
                 rows={[championship.standing]}
                 searchable={false}
