@@ -683,6 +683,20 @@ ruleTester.run('no-query-in-loop', noQueryInLoop, {
       errors: [{ messageId: 'queryInLoop' }],
     },
     {
+      // A memo declared inside the loop starts empty on every pass.
+      code: 'async function f(rows) { for (const row of rows) { let games; games ??= await this.matchRepo.findBySportEvent(row.id); use(games); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A property memo is a different object on every pass.
+      code: 'async function f(rows) { for (const row of rows) { row.contest ??= await this.contestRepo.findById(row.id); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { await Promise.all(rows.map(async (row) => { let league; league ||= await leagueRepo.findById(row.leagueId); return league; })); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
       // A plain assignment is not a memo: it reads on every pass.
       code: 'async function f(rows) { let games; for (const row of rows) { games = await this.matchRepo.findBySportEvent(row.id); } }',
       errors: [{ messageId: 'queryInLoop' }],

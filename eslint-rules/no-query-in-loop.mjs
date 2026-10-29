@@ -21,7 +21,8 @@
  * iterable of `for…of` and a `for` initialiser run once. A callback passed to any other call
  * (a `$transaction(async (tx) => ...)` inside a loop) is treated as running where it is written.
  * A named function is a boundary: the loop that calls it is the caller's business. The right side
- * of `x ??= …` / `x ||= …` is a memo that reads once, and is not flagged.
+ * of `x ??= …` / `x ||= …` is a memo that reads once when `x` is a variable declared outside the
+ * loop, and is not flagged; a variable declared inside it, or a property, is flagged.
  *
  * Escape hatch, for a loop with a small fixed bound or a finding a ticket will fix:
  *   // poolmaster-allow-query-in-loop: <reason>
@@ -152,18 +153,51 @@ function isRepeatedPart(loop, child) {
 }
 
 /** The loop or iterating callback that repeats `node`, or null. */
-function repeatingAncestor(node) {
+/** The variable a plain identifier names, from the scope it is used in outward. */
+function variableOf(sourceCode, identifier) {
+  for (let scope = sourceCode.getScope(identifier); scope; scope = scope.upper) {
+    const variable = scope.set.get(identifier.name);
+    if (variable) return variable;
+  }
+  return null;
+}
+
+/** True when `inner` lies inside `outer`'s source range. */
+function within(inner, outer) {
+  return inner.range[0] >= outer.range[0] && inner.range[1] <= outer.range[1];
+}
+
+/**
+ * Whether `memo` (an `x ??= …` / `x ||= …`) reads once across `repeater`: only when `x` is a
+ * plain variable declared outside it. A variable declared inside the loop starts empty on every
+ * pass, and a property (`row.contest ??= …`) is a different object each time.
+ */
+function memoizesAcross(sourceCode, memo, repeater) {
+  if (memo.left.type !== 'Identifier') return false;
+  const variable = variableOf(sourceCode, memo.left);
+  return variable !== null && variable.defs.length > 0 && variable.defs.every((def) => !within(def.name, repeater));
+}
+
+/** The loop or iterating callback that repeats `node`, or null. */
+function repeatingAncestor(sourceCode, node) {
   let child = node;
+  let memo = null;
   for (let current = node.parent; current; child = current, current = current.parent) {
-    // `games ??= await repo.find(...)` is a memo: it reads once, however often the loop passes.
-    if (current.type === 'AssignmentExpression' && MEMO_OPERATORS.has(current.operator) && child === current.right) return null;
-    if (LOOP_TYPES.has(current.type) && isRepeatedPart(current, child)) return current;
-    if (FUNCTION_TYPES.has(current.type)) {
-      if (isIteratingCallback(current)) return current;
-      // A callback handed to some other call runs where it is written; anything else
-      // (a declaration, a function stored in a variable or property) is a boundary.
-      const passedAsArgument = current.parent?.type === 'CallExpression' && current.parent.arguments.includes(current);
-      if (!passedAsArgument) return null;
+    if (current.type === 'AssignmentExpression' && MEMO_OPERATORS.has(current.operator) && child === current.right) memo ??= current;
+    let repeater = null;
+    if (LOOP_TYPES.has(current.type) && isRepeatedPart(current, child)) repeater = current;
+    else if (FUNCTION_TYPES.has(current.type)) {
+      if (isIteratingCallback(current)) repeater = current;
+      else {
+        // A callback handed to some other call runs where it is written; anything else
+        // (a declaration, a function stored in a variable or property) is a boundary.
+        const passedAsArgument = current.parent?.type === 'CallExpression' && current.parent.arguments.includes(current);
+        if (!passedAsArgument) return null;
+      }
+    }
+    if (repeater) {
+      // `games ??= await repo.find(...)` with `games` declared outside the loop reads once.
+      return memo && memoizesAcross(sourceCode, memo, repeater) ? null : repeater;
     }
   }
   return null;
@@ -222,7 +256,7 @@ export default {
 
     function check(node, callee) {
       // The ancestor walk is cheap; the type lookup in isQueryCallee is not, so it goes second.
-      if (!repeatingAncestor(node) || !isQueryCallee(callee)) return;
+      if (!repeatingAncestor(context.sourceCode, node) || !isQueryCallee(callee)) return;
       const marker = markerFor(node);
       if (marker) {
         used.add(marker);
