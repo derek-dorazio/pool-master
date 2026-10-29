@@ -27,6 +27,7 @@ import { QueryKeys } from '@/lib/query-keys';
 import { formatClaimedCount, formatGridTaken, squaresMomentRows } from './squares-board';
 import { SquaresGrid, type SquaresBoxAction } from './squares-grid';
 import { useSquaresBoardQuery } from './use-squares-board';
+import { entryWriteKeys } from './use-contest-entries';
 
 /** Copy for the refusals a claim, a clear and the draw can meet (#711). The codes are the contract. */
 const SQUARES_CODE_MESSAGES: ErrorCodeMessages = {
@@ -115,7 +116,7 @@ export function SquaresBoardView({
       setIsDrawConfirmOpen(false);
     },
     // The draw submits every entry holding a box.
-    invalidates: [QueryKeys.contestEntries.byContest(contestId), QueryKeys.contests.detail(contestId)],
+    invalidates: entryWriteKeys(contestId),
     onError: (error) => logRefusal('squares.draw.failed', error),
   });
 

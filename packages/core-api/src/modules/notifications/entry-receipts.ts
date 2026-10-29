@@ -12,11 +12,8 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type {
-  ContestEntryRepository,
   ContestEntryWithSquad,
-  ContestRepository,
   LeagueRepository,
-  SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
   UserRepository,
@@ -31,6 +28,7 @@ import {
   type League,
   type SportEvent,
   type SportEventMatch,
+  type SportLeague,
   type User,
 } from '@poolmaster/shared/domain';
 import {
@@ -50,13 +48,14 @@ import type { SquaresBoard } from '../selections/squares-service';
 /** How many of a bracket's rounds its receipt lists, the final first: the final, the semifinals and the quarterfinals. */
 const BRACKET_RECEIPT_ROUNDS = 3;
 
+/**
+ * A receipt is sent from what its caller already loaded (#1201): the contest, its entries and its
+ * event are never read again here. Only the league, the sport league and the owners are.
+ */
 export interface EntryReceiptDeps {
-  contests: Pick<ContestRepository, 'findById'>;
   leagues: Pick<LeagueRepository, 'findById'>;
-  entries: Pick<ContestEntryRepository, 'findByIdWithSquad'>;
-  squadMemberships: Pick<SquadMembershipRepository, 'findBySquad'>;
-  users: Pick<UserRepository, 'findById'>;
-  sportEvents: Pick<SportEventRepository, 'findById'>;
+  squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
+  users: Pick<UserRepository, 'findByIds'>;
   /** The event's sport league, named on the receipt, and a bracket's round names ("Sweet 16"). */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   email: Pick<EmailService, 'send'>;
@@ -64,19 +63,40 @@ export interface EntryReceiptDeps {
   logger?: FastifyBaseLogger;
 }
 
+/** The submitted week as PredictionService already holds it: the contest, the entry and the event. */
+export interface SubmittedWeek {
+  contest: Contest;
+  entry: ContestEntryWithSquad;
+  sportEvent: SportEvent;
+}
+
 /** The seam PredictionService calls once an entry's picks for an event are submitted. */
 export interface GamePicksReceiptNotice {
   /** Never throws: a receipt that cannot be queued is logged, and the submit stands. */
-  gamePicksSubmitted(view: GamePicksView): Promise<void>;
+  gamePicksSubmitted(view: GamePicksView, week: SubmittedWeek): Promise<void>;
 }
 
 /** What a squares receipt reads of the drawn board. */
 export type DrawnSquaresBoard = Pick<SquaresBoard, 'contest' | 'homeTeamName' | 'awayTeamName' | 'boxes' | 'digits'>;
 
+/** The drawn board with the contest's entries and its event, as SquaresService already holds them. */
+export interface DrawnSquares {
+  board: DrawnSquaresBoard;
+  entries: readonly ContestEntryWithSquad[];
+  sportEvent: SportEvent;
+}
+
 /** The seam SquaresService calls once a squares contest's numbers are drawn. */
 export interface SquaresDrawnNotice {
   /** Never throws: a receipt that cannot be queued is logged, and the draw stands. */
-  squaresDrawn(board: DrawnSquaresBoard): Promise<void>;
+  squaresDrawn(drawn: DrawnSquares): Promise<void>;
+}
+
+/** What every receipt of one contest shares: its league, its event's sport league and the squads' active owners. */
+interface ReceiptSetting {
+  league: League;
+  sportLeague: SportLeague | null;
+  ownersBySquad: ReadonlyMap<string, User[]>;
 }
 
 export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice {
@@ -86,9 +106,9 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
    * Queues the receipt for a submitted week to every active owner of the entry's squad. A failure
    * is logged and never fails the submit: the picks are already saved.
    */
-  async gamePicksSubmitted(view: GamePicksView): Promise<void> {
+  async gamePicksSubmitted(view: GamePicksView, week: SubmittedWeek): Promise<void> {
     try {
-      await this.sendGamePicksReceipt(view);
+      await this.sendGamePicksReceipt(view, week);
     } catch (error) {
       this.deps.logger?.error({
         action: 'email.entryReceipt.failed',
@@ -97,26 +117,20 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     }
   }
 
-  private async sendGamePicksReceipt(view: GamePicksView): Promise<void> {
-    const [contest, entry, sportEvent] = await Promise.all([
-      this.deps.contests.findById(view.contestId),
-      this.deps.entries.findByIdWithSquad(view.entryId),
-      this.deps.sportEvents.findById(view.sportEventId),
-    ]);
-    const league = contest ? await this.deps.leagues.findById(contest.leagueId) : null;
-    if (!contest || !entry || !sportEvent || !league || view.submittedAt === null) {
+  private async sendGamePicksReceipt(view: GamePicksView, { contest, entry, sportEvent }: SubmittedWeek): Promise<void> {
+    const setting = await this.loadSetting(contest, sportEvent, [entry]);
+    if (!setting || view.submittedAt === null) {
       this.deps.logger?.warn({
         action: 'email.entryReceipt.skipped',
         data: { contestId: view.contestId, entryId: view.entryId, sportEventId: view.sportEventId },
-      }, 'Skipped an entry receipt because its contest, entry or event is gone');
+      }, 'Skipped an entry receipt because its league is gone or the week is not submitted');
       return;
     }
     const submittedAt = view.submittedAt;
-    const receipt = await this.receiptOf(view, sportEvent);
+    const receipt = this.receiptOf(view, sportEvent, setting.sportLeague?.roundNames ?? []);
     const tiebreaker = describeTiebreaker(view, sportEvent);
-    await this.sendToOwners({
+    await this.sendToOwners(setting, {
       contest,
-      league,
       entry,
       sportEvent,
       about: `${entry.id}:${sportEvent.id}:${submittedAt.toISOString()}`,
@@ -128,29 +142,23 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
    * Queues each entry with a box a receipt of its boxes' numbers, once the squares draw is in.
    * Rows take the away team's score and columns the home team's, as the grid shows them.
    */
-  async squaresDrawn(board: DrawnSquaresBoard): Promise<void> {
+  async squaresDrawn({ board, entries, sportEvent }: DrawnSquares): Promise<void> {
     const { contest, digits } = board;
     try {
-      const [league, sportEvent] = await Promise.all([
-        this.deps.leagues.findById(contest.leagueId),
-        // A squares grid is on one game, of the contest's one event.
-        this.deps.sportEvents.findById(contest.sportEventIds[0] ?? ''),
-      ]);
-      if (!league || !sportEvent || digits === null) {
-        this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league, the event or the draw is gone');
+      const holding = new Set(board.boxes.map((box) => box.contestEntryId));
+      const holders = entries.filter((entry) => holding.has(entry.id));
+      const setting = await this.loadSetting(contest, sportEvent, holders);
+      if (!setting || digits === null) {
+        this.deps.logger?.warn({ action: 'email.entryReceipt.skipped', data: { contestId: contest.id } }, 'Skipped squares receipts because the league or the draw is gone');
         return;
       }
-      const entryIds = [...new Set(board.boxes.map((box) => box.contestEntryId))];
-      for (const entryId of entryIds) {
-        const entry = await this.deps.entries.findByIdWithSquad(entryId);
-        if (!entry) continue;
+      for (const entry of holders) {
         const boxes = board.boxes
-          .filter((box) => box.contestEntryId === entryId)
+          .filter((box) => box.contestEntryId === entry.id)
           .map((box) => ({ rowNumber: digits.rowDigits[box.rowIndex], columnNumber: digits.columnDigits[box.columnIndex] }))
           .sort((left, right) => left.rowNumber - right.rowNumber || left.columnNumber - right.columnNumber);
-        await this.sendToOwners({
+        await this.sendToOwners(setting, {
           contest,
-          league,
           entry,
           sportEvent,
           // The draw is final: one receipt per entry.
@@ -173,20 +181,43 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     }
   }
 
+  /**
+   * The league, the sport league and every given entry's squad's active owners, each read once
+   * however many entries there are (#1201). Null when the league is gone.
+   */
+  private async loadSetting(contest: Contest, sportEvent: SportEvent, entries: readonly ContestEntryWithSquad[]): Promise<ReceiptSetting | null> {
+    const squadIds = [...new Set(entries.map((entry) => entry.squadId))];
+    const [league, sportLeague, memberships] = await Promise.all([
+      this.deps.leagues.findById(contest.leagueId),
+      this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
+      squadIds.length === 0 ? Promise.resolve([]) : this.deps.squadMemberships.findBySquads(squadIds),
+    ]);
+    if (!league) return null;
+    const userIds = [...new Set(memberships.map((membership) => membership.userId))];
+    const users = userIds.length === 0 ? [] : await this.deps.users.findByIds(userIds);
+    const activeUserById = new Map(users.filter((user) => user.isActive).map((user) => [user.id, user]));
+    const ownersBySquad = new Map<string, User[]>();
+    for (const membership of memberships) {
+      const user = activeUserById.get(membership.userId);
+      if (user === undefined) continue;
+      ownersBySquad.set(membership.squadId, [...(ownersBySquad.get(membership.squadId) ?? []), user]);
+    }
+    return { league, sportLeague, ownersBySquad };
+  }
+
   /** Queues the receipt to every active owner of the entry's squad; one owner's failure never costs the others theirs. */
-  private async sendToOwners(input: {
+  private async sendToOwners(setting: ReceiptSetting, input: {
     contest: Contest;
-    league: League;
     entry: ContestEntryWithSquad;
     sportEvent: SportEvent;
     about: string;
     data: Pick<ContestEntryCompletedEmailData, 'submittedAt' | 'tiebreaker' | 'receipt'>;
   }): Promise<void> {
-    const { contest, league, entry, sportEvent } = input;
+    const { contest, entry, sportEvent } = input;
+    const { league } = setting;
     const entryUrl = buildEntryUrl(this.deps.appBaseUrl, league.leagueCode, contest.id, entry.id);
-    const sportLeagueName = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.name ?? '';
-    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeagueName);
-    for (const user of await this.activeOwners(entry.squadId)) {
+    const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, setting.sportLeague?.name ?? '');
+    for (const user of setting.ownersBySquad.get(entry.squadId) ?? []) {
       try {
         await this.deps.email.send('CONTEST_ENTRY_COMPLETED', {
           to: emailRecipientOf(user),
@@ -213,13 +244,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
     }
   }
 
-  private async activeOwners(squadId: string): Promise<User[]> {
-    const owners = await Promise.all((await this.deps.squadMemberships.findBySquad(squadId))
-      .map((membership) => this.deps.users.findById(membership.userId)));
-    return owners.filter((user): user is User => user !== null && user.isActive);
-  }
-
-  private async receiptOf(view: GamePicksView, sportEvent: SportEvent): Promise<EntryReceipt> {
+  private receiptOf(view: GamePicksView, sportEvent: SportEvent, roundNames: readonly string[]): EntryReceipt {
     const tieWord = getSportDefinition(sportEvent.sport).vocabulary.tie ?? 'Tie';
     const picked = view.games.filter((game) => game.pick !== null);
     switch (view.selectionType) {
@@ -240,7 +265,7 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
         return {
           kind: EntryReceiptKind.BRACKET,
           eventName: sportEvent.name,
-          rounds: await this.bracketRounds(picked, sportEvent),
+          rounds: bracketRounds(picked, sportEvent, roundNames),
           // A bracket's picks lock together: at the event's start, or a second-chance bracket's
           // starting round.
           changeUntil: view.picksCloseAt,
@@ -257,20 +282,19 @@ export class EntryReceipts implements GamePicksReceiptNotice, SquaresDrawnNotice
         };
     }
   }
+}
 
-  /** The bracket's picks for its last rounds, the final first, each round in its sport league's words. */
-  private async bracketRounds(picked: GamePickGame[], sportEvent: SportEvent): Promise<Array<{ name: string; picks: string[] }>> {
-    const roundNames = (await this.deps.sportLeagues.findById(sportEvent.sportLeagueId))?.roundNames ?? [];
-    const roundNumbers = [...new Set(picked.map((game) => game.match.roundNumber))].sort((left, right) => right - left);
-    const roundCount = Math.max(sportEvent.rounds ?? 0, roundNumbers.at(0) ?? 0);
-    return roundNumbers.slice(0, BRACKET_RECEIPT_ROUNDS).map((roundNumber) => ({
-      name: eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount),
-      picks: picked
-        .filter((game) => game.match.roundNumber === roundNumber)
-        .sort((left, right) => left.match.matchNumber - right.match.matchNumber)
-        .map((game) => describePick(game, false, '')),
-    }));
-  }
+/** The bracket's picks for its last rounds, the final first, each round in its sport league's words. */
+function bracketRounds(picked: GamePickGame[], sportEvent: SportEvent, roundNames: readonly string[]): Array<{ name: string; picks: string[] }> {
+  const roundNumbers = [...new Set(picked.map((game) => game.match.roundNumber))].sort((left, right) => right - left);
+  const roundCount = Math.max(sportEvent.rounds ?? 0, roundNumbers.at(0) ?? 0);
+  return roundNumbers.slice(0, BRACKET_RECEIPT_ROUNDS).map((roundNumber) => ({
+    name: eventRoundLabel(sportEvent, roundNames, roundNumber, roundCount),
+    picks: picked
+      .filter((game) => game.match.roundNumber === roundNumber)
+      .sort((left, right) => left.match.matchNumber - right.match.matchNumber)
+      .map((game) => describePick(game, false, '')),
+  }));
 }
 
 /** The team a game's pick names: the teams the entry's own picks put there in a bracket, else the game's. */

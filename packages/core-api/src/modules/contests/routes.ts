@@ -90,6 +90,23 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
     handler: handlers.listFinishedYears,
   });
 
+  fastify.get('/my-entries', {
+    schema: {
+      tags: ['Contests'],
+      summary: "List the requester's entries in a league's current contests",
+      description:
+        "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+      operationId: 'listMyContestEntries',
+      response: {
+        200: schemaRef('MyContestEntriesResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: requireMemberOfLeague(membershipRepo, leagueFromPath),
+    handler: handlers.listMyEntries,
+  });
+
   fastify.post('/', {
     schema: {
       tags: ['Contests'],
@@ -198,7 +215,7 @@ export function contestsByIdModule(fastify: FastifyInstance, opts: MailModuleOpt
       tags: ['Contests'],
       summary: 'Get a contest by ID',
       description:
-        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
+        'Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester\'s own entries in it (#1197). Active members of the contest\'s league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.',
       operationId: 'getContest',
       response: {
         200: schemaRef('ContestResponse'),

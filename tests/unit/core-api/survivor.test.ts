@@ -12,7 +12,7 @@
  * - Cara picks the Jets: out in week 1.
  * - Dan picks the Bills, then leaves week 2 in draft: out in week 2.
  */
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import {
   MatchEnding,
   ContestEntryStatus,
@@ -29,6 +29,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { ContestOperationError, ContestService } from '../../../packages/core-api/src/modules/contests/service';
+import { loadSurvivorWeeks } from '../../../packages/core-api/src/modules/contests/survivor-standings';
 import { survivorPickOutcome, survivorRun, survivorTeamsUsedInCycle, type SurvivorWeek } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/survivor';
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { survivorPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/survivor';
@@ -144,14 +145,16 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
   });
   const contestService = new ContestService(deps);
   const settlement = new ContestSettlementService({ ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
+  // The season reads a test counts (#1201).
+  const seasonReads = { sportEvents: world.sportEventRepo(), matches: games.matchRepo() };
   const predictions = new PredictionService({
     contests: world.contestRepo(),
     configurations: world.configurationRepo(),
     scoringRules: world.scoringRuleRepo(),
     entries: world.entryRepo(),
     squadMemberships: world.squadMembershipRepo(),
-    sportEvents: world.sportEventRepo(),
-    matches: games.matchRepo(),
+    sportEvents: seasonReads.sportEvents,
+    matches: seasonReads.matches,
     field: games.fieldRepo(),
     participants: games.participantRepo(),
     predictions: games.predictionRepo(),
@@ -169,7 +172,7 @@ function setup(rules: { reuseTeamsOnceAllUsed?: boolean } = {}) {
   };
   const viewerId = expectDefined(users.get('Alice'));
   return {
-    world, games, contest, week1, week2, week3, team, contestService, settlement, predictions,
+    world, games, contest, week1, week2, week3, team, contestService, settlement, predictions, seasonReads,
     gamesByNumber: { g1, g2, g3, g4, g5, g6 },
     sideOf, play, cancel, setEventStatus,
     userOf: (name: string) => expectDefined(users.get(name)),
@@ -348,6 +351,29 @@ describe('PredictionService — a survivor week', () => {
     const pickOf = (game: SportEventMatch, name: TeamName) => ({ sportEventMatchId: game.id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: context.sideOf(game, name), confidence: null });
     return { ...context, input, pickOf };
   }
+
+  it('reads the week once and only the season\'s other weeks for the teams used, never the week again', async () => {
+    const context = beforeWeek3();
+    const eventReads = jest.spyOn(context.seasonReads.sportEvents, 'findByIds');
+    const weekMatchReads = jest.spyOn(context.seasonReads.matches, 'findBySportEvent');
+    const seasonMatchReads = jest.spyOn(context.seasonReads.matches, 'findBySportEvents');
+    const view = await context.predictions.getGamePicks(context.input('Alice'));
+
+    expect(view.survivor?.usedParticipantIds).toHaveLength(2);
+    expect(eventReads.mock.calls).toEqual([[[context.week3.id]], [[context.week1.id, context.week2.id]]]);
+    expect(weekMatchReads.mock.calls).toEqual([[context.week3.id]]);
+    expect(seasonMatchReads.mock.calls).toEqual([[[context.week1.id, context.week2.id]]]);
+  });
+
+  it('builds the same season from a week already loaded as from reading every week', async () => {
+    const context = beforeWeek3();
+    const now = later(WEEK_3, -2);
+    const week3 = expectDefined(await context.seasonReads.sportEvents.findById(context.week3.id) ?? undefined);
+    const loaded = { sportEvent: week3, matches: await context.seasonReads.matches.findBySportEvent(week3.id) };
+
+    expect(await loadSurvivorWeeks(context.seasonReads, context.contest, now, loaded))
+      .toEqual(await loadSurvivorWeeks(context.seasonReads, context.contest, now));
+  });
 
   it('shows the entry the teams it has used, and refuses a pick of one of them', async () => {
     const context = beforeWeek3();

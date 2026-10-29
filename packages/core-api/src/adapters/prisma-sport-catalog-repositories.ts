@@ -596,8 +596,23 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return row ? toSportEventParticipant(row) : null;
   }
 
+  async findByIds(ids: readonly string[]): Promise<SportEventParticipant[]> {
+    if (ids.length === 0) return [];
+    const rows = await this.prisma.sportEventParticipant.findMany({ where: { id: { in: [...ids] } } });
+    return rows.map(toSportEventParticipant);
+  }
+
   async findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]> {
     const rows = await this.prisma.sportEventParticipant.findMany({ where: { sportEventId }, orderBy: FIELD_ORDER });
+    return rows.map(toSportEventParticipant);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipant[]> {
+    if (sportEventIds.length === 0) return [];
+    const rows = await this.prisma.sportEventParticipant.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      orderBy: [{ sportEventId: 'asc' }, ...FIELD_ORDER],
+    });
     return rows.map(toSportEventParticipant);
   }
 
@@ -723,6 +738,15 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
     return rows.map(toTier);
   }
 
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]> {
+    if (sportEventIds.length === 0) return [];
+    const rows = await this.prisma.sportEventTier.findMany({
+      where: { sportEventId: { in: [...sportEventIds] } },
+      orderBy: [{ sportEventId: 'asc' }, { tierNumber: 'asc' }],
+    });
+    return rows.map(toTier);
+  }
+
   async createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
     await this.prisma.$transaction(tiers.map((tier) => this.prisma.sportEventTier.create({
       data: { sportEventId, ...tierColumns(tier) },
@@ -773,8 +797,13 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
   constructor(private readonly prisma: Db) {}
 
   async findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]> {
+    return this.findBySportEvents([sportEventId]);
+  }
+
+  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]> {
+    if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventParticipantValuation.findMany({
-      where: { sportEventParticipant: { sportEventId } },
+      where: { sportEventParticipant: { sportEventId: { in: [...sportEventIds] } } },
       orderBy: [{ sportEventTier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
     });
     return rows.map(toValuation);

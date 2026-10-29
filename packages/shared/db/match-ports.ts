@@ -69,6 +69,8 @@ export interface MatchResultApply {
 }
 
 export interface SportEventMatchRepository {
+  /** One match, or null when there is none: a squares grid's game (#1201). */
+  findById(id: string): Promise<SportEventMatch | null>;
   /** The event's matches in match-number order. */
   findBySportEvent(sportEventId: string): Promise<SportEventMatch[]>;
   /** Several events' matches in one read (#762), each event's in match-number order. */

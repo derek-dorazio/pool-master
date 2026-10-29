@@ -10169,7 +10169,7 @@
               "additionalProperties": false,
               "description": "One inherited event tier and its participant assignments."
             },
-            "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+            "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
           }
         },
         "required": [
@@ -10270,7 +10270,7 @@
                     "additionalProperties": false,
                     "description": "One inherited event tier and its participant assignments."
                   },
-                  "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                  "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
                 }
               },
               "required": [
@@ -12353,7 +12353,7 @@
                         "additionalProperties": false,
                         "description": "One inherited event tier and its participant assignments."
                       },
-                      "description": "Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured."
+                      "description": "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured."
                     }
                   },
                   "required": [
@@ -26817,8 +26817,27 @@
             ]
           },
           "entryCount": {
-            "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+            "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
             "type": "number"
+          },
+          "enteredSquadCount": {
+            "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "allEntryCount": {
+            "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "myEntryIds": {
+            "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "entriesPerContest": {
             "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -28967,8 +28986,27 @@
                 ]
               },
               "entryCount": {
-                "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+                "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
                 "type": "number"
+              },
+              "enteredSquadCount": {
+                "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "allEntryCount": {
+                "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "myEntryIds": {
+                "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "entriesPerContest": {
                 "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29174,8 +29212,27 @@
                   ]
                 },
                 "entryCount": {
-                  "description": "Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.",
+                  "description": "Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.",
                   "type": "number"
+                },
+                "enteredSquadCount": {
+                  "description": "Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "allEntryCount": {
+                  "description": "Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.",
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "myEntryIds": {
+                  "description": "The requester's own squad's entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 },
                 "entriesPerContest": {
                   "description": "The most entries the contest takes, every squad's drafts included: its league plan's cap or its expansion (#987), whichever is higher. Null for no limit.",
@@ -29621,6 +29678,178 @@
         "additionalProperties": false,
         "description": "Expanded contest-entry detail response."
       },
+      "MyContestEntriesResponse": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "contestId": {
+                  "type": "string"
+                },
+                "squadId": {
+                  "type": "string"
+                },
+                "squadName": {
+                  "type": "string"
+                },
+                "entryNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string"
+                },
+                "events": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportEventId": {
+                        "type": "string",
+                        "description": "One event of the entry's contest."
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "DRAFT",
+                          "SUBMITTED"
+                        ],
+                        "description": "DRAFT until the owner submits a complete lineup for this event; only a SUBMITTED event counts on the leaderboard, in standings and at settlement (#481, per event since #713)."
+                      },
+                      "submittedAt": {
+                        "description": "When the event's picks were submitted; null while a draft.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "sportEventId",
+                      "status",
+                      "submittedAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "An entry's status in one event of its contest (#713): \"submit week 6\"."
+                  },
+                  "description": "The entry's status in each event of its contest, in the contest's event order."
+                },
+                "tiebreakerValue": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "picksCount": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Number of roster picks currently saved on this entry. Always populated, even when picks are hidden from non-owners."
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest entry was created."
+                },
+                "updatedAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "When the contest entry was last updated."
+                },
+                "participants": {
+                  "description": "The entry's picked participants, each naming its event. To anyone but the owning squad only the picks of events whose picks are revealed are listed. Omitted on the entry writes, which return the entry without them.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "pickId": {
+                        "type": "string"
+                      },
+                      "sportEventParticipantId": {
+                        "type": "string"
+                      },
+                      "sportEventId": {
+                        "type": "string",
+                        "description": "The event of the contest the pick is in (#713)."
+                      },
+                      "participantId": {
+                        "type": "string"
+                      },
+                      "participantName": {
+                        "type": "string"
+                      },
+                      "participantStatus": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "role": {
+                        "description": "The participant's playing role, when known.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "teamAffiliation": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "pickedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the participant was added to the contest entry."
+                      }
+                    },
+                    "required": [
+                      "pickId",
+                      "sportEventParticipantId",
+                      "sportEventId",
+                      "participantId",
+                      "participantName",
+                      "pickedAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint."
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "contestId",
+                "squadId",
+                "squadName",
+                "entryNumber",
+                "name",
+                "events",
+                "picksCount",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false,
+              "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
+            },
+            "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry's picks are on `getContestEntry`. Empty without an active squad in the league."
+          }
+        },
+        "required": [
+          "entries"
+        ],
+        "additionalProperties": false,
+        "description": "The requester's own entries across a league's current contests (#1197)."
+      },
       "ContestEntryListResponse": {
         "type": "object",
         "properties": {
@@ -29631,24 +29860,6 @@
           "total": {
             "type": "number",
             "description": "Total number of entries in the contest."
-          },
-          "isJoined": {
-            "type": "boolean",
-            "description": "Whether the current user has at least one active entry in the contest."
-          },
-          "myEntryId": {
-            "description": "Primary current-user entry when the contest allows a single active entry.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "myEntryIds": {
-            "description": "All current-user entry identifiers when multiple entries are allowed.",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
           },
           "picksRevealed": {
             "type": "boolean",
@@ -29814,14 +30025,12 @@
               "additionalProperties": false,
               "description": "A contest entry: the one shape every entry read and write returns (#248 collapsed the summary and detail variants, which differed by `participants`)."
             },
-            "description": "Entries for the contest. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's."
+            "description": "Entries for the contest, the requester's own squad's first. Each entry lists participants[]: all of them for the requester's own entries, and only the revealed events' picks for everyone else's. The requester's entry ids alone are `myEntryIds` on `getContest`."
           }
         },
         "required": [
           "contestId",
           "total",
-          "isJoined",
-          "myEntryId",
           "picksRevealed",
           "entries"
         ],
@@ -70276,6 +70485,58 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/contests/my-entries": {
+      "get": {
+        "operationId": "listMyContestEntries",
+        "summary": "List the requester's entries in a league's current contests",
+        "tags": [
+          "Contests"
+        ],
+        "description": "The requester's own squad's entries, drafts included, in each of the league's OPEN and ACTIVE contests, each with its status in every event of its contest and without its picks (#1197): one read for what league home, the Contests page's My entries and My team show, however many contests are current. Empty without an active squad in the league. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requester's own entries across a league's current contests (#1197).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyContestEntriesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/contests/sports-leagues-used": {
       "get": {
         "operationId": "listSportLeaguesUsed",
@@ -70908,7 +71169,7 @@
         "tags": [
           "Contests"
         ],
-        "description": "Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier. Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "description": "Returns detailed contest information by contest ID for league, entry, and history surfaces that already know the contest identifier, with its entries counted and the ids of the requester's own entries in it (#1197). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
         "parameters": [
           {
             "schema": {

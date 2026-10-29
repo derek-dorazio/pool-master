@@ -23,6 +23,11 @@ export const MATCH_INCLUDE = {
 export class PrismaSportEventMatchRepository implements SportEventMatchRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
+  async findById(id: string): Promise<SportEventMatch | null> {
+    const row = await this.prisma.sportEventMatch.findUnique({ where: { id }, include: MATCH_INCLUDE });
+    return row ? toSportEventMatch(row) : null;
+  }
+
   async findBySportEvent(sportEventId: string): Promise<SportEventMatch[]> {
     return this.findBySportEvents([sportEventId]);
   }

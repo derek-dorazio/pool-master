@@ -401,7 +401,9 @@ export class InMemorySportEvents {
       .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity));
     return {
       findById: async (id) => this.field.find((row) => row.id === id) ?? null,
+      findByIds: async (ids) => this.field.filter((row) => ids.includes(row.id)),
       findBySportEvent: async (sportEventId) => bySeed(sportEventId),
+      findBySportEvents: async (sportEventIds) => [...sportEventIds].sort().flatMap((sportEventId) => bySeed(sportEventId)),
       findFieldForEvent: async (sportEventId, sportLeagueId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId)),
       findFieldRow: async (sportEventId, sportEventParticipantId, sportLeagueId) => {
         const entry = this.field.find((row) => row.id === sportEventParticipantId && row.sportEventId === sportEventId);
@@ -463,10 +465,12 @@ export class InMemorySportEvents {
   }
 
   tierRepo(): SportEventTierRepository {
+    const findBySportEvents = async (sportEventIds: readonly string[]) => this.tierRows
+      .filter((row) => sportEventIds.includes(row.sportEventId))
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.tierNumber - right.tierNumber);
     return {
-      findBySportEvent: async (sportEventId) => this.tierRows
-        .filter((row) => row.sportEventId === sportEventId)
-        .sort((left, right) => left.tierNumber - right.tierNumber),
+      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
+      findBySportEvents,
       createMany: async (sportEventId, tiers) => {
         for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), sportEventId, ...tier }));
       },
@@ -506,6 +510,10 @@ export class InMemorySportEvents {
     return {
       findBySportEvent: async (sportEventId) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
+        return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
+      },
+      findBySportEvents: async (sportEventIds) => {
+        const entryIds = new Set(this.field.filter((row) => sportEventIds.includes(row.sportEventId)).map((row) => row.id));
         return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
       },
       assignTiers: async (assignments) => {
@@ -599,7 +607,7 @@ export class InMemorySportEvents {
         if (writes.some((write) => !this.field.some((row) => row.id === write.sportEventParticipantId))) {
           throw new Error('unknown field row');
         }
-        for (const write of writes) this.writeGolfRound(write);
+        return writes.map((write) => this.writeGolfRound(write));
       },
     };
   }
@@ -611,21 +619,7 @@ export class InMemorySportEvents {
         return this.golfStandingResults().filter((result) => entryIds.has(result.standing.sportEventParticipantId));
       },
       findBySportEventParticipants: async (ids) => this.golfStandingResults().filter((result) => ids.includes(result.standing.sportEventParticipantId)),
-      upsert: async (write: GolfStandingWrite) => {
-        let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
-        if (!standing) {
-          standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-          this.standingRows.push(standing);
-        }
-        Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
-        let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
-        if (!golf) {
-          golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
-          this.golfStandingRows.push(golf);
-        }
-        Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
-        return { standing: { ...standing }, golf: { ...golf } };
-      },
+      upsertMany: async (writes) => writes.map((write) => this.writeGolfStanding(write)),
       updateRanks: async (ranks) => {
         for (const rank of ranks) {
           const standing = this.standingRows.find((row) => row.id === rank.standingId);
@@ -634,6 +628,22 @@ export class InMemorySportEvents {
         }
       },
     };
+  }
+
+  private writeGolfStanding(write: GolfStandingWrite): GolfStandingResult {
+    let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
+    if (!standing) {
+      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+      this.standingRows.push(standing);
+    }
+    Object.assign(standing, { status: write.status, asOf: write.asOf, currentRound: write.currentRound });
+    let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
+    if (!golf) {
+      golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
+      this.golfStandingRows.push(golf);
+    }
+    Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
+    return { standing: { ...standing }, golf: { ...golf } };
   }
 
   matchRepo(): SportEventMatchRepository {
@@ -647,6 +657,10 @@ export class InMemorySportEvents {
       return row;
     };
     return {
+      findById: async (id) => {
+        const row = this.matchRows.find((match) => match.id === id);
+        return row ? { ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) } : null;
+      },
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
       replaceBracket: async (sportEventId, matches) => {

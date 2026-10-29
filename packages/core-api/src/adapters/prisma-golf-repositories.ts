@@ -58,8 +58,10 @@ export class PrismaSportEventParticipantGolfRoundRepository implements SportEven
     return result;
   }
 
-  async upsertMany(writes: readonly GolfRoundWrite[]): Promise<void> {
-    await this.prisma.$transaction(writes.map((write) => this.golfRoundUpsert(write)));
+  async upsertMany(writes: readonly GolfRoundWrite[]): Promise<GolfRoundResult[]> {
+    if (writes.length === 0) return [];
+    const rows = await this.prisma.$transaction(writes.map((write) => this.golfRoundUpsert(write)));
+    return rows.flatMap(toGolfRoundResult);
   }
 
   private golfRoundUpsert(write: GolfRoundWrite) {
@@ -106,21 +108,23 @@ export class PrismaSportEventParticipantGolfStandingRepository implements SportE
     return rows.flatMap(toGolfStandingResult);
   }
 
-  async upsert(write: GolfStandingWrite): Promise<GolfStandingResult> {
-    const golf = {
-      eventScoreToPar: write.eventScoreToPar,
-      eventStrokes: write.eventStrokes,
-      currentRoundThru: write.currentRoundThru,
-    };
-    const core = { currentRound: write.currentRound, status: write.status, asOf: write.asOf };
-    const row = await this.prisma.sportEventParticipantStanding.upsert({
-      where: { sportEventParticipantId: write.sportEventParticipantId },
-      create: { sportEventParticipantId: write.sportEventParticipantId, ...core, golf: { create: golf } },
-      update: { ...core, golf: { upsert: { create: golf, update: golf } } },
-      include: { golf: true },
-    });
-    const [result] = toGolfStandingResult(row);
-    return result;
+  async upsertMany(writes: readonly GolfStandingWrite[]): Promise<GolfStandingResult[]> {
+    if (writes.length === 0) return [];
+    const rows = await this.prisma.$transaction(writes.map((write) => {
+      const golf = {
+        eventScoreToPar: write.eventScoreToPar,
+        eventStrokes: write.eventStrokes,
+        currentRoundThru: write.currentRoundThru,
+      };
+      const core = { currentRound: write.currentRound, status: write.status, asOf: write.asOf };
+      return this.prisma.sportEventParticipantStanding.upsert({
+        where: { sportEventParticipantId: write.sportEventParticipantId },
+        create: { sportEventParticipantId: write.sportEventParticipantId, ...core, golf: { create: golf } },
+        update: { ...core, golf: { upsert: { create: golf, update: golf } } },
+        include: { golf: true },
+      });
+    }));
+    return rows.flatMap(toGolfStandingResult);
   }
 
   async updateRanks(ranks: ReadonlyArray<StandingRankWrite>): Promise<void> {

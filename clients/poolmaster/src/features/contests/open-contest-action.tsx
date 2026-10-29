@@ -6,6 +6,7 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { Alert, Button, ConfirmDialog } from '@/features/shared/ui';
 import { CONTEST_RELEASE_CODE_MESSAGES } from './contest-release-messages';
+import { entryWriteKeys } from './use-contest-entries';
 
 /**
  * "Open to league" (#117): the commissioner's one-way release of a draft contest. Members can
@@ -43,10 +44,9 @@ export function OpenContestAction({
       setIsConfirmOpen(false);
     },
     invalidates: [
-      QueryKeys.contests.detail(contestId),
       QueryKeys.contests.list({ leagueId }),
       QueryKeys.managedContests.all,
-      QueryKeys.contestEntries.byContest(contestId),
+      ...entryWriteKeys(contestId),
     ],
     onError: (error) => {
       const payload = { action: 'contest.open.failed', data: { leagueId, contestId }, err: error };

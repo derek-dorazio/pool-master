@@ -472,6 +472,25 @@ export class InMemoryContestWorld {
         [...this.entries.values()]
           .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
           .sort((left, right) => left.entryNumber - right.entryNumber),
+      findIdsByContestAndSquad: async (contestId, squadId) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.contestId === contestId && entry.squadId === squadId)
+          .sort((left, right) => left.entryNumber - right.entryNumber)
+          .map((entry) => entry.id),
+      findBySquadAndContests: async (squadId, contestIds) =>
+        [...this.entries.values()]
+          .filter((entry) => entry.squadId === squadId && contestIds.includes(entry.contestId))
+          .sort((left, right) => left.contestId.localeCompare(right.contestId) || left.entryNumber - right.entryNumber)
+          .map((entry) => this.withSquad(entry)),
+      countForContest: async (contestId) => {
+        const all = [...this.entries.values()].filter((entry) => entry.contestId === contestId);
+        const submitted = all.filter((entry) => entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED));
+        return {
+          submittedEntryCount: submitted.length,
+          enteredSquadCount: new Set(submitted.map((entry) => entry.squadId)).size,
+          allEntryCount: all.length,
+        };
+      },
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
       countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>

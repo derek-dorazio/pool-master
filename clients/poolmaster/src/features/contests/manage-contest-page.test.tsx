@@ -21,7 +21,6 @@ import { EditContestPage } from './edit-contest-page';
 import { ManageContestPage } from './manage-contest-page';
 import {
   buildContest,
-  buildContestEntry,
   buildContestSportEvent,
   buildManagedContest,
   buildSelectionState,
@@ -41,7 +40,6 @@ const getSelectionStateMock = vi.fn();
 const getSportLeagueMock = vi.fn();
 const runContestDrawMock = vi.fn();
 const setContestCupWeightMock = vi.fn();
-const listContestEntriesMock = vi.fn();
 const getContestMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const openContestMock = vi.fn();
@@ -62,7 +60,6 @@ bindApiMocks({
   getSportLeague: getSportLeagueMock,
   runContestDraw: runContestDrawMock,
   setContestCupWeight: setContestCupWeightMock,
-  listContestEntries: listContestEntriesMock,
   getContest: getContestMock,
   listLeagueSquads: listLeagueSquadsMock,
   openContest: openContestMock,
@@ -136,19 +133,13 @@ function primeMocks({
   getContestConfigurationMock.mockResolvedValue(apiSuccess({ contest: managedContest }));
   getEventMock.mockResolvedValue(apiSuccess({ event }));
   getContestExpansionMock.mockResolvedValue(apiSuccess(expansion));
-  listContestEntriesMock.mockResolvedValue(apiSuccess({
-    contestId: contest.id,
-    total: 0,
-    picksRevealed: false,
-    entries: [],
-  }));
 }
 
 afterEach(() => {
   for (const mock of [
     deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
     getSelectionStateMock, getSportLeagueMock, runContestDrawMock, setContestCupWeightMock,
-    listContestEntriesMock, getContestMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
+    getContestMock, listLeagueSquadsMock, openContestMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
     mock.mockReset();
@@ -290,17 +281,11 @@ describe('Commissioner tools › Contests › one contest', () => {
   });
 
   it('counts an open contest\'s teams with a submitted entry against the league\'s active teams', async () => {
-    primeMocks({ contest: buildContest({ status: 'OPEN' }), managedContest: buildManagedContest({ status: 'OPEN' }) });
-    listContestEntriesMock.mockResolvedValue(apiSuccess({
-      contestId: 'contest-1',
-      total: 3,
-      picksRevealed: false,
-      entries: [
-        buildContestEntry({ id: 'entry-1', squadId: 'team-1' }),
-        buildContestEntry({ id: 'entry-2', squadId: 'team-1', entryNumber: 2 }),
-        buildContestEntry({ id: 'entry-3', squadId: 'team-2', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }] }),
-      ],
-    }));
+    // Two submitted entries, both team-1's, and team-2's draft: as the contest read counts them (#1197).
+    primeMocks({
+      contest: buildContest({ status: 'OPEN', entryCount: 2, enteredSquadCount: 1, allEntryCount: 3 }),
+      managedContest: buildManagedContest({ status: 'OPEN' }),
+    });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
@@ -444,7 +429,8 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
 
   function primeDrawMocks(drawnAt: string | null = null) {
     primeMocks({
-      contest: buildContest({ name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN', drawnAt }),
+      // Two entries, both drafts until the draw deals them their picks.
+      contest: buildContest({ name: 'Masters Sweepstake', selectionType: SelectionType.RANDOM_DRAW, status: 'OPEN', drawnAt, allEntryCount: 2 }),
       managedContest: buildManagedContest({
         status: 'OPEN',
         configuration: {
@@ -457,15 +443,6 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
         },
       }),
     });
-    listContestEntriesMock.mockResolvedValue(apiSuccess({
-      contestId: 'contest-1',
-      total: 2,
-      picksRevealed: false,
-      entries: [
-        buildContestEntry({ id: 'entry-1', squadId: 'team-1', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }], picksCount: 0 }),
-        buildContestEntry({ id: 'entry-2', squadId: 'team-2', events: [{ sportEventId: 'event-1', status: 'DRAFT', submittedAt: null }], picksCount: 0 }),
-      ],
-    }));
     // The room is never drawn here: the card must read the draw from the contest itself.
     getSelectionStateMock.mockResolvedValue(apiSuccess(buildSelectionState({ drawnAt: null })));
   }

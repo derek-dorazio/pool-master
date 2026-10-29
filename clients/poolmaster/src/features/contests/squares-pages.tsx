@@ -1,18 +1,16 @@
 import type { ColumnDef } from '@tanstack/react-table';
-import { useQuery } from '@tanstack/react-query';
 import { useLocation, useParams } from 'react-router';
 import { ContestStatus, describeSquaresRules  } from '@poolmaster/shared/domain';
 import type { ContestDto, SquaresBoardResponse, SquaresEntryDto } from '@/lib/api';
 import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
 import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { DataGrid, LinkButton, Tile } from '@/features/shared/ui';
-import { QueryKeys } from '@/lib/query-keys';
 import { parseRouteState } from '@/routes/route-state';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { ContestStatusBadge } from './contest-status-badge';
 import { SquaresBoardView } from './squares-board-view';
 import { useSquaresBoardQuery } from './use-squares-board';
-import { fetchContestEntries } from './use-contest-entries';
+import { useContestEntryQuery } from './use-contest-entries';
 
 /** A squares contest's rules sentence, once its board has loaded with the box limit. */
 function squaresRules(board: SquaresBoardResponse | undefined) {
@@ -29,15 +27,11 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   const hintedLeagueCode = routeLeagueCode ?? parseRouteState(location.state).leagueCode ?? null;
   const boardQuery = useSquaresBoardQuery(contest);
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
+  const entryQuery = useContestEntryQuery(contestId, entryId);
   const { league, viewer } = useLeagueContextById(contest.leagueId);
   const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
-  const entry = contestEntriesQuery.data?.entries.find((candidate) => candidate.id === entryId) ?? null;
+  const myEntryIds = contest.myEntryIds ?? [];
+  const entry = entryQuery.data?.entry ?? null;
   const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
 
   return (
@@ -66,7 +60,7 @@ export function SquaresEntryPage({ contest }: { contest: ContestDto }) {
             current={myEntryIds.includes(entryId) ? 'my-entry' : null}
             leagueCode={backLeagueCode}
             myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={contestEntriesQuery.data?.picksRevealed ?? false}
+            picksRevealed={entryQuery.data?.picksRevealed ?? false}
           />
         ) : null}
         summary={(
@@ -117,14 +111,9 @@ const STANDINGS_COLUMNS: ColumnDef<SquaresEntryDto>[] = [
 export function SquaresLeaderboard({ contest, leagueCode: hintedLeagueCode }: { contest: ContestDto; leagueCode: string | null }) {
   const contestId = contest.id;
   const boardQuery = useSquaresBoardQuery(contest);
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
   const { league, viewer } = useLeagueContextById(contest.leagueId);
   const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
+  const myEntryIds = contest.myEntryIds ?? [];
 
   return (
     <section className="space-y-6" data-testid="contest-leaderboard">

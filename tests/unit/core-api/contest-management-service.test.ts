@@ -226,25 +226,26 @@ function createSportEventTierServiceStub(
   tierCount = 0,
   withParticipants = false,
 ): SportEventTierService {
+  const tiers = Array.from({ length: tierCount }, (_, index) => ({
+    id: `tier-${index + 1}`,
+    tierKey: `tier-${index + 1}`,
+    label: `Tier ${index + 1}`,
+    tierNumber: index + 1,
+    participants: withParticipants
+      ? [
+          {
+            sportEventParticipantId: `sep-${index + 1}`,
+            participantId: `golfer-${index + 1}`,
+            tierOrderIndex: index + 1,
+            price: null,
+          },
+        ]
+      : [],
+  }));
   return {
-    getEffectiveTiersForSportEvent: jest.fn().mockResolvedValue(
-      Array.from({ length: tierCount }, (_, index) => ({
-        id: `tier-${index + 1}`,
-        tierKey: `tier-${index + 1}`,
-        label: `Tier ${index + 1}`,
-        tierNumber: index + 1,
-        participants: withParticipants
-          ? [
-              {
-                sportEventParticipantId: `sep-${index + 1}`,
-                participantId: `golfer-${index + 1}`,
-                tierOrderIndex: index + 1,
-                price: null,
-              },
-            ]
-          : [],
-      })),
-    ),
+    listTiers: jest.fn().mockResolvedValue(tiers.map(({ participants: _participants, ...tier }) => tier)),
+    getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
+      new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
   } as unknown as SportEventTierService;
 }
 
@@ -961,8 +962,9 @@ describe('ContestManagementService', () => {
 
     const result = await service.getContest('contest-1');
 
-    expect(golfTierService.getEffectiveTiersForSportEvent).toHaveBeenCalledWith(
-      '11111111-1111-1111-1111-111111111111',
+    expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledTimes(1);
+    expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledWith(
+      ['11111111-1111-1111-1111-111111111111'],
     );
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
@@ -991,6 +993,37 @@ describe('ContestManagementService', () => {
           },
         ],
       },
+    ]);
+  });
+
+  it('reads no tiers for a contest that does not pick by tier, and echoes an empty tier list for each of its events', async () => {
+    const contests = createContestRepo();
+    const contest = await contests.findById('contest-1');
+    (contests.findById as jest.Mock).mockResolvedValue({
+      ...contest,
+      contestFormat: ContestFormat.PREDICTION,
+      selectionType: SelectionType.PICK_EM,
+      sportEventIds: ['week-1', 'week-2', 'week-3'],
+    });
+    const tiers = createSportEventTierServiceStub(2, true);
+    const service = new ContestManagementService({
+      contests,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers,
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+
+    const result = await service.getContest('contest-1');
+
+    expect(tiers.getEffectiveTiersForSportEvents).not.toHaveBeenCalled();
+    expect(result.sportEvents).toEqual([
+      { sportEventId: 'week-1', effectiveTiers: [] },
+      { sportEventId: 'week-2', effectiveTiers: [] },
+      { sportEventId: 'week-3', effectiveTiers: [] },
     ]);
   });
 

@@ -34,6 +34,7 @@ import {
   type SportDefinition,
   type SportEvent,
   type SportEventParticipant,
+  type SportEventParticipantValuation,
   type SportEventTier,
 } from '@poolmaster/shared/domain';
 import { compareNullsLast, deriveGolfPrices } from '../golf/golf-seeding-algorithm';
@@ -138,18 +139,7 @@ export class SportEventTierService {
     const participantIdByEntry = new Map(fieldRows.map((entry) => [entry.id, entry.participantId]));
     const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
     return {
-      tiers: tiers.map((tier) => ({
-        ...tier,
-        participants: valuations
-          .filter((valuation) => valuation.sportEventTierId === tier.id)
-          .sort((left, right) => (left.tierOrderIndex ?? Number.MAX_SAFE_INTEGER) - (right.tierOrderIndex ?? Number.MAX_SAFE_INTEGER))
-          .map((valuation) => ({
-            sportEventParticipantId: valuation.sportEventParticipantId,
-            participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
-            tierOrderIndex: valuation.tierOrderIndex,
-            price: valuation.price,
-          })),
-      })),
+      tiers: tierGroups(tiers, valuations, participantIdByEntry),
       valuations: valuations.map((valuation) => {
         const tier = valuation.sportEventTierId ? tierById.get(valuation.sportEventTierId) : undefined;
         return {
@@ -164,6 +154,23 @@ export class SportEventTierService {
         };
       }),
     };
+  }
+
+  /**
+   * Each event's effective tiers from one read of the events' tiers, valuations and fields
+   * (#1201), keyed by event; an event with no tiers has an empty list.
+   */
+  async getEffectiveTiersForSportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierGroup[]>> {
+    const [tiers, valuations, fieldRows] = await Promise.all([
+      this.deps.tiers.findBySportEvents(sportEventIds),
+      this.deps.valuations.findBySportEvents(sportEventIds),
+      this.deps.field.findBySportEvents(sportEventIds),
+    ]);
+    const participantIdByEntry = new Map(fieldRows.map((entry) => [entry.id, entry.participantId]));
+    return new Map(sportEventIds.map((sportEventId) => [
+      sportEventId,
+      tierGroups(tiers.filter((tier) => tier.sportEventId === sportEventId), valuations, participantIdByEntry),
+    ]));
   }
 
   /**
@@ -374,4 +381,24 @@ function evenSpreadTierIndex(fieldSize: number, tierCount: number): (index: numb
   return (index) => (index < inLargeTiers
     ? Math.floor(index / (smallSize + 1))
     : largeTierCount + Math.floor((index - inLargeTiers) / smallSize));
+}
+
+/** The tiers with the field rows placed in each, in tier order; a valuation in no tier given is left out. */
+function tierGroups(
+  tiers: readonly SportEventTier[],
+  valuations: readonly SportEventParticipantValuation[],
+  participantIdByEntry: ReadonlyMap<string, string>,
+): SportEventTierGroup[] {
+  return tiers.map((tier) => ({
+    ...tier,
+    participants: valuations
+      .filter((valuation) => valuation.sportEventTierId === tier.id)
+      .sort((left, right) => (left.tierOrderIndex ?? Number.MAX_SAFE_INTEGER) - (right.tierOrderIndex ?? Number.MAX_SAFE_INTEGER))
+      .map((valuation) => ({
+        sportEventParticipantId: valuation.sportEventParticipantId,
+        participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
+        tierOrderIndex: valuation.tierOrderIndex,
+        price: valuation.price,
+      })),
+  }));
 }

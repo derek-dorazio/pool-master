@@ -102,7 +102,10 @@ export const ContestDtoSchema = z.object({
   leagueId: z.string(),
   sportEvents: z.array(ContestSportEventDtoSchema).describe('The events the contest covers, in sequence order (#713). One for a golf or race contest.'),
   sport: z.enum(Sport).nullable().optional(),
-  entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on list reads, which count them; omitted on a single-contest read.'),
+  entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.'),
+  enteredSquadCount: z.number().int().min(0).optional().describe('Number of squads with at least one entry that submitted an event (#1197). Single-contest read only.'),
+  allEntryCount: z.number().int().min(0).optional().describe('Every entry the contest holds, drafts included, as its entry cap counts them (#1197): before a random draw no entry is submitted. Single-contest read only.'),
+  myEntryIds: z.array(z.string()).optional().describe('The requester\'s own squad\'s entries in the contest, drafts included, in entry-number order (#1197). Empty without an active squad in the league. Single-contest read only.'),
   entriesPerContest: z.number().int().min(1).nullable().describe('The most entries the contest takes, every squad\'s drafts included: its league plan\'s cap or its expansion (#987), whichever is higher. Null for no limit.'),
   startsAt: z.iso.datetime().nullable().optional(),
   endsAt: z.iso.datetime().nullable().optional(),
@@ -334,13 +337,15 @@ export type ContestEntryDetailResponse = z.infer<typeof ContestEntryDetailRespon
 export const ContestEntryListResponseSchema = z.object({
   contestId: z.string().describe('Contest whose entries are being returned.'),
   total: z.number().describe('Total number of entries in the contest.'),
-  isJoined: z.boolean().describe('Whether the current user has at least one active entry in the contest.'),
-  myEntryId: z.string().nullable().describe('Primary current-user entry when the contest allows a single active entry.'),
-  myEntryIds: z.array(z.string()).optional().describe('All current-user entry identifiers when multiple entries are allowed.'),
   picksRevealed: z.boolean().describe('Whether any of the contest\'s events has its picks visible to non-owners: once the contest is live and that event has started, or once a random draw has dealt.'),
-  entries: z.array(ContestEntryDtoSchema).describe('Entries for the contest. Each entry lists participants[]: all of them for the requester\'s own entries, and only the revealed events\' picks for everyone else\'s.'),
+  entries: z.array(ContestEntryDtoSchema).describe('Entries for the contest, the requester\'s own squad\'s first. Each entry lists participants[]: all of them for the requester\'s own entries, and only the revealed events\' picks for everyone else\'s. The requester\'s entry ids alone are `myEntryIds` on `getContest`.'),
 }).describe('Contest-entry list response.');
 export type ContestEntryListResponse = z.infer<typeof ContestEntryListResponseSchema>;
+
+export const MyContestEntriesResponseSchema = z.object({
+  entries: z.array(ContestEntryDtoSchema).describe('The requester\'s own squad\'s entries, drafts included, in each of the league\'s OPEN and ACTIVE contests, in entry-number order within a contest. Without `participants`: an entry\'s picks are on `getContestEntry`. Empty without an active squad in the league.'),
+}).describe('The requester\'s own entries across a league\'s current contests (#1197).');
+export type MyContestEntriesResponse = z.infer<typeof MyContestEntriesResponseSchema>;
 
 export const ContestEntryDeletionResponseSchema = z.object({
   contestId: z.string().describe('Contest from which the entry was removed.'),
@@ -376,5 +381,6 @@ registerSchema('ListContestsQuery', ListContestsQuerySchema);
 registerSchema('ContestFinishedYearsResponse', ContestFinishedYearsResponseSchema);
 registerSchema('ContestEntryResponse', ContestEntryResponseSchema);
 registerSchema('ContestEntryDetailResponse', ContestEntryDetailResponseSchema);
+registerSchema('MyContestEntriesResponse', MyContestEntriesResponseSchema);
 registerSchema('ContestEntryListResponse', ContestEntryListResponseSchema);
 registerSchema('ContestEntryDeletionResponse', ContestEntryDeletionResponseSchema);

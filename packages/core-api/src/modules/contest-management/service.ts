@@ -6,7 +6,7 @@ import type {
   ContestSeasonLimits,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
-import type { SportEventTierService } from '../events/sport-event-tier-service';
+import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
 import type { ContestOpenedNotice } from '../notifications/contest-notices';
 import type { CupService } from '../cups/service';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -323,14 +323,17 @@ export class ContestManagementService {
    * override — so every ContestManagementDetailDto carries them so the commissioner UI can show
    * what was inherited without a mode flag. Reads through the same SportEventTierService
    * resolution the root-admin tier routes use; an event with no tiers yet has an empty list.
+   * Only a tiered contest picks by tier, so only its tiers are read, every event's in one read
+   * (#1201); any other format's events carry an empty list.
    */
   private async resolveContestSportEvents(contest: Contest): Promise<ContestManagementSportEventDto[]> {
-    return Promise.all(contest.sportEventIds.map(async (sportEventId) => ({
+    const tiersByEvent = contest.selectionType === SelectionType.TIERED
+      ? await this.sportEventTierService.getEffectiveTiersForSportEvents(contest.sportEventIds)
+      : new Map<string, SportEventTierGroup[]>();
+    return contest.sportEventIds.map((sportEventId) => ({
       sportEventId,
-      effectiveTiers: toEffectiveTierDtoList(
-        await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId),
-      ),
-    })));
+      effectiveTiers: toEffectiveTierDtoList(tiersByEvent.get(sportEventId) ?? []),
+    }));
   }
 
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
@@ -1252,7 +1255,8 @@ export class ContestManagementService {
     sportEventId: string,
     rules: TieredContestRules,
   ): Promise<void> {
-    const tiers = await this.sportEventTierService.getEffectiveTiersForSportEvent(sportEventId);
+    // Only the tier count matters here, so the tiers alone are read, not who is placed in them.
+    const tiers = await this.sportEventTierService.listTiers(sportEventId);
     if (tiers.length === 0) {
       return;
     }
