@@ -87,11 +87,25 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
 
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
     const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
+    const statusChange = eventStatus === null
+      ? {}
+      : { status: eventStatus, submittedAt: eventStatus === ContestEntryStatus.SUBMITTED ? at : null };
+    // The event's tiebreaker rides on the entry's row for the event (#717).
+    const tiebreakerChange = tiebreakerValue === undefined ? {} : { tiebreakerValue };
     await this.prisma.$transaction(async (tx) => {
-      // Touching the entry first takes its row lock, so two saves to one entry run one after the
+      // The first write takes a row lock, so two saves to one entry's week run one after the
       // other: otherwise both could delete a game's pick before either inserts, and the second
-      // insert would hit the (entry, game) unique index.
-      await tx.contestEntry.update({ where: { id: contestEntryId }, data: { updatedAt: at } });
+      // insert would hit the (entry, game) unique index. The entry's row for the event is that
+      // write when the save changes it; otherwise the entry itself is touched.
+      if (eventStatus !== null || tiebreakerValue !== undefined) {
+        await tx.contestEntryEvent.upsert({
+          where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
+          create: { contestEntryId, sportEventId, ...statusChange, ...tiebreakerChange },
+          update: { ...statusChange, ...tiebreakerChange },
+        });
+      } else {
+        await tx.contestEntry.update({ where: { id: contestEntryId }, data: { updatedAt: at } });
+      }
       // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
       // insert, so the write costs the same for one game as for a full slate (#1254).
       const replacedMatchIds = [...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)];
@@ -105,18 +119,6 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           data: saves.map(({ sportEventMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
             contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
           })),
-        });
-      }
-      const statusChange = eventStatus === null
-        ? {}
-        : { status: eventStatus, submittedAt: eventStatus === ContestEntryStatus.SUBMITTED ? at : null };
-      // The event's tiebreaker rides on the entry's row for the event (#717).
-      const tiebreakerChange = tiebreakerValue === undefined ? {} : { tiebreakerValue };
-      if (eventStatus !== null || tiebreakerValue !== undefined) {
-        await tx.contestEntryEvent.upsert({
-          where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
-          create: { contestEntryId, sportEventId, ...statusChange, ...tiebreakerChange },
-          update: { ...statusChange, ...tiebreakerChange },
         });
       }
     });

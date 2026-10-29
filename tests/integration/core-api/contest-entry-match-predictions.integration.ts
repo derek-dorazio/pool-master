@@ -216,7 +216,10 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     );
   });
 
-  it('runs overlapping saves to one entry\'s same games one after the other, each succeeding and the last one\'s picks standing (#1254)', async () => {
+  it.each([
+    ['that also move the entry\'s week to draft', ContestEntryStatus.DRAFT],
+    ['that leave the entry\'s week as it is', null],
+  ] as const)('runs overlapping saves to one entry\'s same games %s one after the other, each succeeding and one save\'s picks standing (#1254)', async (_, eventStatus) => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
     const saveAll = (confidence: number) => repos().predictions.save({
@@ -229,7 +232,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
         confidence,
       })),
       clearedMatchIds: [],
-      eventStatus: ContestEntryStatus.DRAFT,
+      eventStatus,
       at: LATER,
     });
 
