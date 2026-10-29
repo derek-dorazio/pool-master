@@ -38,6 +38,7 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
     <SettingsSection
       description={`How this ${participant.one} is matched in each provider’s feed. Read-only.`}
       testId="root-admin-participant-home-mappings-section"
+      // poolmaster-allow-list-lookup: counts the mappings listed right below it
       title={`Provider mappings (${providerMappings.length})`}
     >
       {mappingsQuery.isError ? (

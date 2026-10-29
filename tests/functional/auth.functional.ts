@@ -15,6 +15,7 @@ import {
   getSdkClient,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { hashRefreshToken } from '../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 afterEach(async () => {
   await cleanupFunctionalData();
@@ -57,7 +58,7 @@ describe('SDK Functional: Auth', () => {
 
     const cookieClient = createCookieSessionClient(user.login.tokens);
     const originalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
-      where: { token: user.login.tokens.refreshToken },
+      where: { tokenHash: hashRefreshToken(user.login.tokens.refreshToken) },
       select: {
         sessionId: true,
         revokedAt: true,
@@ -86,14 +87,14 @@ describe('SDK Functional: Auth', () => {
     expect(refreshResponse.data?.refreshToken).not.toBe(user.login.tokens.refreshToken);
 
     const rotatedOriginalRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
-      where: { token: user.login.tokens.refreshToken },
+      where: { tokenHash: hashRefreshToken(user.login.tokens.refreshToken) },
       select: {
         sessionId: true,
         revokedAt: true,
       },
     });
     const rotatedRefreshToken = await prisma.refreshToken.findUniqueOrThrow({
-      where: { token: expectDefined(refreshResponse.data).refreshToken },
+      where: { tokenHash: hashRefreshToken(expectDefined(refreshResponse.data).refreshToken) },
       select: {
         sessionId: true,
         revokedAt: true,

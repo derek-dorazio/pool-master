@@ -10,6 +10,7 @@ import {
   createTestUser,
 } from '../helpers';
 import { RefreshTokenRetention } from '../../../packages/core-api/src/modules/auth/refresh-token-retention';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -35,7 +36,7 @@ describe('refresh-token retention (#1175)', () => {
     const ids = new Map<string, string>();
     for (const [name, dates] of Object.entries(tokens)) {
       const row = await getPrisma().refreshToken.create({
-        data: { token: randomUUID(), userId: user.id, ...dates },
+        data: { tokenHash: hashRefreshToken(randomUUID()), userId: user.id, ...dates },
       });
       ids.set(name, row.id);
     }

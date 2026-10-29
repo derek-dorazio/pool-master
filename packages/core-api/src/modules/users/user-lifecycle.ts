@@ -24,6 +24,7 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { UserRepository } from '@poolmaster/shared/db';
 import type { User } from '@poolmaster/shared/domain';
+import { hashRefreshToken } from '../auth/refresh-token-hash';
 
 /** The subset of Prisma usable inside or outside a transaction. */
 type PrismaLike = PrismaClient | Prisma.TransactionClient;
@@ -75,7 +76,7 @@ export async function revokeUserSessions(
   keepToken?: string | null,
 ): Promise<number> {
   const result = await prisma.refreshToken.updateMany({
-    where: { userId, revokedAt: null, ...(keepToken ? { NOT: { token: keepToken } } : {}) },
+    where: { userId, revokedAt: null, ...(keepToken ? { NOT: { tokenHash: hashRefreshToken(keepToken) } } : {}) },
     data: { revokedAt: new Date() },
   });
   return result.count;

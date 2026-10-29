@@ -281,6 +281,8 @@ export const QueryKeys = {
     // Every settings group (#450). History sits under the same prefix, so invalidating
     // `settings` after any save refreshes each group's recent changes too.
     settings: ['poolmaster', 'root-admin', 'settings'] as const,
+    // One group, for a screen that edits or reads only it; under `settings`, so any save refreshes it.
+    settingsGroup: (key: QueryKeyId) => ['poolmaster', 'root-admin', 'settings', key] as const,
     settingsHistory: (key: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,

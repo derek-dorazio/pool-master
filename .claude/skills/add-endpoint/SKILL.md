@@ -26,6 +26,10 @@ The rules this routes to are authoritative. This file exists to say *what order*
    contract-verification suite or a functional journey that already holds it
    (`rules/testing-rules.md` §4 *Contract Verification Gate*). `rules:check:contract-verification`
    fails a response schema no test checks.
+6. **Scaling case, for a GET that answers with a list** — an `expectConstantQueries` case that
+   reads the route with 2 child rows and with 20 and expects the same SQL statement count
+   (`rules/testing-rules.md` §9B *Query Scaling Tests*). `rules:check:query-scaling` fails a list
+   route with none.
 
 Full detail: `rules/service-rules.md` §4 *DTOs, Mappers, and OpenAPI*, including the
 Contract Documentation Checklist you run before calling the work done.

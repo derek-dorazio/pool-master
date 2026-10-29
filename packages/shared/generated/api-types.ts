@@ -3300,7 +3300,7 @@ export interface paths {
         };
         /**
          * Read one provider sync run with its detailed diagnostics
-         * @description One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts. 404 when there is no such run.
+         * @description One sync run's summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts and once they are cleared, 30 days after submission; the run itself is kept a year. 404 when there is no such run.
          */
         get: operations["getProviderSyncRun"];
         put?: never;
@@ -22351,7 +22351,7 @@ export interface components {
             } & {
                 [key: string]: unknown;
             };
-            /** @description The run's detailed diagnostics; null before the run starts. */
+            /** @description The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission. */
             details: ({
                 /** @description Raw/debug provider payload captured for this run. */
                 providerPayload?: {

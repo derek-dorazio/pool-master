@@ -21,6 +21,7 @@ import {
 } from '../../../packages/core-api/src/modules/users/user-lifecycle';
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { LeagueIconKey, LeaguePlan, LeaguePlanChangeReason, LeagueRole, LeagueMembershipStatus } from '@poolmaster/shared/domain';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 const LEAGUE_CODE_PREFIX = 'ULIFE';
 
@@ -41,7 +42,7 @@ describe('shared user delete cascade (#202)', () => {
 
     await prisma.refreshToken.create({
       data: {
-        token: `cascade-token-${user.id}`,
+        tokenHash: hashRefreshToken(`cascade-token-${user.id}`),
         userId: user.id,
         expiresAt: new Date(Date.now() + 60_000),
       },
@@ -170,10 +171,10 @@ describe('shared user delete cascade (#202)', () => {
 
     await prisma.refreshToken.createMany({
       data: [
-        { token: `live-1-${user.id}`, userId: user.id, expiresAt: new Date(Date.now() + 60_000) },
-        { token: `live-2-${user.id}`, userId: user.id, expiresAt: new Date(Date.now() + 60_000) },
+        { tokenHash: hashRefreshToken(`live-1-${user.id}`), userId: user.id, expiresAt: new Date(Date.now() + 60_000) },
+        { tokenHash: hashRefreshToken(`live-2-${user.id}`), userId: user.id, expiresAt: new Date(Date.now() + 60_000) },
         {
-          token: `already-revoked-${user.id}`,
+          tokenHash: hashRefreshToken(`already-revoked-${user.id}`),
           userId: user.id,
           expiresAt: new Date(Date.now() + 60_000),
           revokedAt: new Date(),
