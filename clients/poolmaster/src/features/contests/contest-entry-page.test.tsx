@@ -1660,6 +1660,27 @@ describe('ContestEntryPage — a contest of two events', () => {
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });
 
+  it('still warns that a short lineup in the open second event is not submitted once the first event has started, with no tiebreaker to ask for', async () => {
+    primeTwoEventMocks();
+    const started = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Race 1', startDate: '2020-05-02T22:00:00.000Z', status: 'IN_PROGRESS' });
+    const next = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Race 2', startDate: '2099-05-16T22:00:00.000Z' });
+    getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sport: 'HORSE_RACING', sportEvents: [started, next] }) } });
+    const golfer = buildGolfParticipant('sep-21', 'Sovereignty', 1, false);
+    getSelectionStateMock.mockResolvedValue({
+      data: {
+        ...buildSelectionState([{ groupId: 'tier-1', groupName: 'Tier 1', groupNumber: 1, picksFromGroup: 1, selectedParticipantIds: [], participants: [golfer] }]),
+        sportEventId: 'event-2',
+      },
+    });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once its lineup is complete and submitted');
+    // The entry's name locked with the first event, so only the warning is left to show.
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
+  });
+
   it('shows no event switcher for a contest of one event', async () => {
     primeCommonMocks();
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([]) });

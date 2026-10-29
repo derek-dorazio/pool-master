@@ -229,7 +229,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
-  const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
   const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
   const isSurvivor = isSurvivorWeek(gamePicks);
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
@@ -324,29 +323,19 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
 
       <Tile>
         {isSurvivor ? (
-          <MetricGrid className="md:grid-cols-2">
+          <MetricGrid>
             <MetricTile
               helperText={canChange ? `Your pick locks when its ${match.one} starts.` : 'No pick can change now.'}
               label="Your pick"
               value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
             />
-            <MetricTile
-              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : `Submit before the ${eventStart} to stay in.`}
-              label="Status"
-              value={<span data-testid="pick-em-status">{statusLabel}</span>}
-            />
           </MetricGrid>
         ) : (
-        <MetricGrid className="md:grid-cols-4">
+        <MetricGrid className="md:grid-cols-3">
           <MetricTile
             helperText={canChange ? 'Each pick locks at its game\'s kickoff.' : 'No pick can change now.'}
             label="Picked"
             value={<span data-testid="pick-em-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-          />
-          <MetricTile
-            helperText={isSubmitted ? 'This week counts.' : 'Only a submitted week counts.'}
-            label="Status"
-            value={<span data-testid="pick-em-status">{statusLabel}</span>}
           />
           <MetricTile
             helperText={gamePicks.mode === PickEmMode.CONFIDENCE ? 'The values of the correct picks so far.' : 'One point for each correct pick so far.'}

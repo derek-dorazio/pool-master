@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router';
-import { ContestEntryStatus, PredictedResult, type Sport } from '@poolmaster/shared/domain';
+import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -31,7 +31,6 @@ import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import {
-  CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_POLL_INTERVAL_MS,
   contestStatusLabel,
   shouldPollContestEntries,
@@ -172,7 +171,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const canPick = gamePicks.ownEntry && isOpen;
   // Another entry's picks come back hidden until its games are revealed.
   const picksHidden = !gamePicks.ownEntry && !gamePicks.games.some((game) => game.revealed);
-  const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
 
   const pick = (game: BracketGame, team: BracketTeam) => {
     saveMutation.reset();
@@ -210,16 +208,11 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       ) : (
         <>
           <Tile>
-            <MetricGrid className="md:grid-cols-4">
+            <MetricGrid className="md:grid-cols-3">
               <MetricTile
                 helperText={gamePicks.ownEntry && isOpen ? `Picks lock at ${closesAt}.` : 'Every pick is locked.'}
                 label="Picked"
                 value={<span data-testid="bracket-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-              />
-              <MetricTile
-                helperText={gamePicks.status === ContestEntryStatus.SUBMITTED ? 'This bracket counts.' : 'Only a submitted bracket counts.'}
-                label="Status"
-                value={<span data-testid="bracket-status">{statusLabel}</span>}
               />
               <MetricTile
                 helperText="Correct picks so far."

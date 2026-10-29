@@ -230,7 +230,6 @@ describe('Bracket contest entry page', () => {
     await waitFor(() => expect(submitGamePicksMock).toHaveBeenCalledTimes(1));
     expect(submitGamePicksMock.mock.calls[0]?.[0]).toMatchObject({ path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'event-1' } });
     expect(await screen.findByTestId('bracket-submitted')).toBeInTheDocument();
-    expect(screen.getByTestId('bracket-status')).toHaveTextContent('Submitted');
     expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
   });
 

@@ -641,7 +641,7 @@ function RosterContestEntryPage() {
       : null,
   ].filter((part) => part !== null).join(' · ');
   // Picks come first, then the entry's name, its tiebreaker and the one Submit for all of it.
-  const showFinish = isMyEntry && !isRandomDraw && (detailsEditable || (isEditable && lineupComplete) || tiebreaker !== null);
+  const showFinish = isMyEntry && !isRandomDraw && (detailsEditable || isEditable || tiebreaker !== null);
 
   return (
     <ContestEntryFrame
@@ -680,15 +680,15 @@ function RosterContestEntryPage() {
             ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
             : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
         </h3>
+        {progressNote ? (
+          <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-entry-progress">{progressNote}</p>
+        ) : null}
         {isRandomDraw ? (
           <div className="mt-5">
             <DrawLineup noun={participantNoun} selectionState={selectionState} />
           </div>
         ) : (
         <div className="mt-5 space-y-5">
-          {progressNote ? (
-            <p className="-mt-3 text-sm text-muted-foreground" data-testid="contest-entry-progress">{progressNote}</p>
-          ) : null}
           {picksHidden ? (
             <Alert data-testid="contest-entry-picks-hidden">
               This entry&apos;s picks stay hidden until the event starts.
@@ -779,7 +779,7 @@ function RosterContestEntryPage() {
 
       {showFinish ? (
         <Tile className="space-y-4" data-testid="contest-entry-finish">
-          <h3 className="title-card text-xl">{isEditable ? 'Name and submit' : 'Your entry'}</h3>
+          <h3 className="title-card text-xl">{detailsEditable ? 'Name and submit' : isEditable ? 'Submit' : 'Your entry'}</h3>
 
           {detailsEditable ? (
             <FormField label="Entry name">

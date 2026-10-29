@@ -97,9 +97,7 @@ export function InfoPopover({
           id={panelId}
           padding="sm"
           radius="lg"
-          role="region"
           style={{ left: -shiftLeft, width: `min(${CALLOUT_WIDTH}px, calc(100vw - ${2 * SCREEN_GUTTER}px))` }}
-          aria-label={label}
         >
           {children}
         </Tile>
