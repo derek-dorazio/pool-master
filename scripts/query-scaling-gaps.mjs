@@ -3,10 +3,10 @@
  * the rule and its reasoning are in that file's header.
  *
  * Every entry is a route that shipped before the check existed, with the ticket that will add its
- * test: #1198 where the audit already found its reads, #1248 for the rest, which nobody has
- * measured. The list only shrinks: add an `expectConstantQueries` case and delete the entry, which
- * also lowers `GAP_CEILING` in the scanner by one. The scanner fails if a listed route has a test
- * now, or if an entry names no list route, so the list cannot drift from the tests.
+ * test: #1198 for the event reads whose guard that ticket replaces, #1248 for the rest. The list
+ * only shrinks: add an `expectConstantQueries` case and delete the entry, which also lowers
+ * `GAP_CEILING` in the scanner by one. The scanner fails if a listed route has a test now, or if an
+ * entry names no list route, so the list cannot drift from the tests.
  *
  * A new list route never goes on this list; `rules/testing-rules.md` §9B *Query Scaling Tests* says
  * its scaling test lands with it.
@@ -56,9 +56,9 @@ export const QUERY_SCALING_GAPS = [
   // --- Events, sports and event pages ---
   { route: 'GET /api/v1/events/', ticket: 1198 },
   { route: 'GET /api/v1/events/{eventId}', ticket: 1198 },
-  { route: 'GET /api/v1/events/{eventId}/rounds', ticket: 1248 },
-  { route: 'GET /api/v1/events/{eventId}/tiers', ticket: 1248 },
-  { route: 'GET /api/v1/events/{eventId}/bracket', ticket: 1248 },
+  { route: 'GET /api/v1/events/{eventId}/rounds', ticket: 1198 },
+  { route: 'GET /api/v1/events/{eventId}/tiers', ticket: 1198 },
+  { route: 'GET /api/v1/events/{eventId}/bracket', ticket: 1198 },
   { route: 'GET /api/v1/events/{eventId}/bracket/rounds/{roundNumber}/reseed', ticket: 1248 },
   { route: 'GET /api/v1/sports/', ticket: 1248 },
   { route: 'GET /api/v1/sport-leagues/', ticket: 1248 },

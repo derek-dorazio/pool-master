@@ -1089,8 +1089,10 @@ timing them, so it catches the per-row read at any data size.
   2 and one of 20 and fails if the statement count differs, listing the statements whose count
   changed.
 - **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
-  the contests of a cup. The helper refuses a case whose larger seed the response does not show,
-  since its count would prove nothing.
+  the contests of a cup, and each parent of the row (give each contest its own event, so a read per
+  event shows too). The helper refuses a case whose larger seed the response does not show, or whose
+  read sends no recorded statement, since its count would prove nothing. It sends any email the
+  seed queued before it starts counting.
 - **Enforced by** `npm run rules:check:query-scaling`, which reads the list routes from the OpenAPI
   spec. Routes that shipped before it are listed in `scripts/query-scaling-gaps.mjs`, each with the
   ticket that will add its test; that list only shrinks, and a new route never goes on it.

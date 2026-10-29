@@ -87,6 +87,12 @@ describe('expectSameStatementCount', () => {
     await expect(expectSameStatementCount(batched)).resolves.toBeUndefined();
   });
 
+  it('refuses a case whose read sends no recorded statement, since a client nobody records would always look constant', async () => {
+    const unrecorded: QueryScalingCase<string[], UserRows> = { ...batched, call: (ids) => Promise.resolve(ids.map((id) => ({ id }))) };
+
+    await expect(expectSameStatementCount(unrecorded)).rejects.toThrow(/sent no statements the integration client reported/);
+  });
+
   it('refuses a case whose read shows no more rows for the larger seed, since its count would prove nothing', async () => {
     const vacuous: QueryScalingCase<string[], UserRows> = { ...batched, call: (ids) => batched.call(ids.slice(0, 1)) };
 

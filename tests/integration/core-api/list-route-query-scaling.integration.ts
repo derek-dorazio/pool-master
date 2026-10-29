@@ -103,12 +103,12 @@ async function seedEventWithField(golfers: number) {
   return event;
 }
 
-/** `contests` open roster contests in one league, all on one upcoming event. */
+/** `contests` open roster contests in one league, each on an upcoming event of its own, so a read per event scales too. */
 async function seedLeagueWithContests(contests: number) {
   const seeded = await seedLeagueWithTeams(1);
-  const event = await seedEventWithField(2);
   const contestRows = new PrismaContestRepository(getPrisma());
   for (let index = 0; index < contests; index += 1) {
+    const event = await seedEventWithField(2);
     await createContestRow(contestRows, {
       leagueId: seeded.league.id,
       seasonYear: event.startDate.getUTCFullYear(),
@@ -127,10 +127,11 @@ const LAST_SEEDED_YEAR = new Date().getUTCFullYear() - 1;
 
 /**
  * A league's trophy room: two teams, and `years` years each with `contestsPerYear` final
- * contests on the fixture tour, the first team 1st and the second 2nd in each, and the year's
- * cup. Finishes are written as settlement leaves them.
+ * contests, the first team 1st and the second 2nd in each, and each year's cups. The contests
+ * share the fixture tour and the year's one cup, or with `cupPerContest` each has a sports league
+ * and a cup of its own. Finishes are written as settlement leaves them.
  */
-async function seedTrophyRoom({ years, contestsPerYear }: { years: number; contestsPerYear: number }) {
+async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false }: { years: number; contestsPerYear: number; cupPerContest?: boolean }) {
   const prisma = getPrisma();
   const seeded = await seedLeagueWithTeams(2);
   const [first, second] = seeded.squads;
@@ -139,6 +140,11 @@ async function seedTrophyRoom({ years, contestsPerYear }: { years: number; conte
     const endsAt = new Date(`${String(year)}-06-15T12:00:00.000Z`);
     for (let index = 0; index < contestsPerYear; index += 1) {
       const edition = await freshEventEdition(prisma, { eventYear: year });
+      if (cupPerContest) {
+        const { sportId } = await prisma.sportLeague.findFirstOrThrow({ where: { eventSeries: { some: { id: edition.eventSeriesId } } } });
+        const tour = await prisma.sportLeague.create({ data: { sportId, name: `Scaling Tour ${seeded.suffix} ${String(year)} ${String(index)}` } });
+        await prisma.eventSeries.update({ where: { id: edition.eventSeriesId }, data: { sportLeagueId: tour.id } });
+      }
       const event = await prisma.sportEvent.create({
         data: {
           ...edition,
@@ -172,7 +178,7 @@ async function seedTrophyRoom({ years, contestsPerYear }: { years: number; conte
           },
         });
       }
-      if (index === 0) {
+      if (cupPerContest || index === 0) {
         const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: edition.eventSeriesId } });
         await prisma.cup.create({ data: { leagueId: seeded.league.id, seasonYear: year, sportLeagueId } });
       }
@@ -274,7 +280,16 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
     });
   });
 
-  it("GET a season's cups: the same statements for 2 contests in the cup as for 20 (#1213)", async () => {
+  it("GET a season's cups: the same statements for 2 cups as for 20 (#1213)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/leagues/{id}/cups/',
+      seed: (cups) => seedTrophyRoom({ years: 1, contestsPerYear: cups, cupPerContest: true }),
+      call: ({ league, commissioner }) => get(`/api/v1/leagues/${league.id}/cups/?seasonYear=${String(LAST_SEEDED_YEAR)}`, commissioner),
+      rowsShown: (response) => okBody(response, CupListResponseSchema).cups.length,
+    });
+  });
+
+  it("GET a season's cups: the same statements for 2 contests in the one cup as for 20 (#1213)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/cups/',
       seed: (contestsPerYear) => seedTrophyRoom({ years: 1, contestsPerYear }),

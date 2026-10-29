@@ -10,7 +10,8 @@
  * any object it contains, must be named in `tests/` as `route: 'GET <path>'`, the path exactly as
  * the spec writes it, in a file that calls `expectConstantQueries(`, or be listed in
  * `query-scaling-gaps.mjs`. A listed route that has a test now, or a listed path that is not such a
- * route, fails too, and so does a list longer than `GAP_CEILING`, so the list only shrinks.
+ * route, fails too, and so does a list whose length is not exactly `GAP_CEILING`, so the list only
+ * shrinks and each deletion lowers the ceiling with it.
  *
  * WHAT IT DOES NOT PROVE. That the test seeds the rows that could cost a query each. The helper
  * refuses a seed the response does not show; the reviewer judges whether it is the right one.
@@ -26,8 +27,9 @@ export const TEST_ROOTS = ['tests'];
 const GAPS_FILE = 'scripts/query-scaling-gaps.mjs';
 
 /**
- * The most entries the gap list may hold. Lower it each time an entry is deleted; never raise it.
- * Growing the list means editing this line, which a reviewer sees.
+ * How many entries the gap list holds, exactly. Lower it with each entry deleted; never raise it.
+ * An exact count leaves no slack for a later entry, so growing the list means editing this line,
+ * which a reviewer sees.
  */
 export const GAP_CEILING = 58;
 
@@ -75,6 +77,11 @@ export function evaluateQueryScaling({ routes, tested, gaps, ceiling = GAP_CEILI
       location: GAPS_FILE,
       message: `${gaps.length} gaps are listed, over the ceiling of ${ceiling}. A new list route gets its scaling test, `
         + 'not a gap entry.',
+    });
+  } else if (gaps.length < ceiling) {
+    findings.push({
+      location: 'scripts/check-query-scaling.mjs',
+      message: `${gaps.length} gaps are listed under a ceiling of ${ceiling}. Lower GAP_CEILING to ${gaps.length}.`,
     });
   }
   const listed = new Set(gaps.map((gap) => gap.route));
