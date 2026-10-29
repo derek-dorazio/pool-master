@@ -42,7 +42,7 @@ function syncRuns(overrides: Partial<ProviderSyncRunRepository> = {}): ProviderS
     })),
     update: jest.fn().mockResolvedValue(undefined),
     findAll: jest.fn().mockResolvedValue([]),
-    findById: jest.fn().mockResolvedValue(null),    clearDetailsBatchSubmittedBetween: jest.fn().mockResolvedValue(0),    deleteBatchSubmittedBefore: jest.fn().mockResolvedValue(0),
+    findById: jest.fn().mockResolvedValue(null),    clearDetailsBatchSubmittedBefore: jest.fn().mockResolvedValue(0),    deleteBatchSubmittedBefore: jest.fn().mockResolvedValue(0),
     ...overrides,
   };
 }

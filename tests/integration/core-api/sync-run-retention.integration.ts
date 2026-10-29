@@ -69,14 +69,15 @@ describe('sync-run details retention (#1174)', () => {
     });
   });
 
-  it('looks back one week past the 30 days, leaving older runs to the nights that already passed them', async () => {
-    await seedRun('submitted-36-days-ago', daysAgo(36));
-    await seedRun('submitted-38-days-ago', daysAgo(38));
+  it('still clears runs long past 30 days, so a missed night or a backfilled run is not left holding details', async () => {
+    await seedRun('submitted-60-days-ago', daysAgo(60));
 
     const cleared = await new SyncRunDetailsRetention(new PrismaProviderSyncRunRepository(getPrisma())).purge(NOW);
 
     expect(cleared).toBe(1);
-    expect((await detailsByLabel())['submitted-38-days-ago'].details).toEqual(DETAILS);
+    expect(await detailsByLabel()).toEqual({
+      'submitted-60-days-ago': { details: null, payload: { detail: 'submitted-60-days-ago' } },
+    });
   });
 
   it('counts only the runs it cleared, not ones that had no details left', async () => {
@@ -94,9 +95,9 @@ describe('sync-run details retention (#1174)', () => {
     }
     const repo = new PrismaProviderSyncRunRepository(getPrisma());
 
-    expect(await repo.clearDetailsBatchSubmittedBetween(daysAgo(37), daysAgo(30), 2)).toBe(2);
-    expect(await repo.clearDetailsBatchSubmittedBetween(daysAgo(37), daysAgo(30), 2)).toBe(2);
-    expect(await repo.clearDetailsBatchSubmittedBetween(daysAgo(37), daysAgo(30), 2)).toBe(1);
+    expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
+    expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
+    expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(1);
     expect(await getPrisma().providerSyncRun.count({ where: { detailsJson: { not: Prisma.DbNull } } })).toBe(0);
   });
 });

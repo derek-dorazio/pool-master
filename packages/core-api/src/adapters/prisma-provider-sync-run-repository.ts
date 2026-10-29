@@ -67,9 +67,9 @@ export class PrismaProviderSyncRunRepository implements ProviderSyncRunRepositor
     };
   }
 
-  async clearDetailsBatchSubmittedBetween(from: Date, before: Date, limit: number): Promise<number> {
+  async clearDetailsBatchSubmittedBefore(before: Date, limit: number): Promise<number> {
     const batch = await this.prisma.providerSyncRun.findMany({
-      where: { createdAt: { gte: from, lt: before }, detailsJson: { not: Prisma.DbNull } },
+      where: { createdAt: { lt: before }, detailsJson: { not: Prisma.DbNull } },
       select: { id: true },
       take: limit,
     });
