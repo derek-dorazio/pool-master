@@ -22,6 +22,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { UserRepository } from '@poolmaster/shared/db';
 import { AuthProvider, isKnownLocale, isKnownTimeZone, type User } from '@poolmaster/shared/domain';
 import { readJwtSecret } from '../../core/config';
+import { hashRefreshToken } from './refresh-token-hash';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
 // ---------------------------------------------------------------------------
@@ -200,7 +201,7 @@ export class AuthService {
       action: 'authService.refresh.start',
     }, 'Refreshing session');
     const stored = await this.prisma.refreshToken.findUnique({
-      where: { token: refreshTokenValue },
+      where: { tokenHash: hashRefreshToken(refreshTokenValue) },
       include: { user: true },
     });
 
@@ -257,7 +258,7 @@ export class AuthService {
       action: 'authService.logout.start',
     }, 'Revoking refresh token');
     const result = await this.prisma.refreshToken.updateMany({
-      where: { token: refreshTokenValue, revokedAt: null },
+      where: { tokenHash: hashRefreshToken(refreshTokenValue), revokedAt: null },
       data: { revokedAt: new Date() },
     });
     this.logger?.info({
@@ -332,7 +333,7 @@ export class AuthService {
 
     await db.refreshToken.create({
       data: {
-        token: refreshTokenValue,
+        tokenHash: hashRefreshToken(refreshTokenValue),
         sessionId,
         userId,
         expiresAt,

@@ -39,6 +39,7 @@ import {
   type MailDeliveryProvider,
   type MailDeliveryResult,
 } from '../../../packages/core-api/src/modules/email';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 const APP_BASE_URL = 'https://app.example.test';
 const MINUTE_MS = 60_000;
@@ -126,7 +127,7 @@ function buildService(options: { now?: () => Date } = {}) {
 async function issueRefreshToken(userId: string): Promise<string> {
   const token = `reset-it-${randomUUID()}`;
   await getPrisma().refreshToken.create({
-    data: { token, userId, expiresAt: new Date(Date.now() + 60 * MINUTE_MS) },
+    data: { tokenHash: hashRefreshToken(token), userId, expiresAt: new Date(Date.now() + 60 * MINUTE_MS) },
   });
   return token;
 }
@@ -260,7 +261,7 @@ describe('password reset confirm (#847)', () => {
     const stored = await getPrisma().user.findUniqueOrThrow({ where: { id: user.id } });
     await expect(bcrypt.compare('NewPass-1234', expectDefined(stored.passwordHash))).resolves.toBe(true);
     await expect(bcrypt.compare('OldPass-1234', expectDefined(stored.passwordHash))).resolves.toBe(false);
-    const session = await getPrisma().refreshToken.findUniqueOrThrow({ where: { token: refreshToken } });
+    const session = await getPrisma().refreshToken.findUniqueOrThrow({ where: { tokenHash: hashRefreshToken(refreshToken) } });
     expect(session.revokedAt).not.toBeNull();
     const link = await getPrisma().passwordResetToken.findUniqueOrThrow({
       where: { tokenHash: hashResetToken(token) },
@@ -325,6 +326,31 @@ describe('password reset confirm (#847)', () => {
     await expect(service.confirmReset(token, 'NewPass-1234', 'NewPass-5678'))
       .rejects.toMatchObject({ code: 'PASSWORD_CONFIRMATION_MISMATCH', statusCode: 400 });
     await expect(service.confirmReset(token, 'NewPass-1234', 'NewPass-1234')).resolves.toBeUndefined();
+  });
+});
+
+describe('changing your own password', () => {
+  it('signs out every other session and keeps the one that made the change signed in', async () => {
+    const { user } = await createTestUser({ password: 'OldPass-1234' });
+    const current = await issueRefreshToken(user.id);
+    const other = await issueRefreshToken(user.id);
+
+    await buildUserService(new RecordingMailDelivery()).changeOwnPassword(
+      { userId: user.id, isRootAdmin: false },
+      user.id,
+      {
+        currentPassword: 'OldPass-1234',
+        newPassword: 'Changed-1234',
+        confirmNewPassword: 'Changed-1234',
+        currentRefreshToken: current,
+      },
+    );
+
+    const revokedAt = async (token: string) => (await getPrisma().refreshToken.findUniqueOrThrow({
+      where: { tokenHash: hashRefreshToken(token) },
+    })).revokedAt;
+    expect(await revokedAt(current)).toBeNull();
+    expect(await revokedAt(other)).toBeInstanceOf(Date);
   });
 });
 

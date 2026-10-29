@@ -22,6 +22,7 @@ import {
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
 } from '../helpers';
+import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -236,13 +237,13 @@ describe('refresh and logout', () => {
 
     const rows = await getPrisma().refreshToken.findMany({ where: { userId: session.userId } });
     expect(new Set(rows.map((row) => row.sessionId)).size).toBe(1);
-    expect(rows.filter((row) => row.revokedAt === null).map((row) => row.token)).toEqual([nextRefresh]);
+    expect(rows.filter((row) => row.revokedAt === null).map((row) => row.tokenHash)).toEqual([hashRefreshToken(nextRefresh ?? '')]);
   });
 
   it('refuses an expired refresh token with 401', async () => {
     const session = await signedIn();
     await getPrisma().refreshToken.update({
-      where: { token: session.refreshToken },
+      where: { tokenHash: hashRefreshToken(session.refreshToken) },
       data: { expiresAt: new Date(Date.now() - 1000) },
     });
 
@@ -538,7 +539,7 @@ describe('passwords', () => {
 
     expect(response.statusCode).toBe(200);
     const live = await getPrisma().refreshToken.findMany({ where: { userId: session.userId, revokedAt: null } });
-    expect(live.map((row) => row.token)).toEqual([session.refreshToken]);
+    expect(live.map((row) => row.tokenHash)).toEqual([hashRefreshToken(session.refreshToken)]);
     expect((await login(session.identity.email)).statusCode).toBe(401);
     expect((await login(session.identity.email, 'BatteryStaple7')).statusCode).toBe(200);
   });
@@ -611,7 +612,7 @@ describe('account lifecycle', () => {
     expect(response.json<UserResponse>().user.isActive).toBe(false);
     expect(response.cookies).toEqual([]);
     const live = await getPrisma().refreshToken.findMany({ where: { userId: session.userId, revokedAt: null } });
-    expect(live.map((row) => row.token)).toEqual([session.refreshToken]);
+    expect(live.map((row) => row.tokenHash)).toEqual([hashRefreshToken(session.refreshToken)]);
 
     const reactivated = await getApp().inject({
       method: 'POST',
