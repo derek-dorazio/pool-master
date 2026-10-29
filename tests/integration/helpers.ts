@@ -19,6 +19,8 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
+import { statementLog } from './statement-log';
+import { describeUnindexedScans, indexCheck } from './index-check';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -38,6 +40,9 @@ import { contestsModule, contestsByIdModule } from '../../packages/core-api/src/
 import { billingModule } from '../../packages/core-api/src/modules/billing/routes';
 import { BILLING_SETTINGS } from '../../packages/core-api/src/modules/billing/billing-settings';
 import { contestManagementModule } from '../../packages/core-api/src/modules/contest-management/routes';
+import { cupsModule } from '../../packages/core-api/src/modules/cups/routes';
+import { championshipModule } from '../../packages/core-api/src/modules/championship/routes';
+import { historyModule } from '../../packages/core-api/src/modules/history/routes';
 import { contestConfigTemplatesModule } from '../../packages/core-api/src/modules/contest-config-templates/routes';
 import { participantsModule } from '../../packages/core-api/src/modules/participants/routes';
 import { usersModule } from '../../packages/core-api/src/modules/users/routes';
@@ -112,6 +117,8 @@ const INTEGRATION_TEST_LEAGUE_CODE_PREFIXES = [
 
 let app: FastifyInstance;
 let prisma: PrismaClient;
+/** The app's own client: the statements it sends are the ones the index check plans (#1243). */
+let appPrisma: PrismaClient;
 let integrationSmtpServer: SmtpSinkServer | undefined;
 let emailSender: EmailSender | undefined;
 let previousMailEnv: Partial<Record<MailEnvironmentKey, string | undefined>> | undefined;
@@ -150,8 +157,8 @@ export function getPrisma(): PrismaClient {
   return prisma;
 }
 
-/** Build the Fastify app with real plugins and modules (no background jobs). */
-async function buildTestApp(): Promise<FastifyInstance> {
+/** Build the Fastify app with real plugins and modules (no background jobs), on `prisma`. */
+async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   const testApp = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS, schemaController: FASTIFY_SCHEMA_CONTROLLER });
 
   testApp.decorate('prisma', prisma);
@@ -231,6 +238,10 @@ async function buildTestApp(): Promise<FastifyInstance> {
     planEntitlements,
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
+  // The trophy room's routes, for the query-scaling tests of its reads (#1242).
+  testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
+  testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
+  testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', providerRegistry });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, { prefix: '/api/v1/events', ingestionService, providerRegistry, cdn });
@@ -273,11 +284,20 @@ export async function setupIntegrationTests(): Promise<void> {
   // comes from version-info.json, written by this config's globalSetup (#180).
   process.env.POOLMASTER_ENVIRONMENT ??= 'test';
   process.env.LOG_LEVEL ??= 'warn';
-  prisma = new PrismaClient();
-  await prisma.$connect();
+  // Query events feed statementLog, which the query-scaling tests count (#1242), and the app's
+  // also feed the index check (#1243). The tests' own seeds, reads and cleanup go through a client
+  // of their own, so the check plans only what the app sends.
+  const testClient = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+  statementLog.watch(testClient);
+  const appClient = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
+  statementLog.watch(appClient);
+  appClient.$on('query', (event) => indexCheck.receive(event));
+  prisma = testClient;
+  appPrisma = appClient;
+  await Promise.all([prisma.$connect(), appPrisma.$connect()]);
   await cleanupTestData();
   await startIntegrationMailSink();
-  app = await buildTestApp();
+  app = await buildTestApp(appPrisma);
 }
 
 /** Signs SNS messages the app's SES events route believes, as SNS would (#844 slice 4). */
@@ -308,9 +328,14 @@ export async function teardownIntegrationTests(): Promise<void> {
   // Setup can fail before assigning these, and teardown must still run.
   const startedApp = app as FastifyInstance | undefined;
   const startedPrisma = prisma as PrismaClient | undefined;
+  const startedAppPrisma = appPrisma as PrismaClient | undefined;
   if (startedApp) await startedApp.close();
+  // Planned before disconnecting, and failed after the rest of teardown has run.
+  const unindexed = startedPrisma ? await describeUnindexedScans(startedPrisma) : null;
   if (startedPrisma) await startedPrisma.$disconnect();
+  if (startedAppPrisma) await startedAppPrisma.$disconnect();
   await stopIntegrationMailSink();
+  if (unindexed !== null) throw new Error(unindexed);
 }
 
 async function startIntegrationMailSink(): Promise<void> {
@@ -355,7 +380,7 @@ async function stopIntegrationMailSink(): Promise<void> {
 // Test data helpers
 // ---------------------------------------------------------------------------
 
-interface TestUserResult {
+export interface TestUserResult {
   user: {
     id: string;
     email: string;

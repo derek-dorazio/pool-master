@@ -8,7 +8,7 @@ import { confirmPasswordReset } from "@/lib/api";
 import { extractErrorMessage, hasErrorCode, throwApiError } from "@/lib/errors";
 import { getLogger } from "@/lib/logger";
 import { useInvalidatingMutation } from "@/lib/mutation-hooks";
-import { FormField, FormPage, Input, LinkButton, Tile } from "@/features/shared/ui";
+import { FormField, FormPage, Heading, Input, LinkButton, Tile } from "@/features/shared/ui";
 import { useAuth } from "./auth-context";
 import { FORGOT_PASSWORD_PATH } from "./auth-paths";
 
@@ -36,7 +36,7 @@ function readTokenFromHash(hash: string): string | null {
 function DeadLinkState() {
   return (
     <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-      <h2 className="title-card text-lg text-foreground">Choose a new password</h2>
+      <Heading level={2} variant="card" size="lg">Choose a new password</Heading>
       <p className="text-sm text-muted-foreground" data-testid="reset-password-link-invalid">
         This reset link has expired or has already been used.
       </p>
@@ -100,7 +100,7 @@ export function ResetPasswordPage() {
   if (confirmMutation.isSuccess) {
     return (
       <Tile className="mx-auto max-w-md space-y-4" padding="lg" radius="xl">
-        <h2 className="title-card text-lg text-foreground">Password reset</h2>
+        <Heading level={2} variant="card" size="lg">Password reset</Heading>
         <p className="text-sm text-muted-foreground" data-testid="reset-password-done">
           Your password is reset. Sign in with your new password.
         </p>

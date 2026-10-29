@@ -1,6 +1,7 @@
 import type { AriaRole, ReactNode } from "react";
 import { LOADING_TEXT } from "./state-copy";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type StateProps = {
   action?: ReactNode;
@@ -18,7 +19,7 @@ function StateTile({ action, ariaLive, body, role, testId, title }: StateTilePro
   return (
     <Tile aria-live={ariaLive} data-testid={testId} padding="lg" role={role}>
       {title ? (
-        <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
+        <Heading level={2} variant="page">{title}</Heading>
       ) : null}
       {body ? (
         <p

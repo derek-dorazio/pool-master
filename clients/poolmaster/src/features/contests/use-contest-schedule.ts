@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { getEvent, type ContestDto, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -31,38 +30,25 @@ export function sportEventQueryOptions(eventId: string) {
   };
 }
 
-/** The sport event's scheduled end, from the event's shared read. */
-function sportEventEndQuery(eventId: string) {
-  return {
-    ...sportEventQueryOptions(eventId),
-    select: (event: SportEventDto) => event.endDate ?? null,
-  };
-}
-
-function resolveSchedule(
-  contest: ScheduledContest | undefined,
-  lastEventEndsAt: string | null | undefined,
-): ContestSchedule | null {
-  const startsAt = contest?.startsAt ?? (contest ? firstContestEvent(contest)?.startDate : undefined);
-  if (!startsAt) {
-    return null;
-  }
-  return { startsAt, endsAt: contest?.endsAt ?? lastEventEndsAt ?? null };
-}
-
 /**
  * When a contest runs (#221): its own `startsAt`/`endsAt` once set, else its first event's
- * scheduled start and its last event's scheduled end (#713).
+ * scheduled start and its last event's scheduled end (#713), both carried on the contest, so the
+ * schedule reads no event (#1198).
  *
  * The contest's own times are lifecycle stamps: `startsAt` is written when the event goes live,
  * `endsAt` when the contest settles. Before then they are
  * empty, which is the whole time a member is deciding whether to enter, so the event's schedule
  * fills in. The first event's start is also the entry cutoff (#430, #431).
  */
-export function useContestSchedule(contest: ScheduledContest | undefined): ContestSchedule | null {
-  const lastEventId = contest ? lastContestEvent(contest)?.sportEventId : undefined;
-  const lastEventEndQuery = useQuery(sportEventEndQuery(lastEventId ?? ''));
-  return resolveSchedule(contest, lastEventEndQuery.data);
+export function contestSchedule(contest: ScheduledContest | undefined): ContestSchedule | null {
+  if (!contest) {
+    return null;
+  }
+  const startsAt = contest.startsAt ?? firstContestEvent(contest)?.startDate;
+  if (!startsAt) {
+    return null;
+  }
+  return { startsAt, endsAt: contest.endsAt ?? lastContestEvent(contest)?.endDate ?? null };
 }
 
 /**

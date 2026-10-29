@@ -308,7 +308,7 @@ export default tseslint.config(
       '**/*.spec.tsx',
     ],
     plugins: { poolmaster },
-    rules: { 'poolmaster/no-bare-ui-controls': 'error' },
+    rules: { 'poolmaster/no-bare-ui-controls': 'error', 'poolmaster/no-button-row-override': 'error' },
   },
   {
     // lib/errors.ts is the canonical definition; tests may build local stand-ins.
@@ -345,6 +345,14 @@ export default tseslint.config(
     ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
     plugins: { poolmaster },
     rules: { 'poolmaster/no-parallel-api-types': 'error' },
+  },
+  {
+    // Web app source, tests excluded: a list query reduced in the browser to one row, a count
+    // or an id/status filter is a request the server should answer (#1158, #1241).
+    files: ['clients/poolmaster/src/**/*.{ts,tsx}'],
+    ignores: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    plugins: { poolmaster },
+    rules: { 'poolmaster/no-list-lookup': 'error' },
   },
   {
     // Backend source: a gate that sends its rejection without awaiting lets Fastify run the

@@ -20,6 +20,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   EventSeriesRepository,
   SportEventCreate,
+  SportEventRoundSchedule,
   SportEventFilters,
   SportEventRepository,
   SportEventUpdate,
@@ -41,21 +42,39 @@ import { SportEventError } from './errors';
 import { hasSportEventStarted } from './operational-timing';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import type { SportEventBracketService } from './sport-event-bracket-service';
-import type { SportEventRoundService } from './sport-event-round-service';
+import { dailyRoundSchedule, type SportEventRoundService } from './sport-event-round-service';
 import type { SportEventTierService } from './sport-event-tier-service';
 
-/** An event with the counts its readers derive readiness and deletability from. */
-export interface SportEventSummary {
-  event: SportEvent;
-  loadedParticipantCount: number;
+/**
+ * What only a root admin reads of an event: its release readiness and whether it can be deleted.
+ * Five more queries per read, so they are counted for a root admin only (#1198); the contest
+ * count spans every league, which a commissioner must never see.
+ */
+export interface SportEventAdminCounts {
   /** Active participants with no tier: a DRAFT event can't be released while any remain. */
   untieredParticipantCount: number;
   /** Active participants with no price: a DRAFT event can't be released while any remain (#93). */
   unpricedParticipantCount: number;
-  tierCount: number;
   /** Labels of the tiers no active participant is in, in tier order: a DRAFT event can't be released while any remain. */
   emptyTierLabels: string[];
   contestCount: number;
+}
+
+/** An event with the counts every reader needs, and a root admin's own counts when asked for. */
+export interface SportEventSummary {
+  event: SportEvent;
+  loadedParticipantCount: number;
+  tierCount: number;
+  /** Null unless the read asked for them: see `SportEventAdminCounts`. */
+  adminCounts: SportEventAdminCounts | null;
+}
+
+/** An event summary with the root admin's counts filled in. */
+export type SportEventAdminSummary = SportEventSummary & { adminCounts: SportEventAdminCounts };
+
+/** Whether a read counts the root admin's numbers: only a root admin's read does (#1198). */
+export interface SportEventReadOptions {
+  adminCounts: boolean;
 }
 
 export interface CreateSportEventInput {
@@ -82,7 +101,7 @@ export interface ProviderEventDetail {
 
 /** What a provider event-year import (#385) created, and what it left alone and why. */
 export interface ProviderEventYearImport {
-  created: SportEventSummary[];
+  created: SportEventAdminSummary[];
   skipped: Array<{ externalId: string; name: string; reason: 'ALREADY_LINKED' | 'EDITION_EXISTS' }>;
 }
 
@@ -134,56 +153,55 @@ export class SportEventService {
    * The whole catalog for the filters — narrowed, never paged (§16). A sport, sport league or
    * event year is required (#1180), so the list never reads every event ever with its counts.
    */
-  async listEvents(filters: SportEventFilters): Promise<SportEventSummary[]> {
+  async listEvents(filters: SportEventFilters, options: SportEventReadOptions): Promise<SportEventSummary[]> {
     this.deps.logger?.debug({ action: 'events.list.start', data: { ...filters } }, 'Listing sport events');
     if (filters.sport === undefined && filters.sportLeagueId === undefined && filters.eventYear === undefined) {
       this.deps.logger?.warn({ action: 'events.list.filterRequired', data: { ...filters } }, 'Rejected a sport event list without a sport, sport league or year');
       throw new SportEventError('Choose a sport, a sport league or a year to list events.', 'SPORT_EVENT_FILTER_REQUIRED', 400);
     }
     const events = await this.deps.sportEvents.findAll(filters);
-    const summaries = await this.summarize(events);
+    const summaries = options.adminCounts ? await this.summarizeForAdmin(events) : await this.summarize(events);
     this.deps.logger?.info({ action: 'events.list.success', data: { ...filters, count: events.length } }, 'Listed sport events');
     return summaries;
   }
 
-  async getEvent(sportEventId: string): Promise<SportEventSummary | null> {
-    const event = await this.deps.sportEvents.findById(sportEventId);
-    if (!event) return null;
-    const [summary] = await this.summarize([event]);
-    return summary;
+  /** The event years a sport league has events in, earliest first: what a year picker offers. */
+  async listEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
+    return this.deps.sportEvents.findEventYears(sportLeagueId, options);
   }
 
   /** An admin-authored event: the reserved manual identity, DRAFT, accepting no provider data. */
-  async createEvent(input: CreateSportEventInput): Promise<SportEventSummary> {
+  async createEvent(input: CreateSportEventInput): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const rounds = input.rounds ?? sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
-    const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, input.name);
+    const seriesIdByName = await this.resolveSeries(sportLeague, [input.name]);
 
-    const event = await this.createEdition({
-      externalId: `manual-${randomUUID()}`,
-      providerId: MANUAL_ADMIN_PROVIDER_ID,
-      sport,
-      name: input.name,
-      venue: input.venue,
-      location: input.location,
-      startDate: input.startDate,
-      endDate: input.endDate,
-      status: SportEventStatus.DRAFT,
-      rounds,
-      roundsPar: input.roundsPar,
-      eventSeriesId: eventSeries.id,
-      eventYear: input.eventYear,
-      syncScope: SportEventSyncScope.NONE,
-      autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
-    });
-    await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: input.startDate });
-    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
+    const summary = onlyOne(await this.createEditions(sportLeague, [{
+      event: {
+        externalId: `manual-${randomUUID()}`,
+        providerId: MANUAL_ADMIN_PROVIDER_ID,
+        sport,
+        name: input.name,
+        venue: input.venue,
+        location: input.location,
+        startDate: input.startDate,
+        endDate: input.endDate,
+        status: SportEventStatus.DRAFT,
+        rounds,
+        roundsPar: input.roundsPar,
+        eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+        eventYear: input.eventYear,
+        syncScope: SportEventSyncScope.NONE,
+        autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
+      },
+      rounds: dailyRoundSchedule(rounds, input.startDate),
+    }]));
 
     this.deps.logger?.info(
-      { sportEventId: event.id, sportLeagueId: sportLeague.id, eventSeriesId: eventSeries.id, eventYear: input.eventYear, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventSeriesId: summary.event.eventSeriesId, eventYear: input.eventYear, rounds },
       'Created sport event',
     );
-    return this.requireSummary(event.id);
+    return summary;
   }
 
   /**
@@ -198,7 +216,7 @@ export class SportEventService {
     externalId: string;
     rounds?: number;
     providerEvent: ProviderEventDetail;
-  }): Promise<SportEventSummary> {
+  }): Promise<SportEventAdminSummary> {
     const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     if (await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId)) {
       throw new SportEventError(
@@ -207,48 +225,25 @@ export class SportEventService {
         409,
       );
     }
-    const { providerEvent } = input;
-    const eventSeries = await this.deps.eventSeries.findOrCreate(sportLeague.id, providerEvent.name);
-    // The derived schedule applies only when no round count was given; an explicit count
-    // falls back to sequential days, so `rounds` always matches the rounds created.
-    const derived = deriveGolfTournamentRounds(providerEvent.startDate, providerEvent.endDate);
-    const rounds = input.rounds ?? derived.length;
-
-    const event = await this.createEdition({
-      externalId: input.externalId,
-      providerId: input.providerId,
-      sport,
-      name: providerEvent.name,
-      venue: providerEvent.venue ?? undefined,
-      startDate: providerEvent.startDate,
-      endDate: providerEvent.endDate ?? undefined,
-      status: SportEventStatus.DRAFT,
-      rounds,
-      eventSeriesId: eventSeries.id,
-      eventYear: input.eventYear,
-      syncScope: SportEventSyncScope.SCORES_ONLY,
-      autoLifecycleEnabled: true,
-    });
-    if (input.rounds === undefined) {
-      await this.deps.rounds.createFromSchedule(event.id, derived);
-    } else {
-      await this.deps.rounds.ensureRounds({ sportEventId: event.id, rounds, startDate: providerEvent.startDate });
-    }
-    await this.deps.tiers.ensureDefaultTiers(event.id, eventSportDefinition(event), sportLeague.tierCount);
+    const seriesIdByName = await this.resolveSeries(sportLeague, [input.providerEvent.name]);
+    const edition = providerEdition(sport, seriesIdByName, { ...input, ...input.providerEvent, externalId: input.externalId });
+    const summary = onlyOne(await this.createEditions(sportLeague, [edition]));
 
     this.deps.logger?.info(
-      { sportEventId: event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds },
+      { sportEventId: summary.event.id, sportLeagueId: sportLeague.id, eventYear: input.eventYear, providerId: input.providerId, externalId: input.externalId, rounds: edition.rounds.length },
       'Created sport event from provider event',
     );
-    return this.requireSummary(event.id);
+    return summary;
   }
 
   /**
-   * #385 — a tour's provider slate for one year, created in one action. Each event goes
-   * through `createEventFromProviderEvent`, so it is created and linked exactly as a single
-   * browse-and-create would be. Events PoolMaster already has are skipped rather than
-   * refused, so the import can be run again: one already linked to the provider event, or
-   * a series that already has an edition that year (an admin-authored one, say).
+   * #385 — a tour's provider slate for one year, created in one action, in a fixed number of
+   * queries however long the slate (#1253). Each event is created and linked exactly as a single
+   * browse-and-create would be. Events PoolMaster already has are skipped rather than refused,
+   * so the import can be run again: one already linked to the provider event, or a series that
+   * already has an edition that year (an admin-authored one, say, or an earlier event of the
+   * same name in this slate). An edition another admin creates while the import runs is not
+   * skipped: it refuses the whole import with 409, and running it again skips that event.
    */
   async importProviderEventYear(input: {
     sportLeagueId: string;
@@ -256,31 +251,34 @@ export class SportEventService {
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
   }): Promise<ProviderEventYearImport> {
-    const created: SportEventSummary[] = [];
+    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
+    const linked = new Set((await this.deps.sportEvents.findByProviderRefs(
+      input.providerId,
+      input.providerEvents.map((providerEvent) => providerEvent.externalId),
+    )).map((event) => event.externalId));
+    const unlinked = input.providerEvents.filter((providerEvent) => !linked.has(providerEvent.externalId));
+    const seriesIdByName = await this.resolveSeries(sportLeague, unlinked.map((providerEvent) => providerEvent.name));
+    const seriesWithEdition = new Set(unlinked.length === 0
+      ? []
+      : (await this.deps.sportEvents.findAll({ sportLeagueId: sportLeague.id, eventYear: input.eventYear })).map((event) => event.eventSeriesId));
+
+    const editions: NewEdition[] = [];
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      // poolmaster-allow-query-in-loop: root-admin import of one tour's year, run by hand; each event goes through the single-event create
-      if (await this.deps.sportEvents.findByProviderRef(input.providerId, externalId)) {
+      if (linked.has(externalId)) {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      try {
-        created.push(await this.createEventFromProviderEvent({
-          sportLeagueId: input.sportLeagueId,
-          eventYear: input.eventYear,
-          providerId: input.providerId,
-          externalId,
-          providerEvent,
-        }));
-      } catch (error) {
-        if (error instanceof SportEventError && error.code === 'EVENT_EDITION_ALREADY_EXISTS') {
-          skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
-          continue;
-        }
-        throw error;
+      const eventSeriesId = seriesIdOf(seriesIdByName, name);
+      if (seriesWithEdition.has(eventSeriesId)) {
+        skipped.push({ externalId, name, reason: 'EDITION_EXISTS' });
+        continue;
       }
+      seriesWithEdition.add(eventSeriesId);
+      editions.push(providerEdition(sport, seriesIdByName, { ...providerEvent, eventYear: input.eventYear, providerId: input.providerId }));
     }
+    const created = await this.createEditions(sportLeague, editions);
 
     this.deps.logger?.info(
       { sportLeagueId: input.sportLeagueId, eventYear: input.eventYear, providerId: input.providerId, createdCount: created.length, skippedCount: skipped.length },
@@ -306,8 +304,8 @@ export class SportEventService {
     sportLeagueId: string;
     eventYear: number;
     targetYear?: number;
-  }): Promise<SportEventSummary[]> {
-    const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
+  }): Promise<SportEventAdminSummary[]> {
+    const { sportLeague, sport } = await this.resolveSportLeague(input.sportLeagueId);
     const targetYear = input.targetYear ?? input.eventYear + 1;
     const shift = targetYear - input.eventYear;
 
@@ -329,21 +327,32 @@ export class SportEventService {
       );
     }
 
-    const cloned: SportEventSummary[] = [];
-    for (const event of sourceEvents) {
-      cloned.push(await this.createEvent({
-        sportLeagueId: sportLeague.id,
-        eventYear: targetYear,
-        name: event.name,
-        venue: event.venue,
-        location: event.location,
-        startDate: shiftYears(event.startDate, shift),
-        endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
-        rounds: event.rounds,
-        roundsPar: event.roundsPar,
-        autoLifecycleEnabled: event.autoLifecycleEnabled,
-      }));
-    }
+    const seriesIdByName = await this.resolveSeries(sportLeague, sourceEvents.map((event) => event.name));
+    const defaultRounds = sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    const cloned = await this.createEditions(sportLeague, sourceEvents.map((event) => {
+      const startDate = shiftYears(event.startDate, shift);
+      const rounds = event.rounds ?? defaultRounds;
+      return {
+        event: {
+          externalId: `manual-${randomUUID()}`,
+          providerId: MANUAL_ADMIN_PROVIDER_ID,
+          sport,
+          name: event.name,
+          venue: event.venue,
+          location: event.location,
+          startDate,
+          endDate: event.endDate ? shiftYears(event.endDate, shift) : undefined,
+          status: SportEventStatus.DRAFT,
+          rounds,
+          roundsPar: event.roundsPar,
+          eventSeriesId: seriesIdOf(seriesIdByName, event.name),
+          eventYear: targetYear,
+          syncScope: SportEventSyncScope.NONE,
+          autoLifecycleEnabled: event.autoLifecycleEnabled,
+        },
+        rounds: dailyRoundSchedule(rounds, startDate),
+      };
+    }));
     this.deps.logger?.info(
       { sportLeagueId: sportLeague.id, eventYear: input.eventYear, targetYear, clonedEventCount: cloned.length },
       'Cloned event year calendar',
@@ -365,7 +374,7 @@ export class SportEventService {
     sportEventId: string,
     updates: SportEventUpdate,
     options: { tellMembers: boolean },
-  ): Promise<SportEventSummary> {
+  ): Promise<SportEventAdminSummary> {
     const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
     const movesStart = updates.startDate !== undefined && updates.startDate.getTime() !== startedAt.getTime();
     if (movesStart && !options.tellMembers && !isDateOnlyPlaceholder(startedAt)) {
@@ -395,7 +404,7 @@ export class SportEventService {
     if (shiftMs !== 0 && RESCHEDULE_TOLD.includes(status) && options.tellMembers) {
       await this.deps.lifecycle.sportEventRescheduled(await this.requireEvent(sportEventId), startedAt);
     }
-    return this.requireSummary(sportEventId);
+    return this.requireAdminSummary(sportEventId);
   }
 
   /**
@@ -407,8 +416,8 @@ export class SportEventService {
    * prices are not assigned or miss an active participant (#93), or, for a sport that plays a
    * bracket, its bracket is incomplete (#698).
    */
-  async releaseEvent(sportEventId: string): Promise<SportEventSummary> {
-    const summary = await this.requireSummary(sportEventId);
+  async releaseEvent(sportEventId: string): Promise<SportEventAdminSummary> {
+    const summary = await this.requireAdminSummary(sportEventId);
     const { event } = summary;
     if (event.status !== SportEventStatus.DRAFT) {
       this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused to release a sport event that is not a draft');
@@ -435,9 +444,9 @@ export class SportEventService {
         {
           sportEventId,
           loadedParticipantCount: summary.loadedParticipantCount,
-          untieredParticipantCount: summary.untieredParticipantCount,
-          unpricedParticipantCount: summary.unpricedParticipantCount,
-          emptyTierLabels: summary.emptyTierLabels,
+          untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
+          unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
+          emptyTierLabels: summary.adminCounts.emptyTierLabels,
           isPriced: summary.event.pricingConfig !== undefined,
         },
         'Refused to release a sport event that is not ready',
@@ -456,7 +465,7 @@ export class SportEventService {
       release: true,
     });
     this.deps.logger?.info({ sportEventId }, 'Released sport event for contests');
-    return this.requireSummary(sportEventId);
+    return this.requireAdminSummary(sportEventId);
   }
 
   /** Deletes an event with its rounds, tiers and field. 409 EVENT_HAS_CONTESTS while any contest runs on it. */
@@ -480,44 +489,96 @@ export class SportEventService {
    * lists them.
    */
   async releaseBlockersOf(sportEventId: string): Promise<string[]> {
-    return this.releaseBlockersFor(await this.requireSummary(sportEventId));
+    return this.releaseBlockersFor(await this.requireAdminSummary(sportEventId));
   }
 
-  private async releaseBlockersFor(summary: SportEventSummary): Promise<string[]> {
+  private async releaseBlockersFor(summary: SportEventAdminSummary): Promise<string[]> {
     return [...describeReleaseBlockers(summary), ...await this.deps.bracket.releaseBlockers(summary.event)];
   }
 
-  /** `releasedOnly` hides a DRAFT as if it did not exist: only a root admin sees drafts (#431). */
-  async requireSummary(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEventSummary> {
-    const summary = await this.getEvent(sportEventId);
-    if (!summary || (options.releasedOnly && summary.event.status === SportEventStatus.DRAFT)) {
-      throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
-    }
+  /**
+   * The event with the counts a reader of it needs. `releasedOnly` hides a DRAFT as if it did not
+   * exist: only a root admin sees drafts (#431).
+   */
+  async requireSummary(
+    sportEventId: string,
+    options: SportEventReadOptions & { releasedOnly?: boolean },
+  ): Promise<SportEventSummary> {
+    const event = await this.requireEvent(sportEventId, options);
+    const [summary] = options.adminCounts ? await this.summarizeForAdmin([event]) : await this.summarize([event]);
     return summary;
   }
 
-  private async requireEvent(sportEventId: string): Promise<SportEvent> {
+  /** The event with a root admin's counts: what every admin action answers with. */
+  async requireAdminSummary(sportEventId: string): Promise<SportEventAdminSummary> {
+    const [summary] = await this.summarizeForAdmin([await this.requireEvent(sportEventId)]);
+    return summary;
+  }
+
+  /**
+   * The event, one read and no counts: the guard for a read or action that needs only to know the
+   * event exists (#1198). `releasedOnly` hides a DRAFT as if it did not exist (#431).
+   */
+  async requireEvent(sportEventId: string, options: { releasedOnly?: boolean } = {}): Promise<SportEvent> {
     const event = await this.deps.sportEvents.findById(sportEventId);
-    if (!event) {
+    if (!event || (options.releasedOnly && event.status === SportEventStatus.DRAFT)) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return event;
   }
 
-  /** One edition of its series per year: the database decides, and a conflict is a 409. */
-  private async createEdition(input: SportEventCreate): Promise<SportEvent> {
+  /** The sport league's series of these names, each created on first use, by name. */
+  private async resolveSeries(sportLeague: SportLeague, names: readonly string[]): Promise<Map<string, string>> {
+    const series = await this.deps.eventSeries.findOrCreateMany(sportLeague.id, [...new Set(names)]);
+    return new Map(series.map((row) => [row.name, row.id]));
+  }
+
+  /**
+   * Creates new editions in a fixed number of queries, however many (#1253): the events in one
+   * insert, then every event's rounds and default tiers in one insert each. A new event has no
+   * field, no contests and every tier empty, so its summary is built from what was written
+   * rather than read back. 409 EVENT_EDITION_ALREADY_EXISTS when a series already has an
+   * edition in the year; then none of the events is created.
+   */
+  private async createEditions(sportLeague: SportLeague, editions: readonly NewEdition[]): Promise<SportEventAdminSummary[]> {
+    if (editions.length === 0) return [];
+    let events: SportEvent[];
     try {
-      return await this.deps.sportEvents.create(input);
+      events = await this.deps.sportEvents.createMany(editions.map((edition) => edition.event));
     } catch (error) {
       if (isEditionConflict(error)) {
+        // Every caller creates editions of one year.
+        const [first] = editions;
         throw new SportEventError(
-          `"${input.name}" already has an edition in ${input.eventYear}.`,
+          editions.length === 1
+            ? `"${first.event.name}" already has an edition in ${first.event.eventYear}.`
+            : `One of these events already has an edition in ${first.event.eventYear}; none were created.`,
           'EVENT_EDITION_ALREADY_EXISTS',
           409,
         );
       }
       throw error;
     }
+    await this.deps.rounds.createSchedules(events.map((event, index) => ({ sportEventId: event.id, rounds: editions[index]?.rounds ?? [] })));
+    const tiersByEvent = await this.deps.tiers.createDefaultTiers(events.map((event) => ({
+      sportEventId: event.id,
+      definition: eventSportDefinition(event),
+      leagueTierCount: sportLeague.tierCount,
+    })));
+    return events.map((event): SportEventAdminSummary => {
+      const tiers = tiersByEvent.get(event.id) ?? [];
+      return {
+        event,
+        loadedParticipantCount: 0,
+        tierCount: tiers.length,
+        adminCounts: {
+          untieredParticipantCount: 0,
+          unpricedParticipantCount: 0,
+          emptyTierLabels: tiers.map((tier) => tier.label),
+          contestCount: 0,
+        },
+      };
+    });
   }
 
   /** The sport league and the sport it belongs to. */
@@ -537,45 +598,114 @@ export class SportEventService {
     return this.deps.now?.() ?? new Date();
   }
 
+  /** The counts every reader of an event needs: two grouped counts for the whole list. */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, untiered, unpriced, tiers, emptyTiers, contests] = await Promise.all([
+    const [participants, tiers] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
-      this.deps.sportEvents.countUntieredActiveParticipants(ids),
-      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
       this.deps.sportEvents.countTiers(ids),
-      this.deps.sportEvents.findEmptyTierLabels(ids),
-      this.deps.sportEvents.countContests(ids),
     ]);
     return events.map((event) => ({
       event,
       loadedParticipantCount: participants.get(event.id) ?? 0,
-      untieredParticipantCount: untiered.get(event.id) ?? 0,
-      unpricedParticipantCount: unpriced.get(event.id) ?? 0,
       tierCount: tiers.get(event.id) ?? 0,
-      emptyTierLabels: emptyTiers.get(event.id) ?? [],
-      contestCount: contests.get(event.id) ?? 0,
+      adminCounts: null,
+    }));
+  }
+
+  /** Every reader's counts and a root admin's own. */
+  private async summarizeForAdmin(events: SportEvent[]): Promise<SportEventAdminSummary[]> {
+    const ids = events.map((event) => event.id);
+    const [summaries, untiered, unpriced, emptyTiers, contests] = await Promise.all([
+      this.summarize(events),
+      this.deps.sportEvents.countUntieredActiveParticipants(ids),
+      this.deps.sportEvents.countUnpricedActiveParticipants(ids),
+      this.deps.sportEvents.findEmptyTierLabels(ids),
+      this.deps.sportEvents.countContests(ids),
+    ]);
+    return summaries.map((summary) => ({
+      ...summary,
+      adminCounts: {
+        untieredParticipantCount: untiered.get(summary.event.id) ?? 0,
+        unpricedParticipantCount: unpriced.get(summary.event.id) ?? 0,
+        emptyTierLabels: emptyTiers.get(summary.event.id) ?? [],
+        contestCount: contests.get(summary.event.id) ?? 0,
+      },
     }));
   }
 }
 
 /** What still stops a DRAFT event being released, in words an admin can act on. */
-function describeReleaseBlockers(summary: SportEventSummary): string[] {
+function describeReleaseBlockers(summary: SportEventAdminSummary): string[] {
   const blockers: string[] = [];
+  const { untieredParticipantCount, unpricedParticipantCount, emptyTierLabels } = summary.adminCounts;
   if (summary.loadedParticipantCount === 0) {
     blockers.push('its field is not loaded');
   }
-  if (summary.untieredParticipantCount > 0) {
-    blockers.push(`${summary.untieredParticipantCount} active participant(s) have no tier`);
+  if (untieredParticipantCount > 0) {
+    blockers.push(`${untieredParticipantCount} active participant(s) have no tier`);
   }
   const { participant } = eventSportDefinition(summary.event).vocabulary;
-  for (const label of summary.emptyTierLabels) {
+  for (const label of emptyTierLabels) {
     blockers.push(`${label} has no ${participant.many}`);
   }
   if (!summary.event.pricingConfig) {
     blockers.push('its prices have not been assigned');
-  } else if (summary.unpricedParticipantCount > 0) {
-    blockers.push(`${summary.unpricedParticipantCount} active participant(s) have no price`);
+  } else if (unpricedParticipantCount > 0) {
+    blockers.push(`${unpricedParticipantCount} active participant(s) have no price`);
   }
   return blockers;
+}
+
+/** One new edition to create: the event, and its round schedule. */
+interface NewEdition {
+  event: SportEventCreate;
+  rounds: readonly SportEventRoundSchedule[];
+}
+
+/** The id of the series of this name, which `resolveSeries` found or created. */
+function seriesIdOf(seriesIdByName: ReadonlyMap<string, string>, name: string): string {
+  const id = seriesIdByName.get(name);
+  if (id === undefined) throw new Error(`No event series "${name}" was found or created.`);
+  return id;
+}
+
+/** The one summary of a single-edition create. */
+function onlyOne(summaries: readonly SportEventAdminSummary[]): SportEventAdminSummary {
+  const summary = summaries.at(0);
+  if (summary === undefined || summaries.length !== 1) throw new Error(`Expected one created event, got ${summaries.length}.`);
+  return summary;
+}
+
+/**
+ * A provider event as a new edition, pre-linked to its provider for scores (SCORES_ONLY). The
+ * rounds follow its dates unless a round count is given, which falls back to sequential days, so
+ * `rounds` always matches the rounds created.
+ */
+function providerEdition(
+  sport: Sport,
+  seriesIdByName: ReadonlyMap<string, string>,
+  input: ProviderEventDetail & { externalId: string; eventYear: number; providerId: string; rounds?: number },
+): NewEdition {
+  const schedule = input.rounds === undefined
+    ? deriveGolfTournamentRounds(input.startDate, input.endDate)
+    : dailyRoundSchedule(input.rounds, input.startDate);
+  return {
+    event: {
+      externalId: input.externalId,
+      providerId: input.providerId,
+      sport,
+      name: input.name,
+      venue: input.venue ?? undefined,
+      startDate: input.startDate,
+      endDate: input.endDate ?? undefined,
+      status: SportEventStatus.DRAFT,
+      rounds: schedule.length,
+      eventSeriesId: seriesIdOf(seriesIdByName, input.name),
+      eventYear: input.eventYear,
+      syncScope: SportEventSyncScope.SCORES_ONLY,
+      autoLifecycleEnabled: true,
+    },
+    rounds: schedule,
+  };
 }

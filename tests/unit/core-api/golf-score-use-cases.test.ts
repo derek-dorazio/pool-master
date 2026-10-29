@@ -12,7 +12,7 @@ async function setup() {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerId: 'feed', syncScope: 'SCORES_ONLY', rounds: 4 });
-  await store.roundRepo().createMany(event.id, [1, 2, 3, 4].map((roundNumber) => ({
+  await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({
     roundNumber,
     scheduledDate: new Date('2026-06-04T12:00:00.000Z'),
   })));

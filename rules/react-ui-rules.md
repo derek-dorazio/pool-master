@@ -352,6 +352,17 @@ state, stale actions, and unthemeable markup accumulate.
 - Apply the rule of two: the second time the same layout, action row, form
   field cluster, error panel, tile, status treatment, or table shell appears,
   extract a reusable component or shared helper.
+- The rule of two covers composites as much as primitives: a team row, a
+  leaderboard, a contest card, a page section. Before building any card, row,
+  table or section, search the web app for one with the same shape (the shared
+  UI layer first, then the feature folder that owns the concept) and reuse or
+  extend it. Where the extracted piece lives is the location rule in
+  `clients/poolmaster/src/features/shared/ui/README.md`: generic pieces in
+  `features/shared/ui`, a product piece in the feature folder that owns it.
+- `npm run rules:check:duplicates` fails CI on a new near-identical block in
+  the web app. `scripts/duplicate-baseline.json` lists today's copies, each with
+  the ticket that removes it; a PR that removes one shrinks its entry and
+  `BASELINE_CEILING`, and a new copy never goes on the list.
 - Prefer shared primitives from `clients/poolmaster/src/features/shared/ui/`
   for buttons, inputs, textareas, modals, page templates, tiles, badges, and
   alerts.
@@ -386,11 +397,16 @@ state, stale actions, and unthemeable markup accumulate.
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
 - The house type style is set once in the shared layer, not per page. The wordmark, card and
   tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
-  titles are also italic. Page titles and section titles that sit on the page stay normal case. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
+  titles are also italic. Page titles and section titles that sit on the page stay normal case.
+  Every title is a `Heading`: `level` picks the tag and `variant` the look (`hero`, `display`,
+  `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`), so no page types a heading's font, size or
+  `title-card` class string by hand. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
   or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
   `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
-  (navy header, gold column names). A `Button` used as a row or card, not as a button, adds
-  `normal-case tracking-normal`.
+  (navy header, gold column names). A `Button` or `LinkButton` used as a row or card, not as a button, takes
+  `layout="row"` (sentence case, full width, left aligned, wraps; colour still comes from
+  `variant`), and a dropdown menu entry is a `MenuItem`. The `poolmaster/no-button-row-override`
+  ESLint rule flags a hand-typed `normal-case` or `tracking-normal` in their `className`.
 
 ### Frontend Logging Discipline
 

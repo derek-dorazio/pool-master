@@ -5,10 +5,11 @@ import { linkEventScoreSource, listProviders, unlinkEventScoreSource } from '@/l
 import {
   Button,
   ConfirmationModal,
+  formatDateTimeDisplay,
+  Heading,
   PickerModal,
   StatusBadge,
   Tile,
-  formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -85,6 +86,7 @@ export function SportEventScoreSourceCard({
     },
     retry: false,
   });
+  // poolmaster-allow-list-lookup: the few data providers
   const simulatingProviderId = (providersQuery.data ?? []).find(
     (provider) => provider.sportsCovered.includes(tournament.sport) && provider.supportsLiveSimulation,
   )?.providerId ?? null;
@@ -142,7 +144,7 @@ export function SportEventScoreSourceCard({
 
   return (
     <Tile>
-      <h2 className="title-card text-lg text-foreground">Score source</h2>
+      <Heading level={2} variant="card" size="lg">Score source</Heading>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <StatusBadge tone={syncScopeTone(tournament.syncScope)}>
           {syncScopeLabel(tournament.syncScope)}

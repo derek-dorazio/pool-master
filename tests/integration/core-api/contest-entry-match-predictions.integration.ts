@@ -18,6 +18,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { countingPrisma } from '../../support/counting-prisma';
+import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { createContestRow } from '../../support/contest-rows';
 
 // A pick'em entry's game picks against real Postgres (#716): the prediction port's read and its
@@ -59,7 +61,7 @@ async function createWeek(label: string, startDate: Date) {
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
-  const event = await new PrismaSportEventRepository(prisma).create({
+  const event = await createSportEventRow(new PrismaSportEventRepository(prisma), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: `pickem-${randomUUID()}`,
@@ -72,7 +74,7 @@ async function createWeek(label: string, startDate: Date) {
     syncScope: 'NONE',
     autoLifecycleEnabled: true,
   });
-  await new PrismaSportEventRoundRepository(prisma).createMany(event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(new PrismaSportEventRoundRepository(prisma), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));
@@ -157,7 +159,7 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     ]);
   });
 
-  it('replaces the entry\'s pick on a game it saves again, keeping the row and stamping the new pickedAt', async () => {
+  it('replaces the entry\'s pick on a game it saves again with the new pick alone, stamping the new pickedAt', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
     const first = game(1);
@@ -167,17 +169,80 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     });
 
     await save(expectDefined(first.homeSportEventParticipantId), 2, AT);
-    const [before] = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
     await save(expectDefined(first.awaySportEventParticipantId), null, LATER);
     const after = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
 
     expect(after).toHaveLength(1);
     expect(after[0]).toMatchObject({
-      id: expectDefined(before).id,
       sportEventParticipantId: first.awaySportEventParticipantId,
       confidence: null,
       pickedAt: LATER,
     });
+  });
+
+  it('saves a full slate of picks, replacing earlier ones, in the same number of queries as one pick (#1254)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry: oneGame } = await createPickEmEntry([event.id]);
+    const { entry: fullSlate } = await createPickEmEntry([event.id]);
+    const counted = countingPrisma(getPrisma());
+    const predictions = new PrismaContestEntryMatchPredictionRepository(counted.prisma);
+    const saveOn = (contestEntryId: string, matchNumbers: readonly number[], at: Date) => predictions.save({
+      contestEntryId,
+      sportEventId: event.id,
+      saves: matchNumbers.map((matchNumber) => ({
+        sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
+        sportEventParticipantId: expectDefined(game(matchNumber).awaySportEventParticipantId),
+        confidence: matchNumber,
+      })),
+      clearedMatchIds: [],
+      eventStatus: ContestEntryStatus.DRAFT,
+      at,
+    });
+    await repos().predictions.save({
+      contestEntryId: fullSlate.id, sportEventId: event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+      saves: [{ sportEventMatchId: game(1).id, predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game(1).homeSportEventParticipantId), confidence: 1 }],
+    });
+
+    await saveOn(oneGame.id, [1], LATER);
+    const oneGameQueries = counted.total();
+    await saveOn(fullSlate.id, [1, 2, 3], LATER);
+    const fullSlateQueries = counted.total() - oneGameQueries;
+
+    expect(fullSlateQueries).toBe(oneGameQueries);
+    expect(counted.count('ContestEntryMatchPrediction.upsert')).toBe(0);
+    const picks = await repos().predictions.findByEntryAndEvent(fullSlate.id, event.id);
+    expect(picks.map((pick) => [pick.sportEventMatchId, pick.sportEventParticipantId, pick.confidence, pick.pickedAt])).toEqual(
+      [1, 2, 3].map((matchNumber) => [game(matchNumber).id, game(matchNumber).awaySportEventParticipantId, matchNumber, LATER]),
+    );
+  });
+
+  it.each([
+    ['that all move the entry\'s week to draft', [ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT, ContestEntryStatus.DRAFT]],
+    ['that all leave the entry\'s week as it is', [null, null, null, null, null]],
+    ['of both kinds', [ContestEntryStatus.DRAFT, null, ContestEntryStatus.DRAFT, null, ContestEntryStatus.DRAFT]],
+  ] as const)('runs overlapping saves to one entry\'s same games %s one after the other, each succeeding and one save\'s picks standing (#1254)', async (_, eventStatuses) => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    const save = (eventStatus: ContestEntryStatus | null, index: number) => repos().predictions.save({
+      contestEntryId: entry.id,
+      sportEventId: event.id,
+      saves: [1, 2, 3].map((matchNumber) => ({
+        sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
+        sportEventParticipantId: expectDefined(game(matchNumber).homeSportEventParticipantId),
+        confidence: index + 1,
+      })),
+      clearedMatchIds: [],
+      eventStatus,
+      at: LATER,
+    });
+
+    await Promise.all(eventStatuses.map(save));
+
+    const picks = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
+    expect(picks.map((pick) => pick.sportEventMatchId)).toEqual([1, 2, 3].map((matchNumber) => game(matchNumber).id));
+    expect(new Set(picks.map((pick) => pick.confidence)).size).toBe(1);
   });
 
   it('says whether any entry has picked a game, so a picked game\'s spread stays fixed (#720)', async () => {

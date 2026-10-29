@@ -8,6 +8,7 @@ import {
   Chip,
   cn,
   FormField,
+  Heading,
   Input,
   ListStack,
   ProgressIndicator,
@@ -116,11 +117,12 @@ function BudgetParticipantRow({
   return (
     <Button
       className={cn(
-        'normal-case tracking-normal h-auto w-full items-center justify-start gap-3 px-4 py-3 text-left whitespace-normal',
+        'gap-3 px-4 py-3',
         isSelected ? 'border-primary bg-primary/5 hover:bg-primary/5' : 'hover:border-foreground/30',
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
       disabled={isDisabled}
+      layout="row"
       onClick={() => onSelect(participant)}
       variant="secondary"
     >
@@ -172,9 +174,9 @@ export function BudgetLineupBuilder({
     <div className="space-y-4" data-testid="contest-entry-budget-builder">
       {summary ? <BudgetSpendBar noun={noun} summary={summary} /> : null}
       <div>
-        <h4 className="text-lg font-semibold text-foreground">
+        <Heading level={4} variant="subtitle">
           {`Your ${noun.many} (${picked.length}/${group.picksFromGroup})`}
-        </h4>
+        </Heading>
         {picked.length ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {picked.map((participant) => (
@@ -240,7 +242,7 @@ export function LockedBudgetLineup({
   return (
     <Tile data-testid="contest-entry-budget-locked" padding="sm" radius="lg" variant="subtle">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h4 className="text-lg font-semibold text-foreground">{`Your ${noun.many}`}</h4>
+        <Heading level={4} variant="subtitle">{`Your ${noun.many}`}</Heading>
         <StatusBadge tone="locked">Locked</StatusBadge>
       </div>
       {picked.length ? (

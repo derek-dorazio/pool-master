@@ -2042,7 +2042,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, status, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness, and its tier and contest counts. DRAFT events (not yet released for contests) are listed for a root admin only.
+         * @description The sport-event catalog, narrowed by sport, statuses, sport league, event year and name and never paged. At least one of `sport`, `sportLeagueId` and `eventYear` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. Any signed-in user may read it: contest setup picks an event from it, and a root admin browses it. Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -2051,6 +2051,26 @@ export interface paths {
          * @description An admin-authored edition of a series in an event year, SCHEDULED, accepting no provider data, with its default rounds and tiers. The series is found or created in the sport league by the event's name; 409 EVENT_EDITION_ALREADY_EXISTS when it already has an edition that year. The sport comes from the sport league. Root admin only.
          */
         post: operations["createEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport league's event years
+         * @description The years a sport league has events in, for a year picker that then lists one year's events. Any signed-in user may read it; a year with only DRAFT events is listed for a root admin only.
+         */
+        get: operations["listEventYears"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2066,7 +2086,7 @@ export interface paths {
         };
         /**
          * Get a sport event
-         * @description 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin.
+         * @description 404 EVENT_NOT_FOUND for a DRAFT event unless the caller is a root admin, whose read alone carries adminCounts.
          */
         get: operations["getEvent"];
         put?: never;
@@ -3320,7 +3340,7 @@ export interface paths {
         };
         /**
          * List competitors a provider could not match
-         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping.
+         * @description Every competitor a provider reports, across its scheduled sports, that no participant is mapped to. Their synced data has nowhere to land until one is: bind each with bindParticipantProviderMapping. `providerId` asks only that provider, and `externalId` keeps only that competitor, so one competitor's page reads one row (#1251).
          */
         get: operations["listUnmappedProviderParticipants"];
         put?: never;
@@ -3431,7 +3451,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/selections/{contestId}/pick": {
+    "/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3439,13 +3459,17 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
         /**
-         * Submit a pick
-         * @description Submits a pick and returns the refreshed selection state for the pick's event: the event of the field row it names (#713). Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and that event's start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT; it must be submitted again to count.
+         * Select a pick
+         * @description Selects one field row for the entry, in the event the row belongs to (#713, #1259). Selecting a row the entry already holds changes nothing. In a tiered contest a pick in a full tier replaces the tier's newest pick. In a budget contest a golfer with no price is refused with 400 PRICE_MISSING, a full roster with 400 ENTRY_COMPLETE, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A withdrawn or otherwise unavailable row is refused with 400 PARTICIPANT_UNAVAILABLE. Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and the pick's event has not started: 409 CONTEST_ENTRY_LOCKED otherwise, and 409 SELECTION_DEALT_BY_DRAW in a random-draw contest, whose picks the draw deals. Only a member of the entry's squad may change its picks: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest; 400 PARTICIPANT_NOT_IN_EVENT or PARTICIPANT_NOT_SELECTABLE for a field row outside the contest's events. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT for that event; it must be submitted again to count. The answer carries only what changed on the entry (#1259): its picks in the event, its status there and, in a budget contest, its lineup summary.
          */
-        post: operations["submitContestSelection"];
-        delete?: never;
+        put: operations["selectContestPick"];
+        post?: never;
+        /**
+         * Unselect a pick
+         * @description Removes one field row from the entry's picks (#1259). Unselecting a row the entry does not hold changes nothing. A golfer who withdrew after being picked can still be removed. Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and the pick's event has not started: 409 CONTEST_ENTRY_LOCKED otherwise, and 409 SELECTION_DEALT_BY_DRAW in a random-draw contest, whose picks the draw deals. Only a member of the entry's squad may change its picks: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest; 400 PARTICIPANT_NOT_IN_EVENT or PARTICIPANT_NOT_SELECTABLE for a field row outside the contest's events. A change that leaves a SUBMITTED entry's lineup short, or over a budget contest's cap, sends the entry back to DRAFT for that event; it must be submitted again to count. The answer carries only what changed on the entry (#1259): its picks in the event, its status there and, in a budget contest, its lineup summary.
+         */
+        delete: operations["unselectContestPick"];
         options?: never;
         head?: never;
         patch?: never;
@@ -9890,6 +9914,17 @@ export interface components {
         EventReadinessStatusDto: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
         /** @enum {string} */
         EventReadinessReasonDto: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "EVENT_STARTED";
+        /** @description What only a root admin reads of an event: what still stops its release, and how many contests run on it. */
+        SportEventAdminCountsDto: {
+            /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
+            untieredParticipantCount: number;
+            /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
+            unpricedParticipantCount: number;
+            /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+            emptyTierLabels: string[];
+            /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
+            contestCount: number;
+        };
         /** @description A real-world event a contest can be run on — a golf tournament, a race, a match. */
         SportEventDto: {
             /**
@@ -9935,10 +9970,6 @@ export interface components {
             participantCount: number | null;
             /** @description Number of event participants currently persisted for the event. */
             loadedParticipantCount: number;
-            /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-            untieredParticipantCount: number;
-            /** @description Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-            unpricedParticipantCount: number;
             /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
             pricing: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
@@ -9994,10 +10025,17 @@ export interface components {
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
             tierCount: number;
-            /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.) */
-            emptyTierLabels: string[];
-            /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
-            contestCount: number;
+            /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
+            adminCounts: {
+                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
+                untieredParticipantCount: number;
+                /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
+                unpricedParticipantCount: number;
+                /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                emptyTierLabels: string[];
+                /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
+                contestCount: number;
+            } | null;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
             allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
             /**
@@ -10018,11 +10056,8 @@ export interface components {
              * @enum {string}
              */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /**
-             * @description Only events in this lifecycle status.
-             * @enum {string}
-             */
-            status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
+            status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
             /**
              * Format: uuid
              * @description Only events of this sport league's series.
@@ -10080,10 +10115,6 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                untieredParticipantCount: number;
-                /** @description Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                unpricedParticipantCount: number;
                 /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
@@ -10139,10 +10170,17 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.) */
-                emptyTierLabels: string[];
-                /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
-                contestCount: number;
+                /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
+                adminCounts: {
+                    /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
+                    untieredParticipantCount: number;
+                    /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
+                    unpricedParticipantCount: number;
+                    /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                    emptyTierLabels: string[];
+                    /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
+                    contestCount: number;
+                } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /**
@@ -10156,6 +10194,19 @@ export interface components {
                  */
                 updatedAt: string;
             }[];
+        };
+        /** @description The sport league to list the event years of. */
+        SportEventYearListQuery: {
+            /**
+             * Format: uuid
+             * @description The sport league whose event years are listed.
+             */
+            sportLeagueId: string;
+        };
+        /** @description The event years of one sport league: what a year picker offers, without reading every event. */
+        SportEventYearListResponse: {
+            /** @description Every event year the sport league has events in, earliest first. A year with only DRAFT events is listed for a root admin only. */
+            years: number[];
         };
         /** @description One sport event. */
         SportEventResponse: {
@@ -10204,10 +10255,6 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                untieredParticipantCount: number;
-                /** @description Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                unpricedParticipantCount: number;
                 /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
@@ -10263,10 +10310,17 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.) */
-                emptyTierLabels: string[];
-                /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
-                contestCount: number;
+                /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
+                adminCounts: {
+                    /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
+                    untieredParticipantCount: number;
+                    /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
+                    unpricedParticipantCount: number;
+                    /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                    emptyTierLabels: string[];
+                    /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
+                    contestCount: number;
+                } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /**
@@ -10397,10 +10451,6 @@ export interface components {
                 participantCount: number | null;
                 /** @description Number of event participants currently persisted for the event. */
                 loadedParticipantCount: number;
-                /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                untieredParticipantCount: number;
-                /** @description Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.) */
-                unpricedParticipantCount: number;
                 /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
@@ -10456,10 +10506,17 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
-                /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.) */
-                emptyTierLabels: string[];
-                /** @description Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.) */
-                contestCount: number;
+                /** @description The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them. */
+                adminCounts: {
+                    /** @description Active event participants with no tier. A DRAFT event can't be released while any remain. */
+                    untieredParticipantCount: number;
+                    /** @description Active event participants with no price. A DRAFT event can't be released while any remain. */
+                    unpricedParticipantCount: number;
+                    /** @description Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. */
+                    emptyTierLabels: string[];
+                    /** @description Contests run on the event, across every league; an event with any cannot be deleted. */
+                    contestCount: number;
+                } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /**
@@ -11919,6 +11976,11 @@ export interface components {
              */
             startDate: string;
             /**
+             * Format: date-time
+             * @description The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+             */
+            endDate: string | null;
+            /**
              * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              * @enum {string}
              */
@@ -12005,6 +12067,11 @@ export interface components {
                  * @description The event's scheduled start: when its picks close.
                  */
                 startDate: string;
+                /**
+                 * Format: date-time
+                 * @description The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+                 */
+                endDate: string | null;
                 /**
                  * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                  * @enum {string}
@@ -12101,43 +12168,6 @@ export interface components {
                  */
                 pickedAt: string;
             }[];
-        };
-        /** @description Raw ContestEntryPick row used by persistence-aware surfaces. */
-        ContestEntryPickDto: {
-            /** @description Pick identifier. */
-            id: string;
-            /** @description Owning contest entry identifier. */
-            entryId: string;
-            /** @description Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant). */
-            sportEventParticipantId: string;
-            /**
-             * @description Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
-             * @enum {string}
-             */
-            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
-            /** @description Unused: no built contest format sets it, so it is always null. Removal is tracked in #632. */
-            period: number | null;
-            /** @description Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632. */
-            slot: number | null;
-            /** @description Selection tier (tiered ROSTER); null otherwise. */
-            tier: string | null;
-            /** @description Budget cost (budget ROSTER); null otherwise. */
-            cost: number | null;
-            /** @description Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick. */
-            isAutoPicked: boolean;
-            /** @description Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection. */
-            lineupSlot: number | null;
-            /** @description Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection. */
-            pickSequence: number | null;
-            /**
-             * Format: date-time
-             * @description When the pick was made (or auto-picked).
-             */
-            pickedAt: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
         };
         /** @description Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint. */
         ContestEntryParticipantDetailDto: {
@@ -12680,6 +12710,11 @@ export interface components {
                      */
                     startDate: string;
                     /**
+                     * Format: date-time
+                     * @description The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+                     */
+                    endDate: string | null;
+                    /**
                      * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                      * @enum {string}
                      */
@@ -12747,6 +12782,11 @@ export interface components {
                      * @description The event's scheduled start: when its picks close.
                      */
                     startDate: string;
+                    /**
+                     * Format: date-time
+                     * @description The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+                     */
+                    endDate: string | null;
                     /**
                      * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                      * @enum {string}
@@ -13064,13 +13104,6 @@ export interface components {
              */
             sportEventId?: string;
         };
-        /** @description Request payload for submitting a pick. */
-        SubmitPickRequest: {
-            /** @description Entry making the pick. */
-            entryId: string;
-            /** @description Participant being selected. */
-            participantId: string;
-        };
         /** @description Budget contest: the viewed entry's spend against the salary cap (#93). */
         SelectionBudgetLineupSummaryDto: {
             /** @enum {string} */
@@ -13190,40 +13223,20 @@ export interface components {
                 cheapestFill: number | null;
             } | null;
         };
-        /** @description Selection response returned immediately after a pick mutation. */
+        /** @description What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room. */
         SelectionPickResponse: {
             contestId: string;
-            contestName: string;
-            /** @description The contest event the room shows (#713): its field, its picks, and each entry's status in it. */
+            /** @description The entry whose pick changed. */
+            entryId: string;
+            /** @description The contest event the pick is in: the event of the field row it names (#713). */
             sportEventId: string;
-            /** @description Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started. */
-            acceptsPicks: boolean;
-            /** @enum {string} */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
             /**
-             * Format: date-time
-             * @description When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+             * @description The entry's status in the event after the change: a change that leaves a submitted lineup short, or over a budget contest's cap, sends it back to DRAFT.
+             * @enum {string}
              */
-            drawnAt: string | null;
-            isCommissioner?: boolean;
-            rosterSize: number;
-            /** @enum {string} */
-            status: "PENDING" | "LIVE" | "PAUSED" | "COMPLETE";
-            myEntryId: string | null;
-            entries: {
-                /** @description Entry identifier. */
-                id: string;
-                /** @description User that owns the entry. */
-                userId: string;
-                /** @description Entry display name. */
-                name: string;
-                /**
-                 * @description The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-                 * @enum {string}
-                 */
-                status: "DRAFT" | "SUBMITTED";
-            }[];
-            pickHistories: {
+            entryStatus: "DRAFT" | "SUBMITTED";
+            /** @description Every one of the entry's picks in the event after the change, oldest first: the room replaces the entry's picks with these, which also puts right a full-tier swap it guessed differently. */
+            picks: {
                 pickNumber: number;
                 round: number;
                 pickInRound: number;
@@ -13244,38 +13257,8 @@ export interface components {
                  */
                 pickedAt: string;
             }[];
-            availableParticipantIds: string[];
-            selectedEntryId?: string | null;
-            selectedEntryName?: string | null;
-            tiebreakerValue?: number | null;
-            selectionGroups?: {
-                groupId: string;
-                groupName: string;
-                groupNumber: number;
-                picksFromGroup: number;
-                /** @description Selections currently saved on the selected entry for this group. */
-                selectedParticipantIds: string[];
-                /** @description Selectable participants shown inside the group. */
-                participants: {
-                    sportEventParticipantId: string;
-                    participantId: string;
-                    participantName: string;
-                    role?: string | null;
-                    team?: string | null;
-                    status?: string | null;
-                    price?: number | null;
-                    ranking?: number | null;
-                    /** @description The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody. */
-                    seedNumber: number | null;
-                    orderIndex?: number | null;
-                    isAvailable: boolean;
-                    /** @description Whether the currently selected entry has this participant selected. */
-                    isSelected?: boolean;
-                }[];
-            }[];
-            isComplete: boolean;
-            /** @description The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none. */
-            lineupSummary?: {
+            /** @description The entry's lineup summary after the change: only budget contests carry one, null otherwise. */
+            lineupSummary: {
                 /** @enum {string} */
                 selectionType: "BUDGET_PICK";
                 /** @description Whole dollars the entry's picks may cost at most: its event's cap. */
@@ -22642,7 +22625,14 @@ export interface components {
             /** @enum {string} */
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
         };
-        /** @description Every unmapped competitor across the scheduled sports of every provider. */
+        /** @description Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors. */
+        UnmappedProviderParticipantListQuery: {
+            /** @description Only this provider's competitors; the other providers are not asked. */
+            providerId?: string;
+            /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
+            externalId?: string;
+        };
+        /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
         UnmappedProviderParticipantListResponse: {
             participants: {
                 providerId: string;
@@ -28725,8 +28715,8 @@ export interface operations {
             query?: {
                 /** @description Only events of this sport. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "AMERICAN_FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /** @description Only events in this lifecycle status. */
-                status?: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
+                status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
                 /** @description Only events of this sport league's series. */
                 sportLeagueId?: string;
                 /** @description Only editions branded with this year. */
@@ -28829,6 +28819,47 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventYears: {
+        parameters: {
+            query: {
+                /** @description The sport league whose event years are listed. */
+                sportLeagueId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The event years of one sport league: what a year picker offers, without reading every event. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventYearListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -33302,14 +33333,19 @@ export interface operations {
     };
     listUnmappedProviderParticipants: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Only this provider's competitors; the other providers are not asked. */
+                providerId?: string;
+                /** @description Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped. */
+                externalId?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Every unmapped competitor across the scheduled sports of every provider. */
+            /** @description The unmapped competitors matching the filters, across the scheduled sports of each provider asked. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -33582,22 +33618,89 @@ export interface operations {
             };
         };
     };
-    submitContestSelection: {
+    selectContestPick: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 contestId: string;
+                entryId: string;
+                sportEventParticipantId: string;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SubmitPickRequest"];
+        requestBody?: never;
+        responses: {
+            /** @description What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelectionPickResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
             };
         };
+    };
+    unselectContestPick: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contestId: string;
+                entryId: string;
+                sportEventParticipantId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
-            /** @description Selection response returned immediately after a pick mutation. */
+            /** @description What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room. */
             200: {
                 headers: {
                     [name: string]: unknown;

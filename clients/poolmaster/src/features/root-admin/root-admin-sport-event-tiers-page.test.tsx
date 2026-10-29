@@ -26,7 +26,7 @@ const {
   autoAssignEventTiersMock,
   autoAssignEventPricesMock,
   updateEventParticipantsMock,
-  listSettingsGroupsMock,
+  getSettingsGroupMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -47,7 +47,7 @@ const {
     autoAssignEventTiersMock: vi.fn(),
     autoAssignEventPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
-    listSettingsGroupsMock: vi.fn(),
+    getSettingsGroupMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -61,7 +61,7 @@ bindApiMocks({
   autoAssignEventTiers: autoAssignEventTiersMock,
   autoAssignEventPrices: autoAssignEventPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
-  listSettingsGroups: listSettingsGroupsMock,
+  getSettingsGroup: getSettingsGroupMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -87,7 +87,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     autoLifecycleEnabled: true,
     loadedParticipantCount: 3,
     tierCount: 2,
-    contestCount: 0,
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     allowedTransitions: [],
@@ -134,7 +134,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   listEventTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
-  listSettingsGroupsMock.mockResolvedValue({ data: { groups: [budgetPricingGroupFixture()] } });
+  getSettingsGroupMock.mockResolvedValue({ data: budgetPricingGroupFixture() });
 }
 
 function renderPage() {
@@ -312,6 +312,17 @@ describe('pool-master-dyb RootAdminSportEventTiersPage', () => {
         }),
       ),
     );
+  });
+
+  it('reads the price dialog\'s profiles from the Budget pricing settings group alone, not the list of every group', async () => {
+    seed({ tournament: { pricing: null } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-prices'));
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('Standard');
+    expect(getSettingsGroupMock).toHaveBeenCalledTimes(1);
+    const [request] = getSettingsGroupMock.mock.calls[0] as [{ path: { key: string } }];
+    expect(request.path.key).toBe('BUDGET_PRICING_CONFIG');
   });
 
   it('pool-master-dyb deletes a tier, reassigning its golfers to another tier', async () => {

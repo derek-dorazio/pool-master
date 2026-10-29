@@ -35,7 +35,8 @@ const {
   getContestEntryMock,
   mockLogger,
   submitContestEntryMock,
-  submitContestSelectionMock,
+  selectContestPickMock,
+  unselectContestPickMock,
   updateContestEntryMock,
 } = vi.hoisted(() => {
   const logger = {
@@ -57,7 +58,8 @@ const {
     getContestEntryMock: vi.fn(),
     mockLogger: logger,
     submitContestEntryMock: vi.fn(),
-    submitContestSelectionMock: vi.fn(),
+    selectContestPickMock: vi.fn(),
+    unselectContestPickMock: vi.fn(),
     updateContestEntryMock: vi.fn(),
   };
 });
@@ -69,7 +71,8 @@ bindApiMocks({
   getLeague: getLeagueMock,
   getContestEntry: getContestEntryMock,
   submitContestEntry: submitContestEntryMock,
-  submitContestSelection: submitContestSelectionMock,
+  selectContestPick: selectContestPickMock,
+  unselectContestPick: unselectContestPickMock,
   updateContestEntry: updateContestEntryMock,
 });
 
@@ -100,6 +103,12 @@ vi.mock('@/lib/logger', () => ({
   logger: mockLogger,
   getLogger: () => mockLogger,
 }));
+
+/** Taps the status icon beside the entry's name and answers the callout it opens. */
+async function openStatusCallout() {
+  fireEvent.click(await screen.findByTestId('contest-entry-status'));
+  return screen.getByTestId('contest-entry-status-callout');
+}
 
 function renderContestEntryPage() {
   const queryClient = new QueryClient({
@@ -277,6 +286,43 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
   };
 }
 
+type PickPath = { path: { contestId: string; entryId: string; sportEventParticipantId: string } };
+
+/** The path of a pick change on entry-1 of contest-1 (#1259). */
+function pickPath(sportEventParticipantId: string): PickPath {
+  return { path: { contestId: 'contest-1', entryId: 'entry-1', sportEventParticipantId } };
+}
+
+/**
+ * The server's answer to one pick change (#1259): only entry-1's picks after it, oldest first,
+ * its status in the event and its lineup summary, never the whole room.
+ */
+function pickAnswer(
+  pickedIds: string[],
+  overrides: { entryStatus?: 'DRAFT' | 'SUBMITTED'; lineupSummary?: Record<string, unknown> | null } = {},
+) {
+  return {
+    data: {
+      contestId: 'contest-1',
+      entryId: 'entry-1',
+      sportEventId: 'event-1',
+      entryStatus: overrides.entryStatus ?? 'DRAFT',
+      picks: pickedIds.map((id, index) => ({
+        pickNumber: index + 1,
+        round: index + 1,
+        pickInRound: 1,
+        entryId: 'entry-1',
+        entryName: 'Birdie Hunters Entry 1',
+        participantId: id,
+        participantName: id,
+        autoPicked: false,
+        pickedAt: `2026-04-15T1${index}:00:00.000Z`,
+      })),
+      lineupSummary: overrides.lineupSummary ?? null,
+    },
+  };
+}
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
@@ -296,7 +342,8 @@ describe('ContestEntryPage', () => {
     getLeagueMock.mockReset();
     getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
-    submitContestSelectionMock.mockReset();
+    selectContestPickMock.mockReset();
+    unselectContestPickMock.mockReset();
     updateContestEntryMock.mockReset();
     mockLogger.debug.mockReset();
     mockLogger.info.mockReset();
@@ -400,15 +447,14 @@ describe('ContestEntryPage', () => {
         },
       },
     });
-    submitContestSelectionMock.mockImplementation(({ body }: { body: { participantId: string } }) => {
-      if (body.participantId === 'sep-1') {
+    selectContestPickMock.mockImplementation(({ path }: PickPath) => {
+      if (path.sportEventParticipantId === 'sep-1') {
         selectedParticipantIdsByTier.set('tier-1', ['sep-1']);
       }
-      if (body.participantId === 'sep-2') {
+      if (path.sportEventParticipantId === 'sep-2') {
         selectedParticipantIdsByTier.set('tier-2', ['sep-2']);
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- getSelectionStateMock is an untyped vi.fn() (bindApiMocks expects a loose mock shape); this just forwards its mocked resolution.
-      return getSelectionStateMock();
+      return Promise.resolve(pickAnswer(Array.from(selectedParticipantIdsByTier.values()).flat()));
     });
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- as above: forwards the untyped selection-state mock's resolution.
     submitContestEntryMock.mockImplementation(() => getSelectionStateMock());
@@ -430,13 +476,7 @@ describe('ContestEntryPage', () => {
     fireEvent.click(scottieButton);
 
     await waitFor(() =>
-      expect(submitContestSelectionMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1' },
-        body: {
-          entryId: 'entry-1',
-          participantId: 'sep-1',
-        },
-      }),
+      expect(selectContestPickMock).toHaveBeenCalledWith(pickPath('sep-1')),
     );
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByTestId('contest-entry-group-toggle-tier-2')).toHaveFocus());
@@ -472,7 +512,7 @@ describe('ContestEntryPage', () => {
     expect(await screen.findByTestId('contest-page')).toBeInTheDocument();
     expect(mockLogger.info).toHaveBeenCalledWith(
       expect.objectContaining({
-        action: 'contestEntry.selection.succeeded',
+        action: 'contestEntry.pickChange.succeeded',
       }),
       expect.any(String),
     );
@@ -640,14 +680,14 @@ describe('ContestEntryPage', () => {
   });
 
   // The old page-only wording for a live contest was "Scoring live"; it must be gone.
-  it('labels an ACTIVE contest "Live" in the badge and Contest phase row, as on every contest page', async () => {
+  it('labels an ACTIVE contest "Live" in the entry status callout, as on every contest page', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
     getSelectionStateMock.mockResolvedValue({ data: { ...buildSelectionState([]), acceptsPicks: false } });
 
     renderContestEntryPage();
 
-    await screen.findByTestId('contest-entry-heading');
-    expect(await screen.findAllByText('Live')).toHaveLength(2);
+    const callout = within(await openStatusCallout());
+    expect(callout.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Live');
     expect(screen.queryByText('Scoring live')).not.toBeInTheDocument();
   });
 
@@ -656,15 +696,6 @@ describe('ContestEntryPage', () => {
   it('shows a read-only saved lineup once the event\'s scheduled start has passed, though the contest still reads OPEN', async () => {
     const startedAt = new Date(Date.now() - 60 * 60_000).toISOString();
     primeCommonMocks({ eventStartDate: startedAt });
-    getEventMock.mockResolvedValue({
-      data: {
-        event: {
-          id: 'event-1',
-          startDate: startedAt,
-          endDate: new Date(Date.now() + 3 * 24 * 60 * 60_000).toISOString(),
-        },
-      },
-    });
     getSelectionStateMock.mockResolvedValue({
       data: buildSelectionState([
         {
@@ -680,7 +711,6 @@ describe('ContestEntryPage', () => {
 
     renderContestEntryPage();
 
-    await waitFor(() => expect(getEventMock).toHaveBeenCalled());
     await waitFor(() =>
       expect(screen.getByTestId('contest-entry-builder-heading')).toHaveTextContent('Saved lineup detail'),
     );
@@ -725,16 +755,15 @@ describe('ContestEntryPage', () => {
     getSelectionStateMock.mockImplementation(() =>
       Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) }),
     );
-    submitContestSelectionMock.mockImplementation(({ body }: { body: { participantId: string } }) => {
-      if (selectedParticipantIds.includes(body.participantId)) {
-        selectedParticipantIds = selectedParticipantIds.filter((id) => id !== body.participantId);
-      } else if (selectedParticipantIds.length >= 2) {
-        selectedParticipantIds = [selectedParticipantIds[0], body.participantId];
-      } else {
-        selectedParticipantIds = [...selectedParticipantIds, body.participantId];
-      }
-
-      return Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) });
+    selectContestPickMock.mockImplementation(({ path }: PickPath) => {
+      selectedParticipantIds = selectedParticipantIds.length >= 2
+        ? [selectedParticipantIds[0], path.sportEventParticipantId]
+        : [...selectedParticipantIds, path.sportEventParticipantId];
+      return Promise.resolve(pickAnswer(selectedParticipantIds));
+    });
+    unselectContestPickMock.mockImplementation(({ path }: PickPath) => {
+      selectedParticipantIds = selectedParticipantIds.filter((id) => id !== path.sportEventParticipantId);
+      return Promise.resolve(pickAnswer(selectedParticipantIds));
     });
 
     renderContestEntryPage();
@@ -747,13 +776,7 @@ describe('ContestEntryPage', () => {
     fireEvent.click(jordanButton);
 
     await waitFor(() =>
-      expect(submitContestSelectionMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1' },
-        body: {
-          entryId: 'entry-1',
-          participantId: 'sep-3',
-        },
-      }),
+      expect(selectContestPickMock).toHaveBeenCalledWith(pickPath('sep-3')),
     );
     await waitFor(() =>
       expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Jordan Spieth'),
@@ -768,14 +791,9 @@ describe('ContestEntryPage', () => {
     fireEvent.click(scottieButton);
 
     await waitFor(() =>
-      expect(submitContestSelectionMock).toHaveBeenCalledWith({
-        path: { contestId: 'contest-1' },
-        body: {
-          entryId: 'entry-1',
-          participantId: 'sep-1',
-        },
-      }),
+      expect(unselectContestPickMock).toHaveBeenCalledWith(pickPath('sep-1')),
     );
+    expect(selectContestPickMock).not.toHaveBeenCalledWith(pickPath('sep-1'));
     expect(await screen.findByText('1/2 saved')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Select golfer');
   });
@@ -796,25 +814,28 @@ describe('ContestEntryPage', () => {
         ],
       },
     ];
-    const deferredSelection = createDeferred<{ data: ReturnType<typeof buildSelectionState> }>();
+    const deferredSelection = createDeferred<ReturnType<typeof pickAnswer>>();
 
     getSelectionStateMock.mockImplementation(() =>
       Promise.resolve({ data: buildSelectionState(buildSelectionGroups()) }),
     );
-    submitContestSelectionMock.mockImplementation(() => deferredSelection.promise);
+    selectContestPickMock.mockImplementation(() => deferredSelection.promise);
 
     renderContestEntryPage();
 
-    const scottieButton = await screen.findByTestId('contest-entry-participant-sep-1');
-    fireEvent.click(scottieButton);
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
 
-    await waitFor(() => {
-      expect(within(scottieButton).getByRole('checkbox')).toBeChecked();
-      expect(scottieButton).toHaveTextContent('Selected');
-    });
+    // The pick fills the tier, so it closes at once, naming Scottie, before the server answers.
+    await waitFor(() =>
+      expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Scottie Scheffler'));
+    expect(screen.queryByTestId('contest-entry-participant-sep-1')).not.toBeInTheDocument();
+    expect(screen.getByText('1/1 saved')).toBeInTheDocument();
 
     selectedParticipantIds = ['sep-1'];
-    deferredSelection.resolve({ data: buildSelectionState(buildSelectionGroups()) });
+    await act(async () => {
+      deferredSelection.resolve(pickAnswer(['sep-1']));
+      await deferredSelection.promise;
+    });
   });
 
   it('keeps the member on the entry page with the refusal shown when saving the finished entry is refused', async () => {
@@ -866,7 +887,7 @@ describe('ContestEntryPage', () => {
         },
       ]),
     });
-    submitContestSelectionMock.mockResolvedValue({
+    selectContestPickMock.mockResolvedValue({
       error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Entries for this contest are closed.' } },
       status: 409,
     });
@@ -879,7 +900,7 @@ describe('ContestEntryPage', () => {
     expect(await screen.findByText('Entries for this contest are closed.')).toBeInTheDocument();
     expect(within(screen.getByTestId('contest-entry-participant-sep-1')).getByRole('checkbox')).not.toBeChecked();
     expect(mockLogger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'contestEntry.selection.failed' }),
+      expect.objectContaining({ action: 'contestEntry.pickChange.failed' }),
       expect.any(String),
     );
     expect(mockLogger.error).not.toHaveBeenCalled();
@@ -893,7 +914,8 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     getEventMock.mockReset();
     getLeagueMock.mockReset();
     getContestEntryMock.mockReset();
-    submitContestSelectionMock.mockReset();
+    selectContestPickMock.mockReset();
+    unselectContestPickMock.mockReset();
     updateContestEntryMock.mockReset();
   });
 
@@ -938,27 +960,30 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
       ],
     };
     getSelectionStateMock.mockResolvedValue({ data: selectionState });
-    const deferred = createDeferred<{ data: ReturnType<typeof buildSelectionState> }>();
-    submitContestSelectionMock.mockImplementation(() => deferred.promise);
+    const deferred = createDeferred<ReturnType<typeof pickAnswer>>();
+    selectContestPickMock.mockImplementation(() => deferred.promise);
 
     renderContestEntryPage();
 
     fireEvent.click(await screen.findByTestId('contest-entry-group-toggle-tier-1'));
     fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-3'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('contest-entry-participant-sep-3')).toHaveTextContent('Selected');
-    });
-    expect(screen.getByTestId('contest-entry-participant-sep-2')).toHaveTextContent('Selected');
-    expect(screen.getByTestId('contest-entry-participant-sep-1')).not.toHaveTextContent('Selected');
+    // The tier is still full, so it closes at once, naming the lineup the server will keep.
+    const tierToggle = screen.getByTestId('contest-entry-group-toggle-tier-1');
+    await waitFor(() => expect(tierToggle).toHaveTextContent('Jordan Spieth'));
+    expect(tierToggle).toHaveTextContent('Rory McIlroy');
+    expect(tierToggle).not.toHaveTextContent('Scottie Scheffler');
 
-    deferred.resolve({ data: buildSelectionState([twoPickTier(['sep-2', 'sep-3'])]) });
+    await act(async () => {
+      deferred.resolve(pickAnswer(['sep-2', 'sep-3']));
+      await deferred.promise;
+    });
   });
 
   it('puts the selection back and says why when the server refuses a pick', async () => {
     primeCommonMocks();
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
-    submitContestSelectionMock.mockResolvedValue({
+    selectContestPickMock.mockResolvedValue({
       error: { error: { code: 'CONTEST_ENTRY_LOCKED', message: 'Picks can no longer be changed.' } },
       response: { status: 409 },
     });
@@ -971,6 +996,63 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(await screen.findByText('Picks can no longer be changed.')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-participant-sep-2')).not.toHaveTextContent('Selected');
     expect(screen.getByTestId('contest-entry-participant-sep-1')).toHaveTextContent('Selected');
+  });
+
+  // #1259: a pick is one small call, and the page takes its answer without reading anything again.
+  it('after a pick is saved, shows the server\'s lineup without reading the room, the contest or the entry again', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
+    selectContestPickMock.mockResolvedValue(pickAnswer(['sep-1', 'sep-2']));
+
+    renderContestEntryPage();
+
+    const rory = await screen.findByTestId('contest-entry-participant-sep-2');
+    const readsBefore = [getSelectionStateMock, getContestMock, getContestEntryMock].map((mock) => mock.mock.calls.length);
+    fireEvent.click(rory);
+
+    await waitFor(() => expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ action: 'contestEntry.pickChange.succeeded' }),
+      expect.any(String),
+    ));
+    expect(screen.getByTestId('contest-entry-group-toggle-tier-1')).toHaveTextContent('Rory McIlroy');
+    expect(screen.getByText('2/2 saved')).toBeInTheDocument();
+    expect(selectContestPickMock).toHaveBeenCalledTimes(1);
+    expect([getSelectionStateMock, getContestMock, getContestEntryMock].map((mock) => mock.mock.calls.length))
+      .toEqual(readsBefore);
+  });
+
+  it('settles on the golfers the server kept when its swap in a full tier differs from the page\'s guess', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1', 'sep-2'])]) });
+    // With no pick times the page guesses Scottie stays; the server kept Scottie and dropped Rory.
+    selectContestPickMock.mockResolvedValue(pickAnswer(['sep-1', 'sep-3']));
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-group-toggle-tier-1'));
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-3'));
+
+    const tierToggle = screen.getByTestId('contest-entry-group-toggle-tier-1');
+    await waitFor(() => expect(tierToggle).toHaveTextContent('Scottie Scheffler'));
+    expect(tierToggle).toHaveTextContent('Jordan Spieth');
+    expect(tierToggle).not.toHaveTextContent('Rory McIlroy');
+  });
+
+  it('opens the tier again, with the pick put back, when the server refuses the pick that filled it', async () => {
+    primeCommonMocks();
+    getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
+    selectContestPickMock.mockResolvedValue({
+      error: { error: { code: 'PARTICIPANT_UNAVAILABLE', message: 'Rory McIlroy has withdrawn.' } },
+      response: { status: 400 },
+    });
+
+    renderContestEntryPage();
+
+    fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-2'));
+
+    expect(await screen.findByText('Rory McIlroy has withdrawn.')).toBeInTheDocument();
+    expect(await screen.findByTestId('contest-entry-participant-sep-2')).not.toHaveTextContent('Selected');
+    expect(screen.getByText('1/2 saved')).toBeInTheDocument();
   });
 
   function primeHiddenOtherTeamEntry() {
@@ -1024,24 +1106,21 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.queryByText('My Own Entry')).not.toBeInTheDocument();
   });
 
-  it("shows the summary tiles as hidden on another team's entry while the contest is open, not empty-lineup counts", async () => {
+  it("shows another team's entry status as hidden while the contest is open, with no empty-lineup counts", async () => {
     primeHiddenOtherTeamEntry();
 
     renderContestEntryPage();
 
     await screen.findByTestId('contest-entry-picks-hidden');
-    expect(screen.queryByText('0/0')).not.toBeInTheDocument();
-    expect(screen.queryByText('Lineup is fully selected')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-tiebreaker-status')).toHaveTextContent('Hidden');
-    expect(screen.getByTestId('contest-entry-tiebreaker-summary')).toHaveTextContent('Hidden until the event starts');
-    expect(screen.getAllByText('Hidden until the event starts')).toHaveLength(4);
+    expect(screen.queryByTestId('contest-entry-progress')).not.toBeInTheDocument();
+    expect(screen.queryByText(/0 of 0/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Lineup is fully selected/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Hidden until the event starts');
+    expect(screen.queryByTestId('contest-entry-finish')).not.toBeInTheDocument();
   });
 
   it('closes editing once the event has started, even while the contest still says open', async () => {
     primeCommonMocks({ eventStartDate: '2020-04-10T12:00:00.000Z' });
-    getEventMock.mockResolvedValue({
-      data: { event: { id: 'event-1', startDate: '2020-04-10T12:00:00.000Z', endDate: null } },
-    });
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([twoPickTier(['sep-1'])]) });
 
     renderContestEntryPage();
@@ -1101,7 +1180,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
       expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once it is submitted');
       expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Submit entry');
     });
@@ -1112,28 +1191,63 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
       expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
       expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Save entry');
+    });
+
+    it('puts the picks first, then the entry name, the tiebreaker and one Submit for the whole entry outside the tiebreaker', async () => {
+      primeCommonMocks();
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
+
+      renderContestEntryPage();
+
+      const submit = await screen.findByTestId('contest-entry-submit');
+      const picks = screen.getByTestId('contest-entry-builder-heading');
+      const name = screen.getByTestId('contest-entry-name-input');
+      const tiebreaker = screen.getByTestId('contest-entry-tiebreaker-select');
+      const follows = (earlier: Element, later: Element) =>
+        Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(follows(picks, name)).toBe(true);
+      expect(follows(name, tiebreaker)).toBe(true);
+      expect(follows(tiebreaker, submit)).toBe(true);
+      expect(within(screen.getByTestId('contest-entry-finish')).getByTestId('contest-entry-submit')).toBe(submit);
+      expect(screen.getAllByTestId('contest-entry-submit')).toHaveLength(1);
+    });
+
+    it('keeps the status, phase and dates in a callout beside the entry name, opened and closed by tapping its icon', async () => {
+      primeCommonMocks();
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
+
+      renderContestEntryPage();
+
+      expect(await screen.findByTestId('contest-entry-heading')).toHaveTextContent('Birdie Hunters Entry 1');
+      expect(screen.queryByText('Contest phase')).not.toBeInTheDocument();
+
+      const callout = within(await openStatusCallout());
+      expect(callout.getByTestId('contest-entry-status-entry-status')).toHaveTextContent('Not submitted');
+      expect(callout.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Editable until the event starts');
+      expect(callout.getByTestId('contest-entry-status-entries-close')).toHaveTextContent('When the event starts');
+      expect(callout.getByText('Created')).toBeInTheDocument();
+      expect(callout.getByText('Last updated')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('contest-entry-status'));
+      expect(screen.queryByTestId('contest-entry-status-callout')).not.toBeInTheDocument();
     });
 
     it('shows the entry back as Not submitted when unselecting a golfer leaves a submitted lineup short', async () => {
       primeCommonMocks();
       getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('SUBMITTED') });
-      submitContestSelectionMock.mockResolvedValue({
-        data: selectionStateWithStatus('DRAFT', [
-          { ...completeGroups()[0], selectedParticipantIds: [], participants: [buildGolfParticipant('sep-1', 'Scottie Scheffler', 1, false)] },
-        ]),
-      });
+      unselectContestPickMock.mockResolvedValue(pickAnswer([], { entryStatus: 'DRAFT' }));
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
       fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
       fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
 
       await waitFor(() =>
-        expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted'));
+        expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted'));
       expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('needs submitting again');
     });
 
@@ -1193,7 +1307,8 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     getLeagueMock.mockReset();
     getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
-    submitContestSelectionMock.mockReset();
+    selectContestPickMock.mockReset();
+    unselectContestPickMock.mockReset();
     updateContestEntryMock.mockReset();
   });
 
@@ -1256,7 +1371,7 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
   it('adds a golfer that takes the entry over the cap, then turns the spend red and keeps Submit disabled with the reason', async () => {
     primeBudgetMocks(['sep-2']);
     const deferred = createDeferred<unknown>();
-    submitContestSelectionMock.mockReturnValue(deferred.promise);
+    selectContestPickMock.mockReturnValue(deferred.promise);
 
     renderContestEntryPage();
 
@@ -1265,12 +1380,10 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     // Before the server answers, the spend already counts Scheffler.
     expect(await screen.findByTestId('contest-entry-over-budget')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-budget-remaining')).toHaveTextContent('$1,000 over the cap');
-    expect(submitContestSelectionMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { entryId: 'entry-1', participantId: 'sep-1' },
-    }));
+    expect(selectContestPickMock).toHaveBeenCalledWith(pickPath('sep-1'));
 
     await act(async () => {
-      deferred.resolve({ data: budgetState(['sep-2', 'sep-1']) });
+      deferred.resolve(pickAnswer(['sep-2', 'sep-1'], { lineupSummary: budgetState(['sep-2', 'sep-1']).lineupSummary }));
       await deferred.promise;
     });
     fireEvent.change(screen.getByTestId('contest-entry-tiebreaker-select'), { target: { value: '-12' } });
@@ -1281,37 +1394,55 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
     expect(screen.getByTestId('contest-entry-submit')).toBeDisabled();
   });
 
+  it('takes the server\'s cheapest fill from a pick\'s answer and warns with it, without reading the room again', async () => {
+    primeBudgetMocks([]);
+    selectContestPickMock.mockResolvedValue(pickAnswer(['sep-1'], {
+      lineupSummary: budgetState(['sep-1'], { cheapestFill: 7000, remaining: 6000 }).lineupSummary,
+    }));
+
+    renderContestEntryPage();
+
+    const scheffler = await screen.findByTestId('contest-entry-participant-sep-1');
+    const roomReadsBefore = getSelectionStateMock.mock.calls.length;
+    fireEvent.click(scheffler);
+
+    expect(await screen.findByTestId('contest-entry-budget-unfillable')).toHaveTextContent(
+      'The cheapest golfers left for your 1 place cost $7,000, more than you have left.',
+    );
+    expect(screen.getByTestId('contest-entry-selected-sep-1')).toHaveTextContent('Scottie Scheffler · $9,000');
+    expect(getSelectionStateMock).toHaveBeenCalledTimes(roomReadsBefore);
+  });
+
   it('counts the golfers still to pick in the singular when one place is left', async () => {
     primeBudgetMocks(['sep-2']);
 
     renderContestEntryPage();
 
-    expect(await screen.findByText('1 golfer still to pick')).toBeInTheDocument();
-    expect(screen.queryByText('1 golfers still to pick')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('contest-entry-progress')).toHaveTextContent('1 golfer still to pick');
+    expect(screen.getByTestId('contest-entry-progress')).not.toHaveTextContent('1 golfers still to pick');
   });
 
-  it('shows a dash, not Hidden, on the Spent tile when the picks are visible but the server sent no spend', async () => {
+  it('leaves the spend out of the progress line, rather than saying Hidden, when the picks are visible but the server sent no spend', async () => {
     primeBudgetMocks(['sep-2']);
     getSelectionStateMock.mockResolvedValue({ data: { ...budgetState(['sep-2']), lineupSummary: null } });
 
     renderContestEntryPage();
 
-    expect(await screen.findByText('Spent')).toBeInTheDocument();
-    expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
+    const progress = await screen.findByTestId('contest-entry-progress');
+    expect(progress).toHaveTextContent('picks saved');
+    expect(progress).not.toHaveTextContent('cap spent');
+    expect(progress).not.toHaveTextContent('Hidden');
   });
 
   it('removes a picked golfer when their chip is tapped', async () => {
     primeBudgetMocks(['sep-1', 'sep-2']);
-    submitContestSelectionMock.mockResolvedValue({ data: budgetState(['sep-1']) });
+    unselectContestPickMock.mockResolvedValue(pickAnswer(['sep-1'], { lineupSummary: budgetState(['sep-1']).lineupSummary }));
 
     renderContestEntryPage();
 
     fireEvent.click(await screen.findByTestId('contest-entry-selected-sep-2'));
 
-    await waitFor(() => expect(submitContestSelectionMock).toHaveBeenCalledWith(expect.objectContaining({
-      body: { entryId: 'entry-1', participantId: 'sep-2' },
-    })));
+    await waitFor(() => expect(unselectContestPickMock).toHaveBeenCalledWith(pickPath('sep-2')));
     await waitFor(() => expect(screen.queryByTestId('contest-entry-selected-sep-2')).not.toBeInTheDocument());
   });
 
@@ -1375,7 +1506,8 @@ describe('ContestEntryPage — a random-draw entry', () => {
     getLeagueMock.mockReset();
     getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
-    submitContestSelectionMock.mockReset();
+    selectContestPickMock.mockReset();
+    unselectContestPickMock.mockReset();
     updateContestEntryMock.mockReset();
   });
 
@@ -1422,9 +1554,9 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(pending).toHaveTextContent('There is nothing to pick in this contest.');
     expect(pending).toHaveTextContent('the commissioner runs the draw, which deals this entry 2 golfers at random and enters it.');
     expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Not yet run');
-    expect(screen.getByText('Open until the draw', { selector: 'span' })).toBeInTheDocument();
+    expect(within(await openStatusCallout()).getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the draw');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /submit/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
   });
@@ -1440,8 +1572,9 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(screen.getByTestId('contest-entry-draw-done')).toHaveTextContent('The draw is final.');
     expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Done');
     expect(screen.getByRole('heading', { name: 'Dealt golfers' })).toBeInTheDocument();
-    expect(screen.getAllByText('Entries closed').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    // The status icon is the one thing to press: the dealt golfers are read-only.
+    expect(screen.getAllByRole('button')).toEqual([screen.getByTestId('contest-entry-status')]);
+    expect(within(await openStatusCallout()).getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Entries closed');
     expect(screen.queryByTestId('contest-entry-draw-pending')).not.toBeInTheDocument();
   });
 });
@@ -1454,7 +1587,8 @@ describe('ContestEntryPage — a contest of two events', () => {
     getLeagueMock.mockReset();
     getContestEntryMock.mockReset();
     submitContestEntryMock.mockReset();
-    submitContestSelectionMock.mockReset();
+    selectContestPickMock.mockReset();
+    unselectContestPickMock.mockReset();
     updateContestEntryMock.mockReset();
   });
 
@@ -1526,6 +1660,27 @@ describe('ContestEntryPage — a contest of two events', () => {
     expect(screen.getByText('Scottie Scheffler')).toBeInTheDocument();
   });
 
+  it('still warns that a short lineup in the open second event is not submitted once the first event has started, with no tiebreaker to ask for', async () => {
+    primeTwoEventMocks();
+    const started = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Race 1', startDate: '2020-05-02T22:00:00.000Z', status: 'IN_PROGRESS' });
+    const next = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Race 2', startDate: '2099-05-16T22:00:00.000Z' });
+    getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sport: 'HORSE_RACING', sportEvents: [started, next] }) } });
+    const golfer = buildGolfParticipant('sep-21', 'Sovereignty', 1, false);
+    getSelectionStateMock.mockResolvedValue({
+      data: {
+        ...buildSelectionState([{ groupId: 'tier-1', groupName: 'Tier 1', groupNumber: 1, picksFromGroup: 1, selectedParticipantIds: [], participants: [golfer] }]),
+        sportEventId: 'event-2',
+      },
+    });
+
+    renderContestEntryPage();
+
+    expect(await screen.findByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once its lineup is complete and submitted');
+    // The entry's name locked with the first event, so only the warning is left to show.
+    expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
+  });
+
   it('shows no event switcher for a contest of one event', async () => {
     primeCommonMocks();
     getSelectionStateMock.mockResolvedValue({ data: buildSelectionState([]) });
@@ -1549,7 +1704,7 @@ describe('ContestEntryPage — a contest of two events', () => {
     })));
     expect(await screen.findByText('Xander Schauffele')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-event-switcher')).toHaveValue('event-2');
-    expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
   });
 
   it('submits the shown event\'s picks through that event\'s submit, not the first event\'s', async () => {

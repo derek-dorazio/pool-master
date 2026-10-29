@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { SportVocabulary } from '@poolmaster/shared/domain';
 import { replaceEventParticipant } from '@/lib/api';
 import type { SportEventDto, SportEventMatchDto, SportEventParticipantDto } from '@/lib/api';
-import { Button, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, LOADING_TEXT, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -71,7 +71,7 @@ export function WithdrawalsCard({
 
   return (
     <Tile data-testid="root-admin-withdrawals">
-      <h3 className="title-card text-base text-foreground">Withdrawals</h3>
+      <Heading level={3} variant="card" size="base">Withdrawals</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {`If a ${participant.one} withdraws before playing, name who takes the place. Picks of the withdrawn ${participant.one} stay, and score as a first-round loss. Once their ${noun.one} starts, enter the withdrawal as a walkover instead.`}
       </p>

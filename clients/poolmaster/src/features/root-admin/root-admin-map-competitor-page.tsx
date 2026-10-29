@@ -14,7 +14,7 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { UNMAPPED_COMPETITORS_PATH } from './manage-navigation';
-import { useUnmappedCompetitorsQuery } from './use-unmapped-competitors';
+import { useUnmappedCompetitorQuery } from './use-unmapped-competitors';
 
 function MapCompetitorForm({ competitor }: { competitor: UnmappedProviderParticipantDto }) {
   const logger = getLogger().child({ feature: 'root-admin-map-competitor-page' });
@@ -144,10 +144,8 @@ export function RootAdminMapCompetitorPage() {
   const [searchParams] = useSearchParams();
   const providerId = searchParams.get('provider') ?? '';
   const externalId = searchParams.get('competitor') ?? '';
-  const unmappedQuery = useUnmappedCompetitorsQuery();
-  const competitor = unmappedQuery.data?.find(
-    (candidate) => candidate.providerId === providerId && candidate.externalId === externalId,
-  );
+  const unmappedQuery = useUnmappedCompetitorQuery(providerId, externalId);
+  const competitor = unmappedQuery.data ?? null;
 
   return (
     <AsyncPage

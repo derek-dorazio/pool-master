@@ -27,10 +27,24 @@ const buttonVariants = cva(
         lg: "h-14 px-5",
         icon: "h-12 w-12 p-0",
       },
+      /**
+       * `row` is a button drawn as a line of content rather than a call to action: sentence
+       * case, full width, left aligned, and tall enough to wrap. Colour still comes from `variant`.
+       */
+      layout: {
+        button: "",
+        row: "w-full justify-start whitespace-normal text-left normal-case tracking-normal",
+      },
     },
+    compoundVariants: [
+      { layout: "row", size: "sm", className: "h-auto min-h-9 py-1.5" },
+      { layout: "row", size: "md", className: "h-auto min-h-12 py-2" },
+      { layout: "row", size: "lg", className: "h-auto min-h-14 py-2" },
+    ],
     defaultVariants: {
       variant: "primary",
       size: "md",
+      layout: "button",
     },
   },
 );
@@ -47,6 +61,7 @@ export function Button({
   className,
   disabled,
   isLoading = false,
+  layout,
   size,
   type = "button",
   variant,
@@ -56,7 +71,7 @@ export function Button({
 
   return (
     <Component
-      className={cn(buttonVariants({ className, size, variant }))}
+      className={cn(buttonVariants({ className, layout, size, variant }))}
       disabled={disabled || isLoading}
       type={asChild ? undefined : type}
       {...props}
@@ -75,6 +90,7 @@ export function LinkButton({
   children,
   className,
   isDisabled = false,
+  layout,
   size,
   variant,
   ...props
@@ -83,12 +99,30 @@ export function LinkButton({
     <Link
       aria-disabled={isDisabled}
       className={cn(
-        buttonVariants({ className, size, variant }),
+        buttonVariants({ className, layout, size, variant }),
         isDisabled ? "pointer-events-none opacity-60" : null,
       )}
       {...props}
     >
       {children}
     </Link>
+  );
+}
+
+export type MenuItemProps = Omit<ButtonProps, "layout" | "size" | "variant"> & {
+  /** The entry that is current, such as the league being viewed. */
+  isSelected?: boolean;
+};
+
+/** One entry in a dropdown menu: a quiet full-width row that tints when it is the current one. */
+export function MenuItem({ className, isSelected = false, ...props }: MenuItemProps) {
+  return (
+    <Button
+      className={cn("gap-3 rounded-xl px-3 font-medium", className)}
+      layout="row"
+      size="sm"
+      variant={isSelected ? "subtle" : "ghost"}
+      {...props}
+    />
   );
 }

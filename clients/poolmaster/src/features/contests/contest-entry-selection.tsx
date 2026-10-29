@@ -7,12 +7,13 @@ import {
   Button,
   Checkbox,
   Chip,
+  cn,
   FormField,
+  Heading,
   ListStack,
   Select,
   StatusBadge,
   Tile,
-  cn,
 } from "@/features/shared/ui";
 
 type SelectionState = SelectionStateResponse;
@@ -103,13 +104,14 @@ export function SelectionParticipantCard({
   return (
     <Button
       className={cn(
-        "normal-case tracking-normal h-auto w-full items-start justify-start gap-3 px-4 py-3 text-left whitespace-normal",
+        "items-start gap-3 px-4 py-3",
         isSelected
           ? "border-primary bg-primary/5 hover:bg-primary/5"
           : "hover:border-foreground/30",
       )}
       data-testid={`contest-entry-participant-${participant.sportEventParticipantId}`}
       disabled={isDisabled}
+      layout="row"
       onClick={() => onSelect(participant)}
       variant="secondary"
     >
@@ -201,16 +203,17 @@ export function EditableSelectionGroup({
       variant="subtle"
     >
       <Button
-        className="normal-case tracking-normal h-auto w-full flex-wrap items-start justify-between gap-3 p-0 text-left whitespace-normal hover:bg-transparent"
+        className="h-auto min-h-0 flex-wrap items-start justify-between gap-3 p-0 hover:bg-transparent"
         data-testid={`contest-entry-group-toggle-${group.groupId}`}
+        layout="row"
         onClick={onToggle}
         ref={setToggleRef}
         variant="ghost"
       >
         <div>
-          <h4 className="text-lg font-semibold text-foreground">
+          <Heading level={4} variant="subtitle">
             {group.groupName}
-          </h4>
+          </Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose {group.picksFromGroup} {group.picksFromGroup === 1 ? noun.one : noun.many} from this tier.
           </p>
@@ -269,9 +272,9 @@ export function LockedSelectionGroup({
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-lg font-semibold text-foreground">
+          <Heading level={4} variant="subtitle">
             {group.groupName}
-          </h4>
+          </Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             Frozen lineup from Tier {group.groupNumber}.
           </p>
@@ -326,57 +329,33 @@ export function LockedSelectionGroup({
   );
 }
 
-/**
- * The entry's tiebreaker prediction, when its scoring family asks for one, and the submit action.
- * A family with no tiebreaker (`tiebreaker` null) shows the submit action alone.
- */
-export function TiebreakerSelector({
+/** The entry's tiebreaker prediction, for a scoring family that asks for one. */
+export function TiebreakerField({
   disabled,
-  isSubmitted,
-  isSubmitting,
   onChange,
-  onSubmit,
-  submitDisabled,
   tiebreaker,
   value,
 }: {
   disabled: boolean;
-  /** An entry already submitted is saved again with the same button, which says so. */
-  isSubmitted: boolean;
-  isSubmitting: boolean;
   onChange: (value: string) => void;
-  onSubmit: () => void;
-  submitDisabled: boolean;
-  tiebreaker: EntryTiebreakerUi | null;
+  tiebreaker: EntryTiebreakerUi;
   value: string;
 }) {
   return (
-    <Tile padding="sm" radius="lg" variant="subtle">
-      {tiebreaker ? (
-        <FormField label={tiebreaker.label}>
-          <Select
-            data-testid="contest-entry-tiebreaker-select"
-            disabled={disabled}
-            onChange={(event) => onChange(event.target.value)}
-            value={value}
-          >
-            <option value="">{tiebreaker.placeholder}</option>
-            {tiebreaker.options.map((option) => (
-              <option key={option} value={option}>
-                {tiebreaker.format(option)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-      ) : null}
-      <Button
-        className={tiebreaker ? "mt-4" : undefined}
-        data-testid="contest-entry-submit"
-        disabled={submitDisabled}
-        onClick={onSubmit}
+    <FormField label={tiebreaker.label}>
+      <Select
+        data-testid="contest-entry-tiebreaker-select"
+        disabled={disabled}
+        onChange={(event) => onChange(event.target.value)}
+        value={value}
       >
-        {isSubmitting ? "Submitting..." : isSubmitted ? "Save entry" : "Submit entry"}
-      </Button>
-    </Tile>
+        <option value="">{tiebreaker.placeholder}</option>
+        {tiebreaker.options.map((option) => (
+          <option key={option} value={option}>
+            {tiebreaker.format(option)}
+          </option>
+        ))}
+      </Select>
+    </FormField>
   );
 }

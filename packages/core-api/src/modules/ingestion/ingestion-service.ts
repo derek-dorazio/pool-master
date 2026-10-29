@@ -32,7 +32,7 @@ import {
   isEventSyncFeedType,
   readPayload,
 } from './persistence/provider-sync-run-ledger';
-import { outsideReadMemo } from '../../core/request-read-memo';
+import { outsideRequest } from '../../core/request-scope';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -66,6 +66,13 @@ export interface UnmappedParticipant {
   externalId: string;
   externalName: string;
   sport: Sport;
+}
+
+export interface UnmappedParticipantFilters {
+  /** Only this provider's competitors. */
+  providerId?: string;
+  /** Only the competitor the provider knows by this identifier. */
+  externalId?: string;
 }
 
 export interface SyncRunListFilters {
@@ -229,11 +236,13 @@ export class IngestionService {
     }
   }
 
-  private async buildUnmappedParticipantsForProvider(provider: SportDataProvider): Promise<UnmappedParticipant[]> {
+  private async buildUnmappedParticipantsForProvider(provider: SportDataProvider, externalId: string | undefined): Promise<UnmappedParticipant[]> {
     const results: UnmappedParticipant[] = [];
 
     for (const sport of await this.getConfiguredSportsForProvider(provider)) {
-      const participants = await provider.getParticipants(sport);
+      const participants = (await provider.getParticipants(sport))
+        .filter((participant) => externalId === undefined || participant.externalId === externalId);
+      if (participants.length === 0) continue;
       // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
       const mapped = await this.participantMappings.findByProviderExternalIds(
         provider.providerId,
@@ -368,8 +377,8 @@ export class IngestionService {
       runType: 'MANUAL_EVENT_SYNC',
     });
 
-    // Outside the request's read memo: the sync runs on after the response and reads afresh.
-    outsideReadMemo(() => setImmediate(() => {
+    // Outside the request: the sync runs on after the response and reads afresh.
+    outsideRequest(() => setImmediate(() => {
       void this.executeSubmittedEventSync({
         scheduler,
         normalizedScope,
@@ -437,12 +446,18 @@ export class IngestionService {
     }
   }
 
-  async getUnmappedParticipants(): Promise<UnmappedParticipant[]> {
-    const providers = this.registry.getAllProviders();
+  /**
+   * Competitors the providers report that no participant is mapped to. `providerId` asks only
+   * that provider and `externalId` keeps only that competitor, so a page about one competitor
+   * reads one mapping (#1251).
+   */
+  async getUnmappedParticipants(filters: UnmappedParticipantFilters = {}): Promise<UnmappedParticipant[]> {
+    const providers = this.registry.getAllProviders()
+      .filter((provider) => filters.providerId === undefined || provider.providerId === filters.providerId);
     const unmapped: UnmappedParticipant[] = [];
 
     for (const provider of providers) {
-      unmapped.push(...await this.buildUnmappedParticipantsForProvider(provider));
+      unmapped.push(...await this.buildUnmappedParticipantsForProvider(provider, filters.externalId));
     }
 
     return unmapped;

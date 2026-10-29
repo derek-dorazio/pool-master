@@ -1,7 +1,18 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import { updateEventParticipantGolfRoundScore } from '@/lib/api';
-import { Alert, Button, DataGrid, Input, Select, Tile, timeZoneGenericName, toDateTimeLocalValue, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  Alert,
+  Button,
+  DataGrid,
+  Heading,
+  Input,
+  Select,
+  Tile,
+  timeZoneGenericName,
+  toDateTimeLocalValue,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -328,7 +339,7 @@ export function GolfRoundScoreCorrectionsCard({
 
   return (
     <Tile>
-      <h3 className="title-card text-base text-foreground">Corrections</h3>
+      <Heading level={3} variant="card" size="base">Corrections</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         Fix one golfer&rsquo;s round result at a time. Enter every value yourself: changing strokes does not change to par, and completing a round does not set its time.
       </p>

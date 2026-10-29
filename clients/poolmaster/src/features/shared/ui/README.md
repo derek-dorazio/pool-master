@@ -6,14 +6,27 @@ The shared UI layer is split into three levels:
    `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
-   `Eyebrow`; letter spacing comes from the theme's `tracking-eyebrow` and
-   `tracking-label`, never a hand-typed `tracking-[…]`.
+   `Eyebrow`; a title is a `Heading` (`level` is the tag, `variant` the look:
+   `hero`, `display`, `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`); letter spacing comes from the theme's `tracking-eyebrow` and
+   `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
+   (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
+   `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
+   `normal-case tracking-normal` onto a button.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.
 3. **Feature pages** own product-specific data fetching, mutations, copy, and
    business rules. They should compose primitives and templates instead of
    repeating page chrome or modal footers.
+
+## Where a Reusable Piece Lives
+
+- A **generic** piece, one that knows nothing about the product (a heading, a
+  row button, a table, an inline state), goes in `features/shared/ui`.
+- A **product** piece stays in the feature folder that owns its concept, such
+  as `features/teams` (a team name), `features/contests` (a leaderboard or a
+  contest row), `features/event-pages` or `features/auth`. Other features import
+  it from there rather than copying it or moving it into the shared layer.
 
 ## Page Templates
 
@@ -38,6 +51,14 @@ League pages and administration areas use the pieces named in
 (`SettingsSectionHeader` alone titles a section whose body is a `DataGrid`),
 `DangerZone` / `DangerZoneAction`, and `FormPage` for a full-page edit
 (with `IconPalette` when the form picks an icon).
+
+A team's icon and name come from `features/teams`, not this folder, because they
+are a product piece: `TeamAvatar` draws the icon in its coloured square, and
+`TeamName` puts it beside the name, linked or plain, with the You and Inactive
+markers and an optional line underneath.
+
+`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
+callout opens on mouse hover or on a tap, for a phone.
 
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or

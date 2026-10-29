@@ -56,6 +56,19 @@ const SURVIVOR_PICK_REFUSALS = 'In a survivor contest (#719): 409 PREDICTION_ONE
 /** What every game-pick route answers for a contest, event, entry or game it can't serve (#716). */
 const GAME_PICK_REFUSALS = '404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.';
 
+const selectionPickParams = {
+  type: 'object',
+  required: ['contestId', 'entryId', 'sportEventParticipantId'],
+  properties: {
+    contestId: { type: 'string', format: 'uuid' },
+    entryId: { type: 'string', format: 'uuid' },
+    sportEventParticipantId: { type: 'string', format: 'uuid' },
+  },
+} as const;
+
+/** What both pick changes refuse, and how. */
+const PICK_CHANGE_REFUSALS = 'Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and the pick\'s event has not started: 409 CONTEST_ENTRY_LOCKED otherwise, and 409 SELECTION_DEALT_BY_DRAW in a random-draw contest, whose picks the draw deals. Only a member of the entry\'s squad may change its picks: 403 ENTRY_ACCESS_DENIED otherwise. 404 CONTEST_ENTRY_NOT_FOUND for an entry not in the contest; 400 PARTICIPANT_NOT_IN_EVENT or PARTICIPANT_NOT_SELECTABLE for a field row outside the contest\'s events. A change that leaves a SUBMITTED entry\'s lineup short, or over a budget contest\'s cap, sends the entry back to DRAFT for that event; it must be submitted again to count. The answer carries only what changed on the entry (#1259): its picks in the event, its status there and, in a budget contest, its lineup summary.';
+
 const contestEntryEventParams = {
   type: 'object',
   required: ['contestId', 'entryId', 'sportEventId'],
@@ -112,21 +125,36 @@ export function selectionsModule(fastify: FastifyInstance, opts: MailModuleOptio
     handler: handlers.getSelectionState,
   });
 
-  fastify.post('/:contestId/pick', {
+  fastify.put('/:contestId/entries/:entryId/picks/:sportEventParticipantId', {
     schema: {
       tags: ['Selections'],
-      summary: 'Submit a pick',
+      summary: 'Select a pick',
       description:
-        'Submits a pick and returns the refreshed selection state for the pick\'s event: the event of the field row it names (#713). Picks are placed, swapped and unselected only while the contest is OPEN or ACTIVE and that event\'s start time has not passed: 409 CONTEST_ENTRY_LOCKED otherwise. In a budget contest re-selecting a held golfer unselects it, a golfer with no price is refused with 400 PRICE_MISSING, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A change that leaves a SUBMITTED entry\'s lineup short, or over a budget contest\'s cap, sends the entry back to DRAFT; it must be submitted again to count.',
-      operationId: 'submitContestSelection',
-      params: contestIdParams,
-      body: schemaRef('SubmitPickRequest'),
+        `Selects one field row for the entry, in the event the row belongs to (#713, #1259). Selecting a row the entry already holds changes nothing. In a tiered contest a pick in a full tier replaces the tier's newest pick. In a budget contest a golfer with no price is refused with 400 PRICE_MISSING, a full roster with 400 ENTRY_COMPLETE, and the salary cap never refuses a pick: an entry may go over it while it rearranges. A withdrawn or otherwise unavailable row is refused with 400 PARTICIPANT_UNAVAILABLE. ${PICK_CHANGE_REFUSALS}`,
+      operationId: 'selectContestPick',
+      params: selectionPickParams,
       response: {
         200: schemaRef('SelectionPickResponse'),
         ...selectionErrorResponses(400, 401, 403, 404, 409),
       },
     },
-    handler: handlers.submitContestSelection,
+    handler: handlers.selectContestPick,
+  });
+
+  fastify.delete('/:contestId/entries/:entryId/picks/:sportEventParticipantId', {
+    schema: {
+      tags: ['Selections'],
+      summary: 'Unselect a pick',
+      description:
+        `Removes one field row from the entry's picks (#1259). Unselecting a row the entry does not hold changes nothing. A golfer who withdrew after being picked can still be removed. ${PICK_CHANGE_REFUSALS}`,
+      operationId: 'unselectContestPick',
+      params: selectionPickParams,
+      response: {
+        200: schemaRef('SelectionPickResponse'),
+        ...selectionErrorResponses(400, 401, 403, 404, 409),
+      },
+    },
+    handler: handlers.unselectContestPick,
   });
 
   fastify.post('/:contestId/entries/:entryId/events/:sportEventId/submit', {

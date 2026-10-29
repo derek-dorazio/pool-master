@@ -81,6 +81,7 @@ export function RootAdminSportEventFieldPage() {
               {sportEventHasScoreSync(tournament.syncScope) ? (
                 <EventFieldRefreshAction
                   eventId={eventId}
+                  // poolmaster-allow-list-lookup: counts the tournament's field, which this page shows in full
                   fieldCount={entries.length}
                 />
               ) : null}

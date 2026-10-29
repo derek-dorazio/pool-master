@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BracketAdvancement, MatchSide, SportEventStatus } from '@poolmaster/shared/domain';
 import { proposeEventRoundMatchups, setEventRoundMatchups } from '@/lib/api';
 import type { RoundMatchupDto, SportEventDto } from '@/lib/api';
-import { Button, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -41,6 +41,7 @@ export function ReseedRoundsCard({
   roundCount: number;
 }) {
   const leaguesQuery = useSportLeaguesQuery(event.sport);
+  // poolmaster-allow-list-lookup: sport leagues are reference data, a few dozen rows that do not grow with history
   const league = leaguesQuery.data?.find((candidate) => candidate.id === event.sportLeagueId);
   // Only a released event still being played places rounds: not a draft, a cancelled or a finished one.
   const underWay = event.status === SportEventStatus.SCHEDULED || event.status === SportEventStatus.IN_PROGRESS;
@@ -55,7 +56,7 @@ export function ReseedRoundsCard({
 
   return (
     <Tile data-testid="root-admin-reseed">
-      <h3 className="title-card text-base text-foreground">Reseeded rounds</h3>
+      <Heading level={3} variant="card" size="base">Reseeded rounds</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${matchNoun(context.vocabulary).many}, change any that need it, then save them.`}
       </p>
@@ -152,7 +153,7 @@ function ReseedRound({
 
   return (
     <section className="mt-4" data-testid={`root-admin-reseed-round-${roundNumber}`}>
-      <h4 className="text-sm font-semibold text-foreground">{roundLabel(roundNumber, roundCount)}</h4>
+      <Heading level={4} variant="label">{roundLabel(roundNumber, roundCount)}</Heading>
       {ready ? null : (
         <p className="mt-1 text-sm text-muted-foreground" data-testid={`root-admin-reseed-waiting-${roundNumber}`}>
           {`Enter the result of every ${before} ${noun.one} first. ${capitalize(unfinishedNoun)} ${listNumbers(unfinished.map((match) => match.matchNumber))} ${unfinished.length === 1 ? 'has' : 'have'} no result yet.`}

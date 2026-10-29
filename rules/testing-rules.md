@@ -811,6 +811,14 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 - When a slice introduces or standardizes intentional error conditions, functional API coverage must include explicit negative-path cases for those errors and assert the expected application error codes, not just the HTTP status.
 - Do not stop at a single generic failure case when the route exposes multiple meaningful denial reasons; cover the distinct error conditions that the frontend or other clients need to handle differently.
 
+**Query budget (#1244):**
+- Every request the functional suite makes must run at most 25 Prisma queries (`REQUEST_QUERY_BUDGET` in `packages/core-api/src/core/request-query-usage.ts`). The server records each request over it, and the test that made it fails after it runs, naming the route and the count.
+- A read answered by the request read memo is not a query; each statement of a `$transaction([...])` batch is one.
+- An over-budget route is fixed by batching its reads, not by splitting the test. The routes over budget when the check arrived are on `tests/functional/query-budget-allow-list.ts`, each with the ticket that fixes it; the fix PR removes its entry. A new entry needs a ticket and is a review trigger.
+- A full functional run (unsharded, no file or name filter, as `rules/workflow-rules.md` §3 runs it) fails in teardown on any allow-list entry whose route never went over budget, or was never called: its fix has landed, so the entry goes. CI runs the suite in shards and skips this check, so the local full run is where it bites.
+- Work a request starts but does not wait for (the email sender's drain, a manual event sync) runs in `outsideRequest` (`packages/core-api/src/core/request-scope.ts`), so its queries are not the request's and it does not share the request's read memo.
+- The same count is on every `request completed` log line as `res.queryCount` and `res.dbMs`, and a request over budget logs `request.queryBudget.exceeded` at `warn` in every environment.
+
 Functional suites should prioritize durable critical-path journeys covering:
 
 - auth
@@ -1069,6 +1077,35 @@ database within normal local and CI execution.
 However, the local `poolmaster_test` database is intentionally disposable. It
 is acceptable to reset or recreate `poolmaster_test` before a validation run
 when you need a clean migrated schema.
+
+---
+
+## 9B. Query Scaling Tests
+
+A read that queries once per row passes every other test, because tests seed a handful of rows and
+a handful of extra queries costs nothing measurable. A scaling test counts SQL statements instead of
+timing them, so it catches the per-row read at any data size.
+
+- **Required for** every GET route whose response holds an array, at the top or anywhere inside:
+  lists, and detail reads that embed one (a contest with its events, a setting with its history).
+  It lands in the slice that adds the route.
+- **How:** `expectConstantQueries` from `tests/integration/query-scaling.ts`, in
+  `tests/integration/core-api/list-route-query-scaling.integration.ts` or the route's own suite.
+  `route` names the route exactly as the OpenAPI spec does (`'GET /api/v1/leagues/{id}/contests/'`),
+  `seed(rows)` builds a fresh parent with that many child rows, `call` reads it through
+  `app.inject`, and `rowsShown` says how many of them the response shows. The helper reads a seed of
+  2 and one of 20 and fails if the statement count differs, listing the statements whose count
+  changed.
+- **Seed the rows that could each cost a query:** the teams of a team list, the years of a history,
+  the contests of a cup, and each parent of the row (give each contest its own event, so a read per
+  event shows too). The helper refuses a case whose larger seed the response does not show, or whose
+  read sends no recorded statement, since its count would prove nothing. It sends any email the
+  seed queued before it starts counting.
+- **Enforced by** `npm run rules:check:query-scaling`, which reads the list routes from the OpenAPI
+  spec. Routes that shipped before it are listed in `scripts/query-scaling-gaps.mjs`, each with the
+  ticket that will add its test; that list only shrinks, and a new route never goes on it.
+- A count that grows is a defect: fix the read (§3 *Defect Verification Protocol*), never loosen the
+  case.
 
 ---
 

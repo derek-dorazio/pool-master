@@ -11,7 +11,7 @@ import {
   buildLeagueContestPath,
   buildLeagueContestsPath,
 } from '@/features/leagues/league-routing';
-import { Alert, LinkButton } from '@/features/shared/ui';
+import { Alert, Heading, LinkButton } from '@/features/shared/ui';
 
 /** The team's best place on a live contest's leaderboard; the server ranks best first. */
 function LiveRank({ contest, teamId }: { contest: ContestDto; teamId: string }) {
@@ -50,6 +50,7 @@ export function MyTeamEntriesSection({
   teamId: string;
 }) {
   const contestsQuery = useLeagueContestsQuery(leagueId);
+  // poolmaster-allow-list-lookup: the league's current contests (#1161), dropping drafts
   const currentContests = (contestsQuery.data ?? []).filter(
     (contest) => contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE,
   );
@@ -66,7 +67,7 @@ export function MyTeamEntriesSection({
 
   return (
     <section className="space-y-3" data-testid="my-team-entries">
-      <h2 className="text-lg font-semibold text-foreground">My entries</h2>
+      <Heading level={2} variant="subtitle">My entries</Heading>
       {contestsQuery.isLoading ? (
         <p className="text-sm text-muted-foreground" role="status">Loading your contests...</p>
       ) : contestsQuery.isError ? (

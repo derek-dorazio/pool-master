@@ -94,7 +94,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     autoLifecycleEnabled: true,
     loadedParticipantCount: 120,
     tierCount: 6,
-    contestCount: 0,
+    adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 },
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
     allowedTransitions: ['IN_PROGRESS', 'CANCELLED'],
@@ -196,7 +196,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('lists what is missing and keeps the button disabled while a draft has untiered golfers', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({
-        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], untieredParticipantCount: 3 }) },
+        data: { event: tournament({ status: 'DRAFT', allowedTransitions: ['CANCELLED'], adminCounts: { untieredParticipantCount: 3, unpricedParticipantCount: 0, emptyTierLabels: [], contestCount: 0 } }) },
       });
       renderPage();
 
@@ -209,7 +209,7 @@ describe('pool-master-3dg RootAdminSportEventHomePage', () => {
     it('names an empty tier and keeps the button disabled while a draft race has a tier with no drivers', async () => {
       seedDefaults();
       getEventMock.mockResolvedValue({
-        data: { event: tournament({ sport: 'AUTO_RACING', status: 'DRAFT', allowedTransitions: ['CANCELLED'], tierCount: 4, emptyTierLabels: ['Tier 4'] }) },
+        data: { event: tournament({ sport: 'AUTO_RACING', status: 'DRAFT', allowedTransitions: ['CANCELLED'], tierCount: 4, adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierLabels: ['Tier 4'], contestCount: 0 } }) },
       });
       renderPage();
 

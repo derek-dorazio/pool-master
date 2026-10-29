@@ -16,10 +16,10 @@ import {
 import { extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { CreateTeamForm } from './create-team-form';
+import { TeamAvatar } from './team-avatar';
 import { MyTeamEntriesSection } from './my-team-entries-section';
 import { TEAM_PAGE_FALLBACK_ERROR } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
-import { TeamIcon } from './team-icon';
 import { TeamOwnersSection } from './team-owners-section';
 import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamOwners } from './use-my-team-owners';
@@ -97,7 +97,7 @@ export function MyTeamPage() {
     <section className="space-y-8" data-testid="my-team-page">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <IdentityHeading
-          icon={<TeamIcon iconKey={myTeam.iconKey} size="md" />}
+          avatar={<TeamAvatar iconKey={myTeam.iconKey} label={`${myTeam.name} icon`} size="md" />}
           meta={formatOwnerCount(myTeam)}
           name={myTeam.name}
           testId="my-team-identity"

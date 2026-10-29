@@ -8,14 +8,11 @@
  * `engine/` classes #323 deleted — they were just unreachable from anywhere but an HTTP
  * request, so the only way to test a selection rule was to send one.
  *
- * **Submitting a selection has three outcomes, not two.** A selection can be placed, it can
- * *replace* the entry's last pick in a tier that is already full, or — in a tiered contest —
- * re-submitting a participant the entry already holds *toggles it off*, deleting the pick and
- * inserting nothing. An abstraction that forgot this has already failed once:
- * the first attempt's `validatePick` returned `{ valid, reason }`, a boolean cannot express
- * replace or toggle-off, so the live behaviour could never live behind it; the engines built
- * on it enforced three rules to the route's ten and, on a full tier, rejected the pick where
- * the route replaces it. They were dead code that disagreed with production.
+ * **A pick change is one of two explicit calls (#1259).** Selecting places a pick, or *replaces*
+ * the entry's newest pick in a tier that is already full; unselecting removes one. Each is
+ * idempotent: selecting a held pick or unselecting one not held changes nothing. Each answers
+ * with only what changed on the entry, never the whole room. (The old toggle, where re-sending a
+ * held pick removed it, is gone: a double tap could undo itself.)
  *
  * **This is the shared handler; the per-type rules are engines (#198).** Auth, the pick
  * window, participant-in-event, availability, exclusivity and persistence are the same for
@@ -57,6 +54,7 @@ import {
   ContestDrawAlreadyRunError,
   ContestDrawEntriesChangedError,
   type ContestEntryPickService,
+  type LockedEntryPick,
 } from '../contest-entry-picks';
 import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
 import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
@@ -88,7 +86,8 @@ import {
   type PickHistoryRow,
   type SelectionView,
   type SelectionGroup,
-  type SubmitSelectionResult,
+  type SelectionParticipant,
+  type SelectionPickResult,
 } from './types';
 
 export interface SelectionServiceDeps {
@@ -103,9 +102,9 @@ export interface SelectionServiceDeps {
   /** Read-only by design (#247); the two pick writes below go through `pickWrites`. */
   picks: ContestEntryPickRepository;
   /**
-   * The single enforced pick-write path (plans/117 §7.1): `createPick` resolves the parent
-   * contest's `contestFormat` inside the insert's transaction, and `deletePick` keeps the
-   * tiered replace and toggle-off deletes on the same service rather than on the read port.
+   * The single enforced pick-write path (plans/117 §7.1): `changeEntryPick` locks the entry,
+   * reads its picks and writes the change in one transaction, stamping the parent contest's
+   * `contestFormat` on an insert, and `recordDraw` deals a random draw.
    */
   pickWrites: ContestEntryPickService;
   tiers: SportEventTierService;
@@ -136,12 +135,21 @@ export interface GetSelectionStateInput {
   actorIsRootAdmin?: boolean;
 }
 
-export interface SubmitSelectionInput {
+export interface PickChangeInput {
   contestId: string;
   entryId: string;
-  /** A `SportEventParticipant` id — the field row, not the canonical participant. */
-  participantId: string;
+  /** The field row picked or unpicked, not the canonical participant. */
+  sportEventParticipantId: string;
   actorUserId?: string;
+}
+
+/** What a pick change has checked and read before it writes. */
+interface PickChange {
+  context: SelectionContext;
+  engine: SelectionEngine;
+  entry: ContestEntry;
+  rosterSize: number;
+  selectionParticipant: SelectionParticipant;
 }
 
 export interface RunDrawInput {
@@ -191,29 +199,108 @@ export class SelectionService {
   }
 
   /**
-   * Submit a selection, and answer with the refreshed room.
+   * Selects one field row for an entry (#1259), and answers with only what changed. Selecting a
+   * pick the entry already holds changes nothing. A full tier swaps out its newest pick.
    *
-   * The guards run in the order below and that order is part of the contract — an unknown
-   * entry answers 404 before an unauthenticated caller answers 401, because which entry was
-   * meant is not a secret and a missing one is the more specific complaint.
+   * The guards run in `loadPickChange`'s order, and that order is part of the contract. The
+   * engine decides on the entry's picks as they stand under the entry's lock, so two changes to
+   * one entry never decide on the same picks.
    */
-  async submitSelection(input: SubmitSelectionInput): Promise<SubmitSelectionResult> {
-    const { contestId, entryId, participantId, actorUserId } = input;
+  async selectPick(input: PickChangeInput): Promise<SelectionPickResult> {
+    const change = await this.loadPickChange(input);
+    const { context, engine, rosterSize, selectionParticipant } = change;
+    const { contestId, entryId, sportEventParticipantId } = input;
+    // What `decide` placed, read after the write; a field, so the closure's assignment is seen.
+    const placed: { lineupSlot: number | null; replacedPickId: string | null } = { lineupSlot: null, replacedPickId: null };
+    const { changed } = await this.deps.pickWrites.changeEntryPick({
+      entryId,
+      sportEventId: context.sportEvent.id,
+      decide: (picks) => {
+        if (picks.some((pick) => pick.sportEventParticipantId === sportEventParticipantId)) return null;
+        if (!selectionParticipant.isAvailable) {
+          throw selectionErrors.participantUnavailable(sportEventParticipantId, selectionParticipant.status ?? null);
+        }
+        const outcome = engine.evaluate({
+          participant: selectionParticipant,
+          existingPicks: picks.map(toEntryPick),
+          tiers: context.tiers,
+          rosterSize,
+        });
+        if (outcome.kind === SelectionOutcomeKind.REJECT) {
+          throw rejectionError(outcome, { contestId, entryId, participantId: sportEventParticipantId, rosterSize });
+        }
+        // Accept, or replace: a replacement first displaces the pick it takes the place of.
+        placed.replacedPickId = outcome.kind === SelectionOutcomeKind.REPLACE ? outcome.replacedPickId : null;
+        placed.lineupSlot = outcome.lineupSlot;
+        return { removePickId: placed.replacedPickId, add: { sportEventParticipantId, lineupSlot: outcome.lineupSlot } };
+      },
+    });
+
+    if (changed) {
+      this.deps.logger?.info(
+        {
+          action: 'selection.selectPick.placed',
+          data: { contestId, entryId, sportEventParticipantId, ...placed },
+        },
+        placed.replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
+      );
+    }
+    return this.afterPickChange(change, changed);
+  }
+
+  /**
+   * Unselects one field row from an entry (#1259), and answers with only what changed.
+   * Unselecting a pick the entry does not hold changes nothing. A golfer who withdrew after
+   * being picked can still be removed, or the entry would be stuck holding them.
+   */
+  async unselectPick(input: PickChangeInput): Promise<SelectionPickResult> {
+    const change = await this.loadPickChange(input);
+    const { context, engine, rosterSize } = change;
+    const { contestId, entryId, sportEventParticipantId } = input;
+    const refusal = engine.refuseUnselect();
+    if (refusal) throw rejectionError(refusal, { contestId, entryId, participantId: sportEventParticipantId, rosterSize });
+
+    let removedPickId: string | null = null;
+    const { changed } = await this.deps.pickWrites.changeEntryPick({
+      entryId,
+      sportEventId: context.sportEvent.id,
+      decide: (picks) => {
+        removedPickId = picks.find((pick) => pick.sportEventParticipantId === sportEventParticipantId)?.id ?? null;
+        return removedPickId ? { removePickId: removedPickId, add: null } : null;
+      },
+    });
+
+    if (changed) {
+      this.deps.logger?.info(
+        { action: 'selection.unselectPick.removed', data: { contestId, entryId, sportEventParticipantId, pickId: removedPickId } },
+        'Unselected a participant on the entry',
+      );
+    }
+    return this.afterPickChange(change, changed);
+  }
+
+  /**
+   * Everything a pick change checks before it writes, in the contract's order: an unknown entry
+   * answers 404 before an unauthenticated caller 401, because which entry was meant is not a
+   * secret and a missing one is the more specific complaint; then ownership, the pick window,
+   * the roster, and the field row being in the contest's event.
+   */
+  private async loadPickChange(input: PickChangeInput): Promise<PickChange> {
+    const { contestId, entryId, sportEventParticipantId, actorUserId } = input;
     // The pick is in the event its field row belongs to (#713); a row from outside the contest
     // is refused below, after the entry and actor checks.
-    const fieldRow = await this.deps.field.findById(participantId);
+    const fieldRow = await this.deps.field.findById(sportEventParticipantId);
     const context = await this.loadContext(contestId, fieldRow?.sportEventId, { fallBackToCurrent: true });
 
-    const requestedEntry = context.entries.find((entry) => entry.id === entryId);
-    if (!requestedEntry) throw selectionErrors.entryNotFound(entryId, contestId);
+    const entry = context.entries.find((candidate) => candidate.id === entryId);
+    if (!entry) throw selectionErrors.entryNotFound(entryId, contestId);
 
     if (!actorUserId) throw selectionErrors.authSessionRequired();
 
-    const ownsRequestedEntry = context.squadMemberships.some(
-      (membership) =>
-        membership.squadId === requestedEntry.squadId && membership.userId === actorUserId,
+    const ownsEntry = context.squadMemberships.some(
+      (membership) => membership.squadId === entry.squadId && membership.userId === actorUserId,
     );
-    if (!ownsRequestedEntry) throw selectionErrors.entryAccessDenied();
+    if (!ownsEntry) throw selectionErrors.entryAccessDenied();
 
     const engine = getSelectionEngine(context.selectionType);
 
@@ -222,97 +309,71 @@ export class SelectionService {
     // and once the event's start time passes the golfers are playing.
     if (!context.acceptsPicks) {
       this.deps.logger?.warn(
-        { action: 'selection.submitSelection.locked', data: { contestId, entryId, status: context.contest.status } },
+        { action: 'selection.pickChange.locked', data: { contestId, entryId, status: context.contest.status } },
         'Refused a pick change on a contest that no longer takes picks',
       );
       throw lockedSelectionError(context, contestId);
     }
 
-    const { tiers } = context;
-    const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers });
+    const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
     if (!fieldRow || fieldRow.sportEventId !== context.sportEvent.id) {
-      throw selectionErrors.participantNotInEvent(participantId, contestId);
+      throw selectionErrors.participantNotInEvent(sportEventParticipantId, contestId);
     }
-
-    // Accepts either id, because a client may send the field row's id or the canonical
-    // participant's and both identify the same selection.
     const selectionParticipant = context.selectionParticipants.find(
-      (participant) =>
-        participant.sportEventParticipantId === participantId
-        || participant.participantId === fieldRow.participantId,
+      (participant) => participant.sportEventParticipantId === sportEventParticipantId,
     );
     if (!selectionParticipant) {
-      throw selectionErrors.participantNotSelectable(participantId, contestId);
+      throw selectionErrors.participantNotSelectable(sportEventParticipantId, contestId);
     }
 
-    const existingPicks = await this.findEventPicks(context, [entryId]);
-    const heldPick = existingPicks.find((pick) => pick.sportEventParticipantId === participantId);
-    const outcome = engine.evaluate({
-      participant: selectionParticipant,
-      heldPick: heldPick ? toEntryPick(heldPick) : null,
-      existingPicks: existingPicks.map(toEntryPick),
-      tiers,
-      rosterSize,
-    });
+    return { context, engine, entry, rosterSize, selectionParticipant };
+  }
 
-    // A toggle-off is acted on before the availability check: a golfer who withdrew after
-    // being picked can no longer be chosen, but must still be removable, or the entry is stuck
-    // holding them.
-    if (outcome.kind === SelectionOutcomeKind.TOGGLE_OFF) {
-      await this.deps.pickWrites.deletePick(outcome.pickId);
-      this.deps.logger?.info(
-        {
-          action: 'selection.submitSelection.toggledOff',
-          data: { contestId, entryId, participantId, pickId: outcome.pickId },
-        },
-        'Unselected a participant already on the entry',
-      );
-      const toggledContext = await this.returnToDraftIfShort(context, engine, requestedEntry, rosterSize);
-      return {
-        outcome: 'toggled-off',
-        view: await this.buildRoomView({ context: toggledContext, engine, selectedEntryId: entryId, actorUserId }),
-      };
-    }
-    if (!selectionParticipant.isAvailable) {
-      throw selectionErrors.participantUnavailable(participantId, selectionParticipant.status ?? null);
-    }
+  /**
+   * After a pick change: the entry's picks read once, a lineup a write left unsubmittable sent
+   * back to draft, and the result.
+   */
+  private async afterPickChange(change: PickChange, changed: boolean): Promise<SelectionPickResult> {
+    const picks = await this.findEventPicks(change.context, [change.entry.id]);
+    const context = changed
+      ? await this.returnToDraftIfShort(change.context, change.engine, change.entry, change.rosterSize, picks)
+      : change.context;
+    return this.pickResult({ ...change, context }, picks);
+  }
 
-    if (outcome.kind === SelectionOutcomeKind.REJECT) {
-      throw rejectionError(outcome, { contestId, entryId, participantId, rosterSize });
-    }
-
-    // Accept, or replace: a replacement first displaces the pick it takes the place of.
-    const { lineupSlot } = outcome;
-    const replacedPickId = outcome.kind === SelectionOutcomeKind.REPLACE ? outcome.replacedPickId : null;
-    if (replacedPickId) await this.deps.pickWrites.deletePick(replacedPickId);
-
-    const contestPickCount = await this.deps.picks.countByContest(contestId);
-
-    // pool-master-rop.78.6 — the one enforced insert path, so the denormalized
-    // contestFormat is read from the parent contest in the same transaction
-    // (plans/117 §7.1 — "no insert path bypasses this").
-    await this.deps.pickWrites.createPick({
-      entryId,
-      sportEventParticipantId: participantId,
-      lineupSlot,
-      pickSequence: contestPickCount + 1,
-      isAutoPicked: false,
-    });
-
-    this.deps.logger?.info(
-      {
-        action: 'selection.submitSelection.placed',
-        data: { contestId, entryId, participantId, lineupSlot, replacedPickId },
-      },
-      replacedPickId ? 'Replaced a pick in a full tier' : 'Placed a selection',
-    );
-
-    const placedContext = await this.returnToDraftIfShort(context, engine, requestedEntry, rosterSize);
+  /** The entry's picks, its status in the event and its lineup summary: what the room merges in. */
+  private pickResult(change: PickChange, picks: readonly ContestEntryPickWithParticipant[]): SelectionPickResult {
+    const { context, engine, rosterSize } = change;
+    const entryId = change.entry.id;
+    const entry = context.entries.find((candidate) => candidate.id === entryId) ?? change.entry;
+    const priceBySportEventParticipantId = buildPriceLookup(context);
+    const held = new Set(picks.map((pick) => pick.sportEventParticipantId));
+    const available = buildAvailableParticipantIds(context);
     return {
-      outcome: 'placed',
-      view: await this.buildRoomView({ context: placedContext, engine, selectedEntryId: entryId, actorUserId }),
+      contestId: context.contest.id,
+      entryId,
+      sportEventId: context.sportEvent.id,
+      entryStatus: contestEntryEventStatus(entry, context.sportEvent.id),
+      picks: this.buildPickHistory({
+        picks,
+        contestEntryById: new Map([[entry.id, entry]]),
+        tierByParticipantId: buildTierByParticipantId(context.tiers),
+        priceBySportEventParticipantId,
+        engine,
+      }),
+      lineupSummary: engine.summarizeLineup({
+        configuration: context.configuration,
+        rosterSize,
+        tiers: context.tiers,
+        picks: picks.map((pick) => ({
+          participantId: pick.participant.participantId,
+          price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
+        })),
+        openField: context.selectionParticipants.filter((participant) =>
+          available.has(participant.sportEventParticipantId) && !held.has(participant.sportEventParticipantId)),
+      }),
     };
   }
 
@@ -320,7 +381,7 @@ export class SelectionService {
    * Submit an entry (#481): its owner declares the lineup final, and from then on it counts on
    * the leaderboard, in standings and at settlement. Refused unless the lineup is complete.
    *
-   * The guards are `submitSelection`'s, in the same order, because they protect the same thing:
+   * The guards are a pick change's, in the same order, because they protect the same thing:
    * an unknown entry answers 404 before an unauthenticated caller 401, then ownership, the
    * selection type, and the window picks change in. Submitting an entry that is already
    * submitted changes nothing and answers with the room.
@@ -356,7 +417,9 @@ export class SelectionService {
     const rosterSize = engine.rosterSize({ configuration: context.configuration, tiers: context.tiers });
     if (rosterSize <= 0) throw selectionErrors.selectionConfigInvalid(contestId);
 
-    const { issues, pickCount } = await this.findEntryIssues(context, engine, entryId, rosterSize);
+    // The event's picks are read once: the lineup check, the receipt and the room all use them (#1254).
+    const picks = await this.findEventPicks(context, context.entries.map((candidate) => candidate.id));
+    const { issues, pickCount } = lineupIssues(context, engine, picks.filter((pick) => pick.entryId === entryId), rosterSize);
     // An incomplete lineup is the first thing to fix, so it is reported ahead of the budget.
     const tierShort = issues.find((issue) => issue.kind === LineupIssueKind.TIER_SHORT);
     if (tierShort || issues.some((issue) => issue.kind === LineupIssueKind.ROSTER_SHORT)) {
@@ -384,10 +447,10 @@ export class SelectionService {
         { action: 'selection.submitEntry.submitted', data: { contestId, entryId, sportEventId: context.sportEvent.id } },
         'Submitted a contest entry\'s picks for one event',
       );
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId]));
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(submittedContext, [entryId], picks));
     }
 
-    return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId });
+    return this.buildRoomView({ context: submittedContext, engine, selectedEntryId: entryId, actorUserId, picks });
   }
 
   /**
@@ -460,14 +523,16 @@ export class SelectionService {
       'Ran a random draw',
     );
     // The draw changed only what `recordDraw` wrote: the contest is drawn and every entry
-    // submitted at the draw's time. The dealt picks are read fresh by the room (#1196).
+    // submitted at the draw's time. The dealt picks are read once, for the receipts and the room
+    // (#1196, #1254).
     const drawnContext = withDraw(context, drawnAt, this.now());
+    const entryIds = context.entries.map((entry) => entry.id);
+    const picks = await this.findEventPicks(drawnContext, entryIds);
 
     // Every entry's owners get a receipt of the picks the draw dealt it (#867). The draw is
     // already recorded, so a receipt that fails is logged and never fails it.
-    const entryIds = context.entries.map((entry) => entry.id);
     try {
-      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds));
+      await this.deps.entryReceipts?.sendEntrySubmittedEmails(receiptInput(drawnContext, entryIds, picks));
     } catch (error) {
       this.deps.logger?.error(
         { action: 'selection.runDraw.receiptFailed', data: { contestId, entryIds, error: error instanceof Error ? error.message : String(error) } },
@@ -475,7 +540,7 @@ export class SelectionService {
       );
     }
 
-    return this.buildRoomView({ context: drawnContext, engine, actorUserId });
+    return this.buildRoomView({ context: drawnContext, engine, actorUserId, picks });
   }
 
   /** The entries' picks in the context's event (#713): a lineup is one event's picks. */
@@ -486,50 +551,28 @@ export class SelectionService {
     return this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: context.sportEvent.id });
   }
 
-  /** What stops the entry's lineup being submitted as of now, read fresh so it sees the latest pick write. */
-  private async findEntryIssues(
-    context: SelectionContext,
-    engine: SelectionEngine,
-    entryId: string,
-    rosterSize: number,
-  ): Promise<{ issues: LineupIssue[]; pickCount: number }> {
-    const picks = await this.findEventPicks(context, [entryId]);
-    const priceBySportEventParticipantId = buildPriceLookup(context);
-    return {
-      pickCount: picks.length,
-      issues: engine.findLineupIssues({
-        configuration: context.configuration,
-        rosterSize,
-        tiers: context.tiers,
-        picks: picks.map((pick) => ({
-          participantId: pick.participant.participantId,
-          price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
-        })),
-      }),
-    };
-  }
-
   /**
    * After a pick change on a submitted event: a lineup it could no longer be submitted with goes
    * back to DRAFT (#481), so it stops counting until its owner fixes it and submits again. That
    * is a lineup left short, or a budget lineup a swap took over the cap (#93). A swap within a
    * full tier, or one that stays under the cap, keeps the event submitted. Only the changed
-   * event moves (#713).
+   * event moves (#713). `picks` are the entry's picks as the change left them.
    */
   private async returnToDraftIfShort(
     context: SelectionContext,
     engine: SelectionEngine,
     entry: ContestEntry,
     rosterSize: number,
+    picks: readonly ContestEntryPickWithParticipant[],
   ): Promise<SelectionContext> {
     if (contestEntryEventStatus(entry, context.sportEvent.id) !== ContestEntryStatus.SUBMITTED) return context;
-    const { issues } = await this.findEntryIssues(context, engine, entry.id, rosterSize);
+    const { issues } = lineupIssues(context, engine, picks, rosterSize);
     if (issues.length === 0) return context;
 
     const reverted = await this.deps.entries.setEventStatus(entry.id, context.sportEvent.id, ContestEntryStatus.DRAFT, this.now());
     this.deps.logger?.info(
       {
-        action: 'selection.submitSelection.returnedToDraft',
+        action: 'selection.pickChange.returnedToDraft',
         data: { contestId: context.contest.id, entryId: entry.id, sportEventId: context.sportEvent.id, issues: issues.map((issue) => issue.kind) },
       },
       'A pick change left a submitted lineup unsubmittable; the entry is a draft again',
@@ -638,13 +681,15 @@ export class SelectionService {
     engine: SelectionEngine;
     selectedEntryId?: string;
     actorUserId?: string;
+    /** Every entry's picks in the event, when the caller already read them after its last write. */
+    picks?: readonly ContestEntryPickWithParticipant[];
   }): Promise<SelectionView> {
     const { context, engine, actorUserId } = input;
     const { contest, configuration, tiers, entries: contestEntries } = context;
     const entryIds = contestEntries.map((entry) => entry.id);
 
     const [picks, actorMembership] = await Promise.all([
-      this.findEventPicks(context, entryIds),
+      input.picks ?? this.findEventPicks(context, entryIds),
       actorUserId
         ? this.deps.memberships.findByLeagueAndUser(contest.leagueId, actorUserId)
         : Promise.resolve(null),
@@ -830,8 +875,8 @@ function buildAvailableParticipantIds(context: SelectionContext): Set<string> {
 }
 
 /** The shape an engine reasons over: a pick's id, whom it points at, and its place. */
-function toEntryPick(pick: ContestEntryPickWithParticipant): EntryPick {
-  return { id: pick.id, participantId: pick.participant.participantId, lineupSlot: pick.lineupSlot };
+function toEntryPick(pick: LockedEntryPick): EntryPick {
+  return { id: pick.id, participantId: pick.participantId, lineupSlot: pick.lineupSlot ?? undefined };
 }
 
 /** Each field row's price in dollars, by its `sportEventParticipantId`. */
@@ -876,9 +921,36 @@ function takesPicks(status: ContestStatus): boolean {
   return status === ContestStatus.OPEN || status === ContestStatus.ACTIVE;
 }
 
-/** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
-function receiptInput(context: SelectionContext, entryIds: readonly string[]): EntrySubmittedReceiptInput {
+/** What stops an entry's lineup, of `picks` (its picks in the context's event), being submitted. */
+function lineupIssues(
+  context: SelectionContext,
+  engine: SelectionEngine,
+  picks: readonly ContestEntryPickWithParticipant[],
+  rosterSize: number,
+): { issues: LineupIssue[]; pickCount: number } {
+  const priceBySportEventParticipantId = buildPriceLookup(context);
   return {
+    pickCount: picks.length,
+    issues: engine.findLineupIssues({
+      configuration: context.configuration,
+      rosterSize,
+      tiers: context.tiers,
+      picks: picks.map((pick) => ({
+        participantId: pick.participant.participantId,
+        price: priceBySportEventParticipantId.get(pick.sportEventParticipantId),
+      })),
+    }),
+  };
+}
+
+/** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
+function receiptInput(
+  context: SelectionContext,
+  entryIds: readonly string[],
+  picks: readonly ContestEntryPickWithParticipant[],
+): EntrySubmittedReceiptInput {
+  return {
+    picks,
     contest: context.contest,
     sportEvent: context.sportEvent,
     configuration: context.configuration,

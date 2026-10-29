@@ -29,8 +29,9 @@
  * on the line before the call or before the statement holding it. A missing reason is an
  * error, and so is a marker that no longer covers a call — a fix removes its own comment.
  */
+import { allowMarkers } from './allow-markers.mjs';
+
 const MARKER = 'poolmaster-allow-query-in-loop';
-const MARKER_PATTERN = new RegExp(`^\\s*${MARKER}\\b:?(.*)$`);
 
 const REPOSITORY_NAME = /(repository|repo)$/i;
 const PRISMA_CLIENT_NAMES = new Set(['prisma', 'tx']);
@@ -203,15 +204,6 @@ function repeatingAncestor(sourceCode, node) {
   return null;
 }
 
-function enclosingStatementLine(node) {
-  for (let current = node; current; current = current.parent) {
-    if (current.parent && (current.parent.type === 'BlockStatement' || current.parent.type === 'Program')) {
-      return current.loc.start.line;
-    }
-  }
-  return node.loc.start.line;
-}
-
 export default {
   meta: {
     type: 'problem',
@@ -229,40 +221,13 @@ export default {
     },
   },
   create(context) {
-    const { sourceCode } = context;
     const isQueryCallee = makeIsQueryCallee(context);
-    /** Marker comments by the line they end on. */
-    const markers = new Map();
-    const used = new Set();
-
-    for (const comment of sourceCode.getAllComments()) {
-      if (comment.type !== 'Line') continue;
-      const match = MARKER_PATTERN.exec(comment.value);
-      if (!match) continue;
-      if (match[1].trim() === '') {
-        context.report({ loc: comment.loc, messageId: 'missingReason' });
-        used.add(comment);
-      }
-      markers.set(comment.loc.end.line, comment);
-    }
-
-    function markerFor(node) {
-      for (const line of [node.loc.start.line, enclosingStatementLine(node)]) {
-        const comment = markers.get(line - 1);
-        if (comment) return comment;
-      }
-      return null;
-    }
+    const allow = allowMarkers(context, MARKER);
 
     function check(node, callee) {
       // The ancestor walk is cheap; the type lookup in isQueryCallee is not, so it goes second.
       if (!repeatingAncestor(context.sourceCode, node) || !isQueryCallee(callee)) return;
-      const marker = markerFor(node);
-      if (marker) {
-        used.add(marker);
-        return;
-      }
-      context.report({ node, messageId: 'queryInLoop' });
+      if (!allow.covers(node)) context.report({ node, messageId: 'queryInLoop' });
     }
 
     return {
@@ -273,9 +238,7 @@ export default {
         check(node, node.tag);
       },
       'Program:exit'() {
-        for (const comment of markers.values()) {
-          if (!used.has(comment)) context.report({ loc: comment.loc, messageId: 'unusedAllow' });
-        }
+        allow.reportUnused();
       },
     };
   },

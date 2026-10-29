@@ -1,6 +1,6 @@
 import type { SquadDto } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
-import { Alert } from '@/features/shared/ui';
+import { Alert, Heading } from '@/features/shared/ui';
 import { MyTeamOwnersPanel } from './my-team-owners-panel';
 import { getActiveOwners } from './team-directory';
 import { useTeamOwnerInvitationsQuery } from './use-team-owner-invitations-query';
@@ -33,11 +33,12 @@ export function TeamOwnersSection({
   const auth = useAuth();
   const invitationsQuery = useTeamOwnerInvitationsQuery(leagueId);
   const activeMembers = getActiveOwners(team);
+  // poolmaster-allow-list-lookup: one league's co-owner invitations, one cached read shared by every team on the page
   const teamOwnerInvitations = (invitationsQuery.data ?? []).filter((invitation) => invitation.squadId === team.id);
 
   return (
     <section className="space-y-3" data-testid={testId}>
-      <h2 className="text-lg font-semibold text-foreground">Owners</h2>
+      <Heading level={2} variant="subtitle">Owners</Heading>
       {invitationsQuery.isError ? (
         <Alert
           data-testid={`${testId}-invitations-error`}

@@ -16,21 +16,18 @@ import {
   type GamePicksResponse,
   type SaveGamePicksRequest,
 } from '@/lib/api';
-import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import {
   Alert,
   Button,
   ErrorState,
+  formatDateTimeDisplay,
   FormField,
-  LinkButton,
+  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
   Select,
-  StatusBadge,
   Tile,
-  formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
@@ -41,13 +38,12 @@ import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
-import { ContestHeader, ContestSubMenu } from './contest-header';
+import { ContestEntryFrame } from './contest-header';
+import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
   shouldPollContestEntries,
 } from './contest-status';
@@ -147,7 +143,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
     refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { league } = useLeagueContextById(contest.leagueId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   const logRefusal = (action: string, error: Error) => {
     const payload = { action, data: { contestId, entryId, sportEventId }, err: error };
@@ -230,14 +226,10 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const gamePicks = isPlayoff ? roundWeek(eventPicks, round) : eventPicks;
   /** What one pick covers: a week, or a playoff's round. */
   const period = isPlayoff ? 'round' : 'week';
-  const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = entryQuery.data?.entry ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
   const canChange = canChangeWeek(gamePicks);
   const isSubmitted = gamePicks.status === ContestEntryStatus.SUBMITTED;
   const kickoff = firstKickoff(gamePicks.games);
-  const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
   const hint = isSubmitted ? null : weekSubmitHint(gamePicks);
   const isSurvivor = isSurvivorWeek(gamePicks);
   const eliminatedInWeek = gamePicks.survivor?.eliminatedInWeek ?? null;
@@ -271,52 +263,21 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
 
   return (
-    <section className="space-y-6" data-testid="pick-em-entry-page">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton data-testid="contest-entry-back-to-contest" to={backToContestPath} variant="secondary">
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome'}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={(
-          <>
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>{contestStatusLabel(contest.status)}</StatusBadge>
-            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-              {statusLabel}
-            </StatusBadge>
-          </>
-        )}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={myEntryIds.includes(entryId) ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {contest.name}
-            {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
-            {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
-            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-          </p>
-        )}
-        title={gamePicks.entryName}
-        titleTestId="contest-entry-heading"
-      />
+    <ContestEntryFrame
+      contest={contest}
+      entry={entrySummary}
+      entryId={entryId}
+      leagueCode={backLeagueCode}
+      phase={contestStatusLabel(contest.status)}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      rules={[
+        ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
+        ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
+      ]}
+      status={gamePicks.status}
+      testId="pick-em-entry-page"
+      title={gamePicks.entryName}
+    >
 
       <ContestEventSwitcher
         describe={(sportEvent) => (entrySummary ? CONTEST_ENTRY_STATUS_LABELS[entryEventStatus(entrySummary, sportEvent.sportEventId)] : null)}
@@ -363,29 +324,19 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
 
       <Tile>
         {isSurvivor ? (
-          <MetricGrid className="md:grid-cols-2">
+          <MetricGrid>
             <MetricTile
               helperText={canChange ? `Your pick locks when its ${match.one} starts.` : 'No pick can change now.'}
               label="Your pick"
               value={<span data-testid="survivor-pick">{survivorTeam?.name ?? 'None yet'}</span>}
             />
-            <MetricTile
-              helperText={isSubmitted ? `This ${isPlayoff ? 'entry' : 'week'} counts.` : `Submit before the ${eventStart} to stay in.`}
-              label="Status"
-              value={<span data-testid="pick-em-status">{statusLabel}</span>}
-            />
           </MetricGrid>
         ) : (
-        <MetricGrid className="md:grid-cols-4">
+        <MetricGrid className="md:grid-cols-3">
           <MetricTile
             helperText={canChange ? 'Each pick locks at its game\'s kickoff.' : 'No pick can change now.'}
             label="Picked"
             value={<span data-testid="pick-em-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-          />
-          <MetricTile
-            helperText={isSubmitted ? 'This week counts.' : 'Only a submitted week counts.'}
-            label="Status"
-            value={<span data-testid="pick-em-status">{statusLabel}</span>}
           />
           <MetricTile
             helperText={gamePicks.mode === PickEmMode.CONFIDENCE ? 'The values of the correct picks so far.' : 'One point for each correct pick so far.'}
@@ -404,9 +355,9 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {pickError ? <Alert data-testid="pick-em-pick-error" tone="danger">{pickError}</Alert> : null}
 
       <Tile>
-        <h3 className="title-card mb-2 text-xl" data-testid="contest-entry-builder-heading">
+        <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-2" data-testid="contest-entry-builder-heading">
           {canChange ? (isSurvivor ? 'Pick a winner' : 'Pick each game') : 'Picks'}
-        </h3>
+        </Heading>
         {canChange ? (
           <p className="mb-5 text-sm text-muted-foreground">
             {isSurvivor
@@ -436,7 +387,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
       {gamePicks.ownEntry && (canChange || isSubmitted) ? (
         <Tile className="space-y-3" data-testid="pick-em-submit-panel">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h3 className="title-card text-xl">Submit</h3>
+            <Heading level={3} variant="card" size="xl" tone="inherit">Submit</Heading>
             <span className="text-sm text-muted-foreground" data-testid="pick-em-progress">
               {isSurvivor ? survivorTeam?.name ?? 'No pick yet' : formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}
             </span>
@@ -469,6 +420,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           ) : null}
         </Tile>
       ) : null}
-    </section>
+    </ContestEntryFrame>
   );
 }

@@ -12,14 +12,15 @@ import { signUpWithDisplayPreferences } from '@/features/auth/signup-display-pre
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
 import {
+  browserTimeZone,
   Button,
   Chip,
   FormField,
+  Heading,
   Input,
   LinkButton,
   PublicInviteJoinPage,
   TimeZoneSelect,
-  browserTimeZone,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -28,8 +29,7 @@ import {
   buildTeamInvitePath,
   rememberRecentLeagueCode,
 } from '@/features/leagues/league-routing';
-import { getTeamIconOption } from './team-icon-catalog';
-import { TeamIcon } from './team-icon';
+import { TeamAvatar } from './team-avatar';
 import {
   fetchTeamOwnerInvitationPreview,
   getTeamOwnerInvitationPreviewQueryKey,
@@ -249,9 +249,6 @@ export function JoinTeamOwnerPage() {
     return null;
   }, [inviteCode, isAuthenticated]);
 
-  const selectedIcon = invitationQuery.data
-    ? getTeamIconOption(invitationQuery.data.team.iconKey)
-    : null;
   const unusableInvitationMessage = describeUnusableInvitation(invitationQuery.data?.status);
 
   if (redirectMessage) {
@@ -270,13 +267,9 @@ export function JoinTeamOwnerPage() {
             />
             <div className="rounded-3xl border border-border bg-background p-5">
               <div className="flex items-center gap-4">
-                {selectedIcon ? (
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
-                    <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
-                  </div>
-                ) : null}
+                <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
                 <div>
-                  <h3 className="title-card text-sm text-foreground">What you&apos;re joining</h3>
+                  <Heading level={3} variant="card" size="sm">What you&apos;re joining</Heading>
                   <p className="mt-1 text-sm text-muted-foreground">
                     You&apos;ll join <span className="font-medium text-foreground">{invitationQuery.data.team.name}</span> as a co-owner inside{' '}
                     <span className="font-medium text-foreground">{invitationQuery.data.league.name}</span>.
@@ -298,7 +291,7 @@ export function JoinTeamOwnerPage() {
             }}
           >
             <div>
-              <h3 className="title-card text-sm text-foreground">Create your account</h3>
+              <Heading level={3} variant="card" size="sm">Create your account</Heading>
               <p className="mt-1 text-sm text-muted-foreground">
                 Your account uses the email this invitation was sent to, so there is nothing to
                 confirm — you&apos;ll land straight in the league.
@@ -419,24 +412,20 @@ export function JoinTeamOwnerPage() {
               message={`Welcome to ${invitationQuery.data.league.name}. You are about to become a co-owner of ${invitationQuery.data.team.name}.`}
               title="Ready to join"
             />
-            {selectedIcon ? (
-              <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
-                  <TeamIcon iconKey={invitationQuery.data.team.iconKey} size="md" />
+            <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+              <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
+              <div className="min-w-0">
+                <div className="text-xs uppercase text-muted-foreground">
+                  You&apos;ll co-own
                 </div>
-                <div className="min-w-0">
-                  <div className="text-xs uppercase text-muted-foreground">
-                    You&apos;ll co-own
-                  </div>
-                  <div className="truncate text-base font-semibold text-foreground">
-                    {invitationQuery.data.team.name}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
-                  </div>
+                <div className="truncate text-base font-semibold text-foreground">
+                  {invitationQuery.data.team.name}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  League homepage: {buildLeaguePath(invitationQuery.data.league.leagueCode)}
                 </div>
               </div>
-            ) : null}
+            </div>
           </div>
         ) : null}
         {unusableInvitationMessage ? <p className="mt-4">{unusableInvitationMessage}</p> : null}

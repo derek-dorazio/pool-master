@@ -576,9 +576,6 @@ export class InMemoryContestWorld {
         }
         return counts;
       },
-      countByContest: async (contestId) =>
-        [...this.picks.values()].filter((pick) =>
-          this.entries.get(pick.entryId)?.contestId === contestId).length,
     };
   }
 
@@ -716,7 +713,7 @@ export class InMemoryContestWorld {
       findByIds: async (ids) => ids.flatMap((id) => this.sportEvents.get(id) ?? []),
       // Ordered by start, as the database orders them.
       findAll: async (filters) => [...this.sportEvents.values()]
-        .filter((event) => (filters.status === undefined || event.status === filters.status)
+        .filter((event) => (filters.statuses === undefined || filters.statuses.includes(event.status))
           && (filters.sportLeagueId === undefined || event.sportLeagueId === filters.sportLeagueId)
           && (filters.eventYear === undefined || event.eventYear === filters.eventYear)
           && (filters.startsFrom === undefined || event.startDate >= filters.startsFrom)

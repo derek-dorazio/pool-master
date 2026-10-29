@@ -8600,6 +8600,28 @@ export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTES
 export type EventReadinessReasonDto = 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'EVENT_STARTED';
 
 /**
+ * What only a root admin reads of an event: what still stops its release, and how many contests run on it.
+ */
+export type SportEventAdminCountsDto = {
+    /**
+     * Active event participants with no tier. A DRAFT event can't be released while any remain.
+     */
+    untieredParticipantCount: number;
+    /**
+     * Active event participants with no price. A DRAFT event can't be released while any remain.
+     */
+    unpricedParticipantCount: number;
+    /**
+     * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+     */
+    emptyTierLabels: Array<string>;
+    /**
+     * Contests run on the event, across every league; an event with any cannot be deleted.
+     */
+    contestCount: number;
+};
+
+/**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
 export type SportEventDto = {
@@ -8659,14 +8681,6 @@ export type SportEventDto = {
      * Number of event participants currently persisted for the event.
      */
     loadedParticipantCount: number;
-    /**
-     * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-     */
-    untieredParticipantCount: number;
-    /**
-     * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-     */
-    unpricedParticipantCount: number;
     /**
      * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
      */
@@ -8741,13 +8755,26 @@ export type SportEventDto = {
      */
     tierCount: number;
     /**
-     * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+     * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
      */
-    emptyTierLabels: Array<string>;
-    /**
-     * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
-     */
-    contestCount: number;
+    adminCounts: {
+        /**
+         * Active event participants with no tier. A DRAFT event can't be released while any remain.
+         */
+        untieredParticipantCount: number;
+        /**
+         * Active event participants with no price. A DRAFT event can't be released while any remain.
+         */
+        unpricedParticipantCount: number;
+        /**
+         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+         */
+        emptyTierLabels: Array<string>;
+        /**
+         * Contests run on the event, across every league; an event with any cannot be deleted.
+         */
+        contestCount: number;
+    } | null;
     /**
      * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
      */
@@ -8771,9 +8798,9 @@ export type SportEventListQuery = {
      */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
     /**
-     * Only events in this lifecycle status.
+     * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
      */
-    status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
     /**
      * Only events of this sport league's series.
      */
@@ -8853,14 +8880,6 @@ export type SportEventListResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        untieredParticipantCount: number;
-        /**
-         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        unpricedParticipantCount: number;
-        /**
          * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
          */
         pricing: {
@@ -8934,13 +8953,26 @@ export type SportEventListResponse = {
          */
         tierCount: number;
         /**
-         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
-        emptyTierLabels: Array<string>;
-        /**
-         * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
-         */
-        contestCount: number;
+        adminCounts: {
+            /**
+             * Active event participants with no tier. A DRAFT event can't be released while any remain.
+             */
+            untieredParticipantCount: number;
+            /**
+             * Active event participants with no price. A DRAFT event can't be released while any remain.
+             */
+            unpricedParticipantCount: number;
+            /**
+             * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+             */
+            emptyTierLabels: Array<string>;
+            /**
+             * Contests run on the event, across every league; an event with any cannot be deleted.
+             */
+            contestCount: number;
+        } | null;
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
@@ -8954,6 +8986,26 @@ export type SportEventListResponse = {
          */
         updatedAt: string;
     }>;
+};
+
+/**
+ * The sport league to list the event years of.
+ */
+export type SportEventYearListQuery = {
+    /**
+     * The sport league whose event years are listed.
+     */
+    sportLeagueId: string;
+};
+
+/**
+ * The event years of one sport league: what a year picker offers, without reading every event.
+ */
+export type SportEventYearListResponse = {
+    /**
+     * Every event year the sport league has events in, earliest first. A year with only DRAFT events is listed for a root admin only.
+     */
+    years: Array<number>;
 };
 
 /**
@@ -9021,14 +9073,6 @@ export type SportEventResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        untieredParticipantCount: number;
-        /**
-         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        unpricedParticipantCount: number;
-        /**
          * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
          */
         pricing: {
@@ -9102,13 +9146,26 @@ export type SportEventResponse = {
          */
         tierCount: number;
         /**
-         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
-        emptyTierLabels: Array<string>;
-        /**
-         * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
-         */
-        contestCount: number;
+        adminCounts: {
+            /**
+             * Active event participants with no tier. A DRAFT event can't be released while any remain.
+             */
+            untieredParticipantCount: number;
+            /**
+             * Active event participants with no price. A DRAFT event can't be released while any remain.
+             */
+            unpricedParticipantCount: number;
+            /**
+             * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+             */
+            emptyTierLabels: Array<string>;
+            /**
+             * Contests run on the event, across every league; an event with any cannot be deleted.
+             */
+            contestCount: number;
+        } | null;
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
@@ -9280,14 +9337,6 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         loadedParticipantCount: number;
         /**
-         * Active event participants with no tier. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        untieredParticipantCount: number;
-        /**
-         * Active event participants with no price. A DRAFT event can't be released while any remain. (Admin-only: operational detail no member surface reads.)
-         */
-        unpricedParticipantCount: number;
-        /**
          * The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.
          */
         pricing: {
@@ -9361,13 +9410,26 @@ export type ImportSportEventYearFromProviderResponse = {
          */
         tierCount: number;
         /**
-         * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them. (Admin-only: operational detail no member surface reads.)
+         * The root admin's counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.
          */
-        emptyTierLabels: Array<string>;
-        /**
-         * Contests run on the event, across every league; an event with any cannot be deleted. (Admin-only: operational detail no member surface reads.)
-         */
-        contestCount: number;
+        adminCounts: {
+            /**
+             * Active event participants with no tier. A DRAFT event can't be released while any remain.
+             */
+            untieredParticipantCount: number;
+            /**
+             * Active event participants with no price. A DRAFT event can't be released while any remain.
+             */
+            unpricedParticipantCount: number;
+            /**
+             * Labels of the event's tiers no active participant is in, in tier order. A DRAFT event can't be released while any remain: no entry could pick from them.
+             */
+            emptyTierLabels: Array<string>;
+            /**
+             * Contests run on the event, across every league; an event with any cannot be deleted.
+             */
+            contestCount: number;
+        } | null;
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
@@ -11275,6 +11337,10 @@ export type ContestSportEventDto = {
      */
     startDate: string;
     /**
+     * The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+     */
+    endDate: string | null;
+    /**
      * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
      */
     status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
@@ -11389,6 +11455,10 @@ export type ContestDto = {
          */
         startDate: string;
         /**
+         * The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+         */
+        endDate: string | null;
+        /**
          * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
          */
         status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
@@ -11495,62 +11565,6 @@ export type ContestEntryDto = {
          */
         pickedAt: string;
     }>;
-};
-
-/**
- * Raw ContestEntryPick row used by persistence-aware surfaces.
- */
-export type ContestEntryPickDto = {
-    /**
-     * Pick identifier.
-     */
-    id: string;
-    /**
-     * Owning contest entry identifier.
-     */
-    entryId: string;
-    /**
-     * Per-event participant the pick refers to (Sport-event-participant row, not the canonical Participant).
-     */
-    sportEventParticipantId: string;
-    /**
-     * Denormalized from parent Contest.contestFormat. Plans/117 §7.1 — enables per-format partial unique indexes that Postgres cannot predicate on joined parent columns.
-     */
-    contestFormat: 'ROSTER' | 'PREDICTION' | 'SQUARES';
-    /**
-     * Unused: no built contest format sets it, so it is always null. Removal is tracked in #632.
-     */
-    period: number | null;
-    /**
-     * Unused: no built contest format sets it, so it is always null; a lineup position is `lineupSlot`. Removal is tracked in #632.
-     */
-    slot: number | null;
-    /**
-     * Selection tier (tiered ROSTER); null otherwise.
-     */
-    tier: string | null;
-    /**
-     * Budget cost (budget ROSTER); null otherwise.
-     */
-    cost: number | null;
-    /**
-     * Whether this pick was auto-assigned rather than submitted by the entry. Always false for tiered and budget selection, which have no auto-pick.
-     */
-    isAutoPicked: boolean;
-    /**
-     * Position of this pick within its entry's roster. Tiered: counted across tier quotas in tier order; budget: the entry's pick ordinal. Null when the pick was not recorded through contest selection.
-     */
-    lineupSlot: number | null;
-    /**
-     * Contest-wide order in which this pick was recorded, across all entries. Null when the pick was not recorded through contest selection.
-     */
-    pickSequence: number | null;
-    /**
-     * When the pick was made (or auto-picked).
-     */
-    pickedAt: string;
-    createdAt: string;
-    updatedAt: string;
 };
 
 /**
@@ -12362,6 +12376,10 @@ export type ContestResponse = {
              */
             startDate: string;
             /**
+             * The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+             */
+            endDate: string | null;
+            /**
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
             status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
@@ -12437,6 +12455,10 @@ export type ContestListResponse = {
              * The event's scheduled start: when its picks close.
              */
             startDate: string;
+            /**
+             * The event's scheduled end when known; null otherwise. The last event's end is when the contest is expected to finish.
+             */
+            endDate: string | null;
             /**
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
@@ -12835,20 +12857,6 @@ export type SelectionStateQuery = {
 };
 
 /**
- * Request payload for submitting a pick.
- */
-export type SubmitPickRequest = {
-    /**
-     * Entry making the pick.
-     */
-    entryId: string;
-    /**
-     * Participant being selected.
-     */
-    participantId: string;
-};
-
-/**
  * Budget contest: the viewed entry's spend against the salary cap (#93).
  */
 export type SelectionBudgetLineupSummaryDto = {
@@ -13011,47 +13019,26 @@ export type SelectionStateResponse = {
 };
 
 /**
- * Selection response returned immediately after a pick mutation.
+ * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
  */
 export type SelectionPickResponse = {
     contestId: string;
-    contestName: string;
     /**
-     * The contest event the room shows (#713): its field, its picks, and each entry's status in it.
+     * The entry whose pick changed.
+     */
+    entryId: string;
+    /**
+     * The contest event the pick is in: the event of the field row it names (#713).
      */
     sportEventId: string;
     /**
-     * Whether this event's picks can still change: the contest is open or live, it has not been drawn, and the event has not started.
+     * The entry's status in the event after the change: a change that leaves a submitted lineup short, or over a budget contest's cap, sends it back to DRAFT.
      */
-    acceptsPicks: boolean;
-    selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
+    entryStatus: 'DRAFT' | 'SUBMITTED';
     /**
-     * When a random-draw contest's draw dealt its picks, closing its entries and revealing every entry's picks. Null until then, and always for other selection types.
+     * Every one of the entry's picks in the event after the change, oldest first: the room replaces the entry's picks with these, which also puts right a full-tier swap it guessed differently.
      */
-    drawnAt: string | null;
-    isCommissioner?: boolean;
-    rosterSize: number;
-    status: 'PENDING' | 'LIVE' | 'PAUSED' | 'COMPLETE';
-    myEntryId: string | null;
-    entries: Array<{
-        /**
-         * Entry identifier.
-         */
-        id: string;
-        /**
-         * User that owns the entry.
-         */
-        userId: string;
-        /**
-         * Entry display name.
-         */
-        name: string;
-        /**
-         * The entry's status in the shown event (#713): DRAFT until the owner submits a complete lineup for it; SUBMITTED once they have. A pick change that leaves the lineup short sends it back to DRAFT (#481).
-         */
-        status: 'DRAFT' | 'SUBMITTED';
-    }>;
-    pickHistories: Array<{
+    picks: Array<{
         pickNumber: number;
         round: number;
         pickInRound: number;
@@ -13071,48 +13058,10 @@ export type SelectionPickResponse = {
          */
         pickedAt: string;
     }>;
-    availableParticipantIds: Array<string>;
-    selectedEntryId?: string | null;
-    selectedEntryName?: string | null;
-    tiebreakerValue?: number | null;
-    selectionGroups?: Array<{
-        groupId: string;
-        groupName: string;
-        groupNumber: number;
-        picksFromGroup: number;
-        /**
-         * Selections currently saved on the selected entry for this group.
-         */
-        selectedParticipantIds: Array<string>;
-        /**
-         * Selectable participants shown inside the group.
-         */
-        participants: Array<{
-            sportEventParticipantId: string;
-            participantId: string;
-            participantName: string;
-            role?: string | null;
-            team?: string | null;
-            status?: string | null;
-            price?: number | null;
-            ranking?: number | null;
-            /**
-             * The bracket seed, 1 the best, shown in the selection room for a knockout event; null where the event seeds nobody.
-             */
-            seedNumber: number | null;
-            orderIndex?: number | null;
-            isAvailable: boolean;
-            /**
-             * Whether the currently selected entry has this participant selected.
-             */
-            isSelected?: boolean;
-        }>;
-    }>;
-    isComplete: boolean;
     /**
-     * The viewed entry's lineup summary, tagged by selection type: only budget contests carry one today. Null when there is no viewed entry or the type has none.
+     * The entry's lineup summary after the change: only budget contests carry one, null otherwise.
      */
-    lineupSummary?: {
+    lineupSummary: {
         selectionType: 'BUDGET_PICK';
         /**
          * Whole dollars the entry's picks may cost at most: its event's cap.
@@ -26195,7 +26144,21 @@ export type UnmappedProviderParticipantDto = {
 };
 
 /**
- * Every unmapped competitor across the scheduled sports of every provider.
+ * Filters for the unmapped-competitor list. With neither, every provider's unmapped competitors.
+ */
+export type UnmappedProviderParticipantListQuery = {
+    /**
+     * Only this provider's competitors; the other providers are not asked.
+     */
+    providerId?: string;
+    /**
+     * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+     */
+    externalId?: string;
+};
+
+/**
+ * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
  */
 export type UnmappedProviderParticipantListResponse = {
     participants: Array<{
@@ -30484,9 +30447,9 @@ export type ListEventsData = {
          */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
         /**
-         * Only events in this lifecycle status.
+         * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
          */
-        status?: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
          * Only events of this sport league's series.
          */
@@ -30565,6 +30528,40 @@ export type CreateEventResponses = {
 };
 
 export type CreateEventResponse = CreateEventResponses[keyof CreateEventResponses];
+
+export type ListEventYearsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * The sport league whose event years are listed.
+         */
+        sportLeagueId: string;
+    };
+    url: '/api/v1/events/years';
+};
+
+export type ListEventYearsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+};
+
+export type ListEventYearsError = ListEventYearsErrors[keyof ListEventYearsErrors];
+
+export type ListEventYearsResponses = {
+    /**
+     * The event years of one sport league: what a year picker offers, without reading every event.
+     */
+    200: SportEventYearListResponse;
+};
+
+export type ListEventYearsResponse = ListEventYearsResponses[keyof ListEventYearsResponses];
 
 export type DeleteEventData = {
     body?: never;
@@ -33554,7 +33551,16 @@ export type SubmitEventSyncResponse = SubmitEventSyncResponses[keyof SubmitEvent
 export type ListUnmappedProviderParticipantsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Only this provider's competitors; the other providers are not asked.
+         */
+        providerId?: string;
+        /**
+         * Only the competitor the provider knows by this identifier. With providerId, the list holds that one competitor while it is unmapped, and is empty once it is mapped.
+         */
+        externalId?: string;
+    };
     url: '/api/v1/ingestion/unmapped-participants';
 };
 
@@ -33573,7 +33579,7 @@ export type ListUnmappedProviderParticipantsError = ListUnmappedProviderParticip
 
 export type ListUnmappedProviderParticipantsResponses = {
     /**
-     * Every unmapped competitor across the scheduled sports of every provider.
+     * The unmapped competitors matching the filters, across the scheduled sports of each provider asked.
      */
     200: UnmappedProviderParticipantListResponse;
 };
@@ -33770,16 +33776,18 @@ export type GetSelectionStateResponses = {
 
 export type GetSelectionStateResponse = GetSelectionStateResponses[keyof GetSelectionStateResponses];
 
-export type SubmitContestSelectionData = {
-    body: SubmitPickRequest;
+export type UnselectContestPickData = {
+    body?: never;
     path: {
         contestId: string;
+        entryId: string;
+        sportEventParticipantId: string;
     };
     query?: never;
-    url: '/api/v1/selections/{contestId}/pick';
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}';
 };
 
-export type SubmitContestSelectionErrors = {
+export type UnselectContestPickErrors = {
     /**
      * Standard API error envelope.
      */
@@ -33802,16 +33810,61 @@ export type SubmitContestSelectionErrors = {
     409: ErrorEnvelope;
 };
 
-export type SubmitContestSelectionError = SubmitContestSelectionErrors[keyof SubmitContestSelectionErrors];
+export type UnselectContestPickError = UnselectContestPickErrors[keyof UnselectContestPickErrors];
 
-export type SubmitContestSelectionResponses = {
+export type UnselectContestPickResponses = {
     /**
-     * Selection response returned immediately after a pick mutation.
+     * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
      */
     200: SelectionPickResponse;
 };
 
-export type SubmitContestSelectionResponse = SubmitContestSelectionResponses[keyof SubmitContestSelectionResponses];
+export type UnselectContestPickResponse = UnselectContestPickResponses[keyof UnselectContestPickResponses];
+
+export type SelectContestPickData = {
+    body?: never;
+    path: {
+        contestId: string;
+        entryId: string;
+        sportEventParticipantId: string;
+    };
+    query?: never;
+    url: '/api/v1/selections/{contestId}/entries/{entryId}/picks/{sportEventParticipantId}';
+};
+
+export type SelectContestPickErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+};
+
+export type SelectContestPickError = SelectContestPickErrors[keyof SelectContestPickErrors];
+
+export type SelectContestPickResponses = {
+    /**
+     * What one pick change left on the entry (#1259): only what changed, for the room to merge into what it shows. Never the whole room.
+     */
+    200: SelectionPickResponse;
+};
+
+export type SelectContestPickResponse = SelectContestPickResponses[keyof SelectContestPickResponses];
 
 export type SubmitContestEntryData = {
     body?: never;

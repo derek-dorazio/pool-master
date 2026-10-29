@@ -39,6 +39,7 @@ export function GolfTournamentLiveSimulation({ tournament }: { tournament: Sport
     },
     retry: false,
   });
+  // poolmaster-allow-list-lookup: the handful of data providers, fixed reference data
   const supported = (providersQuery.data ?? []).some(
     (provider) => provider.providerId === tournament.providerId && provider.supportsLiveSimulation,
   );

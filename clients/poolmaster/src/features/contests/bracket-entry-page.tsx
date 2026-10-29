@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useLocation, useParams } from 'react-router';
-import { ContestEntryStatus, PredictedResult, type Sport } from '@poolmaster/shared/domain';
+import { PredictedResult, type Sport } from '@poolmaster/shared/domain';
 import {
   getGamePicks,
   saveGamePicks,
@@ -10,16 +10,13 @@ import {
   type GamePicksResponse,
   type SaveGamePicksRequest,
 } from '@/lib/api';
-import { buildLeagueContestPath, buildLeaguePath } from '@/features/leagues/league-routing';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import {
   Alert,
   ErrorState,
-  LinkButton,
+  Heading,
   LoadingState,
   MetricGrid,
   MetricTile,
-  StatusBadge,
   Tile,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
@@ -30,14 +27,12 @@ import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
-import { ContestHeader, ContestSubMenu } from './contest-header';
+import { ContestEntryFrame } from './contest-header';
+import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import {
-  CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
   shouldPollContestEntries,
 } from './contest-status';
@@ -102,7 +97,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     refetchInterval: shouldPollContestEntries(contest.status) ? CONTEST_POLL_INTERVAL_MS : false,
   });
   const entryQuery = useContestEntryQuery(contestId, entryId);
-  const { league } = useLeagueContextById(contest.leagueId);
+  const { leagueCode: backLeagueCode } = useContestLeague(contest.leagueId, hintedLeagueCode);
 
   const logRefusal = (action: string, error: Error) => {
     const payload = { action, data: { contestId, entryId }, err: error };
@@ -169,10 +164,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const eventStart = contestEventStart(contest.sport);
   const match = contestMatchNoun(contest.sport);
   const participant = contestParticipantNoun(contest.sport);
-  const backLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
-  const backToContestPath = backLeagueCode ? buildLeagueContestPath(backLeagueCode, contestId) : `/contests/${contestId}`;
   const entrySummary = entryQuery.data?.entry ?? null;
-  const myEntryIds = contest.myEntryIds ?? [];
   const rounds = buildBracketRounds(gamePicks.games, roundLabel);
   // A full bracket closes at the event's start; a second-chance one at its first round's first game.
   const closesAt = describeBracketClose(rounds, eventStart);
@@ -180,7 +172,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const canPick = gamePicks.ownEntry && isOpen;
   // Another entry's picks come back hidden until its games are revealed.
   const picksHidden = !gamePicks.ownEntry && !gamePicks.games.some((game) => game.revealed);
-  const statusLabel = CONTEST_ENTRY_STATUS_LABELS[gamePicks.status];
 
   const pick = (game: BracketGame, team: BracketTeam) => {
     saveMutation.reset();
@@ -199,54 +190,17 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     : null;
 
   return (
-    <section className="space-y-6" data-testid="bracket-entry-page">
-      <ContestHeader
-        actions={(
-          <>
-            {backLeagueCode ? null : (
-              <LinkButton data-testid="contest-entry-back-to-contest" to={backToContestPath} variant="secondary">
-                Back to contest
-              </LinkButton>
-            )}
-            <LinkButton
-              data-testid="contest-entry-back-to-league"
-              to={backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome'}
-              variant="secondary"
-            >
-              Back to league
-            </LinkButton>
-          </>
-        )}
-        badges={(
-          <>
-            <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-              {isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
-            </StatusBadge>
-            {picksHidden ? null : (
-              <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-                {statusLabel}
-              </StatusBadge>
-            )}
-          </>
-        )}
-        menu={backLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current={myEntryIds.includes(entryId) ? 'my-entry' : null}
-            leagueCode={backLeagueCode}
-            myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={entryQuery.data?.picksRevealed ?? false}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-            {contest.name}
-            {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-          </p>
-        )}
-        title={gamePicks.entryName}
-        titleTestId="contest-entry-heading"
-      />
+    <ContestEntryFrame
+      contest={contest}
+      entry={entrySummary}
+      entryId={entryId}
+      leagueCode={backLeagueCode}
+      phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
+      picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      status={picksHidden ? null : gamePicks.status}
+      testId="bracket-entry-page"
+      title={gamePicks.entryName}
+    >
 
       {picksHidden ? (
         <Alert data-testid="bracket-picks-hidden">
@@ -255,16 +209,11 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
       ) : (
         <>
           <Tile>
-            <MetricGrid className="md:grid-cols-4">
+            <MetricGrid className="md:grid-cols-3">
               <MetricTile
                 helperText={gamePicks.ownEntry && isOpen ? `Picks lock at ${closesAt}.` : 'Every pick is locked.'}
                 label="Picked"
                 value={<span data-testid="bracket-picked-count">{formatPickProgress(gamePicks.pickedCount, gamePicks.gameCount)}</span>}
-              />
-              <MetricTile
-                helperText={gamePicks.status === ContestEntryStatus.SUBMITTED ? 'This bracket counts.' : 'Only a submitted bracket counts.'}
-                label="Status"
-                value={<span data-testid="bracket-status">{statusLabel}</span>}
               />
               <MetricTile
                 helperText="Correct picks so far."
@@ -282,9 +231,9 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           {pickError ? <Alert data-testid="bracket-pick-error" tone="danger">{pickError}</Alert> : null}
 
           <Tile>
-            <h3 className="title-card mb-5 text-xl" data-testid="contest-entry-builder-heading">
+            <Heading level={3} variant="card" size="xl" tone="inherit" className="mb-5" data-testid="contest-entry-builder-heading">
               {canPick ? 'Fill in your bracket' : 'Bracket'}
-            </h3>
+            </Heading>
             {canPick ? (
               <p className="mb-5 text-sm text-muted-foreground">
                 {`Pick the winner of each ${match.one}. A later ${match.one} offers the ${participant.many} you picked to get there, and changing a pick clears the later picks that depended on it.`}
@@ -323,6 +272,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           )}
         </>
       )}
-    </section>
+    </ContestEntryFrame>
   );
 }

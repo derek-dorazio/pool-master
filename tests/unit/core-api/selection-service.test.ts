@@ -22,6 +22,7 @@ import {
 import type { SelectionServiceDeps } from '../../../packages/core-api/src/modules/selections/service';
 import type { EntrySubmittedReceiptInput } from '../../../packages/core-api/src/modules/contests/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
+import type { ContestEntryPickService } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -213,7 +214,7 @@ interface SetupOptions {
   configuration?: Partial<ContestConfiguration> | null;
   entries?: ContestEntry[];
   squadMemberships?: SquadMembership[];
-  /** The picks every read of the room sees. */
+  /** The picks the room starts with; a pick write changes what the next read sees. */
   picks?: ContestEntryPickWithParticipant[];
   actorMembership?: LeagueMembership | null;
   tierGroups?: unknown[];
@@ -222,8 +223,40 @@ interface SetupOptions {
 }
 
 function setup(options: SetupOptions = {}) {
-  const createPick = jest.fn().mockResolvedValue({ id: 'new-pick' });
-  const deletePick = jest.fn().mockResolvedValue(undefined);
+  // The picks held, written by the pick writes, so a read after a write sees what it did.
+  const held = [...(options.picks ?? [])];
+  // The writes a pick change applied, in the order `changeEntryPick` applies them.
+  const removePick = jest.fn((pickId: string) => {
+    const index = held.findIndex((row) => row.id === pickId);
+    if (index >= 0) held.splice(index, 1);
+  });
+  const addPick = jest.fn((input: { entryId: string; sportEventParticipantId: string; lineupSlot: number }) => {
+    const row = (options.field ?? FIELD).find((candidate) => candidate.id === input.sportEventParticipantId);
+    held.push({
+      ...pick(`new-pick-${held.length + 1}`, row?.participantId ?? input.sportEventParticipantId, input.sportEventParticipantId, {
+        entryId: input.entryId,
+        lineupSlot: input.lineupSlot,
+        pickedAt: new Date('2026-02-02T00:00:00.000Z'),
+      }),
+      sportEventId: row?.sportEventId ?? EVENT_ID,
+    });
+  });
+  // Decides on the entry's held picks in the event, as the service does under the entry's lock.
+  const changeEntryPick = mockFn<ContestEntryPickService['changeEntryPick']>(async ({ entryId, sportEventId, decide }) => {
+    const picks = held
+      .filter((row) => row.entryId === entryId && row.sportEventId === sportEventId)
+      .map((row) => ({
+        id: row.id,
+        sportEventParticipantId: row.sportEventParticipantId,
+        participantId: row.participant.participantId,
+        lineupSlot: row.lineupSlot ?? null,
+      }));
+    const write = decide(picks);
+    if (!write) return { changed: false };
+    if (write.removePickId) removePick(write.removePickId);
+    if (write.add) addPick({ entryId, ...write.add });
+    return { changed: true };
+  });
   const recordDraw = jest.fn().mockResolvedValue({ drawnAt: RECORDED_DRAW_AT });
 
   const deps: SelectionServiceDeps = {
@@ -271,12 +304,12 @@ function setup(options: SetupOptions = {}) {
       findByIds: jest.fn().mockResolvedValue(PARTICIPANTS),
     }),
     picks: fakeContestEntryPickRepo({
-      // Filters by event as the adapter's query does; a test that stubs its own answer takes over.
-      findByEntriesWithParticipant: mockFn<ContestEntryPickRepository['findByEntriesWithParticipant']>(async (_entryIds, read) =>
-        (options.picks ?? []).filter((row) => read?.sportEventId === undefined || row.sportEventId === read.sportEventId)),
-      countByContest: jest.fn().mockResolvedValue((options.picks ?? []).length),
+      // Filters by entry and event as the adapter's query does; a test that stubs its own answer takes over.
+      findByEntriesWithParticipant: mockFn<ContestEntryPickRepository['findByEntriesWithParticipant']>(async (entryIds, read) =>
+        held.filter((row) => entryIds.includes(row.entryId)
+          && (read?.sportEventId === undefined || row.sportEventId === read.sportEventId))),
     }),
-    pickWrites: { createPick, deletePick, recordDraw } as never,
+    pickWrites: { changeEntryPick, recordDraw } as unknown as ContestEntryPickService,
     tiers: {
       getEffectiveTiersAndValuations: jest
         .fn()
@@ -289,7 +322,7 @@ function setup(options: SetupOptions = {}) {
     drawSeed: () => 'seed-1',
   };
 
-  return { service: new SelectionService(deps), deps, createPick, deletePick, recordDraw };
+  return { service: new SelectionService(deps), deps, addPick, removePick, changeEntryPick, recordDraw };
 }
 
 /** The contest's one golf event, scheduled to start at `startDate`. */
@@ -297,11 +330,12 @@ function eventStarting(startDate: Date): SportEvent {
   return { id: EVENT_ID, sport: 'GOLF', status: 'SCHEDULED', startDate } as SportEvent;
 }
 
-function submit(overrides: { entryId?: string; participantId?: string; actorUserId?: string } = {}) {
+/** One pick change (#1259): sep-a on the owner's entry, unless told otherwise. */
+function pickChange(overrides: { entryId?: string; sportEventParticipantId?: string; actorUserId?: string } = {}) {
   return {
     contestId: CONTEST_ID,
     entryId: overrides.entryId ?? ENTRY_ID,
-    participantId: overrides.participantId ?? 'sep-a',
+    sportEventParticipantId: overrides.sportEventParticipantId ?? 'sep-a',
     actorUserId: 'actorUserId' in overrides ? overrides.actorUserId : OWNER_USER_ID,
   };
 }
@@ -467,67 +501,67 @@ describe('#324 SelectionService.getSelectionState', () => {
   });
 });
 
-describe('#324 SelectionService.submitSelection — the guards, in order', () => {
+describe('#324 SelectionService.selectPick and unselectPick — the guards, in order', () => {
   it('answers 404 CONTEST_NOT_FOUND before anything else', async () => {
-    const { service, deps, createPick } = setup();
+    const { service, deps, addPick } = setup();
     (deps.contests.findById as jest.Mock).mockResolvedValue(null);
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'CONTEST_NOT_FOUND',
       statusCode: 404,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 404 CONTEST_ENTRY_NOT_FOUND for an entry outside the contest', async () => {
-    const { service, createPick } = setup();
+    const { service, addPick } = setup();
 
-    await expect(service.submitSelection(submit({ entryId: 'entry-nope' }))).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange({ entryId: 'entry-nope' }))).rejects.toMatchObject({
       code: 'CONTEST_ENTRY_NOT_FOUND',
       statusCode: 404,
       message: `Entry entry-nope was not found for contest ${CONTEST_ID}`,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 401 AUTH_SESSION_REQUIRED for an anonymous caller — after the entry check', async () => {
-    const { service, createPick } = setup();
+    const { service, addPick } = setup();
 
-    await expect(service.submitSelection(submit({ actorUserId: undefined }))).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange({ actorUserId: undefined }))).rejects.toMatchObject({
       code: 'AUTH_SESSION_REQUIRED',
       statusCode: 401,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 403 ENTRY_ACCESS_DENIED for someone else\'s entry', async () => {
-    const { service, createPick } = setup();
+    const { service, addPick } = setup();
 
     await expect(
-      service.submitSelection(submit({ actorUserId: 'user-interloper' })),
+      service.selectPick(pickChange({ actorUserId: 'user-interloper' })),
     ).rejects.toMatchObject({
       code: 'ENTRY_ACCESS_DENIED',
       statusCode: 403,
       message: 'You can only submit picks for your own contest entry',
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 SELECTION_CONFIG_INVALID when the contest has no usable roster size', async () => {
-    const { service, createPick } = setup({ tierGroups: [] });
+    const { service, addPick } = setup({ tierGroups: [] });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'SELECTION_CONFIG_INVALID',
       statusCode: 400,
       message: `Contest ${CONTEST_ID} does not have a usable roster size or pick count`,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 PARTICIPANT_NOT_IN_EVENT for an unknown field row, and for one from another event', async () => {
     const { service } = setup();
     await expect(
-      service.submitSelection(submit({ participantId: 'sep-nope' })),
+      service.selectPick(pickChange({ sportEventParticipantId: 'sep-nope' })),
     ).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_EVENT', statusCode: 400 });
 
     const elsewhere = setup();
@@ -535,7 +569,7 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
       ...fieldRow('sep-a', 'p-a'),
       sportEventId: 'event-elsewhere',
     });
-    await expect(elsewhere.service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(elsewhere.service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'PARTICIPANT_NOT_IN_EVENT',
       statusCode: 400,
     });
@@ -544,90 +578,109 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
   it('answers 400 PARTICIPANT_NOT_SELECTABLE for a field row the room\'s selection list does not carry', async () => {
     // The row resolves as part of the event, but the room's field read does not return it —
     // so it is in the event and still not selectable here.
-    const { service, deps, createPick } = setup({ field: [fieldRow('sep-b', 'p-b')] });
+    const { service, deps, addPick } = setup({ field: [fieldRow('sep-b', 'p-b')] });
     (deps.field.findById as jest.Mock).mockResolvedValue(fieldRow('sep-a', 'p-a'));
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'PARTICIPANT_NOT_SELECTABLE',
       statusCode: 400,
       message: `SportEventParticipant sep-a is not selectable for contest ${CONTEST_ID}`,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 PARTICIPANT_UNAVAILABLE with the field row\'s own reason', async () => {
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       field: [fieldRow('sep-a', 'p-a', false), fieldRow('sep-b', 'p-b')],
     });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'PARTICIPANT_UNAVAILABLE',
       statusCode: 400,
       message: 'SportEventParticipant sep-a is unavailable with status INACTIVE',
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 TIER_MISSING for a selectable participant with no tier assignment', async () => {
     // A price-only valuation: the row is selectable and priced, but belongs to no tier.
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       valuations: [
         { ...VALUATIONS[0], tierId: null, tierKey: null, tierLabel: null, tierNumber: null, tierOrderIndex: null },
         ...VALUATIONS.slice(1),
       ],
     });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'TIER_MISSING',
       statusCode: 400,
       message: 'SportEventParticipant sep-a is missing a tier assignment',
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 TIER_NOT_FOUND when the participant\'s tier label is not a configured tier', async () => {
     // The room is configured with Tier 2 only, while sep-a's valuation still says Tier 1.
-    const { service, createPick } = setup({ tierGroups: [TIER_GROUPS[1]] });
+    const { service, addPick } = setup({ tierGroups: [TIER_GROUPS[1]] });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'TIER_NOT_FOUND',
       statusCode: 400,
       message: `Tier Tier 1 is not configured for contest ${CONTEST_ID}`,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('unselects a golfer a budget-pick entry already holds, deleting the pick and inserting nothing', async () => {
-    const { service, createPick, deletePick } = setup({
+    const { service, addPick, removePick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
       picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
-    const result = await service.submitSelection(submit());
+    const result = await service.unselectPick(pickChange());
 
-    expect(result.outcome).toBe('toggled-off');
-    expect(deletePick).toHaveBeenCalledWith('pick-a');
-    expect(createPick).not.toHaveBeenCalled();
+    expect(removePick).toHaveBeenCalledWith('pick-a');
+    expect(addPick).not.toHaveBeenCalled();
+    expect(result.picks).toEqual([]);
+    expect(result.lineupSummary).toMatchObject({ spent: 0, openSlots: 3 });
+  });
+
+  it('runs the same guards on an unselect: 403 ENTRY_ACCESS_DENIED for someone else\'s entry, removing nothing', async () => {
+    const { service, removePick } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
+
+    await expect(service.unselectPick(pickChange({ actorUserId: 'user-interloper' }))).rejects.toMatchObject({
+      code: 'ENTRY_ACCESS_DENIED',
+      statusCode: 403,
+    });
+    expect(removePick).not.toHaveBeenCalled();
+  });
+
+  it('refuses 409 CONTEST_ENTRY_LOCKED for an unselect once the event has started, removing nothing', async () => {
+    const { service, deps, removePick } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
+    (deps.sportEvents.findByIds as jest.Mock).mockResolvedValue([eventStarting(new Date('2020-01-01T00:00:00.000Z'))]);
+
+    await expect(service.unselectPick(pickChange())).rejects.toMatchObject({ code: 'CONTEST_ENTRY_LOCKED', statusCode: 409 });
+    expect(removePick).not.toHaveBeenCalled();
   });
 
   it('answers 400 ENTRY_COMPLETE when a full budget-pick entry submits again', async () => {
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
       picks: [pick('pick-b', 'p-b', 'sep-b'), pick('pick-c', 'p-c', 'sep-c')],
     });
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({
       code: 'ENTRY_COMPLETE',
       statusCode: 400,
       message: `Entry ${ENTRY_ID} has already submitted all 2 picks`,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 400 ENTRY_COMPLETE when a full tiered entry has no pick in the target tier to displace', async () => {
-    const { service, createPick, deletePick } = setup({
+    const { service, addPick, removePick } = setup({
       picks: [
         pick('pick-a', 'p-a', 'sep-a'),
         pick('pick-b', 'p-b', 'sep-b'),
@@ -638,120 +691,150 @@ describe('#324 SelectionService.submitSelection — the guards, in order', () =>
     });
 
     // Tier 2 has two picks to give and the entry holds none from it, but the entry is full.
-    await expect(service.submitSelection(submit({ participantId: 'sep-d' }))).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange({ sportEventParticipantId: 'sep-d' }))).rejects.toMatchObject({
       code: 'ENTRY_COMPLETE',
       statusCode: 400,
       message: `Entry ${ENTRY_ID} has already submitted all 4 picks`,
     });
-    expect(createPick).not.toHaveBeenCalled();
-    expect(deletePick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
+    expect(removePick).not.toHaveBeenCalled();
   });
 });
 
-describe('#324 SelectionService.submitSelection — the three outcomes', () => {
-  it('places a selection, writing it through the one enforced insert path', async () => {
-    const { service, createPick, deletePick } = setup();
+describe('#324 SelectionService.selectPick — placing, replacing, and nothing to do', () => {
+  it('places a selection by adding one pick at the lineup slot the engine chose, removing none', async () => {
+    const { service, addPick, removePick } = setup();
 
-    const result = await service.submitSelection(submit());
+    const result = await service.selectPick(pickChange());
 
-    expect(result.outcome).toBe('placed');
-    expect(deletePick).not.toHaveBeenCalled();
-    expect(createPick).toHaveBeenCalledWith({
-      entryId: ENTRY_ID,
-      sportEventParticipantId: 'sep-a',
-      lineupSlot: 1,
-      pickSequence: 1,
-      isAutoPicked: false,
-    });
-  });
-
-  it('numbers a pick after every pick the whole contest holds, not just the entry\'s', async () => {
-    const { service, deps, createPick } = setup();
-    (deps.picks.countByContest as jest.Mock).mockResolvedValue(7);
-
-    await service.submitSelection(submit());
-
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ pickSequence: 8 }));
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a']);
+    expect(removePick).not.toHaveBeenCalled();
+    expect(addPick).toHaveBeenCalledWith({ entryId: ENTRY_ID, sportEventParticipantId: 'sep-a', lineupSlot: 1 });
   });
 
   // The rule the deleted engines had backwards. Given a full tier the engine REJECTED the
   // pick; the live route REPLACES it. The root cause: a `{ valid, reason }` return
   // cannot say "replace", which is why this behaviour could never live behind that interface.
   it('replaces the tier\'s last pick when the tier is already full, rather than rejecting', async () => {
-    const { service, createPick, deletePick } = setup({
+    const { service, addPick, removePick } = setup({
       picks: [pick('pick-a', 'p-a', 'sep-a'), pick('pick-b', 'p-b', 'sep-b')],
     });
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-c' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-c' }));
 
-    expect(result.outcome).toBe('placed');
-    expect(deletePick).toHaveBeenCalledWith('pick-b');
-    expect(createPick).toHaveBeenCalledWith(
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a', 'sep-c']);
+    expect(removePick).toHaveBeenCalledWith('pick-b');
+    expect(addPick).toHaveBeenCalledWith(
       expect.objectContaining({ sportEventParticipantId: 'sep-c', lineupSlot: 2 }),
     );
   });
 
-  // The other outcome a boolean cannot express: re-submitting a participant the entry already
-  // holds unselects it. One delete, no insert, and the refreshed room comes back 200 — not an
-  // error, which is what a validate-then-insert shape would have been forced to answer.
-  it('toggles a tiered selection off when the entry already holds it, deleting and inserting nothing', async () => {
-    const { service, createPick, deletePick } = setup({
+  // #1259: selecting is selecting. A second select of a held golfer used to unselect them, so a
+  // repeated request (a double tap, a retry) undid the pick; now it changes nothing.
+  it('changes nothing when the entry already holds the golfer selected, deleting and inserting nothing', async () => {
+    const { service, addPick, removePick } = setup({
       picks: [pick('pick-a', 'p-a', 'sep-a')],
     });
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-a' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
-    expect(result.outcome).toBe('toggled-off');
-    expect(deletePick).toHaveBeenCalledWith('pick-a');
-    expect(createPick).not.toHaveBeenCalled();
-    expect(result.view.contest.id).toBe(CONTEST_ID);
+    expect(removePick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a']);
   });
 
-  it('answers a toggle-off and a placement alike with the refreshed room for the submitting entry', async () => {
-    const toggled = await setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] }).service.submitSelection(
-      submit({ participantId: 'sep-a' }),
-    );
-    expect(toggled.view.selectedEntryId).toBe(ENTRY_ID);
+  it('unselects a tiered pick the entry holds, deleting it and inserting nothing', async () => {
+    const { service, addPick, removePick } = setup({
+      picks: [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')],
+    });
 
-    const placed = await setup().service.submitSelection(submit());
-    expect(placed.view.selectedEntryId).toBe(ENTRY_ID);
-    expect(placed.view.rosterSize).toBe(4);
+    const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
+
+    expect(removePick).toHaveBeenCalledWith('pick-a');
+    expect(addPick).not.toHaveBeenCalled();
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-d']);
+  });
+
+  it('changes nothing when unselecting a golfer the entry does not hold', async () => {
+    const { service, addPick, removePick } = setup({ picks: [pick('pick-d', 'p-d', 'sep-d')] });
+
+    const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
+
+    expect(removePick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-d']);
+  });
+
+  it('removes a golfer who withdrew after being picked, though a new pick of them is refused', async () => {
+    const { service, removePick } = setup({
+      field: [fieldRow('sep-a', 'p-a', false), fieldRow('sep-b', 'p-b'), fieldRow('sep-c', 'p-c'), fieldRow('sep-d', 'p-d')],
+      picks: [pick('pick-a', 'p-a', 'sep-a')],
+    });
+
+    const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
+
+    expect(removePick).toHaveBeenCalledWith('pick-a');
+    expect(result.picks).toEqual([]);
+    await expect(service.selectPick(pickChange({ sportEventParticipantId: 'sep-a' })))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_UNAVAILABLE', statusCode: 400 });
+  });
+
+  it('answers with only the changed entry\'s picks, its status and summary, never the room or another entry\'s picks', async () => {
+    const { service } = setup({
+      entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, SQUAD_ID)],
+      picks: [pick('pick-other', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID })],
+    });
+
+    const result = await service.selectPick(pickChange());
+
+    expect(Object.keys(result).sort()).toEqual(['contestId', 'entryId', 'entryStatus', 'lineupSummary', 'picks', 'sportEventId']);
+    expect(result).toMatchObject({ contestId: CONTEST_ID, entryId: ENTRY_ID, sportEventId: EVENT_ID, entryStatus: 'DRAFT', lineupSummary: null });
+    expect(result.picks.map((row) => [row.entryId, row.sportEventParticipantId])).toEqual([[ENTRY_ID, 'sep-a']]);
+  });
+
+  it('decides on the entry\'s picks under its lock, reads them back once for the answer, and never reads the league membership a room read needs', async () => {
+    const { service, deps, changeEntryPick } = setup({ entries: [entry(ENTRY_ID, SQUAD_ID), entry(OTHER_ENTRY_ID, SQUAD_ID)] });
+
+    await service.selectPick(pickChange());
+
+    const reads = (deps.picks.findByEntriesWithParticipant as jest.Mock).mock.calls as Array<[string[]]>;
+    expect(reads.map(([entryIds]) => entryIds)).toEqual([[ENTRY_ID]]);
+    expect(changeEntryPick).toHaveBeenCalledTimes(1);
+    expect(changeEntryPick).toHaveBeenCalledWith(expect.objectContaining({ entryId: ENTRY_ID, sportEventId: EVENT_ID }));
+    expect(deps.memberships.findByLeagueAndUser).not.toHaveBeenCalled();
   });
 
   it('counts the rounds the earlier tiers take when placing into a later tier', async () => {
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       picks: [pick('pick-a', 'p-a', 'sep-a'), pick('pick-b', 'p-b', 'sep-b')],
     });
 
-    await service.submitSelection(submit({ participantId: 'sep-d' }));
+    await service.selectPick(pickChange({ sportEventParticipantId: 'sep-d' }));
 
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ lineupSlot: 3 }));
+    expect(addPick).toHaveBeenCalledWith(expect.objectContaining({ lineupSlot: 3 }));
   });
 
-  it('accepts the canonical participant id as well as the field row id', async () => {
-    const { service, deps, createPick } = setup();
-    (deps.field.findById as jest.Mock).mockResolvedValue(fieldRow('sep-a', 'p-a'));
+  it('refuses a canonical participant id, which names no field row, with 400 PARTICIPANT_NOT_IN_EVENT', async () => {
+    const { service, addPick } = setup();
 
-    await service.submitSelection(submit({ participantId: 'sep-a' }));
-
-    expect(createPick).toHaveBeenCalledWith(
-      expect.objectContaining({ sportEventParticipantId: 'sep-a' }),
-    );
+    await expect(service.selectPick(pickChange({ sportEventParticipantId: 'p-a' })))
+      .rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_EVENT', statusCode: 400 });
+    expect(addPick).not.toHaveBeenCalled();
   });
 });
 
 describe('SelectionService — rooms with missing or partial data', () => {
   it('places a budget pick in the next free place when the entry still has room', async () => {
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
       configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
       picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-d' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-d' }));
 
-    expect(result.outcome).toBe('placed');
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', lineupSlot: 2 }));
+    expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a', 'sep-d']);
+    expect(addPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-d', lineupSlot: 2 }));
   });
 
   it('answers 404 for a DRAFT contest\'s room to an anonymous reader and to a commissioner whose membership is inactive', async () => {
@@ -769,13 +852,13 @@ describe('SelectionService — rooms with missing or partial data', () => {
   });
 
   it('refuses every pick as unconfigured when the tiered configuration carries no picksPerTier, rather than guessing a roster', async () => {
-    const { service, createPick } = setup({ configuration: { configJson: undefined } });
+    const { service, addPick } = setup({ configuration: { configJson: undefined } });
 
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
     expect(view.rosterSize).toBe(0);
 
-    await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
-    expect(createPick).not.toHaveBeenCalled();
+    await expect(service.selectPick(pickChange())).rejects.toMatchObject({ code: 'SELECTION_CONFIG_INVALID' });
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('answers 404 CONTEST_EVENT_NOT_IN_CONTEST for a room asked for an event the contest does not cover', async () => {
@@ -787,10 +870,10 @@ describe('SelectionService — rooms with missing or partial data', () => {
 
   it('refuses a pick of a golfer from an event the contest does not cover with 400 PARTICIPANT_NOT_IN_EVENT, placing nothing', async () => {
     const elsewhere = { ...fieldRow('sep-z', 'p-z'), sportEventId: 'event-elsewhere' };
-    const { service, createPick } = setup({ field: [...FIELD, elsewhere] });
+    const { service, addPick } = setup({ field: [...FIELD, elsewhere] });
 
-    await expect(service.submitSelection(submit({ participantId: 'sep-z' }))).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_EVENT', statusCode: 400 });
-    expect(createPick).not.toHaveBeenCalled();
+    await expect(service.selectPick(pickChange({ sportEventParticipantId: 'sep-z' }))).rejects.toMatchObject({ code: 'PARTICIPANT_NOT_IN_EVENT', statusCode: 400 });
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('lists an entry whose team has no active member with an empty owner rather than dropping it', async () => {
@@ -897,6 +980,19 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
     expect(receipt.entryIds).toEqual([ENTRY_ID]);
   });
 
+  it('reads the event\'s picks once on a submit, and hands the same picks to the lineup check, the confirmation and the room (#1254)', async () => {
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    const view = await service.submitEntry(submitEntryInput());
+
+    expect(deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.picks.map((row) => row.id).sort()).toEqual(COMPLETE.map((row) => row.id).sort());
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(COMPLETE.length);
+  });
+
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
     const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
@@ -971,45 +1067,37 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
   });
 });
 
-describe('SelectionService.submitSelection — a pick change on a submitted entry (#481)', () => {
+describe('SelectionService pick changes on a submitted entry (#481)', () => {
   const COMPLETE = [pick('pick-a', 'p-a', 'sep-a'), pick('pick-d', 'p-d', 'sep-d')];
   const ONE_PER_TIER = { configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 } };
 
   it('sends a submitted entry back to DRAFT when unselecting a golfer leaves its lineup short', async () => {
-    const { service, deps } = setup({ configuration: ONE_PER_TIER, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
-    (deps.picks.findByEntriesWithParticipant as jest.Mock)
-      .mockResolvedValueOnce(COMPLETE)
-      .mockResolvedValue([COMPLETE[1]]);
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
     (deps.entries.update as jest.Mock).mockImplementation(async (id: string, updates: Partial<ContestEntry>) => ({
       ...entry(id, SQUAD_ID, 'Entry', 'SUBMITTED'),
       ...updates,
     }));
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-a' }));
+    const result = await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
-    expect(result.outcome).toBe('toggled-off');
     expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
-    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('DRAFT');
+    expect(result.entryStatus).toBe('DRAFT');
   });
 
   it('keeps a submitted entry SUBMITTED when a swap within a full tier leaves the lineup complete', async () => {
-    const { service, deps, deletePick } = setup({ configuration: ONE_PER_TIER, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
-    (deps.picks.findByEntriesWithParticipant as jest.Mock)
-      .mockResolvedValueOnce(COMPLETE)
-      .mockResolvedValue([pick('pick-c', 'p-c', 'sep-c'), COMPLETE[1]]);
+    const { service, deps, removePick } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE, entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-c' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-c' }));
 
-    expect(result.outcome).toBe('placed');
-    expect(deletePick).toHaveBeenCalledWith('pick-a');
+    expect(removePick).toHaveBeenCalledWith('pick-a');
     expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
-    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('SUBMITTED');
+    expect(result.entryStatus).toBe('SUBMITTED');
   });
 
   it('leaves a draft entry a draft without writing its status when a pick changes', async () => {
     const { service, deps } = setup({ picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
-    await service.submitSelection(submit({ participantId: 'sep-a' }));
+    await service.unselectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
     expect(deps.entries.setEventStatus).not.toHaveBeenCalled();
   });
@@ -1061,16 +1149,16 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
   });
 
   it('places a pick that takes the entry over the cap', async () => {
-    const { service, createPick } = setup({ ...BUDGET, picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })] });
+    const { service, addPick } = setup({ ...BUDGET, picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })] });
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-b' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-b' }));
 
-    expect(result.outcome).toBe('placed');
-    expect(createPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-b', lineupSlot: 2 }));
+    expect(addPick).toHaveBeenCalledWith(expect.objectContaining({ sportEventParticipantId: 'sep-b', lineupSlot: 2 }));
+    expect(result.lineupSummary).toMatchObject({ spent: 190, remaining: -40, isOverBudget: true, openSlots: 0 });
   });
 
   it('refuses 400 PRICE_MISSING for a golfer with no price, placing nothing', async () => {
-    const { service, createPick } = setup({
+    const { service, addPick } = setup({
       ...BUDGET,
       valuations: VALUATIONS.map((valuation) =>
         (valuation as { sportEventParticipantId: string }).sportEventParticipantId === 'sep-d'
@@ -1078,11 +1166,11 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
           : valuation),
     });
 
-    await expect(service.submitSelection(submit({ participantId: 'sep-d' }))).rejects.toMatchObject({
+    await expect(service.selectPick(pickChange({ sportEventParticipantId: 'sep-d' }))).rejects.toMatchObject({
       code: 'PRICE_MISSING',
       statusCode: 400,
     });
-    expect(createPick).not.toHaveBeenCalled();
+    expect(addPick).not.toHaveBeenCalled();
   });
 
   it('sends a submitted entry back to DRAFT when a swap takes its full lineup over the cap', async () => {
@@ -1095,10 +1183,10 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
       ...updates,
     }));
 
-    const result = await service.submitSelection(submit({ participantId: 'sep-b' }));
+    const result = await service.selectPick(pickChange({ sportEventParticipantId: 'sep-b' }));
 
     expect(deps.entries.setEventStatus).toHaveBeenCalledWith(ENTRY_ID, EVENT_ID, 'DRAFT', expect.any(Date));
-    expect(result.view.entries.find((row) => row.id === ENTRY_ID)?.status).toBe('DRAFT');
+    expect(result.entryStatus).toBe('DRAFT');
   });
 
   it('lists the whole field as one group, dearest first, and summarises the viewed entry\'s spend', async () => {
@@ -1207,6 +1295,23 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(receipt.entryIds).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
   });
 
+  it('reads the dealt picks once, for both the receipts and the room (#1254)', async () => {
+    const dealt = [
+      pick('pick-1', 'p-a', 'sep-a', { lineupSlot: 1 }),
+      pick('pick-2', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
+    ];
+    const context = setup({ ...DRAW, entries: [...DRAW.entries], picks: dealt });
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    context.deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    const view = await context.service.runDraw(runDraw);
+
+    expect(context.deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.picks.map((row) => row.id)).toEqual(['pick-1', 'pick-2']);
+    expect(view.entries.map((row) => row.pickCount)).toEqual([1, 1]);
+  });
+
   it('still answers with the dealt room when sending the receipts fails, because the draw is already recorded', async () => {
     const context = setup({ ...DRAW, entries: [...DRAW.entries] });
     context.deps.entryReceipts = { sendEntrySubmittedEmails: jest.fn().mockRejectedValue(new Error('database unavailable')) };
@@ -1288,10 +1393,22 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     const before = setup({ ...DRAW, entries: [...DRAW.entries] });
     const after = setup({ ...DRAW, contest: { ...DRAW.contest, drawnAt: DRAWN_AT }, entries: [...DRAW.entries] });
 
-    for (const { service, createPick } of [before, after]) {
-      await expect(service.submitSelection(submit())).rejects.toMatchObject({ code: 'SELECTION_DEALT_BY_DRAW', statusCode: 409 });
-      expect(createPick).not.toHaveBeenCalled();
+    for (const { service, addPick } of [before, after]) {
+      await expect(service.selectPick(pickChange())).rejects.toMatchObject({ code: 'SELECTION_DEALT_BY_DRAW', statusCode: 409 });
+      expect(addPick).not.toHaveBeenCalled();
     }
+  });
+
+  it('refuses 409 SELECTION_DEALT_BY_DRAW for unselecting a golfer the draw dealt, so a dealt lineup stays as dealt', async () => {
+    const { service, removePick } = setup({
+      ...DRAW,
+      contest: { ...DRAW.contest, drawnAt: DRAWN_AT },
+      entries: [...DRAW.entries],
+      picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
+    });
+
+    await expect(service.unselectPick(pickChange())).rejects.toMatchObject({ code: 'SELECTION_DEALT_BY_DRAW', statusCode: 409 });
+    expect(removePick).not.toHaveBeenCalled();
   });
 
   it('refuses 409 SELECTION_DEALT_BY_DRAW for submitting an entry once the draw has dealt', async () => {
@@ -1320,7 +1437,7 @@ describe('SelectionService — what one pick reads (#1196)', () => {
   it('reads the event\'s field once per pick, and hands it to the one read of the tiers and valuations', async () => {
     const { service, deps } = setup();
 
-    await service.submitSelection(submit({ participantId: 'sep-a' }));
+    await service.selectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
     expect(deps.field.findBySportEvent).toHaveBeenCalledTimes(1);
     expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledTimes(1);
@@ -1330,7 +1447,7 @@ describe('SelectionService — what one pick reads (#1196)', () => {
   it('asks for only the event\'s picks on every pick read, so other events\' picks are filtered in the query', async () => {
     const { service, deps } = setup({ entries: [entry(ENTRY_ID, SQUAD_ID, 'Entry', 'SUBMITTED')] });
 
-    await service.submitSelection(submit({ participantId: 'sep-a' }));
+    await service.selectPick(pickChange({ sportEventParticipantId: 'sep-a' }));
 
     const reads = (deps.picks.findByEntriesWithParticipant as jest.Mock).mock.calls as Array<[string[], { sportEventId?: string } | undefined]>;
     expect(reads.length).toBeGreaterThan(0);

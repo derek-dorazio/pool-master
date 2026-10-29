@@ -10,7 +10,7 @@ import { sportEventFixture, sportLeagueFixture } from './sport-test-fixtures';
 // plans/147 — a tour's tournaments by event year: the season list, the season home page,
 // "set as current" and "clone to next year" all moved here when the season was collapsed into the event.
 
-const { listEventsMock, updateSportLeagueMock, cloneEventYearMock, listProvidersMock, importEventYearFromProviderMock, mockLogger } = vi.hoisted(() => {
+const { listEventsMock, listEventYearsMock, updateSportLeagueMock, cloneEventYearMock, listProvidersMock, importEventYearFromProviderMock, mockLogger } = vi.hoisted(() => {
   const logger = {
     debug: vi.fn(),
     info: vi.fn(),
@@ -22,6 +22,7 @@ const { listEventsMock, updateSportLeagueMock, cloneEventYearMock, listProviders
   logger.child.mockReturnValue(logger);
   return {
     listEventsMock: vi.fn(),
+    listEventYearsMock: vi.fn(),
     updateSportLeagueMock: vi.fn(),
     cloneEventYearMock: vi.fn(),
     listProvidersMock: vi.fn(),
@@ -32,6 +33,7 @@ const { listEventsMock, updateSportLeagueMock, cloneEventYearMock, listProviders
 
 bindApiMocks({
   listEvents: listEventsMock,
+  listEventYears: listEventYearsMock,
   updateSportLeague: updateSportLeagueMock,
   cloneEventYear: cloneEventYearMock,
   listProviders: listProvidersMock,
@@ -52,7 +54,10 @@ const EVENTS = [
 ];
 
 function renderCard(sportLeague = SPORT_LEAGUE) {
-  listEventsMock.mockResolvedValue({ data: { events: EVENTS } });
+  // The server filters by year, so the mock does too: the card never filters a list itself.
+  listEventsMock.mockImplementation(({ query }: { query: { eventYear?: number } }) =>
+    Promise.resolve({ data: { events: EVENTS.filter((event) => event.eventYear === query.eventYear) } }));
+  listEventYearsMock.mockResolvedValue({ data: { years: [2026, 2025] } });
   listProvidersMock.mockResolvedValue({ data: { providers: [{ providerId: 'mock-contest-feed', sportsCovered: ['GOLF'] }] } });
   return render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -78,11 +83,51 @@ describe('plans/147 SportLeagueCalendarCard', () => {
     expect(screen.getByTestId('root-admin-sport-league-event-row-open-2026')).toBeInTheDocument();
     expect(screen.queryByTestId('root-admin-sport-league-event-row-masters-2025')).not.toBeInTheDocument();
     expect(screen.getByText('Current year')).toBeInTheDocument();
-    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
+    expect(listEventsMock).toHaveBeenCalledTimes(1);
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga', eventYear: 2026 } }));
     expect(screen.getByTestId('root-admin-sport-league-calendar-new-tournament')).toHaveAttribute(
       'href',
       '/manage/sports/golf/events/new?sportLeagueId=pga&eventYear=2026',
     );
+  });
+
+  it('reads the years from their own small read and asks for one year\'s tournaments at a time, never every year', async () => {
+    renderCard();
+    await screen.findByTestId('root-admin-sport-league-event-row-masters-2026');
+
+    expect(listEventYearsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga' } }));
+    const options = within(screen.getByTestId('root-admin-sport-league-calendar-year')).getAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual(['2027', '2026', '2025']);
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-sport-league-calendar-year'), '2025');
+    expect(await screen.findByTestId('root-admin-sport-league-event-row-masters-2025')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sport-league-event-row-masters-2026')).not.toBeInTheDocument();
+    const years = listEventsMock.mock.calls.map(([request]) => (request as { query: { eventYear?: number } }).query.eventYear);
+    expect(years).toEqual([2026, 2025]);
+  });
+
+  it('waits for the years read before loading any tournaments when the tour has no current year, then opens on its latest year', async () => {
+    let answerYears: (value: unknown) => void = () => undefined;
+    // A once-value outranks the default renderCard sets, so the years read hangs until answered.
+    listEventYearsMock.mockReturnValueOnce(new Promise((resolve) => { answerYears = resolve; }));
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: null }));
+
+    expect(await screen.findByTestId('root-admin-sport-league-calendar-loading')).toHaveTextContent('Loading years...');
+    expect(listEventsMock).not.toHaveBeenCalled();
+    answerYears({ data: { years: [2025] } });
+
+    expect(await screen.findByTestId('root-admin-sport-league-event-row-masters-2025')).toBeInTheDocument();
+    expect(listEventsMock).toHaveBeenCalledTimes(1);
+    expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({ query: { sportLeagueId: 'pga', eventYear: 2025 } }));
+  });
+
+  it('says the years could not be loaded, instead of guessing a year, when the years read fails for a tour without a current year', async () => {
+    listEventYearsMock.mockResolvedValueOnce({ error: { error: { code: 'INTERNAL_ERROR', message: 'Years are unavailable.' } }, response: { status: 500 } });
+    renderCard(sportLeagueFixture({ id: 'pga', name: 'PGA Tour', currentEventYear: null }));
+
+    expect(await screen.findByTestId('root-admin-sport-league-calendar-years-error')).toHaveTextContent('Years are unavailable.');
+    expect(screen.queryByTestId('root-admin-sport-league-calendar-year')).not.toBeInTheDocument();
+    expect(listEventsMock).not.toHaveBeenCalled();
   });
 
   it('sets another year with tournaments as current, in one update to the tour', async () => {

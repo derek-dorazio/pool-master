@@ -1,5 +1,6 @@
 import type {
   FastifyBaseLogger,
+  FastifyReply,
   FastifyRequest,
   FastifyServerOptions,
 } from 'fastify';
@@ -101,6 +102,14 @@ export function createFastifyLoggerOptions(
           remoteAddress: request.ip,
           remotePort: request.socket.remotePort,
         };
+      },
+      // Fastify's default response serializer, plus the request's query count and database
+      // time (#1244) on the "request completed" line.
+      res(reply: Partial<FastifyReply> & Pick<FastifyReply, 'statusCode'>) {
+        const usage = reply.request?.queryUsage;
+        return usage === undefined
+          ? { statusCode: reply.statusCode }
+          : { statusCode: reply.statusCode, queryCount: usage.queryCount, dbMs: usage.dbMs };
       },
     },
     formatters: {

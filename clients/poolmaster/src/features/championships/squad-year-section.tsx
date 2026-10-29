@@ -3,7 +3,15 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import type { SquadDto } from '@/lib/api';
 import { buildLeagueChampionshipsPath, buildLeagueCupSquadPath } from '@/features/leagues/league-routing';
-import { Button, ErrorState, LoadingState, MetricGrid, MetricTile, Tile } from '@/features/shared/ui';
+import {
+  Button,
+  ErrorState,
+  Heading,
+  LoadingState,
+  MetricGrid,
+  MetricTile,
+  Tile,
+} from '@/features/shared/ui';
 import { ChampionshipContestList } from './championship-contest-list';
 import { ChampionshipStandingsGrid } from './championship-standings-grid';
 import { describeContestResultFilter, historyCupsOnShow, type ContestResultFilter } from './championship-view';
@@ -20,11 +28,14 @@ import { useChampionshipContestsQuery, useSquadYearQuery } from './use-champions
 export function SquadYearSection({
   leagueCode,
   leagueId,
+  mySquadId,
   squad,
   year,
 }: {
   leagueCode: string;
   leagueId: string;
+  /** The viewer's own squad, marked You; null when they have none. */
+  mySquadId: string | null;
   squad: Pick<SquadDto, 'id' | 'name'>;
   year: number;
 }) {
@@ -72,7 +83,7 @@ export function SquadYearSection({
 
               <ChampionshipStandingsGrid
                 filter={filter}
-                focusSquadId={squad.id}
+                focusSquadId={mySquadId}
                 onFilter={(next) => setPlace(next.place)}
                 rows={[championship.standing]}
                 searchable={false}
@@ -82,7 +93,7 @@ export function SquadYearSection({
 
           {cups.length ? (
             <Tile className="space-y-2" padding="sm" radius="lg">
-              <h3 className="title-card text-foreground">Cups</h3>
+              <Heading level={3} variant="card">Cups</Heading>
               <ul className="space-y-1 text-sm" data-testid="squad-year-cups">
                 {cups.map((cup) => (
                   <li key={cup.cupId}>
@@ -107,9 +118,9 @@ export function SquadYearSection({
 
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="title-card text-foreground" data-testid="squad-year-contests-heading">
+          <Heading level={3} variant="card" data-testid="squad-year-contests-heading">
             {describeContestResultFilter(filter, squad.name, year)}
-          </h3>
+          </Heading>
           {place === null ? null : (
             <Button data-testid="squad-year-contests-clear" onClick={() => setPlace(null)} size="sm" type="button" variant="subtle">
               Show every contest

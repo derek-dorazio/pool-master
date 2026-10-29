@@ -21,7 +21,7 @@ import {
   releaseEvent,
   setContestSportEvents,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport, findSportRow } from '@poolmaster/shared/domain';
@@ -225,7 +225,7 @@ async function buildTwoTournamentContest(
     const played = [[open, lastTierPick.open], [classic, lastTierPick.classic]] as const;
     for (const [tournament, lastTier] of skipsOpen ? played.slice(1) : played) {
       for (const golfer of [...SHARED, lastTier]) {
-        const pick = await submitContestSelection({ client, path: { contestId }, body: { entryId: entry.id, participantId: tournament.fieldRowOf(golfer) } });
+        const pick = await selectContestPick({ client, path: { contestId, entryId: entry.id, sportEventParticipantId: tournament.fieldRowOf(golfer) } });
         expect(pick.response?.status).toBe(200);
       }
       const submitted = await submitContestEntry({ client, path: { contestId, entryId: entry.id, sportEventId: tournament.eventId } });

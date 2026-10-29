@@ -13,6 +13,7 @@
  */
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
+import noButtonRowOverride from './no-button-row-override.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from './no-env-fallbacks.mjs';
@@ -20,6 +21,7 @@ import noWidenedEnumFields from './no-widened-enum-fields.mjs';
 import noParallelApiTypes from './no-parallel-api-types.mjs';
 import noInlineQueryKeys from './no-inline-query-keys.mjs';
 import noInlineThemeStyles from './no-inline-theme-styles.mjs';
+import noListLookup from './no-list-lookup.mjs';
 import noMockedApi from './no-mocked-api.mjs';
 import noNodeEnvReads from './no-node-env-reads.mjs';
 import noQueryInLoop from './no-query-in-loop.mjs';
@@ -34,6 +36,7 @@ export default {
   rules: {
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
+    'no-button-row-override': noButtonRowOverride,
     'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
     'no-env-fallbacks': noEnvFallbacks,
@@ -41,6 +44,7 @@ export default {
     'no-parallel-api-types': noParallelApiTypes,
     'no-widened-enum-fields': noWidenedEnumFields,
     'no-inline-theme-styles': noInlineThemeStyles,
+    'no-list-lookup': noListLookup,
     'no-mocked-api': noMockedApi,
     'no-node-env-reads': noNodeEnvReads,
     'no-plan-branching': noPlanBranching,

@@ -4,11 +4,12 @@ import {
   Button,
   Callout,
   ConfirmationModal,
+  formatDateTimeDisplay,
+  Heading,
   LinkButton,
   ListCard,
   StatusBadge,
   Tile,
-  formatDateTimeDisplay,
   useDisplayPreferences,
 } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -102,7 +103,7 @@ export function SportEventWorkflowCard({
   return (
     <Tile>
       <div className="flex items-start justify-between gap-3">
-        <h2 className="title-card text-lg text-foreground">Workflow</h2>
+        <Heading level={2} variant="card" size="lg">Workflow</Heading>
         <StatusBadge tone={sportEventStatusTone(tournament.status)}>
           {formatSportEventStatus(tournament.status)}
         </StatusBadge>

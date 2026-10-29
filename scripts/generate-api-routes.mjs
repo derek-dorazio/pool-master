@@ -121,7 +121,6 @@ const MANIFEST = {
   selections: {
     $comment: 'Selections',
     state: 'getSelectionState',
-    pick: 'submitContestSelection',
   },
   observability: {
     clientLogs: 'ingestClientLogs',

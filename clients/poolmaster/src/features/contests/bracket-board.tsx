@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { Button, Chip, cn } from '@/features/shared/ui';
+import { Button, Chip, cn, Heading } from '@/features/shared/ui';
 import {
   describeOpenSide,
   describePickOutcome,
@@ -26,7 +26,8 @@ function TeamChoice({
   return (
     <Button
       aria-pressed={isPicked}
-      className="normal-case tracking-normal w-full justify-between text-left"
+      className="justify-between"
+      layout="row"
       data-testid={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
       disabled={isBusy}
       onClick={() => {
@@ -135,11 +136,11 @@ export function BracketBoard({
     <div className="space-y-8" data-testid="bracket-board">
       {rounds.map((round) => (
         <section aria-labelledby={`bracket-round-${round.roundNumber}`} className="space-y-4" data-testid={`bracket-round-${round.roundNumber}`} key={round.roundNumber}>
-          <h3 className="title-card text-lg" id={`bracket-round-${round.roundNumber}`}>{round.label}</h3>
+          <Heading level={3} variant="card" size="lg" tone="inherit" id={`bracket-round-${round.roundNumber}`}>{round.label}</Heading>
           {round.regions.map((region) => (
             <div className="space-y-2" key={region.regionLabel ?? ''}>
               {region.regionLabel ? (
-                <h4 className="text-xs font-semibold uppercase tracking-eyebrow text-muted-foreground">{region.regionLabel}</h4>
+                <Heading level={4} variant="eyebrow">{region.regionLabel}</Heading>
               ) : null}
               <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {region.games.map((game) => (

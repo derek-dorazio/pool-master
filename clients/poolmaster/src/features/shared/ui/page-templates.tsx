@@ -8,6 +8,7 @@ import { ServerErrorBar } from "./server-error";
 import { EmptyState, ErrorState, LoadingState } from "./state";
 import { LOADING_TEXT } from "./state-copy";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type TemplateState = "ready" | "loading" | "error" | "empty" | "forbidden";
 
@@ -300,7 +301,7 @@ export function FormEditorSection({
     <Tile className={className} data-testid={testId}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="title-card text-xl text-foreground">{title}</h2>
+          <Heading level={2} variant="card" size="xl">{title}</Heading>
           {description ? (
             <p className="mt-2 text-sm text-muted-foreground">{description}</p>
           ) : null}
@@ -351,9 +352,9 @@ export function PublicInviteJoinPage({
       data-testid={testId}
     >
       <Tile className="w-full" padding="lg">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <Heading level={1} variant="page">
           {title}
-        </h1>
+        </Heading>
         {context ? <div className="mt-5">{context}</div> : null}
         <div className="mt-6">{stateContent ?? children}</div>
         {primaryAction || secondaryAction ? (

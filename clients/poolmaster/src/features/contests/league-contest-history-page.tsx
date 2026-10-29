@@ -8,6 +8,7 @@ import {
   Chip,
   EmptyState,
   ErrorState,
+  Heading,
   LinkButton,
   LoadingState,
   PageHeader,
@@ -99,12 +100,13 @@ export function LeagueContestHistoryPage() {
         <Tile data-testid="league-contests-history">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="title-card text-xl text-foreground">Completed in {year}</h2>
+              <Heading level={2} variant="card" size="xl">Completed in {year}</Heading>
               <p className="mt-2 text-sm text-muted-foreground">
                 Open a completed contest to view final standings and revealed picks.
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {/* poolmaster-allow-list-lookup: counts the results listed right below it */}
               {resultsQuery.data ? <Chip tone="info">{resultsQuery.data.length}</Chip> : null}
               <Select
                 aria-label="Year"

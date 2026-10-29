@@ -376,6 +376,7 @@ describe('ContestService entries — confirmation email', () => {
       valuations: [],
       squadMemberships: await world.squadMembershipRepo().findBySquads([squadId]),
       entryIds: [entryId],
+      picks: await world.pickRepo().findByEntriesWithParticipant([entryId], { sportEventId: contest.sportEventIds[0] ?? '' }),
     };
   }
 

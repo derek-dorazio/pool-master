@@ -105,6 +105,7 @@ import {
   areMatchPicksRevealed,
   contestCutoff,
   cutoffTiming,
+  type ContestCutoff,
   type EventTiming,
 } from './entry-window';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
@@ -146,6 +147,8 @@ export interface EntrySubmittedReceiptInput {
   squadMemberships: readonly SquadMembership[];
   /** The submitted entries, each one sent its own receipt. */
   entryIds: readonly string[];
+  /** The entries' picks in the event, as the submission already read them (#1254). */
+  picks: readonly ContestEntryPickWithParticipant[];
 }
 
 type LifecycleLogger = Pick<FastifyBaseLogger, 'debug' | 'info' | 'warn' | 'error' | 'fatal'>;
@@ -278,8 +281,7 @@ export class ContestService {
   async listOpenContestUsage(leagueId: string): Promise<OpenContestUsageDto[]> {
     this.logger.debug({ leagueId }, 'contest open usage list start');
     const contests = await this.deps.contests.findByLeague(leagueId, [ContestStatus.OPEN]);
-    const open = (await Promise.all(contests.map(async (contest) => ((await this.areEntriesOpen(contest)) ? contest : null))))
-      .filter((contest) => contest !== null);
+    const open = await this.filterEntriesOpen(contests);
     const counts = await this.deps.entries.countByContests(open.map((contest) => contest.id));
     return open.map((contest) => ({ contestId: contest.id, name: contest.name, entryCount: counts.get(contest.id) ?? 0 }));
   }
@@ -313,17 +315,44 @@ export class ContestService {
    * (#711). Only those two read their rules for it.
    */
   private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
-    if (contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES) {
-      return events.map((event) => ({ event, window: event }));
-    }
-    const cutoff = contestCutoff((await this.deps.configurations.findByContest(contest.id))?.configJson, contest.squaresGameMatchId);
-    if (cutoff.kind === ContestCutoffKind.EVENT_START) {
-      return events.map((event) => ({ event, window: event }));
-    }
-    const matches = await this.deps.matches.findBySportEvents(events.map((event) => event.id));
-    return events.map((event) => ({
-      event,
-      window: cutoffTiming(cutoff, event, matches.filter((match) => match.sportEventId === event.id)),
+    return (await this.findWindowsOfContests([contest], () => events)).get(contest.id) ?? [];
+  }
+
+  /**
+   * `findContestWindows` for several contests, by contest id, in the same few reads however many
+   * there are (#1248): their rules in one read and their cutoff games in one more. `eventsOf`
+   * gives each contest's events, already read.
+   */
+  private async findWindowsOfContests<Event extends SportEvent>(
+    contests: readonly Contest[],
+    eventsOf: (contest: Contest) => readonly Event[],
+  ): Promise<Map<string, Array<{ event: Event; window: EventTiming }>>> {
+    const cutoffs = await this.findCutoffs(contests);
+    const gameEventIds = contests.filter((contest) => cutoffs.has(contest.id)).flatMap((contest) => eventsOf(contest).map((event) => event.id));
+    const games = gameEventIds.length === 0 ? [] : await this.deps.matches.findBySportEvents([...new Set(gameEventIds)]);
+    return new Map(contests.map((contest) => {
+      const cutoff = cutoffs.get(contest.id);
+      return [contest.id, eventsOf(contest).map((event) => ({
+        event,
+        window: cutoff === undefined ? event : cutoffTiming(cutoff, event, games.filter((game) => game.sportEventId === event.id)),
+      }))];
+    }));
+  }
+
+  /**
+   * The cutoff of each contest whose window does not close at its events' start, by contest id:
+   * a second-chance bracket's and a squares grid's (#711, #721). Only those two read their rules
+   * for it, a lone contest through its remembered point read (#1176) and several in one read.
+   */
+  private async findCutoffs(contests: readonly Contest[]): Promise<Map<string, ContestCutoff>> {
+    const ruled = contests.filter((contest) => contest.selectionType === SelectionType.BRACKET || contest.selectionType === SelectionType.SQUARES);
+    const configurations = ruled.length === 1
+      ? [await this.deps.configurations.findByContest(ruled[0].id)].filter((configuration) => configuration !== null)
+      : await this.deps.configurations.findByContests(ruled.map((contest) => contest.id));
+    const rulesOf = new Map(configurations.map((configuration) => [configuration.contestId, configuration.configJson]));
+    return new Map(ruled.flatMap((contest) => {
+      const cutoff = contestCutoff(rulesOf.get(contest.id), contest.squaresGameMatchId);
+      return cutoff.kind === ContestCutoffKind.EVENT_START ? [] : [[contest.id, cutoff] as const];
     }));
   }
 
@@ -1331,13 +1360,12 @@ export class ContestService {
     const email = this.deps.email;
 
     // One entry is read by id; a draw's entries are the contest's, read in one go.
-    const [entryRows, league, sportLeague, picks] = await Promise.all([
+    const [entryRows, league, sportLeague] = await Promise.all([
       entryIds.length === 1
         ? this.deps.entries.findByIdWithSquad(entryIds[0]).then((row) => (row ? [row] : []))
         : this.deps.entries.findByContestWithSquad(contestId),
       this.deps.leagues.findById(contest.leagueId),
       this.deps.sportLeagues.findById(sportEvent.sportLeagueId),
-      this.deps.picks.findByEntriesWithParticipant(entryIds, { sportEventId: sportEvent.id }),
     ]);
     const entryById = new Map(entryRows.filter((row) => row.contestId === contestId).map((row) => [row.id, row]));
     if (!league) {
@@ -1356,7 +1384,7 @@ export class ContestService {
       .filter((user) => user.isActive)
       .map((user) => [user.id, user]));
     const picksByEntryId = new Map<string, ContestEntryPickWithParticipant[]>();
-    for (const pick of picks) {
+    for (const pick of input.picks) {
       picksByEntryId.set(pick.entryId, [...(picksByEntryId.get(pick.entryId) ?? []), pick]);
     }
 
@@ -1522,9 +1550,20 @@ export class ContestService {
    * contest can be expanded (#987).
    */
   async areEntriesOpen(contest: Contest): Promise<boolean> {
-    const sportEvents = contest.status === ContestStatus.OPEN ? await this.findContestEvents(contest) : [];
-    const windows = await this.findContestWindows(contest, sportEvents);
-    return areContestEntriesOpen(contest, windows.map(({ window }) => window), this.now());
+    return (await this.filterEntriesOpen([contest])).length > 0;
+  }
+
+  /**
+   * The contests whose entries are open now, as `areEntriesOpen` judges each, in the same few
+   * reads however many there are (#1248). Only an OPEN contest's events and rules are read: no
+   * other takes entries.
+   */
+  private async filterEntriesOpen(contests: readonly Contest[]): Promise<Contest[]> {
+    const open = contests.filter((contest) => contest.status === ContestStatus.OPEN);
+    const eventsById = open.length === 0 ? new Map<string, SportEvent>() : await this.findEventsForContests(open);
+    const windows = await this.findWindowsOfContests(open, (contest) => contest.sportEventIds.flatMap((sportEventId) => eventsById.get(sportEventId) ?? []));
+    const now = this.now();
+    return contests.filter((contest) => areContestEntriesOpen(contest, (windows.get(contest.id) ?? []).map(({ window }) => window), now));
   }
 
   private async findEntriesBySquad(

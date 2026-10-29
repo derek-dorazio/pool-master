@@ -18,7 +18,6 @@ import {
   buildLeaguePath,
 } from '@/features/leagues/league-routing';
 import { formatPlanLimit } from '@/features/plans/plan-labels';
-import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
@@ -31,28 +30,27 @@ import {
   EmptyState,
   ErrorState,
   FormField,
+  Heading,
   Input,
   LinkButton,
   LoadingState,
   Tile,
 } from '@/features/shared/ui';
 import { currentContestEvent, entryEventStatus } from './contest-events';
-import { ContestHeader, ContestSubMenu } from './contest-header';
-import { ContestStatusBadge } from './contest-status-badge';
+import { ContestPageFrame } from './contest-header';
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
   CONTEST_ENTRY_STATUS_TONES,
-  CONTEST_POLL_INTERVAL_MS,
   contestRefetchInterval,
   contestStatusLabel,
   refreshOnContestStatusChange,
-  shouldPollContestEntries,
 } from './contest-status';
-import { useContestSchedule } from './use-contest-schedule';
+import { contestSchedule } from './use-contest-schedule';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { entryWriteKeys, fetchContestEntries } from './use-contest-entries';
+import { entryWriteKeys, useContestEntriesQuery } from './use-contest-entries';
+import { useContestLeague } from './use-contest-league';
 
 type ContestEntryParticipant = NonNullable<ContestEntryDto['participants']>[number];
 
@@ -162,16 +160,10 @@ export function ContestDetailPage() {
     refetchInterval: (query) => contestRefetchInterval(query.state.data?.status),
   });
 
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    enabled: Boolean(contestId),
-    retry: false,
-    refetchInterval: shouldPollContestEntries(contestQuery.data?.status) ? CONTEST_POLL_INTERVAL_MS : false,
-  });
+  const contestEntriesQuery = useContestEntriesQuery(contestId, contestQuery.data?.status);
 
   const leagueId = contestQuery.data?.leagueId ?? '';
-  const schedule = useContestSchedule(contestQuery.data);
+  const schedule = contestSchedule(contestQuery.data);
 
   /*
    * #202 (A8) — the viewer's own squad comes from their squad membership, which the
@@ -182,7 +174,7 @@ export function ContestDetailPage() {
    * purpose of learning which squad is theirs. One request replaces it, and it is one this page
    * benefits from caching anyway.
    */
-  const { league, viewer } = useLeagueContextById(leagueId || undefined);
+  const { leagueCode: adminLeagueCode, viewer } = useContestLeague(leagueId || undefined, hintedLeagueCode);
   const myTeamId = viewer.mySquadId;
 
   const enterContestMutation = useInvalidatingMutation({
@@ -299,7 +291,6 @@ export function ContestDetailPage() {
   const entryCap = contest.entriesPerContest;
   const isFull = entryCap !== null && totalCount >= entryCap;
   const canCreateEntry = entriesOpen && Boolean(myTeamId) && !isFull;
-  const adminLeagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
   const backToLeaguePath = hintedLeagueCode
     ? buildLeaguePath(hintedLeagueCode)
@@ -318,64 +309,60 @@ export function ContestDetailPage() {
   }
 
   return (
-    <section className="space-y-6" data-testid="contest-board">
-      <ContestHeader
-        actions={(
-          <LinkButton
-            data-testid="contest-back-to-league"
-            to={backToLeaguePath}
-            variant="secondary"
-          >
-            Back to league
-          </LinkButton>
-        )}
-        badges={<ContestStatusBadge status={contest.status} />}
-        menu={hintedLeagueCode ? (
-          <ContestSubMenu
-            contestId={contestId}
-            current="entries"
-            leagueCode={hintedLeagueCode}
-            myEntryId={contest.myEntryIds?.[0] ?? null}
-            picksRevealed={picksRevealed}
-          />
-        ) : null}
-        summary={(
-          <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
-            {formatSelectionTypeName(contest.selectionType)}
-          </p>
-        )}
-        title={contest.name}
-        titleTestId="contest-detail-heading"
-      >
-        {schedule ? (
-          <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
-            <span data-testid="contest-detail-starts">
-              Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
-            </span>
-            {schedule.endsAt ? (
-              <span data-testid="contest-detail-ends">
-                {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
+    <ContestPageFrame
+      actions={(
+        <LinkButton
+          data-testid="contest-back-to-league"
+          to={backToLeaguePath}
+          variant="secondary"
+        >
+          Back to league
+        </LinkButton>
+      )}
+      contest={contest}
+      current="entries"
+      details={(
+        <>
+          {schedule ? (
+            <p className="mt-1 text-sm text-muted-foreground" data-testid="contest-detail-schedule">
+              <span data-testid="contest-detail-starts">
+                Starts <DateDisplay className="text-muted-foreground" value={schedule.startsAt} />
               </span>
-            ) : null}
-          </p>
-        ) : null}
-        <div className="mt-4 flex flex-wrap gap-3 text-sm">
-          <Chip
-            data-testid="contest-board-my-count"
-            tone="info"
-          >
-            My Entries: <span className="font-semibold text-foreground">{myCount}</span>
-          </Chip>
-          <Chip
-            data-testid="contest-board-total-count"
-            tone="info"
-          >
-            Total Entries: <span className="font-semibold text-foreground">
-              {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
-            </span>
-          </Chip>
-        </div>
-      </ContestHeader>
+              {schedule.endsAt ? (
+                <span data-testid="contest-detail-ends">
+                  {' · '}Ends <DateDisplay className="text-muted-foreground" value={schedule.endsAt} />
+                </span>
+              ) : null}
+            </p>
+          ) : null}
+          <div className="mt-4 flex flex-wrap gap-3 text-sm">
+            <Chip
+              data-testid="contest-board-my-count"
+              tone="info"
+            >
+              My Entries: <span className="font-semibold text-foreground">{myCount}</span>
+            </Chip>
+            <Chip
+              data-testid="contest-board-total-count"
+              tone="info"
+            >
+              Total Entries: <span className="font-semibold text-foreground">
+                {entryCap === null ? totalCount : `${totalCount} of ${formatPlanLimit(entryCap)}`}
+              </span>
+            </Chip>
+          </div>
+        </>
+      )}
+      leagueCode={hintedLeagueCode}
+      picksRevealed={picksRevealed}
+      summary={(
+        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-detail-summary">
+          {formatSelectionTypeName(contest.selectionType)}
+        </p>
+      )}
+      testId="contest-board"
+      titleTestId="contest-detail-heading"
+    >
 
       {isDraft ? (
         <Alert data-testid="contest-draft-note">
@@ -387,7 +374,7 @@ export function ContestDetailPage() {
       <Tile>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h3 className="title-card text-xl">Entries</h3>
+            <Heading level={3} variant="card" size="xl" tone="inherit">Entries</Heading>
             <p className="mt-2 text-sm text-muted-foreground">
               {picksRevealed
                 ? 'Picks are visible. Expand a row to see each entry’s lineup. Scores live on the leaderboard.'
@@ -616,7 +603,7 @@ export function ContestDetailPage() {
       </Tile>
 
       <Tile id="contest-rules">
-        <h3 className="title-card text-xl">Contest rules and snapshot</h3>
+        <Heading level={3} variant="card" size="xl" tone="inherit">Contest rules and snapshot</Heading>
         <DefinitionList
           className="mt-5"
           items={[
@@ -631,6 +618,6 @@ export function ContestDetailPage() {
           ]}
         />
       </Tile>
-    </section>
+    </ContestPageFrame>
   );
 }

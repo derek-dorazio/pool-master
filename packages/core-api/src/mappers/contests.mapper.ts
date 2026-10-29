@@ -145,6 +145,7 @@ export interface ContestSportEventRow {
   id: string;
   name: string;
   startDate: Date;
+  endDate?: Date;
   status: SportEventStatus;
   /** Its sport league's overrides (#934), absent where it plays as its sport. */
   participantType?: ParticipantType | null;
@@ -157,6 +158,7 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
     sequence,
     name: event.name,
     startDate: event.startDate.toISOString(),
+    endDate: event.endDate?.toISOString() ?? null,
     status: event.status,
     participantType: event.participantType ?? null,
     scoringFamily: event.scoringFamily ?? null,

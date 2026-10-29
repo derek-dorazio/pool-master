@@ -8,6 +8,7 @@ import {
   EmptyState,
   ErrorState,
   formatDateDisplay,
+  Heading,
   LinkButton,
   LoadingState,
   MetricGrid,
@@ -115,6 +116,7 @@ export function PointsRacePage() {
     (squadId: string) => buildLeagueCupSquadPath(leagueCode, year, sportLeagueId ?? '', squadId),
     [leagueCode, sportLeagueId, year],
   );
+  // poolmaster-allow-list-lookup: a league's cups for one year, one per sport league
   const cup = cupsQuery.data?.find((candidate) => candidate.sportLeagueId === sportLeagueId);
   const projectionQuery = useCupProjectionQuery(leagueId, cup?.id ?? '', cup !== undefined && hasLiveContest(cup));
   const projection = projectionQuery.data;
@@ -160,7 +162,7 @@ export function PointsRacePage() {
       <CupChips cups={cups.includes(cup) ? cups : [...cups, cup]} leagueCode={leagueCode} selectedId={cup.sportLeagueId} year={year} />
       <Tile className="space-y-5" padding="sm" radius="lg">
         <div>
-          <h2 className="title-card text-xl text-foreground">{cup.name}</h2>
+          <Heading level={2} variant="card" size="xl">{cup.name}</Heading>
           <p className="mt-1 text-sm text-muted-foreground" data-testid="points-race-summary">
             {cup.sportLeagueName} · {cup.crownedAt
               ? `Crowned ${formatDateDisplay(cup.crownedAt, displayPreferences)}`
@@ -193,13 +195,13 @@ export function PointsRacePage() {
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
         <div>
-          <h2 className="title-card text-lg text-foreground">The race so far</h2>
+          <Heading level={2} variant="card" size="lg">The race so far</Heading>
           <p className="text-sm text-muted-foreground">Top five, after each final contest</p>
         </div>
         <CupRaceChart focusSquadId={viewer.mySquadId} series={buildRaceSeries(cup)} />
       </Tile>
       <Tile className="space-y-3" padding="sm" radius="lg">
-        <h2 className="title-card text-lg text-foreground">Contests in this cup</h2>
+        <Heading level={2} variant="card" size="lg">Contests in this cup</Heading>
         <CupContestList contests={cup.contests} leagueCode={leagueCode} />
       </Tile>
     </div>

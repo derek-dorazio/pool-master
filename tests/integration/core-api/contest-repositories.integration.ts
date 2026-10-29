@@ -1432,34 +1432,7 @@ describe('ContestEntryPickRepository — read-only', () => {
     expect(all.map((pick) => pick.id)).toEqual([first.id, second.id]);
   });
 
-  it('counts picks across one contest\'s entries, ignoring other contests', async () => {
-    const prisma = getPrisma();
-    const { league, squads, event, field } = await createLeagueAndEvent();
-    const [contest, other] = [
-      await createContest(league.id, event.id, 'Counted'),
-      await createContest(league.id, event.id, 'Other'),
-    ];
-    const [alpha, bravo, elsewhere] = await Promise.all([
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[0].id, entryNumber: 1, name: 'Alpha' } }),
-      prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squads[1].id, entryNumber: 1, name: 'Bravo' } }),
-      prisma.contestEntry.create({ data: { contestId: other.id, squadId: squads[0].id, entryNumber: 1, name: 'Elsewhere' } }),
-    ]);
-    const pick = (entryId: string, sportEventParticipantId: string, slot: number, minute: number) => prisma.contestEntryPick.create({
-      data: {
-        entryId, sportEventParticipantId, contestFormat: 'ROSTER', slot,
-        pickedAt: new Date(`2026-06-01T12:0${minute}:00.000Z`),
-      },
-    });
-    await pick(bravo.id, field[0].id, 1, 1);
-    await pick(alpha.id, field[0].id, 1, 0);
-    await pick(alpha.id, field[1].id, 2, 2);
-    await pick(elsewhere.id, field[0].id, 1, 3);
-
-    await expect(repos().picks.countByContest(contest.id)).resolves.toBe(3);
-    await expect(repos().picks.countByContest(other.id)).resolves.toBe(1);
-  });
-
-  it('has no insert: ContestEntryPickService.createPick stays the single insert path (plans/117 §7.1)', () => {
+  it('has no write method, so ContestEntryPickService stays the only way a pick is inserted or deleted (plans/117 §7.1)', () => {
     const port = repos().picks as unknown as Record<string, unknown>;
     for (const write of ['create', 'createMany', 'upsert', 'update', 'delete']) {
       expect(port[write]).toBeUndefined();

@@ -9,6 +9,7 @@ import {
   Button,
   ConfirmationModal,
   DataGrid,
+  Heading,
   Input,
   PickerModal,
   StatusBadge,
@@ -281,7 +282,7 @@ export function SportLeagueRosterGridCard({
     <Tile>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="title-card text-base text-foreground">Roster</h3>
+          <Heading level={3} variant="card" size="base">Roster</Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             {`${entries.length} ${entries.length === 1 ? participant.one : participant.many} on this ${sportLeague.one}.`}
           </p>

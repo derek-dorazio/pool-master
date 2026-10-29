@@ -76,7 +76,8 @@ export interface ParticipantLeagueAffiliationRepository {
 
 export interface SportEventFilters {
   sport?: Sport;
-  status?: SportEventStatus;
+  /** Only events in one of these statuses. */
+  statuses?: readonly SportEventStatus[];
   /** Only events whose series belongs to this sport league. */
   sportLeagueId?: string;
   eventYear?: number;
@@ -127,13 +128,21 @@ export interface SportEventRepository {
   findByIds(ids: readonly string[]): Promise<SportEvent[]>;
   /** The event a provider knows by this identity, if one is linked to it. */
   findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
+  /** The events a provider knows by any of these identities, in one read (#1253). */
+  findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]>;
   /** Ordered by start date, then name. */
   findAll(filters: SportEventFilters): Promise<SportEvent[]>;
   /**
+   * The event years the sport league has events in, through their series, earliest first.
+   * `releasedOnly` leaves out years whose only events are DRAFT (#431).
+   */
+  findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]>;
+  /**
+   * Creates the events in one insert, all or none, answering them in the order given (#1253).
    * Rejects a second edition of a series in one year: the database's unique constraint on
    * (eventSeriesId, eventYear) raises, and the caller maps it (plans/147 decision 5).
    */
-  create(input: SportEventCreate): Promise<SportEvent>;
+  createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]>;
   update(id: string, updates: SportEventUpdate): Promise<SportEvent>;
   /**
    * Moves the event to `to`, but only while it is still in `from`: a guarded single write, so of
@@ -185,8 +194,8 @@ export interface SportEventRepository {
 }
 
 export interface EventSeriesRepository {
-  /** The sport league's series of this name, created on first use. */
-  findOrCreate(sportLeagueId: string, name: string): Promise<EventSeries>;
+  /** The sport league's series of these names, each created on first use, in two queries (#1253). */
+  findOrCreateMany(sportLeagueId: string, names: readonly string[]): Promise<EventSeries[]>;
 }
 
 export interface SportEventRoundSchedule {
@@ -195,13 +204,16 @@ export interface SportEventRoundSchedule {
   scheduledEndAt?: Date | null;
 }
 
+/** A round to create, on its event. */
+export type SportEventRoundCreate = SportEventRoundSchedule & { sportEventId: string };
+
 export interface SportEventRoundRepository {
   /** Ordered by round number. */
   findBySportEvent(sportEventId: string): Promise<SportEventRound[]>;
   /** Each asked-about event's rounds, ordered by round number (an empty list where none). */
   findBySportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventRound[]>>;
-  /** Creates the given rounds, all or none. */
-  createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
+  /** Creates the given rounds, of one event or several, in one insert (#1253). */
+  createMany(rounds: readonly SportEventRoundCreate[]): Promise<void>;
   /** Reschedules existing rounds, all or none. `scheduledEndAt` left undefined is kept. */
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
   /** The event's round of this number, created (scheduled now) when a score arrives for a round it lacks. */
@@ -316,7 +328,8 @@ export interface SportEventTierRepository {
   findBySportEvent(sportEventId: string): Promise<SportEventTier[]>;
   /** Several events' tiers in one read (#1201), each event's ordered by tier number. */
   findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]>;
-  createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void>;
+  /** Creates the given tiers, of one event or several, in one insert (#1253). */
+  createMany(tiers: readonly SportEventTierCreate[]): Promise<void>;
   /**
    * Replaces an event's tiers with `tiers`, keyed by tierKey, all or none. Valuations on a
    * removed tier move to `reassignTo` (a tierKey in `tiers`) with no order, or lose their
@@ -328,6 +341,9 @@ export interface SportEventTierRepository {
 }
 
 export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'label' | 'tierNumber'>;
+
+/** A tier to create, on its event. */
+export type SportEventTierCreate = SportEventTierDefinition & { sportEventId: string };
 
 export interface TierAssignment {
   sportEventParticipantId: string;

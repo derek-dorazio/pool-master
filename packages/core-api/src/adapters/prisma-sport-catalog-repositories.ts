@@ -9,6 +9,7 @@
  * every extension at once, mapped by those adapters' own mappers.
  */
 
+import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type {
   EventSeriesRepository,
@@ -27,7 +28,9 @@ import type {
   SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
+  SportEventRoundCreate,
   SportEventRoundSchedule,
+  SportEventTierCreate,
   SportEventTierDefinition,
   SportEventTierRepository,
   SportEventStatusTransition,
@@ -224,11 +227,20 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return row ? toSportEvent(row) : null;
   }
 
+  async findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> {
+    if (externalIds.length === 0) return [];
+    const rows = await this.prisma.sportEvent.findMany({
+      where: { providerId, externalId: { in: [...externalIds] } },
+      include: SPORT_EVENT_INCLUDE,
+    });
+    return rows.map(toSportEvent);
+  }
+
   async findAll(filters: SportEventFilters): Promise<SportEvent[]> {
     const rows = await this.prisma.sportEvent.findMany({
       where: {
         ...(filters.sport !== undefined && { sport: filters.sport }),
-        ...(filters.status !== undefined && { status: filters.status }),
+        ...(filters.statuses !== undefined && { status: { in: [...filters.statuses] } }),
         ...(filters.sportLeagueId !== undefined && { eventSeries: { sportLeagueId: filters.sportLeagueId } }),
         ...(filters.eventYear !== undefined && { eventYear: filters.eventYear }),
         ...(filters.q !== undefined && { name: { contains: filters.q, mode: 'insensitive' as const } }),
@@ -243,9 +255,27 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return rows.map(toSportEvent);
   }
 
-  async create(input: SportEventCreate): Promise<SportEvent> {
-    return toSportEvent(await this.prisma.sportEvent.create({
-      data: {
+  async findEventYears(sportLeagueId: string, options: { releasedOnly: boolean }): Promise<number[]> {
+    // groupBy deduplicates in Postgres; findMany's `distinct` would return a row per event.
+    const rows = await this.prisma.sportEvent.groupBy({
+      by: ['eventYear'],
+      where: {
+        eventSeries: { sportLeagueId },
+        ...(options.releasedOnly && { NOT: { status: SportEventStatus.DRAFT } }),
+      },
+      orderBy: { eventYear: 'asc' },
+    });
+    return rows.map((row) => row.eventYear);
+  }
+
+  async createMany(inputs: readonly SportEventCreate[]): Promise<SportEvent[]> {
+    if (inputs.length === 0) return [];
+    // Each event is given its id here, so the rows the insert answers can be put back in the
+    // order given whatever order the database returns them in.
+    const ids = inputs.map(() => randomUUID());
+    const rows = await this.prisma.sportEvent.createManyAndReturn({
+      data: inputs.map((input, index) => ({
+        id: ids[index],
         externalId: input.externalId,
         providerId: input.providerId,
         sport: input.sport,
@@ -261,9 +291,15 @@ export class PrismaSportEventRepository implements SportEventRepository {
         eventYear: input.eventYear,
         syncScope: input.syncScope,
         autoLifecycleEnabled: input.autoLifecycleEnabled,
-      },
+      })),
       include: SPORT_EVENT_INCLUDE,
-    }));
+    });
+    const rowById = new Map(rows.map((row) => [row.id, row]));
+    return ids.map((id) => {
+      const row = rowById.get(id);
+      if (!row) throw new Error(`The insert did not answer sport event ${id}.`);
+      return toSportEvent(row);
+    });
   }
 
   async update(id: string, updates: SportEventUpdate): Promise<SportEvent> {
@@ -459,20 +495,21 @@ export class PrismaSportEventRepository implements SportEventRepository {
 export class PrismaEventSeriesRepository implements EventSeriesRepository {
   constructor(private readonly prisma: Db) {}
 
-  async findOrCreate(sportLeagueId: string, name: string): Promise<EventSeries> {
-    const row = await this.prisma.eventSeries.upsert({
-      where: { sportLeagueId_name: { sportLeagueId, name } },
-      create: { sportLeagueId, name },
-      update: {},
+  async findOrCreateMany(sportLeagueId: string, names: readonly string[]): Promise<EventSeries[]> {
+    if (names.length === 0) return [];
+    await this.prisma.eventSeries.createMany({
+      data: names.map((name) => ({ sportLeagueId, name })),
+      skipDuplicates: true,
     });
-    return {
+    const rows = await this.prisma.eventSeries.findMany({ where: { sportLeagueId, name: { in: [...names] } } });
+    return rows.map((row) => ({
       id: row.id,
       sportLeagueId: row.sportLeagueId,
       name: row.name,
       isActive: row.isActive,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
-    };
+    }));
   }
 }
 
@@ -498,10 +535,11 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
     return rounds;
   }
 
-  async createMany(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void> {
+  async createMany(rounds: readonly SportEventRoundCreate[]): Promise<void> {
+    if (rounds.length === 0) return;
     await this.prisma.sportEventRound.createMany({
       data: rounds.map((round) => ({
-        sportEventId,
+        sportEventId: round.sportEventId,
         roundNumber: round.roundNumber,
         scheduledDate: round.scheduledDate,
         scheduledEndAt: round.scheduledEndAt ?? null,
@@ -762,9 +800,10 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
     return rows.map(toTier);
   }
 
-  async createMany(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
+  async createMany(tiers: readonly SportEventTierCreate[]): Promise<void> {
+    if (tiers.length === 0) return;
     await this.prisma.sportEventTier.createMany({
-      data: tiers.map((tier) => ({ sportEventId, ...tierColumns(tier) })),
+      data: tiers.map((tier) => ({ sportEventId: tier.sportEventId, ...tierColumns(tier) })),
     });
   }
 
@@ -772,27 +811,37 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
     const keep = new Set(tiers.map((tier) => tier.tierKey));
     await this.prisma.$transaction(async (tx) => {
       const existing = await tx.sportEventTier.findMany({ where: { sportEventId } });
-      // Park every current tier number out of range first, so two tiers swapping numbers
-      // never collide on the (sportEventId, tierNumber) unique index.
-      for (const tier of existing) {
-        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
-        await tx.sportEventTier.update({ where: { id: tier.id }, data: { tierNumber: -(tier.tierNumber + 1) } });
+      const existingByKey = new Map(existing.map((tier) => [tier.tierKey, tier]));
+      const removed = existing.filter((tier) => !keep.has(tier.tierKey));
+      const changed = tiers.flatMap((tier) => {
+        const before = existingByKey.get(tier.tierKey);
+        return before && (before.label !== tier.label || before.tierNumber !== tier.tierNumber) ? [{ id: before.id, tier }] : [];
+      });
+      const added = tiers.filter((tier) => !existingByKey.has(tier.tierKey));
+      // Park every number that moves or goes away below zero in one statement first (tier numbers
+      // start at 1), so two tiers swapping numbers, or a new tier taking a removed one's, never
+      // collide on the (sportEventId, tierNumber) unique index.
+      const parkedIds = [...changed.map(({ id }) => id), ...removed.map((tier) => tier.id)];
+      if (parkedIds.length > 0) {
+        await tx.sportEventTier.updateMany({ where: { id: { in: parkedIds } }, data: { tierNumber: { multiply: -1 } } });
       }
-      for (const tier of tiers) {
-        // poolmaster-allow-query-in-loop: an event's handful of tiers, renumbered in one transaction
-        await tx.sportEventTier.upsert({
-          where: { sportEventId_tierKey: { sportEventId, tierKey: tier.tierKey } },
-          create: { sportEventId, ...tierColumns(tier) },
-          update: { label: tier.label, tierNumber: tier.tierNumber },
-        });
+      // Each changed tier takes its own label and number, so these stay one statement apiece;
+      // valuations point at a tier, so a tier cannot be deleted and inserted again instead.
+      for (const { id, tier } of changed) {
+        // poolmaster-allow-query-in-loop: only the tiers whose label or number changed, of an event's handful
+        await tx.sportEventTier.update({ where: { id }, data: { label: tier.label, tierNumber: tier.tierNumber } });
       }
-      const removedIds = existing.filter((tier) => !keep.has(tier.tierKey)).map((tier) => tier.id);
-      if (removedIds.length === 0) {
+      if (added.length > 0) {
+        await tx.sportEventTier.createMany({ data: added.map((tier) => ({ sportEventId, ...tierColumns(tier) })) });
+      }
+      if (removed.length === 0) {
         return;
       }
       const target = reassignTo
-        ? await tx.sportEventTier.findUniqueOrThrow({ where: { sportEventId_tierKey: { sportEventId, tierKey: reassignTo } } })
+        ? existingByKey.get(reassignTo)
+          ?? await tx.sportEventTier.findUniqueOrThrow({ where: { sportEventId_tierKey: { sportEventId, tierKey: reassignTo } } })
         : null;
+      const removedIds = removed.map((tier) => tier.id);
       await tx.sportEventParticipantValuation.updateMany({
         where: { sportEventTierId: { in: removedIds } },
         data: { sportEventTierId: target?.id ?? null, tierOrderIndex: null },

@@ -12,7 +12,16 @@ import { LeagueIcon } from '@/features/leagues/league-icon';
 import { buildLeagueAdminContestPath, buildLeagueAdminPlanPath } from '@/features/leagues/league-routing';
 import { useLeaguesQuery } from '@/features/leagues/use-leagues-query';
 import { sportLeaguesUsedQuery } from '@/features/plans/use-sport-leagues-used';
-import { Button, EmptyState, ErrorState, Eyebrow, LinkButton, LoadingState, Tile } from '@/features/shared/ui';
+import {
+  Button,
+  EmptyState,
+  ErrorState,
+  Eyebrow,
+  Heading,
+  LinkButton,
+  LoadingState,
+  Tile,
+} from '@/features/shared/ui';
 import { EVENT_PAGE_ACTIONS, eventPageCopy, eventPageOfferCopy } from './event-page-copy';
 import { buildStartDestination, parseStartRequest, type StartRequest } from './start-path';
 import { useEventPageQuery } from './use-event-pages-query';
@@ -40,6 +49,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   }, [checkError, league.id, logger]);
 
   const existing = offer
+    // poolmaster-allow-list-lookup: the league's current contests (#1161), checked for one already made
     ? (contestsQuery.data ?? []).find((contest) => contest.selectionType === offer.template.selectionType
       && contest.sportEvents.some((event) => event.sportEventId === offer.edition.sportEventId))
     : undefined;
@@ -155,9 +165,9 @@ function StartForUser({ request }: { request: StartRequest }) {
     <section className="mx-auto max-w-2xl space-y-6" data-testid="start-page">
       <Tile className="space-y-4" padding="lg" radius="lg">
         <Eyebrow>{`You're starting a ${copy.name} pool`}</Eyebrow>
-        <h1 className="font-display text-3xl font-bold text-foreground">
+        <Heading level={1} variant="display">
           {runs.length ? 'Which league is it for?' : 'Start your own league'}
-        </h1>
+        </Heading>
         <p className="text-sm text-muted-foreground" data-testid="start-offer">{offerLabel}</p>
         {runs.length ? (
           <ul className="space-y-3" data-testid="start-league-picker">

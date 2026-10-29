@@ -1,6 +1,5 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import type { PrismaClient } from '@prisma/client';
 import {
   ContestEntryStatus,
   ContestStatus,
@@ -32,6 +31,8 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { countingPrisma } from '../../support/counting-prisma';
+import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { createContestRow } from '../../support/contest-rows';
 
@@ -50,24 +51,6 @@ beforeEach(() => cleanupTestData());
 const DAY = 24 * 60 * 60 * 1000;
 const HOUR = 60 * 60 * 1000;
 
-/** The Prisma client with every model operation counted, as `Model.operation`. */
-function countingPrisma() {
-  const counts = new Map<string, number>();
-  const client = getPrisma().$extends({
-    query: {
-      $allModels: {
-        async $allOperations({ model, operation, args, query }) {
-          const key = `${model}.${operation}`;
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-          return query(args);
-        },
-      },
-    },
-  });
-  // The extended client runs every query the plain one does; the services take the plain type.
-  return { prisma: client as unknown as PrismaClient, count: (key: string) => counts.get(key) ?? 0 };
-}
-
 /** An NFL week of three games (match numbers 1 to 3, an hour apart from `startDate`), its six teams on the field. */
 async function createWeek(label: string, startDate: Date, status: SportEventStatus) {
   const prisma = getPrisma();
@@ -83,7 +66,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     update: {},
   });
   const eventSeries = await prisma.eventSeries.create({ data: { sportLeagueId: sportLeague.id, name: `${label} ${randomUUID()}` } });
-  const event = await new PrismaSportEventRepository(prisma).create({
+  const event = await createSportEventRow(new PrismaSportEventRepository(prisma), {
     eventSeriesId: eventSeries.id,
     eventYear: 2026,
     externalId: `pickem-board-${randomUUID()}`,
@@ -96,7 +79,7 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     syncScope: 'NONE',
     autoLifecycleEnabled: false,
   });
-  await new PrismaSportEventRoundRepository(prisma).createMany(event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
+  await createRoundRows(new PrismaSportEventRoundRepository(prisma), event.id, [{ roundNumber: 1, scheduledDate: startDate }]);
   const teams = await Promise.all(['Bills', 'Jets', 'Chiefs', 'Raiders', 'Eagles', 'Giants'].map((name) => prisma.participant.create({
     data: { sportId: sport.id, name: `${name} ${randomUUID().slice(0, 6)}`, participantType: 'TEAM' },
   })));
@@ -199,7 +182,7 @@ async function midSeason() {
 describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('loads the games of all six weeks in one query, and the entries and picks of only the week under way, not a set per week', async () => {
     const season = await midSeason();
-    const { prisma, count } = countingPrisma();
+    const { prisma, count } = countingPrisma(getPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(season.contest.id, season.viewerId);
 
@@ -244,7 +227,7 @@ describe('ContestService.getPickEmLeaderboard reads (#762)', () => {
   it('counts a cancelled week for nothing: no games, no tiebreaker total, and settled without a live load', async () => {
     const cancelled = await createWeek('Week 1', new Date(Date.now() - 7 * DAY), SportEventStatus.CANCELLED);
     const { contest, viewerId } = await createPickEmContest([cancelled.event.id]);
-    const { prisma, count } = countingPrisma();
+    const { prisma, count } = countingPrisma(getPrisma());
 
     const leaderboard = await createContestService(prisma, getApp().log, { planEntitlements: integrationPlanEntitlements(prisma) }).getPickEmLeaderboard(contest.id, viewerId);
 

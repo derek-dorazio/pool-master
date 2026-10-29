@@ -2,7 +2,8 @@
  * ContestEntryPick.contestFormat is denormalized from the parent contest
  * (plans/117 §7.1) so partial unique indexes can predicate on a local column.
  * ROSTER is the only format since #605, so this checks the copy is made; the
- * per-format cross-checks went with the formats.
+ * per-format cross-checks went with the formats. It also covers the rest of the one pick-change
+ * path, `changeEntryPick` (#1259): numbering, swaps, removals and the entry row lock.
  */
 import { randomUUID } from 'node:crypto';
 import {
@@ -16,6 +17,7 @@ import {
   ContestEntryPickService,
 } from '../../../packages/core-api/src/modules/contest-entry-picks';
 import { freshEventEdition } from '../../support/event-edition';
+import { holdEntryLock, waitUntilBlockedBy } from '../contest-lock';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -26,7 +28,9 @@ afterAll(async () => {
 interface FormatFixture {
   contestId: string;
   entryId: string;
-  sportEventParticipantId: string;
+  sportEventId: string;
+  /** Two golfers in the event's field. */
+  fieldIds: [string, string];
 }
 
 async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixture> {
@@ -82,21 +86,21 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
       status: 'SCHEDULED',
     },
   });
-  const participant = await prisma.participant.create({
-    data: {
-      sportId: sport.id,
-      name: `Invariant Participant ${suffix}`,
-      participantType: ParticipantType.INDIVIDUAL,
-      externalIds: {},
-    },
-  });
-  const sep = await prisma.sportEventParticipant.create({
-    data: {
-      sportEventId: sportEvent.id,
-      participantId: participant.id,
-      isActive: true,
-    },
-  });
+  const fieldIds: [string, string] = ['', ''];
+  for (const [index, name] of (['One', 'Two'] as const).entries()) {
+    const participant = await prisma.participant.create({
+      data: {
+        sportId: sport.id,
+        name: `Invariant Participant ${name} ${suffix}`,
+        participantType: ParticipantType.INDIVIDUAL,
+        externalIds: {},
+      },
+    });
+    const sep = await prisma.sportEventParticipant.create({
+      data: { sportEventId: sportEvent.id, participantId: participant.id, isActive: true },
+    });
+    fieldIds[index] = sep.id;
+  }
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
@@ -121,40 +125,135 @@ async function seedFixtureForFormat(contestFormat: string): Promise<FormatFixtur
   return {
     contestId: contest.id,
     entryId: entry.id,
-    sportEventParticipantId: sep.id,
+    sportEventId: sportEvent.id,
+    fieldIds,
   };
 }
 
+const add = (sportEventParticipantId: string, lineupSlot = 1) => ({ removePickId: null, add: { sportEventParticipantId, lineupSlot } });
+
 describe('ContestEntryPick.contestFormat denormalization', () => {
-  it('copies the parent contest\'s format onto the pick row it creates', async () => {
+  it('copies the parent contest\'s format onto the pick row a pick change adds', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
     const fixture = await seedFixtureForFormat('ROSTER');
 
-    const dto = await service.createPick({
+    const result = await service.changeEntryPick({
       entryId: fixture.entryId,
-      sportEventParticipantId: fixture.sportEventParticipantId,
+      sportEventId: fixture.sportEventId,
+      decide: () => add(fixture.fieldIds[0]),
     });
 
-    const row = await prisma.contestEntryPick.findUniqueOrThrow({ where: { id: dto.id } });
-    expect(dto.contestFormat).toBe('ROSTER');
-    expect(row.contestFormat).toBe('ROSTER');
+    const row = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
+    expect(result).toEqual({ changed: true });
+    expect(row).toEqual(expect.objectContaining({
+      contestFormat: 'ROSTER',
+      sportEventParticipantId: fixture.fieldIds[0],
+      lineupSlot: 1,
+      isAutoPicked: false,
+    }));
   });
 });
 
-describe('ContestEntryPickService.deletePick', () => {
-  it('removes the one pick named and leaves the entry and its other picks in place', async () => {
+describe('ContestEntryPickService.changeEntryPick', () => {
+  it('numbers an added pick after every pick the whole contest holds, not just the entry\'s', async () => {
     const prisma = getPrisma();
     const service = new ContestEntryPickService(prisma);
     const fixture = await seedFixtureForFormat('ROSTER');
-    const kept = await service.createPick({ entryId: fixture.entryId, sportEventParticipantId: fixture.sportEventParticipantId });
-    const other = await seedFixtureForFormat('ROSTER');
-    const removed = await service.createPick({ entryId: fixture.entryId, sportEventParticipantId: other.sportEventParticipantId });
+    const squad = await prisma.contestEntry.findUniqueOrThrow({ where: { id: fixture.entryId }, select: { squadId: true } });
+    const rival = await prisma.contestEntry.create({
+      data: { contestId: fixture.contestId, squadId: squad.squadId, entryNumber: 2, name: 'Rival entry' },
+    });
+    await service.changeEntryPick({ entryId: rival.id, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[0]) });
 
-    await service.deletePick(removed.id);
+    await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[1]) });
+
+    const row = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
+    expect(row.pickSequence).toBe(2);
+  });
+
+  it('hands decide the entry\'s picks in the event, and swaps one out for another in one change', async () => {
+    const prisma = getPrisma();
+    const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
+    await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[0]) });
+    const first = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId } });
+    const seen: unknown[] = [];
+
+    const result = await service.changeEntryPick({
+      entryId: fixture.entryId,
+      sportEventId: fixture.sportEventId,
+      decide: (picks) => {
+        seen.push(...picks);
+        return { removePickId: first.id, add: { sportEventParticipantId: fixture.fieldIds[1], lineupSlot: 1 } };
+      },
+    });
+
+    const participant = await prisma.sportEventParticipant.findUniqueOrThrow({ where: { id: fixture.fieldIds[0] } });
+    expect(seen).toEqual([{ id: first.id, sportEventParticipantId: fixture.fieldIds[0], participantId: participant.participantId, lineupSlot: 1 }]);
+    expect(result).toEqual({ changed: true });
+    const remaining = await prisma.contestEntryPick.findMany({ where: { entryId: fixture.entryId } });
+    expect(remaining.map((pick) => pick.sportEventParticipantId)).toEqual([fixture.fieldIds[1]]);
+  });
+
+  it('removes only the pick named, leaving the entry and its other picks in place', async () => {
+    const prisma = getPrisma();
+    const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
+    await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[0], 1) });
+    await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => add(fixture.fieldIds[1], 2) });
+    const removed = await prisma.contestEntryPick.findFirstOrThrow({ where: { entryId: fixture.entryId, sportEventParticipantId: fixture.fieldIds[1] } });
+
+    await service.changeEntryPick({
+      entryId: fixture.entryId,
+      sportEventId: fixture.sportEventId,
+      decide: () => ({ removePickId: removed.id, add: null }),
+    });
 
     const remaining = await prisma.contestEntryPick.findMany({ where: { entryId: fixture.entryId } });
-    expect(remaining.map((pick) => pick.id)).toEqual([kept.id]);
+    expect(remaining.map((pick) => pick.sportEventParticipantId)).toEqual([fixture.fieldIds[0]]);
     await expect(prisma.contestEntry.count({ where: { id: fixture.entryId } })).resolves.toBe(1);
+  });
+
+  it('writes nothing and answers unchanged when decide declines the change', async () => {
+    const prisma = getPrisma();
+    const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
+
+    const result = await service.changeEntryPick({ entryId: fixture.entryId, sportEventId: fixture.sportEventId, decide: () => null });
+
+    expect(result).toEqual({ changed: false });
+    await expect(prisma.contestEntryPick.count({ where: { entryId: fixture.entryId } })).resolves.toBe(0);
+  });
+
+  it('waits on the entry\'s row lock and decides on the pick the holder committed, so two changes never decide on the same picks', async () => {
+    const prisma = getPrisma();
+    const service = new ContestEntryPickService(prisma);
+    const fixture = await seedFixtureForFormat('ROSTER');
+    // The holder adds the first golfer under the entry's lock, as a concurrent pick change would.
+    const holder = holdEntryLock(prisma, fixture.entryId, async (tx) => {
+      await tx.contestEntryPick.create({
+        data: { entryId: fixture.entryId, sportEventParticipantId: fixture.fieldIds[0], contestFormat: 'ROSTER', lineupSlot: 1 },
+      });
+    });
+    const holderPid = await holder.ready;
+    const seen: string[] = [];
+
+    const change = service.changeEntryPick({
+      entryId: fixture.entryId,
+      sportEventId: fixture.sportEventId,
+      decide: (picks) => {
+        seen.push(...picks.map((pick) => pick.sportEventParticipantId));
+        // A one-place roster: full once the holder's pick is there.
+        return picks.length >= 1 ? null : add(fixture.fieldIds[1]);
+      },
+    });
+    await waitUntilBlockedBy(prisma, holderPid);
+    await holder.release();
+
+    await expect(change).resolves.toEqual({ changed: false });
+    expect(seen).toEqual([fixture.fieldIds[0]]);
+    const rows = await prisma.contestEntryPick.findMany({ where: { entryId: fixture.entryId } });
+    expect(rows.map((row) => row.sportEventParticipantId)).toEqual([fixture.fieldIds[0]]);
   });
 });
