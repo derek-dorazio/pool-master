@@ -18,6 +18,7 @@ import {
   Checkbox,
   DateDisplay,
   Heading,
+  InlineError,
   Input,
   Select,
   SettingsSectionHeader,
@@ -224,7 +225,7 @@ function CapsGrid({ form }: { form: UseFormReturn<PlanSettingsDraft> }) {
                           />
                           Unlimited
                         </label>
-                        {error ? <p className="text-sm text-destructive" id={errorId}>{error}</p> : null}
+                        {error ? <InlineError id={errorId}>{error}</InlineError> : null}
                       </div>
                     </td>
                   );

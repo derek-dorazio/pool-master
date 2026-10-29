@@ -56,6 +56,7 @@ import {
   Eyebrow,
   FormField,
   FormPage,
+  InlineError,
   Input,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -840,7 +841,7 @@ export function CreateContestPage() {
           values={values}
         />
         {rulesError !== null ? (
-          <p className="text-sm text-destructive" data-testid="contest-rules-error">{rulesError}</p>
+          <InlineError testId="contest-rules-error">{rulesError}</InlineError>
         ) : null}
         {scoringSettingsUi.Fields ? (
           <scoringSettingsUi.Fields
@@ -851,7 +852,7 @@ export function CreateContestPage() {
           />
         ) : null}
         {parsedScoring.error !== null ? (
-          <p className="text-sm text-destructive" data-testid="contest-scoring-error">{parsedScoring.error}</p>
+          <InlineError testId="contest-scoring-error">{parsedScoring.error}</InlineError>
         ) : null}
       </SetupSection>
 

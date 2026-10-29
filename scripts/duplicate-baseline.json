@@ -264,14 +264,6 @@
       ],
       "count": 2,
       "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx",
-        "clients/poolmaster/src/features/teams/team-owner-action-menu.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1290"
     }
   ]
 }

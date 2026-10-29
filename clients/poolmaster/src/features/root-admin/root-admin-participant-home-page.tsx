@@ -5,6 +5,7 @@ import { listParticipantProviderMappings } from '@/lib/api';
 import {
   AsyncPage,
   IdentityHeading,
+  InlineError,
   LinkButton,
   SettingsRow,
   SettingsSection,
@@ -42,11 +43,11 @@ function ParticipantMappingsSection({ participantId }: { participantId: string }
       title={`Provider mappings (${providerMappings.length})`}
     >
       {mappingsQuery.isError ? (
-        <p className="px-5 py-4 text-sm text-destructive" data-testid="root-admin-participant-home-mappings-error">
+        <InlineError className="px-5 py-4" testId="root-admin-participant-home-mappings-error">
           {extractErrorMessage(mappingsQuery.error, {
             fallback: `We could not load this ${participant.one}’s provider mappings.`,
           })}
-        </p>
+        </InlineError>
       ) : mappingsQuery.isLoading ? (
         <p className="px-5 py-4 text-sm text-muted-foreground">Loading provider mappings...</p>
       ) : providerMappings.length === 0 ? (

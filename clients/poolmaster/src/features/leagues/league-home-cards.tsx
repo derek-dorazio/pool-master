@@ -10,11 +10,13 @@ import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/featur
 import {
   cn,
   Countdown,
+  EmptyState,
   Eyebrow,
   formatDateTimeDisplay,
   Heading,
   LinkButton,
-  LOADING_TEXT,
+  LoadingState,
+  QueryState,
   Tile,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -169,7 +171,7 @@ export function OtherContestsCard({
           })}
         </ul>
       ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">No other contests are open or live right now.</p>
+        <EmptyState body="No other contests are open or live right now." size="inline" />
       )}
     </HomeCard>
   );
@@ -218,20 +220,22 @@ export function LiveStandingsCard({
       title={`${contest.name} · Top 5`}
       trailing={<ContestStatusBadge status={contest.status} />}
     >
-      {leaderboardQuery.isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">Loading standings...</p>
-      ) : leaderboardQuery.isError || !standings ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="alert">We couldn&apos;t load the standings.</p>
-      ) : standings.rows.length ? (
-        <table className="w-full text-sm tabular-nums">
-          <tbody>
-            {standings.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
-            {standings.myRowBelow ? <StandingsRow row={standings.myRowBelow} /> : null}
-          </tbody>
-        </table>
-      ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">No submitted entries yet.</p>
-      )}
+      <QueryState
+        empty="No submitted entries yet."
+        error="We couldn't load the standings."
+        isEmpty={(top) => !top.rows.length}
+        loading="Loading standings..."
+        query={{ data: standings ?? undefined, isError: leaderboardQuery.isError }}
+      >
+        {(top) => (
+          <table className="w-full text-sm tabular-nums">
+            <tbody>
+              {top.rows.map((row) => <StandingsRow key={row.entryId} row={row} />)}
+              {top.myRowBelow ? <StandingsRow row={top.myRowBelow} /> : null}
+            </tbody>
+          </table>
+        )}
+      </QueryState>
     </HomeCard>
   );
 }
@@ -259,13 +263,13 @@ export function YourTeamCard({
       title="Yours"
     >
       {isLoading ? (
-        <p className="px-4 py-4 text-sm text-muted-foreground" role="status">{LOADING_TEXT}</p>
+        <LoadingState size="inline" />
       ) : team ? (
         <div className="px-4 py-4">
           <TeamName iconKey={team.iconKey} name={team.name} subtitle={owners.join(', ')} />
         </div>
       ) : (
-        <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
+        <EmptyState body="You haven't chosen your name in this league yet." size="inline" />
       )}
     </HomeCard>
   );

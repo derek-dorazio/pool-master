@@ -7,6 +7,7 @@ import {
   ConfirmationModal,
   formatDateTimeDisplay,
   Heading,
+  InlineError,
   PickerModal,
   StatusBadge,
   Tile,
@@ -205,9 +206,9 @@ export function SportEventScoreSourceCard({
         </p>
       ) : null}
       {linkMutation.isError && !linkOpen ? (
-        <p className="mt-2 text-sm text-destructive" data-testid="root-admin-sport-event-link-error" role="alert">
+        <InlineError className="mt-2" testId="root-admin-sport-event-link-error">
           {extractErrorMessage(linkMutation.error, { fallback: 'The link was rejected.' })}
-        </p>
+        </InlineError>
       ) : null}
       {tournament.syncScope === SportEventSyncScope.NONE ? null : (
         <GolfTournamentLiveSimulation tournament={tournament} />

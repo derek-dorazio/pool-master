@@ -15,7 +15,11 @@ The shared UI layer is split into three levels:
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
    `layout="row"`, and a dropdown entry is a `MenuItem`; never hand-type
-   `normal-case tracking-normal` onto a button.
+   `normal-case tracking-normal` onto a button. A loading, empty or error state
+   is `LoadingState`, `EmptyState` or `ErrorState` (`size="inline"` for one line
+   inside a card), a one-line failure beside what failed is an `InlineError`, and
+   a query's loading, error, empty and data branches are one `QueryState`; never
+   hand-type a `text-destructive` or "Loading..." paragraph.
 2. **Templates** compose primitives into repeated page or modal workflows, such
    as `ManagementListPage`, `EntityDetailPage`, `FormModal`, and
    `ConfirmationModal`.

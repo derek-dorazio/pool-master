@@ -6,12 +6,13 @@ import {
   Alert,
   Button,
   DateTimeField,
+  dateTimeLocalValueToIso,
+  formatDateTimeDisplay,
   FormField,
+  InlineError,
   Input,
   StatusBadge,
   Tile,
-  formatDateTimeDisplay,
-  dateTimeLocalValueToIso,
   toDateTimeLocalValue,
   useDisplayPreferences,
 } from '@/features/shared/ui';
@@ -158,11 +159,11 @@ export function SportEventProviderBrowse({
             {catalog.isLoading ? (
               <p className="text-sm text-muted-foreground">Loading provider events...</p>
             ) : catalog.isError ? (
-              <p className="text-sm text-destructive">
+              <InlineError>
                 {extractErrorMessage(catalog.error, {
                   fallback: 'We could not load the provider catalog.',
                 })}
-              </p>
+              </InlineError>
             ) : catalog.events.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No provider events fall in this window.
@@ -254,14 +255,14 @@ export function SportEventProviderBrowse({
             </div>
 
             {createMutation.isError ? (
-              <p className="text-sm font-medium text-destructive">
+              <InlineError>
                 {extractErrorMessage(createMutation.error, {
                   codeMessages: {
                     EVENT_EDITION_ALREADY_EXISTS: `This ${sportLeagueNounOf(sport, scopedSportLeague?.noun ?? null).one} already has a ${edition.eventYear} edition of this ${eventNoun.one}.`,
                   },
                   fallback: `We could not create this ${eventNoun.one}.`,
                 })}
-              </p>
+              </InlineError>
             ) : null}
           </div>
         </Tile>
