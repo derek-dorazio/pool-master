@@ -11,8 +11,7 @@ import {
   PrismaParticipantLeagueAffiliationRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
-  PrismaSportEventParticipantRoundRepository,
-  PrismaSportEventParticipantStandingRepository,
+  PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
   PrismaSportLeagueRepository,
@@ -102,6 +101,19 @@ describe('Sport and SportLeague repositories', () => {
     expect(ours(await sportLeagues.findAll({ sportId: sport.id }))).toEqual(['LIV Golf', 'PGA Tour']);
     expect(ours(await sportLeagues.findAll({ sportId: sport.id, isActive: true }))).toEqual(['PGA Tour']);
     await expect(sportLeagues.findBySportAndName(sport.id, 'PGA Tour')).resolves.toMatchObject({ matchKeyword: 'PGA' });
+  });
+
+  it('reads the sport leagues with the ids asked for in one read, none for an unknown id or no ids (#1166)', async () => {
+    const sport = await golfSport();
+    const sportLeagues = new PrismaSportLeagueRepository(getPrisma());
+    const pga = await sportLeagues.create({ sportId: sport.id, name: 'PGA Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    const liv = await sportLeagues.create({ sportId: sport.id, name: 'LIV Golf', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+    await sportLeagues.create({ sportId: sport.id, name: 'Korn Ferry Tour', matchKeyword: null, bracketAdvancement: BracketAdvancement.FIXED });
+
+    const rows = await sportLeagues.findByIds([pga.id, liv.id, randomUUID()]);
+
+    expect(rows.map((row) => row.name).sort()).toEqual(['LIV Golf', 'PGA Tour']);
+    await expect(sportLeagues.findByIds([])).resolves.toEqual([]);
   });
 
   it('records the sport league\'s current event year through update (plans/147 decision 6)', async () => {
@@ -329,7 +341,7 @@ describe('SportEvent core repositories', () => {
     ]));
   });
 
-  it('reads rounds in order, participant rounds with their round number, and standings best position first scoped to the event', async () => {
+  it('reads rounds in order, and the event\'s field alone with each row\'s rounds by round number and its own standing', async () => {
     const sport = await golfSport();
     const event = await createEvent('standings');
     const otherEvent = await createEvent('other');
@@ -354,10 +366,16 @@ describe('SportEvent core repositories', () => {
     }
 
     expect((await new PrismaSportEventRoundRepository(getPrisma()).findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
-    expect((await new PrismaSportEventParticipantRoundRepository(getPrisma()).findBySportEvent(event.id))
-      .map((row) => [row.sportEventParticipantId, row.roundNumber])).toEqual([[leader.id, 1], [leader.id, 2]]);
-    const standings = new PrismaSportEventParticipantStandingRepository(getPrisma());
-    expect((await standings.findBySportEvent(event.id)).map((row) => [row.sportEventParticipantId, row.position]))
-      .toEqual([[leader.id, 1], [second.id, 2], [unranked.id, null]]);
+    const { sportLeagueId } = await getPrisma().eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const field = await new PrismaSportEventParticipantRepository(getPrisma()).findFieldForEvent(event.id, sportLeagueId);
+    expect(field.map((row) => [
+      row.participant.name,
+      row.standing?.standing.position,
+      row.rounds.map(({ round }) => [round.sportEventParticipantId, round.roundNumber]),
+    ])).toEqual([
+      ['Leader', 1, [[leader.id, 1], [leader.id, 2]]],
+      ['Second', 2, []],
+      ['Unranked', null, []],
+    ]);
   });
 });

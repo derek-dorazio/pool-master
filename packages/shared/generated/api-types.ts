@@ -1302,7 +1302,7 @@ export interface paths {
         };
         /**
          * List contests for a league
-         * @description Returns the contests associated with the parent league so league-home and commissioner views can list current and historical contests. Each contest carries its entry count and its sport event's name and start, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContests"];
         put?: never;
@@ -1311,6 +1311,26 @@ export interface paths {
          * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
          */
         post: operations["createContest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leagues/{id}/contests/finished-years": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the years a league has finished contests in
+         * @description Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         */
+        get: operations["listContestFinishedYears"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -12624,6 +12644,16 @@ export interface components {
                 /** Format: date-time */
                 updatedAt?: string;
             }[];
+        };
+        /** @description Which of a league's contests to list: the current ones by default, or one year's finished ones. */
+        ListContestsQuery: {
+            /** @description List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`. */
+            finishedYear?: number;
+        };
+        /** @description The years a league has finished contests in. */
+        ContestFinishedYearsResponse: {
+            /** @description Each championship year, US Eastern, a COMPLETED contest of the league went final in, newest first. Empty when none has finished. */
+            years: number[];
         };
         /** @description Single contest-entry response. */
         ContestEntryResponse: {
@@ -26256,7 +26286,10 @@ export interface operations {
     };
     listContests: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description List the COMPLETED contests that went final in this championship year, US Eastern, such as 2025, instead of the current ones. The years with any are `listContestFinishedYears`. */
+                finishedYear?: number;
+            };
             header?: never;
             path: {
                 id: string;
@@ -26272,6 +26305,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContestListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
             /** @description Standard API error envelope. */
@@ -26356,6 +26398,46 @@ export interface operations {
             };
             /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listContestFinishedYears: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The years a league has finished contests in. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestFinishedYearsResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

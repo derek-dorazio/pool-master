@@ -4,7 +4,7 @@
  * contests and the one-event ones with their series (#874), held in plain fields so a service test can settle contests and read a year back.
  */
 import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
-import type { LeagueYearFinish } from '@poolmaster/shared/domain';
+import { CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
 
 export class InMemoryChampionship implements ChampionshipRepository {
   readonly finishes: LeagueYearFinish[] = [];
@@ -26,6 +26,10 @@ export class InMemoryChampionship implements ChampionshipRepository {
 
   async findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearFinish[]> {
     return this.finishes.filter((finish) => finish.leagueId === leagueId && finish.year === year);
+  }
+
+  async hasCountedFinish(leagueId: string, year: number): Promise<boolean> {
+    return this.finishes.some((finish) => finish.leagueId === leagueId && finish.year === year && finish.weight !== CupWeight.NOT_COUNTED);
   }
 
   async findCupName(leagueId: string): Promise<string | null> {

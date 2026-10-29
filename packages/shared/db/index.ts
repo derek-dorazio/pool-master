@@ -93,6 +93,8 @@ export type {
   ParticipantLeagueAffiliationRepository,
   ParticipantMatchQuery,
   ParticipantRanking,
+  ParticipantRoundView,
+  ParticipantStandingView,
   PriceAssignment,
   ReplacementValuation,
   SportEventCreate,
@@ -101,9 +103,8 @@ export type {
   SportEventParticipantFieldUpdate,
   SportEventParticipantPatch,
   SportEventParticipantRepository,
-  SportEventParticipantRoundRepository,
-  SportEventParticipantStandingRepository,
   SportEventParticipantValuationRepository,
+  SportEventParticipantView,
   SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
@@ -136,6 +137,7 @@ export type {
 } from './email-ports';
 export type {
   CupContest,
+  LeagueCupContest,
   CupContestFinish,
   CupKey,
   CupRankedEntry,

@@ -38,7 +38,7 @@ import {
 } from './contest-rules-form';
 import { useEventRoundName } from './use-bracket-round-label';
 import { sportEventQueryOptions } from './use-contest-schedule';
-import { useLeagueContestsQuery } from './use-league-contests-query';
+import { useContestQuery } from './use-contest-query';
 import { useManagedContestQuery } from './use-managed-contest-query';
 
 const editContestFormSchema = z.object({
@@ -239,16 +239,16 @@ export function EditContestPage() {
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   const { league } = useLeagueContext(leagueCode);
-  const contestsQuery = useLeagueContestsQuery(league?.id ?? '');
+  const contestQuery = useContestQuery(contestId);
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
-  const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
+  const contest = contestQuery.data ?? null;
   const eventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
   const contestPath = buildLeagueAdminContestPath(leagueCode, contestId);
 
   if (!league) {
     return null;
   }
-  if (contestsQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
+  if (contestQuery.isLoading || managedContestQuery.isLoading || eventQuery.isLoading) {
     return <LoadingState body="Loading contest..." testId="edit-contest-loading" />;
   }
 
@@ -256,7 +256,7 @@ export function EditContestPage() {
   const event = eventQuery.data;
   // A missing contest, one already open, or a read that failed goes back to the contest page,
   // which says why.
-  if (!contest || !managedContest || !event || contest.status !== ContestStatus.DRAFT || !league.isActive) {
+  if (!contest || contest.leagueId !== league.id || !managedContest || !event || contest.status !== ContestStatus.DRAFT || !league.isActive) {
     return <Navigate replace to={contestPath} />;
   }
   return (

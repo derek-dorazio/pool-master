@@ -7,6 +7,8 @@ import type {
 } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
+import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
+import type { SportEventParticipantView } from '@poolmaster/shared/db';
 
 function buildInProgressEvent(): SportEvent {
   return {
@@ -323,6 +325,62 @@ describe('IngestionPersistence', () => {
     expect(upsert).toHaveBeenCalledWith(expect.objectContaining({
       update: expect.objectContaining({ seedNumber: expectedSeed }),
     }));
+  });
+
+  // #1163 — a viewer's read of the event's field is shared for 30 seconds; once sync writes the
+  // field, this container reads it afresh.
+  describe('the event\'s field this container read lately', () => {
+    const NOW = new Date('2026-10-28T20:00:00.000Z');
+    const detail: SportEventDetail = {
+      ...buildInProgressEvent(),
+      participants: [{ externalId: 'golfer-01', providerId: 'mock-contest-feed', sport: Sport.GOLF, name: 'Scottie Scheffler', active: true, ranking: 1, metadata: {} }],
+    };
+
+    function syncedEvent(upsert: jest.Mock) {
+      return {
+        sportEvent: {
+          update: jest.fn().mockResolvedValue({ id: 'sport-event-1' }),
+          findUnique: jest.fn()
+            .mockResolvedValueOnce(linkedRow())
+            .mockResolvedValueOnce({ id: 'sport-event-1', sport: Sport.GOLF, status: 'SCHEDULED', eventSeries: { sportLeague: { participantType: null, scoringFamily: null } } }),
+        },
+        contest: { findMany: jest.fn().mockResolvedValue([]) },
+        participantProviderMapping: { findUnique: jest.fn().mockResolvedValue({ participantId: 'participant-1' }) },
+        participant: { update: jest.fn().mockResolvedValue({ id: 'participant-1' }) },
+        sportEventParticipant: { findUnique: jest.fn().mockResolvedValue(null), upsert },
+      };
+    }
+
+    async function cacheHoldingTheField() {
+      const fieldCache = new ReadCache<SportEventParticipantView[]>();
+      await fieldCache.get('sport-event-1', NOW, async () => []);
+      return fieldCache;
+    }
+
+    async function readsAfresh(fieldCache: ReadCache<SportEventParticipantView[]>): Promise<boolean> {
+      let read = false;
+      await fieldCache.get('sport-event-1', NOW, async () => { read = true; return []; });
+      return read;
+    }
+
+    it('forgets the event\'s field once sync writes it, so the next read of it is current', async () => {
+      const fieldCache = await cacheHoldingTheField();
+      const prisma = syncedEvent(jest.fn().mockResolvedValue({ id: 'sport-event-participant-1' }));
+
+      await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail);
+
+      expect(await readsAfresh(fieldCache)).toBe(true);
+    });
+
+    it('forgets it too when writing the field fails partway, since some rows may have been written', async () => {
+      const fieldCache = await cacheHoldingTheField();
+      const prisma = syncedEvent(jest.fn().mockRejectedValue(new Error('connection reset')));
+
+      await expect(new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail))
+        .rejects.toThrow('connection reset');
+
+      expect(await readsAfresh(fieldCache)).toBe(true);
+    });
   });
 
   // #118, #435 — an admin owns the header, rounds and status of every event, linked for

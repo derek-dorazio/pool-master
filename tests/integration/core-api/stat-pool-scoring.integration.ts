@@ -12,7 +12,6 @@ import { ErrorEnvelopeSchema, type ErrorEnvelope } from '@poolmaster/shared/dto/
 import {
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantStatLineRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -28,7 +27,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { passLeaderboardCacheTtl, restoreLeaderboardCacheClock } from '../../support/leaderboard-cache-clock';
+import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 // The composite family (#934) against real Postgres: a World Series stat pool scored from its
 // players' stat lines (Box Score: total bases + runs + RBI + walks + stolen bases each game),
@@ -40,7 +39,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 beforeEach(() => cleanupTestData());
-afterEach(() => restoreLeaderboardCacheClock());
+afterEach(() => restoreReadCacheClock());
 
 const PLAYERS = ['Ace', 'Blaze', 'Cruz', 'Dash'];
 
@@ -100,13 +99,15 @@ async function seedSeries(status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS') {
 }
 
 describe('SportEventParticipantStatLineRepository', () => {
-  it('reads back only the event\'s own stat lines, each with its round and stat', async () => {
+  it('reads back only the event\'s own stat lines in its field, each on its round with its stat', async () => {
     const { prisma, event, ace, line } = await seedSeries();
     const other = await seedSeries();
     const round = await line(ace, 1, { TOTAL_BASES: 4, RUNS: 1 });
     await other.line(other.ace, 1, { WALKS: 2 });
 
-    const lines = await new PrismaSportEventParticipantStatLineRepository(prisma).findBySportEvent(event.id);
+    const { sportLeagueId } = await prisma.eventSeries.findUniqueOrThrow({ where: { id: event.eventSeriesId } });
+    const field = await new PrismaSportEventParticipantRepository(prisma).findFieldForEvent(event.id, sportLeagueId);
+    const lines = field.flatMap((row) => row.rounds.flatMap((played) => played.statLines));
 
     expect(lines.map((statLine) => [statLine.participantRoundId, statLine.stat, statLine.value])).toEqual([
       [round.id, SportStat.TOTAL_BASES, 4],
@@ -206,7 +207,7 @@ describe('World Series stat pool contest — scored from its players\' stat line
 
   /** The board as a viewer's next poll reads it, past the board cached by the last read (#1162). */
   async function board(contestId: string, headers: Record<string, string>) {
-    passLeaderboardCacheTtl();
+    passReadCacheTtl();
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contestId}/leaderboard`, headers });
     expect(response.statusCode).toBe(200);
     return ContestLeaderboardResponseSchema.parse(response.json());

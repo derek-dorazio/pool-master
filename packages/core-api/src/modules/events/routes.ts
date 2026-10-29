@@ -28,7 +28,7 @@ import type { IngestionService } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { EventScoreSourceService } from './event-score-source-service';
 import { createEventHandlers } from './handler';
-import { createEventLifecycleService, createSportEventServices } from './wiring';
+import { createEventLifecycleService, createSportEventServices, eventFieldCache } from './wiring';
 
 export interface EventsModuleOptions {
   eventLifecycleService?: EventLifecycleService;
@@ -64,6 +64,16 @@ export function eventsModule(fastify: FastifyInstance, opts: EventsModuleOptions
     ingestion: opts.ingestionService,
   });
   const write = { onRequest: requireRootAdmin };
+
+  // A write to an event forgets the field this container last read of it (#1163) before the
+  // write answers, so the admin's next read, and every contest's on the event, is current.
+  fastify.addHook('onSend', async (request, _reply, payload) => {
+    const { eventId } = request.params as { eventId?: string };
+    if (eventId !== undefined && request.method !== 'GET' && request.method !== 'HEAD') {
+      eventFieldCache.forget(eventId);
+    }
+    return payload;
+  });
 
   // --- SportEvent --------------------------------------------------------------------
 

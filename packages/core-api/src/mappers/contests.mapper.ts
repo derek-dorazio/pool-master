@@ -5,6 +5,7 @@ import type {
   ContestDto,
   ContestSportEventDto,
   ContestResponse,
+  ContestFinishedYearsResponse,
   ContestListResponse,
   ContestEntryDto,
   ContestEntryParticipantDetailDto,
@@ -209,6 +210,11 @@ export function toContestListResponse(
       entriesPerContest: entryCaps.get(c.id) ?? null,
     })),
   };
+}
+
+/** The years a league has finished contests in, newest first. */
+export function toContestFinishedYearsResponse(years: readonly number[]): ContestFinishedYearsResponse {
+  return { years: [...years] };
 }
 
 /** An entry, with its picked participants when the viewer may see them (`null` hides them). */

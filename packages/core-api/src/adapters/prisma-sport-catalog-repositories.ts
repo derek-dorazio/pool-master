@@ -2,10 +2,11 @@
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
  * Sport, SportLeague, ParticipantLeagueAffiliation, SportEvent, EventSeries,
  * SportEventRound, SportEventParticipant, SportEventTier,
- * SportEventParticipantValuation, and the core SportEventParticipantRound / Standing rows.
+ * and SportEventParticipantValuation.
  *
- * Sport extension rows (the golf round and standing tables) are not read here —
- * a core row never carries a sport particular.
+ * Sport extension rows (golf rounds and standings, stat lines, race results, matches) have
+ * their own adapters. The one exception is the field read (#1163): a field row comes with
+ * every extension at once, mapped by those adapters' own mappers.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
@@ -21,9 +22,8 @@ import type {
   SportEventParticipantFieldUpdate,
   SportEventParticipantPatch,
   SportEventParticipantRepository,
-  SportEventParticipantRoundRepository,
   SportEventParticipantValuationRepository,
-  SportEventParticipantStandingRepository,
+  SportEventParticipantView,
   SportEventProviderSummary,
   SportEventRepository,
   SportEventRoundRepository,
@@ -46,8 +46,6 @@ import type {
   SportConfig,
   SportEvent,
   SportEventParticipant,
-  SportEventParticipantRound,
-  SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
   SportEventSyncScope,
@@ -55,7 +53,11 @@ import type {
   SportLeague,
 } from '@poolmaster/shared/domain';
 import { EventPricingConfigSchema, MatchSide, ParticipantInactiveReason, ParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
+import { MATCH_INCLUDE, toSportEventMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
+import { toRaceResult } from './prisma-race-repositories';
+import { toStatLine } from './prisma-stat-line-repositories';
 
 type Db = PrismaClient;
 
@@ -84,6 +86,14 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
   async findById(id: string): Promise<SportLeague | null> {
     const row = await this.prisma.sportLeague.findUnique({ where: { id } });
     return row ? toSportLeague(row) : null;
+  }
+
+  async findByIds(ids: readonly string[]): Promise<SportLeague[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.sportLeague.findMany({ where: { id: { in: [...ids] } } });
+    return rows.map(toSportLeague);
   }
 
   async findAll(filters: SportLeagueFilters): Promise<SportLeague[]> {
@@ -505,6 +515,79 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   }
 }
 
+/** A field in seed order, unseeded last, then by name. */
+const FIELD_ORDER = [
+  { seedNumber: { sort: 'asc', nulls: 'last' } },
+  { participant: { name: 'asc' } },
+] satisfies Prisma.SportEventParticipantOrderByWithRelationInput[];
+
+/**
+ * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
+ * statement on one connection, so the whole field is a handful of sequential queries; empty
+ * relations, such as a golf event's race results, return nothing. Affiliation is read as ids.
+ */
+function fieldRowInclude(sportLeagueId: string) {
+  return {
+    participant: { include: { leagueAffiliations: { where: { sportLeagueId }, select: { id: true } } } },
+    valuation: true,
+    standing: { include: { golf: true } },
+    rounds: {
+      include: { sportEventRound: { select: { roundNumber: true } }, golf: true, statLines: { orderBy: { stat: 'asc' } } },
+      orderBy: { sportEventRound: { roundNumber: 'asc' } },
+    },
+    raceResult: true,
+    homeMatches: { include: MATCH_INCLUDE },
+    awayMatches: { include: MATCH_INCLUDE },
+  } satisfies Prisma.SportEventParticipantInclude;
+}
+
+type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typeof fieldRowInclude> }>;
+
+function toFieldRow(row: FieldRow): SportEventParticipantView {
+  const { participant, valuation, standing, rounds, raceResult, homeMatches, awayMatches, ...entry } = row;
+  const { leagueAffiliations, ...participantRow } = participant;
+  return {
+    entry: toSportEventParticipant(entry),
+    participant: mapToParticipant(participantRow),
+    valuation: valuation ? toValuation(valuation) : null,
+    standing: standing
+      ? {
+        standing: {
+          id: standing.id,
+          sportEventParticipantId: standing.sportEventParticipantId,
+          position: standing.position,
+          displayPosition: standing.displayPosition,
+          status: standing.status,
+          asOf: standing.asOf,
+          currentRound: standing.currentRound,
+          createdAt: standing.createdAt,
+          updatedAt: standing.updatedAt,
+        },
+        golf: standing.golf ? toGolfStanding(standing.golf) : null,
+      }
+      : null,
+    rounds: rounds.map((round) => ({
+      round: {
+        id: round.id,
+        sportEventParticipantId: round.sportEventParticipantId,
+        sportEventRoundId: round.sportEventRoundId,
+        roundNumber: round.sportEventRound.roundNumber,
+        status: round.status,
+        completedAt: round.completedAt,
+        createdAt: round.createdAt,
+        updatedAt: round.updatedAt,
+      },
+      golf: round.golf ? toGolfRound(round.golf) : null,
+      statLines: round.statLines.map(toStatLine),
+    })),
+    raceResult: raceResult ? toRaceResult(raceResult) : null,
+    matches: [...homeMatches, ...awayMatches]
+      .sort((left, right) => left.matchNumber - right.matchNumber)
+      .map(toSportEventMatch),
+    affiliatedWithSportLeague: leagueAffiliations.length > 0,
+  };
+}
+
 export class PrismaSportEventParticipantRepository implements SportEventParticipantRepository {
   constructor(private readonly prisma: Db) {}
 
@@ -514,11 +597,25 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async findBySportEvent(sportEventId: string): Promise<SportEventParticipant[]> {
+    const rows = await this.prisma.sportEventParticipant.findMany({ where: { sportEventId }, orderBy: FIELD_ORDER });
+    return rows.map(toSportEventParticipant);
+  }
+
+  async findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]> {
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
-      orderBy: [{ seedNumber: { sort: 'asc', nulls: 'last' } }, { participant: { name: 'asc' } }],
+      include: fieldRowInclude(sportLeagueId),
+      orderBy: FIELD_ORDER,
     });
-    return rows.map(toSportEventParticipant);
+    return rows.map(toFieldRow);
+  }
+
+  async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
+    const row = await this.prisma.sportEventParticipant.findFirst({
+      where: { id: sportEventParticipantId, sportEventId },
+      include: fieldRowInclude(sportLeagueId),
+    });
+    return row ? toFieldRow(row) : null;
   }
 
   async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
@@ -720,35 +817,6 @@ export class PrismaSportEventParticipantValuationRepository implements SportEven
   }
 }
 
-const PARTICIPANT_ROUND_INCLUDE = { sportEventRound: { select: { roundNumber: true } } } as const;
-
-export class PrismaSportEventParticipantRoundRepository implements SportEventParticipantRoundRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantRound[]> {
-    const rows = await this.prisma.sportEventParticipantRound.findMany({
-      where: { sportEventParticipant: { sportEventId } },
-      include: PARTICIPANT_ROUND_INCLUDE,
-      orderBy: [{ sportEventParticipantId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }],
-    });
-    return rows.map(toParticipantRound);
-  }
-
-}
-
-export class PrismaSportEventParticipantStandingRepository implements SportEventParticipantStandingRepository {
-  constructor(private readonly prisma: Db) {}
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantStanding[]> {
-    const rows = await this.prisma.sportEventParticipantStanding.findMany({
-      where: { sportEventParticipant: { sportEventId } },
-      orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { sportEventParticipantId: 'asc' }],
-    });
-    return rows.map(toStanding);
-  }
-
-}
-
 function countMap(ids: readonly string[], counted: Array<[string, number]>): Map<string, number> {
   const counts = new Map(ids.map((id) => [id, 0]));
   for (const [id, count] of counted) {
@@ -845,35 +913,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     syncScope: row.syncScope as SportEventSyncScope,
     autoLifecycleEnabled: row.autoLifecycleEnabled,
     ...(row.pricingConfig !== null && { pricingConfig: EventPricingConfigSchema.parse(row.pricingConfig) }),
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toParticipantRound(
-  row: Prisma.SportEventParticipantRoundGetPayload<{ include: typeof PARTICIPANT_ROUND_INCLUDE }>,
-): SportEventParticipantRound {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    sportEventRoundId: row.sportEventRoundId,
-    roundNumber: row.sportEventRound.roundNumber,
-    status: row.status,
-    completedAt: row.completedAt,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-  };
-}
-
-function toStanding(row: Prisma.SportEventParticipantStandingGetPayload<object>): SportEventParticipantStanding {
-  return {
-    id: row.id,
-    sportEventParticipantId: row.sportEventParticipantId,
-    position: row.position,
-    displayPosition: row.displayPosition,
-    status: row.status,
-    asOf: row.asOf,
-    currentRound: row.currentRound,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

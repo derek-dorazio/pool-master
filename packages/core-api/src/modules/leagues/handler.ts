@@ -17,7 +17,7 @@ import { toLeagueDto } from '../../mappers/leagues.mapper';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
 import { toSquadMembershipDto } from '../../mappers/squads.mapper';
 import { sendError } from '../../core/error-handler';
-import type { CreateLeagueInput, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
+import type { CreateLeagueInput, LeagueActivityCounts, LeagueService, UpdateLeagueCupSettingsInput, UpdateLeagueDetailsInput } from './service';
 import { LeagueNotFoundError, LeagueOperationError } from './service';
 import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { League, LeagueMembership } from '@poolmaster/shared/domain';
@@ -36,8 +36,11 @@ export function createLeagueHandlers(
   leaguePlanService: LeaguePlanService,
 ) {
   /** A league as the API returns it, with what its plan allows under the current plan settings. */
-  const leagueDto = (league: League, counts?: Parameters<typeof toLeagueDto>[2]) =>
+  const leagueDto = (league: League, counts: LeagueActivityCounts) =>
     toLeagueDto(league, planEntitlements.forPlan(league.plan), counts);
+  /** A league a write just changed, with its counts read back rather than left at zero (#1208). */
+  const changedLeagueDto = async (league: League) =>
+    leagueDto(league, await leagueService.countActivityFor(league.id));
 
   return {
     listLeagues,
@@ -331,7 +334,7 @@ export function createLeagueHandlers(
 
     const [squadContext, counts] = await Promise.all([
       loadViewerSquadContext(result.league.id, userId),
-      leagueService.countLeagueActivity([result.league.id]),
+      leagueService.countActivityFor(result.league.id),
     ]);
 
     logger.info({
@@ -339,10 +342,7 @@ export function createLeagueHandlers(
       data: { ...logData, leagueId: result.league.id, memberCount: result.members.length },
     }, 'Loaded league context');
     return reply.send({
-      league: leagueDto(result.league, {
-        memberCount: counts.memberCounts.get(result.league.id) ?? 0,
-        activeContestCount: counts.activeContestCounts.get(result.league.id) ?? 0,
-      }),
+      league: leagueDto(result.league, counts),
       // Both edges are the viewer's own, so the embedded member is the viewer.
       membership: membership && squadContext.viewer ? mapLeagueMembershipToDto(membership, squadContext.viewer) : null,
       squadMembership: squadContext.squadMembership,
@@ -367,7 +367,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Inactivated league');
       return reply.send({
-        league: leagueDto(league),
+        league: await changedLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -404,7 +404,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Activated league');
       return reply.send({
-        league: leagueDto(league),
+        league: await changedLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -444,7 +444,7 @@ export function createLeagueHandlers(
         data: { leagueId: request.params.id },
       }, 'Updated league details');
       return reply.send({
-        league: leagueDto(league),
+        league: await changedLeagueDto(league),
       });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
@@ -484,7 +484,7 @@ export function createLeagueHandlers(
         action: 'leagueRoute.updateCupSettings.success',
         data: { leagueId: request.params.id },
       }, 'Updated league cup settings');
-      return reply.send({ league: leagueDto(league) });
+      return reply.send({ league: await changedLeagueDto(league) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({
@@ -533,7 +533,7 @@ export function createLeagueHandlers(
         action: 'leagueRoute.updatePlan.success',
         data: { leagueId: request.params.id, plan: league.plan },
       }, 'Updated league plan');
-      return reply.send({ league: leagueDto(league) });
+      return reply.send({ league: await changedLeagueDto(league) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({
@@ -573,7 +573,7 @@ export function createLeagueHandlers(
     }
     try {
       const league = await leaguePlanService.extendRenewal(request.params.id, request.body.months, userId);
-      return reply.send({ league: leagueDto(league) });
+      return reply.send({ league: await changedLeagueDto(league) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({

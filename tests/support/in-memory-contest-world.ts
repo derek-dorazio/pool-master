@@ -38,7 +38,6 @@ import type {
   Contest,
   ContestConfiguration,
   ContestEntry,
-  ContestEntryStatus,
   League,
   LeagueMembership,
   SportEvent,
@@ -49,6 +48,8 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
+  championshipYear,
+  ContestEntryStatus,
   ContestFormat,
   ContestStatus,
   CupWeight,
@@ -71,6 +72,8 @@ import {
 import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
+import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
+import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
@@ -328,11 +331,36 @@ export class InMemoryContestWorld {
       .flatMap((contest) => contest.sportEventIds.flatMap((id) => this.sportEvents.get(id)?.sportLeagueId ?? [])))];
   }
 
+  /** A draft past every cutoff, as the current contest list leaves it out (#1217). */
+  private canNeverOpen(contest: Contest, now: Date): boolean {
+    const events = contest.sportEventIds.flatMap((id) => this.sportEvents.get(id) ?? []);
+    if (events.some((event) => event.status === SportEventStatus.COMPLETED || event.status === SportEventStatus.CANCELLED)) {
+      return true;
+    }
+    const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
+    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGameMatchId).kind === ContestCutoffKind.EVENT_START;
+    return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
+  }
+
   contestRepo(): ContestRepository {
     return {
       findById: async (id) => this.contests.get(id) ?? null,
-      findByLeague: async (leagueId) =>
-        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId),
+      findByLeague: async (leagueId, statuses) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId && statuses.includes(contest.status)),
+      findCurrentByLeague: async (leagueId, now) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status !== ContestStatus.COMPLETED
+          && !(contest.status === ContestStatus.DRAFT && this.canNeverOpen(contest, now))),
+      findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
+        [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
+          && contest.status === ContestStatus.COMPLETED
+          && contest.endsAt !== undefined
+          && contest.endsAt >= endedFrom && contest.endsAt < endedBefore),
+      findFinishedYearsByLeague: async (leagueId) =>
+        [...new Set([...this.contests.values()].flatMap((contest) =>
+          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED && contest.endsAt
+            ? [championshipYear(contest.endsAt)]
+            : []))].sort((left, right) => right - left),
       findOpenByLeague: async (leagueId) =>
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
@@ -446,6 +474,9 @@ export class InMemoryContestWorld {
           .sort((left, right) => left.entryNumber - right.entryNumber),
       countByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
         [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId).length])),
+      countSubmittedByContests: async (contestIds) => new Map(contestIds.map((contestId) =>
+        [contestId, [...this.entries.values()].filter((entry) => entry.contestId === contestId
+          && entry.events.some((event) => event.status === ContestEntryStatus.SUBMITTED)).length])),
       create: async (input, limits) => {
         // The adapter refuses an entry once the contest is drawn, or holds its plan's entries.
         if (this.contests.get(input.contestId)?.drawnAt !== undefined) return { status: 'contestDrawn' };
@@ -747,7 +778,7 @@ export class InMemoryContestWorld {
       users: this.userRepo(),
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
-      eventParticipants: { listEventParticipants: async () => [] },
+      eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
       tiers: {
         getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],

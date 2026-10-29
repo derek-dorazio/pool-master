@@ -15,7 +15,7 @@ import type {
   ContestUpdate,
   ReleasedEdition,
 } from '@poolmaster/shared/db';
-import { ContestStatus, type Contest, type ContestFormat, type CupWeight, type SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -43,13 +43,63 @@ export class PrismaContestRepository implements ContestRepository {
     return row ? mapToContest(row) : null;
   }
 
-  async findByLeague(leagueId: string): Promise<Contest[]> {
+  async findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
-      where: { leagueId },
+      where: { leagueId, status: { in: [...statuses] } },
       orderBy: { createdAt: 'desc' },
       include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);
+  }
+
+  async findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        leagueId,
+        status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
+        // A draft that can never open is left out (#1161, #1217): one with an event finished or
+        // cancelled, which is past every cutoff, and one closing at its event's start once an
+        // event has started, since a started event cannot be removed. Only a bracket starting
+        // after round 1 and a squares contest with its game close later, as `contestCutoff` says.
+        NOT: {
+          status: ContestStatus.DRAFT,
+          OR: [
+            { sportEvents: { some: { sportEvent: { status: { in: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] } } } } },
+            {
+              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
+              sportEvents: { some: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
+              NOT: {
+                OR: [
+                  { selectionType: SelectionType.BRACKET, configuration: { configJson: { path: ['startsAtRound'], gt: 1 } } },
+                  { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
+  async findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { gte: endedFrom, lt: endedBefore } },
+      orderBy: [{ endsAt: 'desc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
+  async findFinishedYearsByLeague(leagueId: string): Promise<number[]> {
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { not: null } },
+      select: { endsAt: true },
+    });
+    const years = new Set(rows.flatMap(({ endsAt }) => (endsAt ? [championshipYear(endsAt)] : [])));
+    return [...years].sort((left, right) => right - left);
   }
 
   async findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>> {

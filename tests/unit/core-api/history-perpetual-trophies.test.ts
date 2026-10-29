@@ -16,7 +16,7 @@ function contest(id: string, eventYear: number, overrides: Partial<SeriesContest
     sportLeagueName: 'PGA Tour',
     eventYear,
     completedAt: new Date(`${eventYear}-04-14T00:00:00.000Z`),
-    games: [],
+    games: { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     ...overrides,
   };
 }
@@ -85,21 +85,25 @@ describe('perpetual trophies', () => {
   });
 
   it('gives a week of games no trophy, but a single game and a bracket one each', () => {
-    const week = [{ roundNumber: 1, sendsWinnerOn: false }, { roundNumber: 1, sendsWinnerOn: false }];
-    const bracket = [{ roundNumber: 1, sendsWinnerOn: true }, { roundNumber: 1, sendsWinnerOn: true }, { roundNumber: 2, sendsWinnerOn: false }];
+    const week = { count: 2, roundCount: 1, sendingWinnerOn: 0 };
+    const bracket = { count: 3, roundCount: 2, sendingWinnerOn: 2 };
+    const bowl = { count: 1, roundCount: 1, sendingWinnerOn: 0 };
+    const noGames = { count: 0, roundCount: 0, sendingWinnerOn: 0 };
     const nfl = { sportLeagueName: 'NFL', selectionType: SelectionType.PICK_EM };
     const trophies = buildPerpetualTrophies([
       contest('week-1-2024', 2024, { ...nfl, eventSeriesId: 'week-1', seriesName: 'NFL Week 1', games: week }),
       contest('week-1-2025', 2025, { ...nfl, eventSeriesId: 'week-1', seriesName: 'NFL Week 1', games: week }),
-      contest('bowl-2024', 2024, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: [{ roundNumber: 1, sendsWinnerOn: false }] }),
-      contest('bowl-2025', 2025, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: [{ roundNumber: 1, sendsWinnerOn: false }] }),
+      contest('bowl-2024', 2024, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: bowl }),
+      contest('bowl-2025', 2025, { ...nfl, selectionType: SelectionType.SQUARES, eventSeriesId: 'bowl', seriesName: 'Super Bowl', games: bowl }),
       contest('playoffs-2024', 2024, { ...nfl, selectionType: SelectionType.BRACKET, eventSeriesId: 'playoffs', seriesName: 'NFL Playoffs', games: bracket }),
       contest('playoffs-2025', 2025, { ...nfl, selectionType: SelectionType.BRACKET, eventSeriesId: 'playoffs', seriesName: 'NFL Playoffs', games: bracket }),
     ], []);
 
     expect(trophies.map((trophy) => trophy.seriesName)).toEqual(['NFL Playoffs', 'Super Bowl']);
     expect(isWeekOfGames(week)).toBe(true);
-    expect(isWeekOfGames([])).toBe(false);
+    expect(isWeekOfGames(noGames)).toBe(false);
     expect(isWeekOfGames(bracket)).toBe(false);
+    // Unlinked games over several rounds are a reseeded bracket.
+    expect(isWeekOfGames({ count: 4, roundCount: 2, sendingWinnerOn: 0 })).toBe(false);
   });
 });
