@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { CupProjectedStandingDto, CupStandingRowDto } from '@/lib/api';
 import { cn, DataGrid } from '@/features/shared/ui';
-import { CupSquadName } from './cup-squad-name';
+import { TeamName } from '@/features/teams/team-name';
 import { describeMovement, formatCupPoints, formatProjectedStanding } from './cup-view';
 
 const STANDINGS_PER_PAGE = 25;
@@ -64,10 +64,10 @@ export function CupStandingsGrid({
         header: 'Squad',
         accessorFn: (row) => row.squadName,
         cell: ({ row }) => (
-          <CupSquadName
+          <TeamName
             iconKey={row.original.squadIconKey}
             isActive={row.original.squadIsActive}
-            isFocus={row.original.squadId === focusSquadId}
+            isMine={row.original.squadId === focusSquadId}
             name={row.original.squadName}
             testId={`cup-standing-squad-${row.original.squadId}`}
             to={squadPath(row.original.squadId)}

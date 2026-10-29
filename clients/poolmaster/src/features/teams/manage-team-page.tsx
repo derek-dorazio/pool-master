@@ -20,9 +20,9 @@ import {
 } from '@/features/shared/ui';
 import { hasErrorCode } from '@/lib/errors';
 import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
+import { TeamAvatar } from './team-avatar';
 import type { ActiveTeamDialog } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
-import { TeamIcon } from './team-icon';
 import { getTeamIconOption } from './team-icon-catalog';
 import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
@@ -78,7 +78,7 @@ export function ManageTeamPage() {
   return (
     <section className="space-y-8" data-testid="manage-team-page">
       <IdentityHeading
-        icon={<TeamIcon iconKey={team.iconKey} size="md" />}
+        avatar={<TeamAvatar iconKey={team.iconKey} label={`${team.name} icon`} size="md" />}
         meta={`${formatOwnerCount(team)} · ${isInactiveTeam ? 'Inactive' : 'Active'}`}
         name={team.name}
         testId="manage-team-identity"

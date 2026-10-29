@@ -270,8 +270,8 @@
         "clients/poolmaster/src/features/teams/manage-teams-page.tsx",
         "clients/poolmaster/src/features/teams/teams-page.tsx"
       ],
-      "count": 1,
-      "ticket": "#1280"
+      "count": 2,
+      "ticket": "#1290"
     },
     {
       "files": [

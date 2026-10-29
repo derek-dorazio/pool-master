@@ -7,16 +7,12 @@
  */
 import { randomUUID } from 'crypto';
 import { ContestFormat, ContestStatus, CupWeight, SelectionType, Sport } from '@poolmaster/shared/domain';
-import type { Response } from 'light-my-request';
-import type { z } from 'zod';
 import {
   cleanupTestData,
   createTestUser,
-  getApp,
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
-  type TestUserResult,
 } from '../helpers';
 import {
   ChampionshipYearListResponseSchema,
@@ -32,6 +28,7 @@ import {
   SportEventYearListResponseSchema,
 } from '@poolmaster/shared/dto';
 import { expectConstantQueries } from '../query-scaling';
+import { get, okBody, seedEventWithField, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
 import { createContestRow } from '../../support/contest-rows';
 import { freshEventEdition } from '../../support/event-edition';
@@ -45,71 +42,12 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-/** The route's 200 body, parsed with its response schema; anything else fails the case before its count is compared. */
-function okBody<Schema extends z.ZodType>(response: Response, schema: Schema): z.infer<Schema> {
-  expect(response.statusCode).toBe(200);
-  return schema.parse(response.json());
-}
-
-/** A league run by `commissioner`, with `teams` members who each own a team of their own. */
-async function seedLeagueWithTeams(teams: number) {
-  const prisma = getPrisma();
-  const suffix = randomUUID().slice(0, 8);
-  const commissioner = await createTestUser({ displayName: `Scaling Commissioner ${suffix}` });
-  const league = await prisma.league.create({
-    data: { cupName: 'Scaling Cup', leagueCode: `SCALE${suffix.toUpperCase()}`, name: `Scaling League ${suffix}` },
-  });
-  await prisma.leagueMembership.create({
-    data: { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER', status: 'ACTIVE' },
-  });
-  const squads = [];
-  for (let index = 0; index < teams; index += 1) {
-    const member = await createTestUser({ displayName: `Scaling Member ${suffix}${index}` });
-    await prisma.leagueMembership.create({ data: { leagueId: league.id, userId: member.user.id, role: 'MEMBER', status: 'ACTIVE' } });
-    const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: member.user.id, name: `Team ${suffix} ${index}` } });
-    await prisma.squadMembership.create({ data: { squadId: squad.id, leagueId: league.id, userId: member.user.id } });
-    squads.push(squad);
-  }
-  return { commissioner, league, squads, suffix };
-}
-
-/** A golf event starting next month with a field of `golfers`. */
-async function seedEventWithField(golfers: number) {
-  const prisma = getPrisma();
-  const suffix = randomUUID().slice(0, 8);
-  const sport = await prisma.sport.upsert({
-    where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, participantType: 'INDIVIDUAL', tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
-    update: {},
-  });
-  const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  const event = await prisma.sportEvent.create({
-    data: {
-      ...(await freshEventEdition(prisma)),
-      externalId: `scaling-${suffix}`,
-      providerId: 'integration-test',
-      sport: Sport.GOLF,
-      name: `Scaling Open ${suffix}`,
-      startDate,
-      endDate: new Date(startDate.getTime() + 3 * 24 * 60 * 60 * 1000),
-      status: 'SCHEDULED',
-    },
-  });
-  for (let index = 0; index < golfers; index += 1) {
-    const participant = await prisma.participant.create({
-      data: { sportId: sport.id, name: `Golfer ${suffix} ${index}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
-    });
-    await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, isActive: true } });
-  }
-  return event;
-}
-
 /** `contests` open roster contests in one league, each on an upcoming event of its own, so a read per event scales too. */
 async function seedLeagueWithContests(contests: number) {
   const seeded = await seedLeagueWithTeams(1);
   const contestRows = new PrismaContestRepository(getPrisma());
   for (let index = 0; index < contests; index += 1) {
-    const event = await seedEventWithField(2);
+    const { event } = await seedEventWithField(2);
     await createContestRow(contestRows, {
       leagueId: seeded.league.id,
       seasonYear: event.startDate.getUTCFullYear(),
@@ -217,10 +155,6 @@ async function seedSportLeagueWithYears(years: number) {
   return sportLeague;
 }
 
-function get(url: string, viewer: TestUserResult) {
-  return getApp().inject({ method: 'GET', url, headers: viewer.headers });
-}
-
 describe('list routes cost the same statements for 2 rows as for 20', () => {
   it("GET a viewer's leagues: the same statements for 2 leagues as for 20 (#1205, #1216)", async () => {
     await expectConstantQueries({
@@ -268,7 +202,7 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
   it("GET an event's field: the same statements for 2 players as for 20 (#1214)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/events/{eventId}/participants',
-      seed: async (golfers) => ({ event: await seedEventWithField(golfers), viewer: await createTestUser() }),
+      seed: async (golfers) => ({ ...(await seedEventWithField(golfers)), viewer: await createTestUser() }),
       call: ({ event, viewer }) => get(`/api/v1/events/${event.id}/participants`, viewer),
       rowsShown: (response) => okBody(response, SportEventParticipantListResponseSchema).participants.length,
     });
