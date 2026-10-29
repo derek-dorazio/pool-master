@@ -2,9 +2,17 @@ import type { PrismaClient } from '@prisma/client';
 import type {
   ContestEntryMatchPredictionRepository,
   ContestEntryMatchPredictionSave,
+  ContestEntryMatchPredictionSaveResult,
   ContestEntrySeasonPrediction,
+  LockedPredictionWeek,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, PredictedResult, type ContestEntryMatchPrediction, type PredictedChoice } from '@poolmaster/shared/domain';
+import {
+  ContestEntryStatus,
+  PredictedResult,
+  type ContestEntryEventStatus,
+  type ContestEntryMatchPrediction,
+  type PredictedChoice,
+} from '@poolmaster/shared/domain';
 
 type PredictionRow = Awaited<ReturnType<PrismaClient['contestEntryMatchPrediction']['findMany']>>[number];
 
@@ -20,6 +28,26 @@ function toChoice(row: PredictionRow): PredictedChoice {
     throw new Error(`Match prediction ${row.id} is a team pick with no team.`);
   }
   return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: row.sportEventParticipantId };
+}
+
+/** The entry's row for one event, as a change reads and writes it. */
+const WEEK_EVENT = { sportEventId: true, status: true, submittedAt: true, tiebreakerValue: true } as const;
+/** A pick with its game's number, so a week's picks can be put in game order without another read. */
+const WITH_MATCH_NUMBER = { sportEventMatch: { select: { matchNumber: true } } } as const;
+
+function toWeekEvent(row: { sportEventId: string; status: ContestEntryStatus; submittedAt: Date | null; tiebreakerValue: number | null }): ContestEntryEventStatus {
+  return {
+    sportEventId: row.sportEventId,
+    status: row.status,
+    submittedAt: row.submittedAt ?? undefined,
+    tiebreakerValue: row.tiebreakerValue ?? undefined,
+  };
+}
+
+function inGameOrder(rows: readonly (PredictionRow & { sportEventMatch: { matchNumber: number } })[]): ContestEntryMatchPrediction[] {
+  return [...rows]
+    .sort((left, right) => left.sportEventMatch.matchNumber - right.sportEventMatch.matchNumber)
+    .map(toPrediction);
 }
 
 function toPrediction(row: PredictionRow): ContestEntryMatchPrediction {
@@ -85,41 +113,68 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
     return row !== null;
   }
 
-  async save(change: ContestEntryMatchPredictionSave): Promise<void> {
-    const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
-    // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
-    // insert, so the write costs the same for one game as for a full slate (#1254).
-    const replacedMatchIds = [...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)];
-    await this.prisma.$transaction(async (tx) => {
-      if (replacedMatchIds.length > 0) {
-        // Touching the entry first takes its row lock, so two saves that write one entry's picks
-        // run one after the other: otherwise both could delete a game's pick before either
-        // inserts, and the second insert would hit the (entry, game) unique index. A save that
-        // only sets the week, as a submit does, writes no pick and needs no lock.
-        await tx.contestEntry.update({ where: { id: contestEntryId }, data: { updatedAt: at } });
+  async save({ contestEntryId, sportEventId, at, decide }: ContestEntryMatchPredictionSave): Promise<ContestEntryMatchPredictionSaveResult> {
+    return this.prisma.$transaction(async (tx) => {
+      // Touching the entry first takes its row lock, and the week is read under it, so two
+      // changes to one entry's picks run one after the other and each judges the week the other
+      // left (#1268). Otherwise both could delete a game's pick before either inserts, hitting
+      // the (entry, game) unique index (#1254), or a submit could pass picks a clear was removing.
+      const locked = await tx.contestEntry.update({
+        where: { id: contestEntryId },
+        data: { updatedAt: at },
+        select: {
+          events: { where: { sportEventId }, select: WEEK_EVENT },
+          predictions: { where: { sportEventMatch: { sportEventId } }, include: WITH_MATCH_NUMBER },
+        },
+      });
+      const lockedEvent = locked.events.at(0);
+      const before: LockedPredictionWeek = {
+        predictions: inGameOrder(locked.predictions),
+        event: lockedEvent === undefined ? null : toWeekEvent(lockedEvent),
+      };
+      const change = decide(before);
+      if (change === null) return { written: null, week: before };
+
+      const { saves, clearedMatchIds, eventStatus, tiebreakerValue } = change;
+      // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
+      // insert, so the write costs the same for one game as for a full slate (#1254).
+      const replacedMatchIds = new Set([...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)]);
+      if (replacedMatchIds.size > 0) {
         await tx.contestEntryMatchPrediction.deleteMany({
-          where: { contestEntryId, sportEventMatchId: { in: replacedMatchIds } },
+          where: { contestEntryId, sportEventMatchId: { in: [...replacedMatchIds] } },
         });
       }
-      if (saves.length > 0) {
-        await tx.contestEntryMatchPrediction.createMany({
+      const created = saves.length > 0
+        ? await tx.contestEntryMatchPrediction.createManyAndReturn({
           data: saves.map(({ sportEventMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
             contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
           })),
-        });
-      }
+          include: WITH_MATCH_NUMBER,
+        })
+        : [];
       const statusChange = eventStatus === null
         ? {}
         : { status: eventStatus, submittedAt: eventStatus === ContestEntryStatus.SUBMITTED ? at : null };
       // The event's tiebreaker rides on the entry's row for the event (#717).
       const tiebreakerChange = tiebreakerValue === undefined ? {} : { tiebreakerValue };
-      if (eventStatus !== null || tiebreakerValue !== undefined) {
-        await tx.contestEntryEvent.upsert({
+      const event = eventStatus !== null || tiebreakerValue !== undefined
+        ? toWeekEvent(await tx.contestEntryEvent.upsert({
           where: { contestEntryId_sportEventId: { contestEntryId, sportEventId } },
           create: { contestEntryId, sportEventId, ...statusChange, ...tiebreakerChange },
           update: { ...statusChange, ...tiebreakerChange },
-        });
-      }
+          select: WEEK_EVENT,
+        }))
+        : before.event;
+      return {
+        written: change,
+        week: {
+          predictions: inGameOrder([
+            ...locked.predictions.filter((row) => !replacedMatchIds.has(row.sportEventMatchId)),
+            ...created,
+          ]),
+          event,
+        },
+      };
     });
   }
 }

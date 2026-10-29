@@ -54,10 +54,12 @@ import {
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
+  ContestEntryMatchPredictionChange,
   ContestEntryMatchPredictionRepository,
   ContestEntryMatchPredictionWrite,
   ContestEntryRepository,
   ContestRepository,
+  LockedPredictionWeek,
   ParticipantContestScoringRuleRepository,
   ParticipantRepository,
   SportEventMatchRepository,
@@ -182,6 +184,14 @@ export interface GamePicksSurvivorView {
   usedParticipantIds: string[] | null;
 }
 
+/** A change to a week's picks, with the picks that stand after it, which its status is judged on. */
+interface WeekChange {
+  after: readonly WeekPrediction[];
+  saves: readonly ContestEntryMatchPredictionWrite[];
+  clearedMatchIds: readonly string[];
+  tiebreakerValue?: number | null;
+}
+
 interface WeekContext {
   contest: Contest;
   configuration: ContestConfiguration | null;
@@ -265,44 +275,48 @@ export class PredictionService {
       }
     }
 
-    // A saved pick must name a team its game offers the entry, its earlier picks included; a pick
-    // already saved that no longer does (a bracket pick that followed from a changed one) is cleared.
-    // The team is checked before the pick's confidence value, as it always was (#716).
+    // Judged against the picks as they stand under the entry's lock (#1268). A saved pick must
+    // name a team its game offers the entry, its earlier picks included; a pick already saved
+    // that no longer does (a bracket pick that followed from a changed one) is cleared. The team
+    // is checked before the pick's confidence value, as it always was (#716).
     const saved = new Map(input.picks.map((pick) => [pick.sportEventMatchId, pick]));
-    const resolved = this.resolvePicks(context, [
-      ...context.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
-      ...input.picks,
-    ]);
-    // Every tie pick being saved is one the pool takes, so a refused pick names a team.
-    const refused = resolved.stranded.filter(isTeamChoice).find((pick) => saved.has(pick.sportEventMatchId));
-    if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
-    for (const pick of input.picks) this.assertTeamUnused(context, pick, resolved.kept);
-    // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
-    for (const pick of resolved.stranded) {
-      const game = gamesById.get(pick.sportEventMatchId);
-      if (game && !saved.has(game.id)) this.assertGameOpen(context, game);
-    }
-    for (const pick of input.picks) {
-      if (!context.engine.acceptsConfidence({
-        configuration: context.configuration?.configJson,
-        confidence: pick.confidence,
-        gameCount: context.games.length,
-      })) {
-        throw selectionErrors.confidenceInvalid(context.mode === PickEmMode.CONFIDENCE
-          ? `A confidence value is a whole number from 1 to ${context.games.length}, the week's number of games`
-          : 'This pool\'s picks carry no confidence value');
+    const { after, written } = await this.writeWeek(context, (current) => {
+      const resolved = this.resolvePicks(current, [
+        ...current.predictions.filter((prediction) => !saved.has(prediction.sportEventMatchId)),
+        ...input.picks,
+      ]);
+      // Every tie pick being saved is one the pool takes, so a refused pick names a team.
+      const refused = resolved.stranded.filter(isTeamChoice).find((pick) => saved.has(pick.sportEventMatchId));
+      if (refused) throw selectionErrors.teamNotInGame(refused.sportEventParticipantId, refused.sportEventMatchId);
+      for (const pick of input.picks) this.assertTeamUnused(current, pick, resolved.kept);
+      // A pick a new one replaces (survivor's one pick a week) is cleared only while its game is open.
+      for (const pick of resolved.stranded) {
+        const game = gamesById.get(pick.sportEventMatchId);
+        if (game && !saved.has(game.id)) this.assertGameOpen(current, game);
       }
-    }
-    await this.writeWeek(context, resolved.kept, {
-      saves: input.picks,
-      clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventMatchId),
-      tiebreakerValue: input.tiebreakerValue,
+      for (const pick of input.picks) {
+        if (!current.engine.acceptsConfidence({
+          configuration: current.configuration?.configJson,
+          confidence: pick.confidence,
+          gameCount: current.games.length,
+        })) {
+          throw selectionErrors.confidenceInvalid(current.mode === PickEmMode.CONFIDENCE
+            ? `A confidence value is a whole number from 1 to ${current.games.length}, the week's number of games`
+            : 'This pool\'s picks carry no confidence value');
+        }
+      }
+      return {
+        after: resolved.kept,
+        saves: input.picks,
+        clearedMatchIds: resolved.stranded.map((pick) => pick.sportEventMatchId),
+        tiebreakerValue: input.tiebreakerValue,
+      };
     });
     this.deps.logger?.info(
-      { action: 'prediction.save', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id, pickCount: input.picks.length, clearedCount: resolved.stranded.length } },
+      { action: 'prediction.save', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id, pickCount: input.picks.length, clearedCount: written?.clearedMatchIds.length ?? 0 } },
       'Saved game picks for one event of a contest entry',
     );
-    return this.buildView(await this.reload(context));
+    return this.buildView(after);
   }
 
   /** Removes the entry's pick on one game. Refused once the game has started, and in a submitted week after its first kickoff. */
@@ -314,23 +328,28 @@ export class PredictionService {
     if (!game) throw selectionErrors.gameNotFound(input.sportEventMatchId, context.sportEvent.id);
     this.assertGameOpen(context, game);
     this.assertNotEliminated(context, game.roundNumber);
-    if (!context.predictions.some((prediction) => prediction.sportEventMatchId === game.id)) {
-      return this.buildView(context);
-    }
-    if (hasSportEventStarted(context.window, context.now)) {
-      throw selectionErrors.clearAfterFirstKickoff(game.id);
-    }
 
-    const resolved = this.resolvePicks(context, context.predictions.filter((prediction) => prediction.sportEventMatchId !== game.id));
-    await this.writeWeek(context, resolved.kept, {
-      saves: [],
-      clearedMatchIds: [game.id, ...resolved.stranded.map((pick) => pick.sportEventMatchId)],
+    // Judged against the picks as they stand under the entry's lock (#1268): a game with no pick
+    // there has nothing to clear.
+    const { after, written } = await this.writeWeek(context, (current) => {
+      if (!current.predictions.some((prediction) => prediction.sportEventMatchId === game.id)) return null;
+      if (hasSportEventStarted(current.window, current.now)) {
+        throw selectionErrors.clearAfterFirstKickoff(game.id);
+      }
+      const resolved = this.resolvePicks(current, current.predictions.filter((prediction) => prediction.sportEventMatchId !== game.id));
+      return {
+        after: resolved.kept,
+        saves: [],
+        clearedMatchIds: [game.id, ...resolved.stranded.map((pick) => pick.sportEventMatchId)],
+      };
     });
-    this.deps.logger?.info(
-      { action: 'prediction.clear', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventMatchId: game.id, clearedCount: resolved.stranded.length + 1 } },
-      'Cleared a game pick of a contest entry',
-    );
-    return this.buildView(await this.reload(context));
+    if (written) {
+      this.deps.logger?.info(
+        { action: 'prediction.clear', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventMatchId: game.id, clearedCount: written.clearedMatchIds.length } },
+        'Cleared a game pick of a contest entry',
+      );
+    }
+    return this.buildView(after);
   }
 
   /**
@@ -349,65 +368,85 @@ export class PredictionService {
       throw selectionErrors.weekNotSubmittedInTime(context.entry.id, context.sportEvent.id);
     }
 
-    const issue = this.findWeekIssues(context, context.predictions, contestEntryEventTiebreaker(context.entry, context.sportEvent.id)).at(0);
-    if (issue) {
-      this.deps.logger?.warn(
-        { action: 'prediction.submit.refused', data: { entryId: context.entry.id, issue: issue.kind } },
-        'Refused to submit a week its picks do not pass',
-      );
-      throw this.weekIssueError(context, issue);
-    }
-
-    await this.deps.predictions.save({
+    // Judged against the picks as they stand under the entry's lock (#1268), so a clear or a
+    // change that committed while this submit waited is judged too.
+    const { written, week } = await this.deps.predictions.save({
       contestEntryId: context.entry.id,
       sportEventId: context.sportEvent.id,
-      saves: [],
-      clearedMatchIds: [],
-      eventStatus: ContestEntryStatus.SUBMITTED,
       at: context.now,
+      decide: (locked) => {
+        const current = this.withLockedWeek(context, locked);
+        // A submit that committed while this one waited leaves nothing to do.
+        if (contestEntryEventStatus(current.entry, current.sportEvent.id) === ContestEntryStatus.SUBMITTED) return null;
+        const issue = this.findWeekIssues(current, current.predictions, contestEntryEventTiebreaker(current.entry, current.sportEvent.id)).at(0);
+        if (issue) {
+          this.deps.logger?.warn(
+            { action: 'prediction.submit.refused', data: { entryId: current.entry.id, issue: issue.kind } },
+            'Refused to submit a week its picks do not pass',
+          );
+          throw this.weekIssueError(current, issue);
+        }
+        return { saves: [], clearedMatchIds: [], eventStatus: ContestEntryStatus.SUBMITTED };
+      },
     });
+    const submitted = this.withLockedWeek(context, week);
+    const view = await this.buildView(submitted);
+    if (!written) return view;
     this.deps.logger?.info(
       { action: 'prediction.submit.submitted', data: { contestId: context.contest.id, entryId: context.entry.id, sportEventId: context.sportEvent.id } },
       'Submitted a contest entry\'s game picks for one event',
     );
-    const submitted = await this.reload(context);
-    const view = await this.buildView(submitted);
     // The receipt is sent from the week already loaded, not read again (#1201).
     await this.deps.receipts?.gamePicksSubmitted(view, { contest: submitted.contest, entry: submitted.entry, sportEvent: submitted.sportEvent });
     return view;
   }
 
   /**
-   * Writes the change and the week's status after it. Before the first kickoff a submitted week
-   * whose picks no longer pass goes back to DRAFT; after it, the change must keep the week valid.
+   * Writes the change `plan` makes to the week as it stands under the entry's lock (#1268), and
+   * the week's status after it; `plan` answers null when there is nothing to write. Before the
+   * first kickoff a submitted week whose picks no longer pass goes back to DRAFT; after it, the
+   * change must keep the week valid. Answers with the week as the change left it, and the change written.
    */
   private async writeWeek(
     context: WeekContext,
-    after: readonly WeekPrediction[],
-    change: { saves: readonly ContestEntryMatchPredictionWrite[]; clearedMatchIds: readonly string[]; tiebreakerValue?: number | null },
-  ): Promise<void> {
-    const submitted = contestEntryEventStatus(context.entry, context.sportEvent.id) === ContestEntryStatus.SUBMITTED;
-    const issue = this.findWeekIssues(context, after, change.tiebreakerValue === undefined ? contestEntryEventTiebreaker(context.entry, context.sportEvent.id) : change.tiebreakerValue).at(0);
-    let eventStatus: ContestEntryStatus | null = null;
-    if (submitted && issue) {
-      if (hasSportEventStarted(context.window, context.now)) {
-        throw this.weekIssueError(context, issue);
-      }
-      eventStatus = ContestEntryStatus.DRAFT;
-      this.deps.logger?.info(
-        { action: 'prediction.returnedToDraft', data: { entryId: context.entry.id, sportEventId: context.sportEvent.id } },
-        'Sent a submitted week back to draft after a change it no longer passes',
-      );
-    }
-    await this.deps.predictions.save({
+    plan: (current: WeekContext) => WeekChange | null,
+  ): Promise<{ after: WeekContext; written: ContestEntryMatchPredictionChange | null }> {
+    const { written, week } = await this.deps.predictions.save({
       contestEntryId: context.entry.id,
       sportEventId: context.sportEvent.id,
-      saves: change.saves,
-      clearedMatchIds: change.clearedMatchIds,
-      eventStatus,
-      tiebreakerValue: change.tiebreakerValue,
       at: context.now,
+      decide: (locked) => {
+        const current = this.withLockedWeek(context, locked);
+        const change = plan(current);
+        if (change === null) return null;
+        const submitted = contestEntryEventStatus(current.entry, current.sportEvent.id) === ContestEntryStatus.SUBMITTED;
+        const tiebreakerValue = change.tiebreakerValue === undefined ? contestEntryEventTiebreaker(current.entry, current.sportEvent.id) : change.tiebreakerValue;
+        const issue = this.findWeekIssues(current, change.after, tiebreakerValue).at(0);
+        let eventStatus: ContestEntryStatus | null = null;
+        if (submitted && issue) {
+          if (hasSportEventStarted(current.window, current.now)) {
+            throw this.weekIssueError(current, issue);
+          }
+          eventStatus = ContestEntryStatus.DRAFT;
+          this.deps.logger?.info(
+            { action: 'prediction.returnedToDraft', data: { entryId: current.entry.id, sportEventId: current.sportEvent.id } },
+            'Sent a submitted week back to draft after a change it no longer passes',
+          );
+        }
+        return { saves: change.saves, clearedMatchIds: change.clearedMatchIds, eventStatus, tiebreakerValue: change.tiebreakerValue };
+      },
     });
+    return { after: this.withLockedWeek(context, week), written };
+  }
+
+  /** The week loaded, with the entry's picks and its row for the event as read under its lock. */
+  private withLockedWeek(context: WeekContext, week: LockedPredictionWeek): WeekContext {
+    const otherEvents = context.entry.events.filter((event) => event.sportEventId !== context.sportEvent.id);
+    return {
+      ...context,
+      entry: { ...context.entry, events: week.event === null ? otherEvents : [...otherEvents, week.event] },
+      predictions: [...week.predictions],
+    };
   }
 
   /** The refusal for the first thing stopping a week's picks from passing. */
@@ -626,15 +665,6 @@ export class PredictionService {
       weekNumberOfRound: new Map(ownWeeks.map((week) => [week.roundNumber, week.weekNumber])),
       firstWeekNumber: first?.weekNumber ?? 1,
     };
-  }
-
-  /** The context after a write: the entry's status and picks read again. */
-  private async reload(context: WeekContext): Promise<WeekContext> {
-    const [entry, predictions] = await Promise.all([
-      this.deps.entries.findByIdWithSquad(context.entry.id),
-      this.deps.predictions.findByEntryAndEvent(context.entry.id, context.sportEvent.id),
-    ]);
-    return { ...context, entry: entry ?? context.entry, predictions };
   }
 
   private async buildView(context: WeekContext): Promise<GamePicksView> {
