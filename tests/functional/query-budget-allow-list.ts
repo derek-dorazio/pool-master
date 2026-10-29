@@ -21,8 +21,9 @@ export const QUERY_BUDGET_ALLOW_LIST: QueryBudgetAllowList = {
   'POST /api/v1/events/clone-year': { ticket: 1253 },
   'POST /api/v1/events/import-year-from-provider': { ticket: 1253 },
   'PUT /api/v1/events/:eventId/tiers': { ticket: 1253 },
-  // A status change fans out to every contest on the event, re-reading the event for each.
+  // A status change or release fans out to every contest on the event, re-reading the event for each.
   'POST /api/v1/events/:eventId/transition': { ticket: 1199 },
+  'POST /api/v1/events/:eventId/release': { ticket: 1199 },
   // Email costs four round trips per recipient.
   'POST /api/v1/invitations/accept': { ticket: 1173 },
   'POST /api/v1/team-invitations/register': { ticket: 1173 },
