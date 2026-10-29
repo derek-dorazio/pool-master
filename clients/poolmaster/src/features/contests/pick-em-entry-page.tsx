@@ -25,7 +25,6 @@ import {
   MetricGrid,
   MetricTile,
   Select,
-  StatusBadge,
   Tile,
   formatDateTimeDisplay,
   useDisplayPreferences,
@@ -38,15 +37,12 @@ import { parseRouteState } from '@/routes/route-state';
 import { formatPickProgress, formatPoints } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { currentContestEvent, entryEventStatus } from './contest-events';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
-import { entryPageView } from './contest-page-view';
+import { ContestEntryFrame } from './contest-header';
 import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, contestTieLabel } from './contest-sport';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
   shouldPollContestEntries,
 } from './contest-status';
@@ -267,31 +263,20 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const pickError = isTiebreakerSave ? null : errorMessage(saveMutation.error, 'We could not save that pick. Please try again.');
 
   return (
-    <ContestPageFrame
+    <ContestEntryFrame
       contest={contest}
-      current={entryPageView(contest, entryId)}
+      entry={entrySummary}
+      entryId={entryId}
       leagueCode={backLeagueCode}
+      phase={contestStatusLabel(contest.status)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      rules={[
+        ...(gamePicks.mode ? [formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })] : []),
+        ...(isSurvivor ? [formatSelectionTypeName(gamePicks.selectionType)] : []),
+      ]}
+      status={gamePicks.status}
       testId="pick-em-entry-page"
-      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
-      badges={(
-        <>
-          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>{contestStatusLabel(contest.status)}</StatusBadge>
-          <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-            {statusLabel}
-          </StatusBadge>
-        </>
-      )}
-      summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-          {contest.name}
-          {gamePicks.mode ? ` · ${formatPickEmRulesName({ mode: gamePicks.mode, againstTheSpread: gamePicks.againstTheSpread })}` : ''}
-          {isSurvivor ? ` · ${formatSelectionTypeName(gamePicks.selectionType)}` : ''}
-          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-        </p>
-      )}
       title={gamePicks.entryName}
-      titleTestId="contest-entry-heading"
     >
 
       <ContestEventSwitcher
@@ -445,6 +430,6 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
           ) : null}
         </Tile>
       ) : null}
-    </ContestPageFrame>
+    </ContestEntryFrame>
   );
 }

@@ -10,22 +10,17 @@ import { getLogger } from '@/lib/logger';
 import { parseRouteState } from '@/routes/route-state';
 import {
   Alert,
-  DefinitionList,
+  Button,
   ErrorState,
-  formatDateTimeDisplay,
   FormField,
   Input,
   LoadingState,
-  MetricGrid,
-  MetricTile,
-  StatusBadge,
   Tile,
-  useDisplayPreferences,
 } from '@/features/shared/ui';
 import {
   EditableSelectionGroup,
   LockedSelectionGroup,
-  TiebreakerSelector,
+  TiebreakerField,
   type SelectionGroup,
 } from './contest-entry-selection';
 import { BudgetLineupBuilder, LockedBudgetLineup } from './contest-entry-budget';
@@ -43,12 +38,9 @@ import {
 import {
   areContestEntriesOpen,
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
 } from './contest-status';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
-import { entryPageView } from './contest-page-view';
+import { ContestEntryFrame } from './contest-header';
 import { useContestLeague } from './use-contest-league';
 import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
 import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
@@ -62,8 +54,6 @@ import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 type SelectionState = SelectionStateResponse;
 /** One tap on a field row: `isSelected` is whether the entry held it before the tap. */
 type PickChange = { participantId: string; isSelected: boolean };
-
-const HIDDEN_PICKS_HELPER = 'Hidden until the event starts';
 
 function formatStillToPick(count: number, participant: SportNoun): string {
   return `${count} ${count === 1 ? participant.one : participant.many} still to pick`;
@@ -148,7 +138,6 @@ function contestDetailQueryOptions(contestId: string) {
 
 /** A roster contest's entry: its lineup, picked in the selection room for each of its events. */
 function RosterContestEntryPage() {
-  const displayPreferences = useDisplayPreferences();
   const logger = getLogger().child({
     feature: 'contest-entry-page',
   });
@@ -600,8 +589,6 @@ function RosterContestEntryPage() {
   const lineupComplete =
     completionStats.requiredSelections > 0
     && completionStats.totalSelections >= completionStats.requiredSelections;
-  const savedTiebreaker = picksHidden ? null : selectionState.tiebreakerValue ?? null;
-  const hasSavedTiebreaker = savedTiebreaker !== null;
   const selectedTiebreakerValue =
     tiebreakerDraft.trim().length > 0
       ? Number.parseInt(tiebreakerDraft.trim(), 10)
@@ -640,33 +627,33 @@ function RosterContestEntryPage() {
     });
   }
 
+  const progressNote = picksHidden ? null : [
+    `${completionStats.totalSelections} of ${completionStats.requiredSelections} picks saved`,
+    isBudget
+      ? lineupSummary ? `${formatDollars(lineupSummary.spent)} of the ${formatDollars(lineupSummary.salaryCap)} cap spent` : null
+      : `${completionStats.completedTiers} of ${selectionGroups.length} tiers complete`,
+    isEditable
+      ? nextIncompleteGroupId
+        ? isBudget
+          ? formatStillToPick(completionStats.requiredSelections - completionStats.totalSelections, participantNoun)
+          : `Next: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
+        : 'Lineup is fully selected'
+      : null,
+  ].filter((part) => part !== null).join(' · ');
+  // Picks come first, then the entry's name, its tiebreaker and the one Submit for all of it.
+  const showFinish = isMyEntry && !isRandomDraw && (detailsEditable || (isEditable && lineupComplete) || tiebreaker !== null);
+
   return (
-    <ContestPageFrame
+    <ContestEntryFrame
       contest={contest}
-      current={entryPageView(contest, entryId)}
+      entry={entrySummary}
+      entryId={entryId}
       leagueCode={backLeagueCode}
+      phase={getContestPhaseLabel(contest, isEditable)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
-      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
-      badges={(
-        <>
-          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-            {getContestPhaseLabel(contest, isEditable)}
-          </StatusBadge>
-          {picksHidden ? null : (
-            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[entryStatus]}>
-              {CONTEST_ENTRY_STATUS_LABELS[entryStatus]}
-            </StatusBadge>
-          )}
-        </>
-      )}
-      summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-          {contest.name}
-          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-        </p>
-      )}
+      status={picksHidden ? null : entryStatus}
+      statusFacts={[{ id: 'entries-close', label: 'Entries close', value: isEditable ? 'When the event starts' : 'Closed' }]}
       title={selectedEntry?.name ?? entrySummary?.name ?? 'Contest entry'}
-      titleTestId="contest-entry-heading"
     >
 
       <ContestEventSwitcher
@@ -685,259 +672,194 @@ function RosterContestEntryPage() {
         value={shownEventId}
       />
 
-      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : (
+      {isRandomDraw ? <DrawEntryMetrics isEditable={isEditable} noun={participantNoun} selectionState={selectionState} /> : null}
+
       <Tile>
-        <MetricGrid className="md:grid-cols-4">
-          {isBudget ? (
-            <MetricTile
-              helperText={picksHidden ? HIDDEN_PICKS_HELPER : lineupSummary ? `Of the ${formatDollars(lineupSummary.salaryCap)} salary cap` : 'Salary cap'}
-              label="Spent"
-              value={picksHidden ? 'Hidden' : lineupSummary ? formatDollars(lineupSummary.spent) : '—'}
-            />
-          ) : (
-            <MetricTile
-              helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Tiers complete'}
-              label="Tier progress"
-              value={picksHidden ? 'Hidden' : `${completionStats.completedTiers}/${selectionGroups.length || 0}`}
-            />
-          )}
-          <MetricTile
-            helperText={picksHidden ? HIDDEN_PICKS_HELPER : 'Lineup slots filled'}
-            label="Picks saved"
-            value={picksHidden ? 'Hidden' : `${completionStats.totalSelections}/${completionStats.requiredSelections}`}
-          />
-          {tiebreaker ? (
-            <MetricTile
-              helperText={(
-                <span data-testid="contest-entry-tiebreaker-summary">
-                  {picksHidden
-                    ? HIDDEN_PICKS_HELPER
-                    : savedTiebreaker !== null
-                    ? tiebreaker.describe(savedTiebreaker)
-                    : isEditable
-                      ? 'Needed after lineup is complete'
-                      : 'No tiebreaker was saved'}
-                </span>
-              )}
-              label="Tiebreaker"
-              value={(
-                <span data-testid="contest-entry-tiebreaker-status">
-                  {picksHidden ? 'Hidden' : hasSavedTiebreaker ? 'Saved' : isEditable ? 'Needed' : 'Closed'}
-                </span>
-              )}
-            />
+        <h3 className="title-card text-xl" data-testid="contest-entry-builder-heading">
+          {isRandomDraw
+            ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
+            : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
+        </h3>
+        {isRandomDraw ? (
+          <div className="mt-5">
+            <DrawLineup noun={participantNoun} selectionState={selectionState} />
+          </div>
+        ) : (
+        <div className="mt-5 space-y-5">
+          {progressNote ? (
+            <p className="-mt-3 text-sm text-muted-foreground" data-testid="contest-entry-progress">{progressNote}</p>
           ) : null}
-          <MetricTile
-            helperText={
-              picksHidden
-                ? HIDDEN_PICKS_HELPER
-                : isEditable
-                ? nextIncompleteGroupId
-                  ? isBudget
-                    ? formatStillToPick(completionStats.requiredSelections - completionStats.totalSelections, participantNoun)
-                    : `Next focus: ${selectionGroups.find((group) => group.groupId === nextIncompleteGroupId)?.groupName ?? 'Open tier'}`
-                  : 'Lineup is fully selected'
-                : 'Entry editing is closed'
-            }
-            label="Entries close"
-            value={isEditable ? 'When the event starts' : 'Closed'}
-          />
-        </MetricGrid>
-      </Tile>
-      )}
-
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-        <div className="space-y-6">
-          <Tile>
-            <h3 className="title-card text-xl">
-              {isEditable ? 'Entry details' : 'Entry summary'}
-            </h3>
-
-            <DefinitionList
-              className="mt-5"
-              items={[
-                { id: 'entry-status', label: 'Entry status', value: CONTEST_ENTRY_STATUS_LABELS[entryStatus] },
-                { id: 'contest-phase', label: 'Contest phase', value: getContestPhaseLabel(contest, isEditable) },
-                { id: 'created', label: 'Created', value: formatDateTimeDisplay(entrySummary?.createdAt, displayPreferences) },
-                { id: 'last-updated', label: 'Last updated', value: formatDateTimeDisplay(entrySummary?.updatedAt, displayPreferences) },
-              ]}
+          {picksHidden ? (
+            <Alert data-testid="contest-entry-picks-hidden">
+              This entry&apos;s picks stay hidden until the event starts.
+            </Alert>
+          ) : null}
+          {isBudget ? selectionGroups.map((group) => (isEditable ? (
+            <BudgetLineupBuilder
+              canSelect={isMyEntry}
+              sport={contest.sport ?? null}
+              group={group}
+              isBusy={pickChangeMutation.isPending}
+              key={group.groupId}
+              noun={participantNoun}
+              onParticipantSelect={(participant) => {
+                // A refused pick is shown by the mutation's error state and rolled back there.
+                void pickChangeMutation.mutateAsync({
+                  participantId: participant.sportEventParticipantId,
+                  isSelected: group.selectedParticipantIds.includes(participant.sportEventParticipantId),
+                }).catch(() => undefined);
+              }}
+              summary={lineupSummary}
             />
-
-            {isMyEntry ? (
-              // A random-draw entry has no lineup to submit, so nothing here saves: the draw
-              // sets its golfers and there is no tiebreaker to show.
-              isRandomDraw ? null : detailsEditable ? (
-                <Tile className="mt-5 space-y-4" padding="sm" radius="lg" variant="subtle">
-                  <FormField label="Entry name">
-                    <Input
-                      data-testid="contest-entry-name-input"
-                      disabled={saveEntryDetailsMutation.isPending}
-                      maxLength={100}
-                      onChange={(event) => setEntryNameDraft(event.target.value)}
-                      value={entryNameDraft}
-                    />
-                  </FormField>
-                  {saveEntryDetailsMutation.isError ? (
-                    <Alert tone="danger">
-                      {extractErrorMessage(saveEntryDetailsMutation.error, {
-                        codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
-                        fallback: 'We could not save this entry right now.',
-                      })}
-                    </Alert>
-                  ) : null}
-                </Tile>
-              ) : tiebreaker ? (
-                <Alert className="mt-5" title="Saved tiebreaker">
-                  <div
-                    data-testid="contest-entry-readonly-tiebreaker"
-                  >
-                    {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
-                      ? 'No tiebreaker prediction was saved.'
-                      : tiebreaker.describe(selectionState.tiebreakerValue)}
-                  </div>
-                </Alert>
-              ) : null
-            ) : (
-              <Alert className="mt-5">
-                {entrySummary ? `This entry belongs to ${entrySummary.squadName}.` : 'This entry belongs to someone else.'}
-              </Alert>
-            )}
-          </Tile>
-
-        </div>
-
-        <Tile>
-          <h3 className="title-card text-xl" data-testid="contest-entry-builder-heading">
-            {isRandomDraw
-              ? `${selectionState.drawnAt ? 'Dealt ' : ''}${selectionState.drawnAt ? participantNoun.many : participantNoun.many.charAt(0).toUpperCase() + participantNoun.many.slice(1)}`
-              : isEditable ? 'Build your lineup' : 'Saved lineup detail'}
-          </h3>
-          {isRandomDraw ? (
-            <div className="mt-5">
-              <DrawLineup noun={participantNoun} selectionState={selectionState} />
-            </div>
           ) : (
-          <div className="mt-5 space-y-5">
-            {picksHidden ? (
-              <Alert data-testid="contest-entry-picks-hidden">
-                This entry&apos;s picks stay hidden until the event starts.
-              </Alert>
-            ) : null}
-            {isBudget ? selectionGroups.map((group) => (isEditable ? (
-              <BudgetLineupBuilder
+            <LockedBudgetLineup group={group} key={group.groupId} noun={participantNoun} summary={lineupSummary} />
+          ))) : selectionGroups.map((group) => {
+            if (!isEditable) {
+              return <LockedSelectionGroup group={group} key={group.groupId} noun={participantNoun} sport={contest.sport ?? null} />;
+            }
+
+            const isExpanded = expandedGroupId === group.groupId;
+
+            return (
+              <EditableSelectionGroup
                 canSelect={isMyEntry}
                 sport={contest.sport ?? null}
                 group={group}
                 isBusy={pickChangeMutation.isPending}
+                isExpanded={isExpanded}
                 key={group.groupId}
                 noun={participantNoun}
-                onParticipantSelect={(participant) => {
-                  // A refused pick is shown by the mutation's error state and rolled back there.
-                  void pickChangeMutation.mutateAsync({
-                    participantId: participant.sportEventParticipantId,
-                    isSelected: group.selectedParticipantIds.includes(participant.sportEventParticipantId),
-                  }).catch(() => undefined);
+                onParticipantSelect={(nextParticipant) => {
+                  const participantId = nextParticipant.sportEventParticipantId;
+                  // The tier closes, and the next short one opens, as soon as the tap fills it:
+                  // the lineup after the tap decides, not the server's answer.
+                  const nextSelectedIds = getNextSelectedParticipantIds(
+                    group,
+                    participantId,
+                    buildPickedAtById(selectionState, entryId),
+                  );
+                  if (nextSelectedIds.length >= group.picksFromGroup) {
+                    const currentIndex = selectionGroups.findIndex((candidate) => candidate.groupId === group.groupId);
+                    const nextGroup = selectionGroups
+                      .slice(currentIndex + 1)
+                      .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
+                    setExpandedGroupId(nextGroup?.groupId ?? null);
+                  }
+                  void pickChangeMutation
+                    .mutateAsync({ participantId, isSelected: group.selectedParticipantIds.includes(participantId) })
+                    // A refused pick is shown by the mutation's error state and rolled back in
+                    // onError; the refused tier is opened again so the fix is in view.
+                    .catch(() => setExpandedGroupId(group.groupId));
                 }}
-                summary={lineupSummary}
+                onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
+                setToggleRef={(element) => {
+                  groupToggleRefs.current[group.groupId] = element;
+                }}
               />
-            ) : (
-              <LockedBudgetLineup group={group} key={group.groupId} noun={participantNoun} summary={lineupSummary} />
-            ))) : selectionGroups.map((group) => {
-              if (!isEditable) {
-                return <LockedSelectionGroup group={group} key={group.groupId} noun={participantNoun} sport={contest.sport ?? null} />;
-              }
+            );
+          })}
 
-              const isExpanded = expandedGroupId === group.groupId;
+          {pickChangeMutation.isError ? (
+            <Alert tone="danger">
+              {extractErrorMessage(pickChangeMutation.error, {
+                codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                fallback: 'We could not save this entry right now.',
+              })}
+            </Alert>
+          ) : null}
+        </div>
+        )}
+      </Tile>
 
-              return (
-                <EditableSelectionGroup
-                  canSelect={isMyEntry}
-                  sport={contest.sport ?? null}
-                  group={group}
-                  isBusy={pickChangeMutation.isPending}
-                  isExpanded={isExpanded}
-                  key={group.groupId}
-                  noun={participantNoun}
-                  onParticipantSelect={(nextParticipant) => {
-                    const participantId = nextParticipant.sportEventParticipantId;
-                    // The tier closes, and the next short one opens, as soon as the tap fills it:
-                    // the lineup after the tap decides, not the server's answer.
-                    const nextSelectedIds = getNextSelectedParticipantIds(
-                      group,
-                      participantId,
-                      buildPickedAtById(selectionState, entryId),
-                    );
-                    if (nextSelectedIds.length >= group.picksFromGroup) {
-                      const currentIndex = selectionGroups.findIndex((candidate) => candidate.groupId === group.groupId);
-                      const nextGroup = selectionGroups
-                        .slice(currentIndex + 1)
-                        .find((candidate) => candidate.selectedParticipantIds.length < candidate.picksFromGroup);
-                      setExpandedGroupId(nextGroup?.groupId ?? null);
-                    }
-                    void pickChangeMutation
-                      .mutateAsync({ participantId, isSelected: group.selectedParticipantIds.includes(participantId) })
-                      // A refused pick is shown by the mutation's error state and rolled back in
-                      // onError; the refused tier is opened again so the fix is in view.
-                      .catch(() => setExpandedGroupId(group.groupId));
-                  }}
-                  onToggle={() => setExpandedGroupId(isExpanded ? null : group.groupId)}
-                  setToggleRef={(element) => {
-                    groupToggleRefs.current[group.groupId] = element;
-                  }}
-                />
-              );
-            })}
+      {isMyEntry ? null : (
+        <Alert>
+          {entrySummary ? `This entry belongs to ${entrySummary.squadName}.` : 'This entry belongs to someone else.'}
+        </Alert>
+      )}
 
-            {isMyEntry && isEditable && !isSubmitted ? (
-              <Alert data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
-                {lineupComplete
-                  ? tiebreaker
-                    ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
-                    : 'Your lineup is complete. Submit it: an entry only counts once it is submitted.'
-                  : 'This entry only counts once its lineup is complete and submitted. A change that leaves a submitted lineup short needs submitting again.'}
-              </Alert>
-            ) : null}
+      {showFinish ? (
+        <Tile className="space-y-4" data-testid="contest-entry-finish">
+          <h3 className="title-card text-xl">{isEditable ? 'Name and submit' : 'Your entry'}</h3>
 
-            {pickChangeMutation.isError ? (
-              <Alert tone="danger">
-                {extractErrorMessage(pickChangeMutation.error, {
-                  codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
-                  fallback: 'We could not save this entry right now.',
-                })}
-              </Alert>
-            ) : null}
-
-            {submitEntryMutation.isError ? (
-              <Alert data-testid="contest-entry-submit-error" tone="danger">
-                {extractErrorMessage(submitEntryMutation.error, {
-                  codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
-                  fallback: 'We could not submit this entry right now.',
-                })}
-              </Alert>
-            ) : null}
-
-            {isEditable && isMyEntry && lineupComplete && submitBlockedReason ? (
-              <Alert data-testid="contest-entry-submit-blocked" tone="danger">
-                {submitBlockedReason}
-              </Alert>
-            ) : null}
-
-            {isEditable && isMyEntry && lineupComplete ? (
-              <TiebreakerSelector
-                disabled={!detailsEditable || saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
-                isSubmitted={isSubmitted}
-                isSubmitting={saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
-                onChange={setTiebreakerDraft}
-                onSubmit={() => void submitEntry()}
-                submitDisabled={finalSubmitDisabled}
-                tiebreaker={tiebreaker}
-                value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
+          {detailsEditable ? (
+            <FormField label="Entry name">
+              <Input
+                data-testid="contest-entry-name-input"
+                disabled={saveEntryDetailsMutation.isPending}
+                maxLength={100}
+                onChange={(event) => setEntryNameDraft(event.target.value)}
+                value={entryNameDraft}
               />
-            ) : null}
-          </div>
-          )}
+            </FormField>
+          ) : null}
+
+          {tiebreaker && isEditable && lineupComplete ? (
+            <TiebreakerField
+              disabled={!detailsEditable || saveEntryDetailsMutation.isPending || submitEntryMutation.isPending}
+              onChange={setTiebreakerDraft}
+              tiebreaker={tiebreaker}
+              value={hasSelectedTiebreaker ? String(selectedTiebreakerValue) : ''}
+            />
+          ) : null}
+
+          {tiebreaker && !detailsEditable ? (
+            <Alert title="Saved tiebreaker">
+              <div data-testid="contest-entry-readonly-tiebreaker">
+                {selectionState.tiebreakerValue === null || selectionState.tiebreakerValue === undefined
+                  ? 'No tiebreaker prediction was saved.'
+                  : tiebreaker.describe(selectionState.tiebreakerValue)}
+              </div>
+            </Alert>
+          ) : null}
+
+          {saveEntryDetailsMutation.isError ? (
+            <Alert tone="danger">
+              {extractErrorMessage(saveEntryDetailsMutation.error, {
+                codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                fallback: 'We could not save this entry right now.',
+              })}
+            </Alert>
+          ) : null}
+
+          {isEditable && !isSubmitted ? (
+            <Alert data-testid="contest-entry-not-submitted" title="Not submitted" tone="warning">
+              {lineupComplete
+                ? tiebreaker
+                  ? 'Your lineup is complete. Choose a tiebreaker and submit it: an entry only counts once it is submitted.'
+                  : 'Your lineup is complete. Submit it: an entry only counts once it is submitted.'
+                : 'This entry only counts once its lineup is complete and submitted. A change that leaves a submitted lineup short needs submitting again.'}
+            </Alert>
+          ) : null}
+
+          {submitEntryMutation.isError ? (
+            <Alert data-testid="contest-entry-submit-error" tone="danger">
+              {extractErrorMessage(submitEntryMutation.error, {
+                codeMessages: CONTEST_ENTRY_CODE_MESSAGES,
+                fallback: 'We could not submit this entry right now.',
+              })}
+            </Alert>
+          ) : null}
+
+          {isEditable && lineupComplete && submitBlockedReason ? (
+            <Alert data-testid="contest-entry-submit-blocked" tone="danger">
+              {submitBlockedReason}
+            </Alert>
+          ) : null}
+
+          {isEditable && lineupComplete ? (
+            <Button
+              className="w-full sm:w-auto"
+              data-testid="contest-entry-submit"
+              disabled={finalSubmitDisabled}
+              onClick={() => void submitEntry()}
+            >
+              {saveEntryDetailsMutation.isPending || submitEntryMutation.isPending
+                ? 'Submitting...'
+                : isSubmitted ? 'Save entry' : 'Submit entry'}
+            </Button>
+          ) : null}
         </Tile>
-      </div>
-    </ContestPageFrame>
+      ) : null}
+    </ContestEntryFrame>
   );
 }

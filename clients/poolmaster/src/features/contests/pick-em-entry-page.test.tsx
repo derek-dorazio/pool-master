@@ -220,6 +220,8 @@ describe('Pick\'em contest entry page', () => {
       path: { contestId: 'contest-1', entryId: 'entry-1', sportEventId: 'week-1' },
     }));
     expect(screen.getByTestId('pick-em-status')).toHaveTextContent('Submitted');
+    // The status beside the entry's name turns with it.
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
     expect(screen.queryByTestId('pick-em-not-submitted-warning')).not.toBeInTheDocument();
   });
 

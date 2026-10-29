@@ -16,7 +16,6 @@ import {
   LoadingState,
   MetricGrid,
   MetricTile,
-  StatusBadge,
   Tile,
 } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage, throwApiError, type ErrorCodeMessages } from '@/lib/errors';
@@ -27,16 +26,13 @@ import { parseRouteState } from '@/routes/route-state';
 import { BracketBoard } from './bracket-board';
 import { BracketSubmitPanel } from './bracket-entry-submit';
 import { buildBracketRounds, describeBracketClose, formatPickProgress, formatPoints, type BracketGame, type BracketTeam } from './bracket-layout';
-import { ContestEntryBackLinks, ContestPageFrame } from './contest-header';
-import { entryPageView } from './contest-page-view';
+import { ContestEntryFrame } from './contest-header';
 import { useContestLeague } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit } from './contest-sport';
 import { firstContestEvent } from './contest-events';
 import {
   CONTEST_ENTRY_STATUS_LABELS,
-  CONTEST_ENTRY_STATUS_TONES,
   CONTEST_POLL_INTERVAL_MS,
-  CONTEST_STATUS_TONES,
   contestStatusLabel,
   shouldPollContestEntries,
 } from './contest-status';
@@ -195,33 +191,16 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
     : null;
 
   return (
-    <ContestPageFrame
+    <ContestEntryFrame
       contest={contest}
-      current={entryPageView(contest, entryId)}
+      entry={entrySummary}
+      entryId={entryId}
       leagueCode={backLeagueCode}
+      phase={isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
       picksRevealed={entryQuery.data?.picksRevealed ?? false}
+      status={picksHidden ? null : gamePicks.status}
       testId="bracket-entry-page"
-      actions={<ContestEntryBackLinks contestId={contestId} leagueCode={backLeagueCode} />}
-      badges={(
-        <>
-          <StatusBadge tone={CONTEST_STATUS_TONES[contest.status]}>
-            {isOpen ? `Open until ${closesAt}` : contestStatusLabel(contest.status)}
-          </StatusBadge>
-          {picksHidden ? null : (
-            <StatusBadge data-testid="contest-entry-status-badge" tone={CONTEST_ENTRY_STATUS_TONES[gamePicks.status]}>
-              {statusLabel}
-            </StatusBadge>
-          )}
-        </>
-      )}
-      summary={(
-        <p className="mt-2 text-sm text-muted-foreground" data-testid="contest-entry-summary">
-          {contest.name}
-          {entrySummary ? ` · ${entrySummary.squadName} · Entry ${entrySummary.entryNumber}` : ''}
-        </p>
-      )}
       title={gamePicks.entryName}
-      titleTestId="contest-entry-heading"
     >
 
       {picksHidden ? (
@@ -299,6 +278,6 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
           )}
         </>
       )}
-    </ContestPageFrame>
+    </ContestEntryFrame>
   );
 }

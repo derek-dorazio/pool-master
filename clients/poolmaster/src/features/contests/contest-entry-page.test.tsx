@@ -104,6 +104,12 @@ vi.mock('@/lib/logger', () => ({
   getLogger: () => mockLogger,
 }));
 
+/** Taps the status icon beside the entry's name and answers the callout it opens. */
+async function openStatusCallout() {
+  fireEvent.click(await screen.findByTestId('contest-entry-status'));
+  return screen.getByTestId('contest-entry-status-callout');
+}
+
 function renderContestEntryPage() {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -674,14 +680,14 @@ describe('ContestEntryPage', () => {
   });
 
   // The old page-only wording for a live contest was "Scoring live"; it must be gone.
-  it('labels an ACTIVE contest "Live" in the badge and Contest phase row, as on every contest page', async () => {
+  it('labels an ACTIVE contest "Live" in the entry status callout, as on every contest page', async () => {
     primeCommonMocks({ contestStatus: 'ACTIVE' });
     getSelectionStateMock.mockResolvedValue({ data: { ...buildSelectionState([]), acceptsPicks: false } });
 
     renderContestEntryPage();
 
-    await screen.findByTestId('contest-entry-heading');
-    expect(await screen.findAllByText('Live')).toHaveLength(2);
+    const callout = within(await openStatusCallout());
+    expect(callout.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Live');
     expect(screen.queryByText('Scoring live')).not.toBeInTheDocument();
   });
 
@@ -1100,17 +1106,17 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
     expect(screen.queryByText('My Own Entry')).not.toBeInTheDocument();
   });
 
-  it("shows the summary tiles as hidden on another team's entry while the contest is open, not empty-lineup counts", async () => {
+  it("shows another team's entry status as hidden while the contest is open, with no empty-lineup counts", async () => {
     primeHiddenOtherTeamEntry();
 
     renderContestEntryPage();
 
     await screen.findByTestId('contest-entry-picks-hidden');
-    expect(screen.queryByText('0/0')).not.toBeInTheDocument();
-    expect(screen.queryByText('Lineup is fully selected')).not.toBeInTheDocument();
-    expect(screen.getByTestId('contest-entry-tiebreaker-status')).toHaveTextContent('Hidden');
-    expect(screen.getByTestId('contest-entry-tiebreaker-summary')).toHaveTextContent('Hidden until the event starts');
-    expect(screen.getAllByText('Hidden until the event starts')).toHaveLength(4);
+    expect(screen.queryByTestId('contest-entry-progress')).not.toBeInTheDocument();
+    expect(screen.queryByText(/0 of 0/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Lineup is fully selected/)).not.toBeInTheDocument();
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Hidden until the event starts');
+    expect(screen.queryByTestId('contest-entry-finish')).not.toBeInTheDocument();
   });
 
   it('closes editing once the event has started, even while the contest still says open', async () => {
@@ -1174,7 +1180,7 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
       expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('only counts once it is submitted');
       expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Submit entry');
     });
@@ -1185,9 +1191,48 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
       expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
       expect(screen.getByTestId('contest-entry-submit')).toHaveTextContent('Save entry');
+    });
+
+    it('puts the picks first, then the entry name, the tiebreaker and one Submit for the whole entry outside the tiebreaker', async () => {
+      primeCommonMocks();
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
+
+      renderContestEntryPage();
+
+      const submit = await screen.findByTestId('contest-entry-submit');
+      const picks = screen.getByTestId('contest-entry-builder-heading');
+      const name = screen.getByTestId('contest-entry-name-input');
+      const tiebreaker = screen.getByTestId('contest-entry-tiebreaker-select');
+      const follows = (earlier: Element, later: Element) =>
+        Boolean(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING);
+      expect(follows(picks, name)).toBe(true);
+      expect(follows(name, tiebreaker)).toBe(true);
+      expect(follows(tiebreaker, submit)).toBe(true);
+      expect(within(screen.getByTestId('contest-entry-finish')).getByTestId('contest-entry-submit')).toBe(submit);
+      expect(screen.getAllByTestId('contest-entry-submit')).toHaveLength(1);
+    });
+
+    it('keeps the status, phase and dates in a callout beside the entry name, opened and closed by tapping its icon', async () => {
+      primeCommonMocks();
+      getSelectionStateMock.mockResolvedValue({ data: selectionStateWithStatus('DRAFT') });
+
+      renderContestEntryPage();
+
+      expect(await screen.findByTestId('contest-entry-heading')).toHaveTextContent('Birdie Hunters Entry 1');
+      expect(screen.queryByText('Contest phase')).not.toBeInTheDocument();
+
+      const callout = within(await openStatusCallout());
+      expect(callout.getByTestId('contest-entry-status-entry-status')).toHaveTextContent('Not submitted');
+      expect(callout.getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Editable until the event starts');
+      expect(callout.getByTestId('contest-entry-status-entries-close')).toHaveTextContent('When the event starts');
+      expect(callout.getByText('Created')).toBeInTheDocument();
+      expect(callout.getByText('Last updated')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('contest-entry-status'));
+      expect(screen.queryByTestId('contest-entry-status-callout')).not.toBeInTheDocument();
     });
 
     it('shows the entry back as Not submitted when unselecting a golfer leaves a submitted lineup short', async () => {
@@ -1197,12 +1242,12 @@ describe('ContestEntryPage — selection rules the server enforces', () => {
 
       renderContestEntryPage();
 
-      expect(await screen.findByTestId('contest-entry-status-badge')).toHaveTextContent('Submitted');
+      expect(await screen.findByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Submitted');
       fireEvent.click(screen.getByTestId('contest-entry-group-toggle-tier-1'));
       fireEvent.click(await screen.findByTestId('contest-entry-participant-sep-1'));
 
       await waitFor(() =>
-        expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted'));
+        expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted'));
       expect(screen.getByTestId('contest-entry-not-submitted')).toHaveTextContent('needs submitting again');
     });
 
@@ -1373,19 +1418,20 @@ describe('ContestEntryPage — a budget entry (#93)', () => {
 
     renderContestEntryPage();
 
-    expect(await screen.findByText('1 golfer still to pick')).toBeInTheDocument();
-    expect(screen.queryByText('1 golfers still to pick')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('contest-entry-progress')).toHaveTextContent('1 golfer still to pick');
+    expect(screen.getByTestId('contest-entry-progress')).not.toHaveTextContent('1 golfers still to pick');
   });
 
-  it('shows a dash, not Hidden, on the Spent tile when the picks are visible but the server sent no spend', async () => {
+  it('leaves the spend out of the progress line, rather than saying Hidden, when the picks are visible but the server sent no spend', async () => {
     primeBudgetMocks(['sep-2']);
     getSelectionStateMock.mockResolvedValue({ data: { ...budgetState(['sep-2']), lineupSummary: null } });
 
     renderContestEntryPage();
 
-    expect(await screen.findByText('Spent')).toBeInTheDocument();
-    expect(screen.getByText('—')).toBeInTheDocument();
-    expect(screen.queryByText('Hidden')).not.toBeInTheDocument();
+    const progress = await screen.findByTestId('contest-entry-progress');
+    expect(progress).toHaveTextContent('picks saved');
+    expect(progress).not.toHaveTextContent('cap spent');
+    expect(progress).not.toHaveTextContent('Hidden');
   });
 
   it('removes a picked golfer when their chip is tapped', async () => {
@@ -1508,9 +1554,9 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(pending).toHaveTextContent('There is nothing to pick in this contest.');
     expect(pending).toHaveTextContent('the commissioner runs the draw, which deals this entry 2 golfers at random and enters it.');
     expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Not yet run');
-    expect(screen.getByText('Open until the draw', { selector: 'span' })).toBeInTheDocument();
+    expect(within(await openStatusCallout()).getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Open until the draw');
     expect(screen.queryByText('Scottie Scheffler')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /submit/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('contest-entry-submit')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-not-submitted')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-entry-name-input')).not.toBeInTheDocument();
   });
@@ -1526,8 +1572,9 @@ describe('ContestEntryPage — a random-draw entry', () => {
     expect(screen.getByTestId('contest-entry-draw-done')).toHaveTextContent('The draw is final.');
     expect(screen.getByTestId('contest-entry-draw-status')).toHaveTextContent('Done');
     expect(screen.getByRole('heading', { name: 'Dealt golfers' })).toBeInTheDocument();
-    expect(screen.getAllByText('Entries closed').length).toBeGreaterThan(0);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    // The status icon is the one thing to press: the dealt golfers are read-only.
+    expect(screen.getAllByRole('button')).toEqual([screen.getByTestId('contest-entry-status')]);
+    expect(within(await openStatusCallout()).getByTestId('contest-entry-status-contest-phase')).toHaveTextContent('Entries closed');
     expect(screen.queryByTestId('contest-entry-draw-pending')).not.toBeInTheDocument();
   });
 });
@@ -1636,7 +1683,7 @@ describe('ContestEntryPage — a contest of two events', () => {
     })));
     expect(await screen.findByText('Xander Schauffele')).toBeInTheDocument();
     expect(screen.getByTestId('contest-entry-event-switcher')).toHaveValue('event-2');
-    expect(screen.getByTestId('contest-entry-status-badge')).toHaveTextContent('Not submitted');
+    expect(screen.getByTestId('contest-entry-status')).toHaveAccessibleName('Entry status: Not submitted');
   });
 
   it('submits the shown event\'s picks through that event\'s submit, not the first event\'s', async () => {

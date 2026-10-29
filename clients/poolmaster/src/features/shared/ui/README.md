@@ -56,6 +56,9 @@ are a product piece: `TeamAvatar` draws the icon in its coloured square, and
 `TeamName` puts it beside the name, linked or plain, with the You and Inactive
 markers and an optional line underneath.
 
+`InfoPopover` keeps secondary facts out of a page's way: an icon button whose
+callout opens on mouse hover or on a tap, for a phone.
+
 Feature pages should keep route-specific copy and generated-SDK calls local, but
 they should not duplicate header, grid-shell, detail/actions, or
 public-join layout code when a template fits.

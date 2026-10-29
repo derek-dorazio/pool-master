@@ -2,12 +2,11 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Sport, getSportDefinition } from "@poolmaster/shared/domain";
-import { finishPositionUi } from "./scoring-family-ui/finish-position";
 import { strokePlayUi } from "./scoring-family-ui/stroke-play";
 import {
   EditableSelectionGroup,
   LockedSelectionGroup,
-  TiebreakerSelector,
+  TiebreakerField,
   type SelectionGroup,
 } from "./contest-entry-selection";
 
@@ -141,72 +140,28 @@ describe("pool-master-dn4.7: contest entry selection components", () => {
     ).toHaveTextContent("Scottie Scheffler");
   });
 
-  it("rule: renders the tiebreaker selector and submit action", async () => {
+  it("offers the scoring family's tiebreaker predictions and reports the one picked", async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    const handleSubmit = vi.fn();
+    const tiebreaker = strokePlayUi.entryTiebreaker;
+    if (!tiebreaker) {
+      throw new Error("Stroke play asks for a winning score tiebreaker.");
+    }
 
     render(
-      <TiebreakerSelector
+      <TiebreakerField
         disabled={false}
-        isSubmitted={false}
-        isSubmitting={false}
         onChange={handleChange}
-        onSubmit={handleSubmit}
-        submitDisabled={false}
-        tiebreaker={strokePlayUi.entryTiebreaker}
+        tiebreaker={tiebreaker}
         value=""
       />,
     );
 
-    await user.selectOptions(
-      screen.getByTestId("contest-entry-tiebreaker-select"),
-      "-1",
-    );
-    await user.click(screen.getByTestId("contest-entry-submit"));
+    expect(screen.getByLabelText(tiebreaker.label)).toBeInTheDocument();
+    await user.selectOptions(screen.getByTestId("contest-entry-tiebreaker-select"), "-1");
 
     expect(handleChange).toHaveBeenCalledWith("-1");
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("contest-entry-submit")).toHaveTextContent("Submit entry");
-  });
-
-  it("labels the action Save entry for an entry that is already submitted", () => {
-    render(
-      <TiebreakerSelector
-        disabled={false}
-        isSubmitted
-        isSubmitting={false}
-        onChange={vi.fn()}
-        onSubmit={vi.fn()}
-        submitDisabled={false}
-        tiebreaker={strokePlayUi.entryTiebreaker}
-        value="0"
-      />,
-    );
-
-    expect(screen.getByTestId("contest-entry-submit")).toHaveTextContent("Save entry");
-  });
-
-  it("asks for no tiebreaker prediction for a finish-position entry and still offers Submit entry", async () => {
-    const user = userEvent.setup();
-    const handleSubmit = vi.fn();
-
-    render(
-      <TiebreakerSelector
-        disabled={false}
-        isSubmitted={false}
-        isSubmitting={false}
-        onChange={vi.fn()}
-        onSubmit={handleSubmit}
-        submitDisabled={false}
-        tiebreaker={finishPositionUi.entryTiebreaker}
-        value=""
-      />,
-    );
-
-    expect(screen.queryByTestId("contest-entry-tiebreaker-select")).not.toBeInTheDocument();
-    await user.click(screen.getByTestId("contest-entry-submit"));
-    expect(handleSubmit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("contest-entry-submit")).not.toBeInTheDocument();
   });
 });
 
