@@ -2,7 +2,7 @@ import type { UseFormReturn } from 'react-hook-form';
 import { FormField, IconPalette, Input } from '@/features/shared/ui';
 import type { TeamFormValues } from './team-form-schema';
 import { TEAM_ICON_OPTIONS } from './team-icon-catalog';
-import { TeamIcon } from './team-icon';
+import { TeamAvatar } from './team-avatar';
 
 /** The name field and icon palette shared by Create team and Edit team. */
 export function TeamFormFields({
@@ -43,9 +43,7 @@ export function TeamFormFields({
           options={TEAM_ICON_OPTIONS}
           renderOptionIcon={(icon) => (
             <div className="flex justify-center">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${icon.themeClass}`}>
-                <TeamIcon iconKey={icon.key} size="sm" />
-              </span>
+              <TeamAvatar iconKey={icon.key} />
             </div>
           )}
           testId="team-icon-palette"
