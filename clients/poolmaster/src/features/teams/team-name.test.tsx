@@ -54,12 +54,12 @@ describe('TeamName', () => {
     expect(screen.queryByText('Inactive')).not.toBeInTheDocument();
   });
 
-  it("marks the viewer's own team with You, and nobody else's", () => {
+  it("marks the viewer's own team with the shared Yours marker, and nobody else's", () => {
     const { rerender } = renderInRouter(<TeamName name="Blitz" isMine />);
-    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText('Yours')).toBeInTheDocument();
 
     rerender(<MemoryRouter><TeamName name="Blitz" /></MemoryRouter>);
-    expect(screen.queryByText('You')).not.toBeInTheDocument();
+    expect(screen.queryByText('Yours')).not.toBeInTheDocument();
   });
 
   it('shows the line underneath, such as the owners, only when given one', () => {

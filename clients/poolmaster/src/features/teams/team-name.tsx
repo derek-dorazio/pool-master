@@ -1,5 +1,6 @@
 import type { TeamIconKey } from '@poolmaster/shared/domain';
 import { Link } from 'react-router';
+import { MineMarker } from '@/features/contests/mine-marker';
 import { Chip } from '@/features/shared/ui';
 import { TeamAvatar } from './team-avatar';
 
@@ -37,7 +38,7 @@ export function TeamName({
           ) : (
             <span className={nameClass} data-testid={testId}>{name}</span>
           )}
-          {isMine ? <Chip tone="active">You</Chip> : null}
+          {isMine ? <MineMarker /> : null}
           {!isActive ? <Chip>Inactive</Chip> : null}
         </div>
         {subtitle ? <div className="truncate text-sm text-muted-foreground">{subtitle}</div> : null}

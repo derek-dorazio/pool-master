@@ -463,25 +463,25 @@ describe('My team › Team icon in the heading', () => {
   });
 });
 
-describe('My team › This year › You marker', () => {
-  it("marks the viewer's own squad with You in its championship row", async () => {
+describe('My team › This year › Yours marker', () => {
+  it("marks the viewer's own squad with Yours in its championship row", async () => {
     primeTeam();
     getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear() }));
 
     renderTeamRoutes();
 
     expect(await screen.findByTestId('squad-year-championship-standing')).toBeInTheDocument();
-    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.getByText('Yours')).toBeInTheDocument();
   });
 
-  it("leaves You off another team's championship row on that team's page", async () => {
+  it("leaves Yours off another team's championship row on that team's page", async () => {
     primeTeam();
     getSquadYearMock.mockResolvedValue(apiSuccess({ squadYear: buildSquadYear({ squadId: 'team-2', championship: buildSquadChampionship({ pointsBehindLeader: 0 }, { squadId: 'team-2', squadName: 'Rival Squad', position: 1, displayPosition: '1' }) }) }));
 
     renderTeamRoutes('/league/BIGDAWGS/teams/team-2');
 
     expect(await screen.findByTestId('squad-year-championship-standing')).toBeInTheDocument();
-    expect(screen.queryByText('You')).not.toBeInTheDocument();
+    expect(screen.queryByText('Yours')).not.toBeInTheDocument();
   });
 });
 
