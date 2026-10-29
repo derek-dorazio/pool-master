@@ -129,6 +129,12 @@ describe('sport-admin-utils: describeEventReleaseBlockers', () => {
       'Its start time has passed, so it can no longer be released.',
     ]);
   });
+
+  it('keeps a draft whose admin counts are missing from looking releasable, saying its checks have not loaded', () => {
+    expect(describeEventReleaseBlockers({ ...ready, adminCounts: null }, now)).toEqual([
+      'Its tier and price checks have not loaded yet.',
+    ]);
+  });
 });
 
 describe('pool-master-3dg sport-admin-utils: deriveEventAutoTransition', () => {
@@ -230,6 +236,10 @@ describe('sport-admin-utils: deriveSportEventReadiness', () => {
     const race = { ...base, sport: 'HORSE_RACING' as const };
     expect(deriveSportEventReadiness({ ...race, adminCounts: { ...race.adminCounts, untieredParticipantCount: 1 } }).reasons).toEqual(['1 horse without a tier']);
     expect(deriveSportEventReadiness({ ...race, adminCounts: { ...race.adminCounts, unpricedParticipantCount: 3 } }).reasons).toEqual(['3 horses without a price']);
+  });
+
+  it('reports Checking readiness, not Ready to release, for a priced draft whose admin counts are missing', () => {
+    expect(deriveSportEventReadiness({ ...base, adminCounts: null })).toEqual({ label: 'Checking readiness', tone: 'neutral', reasons: [] });
   });
 
   it('reports Ready to release for a fully tiered and priced draft, and Released, Live and Completed after', () => {

@@ -146,7 +146,12 @@ export function describeEventReleaseBlockers(
     blockers.push('Load the field.');
   }
   const counts = tournament.adminCounts;
-  if (counts !== null && counts.untieredParticipantCount > 0) {
+  // Without the counts nothing says the tiers and prices are ready, so the release waits for them.
+  if (counts === null) {
+    blockers.push('Its tier and price checks have not loaded yet.');
+    return blockers;
+  }
+  if (counts.untieredParticipantCount > 0) {
     blockers.push(
       counts.untieredParticipantCount === 1
         ? `Put the 1 active ${participant.one} without a tier into a tier.`
@@ -154,12 +159,12 @@ export function describeEventReleaseBlockers(
     );
   }
   // No entry could pick from a tier nobody is in, so a tiered contest on it could never be completed.
-  for (const label of counts?.emptyTierLabels ?? []) {
+  for (const label of counts.emptyTierLabels) {
     blockers.push(`${label} has no ${participant.many}. Move ${participant.many} into it or delete it.`);
   }
   if (!tournament.pricing) {
     blockers.push('Assign prices on the Tiers page.');
-  } else if (counts !== null && counts.unpricedParticipantCount > 0) {
+  } else if (counts.unpricedParticipantCount > 0) {
     blockers.push(
       counts.unpricedParticipantCount === 1
         ? `Price the 1 active ${participant.one} without a price.`
@@ -281,14 +286,18 @@ export function deriveSportEventReadiness(
   const { participant } = getSportDefinition(tournament.sport).vocabulary;
   const participants = (count: number) => `${count} ${count === 1 ? participant.one : participant.many}`;
   const counts = tournament.adminCounts;
-  if (counts !== null && counts.untieredParticipantCount > 0) {
+  // Unknown is not ready: without the counts the draft's tiers and prices can't be judged.
+  if (counts === null) {
+    return { label: 'Checking readiness', tone: 'neutral', reasons: [] };
+  }
+  if (counts.untieredParticipantCount > 0) {
     return {
       label: 'Tiers pending',
       tone: 'warning',
       reasons: [`${participants(counts.untieredParticipantCount)} without a tier`],
     };
   }
-  if (counts !== null && counts.emptyTierLabels.length > 0) {
+  if (counts.emptyTierLabels.length > 0) {
     return {
       label: 'Tiers pending',
       tone: 'warning',
@@ -298,7 +307,7 @@ export function deriveSportEventReadiness(
   if (!tournament.pricing) {
     return { label: 'Prices pending', tone: 'warning', reasons: ['No prices assigned'] };
   }
-  if (counts !== null && counts.unpricedParticipantCount > 0) {
+  if (counts.unpricedParticipantCount > 0) {
     return {
       label: 'Prices pending',
       tone: 'warning',

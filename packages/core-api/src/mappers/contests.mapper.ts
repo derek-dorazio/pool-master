@@ -142,7 +142,7 @@ export interface ContestSportEventRow {
   id: string;
   name: string;
   startDate: Date;
-  endDate?: Date | null;
+  endDate?: Date;
   status: SportEventStatus;
   /** Its sport league's overrides (#934), absent where it plays as its sport. */
   participantType?: ParticipantType | null;
