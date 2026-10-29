@@ -11,7 +11,7 @@
  * cleared — so that is what this does, directly against the shared function. De-duplicating
  * destructive code without a test that watches it delete is not worth the saving.
  */
-import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser } from '../helpers';
+import { setupIntegrationTests, teardownIntegrationTests, getPrisma, createTestUser, outsideQueryPlanCheck } from '../helpers';
 import {
   countUserDeleteDependencies,
   deleteUserCascade,
@@ -27,11 +27,14 @@ const LEAGUE_CODE_PREFIX = 'ULIFE';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
-  const prisma = getPrisma();
-  await prisma.leagueMembership.deleteMany({
-    where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
+  // Cleanup finds the leagues by test code prefix, which the app never asks (#1243).
+  await outsideQueryPlanCheck(async () => {
+    const prisma = getPrisma();
+    await prisma.leagueMembership.deleteMany({
+      where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
+    });
+    await prisma.league.deleteMany({ where: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } });
   });
-  await prisma.league.deleteMany({ where: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } });
   await teardownIntegrationTests();
 });
 

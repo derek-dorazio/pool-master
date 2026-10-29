@@ -18,6 +18,7 @@ import {
   getPrisma,
   setupIntegrationTests,
   teardownIntegrationTests,
+  outsideQueryPlanCheck,
 } from '../helpers';
 
 type QueuedRecord = Extract<EmailMessageRecord, { status: 'QUEUED' }>;
@@ -52,7 +53,9 @@ beforeAll(async () => {
   await setupIntegrationTests();
 });
 afterEach(async () => {
-  await getPrisma().emailMessage.deleteMany({ where: { idempotencyKey: { startsWith: `outbox-test:${RUN}:` } } });
+  // By the run's key prefix, which the app never asks (#1243).
+  await outsideQueryPlanCheck(() =>
+    getPrisma().emailMessage.deleteMany({ where: { idempotencyKey: { startsWith: `outbox-test:${RUN}:` } } }));
 });
 afterAll(async () => {
   await cleanupTestData();

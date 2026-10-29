@@ -23,6 +23,7 @@ import {
   getConfirmedSnsSubscriptions,
   getPrisma,
   getSnsSigner,
+  outsideQueryPlanCheck,
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders,
@@ -71,7 +72,7 @@ async function sentInvite(): Promise<{ commissioner: TestUser; leagueId: string;
   });
   expect(sent.json<SendLeagueInvitationsResponse>().sent[0].emailStatus).toBe('QUEUED');
   await deliverQueuedIntegrationEmail();
-  const row = await getPrisma().emailMessage.findFirstOrThrow({ where: { recipientEmail: inviteeEmail } });
+  const row = await outsideQueryPlanCheck(() => getPrisma().emailMessage.findFirstOrThrow({ where: { recipientEmail: inviteeEmail } }));
   expect(row.providerMessageId).toBeTruthy();
   return { commissioner, leagueId, inviteeEmail, providerMessageId: row.providerMessageId as string };
 }

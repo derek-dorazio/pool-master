@@ -13,6 +13,7 @@ import {
   teardownIntegrationTests,
   getPrisma,
   createTestUser,
+  outsideQueryPlanCheck,
 } from '../helpers';
 import {
   PrismaLeagueInvitationRepository,
@@ -34,15 +35,18 @@ const LEAGUE_CODE_PREFIX = 'IDREPO';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
-  const prisma = getPrisma();
-  await prisma.leagueInvitation.deleteMany({
-    where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
-  });
-  await prisma.leagueMembership.deleteMany({
-    where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
-  });
-  await prisma.league.deleteMany({
-    where: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } },
+  // Cleanup finds the leagues by test code prefix, which the app never asks (#1243).
+  await outsideQueryPlanCheck(async () => {
+    const prisma = getPrisma();
+    await prisma.leagueInvitation.deleteMany({
+      where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
+    });
+    await prisma.leagueMembership.deleteMany({
+      where: { league: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } } },
+    });
+    await prisma.league.deleteMany({
+      where: { leagueCode: { startsWith: LEAGUE_CODE_PREFIX } },
+    });
   });
   await teardownIntegrationTests();
 });

@@ -55,7 +55,7 @@ export const statementLog = {
 };
 
 /** Resolves once every statement `prisma` sent before it has been reported. */
-async function reportedSoFar(prisma: PrismaClient): Promise<void> {
+export async function reportedSoFar(prisma: PrismaClient): Promise<void> {
   const marker = randomUUID();
   const reported = new Promise<void>((resolve) => pendingMarkers.set(marker, resolve));
   await prisma.user.findUnique({ where: { id: marker }, select: { id: true } });

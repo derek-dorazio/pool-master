@@ -19,7 +19,8 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
-import { statementLog } from './statement-log';
+import { reportedSoFar, statementLog } from './statement-log';
+import { expectEveryQueryIndexed, queryPlanLog } from './query-plans';
 
 // Plugins and modules from core-api
 import { healthPlugin } from '../../packages/core-api/src/plugins/health';
@@ -283,7 +284,10 @@ export async function setupIntegrationTests(): Promise<void> {
   process.env.LOG_LEVEL ??= 'warn';
   // Query events feed statementLog, which the query-scaling tests count (#1242).
   const client = new PrismaClient({ log: [{ emit: 'event', level: 'query' }] });
-  client.$on('query', (event) => statementLog.receive(event));
+  client.$on('query', (event) => {
+    statementLog.receive(event);
+    queryPlanLog.receive(event);
+  });
   prisma = client;
   await prisma.$connect();
   await cleanupTestData();
@@ -320,8 +324,16 @@ export async function teardownIntegrationTests(): Promise<void> {
   const startedApp = app as FastifyInstance | undefined;
   const startedPrisma = prisma as PrismaClient | undefined;
   if (startedApp) await startedApp.close();
-  if (startedPrisma) await startedPrisma.$disconnect();
-  await stopIntegrationMailSink();
+  try {
+    if (startedPrisma) {
+      // Every query the suite sent has been reported once a later one has (#1243).
+      await reportedSoFar(startedPrisma);
+      await expectEveryQueryIndexed(startedPrisma);
+    }
+  } finally {
+    if (startedPrisma) await startedPrisma.$disconnect();
+    await stopIntegrationMailSink();
+  }
 }
 
 async function startIntegrationMailSink(): Promise<void> {
@@ -655,6 +667,19 @@ async function cleanupSportEventParticipantArtifacts(
  * Deletes in reverse dependency order using explicit relation-aware Prisma filters.
  */
 export async function cleanupTestData(): Promise<void> {
+  // Cleanup finds rows by test code prefix, which no index serves and the app never asks (#1243).
+  await outsideQueryPlanCheck(deleteTestData);
+}
+
+/**
+ * Runs test code whose queries are not the app's, such as a read of every row to assert on, so
+ * the missing-index check at teardown leaves them out (#1243).
+ */
+export function outsideQueryPlanCheck<Result>(work: () => Promise<Result>): Promise<Result> {
+  return queryPlanLog.outside(prisma, work);
+}
+
+async function deleteTestData(): Promise<void> {
   const users = await prisma.user.findMany({
     where: {
       email: {

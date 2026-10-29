@@ -9,7 +9,7 @@ import {
   SyncRunDetailsRetention,
   SyncRunRetention,
 } from '../../../packages/core-api/src/modules/ingestion/persistence/sync-run-retention';
-import { cleanupTestData, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getPrisma, outsideQueryPlanCheck, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -45,7 +45,7 @@ async function seedRun(label: string, createdAt: Date, details: object | null = 
 }
 
 async function detailsByLabel(): Promise<Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }>> {
-  const rows = await getPrisma().providerSyncRun.findMany({ select: { eventId: true, detailsJson: true, payloadJson: true } });
+  const rows = await outsideQueryPlanCheck(() => getPrisma().providerSyncRun.findMany({ select: { eventId: true, detailsJson: true, payloadJson: true } }));
   const byLabel: Record<string, { details: Prisma.JsonValue; payload: Prisma.JsonValue }> = {};
   for (const row of rows) {
     byLabel[row.eventId ?? ''] = { details: row.detailsJson, payload: row.payloadJson };
@@ -98,7 +98,7 @@ describe('sync-run details retention (#1174)', () => {
     expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
     expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(2);
     expect(await repo.clearDetailsBatchSubmittedBefore(daysAgo(30), 2)).toBe(1);
-    expect(await getPrisma().providerSyncRun.count({ where: { detailsJson: { not: Prisma.DbNull } } })).toBe(0);
+    expect(await outsideQueryPlanCheck(() => getPrisma().providerSyncRun.count({ where: { detailsJson: { not: Prisma.DbNull } } }))).toBe(0);
   });
 });
 

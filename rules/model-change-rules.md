@@ -207,6 +207,16 @@ it names, and every read by that column, scans the referencing table (#1177).
   filters by.
 - The database-indexes integration suite checks the first and third against the migrated
   catalog, so a missing or duplicate index fails before review.
+- **Every integration suite checks the second at teardown** (#1243). It asks Postgres for the
+  generic plan of each query the suite's app code sent, with sequential scans priced out;
+  a plan that still scans a table growing with customer data has no index to use, and the
+  suite fails naming the table, the filter, the SQL and the test. Test data is too small for
+  timing to notice, which is why the plan is read instead. Fix it with an index the read can
+  use. A deliberate scan (a retention job, a root admin report) gets an entry with its reason
+  in `tests/integration/seq-scan-allow-list.ts`; a known miss gets one naming its ticket,
+  which the fix PR removes. Test code's own queries (cleanup by test prefix, a read of every
+  row to assert on) go in `outsideQueryPlanCheck`, since the app never sends them. Raw SQL
+  is not checked.
 
 ---
 

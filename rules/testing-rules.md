@@ -1055,6 +1055,11 @@ Integration tests share a single Postgres database and run serially (`maxWorkers
 - **No test depends on today's date.** Build events with start dates relative to the clock the
   test runs on (or a clock it controls), never fixed calendar dates that a later run outlives.
   A seeded season is moved relative to the run day for the same reason.
+- **Test code's own queries that no index serves run in `outsideQueryPlanCheck`.** Each suite
+  checks at teardown that the queries it sent can use an index (`model-change-rules.md`
+  *Indexes Follow The Reads And The Foreign Keys*). Cleanup by a test id prefix, or a read of
+  every row to assert on, is a scan the app never makes, so it stays out of that check.
+  `cleanupTestData` already does this. Wrapping is never the answer to a scan the app makes.
 
 ### Cleanup Pattern
 

@@ -39,6 +39,11 @@ DB-backed failure means.
   than the budget. Batch the reads the route makes per row; the allow-list is for routes
   that already have a ticket, never a way past the check — `rules/testing-rules.md` §6
   *Backend Functional API Tests*.
+- **An integration suite fails at teardown on a table scan** → a query the app sent filters
+  a growing table by columns no index leads on. Add the `@@index` the read needs; the
+  allow-list is for deliberate scans and misses that have a ticket, and test code's own
+  queries go in `outsideQueryPlanCheck` — `rules/model-change-rules.md` *Indexes Follow The
+  Reads And The Foreign Keys*.
 - **Lint fails** → no warn tier exists, so there is no "I'll fix it later" state. A rule at
   0 findings stays at 0.
 - **`poolmaster/no-query-in-loop` fails** → a repository or Prisma call runs once per row.

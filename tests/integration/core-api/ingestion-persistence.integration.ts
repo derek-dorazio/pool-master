@@ -2,6 +2,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
+  outsideQueryPlanCheck,
 } from '../helpers';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
@@ -23,6 +24,12 @@ const rankedEventIds = [
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
+  // Cleanup finds rows by test external ids, which the app never filters by alone (#1243).
+  await outsideQueryPlanCheck(deleteIngestionTestData);
+  await teardownIntegrationTests();
+});
+
+async function deleteIngestionTestData(): Promise<void> {
   const prisma = getPrisma();
   await prisma.sportEventParticipantGolfStanding.deleteMany({
     where: {
@@ -72,8 +79,7 @@ afterAll(async () => {
       },
     },
   });
-  await teardownIntegrationTests();
-});
+}
 
 describe('IngestionPersistence', () => {
   it('persists event detail into events, participants, event participants, and source data', async () => {
@@ -127,9 +133,9 @@ describe('IngestionPersistence', () => {
         },
       },
     });
-    const participant = await prisma.participant.findFirstOrThrow({
+    const participant = await outsideQueryPlanCheck(() => prisma.participant.findFirstOrThrow({
       where: { externalId: 'ingestion-player-1' },
-    });
+    }));
     const sportEventParticipant =
       await prisma.sportEventParticipant.findUniqueOrThrow({
         where: {
@@ -512,7 +518,7 @@ describe('IngestionPersistence', () => {
     expect(fieldRowAt).toBe(afterWithdrawal.get('ingestion-batch-1')?.[0]);
     expect(participantAt).not.toBe(afterWithdrawal.get('ingestion-batch-1')?.[1]);
     expect(afterReaffiliation.get('ingestion-batch-2')).toEqual(afterWithdrawal.get('ingestion-batch-2'));
-    await expect(prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
+    await expect(outsideQueryPlanCheck(() => prisma.participant.findFirstOrThrow({ where: { externalId: 'ingestion-batch-1' } }))).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the
