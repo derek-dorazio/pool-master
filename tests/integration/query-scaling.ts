@@ -112,25 +112,29 @@ export async function expectConstantQueries<Fixture, Result>(
   await expectSameStatementCount(scalingCase);
 }
 
-/**
- * The test for a list route whose length code fixes (one row per plan, per email category, per
- * settings group), which no seed can grow from 2 to 20: it pins the exact statements the read
- * sends, so a per-row read added later fails it as a scaling case would. `route` names it for the
- * `rules:check:query-scaling` scanner and must be the route `call` requests.
- */
-export async function expectFixedQueries<Result>({ route, fixedBy, call, statements }: {
+/** A read of a list whose length code fixes, and the exact statements it sends. */
+export interface FixedQueriesCase<Result> {
   route: ScalingRoute;
   /** What fixes the list's length, named in the failure. */
   fixedBy: string;
   call: () => Promise<Result>;
   /** How many statements the read sends, whatever the fixed list holds. */
   statements: number;
-}): Promise<void> {
+}
+
+/**
+ * The test for a list route whose length code fixes (one row per plan, per email category, per
+ * settings group), which no seed can grow from 2 to 20: it pins the exact statements the read
+ * sends, so a per-row read added later fails it as a scaling case would. `route` names it for the
+ * `rules:check:query-scaling` scanner and must be the route `call` requests.
+ */
+export async function expectFixedQueries<Result>(fixedCase: FixedQueriesCase<Result>): Promise<void> {
   await deliverQueuedIntegrationEmail();
-  const recorded = await recordStatements(getPrisma(), call);
-  if (recorded.statements.length !== statements) {
+  const recorded = await recordStatements(getPrisma(), () => fixedCase.call());
+  if (recorded.statements.length !== fixedCase.statements) {
     throw new Error(
-      `${route}, a list fixed by ${fixedBy}, sent ${recorded.statements.length} statements; it is pinned at ${statements}.\n`
+      `${fixedCase.route}, a list fixed by ${fixedCase.fixedBy}, sent ${recorded.statements.length} statements; `
+        + `it is pinned at ${fixedCase.statements}.\n`
         + recorded.statements.map(({ sql }, index) => `  ${index + 1}. ${sql}`).join('\n'),
     );
   }
