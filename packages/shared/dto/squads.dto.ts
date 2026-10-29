@@ -64,10 +64,10 @@ export const SquadDtoSchema = z.object({
   isActive: z
     .boolean()
     .describe('Whether the team is currently active. This lifecycle flag is the source of truth for Team availability and should replace older status-style checks.'),
-  memberCount: z.number().int().describe('Number of memberships attached to the squad.'),
+  memberCount: z.number().int().describe('How many of the squad\'s owners are ACTIVE.'),
   createdAt: DateTimeSchema.describe('When the squad was created.'),
   updatedAt: DateTimeSchema.describe('When the squad was last updated.'),
-  members: z.array(SquadMembershipDtoSchema).optional().describe('Optional expanded squad membership list.'),
+  members: z.array(SquadMembershipDtoSchema).describe('Every owner membership of the squad, any status, in join order, each with its user.'),
 }).describe('A squad within a league. Returned wherever a squad is read.');
 export type SquadDto = z.infer<typeof SquadDtoSchema>;
 

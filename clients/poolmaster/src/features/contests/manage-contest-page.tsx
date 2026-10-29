@@ -44,7 +44,6 @@ import {
   SettingsRow,
   SettingsSection,
 } from '@/features/shared/ui';
-import { useLeagueSquadsQuery } from '@/features/teams/use-league-squads-query';
 import { coversOneEvent, firstContestEvent } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
@@ -111,11 +110,10 @@ export function ManageContestPage() {
   const navigate = useNavigate();
   const { leagueCode = '', contestId = '' } = useParams<{ leagueCode: string; contestId: string }>();
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
-  const { league, viewer } = useLeagueContext(leagueCode);
+  const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const contestsQuery = useLeagueContestsQuery(leagueId);
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
   const contest = contestsQuery.data?.find((candidate) => candidate.id === contestId) ?? null;
   // The first event: its start is when entries close, and the status card counts down to it.
   const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
@@ -178,7 +176,7 @@ export function ManageContestPage() {
 
   const isNotOpen = contest.status === ContestStatus.DRAFT;
   const isTiered = contest.selectionType === SelectionType.TIERED;
-  const activeTeamCount = (teamsQuery.data ?? []).filter((team) => team.isActive).length;
+  const activeTeamCount = leagueQuery.data?.activeTeamCount ?? 0;
   const { configuration } = managedContest;
   const rules = formatContestRules(
     configuration,

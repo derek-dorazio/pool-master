@@ -81,7 +81,7 @@ export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions &
       tags: ['Squads'],
       summary: 'List squads in a league',
       description:
-        'Returns the squads associated with the current league for squad management and contest-entry flows, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
+        'Returns every squad in the league, active and inactive, each with its owners: the Teams page and Manage teams. A page about one squad reads getLeagueSquad instead.',
       operationId: 'listLeagueSquads',
       response: {
         200: schemaRef('SquadListResponse'),
@@ -120,7 +120,7 @@ export function squadsModule(fastify: FastifyInstance, opts: MailModuleOptions &
       tags: ['Squads'],
       summary: 'Get squad details',
       description:
-        'Returns the detailed squad payload for the requested squad identifier, including requester-scoped teamRelationship plus separate global isRootAdmin flags.',
+        'Returns one squad with its owners: every membership, any status, each with its user. A team page reads this rather than the whole team list.',
       operationId: 'getLeagueSquad',
       response: {
         200: schemaRef('SquadResponse'),

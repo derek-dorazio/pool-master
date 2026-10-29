@@ -30,6 +30,7 @@ import type {
   SportEventRepository,
   SportLeagueRepository,
   SquadMembershipRepository,
+  SquadDetails,
   SquadRepository,
   UserRepository,
 } from '@poolmaster/shared/db';
@@ -562,11 +563,29 @@ export class InMemoryContestWorld {
   }
 
   squadRepo(): SquadRepository {
+    const details = (squad: Squad): SquadDetails => ({
+      ...squad,
+      members: [...this.squadMemberships.values()]
+        .filter((row) => row.squadId === squad.id)
+        .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
+        .flatMap((membership) => {
+          const user = this.users.get(membership.userId);
+          return user ? [{ membership, user }] : [];
+        }),
+    });
     return {
       findById: async (id) => this.squads.get(id) ?? null,
       findByLeague: async (leagueId, includeInactive = false) =>
         [...this.squads.values()].filter((squad) =>
           squad.leagueId === leagueId && (includeInactive || squad.isActive)),
+      findDetailsById: async (id) => {
+        const squad = this.squads.get(id);
+        return squad ? details(squad) : null;
+      },
+      findDetailsByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId).map(details),
+      countActiveByLeague: async (leagueId) =>
+        [...this.squads.values()].filter((squad) => squad.leagueId === leagueId && squad.isActive).length,
       findByLeagueAndName: async (leagueId, name) =>
         [...this.squads.values()].find((squad) =>
           squad.leagueId === leagueId && squad.name === name) ?? null,
@@ -599,6 +618,13 @@ export class InMemoryContestWorld {
         const rows = [...this.squadMemberships.values()].filter((row) =>
           row.leagueId === leagueId && row.userId === userId);
         return rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0) ?? null;
+      },
+      findByLeagueAndUserWithSquadName: async (leagueId, userId) => {
+        const rows = [...this.squadMemberships.values()].filter((row) =>
+          row.leagueId === leagueId && row.userId === userId);
+        const membership = rows.find((row) => row.status === SquadMembershipStatus.ACTIVE) ?? rows.at(0);
+        const squad = membership ? this.squads.get(membership.squadId) : undefined;
+        return membership && squad ? { ...membership, squadName: squad.name } : null;
       },
       create: async (input) => this.addSquadMember(input.squadId, input.userId, input),
       update: async (id, updates) => {

@@ -1,6 +1,22 @@
 import type { Prisma, PrismaClient, Squad as PrismaSquad } from '@prisma/client';
-import type { SquadRepository } from '@poolmaster/shared/db';
+import type { SquadDetails, SquadRepository } from '@poolmaster/shared/db';
 import type { Squad, TeamIconKey } from '@poolmaster/shared/domain';
+import { mapToSquadMembership } from './prisma-squad-membership-repository';
+import { mapToUser } from './prisma-user-repository';
+
+/**
+ * A squad's owners, in join order, each with their user (#1165). Prisma reads the relation in
+ * one statement per level for however many squads match, so a league's whole team list is three
+ * statements rather than three per team. `passwordHash` is never read for an embedded user.
+ */
+const SQUAD_DETAILS_INCLUDE = {
+  memberships: {
+    orderBy: { joinedAt: 'asc' },
+    include: { user: { omit: { passwordHash: true } } },
+  },
+} satisfies Prisma.SquadInclude;
+
+type SquadDetailsRow = Prisma.SquadGetPayload<{ include: typeof SQUAD_DETAILS_INCLUDE }>;
 
 export class PrismaSquadRepository implements SquadRepository {
   constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
@@ -19,6 +35,24 @@ export class PrismaSquadRepository implements SquadRepository {
       orderBy: { createdAt: 'asc' },
     });
     return rows.map(mapToSquad);
+  }
+
+  async findDetailsById(id: string): Promise<SquadDetails | null> {
+    const row = await this.prisma.squad.findUnique({ where: { id }, include: SQUAD_DETAILS_INCLUDE });
+    return row ? mapToSquadDetails(row) : null;
+  }
+
+  async findDetailsByLeague(leagueId: string): Promise<SquadDetails[]> {
+    const rows = await this.prisma.squad.findMany({
+      where: { leagueId },
+      orderBy: { createdAt: 'asc' },
+      include: SQUAD_DETAILS_INCLUDE,
+    });
+    return rows.map(mapToSquadDetails);
+  }
+
+  async countActiveByLeague(leagueId: string): Promise<number> {
+    return this.prisma.squad.count({ where: { leagueId, isActive: true } });
   }
 
   async findByLeagueAndName(leagueId: string, name: string): Promise<Squad | null> {
@@ -67,5 +101,15 @@ function mapToSquad(row: PrismaSquad): Squad {
     isActive: row.isActive,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+  };
+}
+
+function mapToSquadDetails(row: SquadDetailsRow): SquadDetails {
+  return {
+    ...mapToSquad(row),
+    members: row.memberships.map((membership) => ({
+      membership: mapToSquadMembership(membership),
+      user: mapToUser(membership.user),
+    })),
   };
 }

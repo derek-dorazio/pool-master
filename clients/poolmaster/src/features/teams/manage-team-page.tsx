@@ -18,12 +18,13 @@ import {
   SettingsRow,
   SettingsSection,
 } from '@/features/shared/ui';
+import { hasErrorCode } from '@/lib/errors';
 import { MyTeamLifecycleDialogs, MyTeamLifecycleNotices } from './my-team-lifecycle';
 import type { ActiveTeamDialog } from './my-team-shared';
 import { formatOwnerCount } from './team-directory';
 import { TeamIcon } from './team-icon';
 import { getTeamIconOption } from './team-icon-catalog';
-import { useLeagueSquadsQuery } from './use-league-squads-query';
+import { useLeagueSquadQuery } from './use-league-squad-query';
 import { useMyTeamLifecycle } from './use-my-team-lifecycle';
 import { TeamOwnersSection } from './team-owners-section';
 import { useMyTeamOwners } from './use-my-team-owners';
@@ -34,8 +35,8 @@ export function ManageTeamPage() {
   // `CommissionerRouteGuard` has loaded the league and admitted the viewer before this renders.
   const { league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
-  const teamsQuery = useLeagueSquadsQuery(leagueId);
-  const team = teamsQuery.data?.find((candidate) => candidate.id === teamId) ?? null;
+  const teamQuery = useLeagueSquadQuery(leagueId, teamId);
+  const team = teamQuery.data ?? null;
   const teamsPath = buildLeagueAdminTeamsPath(leagueCode);
 
   const [activeDialog, setActiveDialog] = useState<ActiveTeamDialog>(null);
@@ -52,11 +53,11 @@ export function ManageTeamPage() {
   if (!league) {
     return null;
   }
-  if (teamsQuery.isLoading) {
+  if (teamQuery.isLoading) {
     return <LoadingState body="Loading this member..." testId="manage-team-loading" />;
   }
-  if (teamsQuery.isError) {
-    return <ErrorState body="We couldn't load this league's members." title="Member unavailable" />;
+  if (teamQuery.isError && !hasErrorCode(teamQuery.error, 'SQUAD_NOT_FOUND')) {
+    return <ErrorState body="We couldn't load this member." title="Member unavailable" />;
   }
   if (!team) {
     return (

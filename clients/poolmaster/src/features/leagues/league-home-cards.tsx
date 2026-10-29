@@ -265,9 +265,12 @@ export function YourTeamCard({
   leagueCode: string;
   team: SquadDto | null;
 }) {
-  const owners = (team?.members ?? [])
-    .filter((member) => member.status === SquadMembershipStatus.ACTIVE)
-    .map((member) => formatUserName(member.user.firstName, member.user.lastName));
+  // No team yet means no owners to name.
+  const owners = team
+    ? team.members
+      .filter((member) => member.status === SquadMembershipStatus.ACTIVE)
+      .map((member) => formatUserName(member.user.firstName, member.user.lastName))
+    : [];
 
   return (
     <HomeCard
