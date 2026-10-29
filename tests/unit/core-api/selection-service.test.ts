@@ -229,7 +229,7 @@ function setup(options: SetupOptions = {}) {
     const index = held.findIndex((row) => row.id === pickId);
     if (index >= 0) held.splice(index, 1);
   });
-  const addPick = jest.fn((input: { entryId: string; sportEventParticipantId: string; lineupSlot: number }) => {
+  const addPick = jest.fn((input: { entryId: string; sportEventParticipantId: string; participantId: string; lineupSlot: number }) => {
     const row = (options.field ?? FIELD).find((candidate) => candidate.id === input.sportEventParticipantId);
     held.push({
       ...pick(`new-pick-${held.length + 1}`, row?.participantId ?? input.sportEventParticipantId, input.sportEventParticipantId, {
@@ -716,7 +716,7 @@ describe('#324 SelectionService.selectPick — placing, replacing, and nothing t
 
     expect(result.picks.map((row) => row.sportEventParticipantId)).toEqual(['sep-a']);
     expect(removePick).not.toHaveBeenCalled();
-    expect(addPick).toHaveBeenCalledWith({ entryId: ENTRY_ID, sportEventParticipantId: 'sep-a', lineupSlot: 1 });
+    expect(addPick).toHaveBeenCalledWith({ entryId: ENTRY_ID, sportEventParticipantId: 'sep-a', participantId: 'p-a', lineupSlot: 1 });
   });
 
   // The rule the deleted engines had backwards. Given a full tier the engine REJECTED the

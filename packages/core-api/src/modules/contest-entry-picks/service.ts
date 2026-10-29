@@ -79,10 +79,15 @@ export class ContestEntryPickService {
     const result = await this.prisma.$transaction(async (tx) => {
       const locked = await readLockedEntry(tx, entryId, sportEventId);
       const write = decide(locked.picks);
-      if (write?.removePickId) await tx.contestEntryPick.delete({ where: { id: write.removePickId } });
+      // The lineup the write leaves, built from the locked read rather than read again.
+      let picks = locked.picks;
+      if (write?.removePickId) {
+        await tx.contestEntryPick.delete({ where: { id: write.removePickId } });
+        picks = picks.filter((pick) => pick.id !== write.removePickId);
+      }
       if (write?.add) {
         const contestPickCount = await tx.contestEntryPick.count({ where: { entry: { contestId: locked.contestId } } });
-        await tx.contestEntryPick.create({
+        const created = await tx.contestEntryPick.create({
           data: {
             entryId,
             sportEventParticipantId: write.add.sportEventParticipantId,
@@ -91,10 +96,16 @@ export class ContestEntryPickService {
             pickSequence: contestPickCount + 1,
             isAutoPicked: false,
           },
+          select: { id: true },
         });
+        picks = [...picks, {
+          id: created.id,
+          sportEventParticipantId: write.add.sportEventParticipantId,
+          participantId: write.add.participantId,
+          lineupSlot: write.add.lineupSlot,
+        }];
       }
       const picksChanged = write !== null;
-      const picks = picksChanged ? await readEventPicks(tx, entryId, sportEventId) : locked.picks;
       const settled = await settleStatus(tx, locked, settle({ picks, status: locked.status, picksChanged }), at);
       return { ...settled, picksChanged, contestId: locked.contestId, write };
     });

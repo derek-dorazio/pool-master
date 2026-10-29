@@ -236,7 +236,7 @@ export class SelectionService {
         // Accept, or replace: a replacement first displaces the pick it takes the place of.
         placed.replacedPickId = outcome.kind === SelectionOutcomeKind.REPLACE ? outcome.replacedPickId : null;
         placed.lineupSlot = outcome.lineupSlot;
-        return { removePickId: placed.replacedPickId, add: { sportEventParticipantId, lineupSlot: outcome.lineupSlot } };
+        return { removePickId: placed.replacedPickId, add: { sportEventParticipantId, participantId: selectionParticipant.participantId, lineupSlot: outcome.lineupSlot } };
       },
     });
 
@@ -995,7 +995,6 @@ function withDraw(context: SelectionContext, drawnAt: Date, now: Date): Selectio
   };
 }
 
-/** The context with one entry replaced by its freshly written row. */
 /** The entry with its status in one event as a locked change left it. */
 function withEventStatus(entry: ContestEntry, sportEventId: string, result: EntryChangeResult): ContestEntry {
   const current = entry.events.find((event) => event.sportEventId === sportEventId);
@@ -1008,6 +1007,7 @@ function withEventStatus(entry: ContestEntry, sportEventId: string, result: Entr
   };
 }
 
+/** The context with one entry replaced by its freshly written row. */
 function withEntry(context: SelectionContext, updated: ContestEntry): SelectionContext {
   return {
     ...context,

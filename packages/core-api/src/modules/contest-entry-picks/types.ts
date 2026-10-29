@@ -18,7 +18,8 @@ export interface LockedEntryPick {
 /** What one pick change writes: a pick to remove, a pick to add, or both, as a swap does. */
 export interface EntryPickWrite {
   removePickId: string | null;
-  add: { sportEventParticipantId: string; lineupSlot: number } | null;
+  /** The pick to add; `participantId` is its canonical participant, so the lineup the write leaves is known without a read. */
+  add: { sportEventParticipantId: string; participantId: string; lineupSlot: number } | null;
 }
 
 /** An entry's lineup and status in one event, as read under the entry's lock (#1300). */
