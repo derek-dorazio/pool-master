@@ -88,6 +88,10 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
   async save(change: ContestEntryMatchPredictionSave): Promise<void> {
     const { contestEntryId, sportEventId, saves, clearedMatchIds, eventStatus, tiebreakerValue, at } = change;
     await this.prisma.$transaction(async (tx) => {
+      // Touching the entry first takes its row lock, so two saves to one entry run one after the
+      // other: otherwise both could delete a game's pick before either inserts, and the second
+      // insert would hit the (entry, game) unique index.
+      await tx.contestEntry.update({ where: { id: contestEntryId }, data: { updatedAt: at } });
       // A saved pick replaces the game's earlier one: both go in one delete, and the saves in one
       // insert, so the write costs the same for one game as for a full slate (#1254).
       const replacedMatchIds = [...clearedMatchIds, ...saves.map((save) => save.sportEventMatchId)];

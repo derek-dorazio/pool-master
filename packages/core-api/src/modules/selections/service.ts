@@ -869,7 +869,6 @@ function takesPicks(status: ContestStatus): boolean {
   return status === ContestStatus.OPEN || status === ContestStatus.ACTIVE;
 }
 
-/** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
 /** What stops an entry's lineup, of `picks` (its picks in the context's event), being submitted. */
 function lineupIssues(
   context: SelectionContext,
@@ -892,6 +891,7 @@ function lineupIssues(
   };
 }
 
+/** What an entry receipt needs from the room, so the receipt reads none of it again (#1196). */
 function receiptInput(
   context: SelectionContext,
   entryIds: readonly string[],

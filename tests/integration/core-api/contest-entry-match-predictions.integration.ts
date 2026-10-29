@@ -216,6 +216,30 @@ describe('PrismaContestEntryMatchPredictionRepository', () => {
     );
   });
 
+  it('runs overlapping saves to one entry\'s same games one after the other, each succeeding and the last one\'s picks standing (#1254)', async () => {
+    const { event, game } = await createWeek('Week 1', AT);
+    const { entry } = await createPickEmEntry([event.id]);
+    const saveAll = (confidence: number) => repos().predictions.save({
+      contestEntryId: entry.id,
+      sportEventId: event.id,
+      saves: [1, 2, 3].map((matchNumber) => ({
+        sportEventMatchId: game(matchNumber).id,
+        predictedResult: PredictedResult.TEAM,
+        sportEventParticipantId: expectDefined(game(matchNumber).homeSportEventParticipantId),
+        confidence,
+      })),
+      clearedMatchIds: [],
+      eventStatus: ContestEntryStatus.DRAFT,
+      at: LATER,
+    });
+
+    await Promise.all([1, 2, 3, 4, 5].map(saveAll));
+
+    const picks = await repos().predictions.findByEntryAndEvent(entry.id, event.id);
+    expect(picks.map((pick) => pick.sportEventMatchId)).toEqual([1, 2, 3].map((matchNumber) => game(matchNumber).id));
+    expect(new Set(picks.map((pick) => pick.confidence)).size).toBe(1);
+  });
+
   it('says whether any entry has picked a game, so a picked game\'s spread stays fixed (#720)', async () => {
     const { event, game } = await createWeek('Week 1', AT);
     const { entry } = await createPickEmEntry([event.id]);
