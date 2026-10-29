@@ -450,6 +450,23 @@ describe('GolfScoreService — provider sync', () => {
       );
     });
 
+    it.each([
+      ['only holes played (thru) changed', { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }, { thru: 10 }],
+      ['only the status changed, to a withdrawal (DNF)', { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }, { status: 'DNF' as const }],
+    ])('rewrites a round and its standing when %s', async (_label, first, change) => {
+      const { service, event, anaEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
+      const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'feed', 4);
+      await tick({});
+      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
+      const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
+
+      const result = await tick(change);
+
+      expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: anaEntry.id, ...change })]);
+      expect(standingWrites.mock.calls[0][0]).toHaveLength(1);
+      expect(result.writeDiagnostics.summary).toMatchObject({ updated: 2, unchanged: 0 });
+    });
+
     it('when a payload carries the same golfer\'s round twice, stores the later one with a single write', async () => {
       const { store, service, event, anaEntry, golfRounds } = await scheduledSyncSetup();
       const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
@@ -457,6 +474,7 @@ describe('GolfScoreService — provider sync', () => {
       const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'feed', 4);
 
       expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ scoreToPar: -3 })]);
+      expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 0 });
       expect(store.golfRoundRows.map((row) => row.scoreToPar)).toEqual([-3]);
       const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
       expect(standing.golf.eventScoreToPar).toBe(-3);

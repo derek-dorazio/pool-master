@@ -280,7 +280,8 @@ export class GolfScoreService {
 
     return {
       updatesReturned: rounds.length,
-      updatesPersisted: persistable.length,
+      // A golfer-round sent twice in one payload counts once: it is compared and written once.
+      updatesPersisted: latestByKey.size,
       updatesSkipped: skipped,
       writeDiagnostics: mergeSyncWriteDiagnostics([summarizeSyncWriteRows(detailRows), standingDiagnostics]),
     };
