@@ -623,6 +623,7 @@ export class InMemoryContestWorld {
   userRepo(): UserRepository {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
+      findByIds: async (ids) => [...this.users.values()].filter((user) => ids.includes(user.id)),
       // Every membership status, as the port says.
       findByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]

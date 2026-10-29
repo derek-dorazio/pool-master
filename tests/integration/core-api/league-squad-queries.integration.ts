@@ -246,3 +246,18 @@ describe('PrismaMembershipTransaction', () => {
     });
   });
 });
+
+describe('PrismaUserRepository.findByIds', () => {
+  it('reads every user named in one call, leaving out an id with no user, and reads nothing for no ids', async () => {
+    const users = new PrismaUserRepository(getPrisma());
+    const [first, second] = await Promise.all([
+      createTestUser({ displayName: `Receipt Owner ${randomUUID().slice(0, 8)}` }),
+      createTestUser({ displayName: `Receipt Co-owner ${randomUUID().slice(0, 8)}` }),
+    ]);
+
+    const found = await users.findByIds([first.user.id, second.user.id, randomUUID()]);
+
+    expect(found.map((user) => user.id).sort()).toEqual([first.user.id, second.user.id].sort());
+    await expect(users.findByIds([])).resolves.toEqual([]);
+  });
+});

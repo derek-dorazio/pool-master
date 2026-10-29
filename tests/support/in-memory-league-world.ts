@@ -173,6 +173,7 @@ export function inMemoryLeagueWorld(): InMemoryLeagueWorld {
 
   const userRepo: UserRepository = {
     findById: async (id) => users.get(id),
+    findByIds: async (ids) => users.where((row) => ids.includes(row.id)),
     findByEmail: async (email) => one(users.where((row) => row.email === email)),
     findAll: async () => users.where(() => true),
     findByLeague: async (leagueId) => {

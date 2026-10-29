@@ -38,7 +38,6 @@ import type {
   SportEvent,
   SportEventMatch,
   SquadMembership,
-  User,
 } from '@poolmaster/shared/domain';
 import {
   ContestFormat,
@@ -1268,7 +1267,8 @@ export class ContestService {
    * The room passes what it already read for the pick (#1196): the contest, the event, the
    * configuration, the event's valuations and the squads' memberships. What is read here is
    * only what it does not hold: the entries with their squad names, their picks in the event,
-   * the league, the sport league and the owners. One read of each for a draw's every entry.
+   * the league, the sport league and the owners. One read of each, however many entries a draw
+   * dealt.
    */
   async sendEntrySubmittedEmails(input: EntrySubmittedReceiptInput): Promise<void> {
     const { contest, sportEvent, entryIds } = input;
@@ -1305,9 +1305,13 @@ export class ContestService {
     const ownerIds = [...new Set(input.squadMemberships
       .filter((membership) => ownedSquadIds.has(membership.squadId))
       .map((membership) => membership.userId))];
-    const userById = new Map((await Promise.all(ownerIds.map((userId) => this.deps.users.findById(userId))))
-      .filter((user): user is User => user !== null && user.isActive)
+    const userById = new Map((await this.deps.users.findByIds(ownerIds))
+      .filter((user) => user.isActive)
       .map((user) => [user.id, user]));
+    const picksByEntryId = new Map<string, ContestEntryPickWithParticipant[]>();
+    for (const pick of picks) {
+      picksByEntryId.set(pick.entryId, [...(picksByEntryId.get(pick.entryId) ?? []), pick]);
+    }
 
     const tierLabelBySportEventParticipantId = new Map<string, string>();
     const priceBySportEventParticipantId = new Map<string, number>();
@@ -1335,7 +1339,7 @@ export class ContestService {
         }, 'Skipped contest entry confirmation email because entry data was unavailable');
         continue;
       }
-      const entryPicks = picks.filter((pick) => pick.entryId === entryId);
+      const entryPicks = picksByEntryId.get(entryId) ?? [];
       const lineup = {
         tiers: buildEntryTierSelections(entryPicks, tierLabelBySportEventParticipantId),
         spent: entryPicks.reduce((total, pick) => total + (priceBySportEventParticipantId.get(pick.sportEventParticipantId) ?? 0), 0),

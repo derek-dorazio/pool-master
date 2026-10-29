@@ -1442,7 +1442,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
@@ -1506,7 +1506,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1555,7 +1555,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         squadMemberships: createMockSquadMembershipRepo({
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
@@ -1585,7 +1585,7 @@ describe('ContestService', () => {
       expect(sentMessage.text).not.toContain('Tiebreaker');
     });
 
-    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, their picks and the league once for all of them', async () => {
+    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, their picks, the league and the owners once for all of them', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1598,6 +1598,7 @@ describe('ContestService', () => {
         send: mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail-1' })),
       };
       const otherOwner = buildUser({ id: 'user-2', email: 'olive@example.com', firstName: 'Olive', lastName: 'Owner', username: 'olive' });
+      const users = fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER, otherOwner]) });
       const entries = createMockEntryRepo({
         findByContestWithSquad: jest.fn().mockResolvedValue([
           DEFAULT_ENTRY_WITH_SQUAD,
@@ -1617,9 +1618,7 @@ describe('ContestService', () => {
         entries,
         leagues,
         picks,
-        users: fakeUserRepo({
-          findById: jest.fn().mockImplementation(async (id: string) => (id === 'user-2' ? otherOwner : RECEIPT_USER)),
-        }),
+        users,
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
@@ -1635,6 +1634,9 @@ describe('ContestService', () => {
       expect(entries.findByContestWithSquad).toHaveBeenCalledTimes(1);
       expect(entries.findByIdWithSquad).not.toHaveBeenCalled();
       expect(leagues.findById).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledTimes(1);
+      expect(users.findByIds).toHaveBeenCalledWith(['user-1', 'user-2']);
+      expect(users.findById).not.toHaveBeenCalled();
       expect(picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
       expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1', 'entry-2'], { sportEventId: 'event-1' });
       await deliverQueuedEmail();
@@ -1667,7 +1669,7 @@ describe('ContestService', () => {
         leagues: fakeLeagueRepo({
           findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
         }),
-        users: fakeUserRepo({ findById: jest.fn().mockResolvedValue(RECEIPT_USER) }),
+        users: fakeUserRepo({ findByIds: jest.fn().mockResolvedValue([RECEIPT_USER]) }),
         memberships: createMockMembershipRepo({ findByLeagueAndUser: jest.fn().mockResolvedValue(membership) }),
         squads: createMockSquadRepo(),
         squadMemberships: createMockSquadMembershipRepo({
