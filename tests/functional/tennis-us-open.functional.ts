@@ -14,7 +14,7 @@ import {
   listSportLeagues,
   openContest,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
@@ -192,7 +192,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
     const lineup = ['Alexander Zverev', 'Frances Tiafoe', 'Luciano Darderi', 'Alexander Blockx', 'Botic van de Zandschulp', 'Dane Sweeny'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const player of lineup) {
-      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(player) } })).response?.status).toBe(200);
+      expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(player) } })).response?.status).toBe(200);
     }
     expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response?.status).toBe(200);
 

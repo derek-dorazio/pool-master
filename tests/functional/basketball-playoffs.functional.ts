@@ -14,7 +14,7 @@ import {
   listSportLeagues,
   openContest,
   submitContestEntry,
-  submitContestSelection,
+  selectContestPick,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
@@ -164,7 +164,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const lineup = ['Oklahoma City Thunder', 'Indiana Pacers', 'Minnesota Timberwolves', 'Golden State Warriors'];
     const entryId = expectDefined((await enterContest({ client: member.client, path: { contestId } })).data).entry.id;
     for (const team of lineup) {
-      expect((await submitContestSelection({ client: member.client, path: { contestId }, body: { entryId, participantId: rowOf(team) } })).response?.status).toBe(200);
+      expect((await selectContestPick({ client: member.client, path: { contestId, entryId, sportEventParticipantId: rowOf(team) } })).response?.status).toBe(200);
     }
     expect((await submitContestEntry({ client: member.client, path: { contestId, entryId, sportEventId: event.id } })).response?.status).toBe(200);
 

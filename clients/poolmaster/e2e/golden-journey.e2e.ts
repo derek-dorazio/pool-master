@@ -686,8 +686,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         await submitAndRead(
           page,
           `contest-entry-participant-${fieldEntryId}`,
-          'POST',
-          `/api/v1/selections/${state.contestId}/pick`,
+          'PUT',
+          `/api/v1/selections/${state.contestId}/entries/${state.entryId}/picks/${fieldEntryId}`,
         );
         await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
       }
@@ -745,10 +745,11 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         `/api/v1/contests/${budgetContestId}/entries/me`,
       );
       state.budgetEntryId = created.entry.id;
+      const budgetEntryId = created.entry.id;
       await expect(page.getByTestId('contest-entry-budget-builder')).toBeVisible();
 
       for (const fieldEntryId of [dearest, dear, floorA]) {
-        await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
+        await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${budgetContestId}/entries/${budgetEntryId}/picks/${fieldEntryId}`);
         await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
       }
       // Over the cap the page says so and Submit stays disabled, whatever the tiebreaker.
@@ -758,8 +759,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       await expect(page.getByTestId('contest-entry-submit')).toBeDisabled();
 
       // The swap: tap the $20,000 golfer off, then add the other $6,000 one.
-      await submitAndRead(page, `contest-entry-selected-${dear}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
-      await submitAndRead(page, `contest-entry-participant-${floorB}`, 'POST', `/api/v1/selections/${budgetContestId}/pick`);
+      await submitAndRead(page, `contest-entry-selected-${dear}`, 'DELETE', `/api/v1/selections/${budgetContestId}/entries/${budgetEntryId}/picks/${dear}`);
+      await submitAndRead(page, `contest-entry-participant-${floorB}`, 'PUT', `/api/v1/selections/${budgetContestId}/entries/${budgetEntryId}/picks/${floorB}`);
       await expect(page.getByTestId('contest-entry-over-budget')).toHaveCount(0);
       await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
       await submitAndRead(
@@ -1490,7 +1491,7 @@ async function buildReleasedTournament(
 async function pickAndSubmitEvent(page: Page, contestId: string, entryId: string, tournament: BuiltTournament) {
   for (const fieldEntryId of tournament.fieldEntryIds) {
     await expect(page.getByTestId(`contest-entry-participant-${fieldEntryId}`)).toBeVisible();
-    await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'POST', `/api/v1/selections/${contestId}/pick`);
+    await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${contestId}/entries/${entryId}/picks/${fieldEntryId}`);
     await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
   }
   await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });

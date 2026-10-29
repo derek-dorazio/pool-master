@@ -74,7 +74,7 @@ export interface ContestEntryPickWithParticipant extends ContestEntryPick {
 
 /**
  * Reads of `ContestEntryPick`. **Read-only by design (#247).** A pick has one insert path,
- * `ContestEntryPickService.createPick`: it reads the parent contest's `contestFormat` inside
+ * `ContestEntryPickService` (`changeEntryPick`, or `recordDraw` for a draw): it reads the parent contest's `contestFormat` inside
  * the insert's transaction and writes it onto the pick, which the per-format partial unique
  * indexes depend on (plans/117 §7.1, "no insert path bypasses this"). A `create` here would be
  * a second way in that every adapter and fake would have to implement; leaving it off the port
@@ -97,8 +97,6 @@ export interface ContestEntryPickRepository {
   ): Promise<ContestEntryPickWithParticipant[]>;
   /** Picks per entry; an entry with none is absent from the map. */
   countByEntries(entryIds: readonly string[]): Promise<Map<string, number>>;
-  /** How many picks the whole contest holds — the source of a pick's contest-wide pick number. */
-  countByContest(contestId: string): Promise<number>;
 }
 
 /** A settled entry standing, with the total its position was ranked from. */

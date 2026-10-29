@@ -27,7 +27,7 @@ import {
 } from './invitation-preview';
 import { buildDefaultTeamName } from '@/features/teams/team-defaults';
 import { getTeamIconOption, TEAM_ICON_OPTIONS } from '@/features/teams/team-icon-catalog';
-import { TeamIcon } from '@/features/teams/team-icon';
+import { TeamAvatar } from '@/features/teams/team-avatar';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { ApiError, extractErrorMessage, throwApiError } from '@/lib/errors';
@@ -337,9 +337,7 @@ export function JoinLeaguePage() {
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium text-foreground">Your icon</legend>
               <div className="flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4">
-                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${selectedIcon.themeClass}`}>
-                  <TeamIcon iconKey={selectedIconKey} size="lg" />
-                </div>
+                <TeamAvatar iconKey={selectedIconKey} size="lg" />
                 <div className="min-w-0">
                   <div className="text-xs uppercase text-muted-foreground">
                     Selected icon
@@ -353,8 +351,8 @@ export function JoinLeaguePage() {
                 optionTestIdPrefix="join-league-team-icon"
                 options={TEAM_ICON_OPTIONS}
                 renderOptionIcon={(icon) => (
-                  <div className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full ${icon.themeClass}`}>
-                    <TeamIcon iconKey={icon.key} size="md" />
+                  <div className="flex justify-center">
+                    <TeamAvatar iconKey={icon.key} />
                   </div>
                 )}
                 testId="join-league-icon-palette"

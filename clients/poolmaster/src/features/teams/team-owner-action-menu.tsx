@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
-import { Button } from '@/features/shared/ui';
+import { Button, MenuItem } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -167,8 +167,7 @@ export function TeamOwnerActionMenu({
             data-testid={`${testPrefix}-menu-${teamId}-${ownerUserId}`}
           >
             {canPromote ? (
-              <Button
-                className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+              <MenuItem
                 data-testid={`${testPrefix}-promote-${teamId}-${ownerUserId}`}
                 onClick={() => {
                   setActiveAction('promote');
@@ -177,11 +176,10 @@ export function TeamOwnerActionMenu({
                 type="button"
               >
                 Promote to commissioner
-              </Button>
+              </MenuItem>
             ) : null}
             {canDemote ? (
-              <Button
-                className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+              <MenuItem
                 data-testid={`${testPrefix}-demote-${teamId}-${ownerUserId}`}
                 onClick={() => {
                   setActiveAction('demote');
@@ -190,10 +188,9 @@ export function TeamOwnerActionMenu({
                 type="button"
               >
                 Demote to member
-              </Button>
+              </MenuItem>
             ) : null}
-            <Button
-              className="normal-case tracking-normal w-full rounded-xl px-3 py-2 text-left text-sm font-medium text-foreground transition hover:bg-muted/40"
+            <MenuItem
               data-testid={`${testPrefix}-remove-${teamId}-${ownerUserId}`}
               onClick={() => {
                 setActiveAction('remove');
@@ -202,7 +199,7 @@ export function TeamOwnerActionMenu({
               type="button"
             >
               Remove owner
-            </Button>
+            </MenuItem>
           </div>
         ) : null}
       </div>

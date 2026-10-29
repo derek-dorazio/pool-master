@@ -122,7 +122,6 @@ export const API_ROUTES = {
   // Selections
   selections: {
     state: (contestId: string) => `/api/v1/selections/${contestId}`,
-    pick: (contestId: string) => `/api/v1/selections/${contestId}/pick`,
   },
 
   observability: {

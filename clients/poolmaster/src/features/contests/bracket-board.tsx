@@ -26,7 +26,8 @@ function TeamChoice({
   return (
     <Button
       aria-pressed={isPicked}
-      className="normal-case tracking-normal w-full justify-between text-left"
+      className="justify-between"
+      layout="row"
       data-testid={`bracket-game-${game.matchNumber}-team-${team.sportEventParticipantId}`}
       disabled={isBusy}
       onClick={() => {

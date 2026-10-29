@@ -13,6 +13,7 @@
  */
 import noBareEnumLiterals from './no-bare-enum-literals.mjs';
 import noBareUiControls from './no-bare-ui-controls.mjs';
+import noButtonRowOverride from './no-button-row-override.mjs';
 import noDisabledTests from './no-disabled-tests.mjs';
 import noDuplicateExtractErrorMessage from './no-duplicate-extract-error-message.mjs';
 import noEnvFallbacks from './no-env-fallbacks.mjs';
@@ -35,6 +36,7 @@ export default {
   rules: {
     'no-bare-enum-literals': noBareEnumLiterals,
     'no-bare-ui-controls': noBareUiControls,
+    'no-button-row-override': noButtonRowOverride,
     'no-disabled-tests': noDisabledTests,
     'no-duplicate-extract-error-message': noDuplicateExtractErrorMessage,
     'no-env-fallbacks': noEnvFallbacks,

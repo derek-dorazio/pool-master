@@ -29,8 +29,11 @@ export const randomDrawSelectionEngine: SelectionEngine = {
 
   rosterSize: ({ configuration }) => picksPerEntryOf(configuration),
 
-  /** Every selection is refused, a held golfer included: dealt picks are final. */
+  /** Every selection is refused: only the draw deals picks. */
   evaluate: () => ({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DEALT_BY_DRAW }),
+
+  /** Dealt picks are final: none can be unselected. */
+  refuseUnselect: () => ({ kind: SelectionOutcomeKind.REJECT, code: SelectionRejectCode.DEALT_BY_DRAW }),
 
   findLineupIssues: ({ rosterSize, picks }) =>
     completenessIssues({ rosterSize, pickCount: picks.length, shortTierNames: [] }),

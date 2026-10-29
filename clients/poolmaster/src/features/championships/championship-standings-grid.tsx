@@ -2,7 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useMemo } from 'react';
 import type { ChampionshipStandingRowDto } from '@/lib/api';
 import { Button, DataGrid, cn } from '@/features/shared/ui';
-import { CupSquadName } from './cup-squad-name';
+import { TeamName } from '@/features/teams/team-name';
 import { formatCupPoints, formatOrdinalPlace } from './cup-view';
 import { FINISH_MATRIX_PLACES, type ContestResultFilter } from './championship-view';
 
@@ -42,10 +42,10 @@ export function ChampionshipStandingsGrid({
         header: 'Squad',
         accessorFn: (row) => row.squadName,
         cell: ({ row }) => (
-          <CupSquadName
+          <TeamName
             iconKey={row.original.squadIconKey}
             isActive={row.original.squadIsActive}
-            isFocus={row.original.squadId === focusSquadId}
+            isMine={row.original.squadId === focusSquadId}
             name={row.original.squadName}
             testId={`championship-standing-squad-${row.original.squadId}`}
           />

@@ -14,6 +14,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 
@@ -129,7 +130,7 @@ describe('EventScoreSourceService links', () => {
   }
 
   async function createEvent(name: string) {
-    return new PrismaSportEventRepository(getPrisma()).create({
+    return createSportEventRow(new PrismaSportEventRepository(getPrisma()), {
       ...(await freshEventEdition(getPrisma())),
       externalId: `manual-${randomUUID()}`,
       providerId: 'integration-test',

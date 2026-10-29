@@ -11,13 +11,11 @@ import {
   cn,
   Eyebrow,
   formatDateTimeDisplay,
-  IconAvatar,
   LinkButton,
   LOADING_TEXT,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { getTeamIconOption } from '@/features/teams/team-icon-catalog';
-import { TeamIcon } from '@/features/teams/team-icon';
+import { TeamName } from '@/features/teams/team-name';
 import {
   buildBracketTopStandings,
   buildTopStandings,
@@ -63,7 +61,8 @@ function HomeCard({
       {children}
       {footer ? (
         <LinkButton
-          className="normal-case tracking-normal w-full justify-start rounded-none border-t border-border"
+          className="rounded-none border-t border-border"
+          layout="row"
           data-testid={footer.testId}
           size="sm"
           to={footer.to}
@@ -277,14 +276,8 @@ export function YourTeamCard({
       {isLoading ? (
         <p className="px-4 py-4 text-sm text-muted-foreground" role="status">{LOADING_TEXT}</p>
       ) : team ? (
-        <div className="flex items-center gap-3 px-4 py-4">
-          <IconAvatar className={getTeamIconOption(team.iconKey).themeClass} size="sm">
-            <TeamIcon iconKey={team.iconKey} size="sm" />
-          </IconAvatar>
-          <div className="min-w-0">
-            <div className="truncate font-bold text-foreground">{team.name}</div>
-            <div className="truncate text-sm text-muted-foreground">{owners.join(', ')}</div>
-          </div>
+        <div className="px-4 py-4">
+          <TeamName iconKey={team.iconKey} name={team.name} subtitle={owners.join(', ')} />
         </div>
       ) : (
         <p className="px-4 py-4 text-sm text-muted-foreground">You haven&apos;t chosen your name in this league yet.</p>
@@ -328,7 +321,8 @@ export function CupsCard({
           return (
             <li className="border-t border-border first:border-t-0" key={cup.id}>
               <LinkButton
-                className="normal-case tracking-normal h-auto w-full flex-col items-start gap-0.5 rounded-none px-4 py-3 text-left"
+                className="flex-col items-start gap-0.5 rounded-none px-4 py-3"
+                layout="row"
                 data-testid={`league-home-cup-${cup.id}`}
                 to={buildLeaguePointsRacePath(leagueCode, year, cup.sportLeagueId)}
                 variant="ghost"
