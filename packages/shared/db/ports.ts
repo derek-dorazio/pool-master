@@ -400,8 +400,9 @@ export interface ContestRepository {
   findByLeague(leagueId: string, statuses: readonly Contest['status'][]): Promise<Contest[]>;
   /**
    * The league's current contests (#1161), newest first: DRAFT, OPEN and ACTIVE, less any DRAFT
-   * with an event started by `now`, since it can never open. A DRAFT with no events stays, and so
-   * does a bracket or squares draft, which closes at its round or game rather than its event.
+   * that can never open (#1217): one with an event COMPLETED or CANCELLED, and one whose cutoff is
+   * its event's start once an event has started by `now`. A DRAFT with no events stays, and so
+   * does a bracket starting after round 1 or a squares draft with its game, which close later.
    */
   findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
   /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */

@@ -3,6 +3,8 @@ import { MatchEnding, MatchStatus, Sport, SportEventStatus } from '@poolmaster/s
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { standardEventPricing } from '../../support/budget-pricing';
+import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
+import type { SportEventParticipantView } from '@poolmaster/shared/db';
 
 // The field's rules against an in-memory store: the one read every field screen uses,
 // seeding from the sport league, adding anyone, the all-or-none grid save, and removal.
@@ -18,13 +20,6 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     affiliations: store.affiliationRepo(),
-    valuations: store.valuationRepo(),
-    standings: store.standingRepo(),
-    participantRounds: store.participantRoundRepo(),
-    golfStandings: store.golfStandingRepo(),
-    golfRounds: store.golfRoundRepo(),
-    statLines: store.statLineRepo(),
-    raceResults: store.raceResultRepo(),
     matches: store.matchRepo(),
     random: () => 0.5,
   });
@@ -73,6 +68,86 @@ describe('SportEventParticipantService.listEventParticipants', () => {
 
     await expect(service.listEventParticipants(orphan.id)).resolves.toEqual([expect.objectContaining({ affiliatedWithSportLeague: false })]);
     await expect(service.listEventParticipants('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+// #1163 — what viewers poll is shared by every service in the container for 30 seconds; what
+// a write answers with is read now.
+describe('SportEventParticipantService — the field viewers share', () => {
+  const T0 = new Date('2026-10-28T20:00:00.000Z');
+
+  function sharing() {
+    const context = setup();
+    const fieldCache = new ReadCache<SportEventParticipantView[]>();
+    let now = T0;
+    const serviceSharing = () => new SportEventParticipantService({
+      sportEvents: context.store.sportEventRepo(),
+      field: context.store.fieldRepo(),
+      participants: context.store.participantRepo(),
+      affiliations: context.store.affiliationRepo(),
+      matches: context.store.matchRepo(),
+      fieldCache,
+      now: () => now,
+    });
+    return { ...context, fieldCache, serviceSharing, advance: (ms: number) => { now = new Date(T0.getTime() + ms); } };
+  }
+
+  it('answers every service in the container with the field one of them read in the last 30 seconds, and reads it again after', async () => {
+    const { store, sport, event, serviceSharing, advance } = sharing();
+    const golfer = store.addToField(event.id, store.addParticipant(sport.id, 'Ana').id, { ranking: 5 });
+    const contestReads = serviceSharing();
+    const pickScreenReads = serviceSharing();
+
+    await contestReads.listCachedEventParticipants(event.id);
+    golfer.ranking = 1;
+    advance(29_999);
+    const shared = await pickScreenReads.listCachedEventParticipants(event.id);
+    advance(30_000);
+    const reread = await pickScreenReads.listCachedEventParticipants(event.id);
+
+    expect(shared.map((row) => row.entry.ranking)).toEqual([5]);
+    expect(reread.map((row) => row.entry.ranking)).toEqual([1]);
+  });
+
+  it('reads the field afresh within the 30 seconds once a write has forgotten it, and listEventParticipants always reads it now', async () => {
+    const { store, sport, event, fieldCache, serviceSharing } = sharing();
+    const golfer = store.addToField(event.id, store.addParticipant(sport.id, 'Ana').id, { ranking: 5 });
+    const service = serviceSharing();
+
+    await service.listCachedEventParticipants(event.id);
+    golfer.ranking = 1;
+    const now = await service.listEventParticipants(event.id);
+    const stillShared = await service.listCachedEventParticipants(event.id);
+    fieldCache.forget(event.id);
+    const afterTheWrite = await service.listCachedEventParticipants(event.id);
+
+    expect(now.map((row) => row.entry.ranking)).toEqual([1]);
+    expect(stillShared.map((row) => row.entry.ranking)).toEqual([5]);
+    expect(afterTheWrite.map((row) => row.entry.ranking)).toEqual([1]);
+  });
+
+  it('does not keep a 404 for an unknown event, so an event created since is read', async () => {
+    const { serviceSharing } = sharing();
+
+    await expect(serviceSharing().listCachedEventParticipants('missing')).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+  });
+});
+
+describe('SportEventParticipantService.getEventParticipant', () => {
+  it('reads one field row as the field read gives it, and 404s for a row on another event or an unknown event', async () => {
+    const { store, service, sport, sportLeague, event } = setup();
+    const ana = store.addParticipant(sport.id, 'Ana');
+    store.affiliate(sportLeague.id, ana.id);
+    store.addToField(event.id, store.addParticipant(sport.id, 'Bea').id, { seedNumber: 1 });
+    const row = store.addToField(event.id, ana.id, { seedNumber: 2 });
+    const elsewhere = store.addToField(store.addEvent({ sportLeagueId: sportLeague.id }).id, ana.id);
+
+    const one = await service.getEventParticipant(event.id, row.id);
+
+    expect(one).toEqual((await service.listEventParticipants(event.id))[1]);
+    expect(one).toMatchObject({ participant: { name: 'Ana' }, affiliatedWithSportLeague: true });
+    await expect(service.getEventParticipant(event.id, elsewhere.id)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_NOT_FOUND', statusCode: 404 });
+    await expect(service.getEventParticipant('missing', row.id)).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
   });
 });
 
@@ -326,13 +401,6 @@ describe('SportEventParticipantService — field upload', () => {
       field: fieldRepo,
       participants: store.participantRepo(),
       affiliations: store.affiliationRepo(),
-      valuations: store.valuationRepo(),
-      standings: store.standingRepo(),
-      participantRounds: store.participantRoundRepo(),
-      golfStandings: store.golfStandingRepo(),
-      golfRounds: store.golfRoundRepo(),
-      statLines: store.statLineRepo(),
-      raceResults: store.raceResultRepo(),
       matches: store.matchRepo(),
     });
 

@@ -44,6 +44,8 @@ describe('SDK Functional: league event email settings (#851)', () => {
     const savedLeague = LeagueResponseSchema.parse(expectDefined(saved.data)).league;
     expect(savedLeague.mutedSportLeagueIds).toEqual([muteFirst, muteSecond]);
     expect(savedLeague.eventEmailDelivery).toBe(EventEmailDelivery.WEEKLY_DIGEST);
+    // The saved league carries its real counts, not zeros the web app would cache.
+    expect(savedLeague.memberCount).toBe(2);
     const stored = await getFunctionalPrisma().league.findUniqueOrThrow({ where: { id: league.id }, select: { mutedSportLeagueIds: true, eventEmailDelivery: true } });
     expect(stored).toEqual({ mutedSportLeagueIds: [muteFirst, muteSecond], eventEmailDelivery: EventEmailDelivery.WEEKLY_DIGEST });
 

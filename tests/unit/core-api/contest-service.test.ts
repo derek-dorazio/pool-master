@@ -223,7 +223,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
       countParticipants: jest.fn().mockImplementation(async (ids: readonly string[]) => new Map(ids.map((id) => [id, 1]))),
     }),
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
-    eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]) },
+    eventParticipants: { listEventParticipants: jest.fn().mockResolvedValue([]), listCachedEventParticipants: jest.fn().mockResolvedValue([]) },
     tiers: {
       getEffectiveValuationsForSportEvent: jest.fn().mockResolvedValue([]),
       listTiers: jest.fn().mockResolvedValue([]),
@@ -988,7 +988,7 @@ describe('ContestService', () => {
           storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
         ]),
       });
-      const listEventParticipants = jest.fn().mockResolvedValue([
+      const listCachedEventParticipants = jest.fn().mockResolvedValue([
         buildGolfFieldView({
           id: 'sep-1',
           participantName: 'Rory McIlroy',
@@ -1074,7 +1074,7 @@ describe('ContestService', () => {
         squadMemberships: createMockSquadMembershipRepo(),
         entries: entryRepo,
         picks: pickRepo,
-        eventParticipants: { listEventParticipants },
+        eventParticipants: { listEventParticipants: jest.fn(), listCachedEventParticipants },
       });
 
       const result = await service.getLeaderboard('contest-1', 'user-1');
@@ -1097,13 +1097,13 @@ describe('ContestService', () => {
       // The field is the event's own rows, passed through; the server no longer preformats
       // rounds (#248). Rendered through the definition the leaderboard names, they read as the
       // deleted displayValue did: strokes once complete, to par while in progress.
-      expect(result.participants).toBe(await listEventParticipants.mock.results[0].value);
+      expect(result.participants).toBe(await listCachedEventParticipants.mock.results[0].value);
       const rory = result.participants.find((participant) => participant.entry.id === 'sep-1');
       const formatRound = expectDefined(PARTICIPANT_SCORING_DEFINITIONS[result.scoringDefinitionId].formatRound);
       expect(rory?.rounds.map(({ round, golf }) => formatRound({ status: round.status, ...expectDefined(golf) })))
         .toEqual(['69', '-2']);
       // Only the entries that submitted the event count: entry 3 is still a draft, so off the board.
-      expect(listEventParticipants).toHaveBeenCalledWith('event-1');
+      expect(listCachedEventParticipants).toHaveBeenCalledWith('event-1');
     });
 
     it('rejects leaving a contest after picks already exist', async () => {

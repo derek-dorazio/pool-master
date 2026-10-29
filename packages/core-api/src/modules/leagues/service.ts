@@ -23,6 +23,12 @@ import { ensureDefaultSquadForLeagueMember } from '../squads/default-squad';
 import { RESERVED_LEAGUE_CODES } from '../email';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 
+/** A league's active member and active contest counts, as the league DTO carries them. */
+export interface LeagueActivityCounts {
+  memberCount: number;
+  activeContestCount: number;
+}
+
 export interface CreateLeagueInput {
   createdBy: string;
   name: string;
@@ -240,6 +246,16 @@ export class LeagueService {
       }
       return true;
     });
+  }
+
+  /** `countLeagueActivity` for one league, as the league DTO carries it. */
+  async countActivityFor(leagueId: string): Promise<LeagueActivityCounts> {
+    const counts = await this.countLeagueActivity([leagueId]);
+    // A league with no active contest is absent from its map, which means zero.
+    return {
+      memberCount: counts.memberCounts.get(leagueId) ?? 0,
+      activeContestCount: counts.activeContestCounts.get(leagueId) ?? 0,
+    };
   }
 
   /**

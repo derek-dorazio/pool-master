@@ -6,11 +6,12 @@ import { sendError } from '../../core/error-handler';
 import { toLeagueDto } from '../../mappers/leagues.mapper';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
 import type { LeagueEventEmailSettingsService } from './event-email-settings-service';
-import { LeagueNotFoundError, LeagueOperationError } from './service';
+import { LeagueNotFoundError, LeagueOperationError, type LeagueService } from './service';
 
 export function createLeagueEventEmailSettingsHandler(
   settings: LeagueEventEmailSettingsService,
   planEntitlements: PlanEntitlementsService,
+  leagues: Pick<LeagueService, 'countActivityFor'>,
 ) {
   return async function updateLeagueEventEmailSettings(
     request: FastifyRequest<{
@@ -22,7 +23,8 @@ export function createLeagueEventEmailSettingsHandler(
     const logger = request.contextLogger ?? request.log;
     try {
       const league = await settings.update(request.params.id, request.body);
-      return reply.send({ league: toLeagueDto(league, planEntitlements.forPlan(league.plan)) });
+      const counts = await leagues.countActivityFor(league.id);
+      return reply.send({ league: toLeagueDto(league, planEntitlements.forPlan(league.plan), counts) });
     } catch (err) {
       if (err instanceof LeagueNotFoundError) {
         logger.warn({
