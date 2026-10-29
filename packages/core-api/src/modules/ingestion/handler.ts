@@ -8,6 +8,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { Sport } from '@poolmaster/shared/domain';
 import type {
   ProviderCatalogEventListQuery,
+  UnmappedProviderParticipantListQuery,
   ProviderSyncRunListQuery,
 } from '@poolmaster/shared/dto';
 import type { IngestionService } from './ingestion-service';
@@ -159,10 +160,13 @@ export function createIngestionHandlers(
     }
   }
 
-  async function listUnmappedParticipants(request: FastifyRequest, reply: FastifyReply) {
+  async function listUnmappedParticipants(
+    request: FastifyRequest<{ Querystring: UnmappedProviderParticipantListQuery }>,
+    reply: FastifyReply,
+  ) {
     const logger = request.contextLogger ?? request.log;
-    logger.debug('Listing unmapped provider participants');
-    const unmapped = await ingestionService.getUnmappedParticipants();
+    logger.debug({ filters: request.query }, 'Listing unmapped provider participants');
+    const unmapped = await ingestionService.getUnmappedParticipants(request.query);
     logger.info({ count: unmapped.length }, 'Listed unmapped provider participants');
     return reply.send({ participants: unmapped.map(toUnmappedProviderParticipantDto) });
   }

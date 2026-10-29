@@ -1,6 +1,6 @@
 import { eventRoundLabel, findSportRow, getSportDefinition, matchPeriodsOf, sportLeagueNounOf, type Sport, type SportMatchPeriods, type SportNoun } from '@poolmaster/shared/domain';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getParticipant, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
+import { getParticipant, listEventYears, listEvents, listParticipantLeagueAffiliations, listParticipants, listSportLeagues, listSports } from '@/lib/api';
 import type { ParticipantDto, ParticipantLeagueAffiliationDto, SportEventDto, SportLeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -64,16 +64,36 @@ export function useSportLeagueNoun(sport: Sport, sportLeagueId: string | undefin
   return sportLeagueNounOf(sport, league?.noun ?? null);
 }
 
-/** One golf tour's tournaments, every event year, earliest start first. */
-export function useSportLeagueEventsQuery(sportLeagueId: string) {
+/**
+ * One year of a sport league's events: what the calendar shows, not every year it has had
+ * (#1251). Waits while the year is still null.
+ */
+export function useSportLeagueEventsQuery(sportLeagueId: string, eventYear: number | null) {
   return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.leagueEvents(sportLeagueId),
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueEvents(sportLeagueId, eventYear),
     queryFn: async (): Promise<SportEventDto[]> => {
-      const response = await listEvents({ query: { sportLeagueId } });
+      const response = await listEvents({ query: { sportLeagueId, eventYear: eventYear ?? undefined } });
       if (!response.data?.events) {
         throwApiError(response.error, 'Sport league event list response is missing data.');
       }
       return response.data.events;
+    },
+    enabled: sportLeagueId !== '' && eventYear !== null,
+    retry: false,
+  });
+}
+
+/** The years a sport league has events in, newest first, for the calendar's year picker. */
+export function useSportLeagueEventYearsQuery(sportLeagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueEventYears(sportLeagueId),
+    queryFn: async (): Promise<number[]> => {
+      const response = await listEventYears({ query: { sportLeagueId } });
+      if (!response.data?.years) {
+        throwApiError(response.error, 'Sport league event years response is missing data.');
+      }
+      // The server lists them earliest first; the calendar's picker reads latest first.
+      return [...response.data.years].sort((left, right) => right - left);
     },
     enabled: sportLeagueId !== '',
     retry: false,
