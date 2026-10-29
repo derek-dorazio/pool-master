@@ -54,7 +54,7 @@ export async function waitUntilBlockedBy(prisma: PrismaClient, holderPid: number
     if (waiting > 0n) return;
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
-  throw new Error(`Nothing waited on the contest lock held by backend ${String(holderPid)}`);
+  throw new Error(`Nothing waited on the lock held by backend ${String(holderPid)}`);
 }
 
 /**

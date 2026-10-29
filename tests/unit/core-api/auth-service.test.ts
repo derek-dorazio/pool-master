@@ -49,6 +49,8 @@ function createPrismaMock(passwordHash: string | null = null) {
         create: jest.fn().mockResolvedValue({}),
         updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       },
+      /** The member's row lock; its ordering is proven against Postgres, not here. */
+      $queryRaw: jest.fn().mockResolvedValue([]),
     },
     $transaction: jest.fn(<T>(work: (tx: unknown) => Promise<T>): Promise<T> => work(prisma.tx)),
   };

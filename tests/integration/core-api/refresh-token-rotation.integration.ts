@@ -7,6 +7,7 @@
  * service against the real table.
  */
 import { createHash, randomUUID } from 'node:crypto';
+import type { Prisma } from '@prisma/client';
 import {
   setupIntegrationTests,
   teardownIntegrationTests,
@@ -16,6 +17,7 @@ import {
 import { PrismaUserRepository } from '../../../packages/core-api/src/adapters';
 import { AuthService } from '../../../packages/core-api/src/modules/auth/auth-service';
 import { hashRefreshToken } from '../../../packages/core-api/src/modules/auth/refresh-token-hash';
+import { waitUntilBlockedBy } from '../contest-lock';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(() => teardownIntegrationTests());
@@ -177,5 +179,91 @@ describe('refresh-token reuse (#1229)', () => {
     const signedOut = byHash.get(sha256(next.refreshToken));
     expect(signedOut?.revokedAt).toBeInstanceOf(Date);
     expect(signedOut?.rotatedAt).toBeNull();
+  });
+});
+
+type Work = (tx: Prisma.TransactionClient) => Promise<unknown>;
+
+/**
+ * Another writer's transaction on the member's account: it takes the member's row lock, as a
+ * rotation or a reuse revoke does, runs `work`, and on `release` runs `last` and commits.
+ */
+function holdMemberLock(userId: string, work: Work = async () => undefined) {
+  let signalReady!: (pid: number) => void;
+  const ready = new Promise<number>((resolve) => { signalReady = resolve; });
+  let releaseWith!: (last: Work) => void;
+  const released = new Promise<Work>((resolve) => { releaseWith = resolve; });
+  const committed = getPrisma().$transaction(async (tx) => {
+    const [{ pid }] = await tx.$queryRaw<[{ pid: number }]>`SELECT pg_backend_pid() AS pid`;
+    await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${userId}::uuid FOR NO KEY UPDATE`;
+    await work(tx);
+    signalReady(pid);
+    await (await released)(tx);
+  }, { timeout: 20_000 });
+  return {
+    ready,
+    release: async (last: Work = async () => undefined) => {
+      releaseWith(last);
+      await committed;
+    },
+  };
+}
+
+describe('refresh-token reuse racing a rotation (#1264)', () => {
+  it('also ends the token a rotation still in flight is inserting, so a replay that lands mid-refresh leaves the session with no live token', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const session = await service.issueSessionForUser(user.id);
+    const current = await service.refresh(session.refreshToken);
+    await getPrisma().refreshToken.update({
+      where: { tokenHash: sha256(session.refreshToken) },
+      data: { rotatedAt: new Date(Date.now() - 60_000) },
+    });
+    // A refresh of the current token, part way through: the token is rotated and its successor
+    // inserted, but the transaction has not committed.
+    const rotation = holdMemberLock(user.id, async (tx) => {
+      const now = new Date();
+      await tx.refreshToken.updateMany({
+        where: { tokenHash: sha256(current.refreshToken), revokedAt: null },
+        data: { revokedAt: now, rotatedAt: now },
+      });
+      await tx.refreshToken.create({
+        data: {
+          tokenHash: sha256(randomUUID()),
+          userId: user.id,
+          sessionId: session.sessionId,
+          expiresAt: new Date(Date.now() + 60 * 60_000),
+        },
+      });
+    });
+    const holderPid = await rotation.ready;
+
+    const replay = service.refresh(session.refreshToken);
+    await waitUntilBlockedBy(getPrisma(), holderPid);
+    await rotation.release();
+
+    await expect(replay).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+    const live = await getPrisma().refreshToken.count({ where: { sessionId: session.sessionId, revokedAt: null } });
+    expect(live).toBe(0);
+  });
+
+  it('makes a refresh wait for a reuse revoke already under way, then refuses it instead of issuing a token the revoke missed', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const session = await service.issueSessionForUser(user.id);
+    // A reuse revoke of this session holds the member's lock and has not yet revoked anything.
+    const reuse = holdMemberLock(user.id);
+    const holderPid = await reuse.ready;
+
+    const refresh = service.refresh(session.refreshToken);
+    await waitUntilBlockedBy(getPrisma(), holderPid);
+    await reuse.release((tx) => tx.refreshToken.updateMany({
+      where: { sessionId: session.sessionId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }));
+
+    await expect(refresh).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+    const live = await getPrisma().refreshToken.count({ where: { sessionId: session.sessionId, revokedAt: null } });
+    expect(live).toBe(0);
   });
 });
