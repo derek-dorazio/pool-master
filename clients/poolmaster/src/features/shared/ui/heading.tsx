@@ -65,5 +65,7 @@ export type HeadingProps = Omit<ComponentProps<"h1">, "color"> &
 export function Heading({ className, level, size, tone, variant, ...props }: HeadingProps) {
   const Tag = `h${level}` as const;
   const cardSize = variant === "card" ? size : undefined;
-  return <Tag className={cn(headingVariants({ size: cardSize, tone, variant }), className)} {...props} />;
+  // An eyebrow carries its own muted colour, so it takes no tone unless asked.
+  const toneOrDefault = tone ?? (variant === "eyebrow" ? "inherit" : "default");
+  return <Tag className={cn(headingVariants({ size: cardSize, tone: toneOrDefault, variant }), className)} {...props} />;
 }

@@ -75,13 +75,14 @@ describe("Heading", () => {
       <>
         <Heading level={2} variant="subtitle">Owners</Heading>
         <Heading level={4} variant="label">Round 2</Heading>
-        <Heading level={4} tone="inherit" variant="eyebrow">East region</Heading>
+        <Heading level={4} variant="eyebrow">East region</Heading>
       </>,
     );
 
     expect(screen.getByRole("heading", { name: "Owners" })).toHaveClass("font-display", "text-lg", "font-extrabold");
     expect(screen.getByRole("heading", { name: "Round 2" })).toHaveClass("text-sm", "font-semibold");
     expect(screen.getByRole("heading", { name: "East region" })).toHaveClass("uppercase", "tracking-eyebrow", "text-muted-foreground");
+    expect(screen.getByRole("heading", { name: "East region" })).not.toHaveClass("text-foreground");
   });
 
   it("only lets a card title take a size, so the fixed steps of the scale cannot be bent per call", () => {

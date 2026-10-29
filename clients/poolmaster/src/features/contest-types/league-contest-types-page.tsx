@@ -92,7 +92,7 @@ export function LeagueContestTypesPage() {
               <SectionHeader description={SPORT_BLURBS[sport.sport]} title={sport.name} />
               {sport.groups.map((group) => (
                 <div className="space-y-3" key={group.sportLeagueId ?? 'every-event'}>
-                  <Heading level={4} tone="inherit" variant="eyebrow">{group.name}</Heading>
+                  <Heading level={4} variant="eyebrow">{group.name}</Heading>
                   {group.sportLeagueId !== null && statPoolLines.has(group.sportLeagueId) ? (
                     <p className="text-sm text-muted-foreground" data-testid={`contest-types-stat-pool-${group.sportLeagueId}`}>
                       {statPoolLines.get(group.sportLeagueId)}

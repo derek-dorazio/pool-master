@@ -24,7 +24,7 @@ export function InvitationContextCard({
           {getLeagueInitials(leagueName)}
         </div>
         <div className="min-w-0">
-          <Heading level={3} tone="inherit" variant="eyebrow">{title}</Heading>
+          <Heading level={3} variant="eyebrow">{title}</Heading>
           <div className="truncate text-base font-semibold text-foreground">{leagueName}</div>
           {inviteCode ? (
             <div className="truncate font-mono text-xs uppercase text-muted-foreground">
