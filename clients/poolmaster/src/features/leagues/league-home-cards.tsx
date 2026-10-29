@@ -3,6 +3,7 @@ import { ContestStatus, SelectionType, SquadMembershipStatus } from '@poolmaster
 import type { ContestDto, ContestEntryDto, SquadDto } from '@/lib/api';
 import { formatUserName } from '@/features/account/user-name';
 import { ContestStatusBadge } from '@/features/contests/contest-status-badge';
+import { MineMarker } from '@/features/contests/mine-marker';
 import { useBracketLeaderboardQuery, useContestLeaderboardQuery } from '@/features/contests/use-contest-leaderboard';
 import {
   cn,
@@ -202,7 +203,7 @@ function StandingsRow({ row }: { row: StandingRow }) {
       <td className="w-10 px-4 py-2 text-muted-foreground">{row.position ?? '–'}</td>
       <td className="px-2 py-2 font-semibold text-foreground">
         {row.name}
-        {row.isMine ? <span className="font-normal text-muted-foreground"> · you</span> : null}
+        {row.isMine ? <span className="ml-2 inline-block"><MineMarker /></span> : null}
       </td>
       <td className="px-4 py-2 text-right">{row.total ?? '–'}</td>
     </tr>
