@@ -103,7 +103,7 @@ export function leaguesModule(fastify: FastifyInstance, opts: MailModuleOptions 
     leagues: leagueRepo,
     sportLeagues: new PrismaSportLeagueRepository(prisma),
     logger: fastify.log,
-  }), opts.planEntitlements);
+  }), opts.planEntitlements, leagueService);
   const invitation = createInvitationHandlers(invitationService, userRepo);
   const member = createMemberHandlers(memberService, memberDirectoryService, userRepo);
   const bulk = createBulkHandlers(bulkService);

@@ -6,7 +6,9 @@
  * `listEventParticipants` is that one read. It returns each field row with its canonical
  * participant, valuation, standing and rounds — the core row plus the sport's extension
  * at each level — so the field grid, the scores screen and the event browser all read
- * the same object. Before #236 those were three projections of these rows.
+ * the same object. Before #236 those were three projections of these rows. Since #1163 it
+ * is one repository call, and what viewers poll, `listCachedEventParticipants`, is shared
+ * by every contest on the event for up to 30 seconds.
  *
  * Seeding from a sport league copies its active affiliations onto the field once; it
  * does not constrain the field afterwards. `addParticipants` is the deliberate path for
@@ -23,16 +25,10 @@ import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantLeagueAffiliationRepository,
   ParticipantRepository,
-  SportEventParticipantGolfRoundRepository,
-  SportEventParticipantGolfStandingRepository,
-  SportEventParticipantStatLineRepository,
   SportEventParticipantPatch,
   SportEventMatchRepository,
-  SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
-  SportEventParticipantRoundRepository,
-  SportEventParticipantStandingRepository,
-  SportEventParticipantValuationRepository,
+  SportEventParticipantView,
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -41,18 +37,10 @@ import {
   eventPlaysMatches,
   SportEventStatus,
   type ParticipantInactiveReason,
-  type Participant,
   type SportEvent,
-  type SportEventMatch,
   type SportEventParticipant,
-  type SportEventParticipantGolfRound,
-  type SportEventParticipantGolfStanding,
-  type SportEventParticipantStatLine,
-  type SportEventParticipantRaceResult,
-  type SportEventParticipantRound,
-  type SportEventParticipantStanding,
-  type SportEventParticipantValuation,
 } from '@poolmaster/shared/domain';
+import { ReadCache } from '../../core/read-cache';
 import { deriveSeedNumbersAndOdds } from '../golf/golf-seeding-algorithm';
 import {
   matchAmong,
@@ -61,36 +49,11 @@ import {
   type ParticipantRowResolution,
 } from '../sport-catalog/participant-row-resolver';
 import { SportEventError } from './errors';
+import type { EventFieldCache } from './event-field-cache';
 import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 
-/** A round row with its sport extension, when the sport has one and it has been scored. */
-export interface ParticipantRoundView {
-  round: SportEventParticipantRound;
-  golf: SportEventParticipantGolfRound | null;
-  /** The composite family's extension (#934): a stat pool player's stats in the game, empty for any other family. */
-  statLines: SportEventParticipantStatLine[];
-}
-
-/** A standing row with its sport extension. */
-export interface ParticipantStandingView {
-  standing: SportEventParticipantStanding;
-  golf: SportEventParticipantGolfStanding | null;
-}
-
-/** One field row, as every reader of an event's participants sees it. */
-export interface SportEventParticipantView {
-  entry: SportEventParticipant;
-  participant: Participant;
-  valuation: SportEventParticipantValuation | null;
-  standing: ParticipantStandingView | null;
-  rounds: ParticipantRoundView[];
-  /** The finish-position extension: how the runner's race ended, once a result is entered. */
-  raceResult: SportEventParticipantRaceResult | null;
-  /** The bracket matches naming this row on either side, in match order: head to head scores from them (#699). */
-  matches: SportEventMatch[];
-  /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
-  affiliatedWithSportLeague: boolean;
-}
+// The field row a reader sees lives with the port that reads it (#1163).
+export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
 
 export interface SeedFieldResult {
   added: number;
@@ -192,70 +155,55 @@ export interface SportEventParticipantServiceDeps {
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
   affiliations: ParticipantLeagueAffiliationRepository;
-  valuations: SportEventParticipantValuationRepository;
-  standings: SportEventParticipantStandingRepository;
-  participantRounds: SportEventParticipantRoundRepository;
-  golfStandings: SportEventParticipantGolfStandingRepository;
-  golfRounds: SportEventParticipantGolfRoundRepository;
-  statLines: Pick<SportEventParticipantStatLineRepository, 'findBySportEvent'>;
-  raceResults: Pick<SportEventParticipantRaceResultRepository, 'findBySportEvent'>;
   matches: Pick<SportEventMatchRepository, 'findBySportEvent'>;
+  /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
+  fieldCache?: EventFieldCache;
+  now?: () => Date;
   random?: () => number;
   logger?: FastifyBaseLogger;
 }
 
 export class SportEventParticipantService {
-  constructor(private readonly deps: SportEventParticipantServiceDeps) {}
+  private readonly fieldCache: EventFieldCache;
 
-  /** The field in seed order, unseeded last. 404 EVENT_NOT_FOUND for an unknown event. */
+  constructor(private readonly deps: SportEventParticipantServiceDeps) {
+    this.fieldCache = deps.fieldCache ?? new ReadCache();
+  }
+
+  /**
+   * The field in seed order, unseeded last, read now in one repository call (#1163). What a
+   * write answers with, and what settlement and the emails read. 404 EVENT_NOT_FOUND for an
+   * unknown event.
+   */
   async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
-    const field = await this.deps.field.findBySportEvent(sportEventId);
-    const [participants, valuations, standings, rounds, golfStandings, golfRounds, statLines, raceResults, matches, affiliated] = await Promise.all([
-      this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
-      this.deps.valuations.findBySportEvent(sportEventId),
-      this.deps.standings.findBySportEvent(sportEventId),
-      this.deps.participantRounds.findBySportEvent(sportEventId),
-      this.deps.golfStandings.findBySportEvent(sportEventId),
-      this.deps.golfRounds.findBySportEvent(sportEventId),
-      this.deps.statLines.findBySportEvent(sportEventId),
-      this.deps.raceResults.findBySportEvent(sportEventId),
-      this.deps.matches.findBySportEvent(sportEventId),
-      this.affiliatedParticipantIds(event),
-    ]);
+    return this.deps.field.findFieldForEvent(sportEventId, event.sportLeagueId);
+  }
 
-    const participantById = new Map(participants.map((participant) => [participant.id, participant]));
-    const valuationByEntry = new Map(valuations.map((valuation) => [valuation.sportEventParticipantId, valuation]));
-    const standingByEntry = new Map(standings.map((standing) => [standing.sportEventParticipantId, standing]));
-    const golfByStanding = new Map(golfStandings.map((result) => [result.standing.id, result.golf]));
-    const golfByRound = new Map(golfRounds.map((result) => [result.participantRound.id, result.golf]));
-    const statLinesByRound = new Map<string, SportEventParticipantStatLine[]>();
-    for (const line of statLines) {
-      statLinesByRound.set(line.participantRoundId, [...(statLinesByRound.get(line.participantRoundId) ?? []), line]);
-    }
-    const raceResultByEntry = new Map(raceResults.map((result) => [result.sportEventParticipantId, result]));
-    const roundsByEntry = new Map<string, ParticipantRoundView[]>();
-    for (const round of rounds) {
-      const list = roundsByEntry.get(round.sportEventParticipantId) ?? [];
-      list.push({ round, golf: golfByRound.get(round.id) ?? null, statLines: statLinesByRound.get(round.id) ?? [] });
-      roundsByEntry.set(round.sportEventParticipantId, list);
-    }
+  /**
+   * The same field, as viewers poll it (#1163): the one read in this container within the last
+   * 30 seconds, else read now and kept. Every contest on the event shares it. A write through
+   * the events routes or ingestion forgets it, so this container's next read is current.
+   */
+  listCachedEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
+    return this.fieldCache.get(sportEventId, this.deps.now?.() ?? new Date(), () => this.listEventParticipants(sportEventId));
+  }
 
-    return field.map((entry) => {
-      const standing = standingByEntry.get(entry.id);
-      return {
-        entry,
-        participant: participantById.get(entry.participantId) as Participant,
-        valuation: valuationByEntry.get(entry.id) ?? null,
-        standing: standing ? { standing, golf: golfByStanding.get(standing.id) ?? null } : null,
-        rounds: roundsByEntry.get(entry.id) ?? [],
-        raceResult: raceResultByEntry.get(entry.id) ?? null,
-        matches: matches.filter((match) => (
-          match.homeSportEventParticipantId === entry.id || match.awaySportEventParticipantId === entry.id
-        )),
-        affiliatedWithSportLeague: affiliated.has(entry.participantId),
-      };
-    });
+  /**
+   * One field row, read as the field reads each (#1163): what a write to one row answers with.
+   * 404 EVENT_NOT_FOUND for an unknown event, EVENT_PARTICIPANT_NOT_FOUND for a row not on it.
+   */
+  async getEventParticipant(sportEventId: string, sportEventParticipantId: string): Promise<SportEventParticipantView> {
+    const event = await this.requireEvent(sportEventId);
+    const row = await this.deps.field.findFieldRow(sportEventId, sportEventParticipantId, event.sportLeagueId);
+    if (!row) {
+      throw new SportEventError(
+        `Field row ${sportEventParticipantId} is not on sport event ${sportEventId}.`,
+        'EVENT_PARTICIPANT_NOT_FOUND',
+        404,
+      );
+    }
+    return row;
   }
 
   /**
@@ -517,9 +465,5 @@ export class SportEventParticipantService {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
     return event;
-  }
-
-  private async affiliatedParticipantIds(event: SportEvent): Promise<Set<string>> {
-    return new Set((await this.deps.affiliations.findBySportLeague(event.sportLeagueId)).map((affiliation) => affiliation.participantId));
   }
 }

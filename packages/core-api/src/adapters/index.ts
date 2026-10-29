@@ -30,8 +30,6 @@ export {
   PrismaEventSeriesRepository,
   PrismaParticipantLeagueAffiliationRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantRoundRepository,
-  PrismaSportEventParticipantStandingRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,

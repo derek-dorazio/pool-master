@@ -12,14 +12,14 @@ import { ContestLeaderboardResponseSchema, type ErrorEnvelope } from '@poolmaste
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
-import { passLeaderboardCacheTtl, restoreLeaderboardCacheClock } from '../../support/leaderboard-cache-clock';
+import { passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   await cleanupTestData();
   await teardownIntegrationTests();
 });
-afterEach(() => restoreLeaderboardCacheClock());
+afterEach(() => restoreReadCacheClock());
 
 describe('pool-master-eux.4: Golf leaderboard read API', () => {
   it('returns a Golf leaderboard ranked from event standings with counting and dropped picks', async () => {
@@ -274,7 +274,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
       });
     }
     // The next viewer poll, once the board computed above has expired (#1162).
-    passLeaderboardCacheTtl();
+    passReadCacheTtl();
     const settledResponse = await getApp().inject({
       method: 'GET',
       url: `/api/v1/contests/${contest.id}/leaderboard`,
@@ -294,7 +294,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     await prisma.participantContestScoringRule.deleteMany({
       where: { contestConfiguration: { contestId: contest.id } },
     });
-    passLeaderboardCacheTtl();
+    passReadCacheTtl();
     const noRuleResponse = await getApp().inject({
       method: 'GET',
       url: `/api/v1/contests/${contest.id}/leaderboard`,

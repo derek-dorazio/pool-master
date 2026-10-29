@@ -5,7 +5,7 @@
  * place it gives the runner in the event.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { RaceResultApply, SportEventParticipantRaceResultRepository } from '@poolmaster/shared/db';
 import type { SportEventParticipantRaceResult } from '@poolmaster/shared/domain';
 
@@ -17,17 +17,7 @@ export class PrismaSportEventParticipantRaceResultRepository implements SportEve
       where: { sportEventParticipant: { sportEventId } },
       orderBy: { sportEventParticipantId: 'asc' },
     });
-    return rows.map((row) => ({
-      id: row.id,
-      sportEventParticipantId: row.sportEventParticipantId,
-      finishPosition: row.finishPosition,
-      startPosition: row.startPosition,
-      resultStatus: row.resultStatus,
-      isOfficial: row.isOfficial,
-      riderName: row.riderName,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
+    return rows.map(toRaceResult);
   }
 
   async applyResults(sportEventId: string, apply: RaceResultApply): Promise<void> {
@@ -56,4 +46,18 @@ export class PrismaSportEventParticipantRaceResultRepository implements SportEve
       }),
     ]);
   }
+}
+
+export function toRaceResult(row: Prisma.SportEventParticipantRaceResultGetPayload<object>): SportEventParticipantRaceResult {
+  return {
+    id: row.id,
+    sportEventParticipantId: row.sportEventParticipantId,
+    finishPosition: row.finishPosition,
+    startPosition: row.startPosition,
+    resultStatus: row.resultStatus,
+    isOfficial: row.isOfficial,
+    riderName: row.riderName,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }

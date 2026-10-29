@@ -3,27 +3,12 @@
  * participant round: one row per round and stat, its key a Postgres enum.
  */
 
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import type { GameStatLineWrite, SportEventParticipantStatLineRepository } from '@poolmaster/shared/db';
 import type { SportEventParticipantStatLine } from '@poolmaster/shared/domain';
 
 export class PrismaSportEventParticipantStatLineRepository implements SportEventParticipantStatLineRepository {
   constructor(private readonly prisma: PrismaClient) {}
-
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantStatLine[]> {
-    const rows = await this.prisma.sportEventParticipantStatLine.findMany({
-      where: { participantRound: { sportEventParticipant: { sportEventId } } },
-      orderBy: [{ participantRoundId: 'asc' }, { stat: 'asc' }],
-    });
-    return rows.map((row) => ({
-      id: row.id,
-      participantRoundId: row.participantRoundId,
-      stat: row.stat,
-      value: row.value,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-    }));
-  }
 
   async replaceGameLines(writes: readonly GameStatLineWrite[]): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
@@ -50,4 +35,15 @@ export class PrismaSportEventParticipantStatLineRepository implements SportEvent
       }
     });
   }
+}
+
+export function toStatLine(row: Prisma.SportEventParticipantStatLineGetPayload<object>): SportEventParticipantStatLine {
+  return {
+    id: row.id,
+    participantRoundId: row.participantRoundId,
+    stat: row.stat,
+    value: row.value,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
 }
