@@ -18,6 +18,7 @@ import {
   Heading,
   Input,
   SegmentedControl,
+  StatusBadge,
   Tile,
   TimeZoneSelect,
 } from "@/features/shared/ui";
@@ -359,9 +360,9 @@ export function AuthHomePage() {
           it; on a wide screen the notes sit under the headline, beside the form. */}
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-[auto_1fr]">
         <div className="space-y-5 lg:col-start-1 lg:row-start-1">
-          <span className="hidden rounded-pill border border-border px-3 py-1 font-display text-xs font-bold uppercase text-muted-foreground sm:inline-flex">
+          <StatusBadge className="hidden text-muted-foreground sm:inline-flex" tone="brandOutline">
             {PRODUCT_TAGLINE}
-          </span>
+          </StatusBadge>
           <div className="space-y-3">
             <Heading className="max-w-xl" level={2} tone="inherit" variant="hero">
               {inviteContext

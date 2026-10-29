@@ -29,6 +29,10 @@ const statusBadgeVariants = cva(
           "border-[color:var(--status-active-border)] bg-[var(--status-active-surface)] [color:var(--status-active-text)]",
         warning:
           "border-[color:var(--status-warning-border)] bg-[var(--status-warning-surface)] [color:var(--status-warning-text)]",
+        /** The filled gold pill, such as "New". */
+        brand: "border-primary bg-primary font-semibold text-primary-foreground",
+        /** An outlined pill in the display face, in the colour of the text around it or the caller's. */
+        brandOutline: "border-current bg-transparent font-display font-bold",
       },
     },
     defaultVariants: {

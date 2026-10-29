@@ -16,4 +16,17 @@ describe("pool-master-3lo.5: shared StatusBadge and Chip primitives", () => {
 
     expect(screen.getByText("Needs review")).toHaveClass("normal-case");
   });
+
+  it("draws the brand pill filled gold with its dark text", () => {
+    render(<Chip tone="brand">New</Chip>);
+
+    expect(screen.getByText("New")).toHaveClass("bg-primary", "text-primary-foreground", "normal-case");
+  });
+
+  it("outlines the brand pill in the colour of its text, so it reads on navy and on white alike", () => {
+    render(<StatusBadge className="text-primary" tone="brandOutline">The ultimate pool</StatusBadge>);
+
+    const pill = screen.getByText("The ultimate pool");
+    expect(pill).toHaveClass("border-current", "bg-transparent", "font-display", "uppercase", "text-primary");
+  });
 });

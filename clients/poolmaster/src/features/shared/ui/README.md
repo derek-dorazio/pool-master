@@ -6,7 +6,9 @@ The shared UI layer is split into three levels:
    `Button`, `Tile`, `Modal`, `DataGrid`, `ActionTile`, `StatusBadge` and
    `Eyebrow`. A bordered card box is a `Tile` (`padding="none"` plus your own
    padding when it needs less), and the small uppercase line over a title is an
-   `Eyebrow`; a title is a `Heading` (`level` is the tag, `variant` the look:
+   `Eyebrow`; a navy panel is a `Tile` with `variant="inverse"` (or
+   `"inverseDeep"`), and the gold pill is a `Chip` with `tone="brand"` (an
+   outlined one is `tone="brandOutline"`); a title is a `Heading` (`level` is the tag, `variant` the look:
    `hero`, `display`, `page`, `section`, `subtitle`, `label`, `eyebrow`, or `card` with a `size`); letter spacing comes from the theme's `tracking-eyebrow` and
    `tracking-label`, never a hand-typed `tracking-[…]`. A button drawn as a line of content
    (a list row, a card toggle, a pick) is a `Button` or `LinkButton` with
