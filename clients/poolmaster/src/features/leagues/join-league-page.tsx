@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router';
 import { SquadMembershipStatus, TeamIconKey } from '@poolmaster/shared/domain';
-import { acceptInvitation, listLeagueSquads, updateLeagueSquad } from '@/lib/api';
+import { acceptInvitation, getLeague, getLeagueSquad, updateLeagueSquad } from '@/lib/api';
 import { useAuth } from '@/features/auth/auth-context';
 import { getLogger } from '@/lib/logger';
 import {
@@ -118,10 +118,13 @@ export function JoinLeaguePage() {
       let teamSetupFailed = false;
 
       if (leagueId && user?.id && nextTeamName) {
-        const squadsResponse = await listLeagueSquads({ path: { id: leagueId } });
-        const myTeam = squadsResponse.data?.squads.find((team) =>
-          team.members.some((member) => member.userId === user.id && member.status === SquadMembershipStatus.ACTIVE),
-        );
+        // The viewer's own squad edge names their new team (#1209), so no team list is read.
+        const contextResponse = await getLeague({ path: { id: leagueId } });
+        const squadMembership = contextResponse.data?.squadMembership;
+        const myTeamResponse = squadMembership?.status === SquadMembershipStatus.ACTIVE
+          ? await getLeagueSquad({ path: { id: leagueId, squadId: squadMembership.squadId } })
+          : null;
+        const myTeam = myTeamResponse?.data?.squad;
 
         if (!myTeam) {
           // The name and icon have nowhere to go, which is as much a failed save as a refused rename.
@@ -130,7 +133,7 @@ export function JoinLeaguePage() {
             {
               action: 'leagueInvite.teamSetup.failed',
               data: { inviteCode, leagueId },
-              err: squadsResponse.error,
+              err: myTeamResponse?.error ?? contextResponse.error,
             },
             'Joined the league but could not find the new team to save its chosen name and icon',
           );
