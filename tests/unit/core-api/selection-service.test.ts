@@ -897,6 +897,19 @@ describe('SelectionService.submitEntry — an entry counts only once its owner s
     expect(receipt.entryIds).toEqual([ENTRY_ID]);
   });
 
+  it('reads the event\'s picks once on a submit, and hands the same picks to the lineup check, the confirmation and the room (#1254)', async () => {
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: COMPLETE });
+    deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    const view = await service.submitEntry(submitEntryInput());
+
+    expect(deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.picks.map((row) => row.id).sort()).toEqual(COMPLETE.map((row) => row.id).sort());
+    expect(view.entries.find((row) => row.id === ENTRY_ID)?.pickCount).toBe(COMPLETE.length);
+  });
+
   it('refuses 409 ENTRY_LINEUP_INCOMPLETE naming the short tier, and leaves the entry a draft', async () => {
     const { service, deps } = setup({ configuration: ONE_PER_TIER, picks: [pick('pick-a', 'p-a', 'sep-a')] });
 
@@ -1205,6 +1218,23 @@ describe('SelectionService.runDraw — the random draw deals every entry its pic
     expect(receipt.contest.id).toBe(CONTEST_ID);
     expect(receipt.contest.drawnAt).toEqual(RECORDED_DRAW_AT);
     expect(receipt.entryIds).toEqual([ENTRY_ID, OTHER_ENTRY_ID]);
+  });
+
+  it('reads the dealt picks once, for both the receipts and the room (#1254)', async () => {
+    const dealt = [
+      pick('pick-1', 'p-a', 'sep-a', { lineupSlot: 1 }),
+      pick('pick-2', 'p-b', 'sep-b', { entryId: OTHER_ENTRY_ID, lineupSlot: 1 }),
+    ];
+    const context = setup({ ...DRAW, entries: [...DRAW.entries], picks: dealt });
+    const sendEntrySubmittedEmails = jest.fn().mockResolvedValue(undefined);
+    context.deps.entryReceipts = { sendEntrySubmittedEmails };
+
+    const view = await context.service.runDraw(runDraw);
+
+    expect(context.deps.picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
+    const [[receipt]] = sendEntrySubmittedEmails.mock.calls as Array<[EntrySubmittedReceiptInput]>;
+    expect(receipt.picks.map((row) => row.id)).toEqual(['pick-1', 'pick-2']);
+    expect(view.entries.map((row) => row.pickCount)).toEqual([1, 1]);
   });
 
   it('still answers with the dealt room when sending the receipts fails, because the draw is already recorded', async () => {

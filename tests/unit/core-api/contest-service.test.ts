@@ -342,6 +342,7 @@ function receiptInput(contest: Contest, overrides: Partial<EntrySubmittedReceipt
     valuations: [],
     squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP],
     entryIds: ['entry-1'],
+    picks: [],
     ...overrides,
   };
 }
@@ -1427,13 +1428,7 @@ describe('ContestService', () => {
     });
 
     it('sends the Entry submitted confirmation with each tier\'s golfer, the tiebreaker and a link to the entry', async () => {
-      const picks = fakeContestEntryPickRepo({
-        countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 2]])),
-        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
-        ]),
-      });
+      const picks = fakeContestEntryPickRepo();
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1467,15 +1462,20 @@ describe('ContestService', () => {
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
 
-      // The event's effective tiers, as the selection room already holds them.
+      // The event's effective tiers and the entry's picks, as the selection room already holds them.
       await service.sendEntrySubmittedEmails(receiptInput(contest, {
         valuations: [
           receiptValuation('sport-event-participant-1', { tierLabel: 'Tier A' }),
           receiptValuation('sport-event-participant-2', { tierLabel: 'Tier B' }),
         ],
+        picks: [
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
+        ],
       }));
 
-      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1'], { sportEventId: 'event-1' });
+      // The receipt reads no picks of its own (#1254).
+      expect(picks.findByEntriesWithParticipant).not.toHaveBeenCalled();
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(mailDelivery.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -1520,12 +1520,6 @@ describe('ContestService', () => {
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: createMockEntryRepo({ findByIdWithSquad: jest.fn().mockResolvedValue(submittedEntry(150)) }),
-        picks: fakeContestEntryPickRepo({
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Kyle Larson', '2026-01-01T12:00:00.000Z'),
-            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Chase Elliott', '2026-01-01T12:01:00.000Z'),
-          ]),
-        }),
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
@@ -1538,6 +1532,10 @@ describe('ContestService', () => {
         valuations: [
           receiptValuation('sport-event-participant-1', { price: 26_000 }),
           receiptValuation('sport-event-participant-2', { price: 22_500 }),
+        ],
+        picks: [
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Kyle Larson', '2026-01-01T12:00:00.000Z'),
+          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Chase Elliott', '2026-01-01T12:01:00.000Z'),
         ],
       }));
 
@@ -1569,12 +1567,6 @@ describe('ContestService', () => {
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: createMockEntryRepo({ findByIdWithSquad: jest.fn().mockResolvedValue({ ...DEFAULT_ENTRY_WITH_SQUAD, tiebreakerValue: null }) }),
-        picks: fakeContestEntryPickRepo({
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-            buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
-          ]),
-        }),
         email: emailServiceOver(mailDelivery),
         appBaseUrl: 'https://app.primetimecommissioner.com',
       });
@@ -1583,6 +1575,10 @@ describe('ContestService', () => {
         configuration: receiptConfiguration({
           selectionType: SharedDomainEnums.SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 2,
         }),
+        picks: [
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:01:00.000Z'),
+        ],
       }));
 
       await deliverQueuedEmail();
@@ -1594,7 +1590,7 @@ describe('ContestService', () => {
       expect(sentMessage.text).not.toContain('Tiebreaker');
     });
 
-    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, their picks, the league and the owners once for all of them', async () => {
+    it('sends a draw\'s every entry its own receipt to its own owners, reading the entries, the league and the owners once for all of them and no picks', async () => {
       const contest = buildContest({
         id: 'contest-1',
         leagueId: 'league-1',
@@ -1617,12 +1613,7 @@ describe('ContestService', () => {
       const leagues = fakeLeagueRepo({
         findById: jest.fn().mockResolvedValue({ id: 'league-1', name: 'Mathworks', leagueCode: 'MATHWORKS', plan: LeaguePlan.PLATINUM }),
       });
-      const picks = fakeContestEntryPickRepo({
-        findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-          { ...buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:00:00.000Z'), entryId: 'entry-2' },
-        ]),
-      });
+      const picks = fakeContestEntryPickRepo();
       const service = buildService({
         entries,
         leagues,
@@ -1638,6 +1629,10 @@ describe('ContestService', () => {
         }),
         squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP, { ...ACTIVE_SQUAD_MEMBERSHIP, id: 'squad-membership-2', squadId: 'squad-2', userId: 'user-2' }],
         entryIds: ['entry-1', 'entry-2'],
+        picks: [
+          buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
+          { ...buildReceiptPick('pick-2', 'sport-event-participant-2', 'participant-2', 'Tommy Fleetwood', '2026-01-01T12:00:00.000Z'), entryId: 'entry-2' },
+        ],
       }));
 
       expect(entries.findByContestWithSquad).toHaveBeenCalledTimes(1);
@@ -1646,8 +1641,7 @@ describe('ContestService', () => {
       expect(users.findByIds).toHaveBeenCalledTimes(1);
       expect(users.findByIds).toHaveBeenCalledWith(['user-1', 'user-2']);
       expect(users.findById).not.toHaveBeenCalled();
-      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledTimes(1);
-      expect(picks.findByEntriesWithParticipant).toHaveBeenCalledWith(['entry-1', 'entry-2'], { sportEventId: 'event-1' });
+      expect(picks.findByEntriesWithParticipant).not.toHaveBeenCalled();
       await deliverQueuedEmail();
       const sent = mailDelivery.send.mock.calls.map(([message]) => [message.to, message.text.includes('Rory McIlroy'), message.text.includes('Tommy Fleetwood')]);
       expect(sent).toEqual([
@@ -1686,16 +1680,12 @@ describe('ContestService', () => {
           findBySquad: jest.fn().mockResolvedValue([ACTIVE_SQUAD_MEMBERSHIP]),
         }),
         entries: entryRepo,
-        picks: fakeContestEntryPickRepo({
-          countByEntries: jest.fn().mockResolvedValue(new Map([['entry-1', 1]])),
-          findByEntriesWithParticipant: jest.fn().mockResolvedValue([
-            buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z'),
-          ]),
-        }),
         email: emailServiceOver(mailDelivery),
       });
 
-      await expect(service.sendEntrySubmittedEmails(receiptInput(contest))).resolves.toBeUndefined();
+      await expect(service.sendEntrySubmittedEmails(receiptInput(contest, {
+        picks: [buildReceiptPick('pick-1', 'sport-event-participant-1', 'participant-1', 'Rory McIlroy', '2026-01-01T12:00:00.000Z')],
+      }))).resolves.toBeUndefined();
       await deliverQueuedEmail();
       expect(mailDelivery.send).toHaveBeenCalledTimes(1);
       expect(entryRepo.update).not.toHaveBeenCalled();
