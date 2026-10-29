@@ -78,9 +78,23 @@ describe('golf provider sync — what is skipped', () => {
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
     expect(store.golfRoundRows).toHaveLength(1);
     expect(logger.warn).toHaveBeenCalledWith(
-      { action: 'liveScore.golf.unmappedExternalId', data: { providerId: 'feed', externalId: 'ext-stranger' } },
+      { action: 'liveScore.golf.unmappedExternalId', data: { providerId: 'feed', sportEventId: event.id, externalIds: ['ext-stranger'] } },
       expect.any(String),
     );
+  });
+
+  it('logs every unmapped golfer in a tick on one warning line, each named once, rather than a line per update', async () => {
+    const { service, event, logger } = await setup();
+
+    await service.persistRoundUpdatesForSportEvent(event.id, [
+      update('ext-stranger', 1, -5), update('ext-stranger', 2, -1), update('ext-nobody', 1, 0), update('ext-ana', 1, -1),
+    ], 'feed', 4);
+
+    const unmappedLines = logger.warn.mock.calls.filter(([fields]) => (fields as { action?: string }).action === 'liveScore.golf.unmappedExternalId');
+    expect(unmappedLines).toEqual([[
+      { action: 'liveScore.golf.unmappedExternalId', data: { providerId: 'feed', sportEventId: event.id, externalIds: ['ext-stranger', 'ext-nobody'] } },
+      expect.any(String),
+    ]]);
   });
 
   it('skips and logs an update for a mapped golfer who is not on this event\'s field', async () => {

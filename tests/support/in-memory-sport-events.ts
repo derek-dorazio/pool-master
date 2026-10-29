@@ -189,12 +189,11 @@ export class InMemorySportEvents {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
       search: async () => [...this.participants],
-      findMatching: async (sportId, query) => this.participants.filter((row) => (
-        row.sportId === sportId
-        && (query.id === undefined || row.id === query.id)
+      findMatchingAny: async (sportId, queries) => this.participants.filter((row) => row.sportId === sportId && queries.some((query) => (
+        (query.id === undefined || row.id === query.id)
         && (query.externalId === undefined || row.externalId === query.externalId)
         && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
-      )),
+      ))),
       create: async () => { throw new Error('not used'); },
       update: async () => { throw new Error('not used'); },
     };
@@ -718,6 +717,11 @@ export class InMemorySportEvents {
       replaceGameLines: async (writes) => {
         for (const { sportEventParticipantId, sportEventRoundId, stats, completedAt } of writes) {
           let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === sportEventParticipantId && row.sportEventRoundId === sportEventRoundId);
+          const storedLines = core ? this.statLineRows.filter((row) => row.participantRoundId === core?.id) : [];
+          if (core && core.status === 'COMPLETED' && stats.length > 0 && storedLines.length === stats.length
+            && stats.every(({ stat, value }) => storedLines.some((row) => row.stat === stat && row.value === value))) {
+            continue;
+          }
           if (core) {
             const roundId = core.id;
             this.statLineRows = this.statLineRows.filter((row) => row.participantRoundId !== roundId);

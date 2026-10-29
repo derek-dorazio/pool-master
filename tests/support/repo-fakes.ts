@@ -334,7 +334,7 @@ export function fakeParticipantRepo(
     findById: one(),
     findByIds: many(),
     search: many(),
-    findMatching: many(),
+    findMatchingAny: many(),
     create: echoCreate('participant'),
     update: echoUpdate(),
     ...overrides,
@@ -459,6 +459,7 @@ export function fakeContestConfigurationRepo(
 ): ContestConfigurationRepository {
   return {
     findByContest: one(),
+    findByContests: many(),
     create: echoCreate('contest-configuration'),
     update: echoUpdate(),
     ...overrides,

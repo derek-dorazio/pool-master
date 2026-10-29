@@ -12,6 +12,7 @@ import { ErrorEnvelopeSchema, type ErrorEnvelope } from '@poolmaster/shared/dto/
 import {
   PrismaSportEventMatchRepository,
   PrismaSportEventParticipantRepository,
+  PrismaSportEventParticipantStatLineRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportLeagueRepository,
@@ -95,7 +96,7 @@ async function seedSeries(status: 'IN_PROGRESS' | 'COMPLETED' = 'IN_PROGRESS') {
     });
     return round;
   };
-  return { prisma, suffix, event, ace, blaze, cruz, dash, line };
+  return { prisma, suffix, event, games, ace, blaze, cruz, dash, line };
 }
 
 describe('SportEventParticipantStatLineRepository', () => {
@@ -121,6 +122,57 @@ describe('SportEventParticipantStatLineRepository', () => {
 
     await expect(prisma.sportEventParticipantStatLine.create({ data: { participantRoundId: round.id, stat: SportStat.RUNS, value: 2 } }))
       .rejects.toThrow();
+  });
+});
+
+// #1183 — a box score is replaced in a fixed handful of statements, and a line already stored
+// exactly as sent is not rewritten.
+describe('SportEventParticipantStatLineRepository — replacing a game\'s lines', () => {
+  it('creates a new player\'s line, rewrites a corrected one, clears an emptied one, and leaves an unchanged one\'s rows and completion time alone', async () => {
+    const { prisma, games, ace, blaze, cruz, dash, line } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const [game1] = games;
+    const firstAt = new Date('2025-10-25T23:00:00.000Z');
+    await statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 2 }], completedAt: firstAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.WALKS, value: 1 }, { stat: SportStat.RUNS, value: 1 }], completedAt: firstAt },
+    ]);
+    await line(blaze, 1, { STOLEN_BASES: 1 });
+    const cruzBefore = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: cruz.id }, include: { statLines: { orderBy: { stat: 'asc' } } } });
+    const secondAt = new Date('2025-10-26T01:00:00.000Z');
+
+    await statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.TOTAL_BASES, value: 4 }], completedAt: secondAt },
+      { sportEventParticipantId: blaze.id, sportEventRoundId: game1.id, stats: [], completedAt: secondAt },
+      { sportEventParticipantId: cruz.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 1 }, { stat: SportStat.WALKS, value: 1 }], completedAt: secondAt },
+      { sportEventParticipantId: dash.id, sportEventRoundId: game1.id, stats: [{ stat: SportStat.RUNS, value: 2 }], completedAt: secondAt },
+    ]);
+
+    const rounds = await prisma.sportEventParticipantRound.findMany({
+      where: { sportEventRoundId: game1.id },
+      include: { statLines: { orderBy: { stat: 'asc' } } },
+    });
+    const byEntry = new Map(rounds.map((round) => [round.sportEventParticipantId, round]));
+    expect(byEntry.get(ace.id)).toMatchObject({ completedAt: secondAt, statLines: [expect.objectContaining({ stat: SportStat.TOTAL_BASES, value: 4 })] });
+    expect(byEntry.has(blaze.id)).toBe(false);
+    await expect(prisma.sportEventParticipantStatLine.count({ where: { participantRound: { sportEventParticipantId: blaze.id } } })).resolves.toBe(0);
+    expect(byEntry.get(cruz.id)).toEqual(cruzBefore);
+    expect(byEntry.get(dash.id)).toMatchObject({ status: 'COMPLETED', completedAt: secondAt, statLines: [expect.objectContaining({ stat: SportStat.RUNS, value: 2 })] });
+  });
+
+  it('is all or none: a line for a field row that does not exist leaves every stored line as it was', async () => {
+    const { prisma, games, ace } = await seedSeries();
+    const statLines = new PrismaSportEventParticipantStatLineRepository(prisma);
+    const at = new Date('2025-10-25T23:00:00.000Z');
+    await statLines.replaceGameLines([{ sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at }]);
+
+    await expect(statLines.replaceGameLines([
+      { sportEventParticipantId: ace.id, sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 3 }], completedAt: at },
+      { sportEventParticipantId: randomUUID(), sportEventRoundId: games[0].id, stats: [{ stat: SportStat.RUNS, value: 1 }], completedAt: at },
+    ])).rejects.toThrow();
+
+    const lines = await prisma.sportEventParticipantStatLine.findMany({ where: { participantRound: { sportEventParticipantId: ace.id } } });
+    expect(lines.map((statLine) => statLine.value)).toEqual([1]);
   });
 });
 

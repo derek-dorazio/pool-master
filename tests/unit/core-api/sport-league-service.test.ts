@@ -207,14 +207,13 @@ describe('SportLeagueService — affiliations', () => {
 
 describe('SportLeagueService — affiliation upload', () => {
   it('resolves by participantId, then externalId, then exact case-insensitive name, within the sport league\'s sport', async () => {
-    const findMatching = jest.fn().mockImplementation(async (sportId: string, query: { id?: string; externalId?: string; name?: string }) => {
-      if (sportId !== 'sport-golf') return [];
-      if (query.id === 'p-1') return [participant('p-1', 'Scottie Scheffler')];
-      if (query.externalId === 'owgr-2') return [participant('p-2', 'Rory McIlroy')];
-      if (query.name === 'jon rahm') return [participant('p-3', 'Jon Rahm')];
-      return [];
-    });
-    const { service } = buildService({ participants: { findMatching } });
+    const candidates = [
+      participant('p-1', 'Scottie Scheffler'),
+      { ...participant('p-2', 'Rory McIlroy'), externalId: 'owgr-2' },
+      participant('p-3', 'Jon Rahm'),
+    ];
+    const findMatchingAny = jest.fn().mockImplementation(async (sportId: string) => (sportId === 'sport-golf' ? candidates : []));
+    const { service } = buildService({ participants: { findMatchingAny } });
 
     const preview = await service.previewAffiliationUpload('sl-pga', [
       { participantId: 'p-1', externalId: 'ignored', ranking: 1 },
@@ -229,11 +228,24 @@ describe('SportLeagueService — affiliation upload', () => {
     ]);
   });
 
+  it('reads every row\'s candidates in one query, asking only for each row\'s first identifier', async () => {
+    const findMatchingAny = jest.fn().mockResolvedValue([]);
+    const { service } = buildService({ participants: { findMatchingAny } });
+
+    await service.previewAffiliationUpload('sl-pga', [
+      { participantId: 'p-1', externalId: 'ignored' },
+      { externalId: 'owgr-2' },
+      { playerName: 'jon rahm' },
+      { ranking: 5 },
+    ]);
+
+    expect(findMatchingAny).toHaveBeenCalledTimes(1);
+    expect(findMatchingAny).toHaveBeenCalledWith('sport-golf', [{ id: 'p-1' }, { externalId: 'owgr-2' }, { name: 'jon rahm' }]);
+  });
+
   it('marks a row AMBIGUOUS when several participants match, and UNRESOLVED when none do or no identifier is given', async () => {
-    const findMatching = jest.fn().mockImplementation(async (_sportId: string, query: { name?: string }) => (
-      query.name === 'Smith' ? [participant('p-a', 'Smith'), participant('p-b', 'Smith')] : []
-    ));
-    const { service } = buildService({ participants: { findMatching } });
+    const findMatchingAny = jest.fn().mockResolvedValue([participant('p-a', 'Smith'), participant('p-b', 'Smith')]);
+    const { service } = buildService({ participants: { findMatchingAny } });
 
     const preview = await service.previewAffiliationUpload('sl-pga', [
       { playerName: 'Smith' },
@@ -263,7 +275,7 @@ describe('SportLeagueService — affiliation upload', () => {
   it('applies a fully resolved upload as one set of rankings, unranked rows as null', async () => {
     const { service, deps } = buildService({
       participants: {
-        findMatching: jest.fn().mockImplementation(async (_sportId: string, query: { id?: string }) => [participant(query.id as string, 'x')]),
+        findMatchingAny: jest.fn().mockResolvedValue([participant('p-1', 'x'), participant('p-2', 'y')]),
       },
     });
 

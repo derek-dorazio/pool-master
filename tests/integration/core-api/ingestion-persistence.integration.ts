@@ -18,6 +18,7 @@ const rankedEventIds = [
   'integration-odds-field',
   'integration-admin-header-SCORES_ONLY',
   'integration-admin-header-NONE',
+  'integration-batched-sync',
 ];
 
 beforeAll(() => setupIntegrationTests());
@@ -64,6 +65,9 @@ afterAll(async () => {
           'ingestion-ranked-4',
           'ingestion-odds-1',
           'ingestion-odds-2',
+          'ingestion-batch-1',
+          'ingestion-batch-2',
+          'ingestion-batch-3',
         ],
       },
     },
@@ -387,6 +391,50 @@ describe('IngestionPersistence', () => {
     expect(table).toBeNull();
     // The model is gone, so the client type has no such key; ask the object itself.
     expect(Reflect.get(prisma, 'participantRankingSnapshot')).toBeUndefined();
+  });
+
+  // #1183 — a field sync reads its mappings and field rows at once and writes only what moved.
+  it('creates a new field with its participants and mappings, then on a repeat sync writes nothing, and on a change writes only the changed golfer', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(prisma);
+    const field = (secondRanking: number) => rankedFieldDetail('integration-batched-sync', [
+      rankedGolfer('ingestion-batch-1', 1),
+      rankedGolfer('ingestion-batch-2', secondRanking),
+      rankedGolfer('ingestion-batch-3', 3),
+    ]);
+    const event = await linkedProviderEvent(prisma, {
+      providerId: 'TEST_PROVIDER',
+      externalId: 'integration-batched-sync',
+      name: field(2).name,
+      startDate: field(2).startDate,
+    });
+    const stamps = async () => {
+      const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: true } });
+      return new Map(rows.map((row) => [row.participant.externalId, [row.updatedAt.toISOString(), row.participant.updatedAt.toISOString()]]));
+    };
+
+    const created = await persistence.persistEventDetailWithDiagnostics(field(2));
+
+    expect(created.value).toEqual({ eventsPersisted: 1, participantsPersisted: 3, sportEventParticipantsPersisted: 3 });
+    expect(created.writeDiagnostics.rows.filter((row) => row.entityType === 'SportEventParticipant').map((row) => [row.disposition, Boolean(row.internalId)]))
+      .toEqual([['CREATED', true], ['CREATED', true], ['CREATED', true]]);
+    await expect(prisma.participantProviderMapping.count({ where: { providerId: 'TEST_PROVIDER', externalId: { startsWith: 'ingestion-batch-' } } })).resolves.toBe(3);
+    const afterCreate = await stamps();
+
+    const repeated = await persistence.persistEventDetailWithDiagnostics(field(2));
+
+    expect(repeated.writeDiagnostics.summary).toMatchObject({ unchanged: 3, created: 0, updated: 0 });
+    expect(await stamps()).toEqual(afterCreate);
+
+    const changed = await persistence.persistEventDetailWithDiagnostics(field(9));
+
+    expect(changed.writeDiagnostics.rows.filter((row) => row.disposition === 'UPDATED').map((row) => row.participantExternalId)).toEqual(['ingestion-batch-2']);
+    const afterChange = await stamps();
+    expect(afterChange.get('ingestion-batch-1')).toEqual(afterCreate.get('ingestion-batch-1'));
+    expect(afterChange.get('ingestion-batch-3')).toEqual(afterCreate.get('ingestion-batch-3'));
+    expect(afterChange.get('ingestion-batch-2')?.[0]).not.toBe(afterCreate.get('ingestion-batch-2')?.[0]);
+    const row = await prisma.sportEventParticipant.findFirstOrThrow({ where: { sportEventId: event.id, participant: { externalId: 'ingestion-batch-2' } } });
+    expect(row.ranking).toBe(9);
   });
 
   // #205 — the `pool-master-8yh` job-completion case went with `persistIngestionJob` and the
