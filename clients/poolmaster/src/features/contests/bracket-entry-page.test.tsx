@@ -7,7 +7,7 @@ import { ContestEntryPage } from './contest-entry-page';
 import {
   TEAMS,
   bracketContestFixture,
-  bracketEntriesFixture,
+  bracketEntryFixture,
   bracketGame,
   bracketLeagueContextFixture,
   emptyBracketGames,
@@ -24,7 +24,7 @@ const {
   getLeagueMock,
   getSelectionStateMock,
   getSportLeagueMock,
-  listContestEntriesMock,
+  getContestEntryMock,
   mockLogger,
   saveGamePicksMock,
   submitGamePicksMock,
@@ -38,7 +38,7 @@ const {
     getLeagueMock: vi.fn(),
     getSelectionStateMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
+    getContestEntryMock: vi.fn(),
     mockLogger: logger,
     saveGamePicksMock: vi.fn(),
     submitGamePicksMock: vi.fn(),
@@ -52,7 +52,7 @@ bindApiMocks({
   getLeague: getLeagueMock,
   getSelectionState: getSelectionStateMock,
   getSportLeague: getSportLeagueMock,
-  listContestEntries: listContestEntriesMock,
+  getContestEntry: getContestEntryMock,
   saveGamePicks: saveGamePicksMock,
   submitGamePicks: submitGamePicksMock,
 });
@@ -99,7 +99,7 @@ function renderBracketEntry(entryId = 'entry-1') {
 function primeMocks({ contest = bracketContestFixture(), gamePicks = gamePicksFixture() } = {}) {
   getContestMock.mockResolvedValue({ data: { contest } });
   getGamePicksMock.mockResolvedValue({ data: gamePicks });
-  listContestEntriesMock.mockResolvedValue({ data: bracketEntriesFixture() });
+  getContestEntryMock.mockImplementation(({ path }: { path: { entryId: string } }) => Promise.resolve({ data: bracketEntryFixture(path.entryId) }));
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
   getEventMock.mockResolvedValue({ data: { event: { id: 'event-1', sport: 'BASKETBALL', sportLeagueId: 'sport-league-1', startDate: '2099-03-19T16:00:00.000Z' } } });
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'sport-league-1', name: 'NCAA Men', roundNames: [] } } });
@@ -112,7 +112,7 @@ describe('Bracket contest entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      getSportLeagueMock, listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
     ]) {
       mock.mockReset();
     }
@@ -329,7 +329,7 @@ describe('Bracket contest entry page › a second-chance bracket', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getEventMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      getSportLeagueMock, listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+      getSportLeagueMock, getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
     ]) {
       mock.mockReset();
     }

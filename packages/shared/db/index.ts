@@ -32,6 +32,7 @@ export type {
   ContestEntryMatchPredictionSave,
   ContestEntrySeasonPrediction,
   ContestEntryMatchPredictionWrite,
+  ContestEntryTotals,
   ContestEntryWithSquad,
   ContestRepository,
   LeagueInvitationRepository,

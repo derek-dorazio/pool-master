@@ -9,6 +9,7 @@ import type {
   ContestEntryCreateResult,
   ContestEntryDeleteResult,
   ContestEntryRepository,
+  ContestEntryTotals,
   ContestEntryWithSquad,
   StandingsEmailPosition,
   StandingsEmailPositionRepository,
@@ -90,6 +91,33 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
       include: ENTRY_EVENTS,
     });
     return rows.map(mapToEntry);
+  }
+
+  async findBySquadAndContests(squadId: string, contestIds: readonly string[]): Promise<ContestEntryWithSquad[]> {
+    if (!contestIds.length) return [];
+    // The squad_id index serves it: a squad holds few entries, whatever the league's size.
+    const rows = await this.prisma.contestEntry.findMany({
+      where: { squadId, contestId: { in: [...contestIds] } },
+      orderBy: [{ contestId: 'asc' }, { entryNumber: 'asc' }],
+      include: { squad: { select: { name: true } }, ...ENTRY_EVENTS },
+    });
+    return rows.map((row) => ({ ...mapToEntry(row), squadName: row.squad.name }));
+  }
+
+  async countForContest(contestId: string): Promise<ContestEntryTotals> {
+    const [allEntryCount, submittedBySquad] = await Promise.all([
+      this.prisma.contestEntry.count({ where: { contestId } }),
+      this.prisma.contestEntry.groupBy({
+        by: ['squadId'],
+        where: { contestId, events: { some: { status: ContestEntryStatus.SUBMITTED } } },
+        _count: { _all: true },
+      }),
+    ]);
+    return {
+      submittedEntryCount: submittedBySquad.reduce((sum, row) => sum + row._count._all, 0),
+      enteredSquadCount: submittedBySquad.length,
+      allEntryCount,
+    };
   }
 
   /** Refused once the contest is drawn or full; waits for a draw being recorded (#644). */

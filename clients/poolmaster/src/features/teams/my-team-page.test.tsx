@@ -34,7 +34,7 @@ const getSquadHistoryMock = vi.fn();
 const listContestResultsMock = vi.fn();
 const listRecordsMock = vi.fn();
 const listPerpetualTrophiesMock = vi.fn();
-const listContestEntriesMock = vi.fn();
+const listMyContestEntriesMock = vi.fn();
 const listContestsMock = vi.fn();
 const getLeagueByCodeMock = vi.fn();
 const listLeagueMembersMock = vi.fn();
@@ -53,7 +53,7 @@ bindApiMocks({
   getSquadHistory: getSquadHistoryMock,
   getSquadYear: getSquadYearMock,
   listContestResults: listContestResultsMock,
-  listContestEntries: listContestEntriesMock,
+  listMyContestEntries: listMyContestEntriesMock,
   listContests: listContestsMock,
   listPerpetualTrophies: listPerpetualTrophiesMock,
   listRecords: listRecordsMock,
@@ -192,18 +192,10 @@ function primeContests(
   entriesByContest: Record<string, ReturnType<typeof teamEntry>[]>,
 ) {
   listContestsMock.mockResolvedValue(apiSuccess({ contests }));
-  listContestEntriesMock.mockImplementation(({ path }: { path: { contestId: string } }) => {
-    const entries = entriesByContest[path.contestId] ?? [];
-    return apiSuccess({
-      contestId: path.contestId,
-      total: entries.length,
-      isJoined: false,
-      myEntryId: null,
-      myEntryIds: [],
-      picksRevealed: false,
-      entries,
-    });
-  });
+  // The viewer's team's (team-1's) entries across the league's current contests, in one read (#1197).
+  listMyContestEntriesMock.mockResolvedValue(apiSuccess({
+    entries: Object.values(entriesByContest).flat().filter((entry) => entry.squadId === 'team-1'),
+  }));
 }
 
 afterEach(() => {
@@ -211,7 +203,7 @@ afterEach(() => {
     createLeagueSquadMock, createSquadOwnerInvitationMock, getCurrentUserMock, getLeagueByCodeMock,
     listLeagueMembersMock, getLeagueSquadMock, listSquadOwnerInvitationsMock, refreshTokenMock,
     replaceSquadOwnerMock, revokeSquadOwnerInvitationMock, updateLeagueSquadMock,
-    getContestLeaderboardMock, listContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
+    getContestLeaderboardMock, listMyContestEntriesMock, listContestsMock, getSquadYearMock, getSquadHistoryMock, listContestResultsMock, listRecordsMock, listPerpetualTrophiesMock,
   ]) {
     mock.mockReset();
   }

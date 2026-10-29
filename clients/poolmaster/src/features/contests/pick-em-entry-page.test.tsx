@@ -8,7 +8,7 @@ import { bracketLeagueContextFixture } from './test/bracket-fixtures';
 import {
   NFL_TEAMS,
   pickEmContestFixture,
-  pickEmEntriesFixture,
+  pickEmEntryFixture,
   pickEmWeekFixture,
   playoffSurvivorContestFixture,
   playoffSurvivorFixture,
@@ -23,7 +23,7 @@ const {
   getGamePicksMock,
   getLeagueMock,
   getSelectionStateMock,
-  listContestEntriesMock,
+  getContestEntryMock,
   mockLogger,
   saveGamePicksMock,
   submitGamePicksMock,
@@ -35,7 +35,7 @@ const {
     getGamePicksMock: vi.fn(),
     getLeagueMock: vi.fn(),
     getSelectionStateMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
+    getContestEntryMock: vi.fn(),
     mockLogger: logger,
     saveGamePicksMock: vi.fn(),
     submitGamePicksMock: vi.fn(),
@@ -47,7 +47,7 @@ bindApiMocks({
   getGamePicks: getGamePicksMock,
   getLeague: getLeagueMock,
   getSelectionState: getSelectionStateMock,
-  listContestEntries: listContestEntriesMock,
+  getContestEntry: getContestEntryMock,
   saveGamePicks: saveGamePicksMock,
   submitGamePicks: submitGamePicksMock,
 });
@@ -94,7 +94,7 @@ function renderPickEmEntry(entryId = 'entry-1') {
 function primeMocks({ week = pickEmWeekFixture() } = {}) {
   getContestMock.mockResolvedValue({ data: { contest: pickEmContestFixture() } });
   getGamePicksMock.mockResolvedValue({ data: week });
-  listContestEntriesMock.mockResolvedValue({ data: pickEmEntriesFixture() });
+  getContestEntryMock.mockImplementation(({ path }: { path: { entryId: string } }) => Promise.resolve({ data: pickEmEntryFixture(path.entryId) }));
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
 }
 
@@ -110,7 +110,7 @@ describe('Pick\'em contest entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+      getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
     ]) {
       mock.mockReset();
     }
@@ -363,7 +363,7 @@ describe('Survivor contest entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+      getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
     ]) {
       mock.mockReset();
     }
@@ -429,7 +429,7 @@ describe('Playoff survivor entry page', () => {
   afterEach(() => {
     for (const mock of [
       getContestMock, getGamePicksMock, getLeagueMock, getSelectionStateMock,
-      listContestEntriesMock, saveGamePicksMock, submitGamePicksMock,
+      getContestEntryMock, saveGamePicksMock, submitGamePicksMock,
     ]) {
       mock.mockReset();
     }

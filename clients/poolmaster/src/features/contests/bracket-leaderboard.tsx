@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useEffect } from 'react';
 import { Link } from 'react-router';
@@ -9,13 +8,11 @@ import { useLeagueContextById } from '@/features/leagues/use-league-context';
 import { Chip, DataGrid, ErrorState, LoadingState, Tile } from '@/features/shared/ui';
 import { ApiError, extractErrorMessage } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
-import { QueryKeys } from '@/lib/query-keys';
 import { formatPoints } from './bracket-layout';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { LEADERBOARD_ERROR_MESSAGES } from './contest-leaderboard';
 import { contestScoreUnit } from './contest-sport';
 import { ContestStatusBadge } from './contest-status-badge';
-import { fetchContestEntries } from './use-contest-entries';
 import { useBracketLeaderboardQuery } from './use-contest-leaderboard';
 
 type BracketRow = BracketLeaderboardResponse['entries'][number];
@@ -106,11 +103,6 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
   const logger = getLogger().child({ feature: 'bracket-leaderboard' });
   const contestId = contest.id;
   const leaderboardQuery = useBracketLeaderboardQuery(contestId, contest.status);
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    retry: false,
-  });
   const { league, viewer } = useLeagueContextById(contest.leagueId);
   const leagueCode = hintedLeagueCode ?? league?.leagueCode ?? null;
 
@@ -154,7 +146,7 @@ export function BracketLeaderboard({ contest, leagueCode: hintedLeagueCode }: { 
             contestId={contestId}
             current="leaderboard"
             leagueCode={leagueCode}
-            myEntryId={contestEntriesQuery.data?.myEntryIds?.[0] ?? null}
+            myEntryId={contest.myEntryIds?.[0] ?? null}
             picksRevealed
           />
         ) : null}

@@ -51,7 +51,7 @@ import {
 } from './contest-status';
 import { ContestHeader, ContestSubMenu } from './contest-header';
 import { contestEntryTiebreaker, contestRosterParticipantNoun } from './contest-sport';
-import { fetchContestEntries } from './use-contest-entries';
+import { entryWriteKeys, useContestEntryQuery } from './use-contest-entries';
 import { useContestSchedule } from './use-contest-schedule';
 import { ContestEventSwitcher } from './contest-event-switcher';
 import { entryEventStatus, hasContestEventStarted } from './contest-events';
@@ -171,12 +171,7 @@ function RosterContestEntryPage() {
 
   const contestQuery = useQuery(contestDetailQueryOptions(contestId));
 
-  const contestEntriesQuery = useQuery({
-    queryKey: QueryKeys.contestEntries.byContest(contestId),
-    queryFn: () => fetchContestEntries(contestId),
-    enabled: Boolean(contestId),
-    retry: false,
-  });
+  const entryQuery = useContestEntryQuery(contestId, entryId);
 
   const selectionStateQuery = useQuery({
     queryKey: selectionStateQueryKey,
@@ -287,7 +282,7 @@ function RosterContestEntryPage() {
     if (
       !contestQuery.isError
       && !selectionStateQuery.isError
-      && !contestEntriesQuery.isError
+      && !entryQuery.isError
     ) {
       return;
     }
@@ -299,13 +294,13 @@ function RosterContestEntryPage() {
           contestId,
           entryId,
         },
-        err: contestQuery.error ?? selectionStateQuery.error ?? contestEntriesQuery.error,
+        err: contestQuery.error ?? selectionStateQuery.error ?? entryQuery.error,
       },
       'Contest entry page failed to load required data',
     );
   }, [
-    contestEntriesQuery.error,
-    contestEntriesQuery.isError,
+    entryQuery.error,
+    entryQuery.isError,
     contestId,
     contestQuery.error,
     contestQuery.isError,
@@ -316,7 +311,7 @@ function RosterContestEntryPage() {
   ]);
 
   useEffect(() => {
-    if (!contestQuery.data || !selectionStateQuery.data || !contestEntriesQuery.data) {
+    if (!contestQuery.data || !selectionStateQuery.data || !entryQuery.data) {
       return;
     }
 
@@ -332,7 +327,7 @@ function RosterContestEntryPage() {
       },
       'Contest entry page loaded',
     );
-  }, [contestEntriesQuery.data, contestId, contestQuery.data, selectionStateQuery.data, entryId, logger]);
+  }, [entryQuery.data, contestId, contestQuery.data, selectionStateQuery.data, entryId, logger]);
 
   const saveEntryDetailsMutation = useInvalidatingMutation({
     mutationFn: async () => {
@@ -400,8 +395,7 @@ function RosterContestEntryPage() {
       );
     },
     invalidates: [
-      QueryKeys.contests.detail(contestId),
-      QueryKeys.contestEntries.byContest(contestId),
+      ...entryWriteKeys(contestId),
       selectionStateQueryKey,
     ],
     onError: (error) => {
@@ -477,8 +471,7 @@ function RosterContestEntryPage() {
       queryClient.setQueryData<SelectionState>(selectionStateQueryKey, selectionState);
     },
     invalidates: [
-      QueryKeys.contests.detail(contestId),
-      QueryKeys.contestEntries.byContest(contestId),
+      ...entryWriteKeys(contestId),
     ],
     onError: (error, participantId, context) => {
       if (context?.previousSelectionState) {
@@ -523,8 +516,7 @@ function RosterContestEntryPage() {
       queryClient.setQueryData<SelectionState>(selectionStateQueryKey, selectionState);
     },
     invalidates: [
-      QueryKeys.contests.detail(contestId),
-      QueryKeys.contestEntries.byContest(contestId),
+      ...entryWriteKeys(contestId),
     ],
     onError: (error) => {
       const payload = {
@@ -541,7 +533,7 @@ function RosterContestEntryPage() {
     },
   });
 
-  if (contestQuery.isLoading || selectionStateQuery.isLoading || contestEntriesQuery.isLoading) {
+  if (contestQuery.isLoading || selectionStateQuery.isLoading || entryQuery.isLoading) {
     return <LoadingState body="Loading contest entry..." />;
   }
 
@@ -550,7 +542,7 @@ function RosterContestEntryPage() {
     || !contestQuery.data
     || selectionStateQuery.isError
     || !selectionStateQuery.data
-    || contestEntriesQuery.isError
+    || entryQuery.isError
   ) {
     return (
       <ErrorState
@@ -571,8 +563,8 @@ function RosterContestEntryPage() {
     ? buildLeagueContestPath(backLeagueCode, contestId)
     : `/contests/${contestId}`;
   const backToLeaguePath = backLeagueCode ? buildLeaguePath(backLeagueCode) : '/welcome';
-  const entrySummary = contestEntriesQuery.data?.entries.find((entry) => entry.id === entryId) ?? null;
-  const myEntryIds = contestEntriesQuery.data?.myEntryIds ?? [];
+  const entrySummary = entryQuery.data?.entry ?? null;
+  const myEntryIds = contest.myEntryIds ?? [];
   const isMyEntry = myEntryIds.includes(entryId);
   const isRandomDraw = contest.selectionType === SelectionType.RANDOM_DRAW;
   const shownEventId = selectionState.sportEventId;
@@ -680,7 +672,7 @@ function RosterContestEntryPage() {
             current={isMyEntry ? 'my-entry' : null}
             leagueCode={backLeagueCode}
             myEntryId={myEntryIds[0] ?? null}
-            picksRevealed={contestEntriesQuery.data?.picksRevealed ?? false}
+            picksRevealed={entryQuery.data?.picksRevealed ?? false}
           />
         ) : null}
         summary={(

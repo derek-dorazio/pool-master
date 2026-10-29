@@ -19,6 +19,7 @@ import {
   ContestListResponseSchema,
   ContestManagementResponseSchema,
   ContestResponseSchema,
+  MyContestEntriesResponseSchema,
   SelectionStateResponseSchema,
   GamePicksResponseSchema,
   ErrorEnvelopeSchema,
@@ -619,6 +620,15 @@ describe('Contract verification (web)', () => {
     expect(openRes.statusCode).toBe(200);
     const openParsed = ContestManagementResponseSchema.safeParse(openRes.json());
     expect(openParsed.success).toBe(true);
+
+    // The viewer's own entries across the league's open and live contests (#1197).
+    const myEntriesRes = await getApp().inject({
+      method: 'GET',
+      url: `${API_ROUTES.leagues.contests(leagueId)}my-entries`,
+      headers: withoutJsonBodyHeaders(owner.headers),
+    });
+    expect(myEntriesRes.statusCode).toBe(200);
+    expect(MyContestEntriesResponseSchema.safeParse(myEntriesRes.json()).success).toBe(true);
     expect(openParsed.data?.contest.status).toBe('OPEN');
 
     // The league's contest list carries each contest's event name and start (#577).

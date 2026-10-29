@@ -6,7 +6,6 @@ import { bindApiMocks } from '@/test/msw-api';
 import { ContestLeaderboardPage } from './contest-leaderboard-page';
 import {
   bracketContestFixture,
-  bracketEntriesFixture,
   bracketLeaderboardFixture,
   bracketLeagueContextFixture,
 } from './test/bracket-fixtures';
@@ -16,7 +15,6 @@ const {
   getContestLeaderboardMock,
   getContestMock,
   getLeagueMock,
-  listContestEntriesMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
@@ -26,7 +24,6 @@ const {
     getContestLeaderboardMock: vi.fn(),
     getContestMock: vi.fn(),
     getLeagueMock: vi.fn(),
-    listContestEntriesMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -36,7 +33,6 @@ bindApiMocks({
   getContest: getContestMock,
   getContestLeaderboard: getContestLeaderboardMock,
   getLeague: getLeagueMock,
-  listContestEntries: listContestEntriesMock,
 });
 
 vi.mock('@/features/auth/auth-context', () => ({
@@ -85,13 +81,12 @@ function renderLeaderboard() {
 
 function primeMocks() {
   getContestMock.mockResolvedValue({ data: { contest: bracketContestFixture({ status: 'ACTIVE' }) } });
-  listContestEntriesMock.mockResolvedValue({ data: bracketEntriesFixture({ picksRevealed: true }) });
   getLeagueMock.mockResolvedValue({ data: bracketLeagueContextFixture() });
 }
 
 describe('Bracket contest leaderboard', () => {
   afterEach(() => {
-    for (const mock of [getBracketLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock, listContestEntriesMock]) {
+    for (const mock of [getBracketLeaderboardMock, getContestLeaderboardMock, getContestMock, getLeagueMock]) {
       mock.mockReset();
     }
   });
@@ -122,7 +117,9 @@ describe('Bracket contest leaderboard', () => {
     getBracketLeaderboardMock.mockResolvedValue({ data: bracketLeaderboardFixture() });
     renderLeaderboard();
 
-    fireEvent.click(await screen.findByTestId('bracket-leaderboard-entry-link-entry-2'));
+    // Once the viewer's league has loaded the board stops re-rendering its rows.
+    await screen.findByText('Yours');
+    fireEvent.click(screen.getByTestId('bracket-leaderboard-entry-link-entry-2'));
 
     expect(await screen.findByTestId('entry-destination')).toHaveTextContent('entry-2');
   });
