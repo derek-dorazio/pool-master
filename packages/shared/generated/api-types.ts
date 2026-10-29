@@ -1302,7 +1302,7 @@ export interface paths {
         };
         /**
          * List contests for a league
-         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT whose events have all started (it can never open); a DRAFT with no events yet is listed. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT with an event that has started (it can never open); a DRAFT with no events yet is listed, and so is a bracket or squares DRAFT, which closes at its round or game rather than its event. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContests"];
         put?: never;

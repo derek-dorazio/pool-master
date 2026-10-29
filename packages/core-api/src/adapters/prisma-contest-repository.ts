@@ -14,7 +14,7 @@ import type {
   ContestStatusTransition,
   ContestUpdate,
 } from '@poolmaster/shared/db';
-import { ContestStatus, type Contest, type ContestFormat, type CupWeight, type SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -56,10 +56,13 @@ export class PrismaContestRepository implements ContestRepository {
       where: {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
-        // A draft whose every event has started can never open (#1161).
+        // A draft can never open once any of its events has started, and a started event cannot
+        // be removed (#1161). A bracket or squares contest closes at its round or game instead,
+        // which can be after its event starts, so those drafts stay.
         NOT: {
           status: ContestStatus.DRAFT,
-          sportEvents: { some: {}, every: { sportEvent: { startDate: { lte: now } } } },
+          selectionType: { notIn: [SelectionType.BRACKET, SelectionType.SQUARES] },
+          sportEvents: { some: { sportEvent: { startDate: { lte: now } } } },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -78,13 +81,12 @@ export class PrismaContestRepository implements ContestRepository {
   }
 
   async findFinishedYearsByLeague(leagueId: string): Promise<number[]> {
-    // The championship year is the US Eastern calendar year (`championshipYear`).
-    const rows = await this.prisma.$queryRaw<Array<{ year: number }>>`
-      SELECT DISTINCT EXTRACT(YEAR FROM ends_at AT TIME ZONE 'America/New_York')::int AS year
-      FROM contests
-      WHERE league_id = ${leagueId}::uuid AND status = 'COMPLETED' AND ends_at IS NOT NULL
-      ORDER BY year DESC`;
-    return rows.map((row) => row.year);
+    const rows = await this.prisma.contest.findMany({
+      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { not: null } },
+      select: { endsAt: true },
+    });
+    const years = new Set(rows.flatMap(({ endsAt }) => (endsAt ? [championshipYear(endsAt)] : [])));
+    return [...years].sort((left, right) => right - left);
   }
 
   async findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>> {

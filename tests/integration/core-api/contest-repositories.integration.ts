@@ -245,7 +245,7 @@ describe('ContestRepository', () => {
     ]);
   });
 
-  it("lists a league's current contests newest first, leaving out finished ones and drafts whose every event has started (#1161)", async () => {
+  it("lists a league's current contests newest first, leaving out finished ones and drafts with an event already started (#1161)", async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
     const later = await createLaterEvent(suffix);
@@ -254,14 +254,33 @@ describe('ContestRepository', () => {
     const live = await createContest(league.id, event.id, 'Live', ContestStatus.ACTIVE);
     await createContest(league.id, event.id, 'Finished', ContestStatus.COMPLETED);
     await createContest(league.id, event.id, 'Stale Draft', ContestStatus.DRAFT);
-    const pendingDraft = await createContest(league.id, [event.id, later.event.id], 'Draft With An Event To Come', ContestStatus.DRAFT);
+    // One event under way already: it can no longer open, and the started event cannot be removed.
+    await createContest(league.id, [event.id, later.event.id], 'Partly Started Draft', ContestStatus.DRAFT);
+    const upcomingDraft = await createContest(league.id, later.event.id, 'Draft On An Event To Come', ContestStatus.DRAFT);
     const emptyDraft = await createContest(league.id, [], 'Draft With No Event', ContestStatus.DRAFT);
     const open = await createContest(league.id, later.event.id, 'Open', ContestStatus.OPEN);
     await createContest(other.league.id, other.event.id, 'Elsewhere', ContestStatus.OPEN);
 
     const current = await repos().contests.findCurrentByLeague(league.id, now);
 
-    expect(current.map((contest) => contest.id)).toEqual([open.id, emptyDraft.id, pendingDraft.id, live.id]);
+    expect(current.map((contest) => contest.id)).toEqual([open.id, emptyDraft.id, upcomingDraft.id, live.id]);
+  });
+
+  it('keeps a bracket or squares draft whose event has started, since it closes at its round or game instead (#1161)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const now = new Date('2026-06-10T12:00:00.000Z');
+    const bracket = await createContestRow(repos().contests, {
+      leagueId: league.id, seasonYear: 2026, sportEventIds: [event.id], name: 'Second Chance',
+      status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.BRACKET,
+    });
+    const squares = await createContestRow(repos().contests, {
+      leagueId: league.id, seasonYear: 2026, sportEventIds: [event.id], name: 'Late Game Squares',
+      status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.SQUARES,
+    });
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([squares.id, bracket.id]);
   });
 
   it("lists only a league's contests in the given statuses", async () => {

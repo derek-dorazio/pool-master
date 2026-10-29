@@ -336,8 +336,9 @@ export class InMemoryContestWorld {
       findCurrentByLeague: async (leagueId, now) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status !== ContestStatus.COMPLETED
-          && !(contest.status === ContestStatus.DRAFT && contest.sportEventIds.length > 0
-            && contest.sportEventIds.every((id) => (this.sportEvents.get(id)?.startDate ?? now) <= now))),
+          && !(contest.status === ContestStatus.DRAFT
+            && contest.selectionType !== SelectionType.BRACKET && contest.selectionType !== SelectionType.SQUARES
+            && contest.sportEventIds.some((id) => (this.sportEvents.get(id)?.startDate ?? now) <= now))),
       findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status === ContestStatus.COMPLETED
