@@ -78,6 +78,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
   }
 
   async placeSides(sides: readonly { id: string; homeSportEventParticipantId: string; awaySportEventParticipantId: string }[]): Promise<void> {
+    // poolmaster-allow-query-in-loop: one round's matches (per-row values, one transaction)
     await this.prisma.$transaction(sides.map(({ id, ...values }) => this.prisma.sportEventMatch.update({ where: { id }, data: values })));
   }
 
@@ -93,6 +94,7 @@ export class PrismaSportEventMatchRepository implements SportEventMatchRepositor
             : { awaySportEventParticipantId: sideFill.sportEventParticipantId },
         })]
         : []),
+      // poolmaster-allow-query-in-loop: one event's field (per-row values, one transaction)
       ...standings.map(({ sportEventParticipantId, ...standing }) => this.prisma.sportEventParticipantStanding.upsert({
         where: { sportEventParticipantId },
         create: { sportEventParticipantId, ...standing },

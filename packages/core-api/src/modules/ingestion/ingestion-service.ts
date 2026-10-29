@@ -234,6 +234,7 @@ export class IngestionService {
 
     for (const sport of await this.getConfiguredSportsForProvider(provider)) {
       const participants = await provider.getParticipants(sport);
+      // poolmaster-allow-query-in-loop: once per sport the provider is configured for, a handful
       const mapped = await this.participantMappings.findByProviderExternalIds(
         provider.providerId,
         participants.map((participant) => participant.externalId),

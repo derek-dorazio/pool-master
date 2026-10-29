@@ -25728,7 +25728,7 @@ export type ProviderSyncRunDetailDto = {
         [key: string]: unknown;
     };
     /**
-     * The run's detailed diagnostics; null before the run starts.
+     * The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.
      */
     details: {
         /**

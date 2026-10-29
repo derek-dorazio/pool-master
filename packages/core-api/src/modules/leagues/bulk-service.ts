@@ -59,6 +59,7 @@ export class BulkService {
         failed.push({ email, reason: 'Invalid email format' });
         continue;
       }
+      // poolmaster-allow-query-in-loop: #1173
       const existing = await this.invitationRepo.findByEmail(leagueId, email);
       if (existing) {
         duplicates.push(email);
@@ -66,6 +67,7 @@ export class BulkService {
       }
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
+      // poolmaster-allow-query-in-loop: #1173
       await this.invitationRepo.create({
         leagueId,
         email,

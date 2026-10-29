@@ -240,17 +240,8 @@ export class UserService {
     await this.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: targetUserId }, data: { passwordHash } });
 
-      // NOT revokeUserSessions: a password change keeps the caller's own session alive and
-      // revokes every other one. Deliberately different from the blanket revoke, so do not
-      // collapse the two.
-      await tx.refreshToken.updateMany({
-        where: {
-          userId: targetUserId,
-          revokedAt: null,
-          ...(request.currentRefreshToken ? { NOT: { token: request.currentRefreshToken } } : {}),
-        },
-        data: { revokedAt: new Date() },
-      });
+      // Every other session ends; the caller's own stays signed in.
+      await revokeUserSessions(tx, targetUserId, request.currentRefreshToken);
       // A reset link sent before the change must not undo it (#847).
       await cancelOpenPasswordResetTokens(tx, targetUserId, changedAt);
     });

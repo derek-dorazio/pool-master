@@ -26,6 +26,7 @@ import noPlanBranching from '../no-plan-branching.mjs';
 import noArbitraryTypeSizes from '../no-arbitrary-type-sizes.mjs';
 import noRawThemeColors from '../no-raw-theme-colors.mjs';
 import noUnawaitedSendError from '../no-unawaited-send-error.mjs';
+import noQueryInLoop from '../no-query-in-loop.mjs';
 
 const ruleTester = new RuleTester({
   languageOptions: {
@@ -215,8 +216,6 @@ ruleTester.run('no-arbitrary-type-sizes', noArbitraryTypeSizes, {
     { code: "const f = 'text-[2vw]';", errors: [{ messageId: 'arbitraryTypeSize' }] },
   ],
 });
-
-console.log('Local ESLint rule tests passed.');
 
 ruleTester.run('no-env-fallbacks', noEnvFallbacks, {
   valid: [
@@ -625,3 +624,210 @@ ruleTester.run('no-plan-branching', noPlanBranching, {
     { code: 'switch (kind) { case LeaguePlan.FREE: break; }', errors: [{ messageId: 'planBranch' }] },
   ],
 });
+
+ruleTester.run('no-query-in-loop', noQueryInLoop, {
+  valid: [
+    // The batched read the rule's message asks for: one IN query, then a map.
+    'async function f(ids) { const rows = await this.contestRepo.findByIds(ids); return ids.map((id) => rows.find((row) => row.id === id)); }',
+    'async function f(ids) { const rows = await prisma.contest.findMany({ where: { id: { in: ids } } }); for (const row of rows) { use(row); } }',
+    // A set-based write built in a loop and sent once.
+    'async function f(rows) { await tx.standing.createMany({ data: rows.map((row) => ({ id: row.id })) }); }',
+    // The iterable of for...of and a for initialiser run once.
+    'async function f() { for (const row of await this.contestRepo.list()) { use(row); } }',
+    'async function f() { for (let rows = await squadRepo.list(); rows.length > 0; rows.pop()) { use(rows); } }',
+    // A function stored inside a loop is a boundary: whoever calls it owns the loop.
+    'for (const id of ids) { const load = async () => squadRepo.findById(id); loaders.push(load); }',
+    'for (const id of ids) { loaders.push(async function load() { return squadRepo.findById(id); }.bind(null)); }',
+    // A memo inside a loop reads once.
+    'async function f(rows) { let games; for (const row of rows) { games ??= await this.matchRepo.findBySportEvent(id); use(row, games); } }',
+    'async function f(rows) { let leagues; for (const row of rows) { leagues ||= await prisma.league.findMany(); use(row, leagues); } }',
+    // Not a repository and not Prisma: other per-row calls are not this rule's business.
+    'async function f(rows) { for (const row of rows) { await this.email.send(row); } }',
+    'async function f(rows) { await Promise.all(rows.map((row) => this.mapper.toDto(row))); }',
+    // A Prisma call that is not a delegate method (a transaction opener) is not a query per row.
+    'async function f(rows) { for (const row of rows) { await prisma.$transaction(async () => undefined); } }',
+    // The escape hatch with a reason, before the call or before the statement holding it.
+    `async function f(rounds) {
+      for (const round of rounds) {
+        // poolmaster-allow-query-in-loop: a sport's handful of scoring periods
+        await this.roundRepo.save(round);
+      }
+    }`,
+    `async function f(rows) {
+      // poolmaster-allow-query-in-loop: #1172
+      await Promise.all(rows.map((row) =>
+        prisma.standing.upsert({ where: { id: row.id }, create: row, update: row })));
+    }`,
+  ],
+  invalid: [
+    {
+      code: 'async function f(ids) { for (const id of ids) { await this.contestRepo.findById(id); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(ids) { for (let i = 0; i < ids.length; i++) { await input.squadRepository.findById(ids[i]); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A while test runs once per iteration too.
+      code: 'async function f() { while (await this.jobRepo.claimNext()) { work(); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f() { do { await tx.contest.update({ where: { id }, data: {} }); } while (more()); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // The fan-out: Promise.all over a map is still one query per row.
+      code: 'async function f(ids) { await Promise.all(ids.map((id) => this.prisma.user.findUnique({ where: { id } }))); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A memo declared inside the loop starts empty on every pass.
+      code: 'async function f(rows) { for (const row of rows) { let games; games ??= await this.matchRepo.findBySportEvent(row.id); use(games); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A property memo is a different object on every pass.
+      code: 'async function f(rows) { for (const row of rows) { row.contest ??= await this.contestRepo.findById(row.id); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { await Promise.all(rows.map(async (row) => { let league; league ||= await leagueRepo.findById(row.leagueId); return league; })); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A plain assignment is not a memo: it reads on every pass.
+      code: 'async function f(rows) { let games; for (const row of rows) { games = await this.matchRepo.findBySportEvent(row.id); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { rows.forEach(async (row) => { await repo.save(row); }); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { await Promise.all(rows.flatMap((row) => [tx.entry.delete({ where: { id: row.id } })])); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { await rows.reduce(async (prev, row) => { await prev; await this.entryRepo.save(row); }, Promise.resolve()); }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A callback handed to another call runs where it is written: still inside the loop.
+      code: 'async function f(rows) { for (const row of rows) { await prisma.$transaction(async (tx) => tx.entry.create({ data: row })); } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      code: 'async function f(rows) { for (const row of rows) { await prisma.$executeRaw`UPDATE x SET y = ${row.y}`; } }',
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A marker without a reason is an error of its own, and does not excuse the call.
+      code: `async function f(rows) {
+        for (const row of rows) {
+          // poolmaster-allow-query-in-loop:
+          await this.entryRepo.save(row);
+        }
+      }`,
+      errors: [{ messageId: 'missingReason' }],
+    },
+    {
+      // A marker that covers nothing must go: a fix removes its own comment.
+      code: `async function f(ids) {
+        // poolmaster-allow-query-in-loop: #1172
+        await this.contestRepo.findByIds(ids);
+      }`,
+      errors: [{ messageId: 'unusedAllow' }],
+    },
+    {
+      // A marker two lines up covers nothing, and the call is still reported.
+      code: `async function f(rows) {
+        // poolmaster-allow-query-in-loop: #1172
+
+        for (const row of rows) { await this.entryRepo.save(row); }
+      }`,
+      errors: [{ messageId: 'unusedAllow' }, { messageId: 'queryInLoop' }],
+    },
+  ],
+});
+
+// The same rule with type information, as `npm run lint` runs it: a repository reached under a
+// name that does not say so (`this.deps.eventStandings`) is recognised by its declared type.
+const typedRuleTester = new RuleTester({
+  languageOptions: {
+    parser: tseslintParser,
+    parserOptions: {
+      project: './tsconfig.json',
+      // CI=true otherwise switches typescript-eslint to single-run mode, which builds the program
+      // once from the fixture on disk and never sees each case's code.
+      disallowAutomaticSingleRunInference: true,
+      tsconfigRootDir: new URL('./fixtures/', import.meta.url).pathname,
+    },
+  },
+});
+const typedFixture = new URL('./fixtures/typed.ts', import.meta.url).pathname;
+const typedDeclarations = `
+  interface EventStandingRepository { upsert(row: { id: string }): Promise<void>; }
+  interface Mailer { send(row: { id: string }): Promise<void>; }
+  interface ContestDelegate { update(args: { where: { id: string } }): Promise<void>; }
+  interface SquadRepository { findById(id: string): Promise<void>; list(): Promise<void>; }
+  interface PredictionRepository { save(row: { id: string }): Promise<void>; }
+  interface PrismaClient { $queryRaw(query: TemplateStringsArray, ...values: unknown[]): Promise<unknown>; $executeRawUnsafe(query: string): Promise<number>; }
+  type Ports = { predictions: Pick<PredictionRepository, 'save'> };
+  type Extra = { predictions: Readonly<{ count(): number }> };
+  declare const deps: {
+    eventStandings: EventStandingRepository;
+    mailer: Mailer;
+    store: { contest: ContestDelegate };
+    squads: Pick<SquadRepository, 'findById'>;
+    partial: Partial<Omit<SquadRepository, 'list'>>;
+    predictions: Ports['predictions'] & Extra['predictions'];
+    db: PrismaClient;
+  };
+  declare const rows: Array<{ id: string }>;
+`;
+
+typedRuleTester.run('no-query-in-loop (typed)', noQueryInLoop, {
+  valid: [
+    {
+      // Typed as something other than a repository: not a database call.
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.mailer.send(row); } }`,
+      filename: typedFixture,
+    },
+  ],
+  invalid: [
+    {
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.eventStandings.upsert(row); } }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // A dependency slot declared as `Pick<…Repository, …>`, and one wrapped twice.
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.squads.findById(row.id); await deps.partial.findById?.(row.id); } }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }, { messageId: 'queryInLoop' }],
+    },
+    {
+      // An intersection of slots: any member typed as a repository is enough.
+      code: `${typedDeclarations} async function f() { await Promise.all(rows.map((row) => deps.predictions.save(row))); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+    {
+      // Raw SQL on a client reached under another name, as a tagged template and as a call.
+      code: `${typedDeclarations} async function f() { for (const row of rows) { await deps.db.$queryRaw\`SELECT \${row.id}\`; await deps.db.$executeRawUnsafe(row.id); } }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }, { messageId: 'queryInLoop' }],
+    },
+    {
+      // A Prisma model delegate under another name, recognised by its `…Delegate` type.
+      code: `${typedDeclarations} async function f() { await Promise.all(rows.map((row) => deps.store.contest.update({ where: { id: row.id } }))); }`,
+      filename: typedFixture,
+      errors: [{ messageId: 'queryInLoop' }],
+    },
+  ],
+});
+
+// Last, so the Jest wrapper's check of this line means every suite above ran.
+console.log('Local ESLint rule tests passed.');

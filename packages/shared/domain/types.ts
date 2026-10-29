@@ -487,7 +487,8 @@ export interface ProviderSyncRun {
 
 /**
  * One sync run with its detailed diagnostics: the changed rows, the ingestion job record, and
- * the raw provider payload. `details` is null before the run starts.
+ * the raw provider payload. `details` is null before the run starts and once the nightly
+ * cleanup has cleared it, 30 days after submission.
  */
 export interface ProviderSyncRunWithDetails extends ProviderSyncRun {
   details: Record<string, unknown> | null;

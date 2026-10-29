@@ -94,6 +94,7 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
         });
       }
       for (const { sportEventMatchId, predictedResult, sportEventParticipantId, confidence } of saves) {
+        // poolmaster-allow-query-in-loop: one entry's picks for one week's games, in one transaction
         await tx.contestEntryMatchPrediction.upsert({
           where: { contestEntryId_sportEventMatchId: { contestEntryId, sportEventMatchId } },
           create: { contestEntryId, sportEventMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at },

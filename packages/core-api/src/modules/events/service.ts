@@ -260,6 +260,7 @@ export class SportEventService {
     const skipped: ProviderEventYearImport['skipped'] = [];
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
+      // poolmaster-allow-query-in-loop: root-admin import of one tour's year, run by hand; each event goes through the single-event create
       if (await this.deps.sportEvents.findByProviderRef(input.providerId, externalId)) {
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;

@@ -47,7 +47,8 @@ export interface ParticipantContestScoringRuleRepository {
   create(
     rule: ParticipantContestScoringRuleCreate,
   ): Promise<ParticipantContestScoringRule>;
-  delete(id: string): Promise<void>;
+  /** Removes every rule of one configuration in one statement, before its scoring is replaced. */
+  deleteByContestConfiguration(contestConfigurationId: string): Promise<void>;
 }
 
 /** The participant a pick points at, as a contest entry shows it. */
