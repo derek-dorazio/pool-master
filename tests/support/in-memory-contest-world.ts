@@ -621,7 +621,9 @@ export class InMemoryContestWorld {
         .sort((left, right) => left.joinedAt.getTime() - right.joinedAt.getTime())
         .flatMap((membership) => {
           const user = this.users.get(membership.userId);
-          return user ? [{ membership, user }] : [];
+          const leagueRole = [...this.memberships.values()]
+            .find((row) => row.leagueId === squad.leagueId && row.userId === membership.userId)?.role ?? null;
+          return user ? [{ membership, user, leagueRole }] : [];
         }),
     });
     return {

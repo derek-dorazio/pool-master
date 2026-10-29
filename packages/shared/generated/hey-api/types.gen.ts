@@ -1745,6 +1745,89 @@ export type SquadMembershipDto = {
 };
 
 /**
+ * A squad owner: the squad membership with the owner's league role.
+ */
+export type SquadOwnerDto = {
+    id: string;
+    squadId: string;
+    leagueId: string;
+    userId: string;
+    /**
+     * The member, as the canonical UserDto.
+     */
+    user: {
+        /**
+         * Stable user identifier.
+         */
+        id: string;
+        /**
+         * Primary email address for the user account.
+         */
+        email: string;
+        /**
+         * Unique login identifier for the account.
+         */
+        username: string;
+        /**
+         * First name shown in account and member-management surfaces.
+         */
+        firstName: string;
+        /**
+         * Last name shown in account and member-management surfaces.
+         */
+        lastName: string;
+        /**
+         * Whether the account is currently active for normal sign-in and product usage.
+         */
+        isActive: boolean;
+        /**
+         * Whether the user has platform-level root-admin access.
+         */
+        isRootAdmin: boolean;
+        /**
+         * Authentication provider used for the account when known.
+         */
+        authProvider?: 'email' | 'google' | 'apple';
+        /**
+         * IANA time zone the member sees dates and times in, picked at signup. Absent means US Eastern.
+         */
+        timezone?: string;
+        /**
+         * BCP 47 locale the member's dates are formatted in, e.g. en-US.
+         */
+        locale?: string;
+        /**
+         * 12-hour or 24-hour clock for the times the member sees. Absent means the locale's own.
+         */
+        timeFormat?: '12H' | '24H';
+        /**
+         * Account creation timestamp in ISO 8601 format.
+         */
+        createdAt?: string;
+    };
+    /**
+     * Squad membership status.
+     */
+    status: 'ACTIVE' | 'INACTIVE';
+    /**
+     * When the user joined the squad.
+     */
+    joinedAt: string;
+    /**
+     * When the squad membership record was created.
+     */
+    createdAt: string;
+    /**
+     * When the squad membership record was last updated.
+     */
+    updatedAt: string;
+    /**
+     * The owner's role in the squad's league; null only if they hold no membership there.
+     */
+    leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
+};
+
+/**
  * A squad within a league. Returned wherever a squad is read.
  */
 export type SquadDto = {
@@ -1776,7 +1859,7 @@ export type SquadDto = {
      */
     updatedAt: string;
     /**
-     * Every owner membership of the squad, any status, in join order, each with its user.
+     * Every owner membership of the squad, any status, in join order, each with its user and league role.
      */
     members: Array<{
         id: string;
@@ -1852,6 +1935,10 @@ export type SquadDto = {
          * When the squad membership record was last updated.
          */
         updatedAt: string;
+        /**
+         * The owner's role in the squad's league; null only if they hold no membership there.
+         */
+        leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
     }>;
 };
 
@@ -1891,7 +1978,7 @@ export type SquadResponse = {
          */
         updatedAt: string;
         /**
-         * Every owner membership of the squad, any status, in join order, each with its user.
+         * Every owner membership of the squad, any status, in join order, each with its user and league role.
          */
         members: Array<{
             id: string;
@@ -1967,6 +2054,10 @@ export type SquadResponse = {
              * When the squad membership record was last updated.
              */
             updatedAt: string;
+            /**
+             * The owner's role in the squad's league; null only if they hold no membership there.
+             */
+            leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
         }>;
     };
 };
@@ -2004,7 +2095,7 @@ export type SquadListResponse = {
          */
         updatedAt: string;
         /**
-         * Every owner membership of the squad, any status, in join order, each with its user.
+         * Every owner membership of the squad, any status, in join order, each with its user and league role.
          */
         members: Array<{
             id: string;
@@ -2080,6 +2171,10 @@ export type SquadListResponse = {
              * When the squad membership record was last updated.
              */
             updatedAt: string;
+            /**
+             * The owner's role in the squad's league; null only if they hold no membership there.
+             */
+            leagueRole: 'COMMISSIONER' | 'MEMBER' | null;
         }>;
     }>;
 };
@@ -19810,6 +19905,20 @@ export type ListCupsQuery = {
 };
 
 /**
+ * Which cup: the league has one per season and sports league.
+ */
+export type CupSquadPointsQuery = {
+    /**
+     * The cup's season, such as 2026.
+     */
+    seasonYear: number;
+    /**
+     * The cup's sports league.
+     */
+    sportLeagueId: string;
+};
+
+/**
  * The seasons in which a league has cups.
  */
 export type CupSeasonListResponse = {
@@ -20307,6 +20416,10 @@ export type CupSquadContestDto = {
  */
 export type CupSquadPointsDto = {
     cupId: string;
+    /**
+     * The cup's name, from its season and sports league: "2026 PGA Tour Cup".
+     */
+    cupName: string;
     squadId: string;
     squadName: string;
     /**
@@ -20352,6 +20465,10 @@ export type CupSquadPointsResponse = {
      */
     squadPoints: {
         cupId: string;
+        /**
+         * The cup's name, from its season and sports league: "2026 PGA Tour Cup".
+         */
+        cupName: string;
         squadId: string;
         squadName: string;
         /**
@@ -22752,6 +22869,10 @@ export type EventPageListQuery = {
      * Only this sport's pages. Omitted: every sport's.
      */
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+    /**
+     * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+     */
+    upcoming?: boolean;
 };
 
 /**
@@ -22759,7 +22880,7 @@ export type EventPageListQuery = {
  */
 export type EventPageListResponse = {
     /**
-     * The active pages, by sport then display order. A page between seasons has no offers.
+     * The active pages, by sport then display order, or soonest first when only the upcoming ones are asked for. A page between seasons has no offers.
      */
     eventPages: Array<{
         id: string;
@@ -29843,6 +29964,55 @@ export type ListCupSeasonsResponses = {
 
 export type ListCupSeasonsResponse = ListCupSeasonsResponses[keyof ListCupSeasonsResponses];
 
+export type GetCupSquadPointsData = {
+    body?: never;
+    path: {
+        id: string;
+        squadId: string;
+    };
+    query: {
+        /**
+         * The cup's season, such as 2026.
+         */
+        seasonYear: number;
+        /**
+         * The cup's sports league.
+         */
+        sportLeagueId: string;
+    };
+    url: '/api/v1/leagues/{id}/cups/squads/{squadId}';
+};
+
+export type GetCupSquadPointsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type GetCupSquadPointsError = GetCupSquadPointsErrors[keyof GetCupSquadPointsErrors];
+
+export type GetCupSquadPointsResponses = {
+    /**
+     * One squad's cup points.
+     */
+    200: CupSquadPointsResponse;
+};
+
+export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
+
 export type GetCupData = {
     body?: never;
     path: {
@@ -29878,43 +30048,6 @@ export type GetCupResponses = {
 };
 
 export type GetCupResponse = GetCupResponses[keyof GetCupResponses];
-
-export type GetCupSquadPointsData = {
-    body?: never;
-    path: {
-        id: string;
-        cupId: string;
-        squadId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/cups/{cupId}/squads/{squadId}';
-};
-
-export type GetCupSquadPointsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type GetCupSquadPointsError = GetCupSquadPointsErrors[keyof GetCupSquadPointsErrors];
-
-export type GetCupSquadPointsResponses = {
-    /**
-     * One squad's cup points.
-     */
-    200: CupSquadPointsResponse;
-};
-
-export type GetCupSquadPointsResponse = GetCupSquadPointsResponses[keyof GetCupSquadPointsResponses];
 
 export type GetCupProjectionData = {
     body?: never;
@@ -32761,6 +32894,10 @@ export type ListEventPagesData = {
          * Only this sport's pages. Omitted: every sport's.
          */
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'AMERICAN_FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS';
+        /**
+         * true: only the pages with an edition coming, the one their primary offer shows, soonest first (#1202). Omitted or false: every active page, by sport then display order.
+         */
+        upcoming?: boolean;
     };
     url: '/api/v1/event-pages/';
 };

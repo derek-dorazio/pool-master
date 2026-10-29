@@ -10,7 +10,6 @@ import {
 } from '@/features/leagues/league-routing';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { useLeagueMembersQuery } from '@/features/leagues/use-league-members-query';
 import {
   Chip,
   EmptyState,
@@ -34,7 +33,6 @@ export function TeamPage() {
   const { query: leagueQuery, league, viewer } = useLeagueContext(leagueCode);
   const leagueId = league?.id ?? '';
   const teamQuery = useLeagueSquadQuery(leagueId, teamId);
-  const { membersByUserId } = useLeagueMembersQuery(leagueId);
 
   const leagueContext = useLeagueContextGuard(leagueQuery, { loadingBody: 'Loading this member...' });
   if (leagueContext.state === 'blocked' || !league) {
@@ -93,7 +91,7 @@ export function TeamPage() {
                 <Link className="font-medium text-foreground hover:underline" to={buildUserPath(owner.userId)}>
                   {formatUserName(owner.user.firstName, owner.user.lastName)}
                 </Link>
-                {membersByUserId.get(owner.userId)?.role === LeagueRole.COMMISSIONER ? <Chip>Commissioner</Chip> : null}
+                {owner.leagueRole === LeagueRole.COMMISSIONER ? <Chip>Commissioner</Chip> : null}
               </li>
             ))}
           </ul>

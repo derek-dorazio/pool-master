@@ -17,6 +17,7 @@ import type {
   LeaguePlanChangeReason,
   LeagueInvitation,
   LeagueMembership,
+  LeagueRole,
   Participant,
   ParticipantProviderMapping,
   Squad,
@@ -264,10 +265,14 @@ export interface LeagueMembershipRepository {
   update(id: string, updates: Partial<LeagueMembership>): Promise<LeagueMembership>;
 }
 
-/** One owner of a squad: the membership, any status, with the member's user. */
+/**
+ * One owner of a squad: the membership, any status, with the member's user and their role in the
+ * squad's league (#1202), null only if they hold no membership there.
+ */
 export interface SquadMemberDetails {
   membership: SquadMembership;
   user: User;
+  leagueRole: LeagueRole | null;
 }
 
 /**
