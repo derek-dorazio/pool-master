@@ -3,6 +3,7 @@
  * refresh-token rotation, a reuse revoke or an account delete would, and releases it on cue.
  */
 import type { Prisma, PrismaClient } from '@prisma/client';
+import { lockMemberRow } from '../../packages/core-api/src/adapters';
 
 type Work = (tx: Prisma.TransactionClient) => Promise<unknown>;
 
@@ -18,7 +19,7 @@ export function holdMemberLock(prisma: PrismaClient, userId: string, work: Work 
   const released = new Promise<Work>((resolve) => { releaseWith = resolve; });
   const committed = prisma.$transaction(async (tx) => {
     const [{ pid }] = await tx.$queryRaw<[{ pid: number }]>`SELECT pg_backend_pid() AS pid`;
-    await tx.$queryRaw`SELECT id FROM "users" WHERE id = ${userId}::uuid FOR NO KEY UPDATE`;
+    await lockMemberRow(tx, userId);
     await work(tx);
     signalReady(pid);
     await (await released)(tx);
