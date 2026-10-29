@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router';
 import { getLogger } from '@/lib/logger';
+import { Heading } from '@/features/shared/ui';
 
 export function NotFoundPage() {
   const logger = getLogger().child({
@@ -25,7 +26,7 @@ export function NotFoundPage() {
         Not Found
       </span>
       <div className="mt-4 space-y-3">
-        <h2 className="text-3xl font-semibold tracking-tight">We couldn&apos;t find that page.</h2>
+        <Heading level={2} tone="inherit" variant="page">We couldn&apos;t find that page.</Heading>
         <p className="max-w-2xl text-base leading-7 text-muted-foreground">
           Try returning to your welcome route or use the league selector once you&apos;re signed in.
         </p>

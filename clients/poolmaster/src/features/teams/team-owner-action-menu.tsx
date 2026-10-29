@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { changeMemberRole, removeSquadOwner } from '@/lib/api';
-import { Button, MenuItem } from '@/features/shared/ui';
+import { Button, Heading, MenuItem } from '@/features/shared/ui';
 import { buildLeagueAdminTeamPath } from '@/features/leagues/league-routing';
 import { QueryKeys } from '@/lib/query-keys';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -38,8 +38,10 @@ function OwnerActionDialog({
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Dialog.Title className="text-2xl font-semibold tracking-tight text-foreground">
-                {title}
+              <Dialog.Title asChild>
+                <Heading level={2} variant="section">
+                  {title}
+                </Heading>
               </Dialog.Title>
               <Dialog.Description
                 className="mt-2 text-sm text-muted-foreground"

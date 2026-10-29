@@ -13,6 +13,7 @@ import {
   Button,
   Checkbox,
   DataGrid,
+  Heading,
   Input,
   LinkButton,
   Select,
@@ -259,9 +260,9 @@ export function EventFieldGridCard({
     <Tile>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="title-card text-base text-foreground">
+          <Heading level={3} variant="card" size="base">
             Field ({entries.length})
-          </h3>
+          </Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             Tier assignment and pricing per tier are managed on the{' '}
             <LinkButton

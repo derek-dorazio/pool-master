@@ -1,5 +1,5 @@
 import { Award } from 'lucide-react';
-import { ErrorState, Tile } from '@/features/shared/ui';
+import { ErrorState, Heading, Tile } from '@/features/shared/ui';
 import { describePlateWinners, describeWonPlate, perpetualTrophyName, type WonPlate } from './perpetual-trophy-view';
 import { usePerpetualTrophiesQuery } from './use-championship-query';
 
@@ -23,10 +23,10 @@ export function PerpetualTrophies({ leagueId }: { leagueId: string }) {
       <h2 className="text-lg font-semibold text-foreground">Perpetual trophies</h2>
       {trophies.map((trophy) => (
         <Tile className="space-y-2" data-testid={`perpetual-trophy-${trophy.eventSeriesId}-${trophy.selectionType}`} key={`${trophy.eventSeriesId}-${trophy.selectionType}`} padding="sm" radius="lg">
-          <h3 className="title-card flex items-center gap-2 text-foreground">
+          <Heading level={3} variant="card" className="flex items-center gap-2">
             <Award aria-hidden className="text-primary" size={18} />
             {perpetualTrophyName(trophy)}
-          </h3>
+          </Heading>
           <p className="text-xs text-muted-foreground">{trophy.sportLeagueName}</p>
           <ul className="space-y-1 text-sm">
             {trophy.plates.map((plate) => (

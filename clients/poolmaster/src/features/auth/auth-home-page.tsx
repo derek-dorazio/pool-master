@@ -12,13 +12,14 @@ import { loginUser, registerUser } from "@/lib/api";
 import { InvitationContextCard } from "@/features/leagues/invitation-context-card";
 import {
   Alert,
+  browserTimeZone,
   Button,
   FormField,
+  Heading,
   Input,
   SegmentedControl,
   Tile,
   TimeZoneSelect,
-  browserTimeZone,
 } from "@/features/shared/ui";
 import {
   fetchInvitationPreview,
@@ -362,13 +363,13 @@ export function AuthHomePage() {
             {PRODUCT_TAGLINE}
           </span>
           <div className="space-y-3">
-            <h2 className="max-w-xl font-display text-3xl font-black tracking-normal sm:text-4xl">
+            <Heading className="max-w-xl" level={2} tone="inherit" variant="hero">
               {inviteContext
                 ? `You're almost inside ${inviteContext.league.name}.`
                 : teamInviteContext
                   ? `You're almost inside ${teamInviteContext.league.name}.`
                   : "Run your league, make your picks, and keep every pool night organized."}
-            </h2>
+            </Heading>
             <p className="max-w-xl text-base text-muted-foreground">
               {inviteContext
                 ? "Sign in to join with your existing account, or create a new account to accept the invitation."

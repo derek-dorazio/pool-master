@@ -8,6 +8,7 @@ import {
   Button,
   ConfirmationModal,
   FormField,
+  Heading,
   Input,
   Select,
   SortableList,
@@ -155,7 +156,7 @@ export function TierDefinitionsPanel({
   return (
     <Tile>
       <div className="flex items-center justify-between gap-3">
-        <h3 className="title-card text-base text-foreground">Tiers</h3>
+        <Heading level={3} variant="card" size="base">Tiers</Heading>
         <Button
           data-testid="root-admin-tier-def-add"
           disabled={locked || draft.length >= 12}

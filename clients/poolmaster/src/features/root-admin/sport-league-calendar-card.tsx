@@ -1,6 +1,6 @@
 import { sportLeagueNounOf } from '@poolmaster/shared/domain';
 import { useMemo, useState } from 'react';
-import { Alert, FormField, LinkButton, Select, Tile } from '@/features/shared/ui';
+import { Alert, FormField, Heading, LinkButton, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import type { SportLeagueDto } from '@/lib/api';
 import { SportLeagueEventCalendar } from './sport-league-event-calendar';
@@ -42,7 +42,7 @@ export function SportLeagueCalendarCard({ sportLeague }: { sportLeague: SportLea
     <Tile data-testid="root-admin-sport-league-calendar">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="title-card text-base text-foreground">{`${capitalize(eventNoun.one)} calendar`}</h3>
+          <Heading level={3} variant="card" size="base">{`${capitalize(eventNoun.one)} calendar`}</Heading>
           <p className="mt-1 text-sm text-muted-foreground">
             {`${sportLeague.name}’s ${eventNoun.many} in one year, earliest first.`}
           </p>

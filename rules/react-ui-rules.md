@@ -397,7 +397,10 @@ state, stale actions, and unthemeable markup accumulate.
   a palette change edits both files (`src/styles/brand-colors.test.ts` fails until it does).
 - The house type style is set once in the shared layer, not per page. The wordmark, card and
   tile titles (`title-card`), buttons, and the league menu are uppercase; the wordmark and
-  titles are also italic. Page titles and section titles that sit on the page stay normal case. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
+  titles are also italic. Page titles and section titles that sit on the page stay normal case.
+  Every title is a `Heading`: `level` picks the tag and `variant` the look (`hero`, `display`,
+  `page`, `section`, or `card` with a `size`), so no page types a heading's font, size or
+  `title-card` class string by hand. Small labels over a title are `Eyebrow`, in label blue (`text-label`),
   or `tone="inverse"` on a navy panel. The selected tab is `bg-selected`. Leaderboard totals are
   `score-total` (condensed), and a leaderboard's `DataGrid` takes `headerTone="scoreboard"`
   (navy header, gold column names). A `Button` or `LinkButton` used as a row or card, not as a button, takes

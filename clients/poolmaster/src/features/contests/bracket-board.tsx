@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import { Button, Chip, cn } from '@/features/shared/ui';
+import { Button, Chip, cn, Heading } from '@/features/shared/ui';
 import {
   describeOpenSide,
   describePickOutcome,
@@ -136,7 +136,7 @@ export function BracketBoard({
     <div className="space-y-8" data-testid="bracket-board">
       {rounds.map((round) => (
         <section aria-labelledby={`bracket-round-${round.roundNumber}`} className="space-y-4" data-testid={`bracket-round-${round.roundNumber}`} key={round.roundNumber}>
-          <h3 className="title-card text-lg" id={`bracket-round-${round.roundNumber}`}>{round.label}</h3>
+          <Heading level={3} variant="card" size="lg" tone="inherit" id={`bracket-round-${round.roundNumber}`}>{round.label}</Heading>
           {round.regions.map((region) => (
             <div className="space-y-2" key={region.regionLabel ?? ''}>
               {region.regionLabel ? (

@@ -2,7 +2,7 @@ import { getSportDefinition, type Sport, type SportNoun } from '@poolmaster/shar
 import { useMemo, useState, type ReactNode } from 'react';
 import { GripVertical } from 'lucide-react';
 import { replaceEventTierAssignments, updateEventParticipants } from '@/lib/api';
-import { Alert, Button, Input, Select, SortableList, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, Select, SortableList, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -299,7 +299,7 @@ export function TierBoard({
   return (
     <Tile>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="title-card text-base text-foreground">Tier assignments</h3>
+        <Heading level={3} variant="card" size="base">Tier assignments</Heading>
         {dirty || priceInvalid ? (
           <div
             className="flex items-center gap-2"

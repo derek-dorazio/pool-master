@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { BracketAdvancement, MatchSide, SportEventStatus } from '@poolmaster/shared/domain';
 import { proposeEventRoundMatchups, setEventRoundMatchups } from '@/lib/api';
 import type { RoundMatchupDto, SportEventDto } from '@/lib/api';
-import { Button, Select, Tile } from '@/features/shared/ui';
+import { Button, Heading, Select, Tile } from '@/features/shared/ui';
 import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
@@ -56,7 +56,7 @@ export function ReseedRoundsCard({
 
   return (
     <Tile data-testid="root-admin-reseed">
-      <h3 className="title-card text-base text-foreground">Reseeded rounds</h3>
+      <Heading level={3} variant="card" size="base">Reseeded rounds</Heading>
       <p className="mt-1 text-sm text-muted-foreground">
         {`The ${team.many} left are paired by seed: the best seed left hosts the worst. Suggest the ${matchNoun(context.vocabulary).many}, change any that need it, then save them.`}
       </p>
