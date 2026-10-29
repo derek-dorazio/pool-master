@@ -110,6 +110,7 @@ const nothing = () => jest.fn().mockResolvedValue(undefined);
 export function fakeUserRepo(overrides: Partial<UserRepository> = {}): UserRepository {
   return {
     findById: one(),
+    findByIds: many(),
     findByEmail: one(),
     findAll: many(),
     findActiveByLeague: many(),

@@ -4,8 +4,8 @@
  * mechanics, not golf (#203 stage 2, decision 3).
  *
  * Tiers and prices are event-level only, never a per-contest override (plans/124 §4.6).
- * `getEffectiveTiersForSportEvent` / `getEffectiveValuationsForSportEvent` are the one
- * path every contest-side reader (selections, contest configuration, the entry email) takes.
+ * `getEffectiveTiersAndValuations` (and its two one-view shorthands) is the one path every
+ * contest-side reader (selections, contest configuration, the entry email) takes.
  * The valuation view reads valuations directly rather than through the tiers, because a
  * valuation can carry a price with no tier (a budget-format contest), and a query that
  * starts from the tiers would never see it.
@@ -115,47 +115,55 @@ export class SportEventTierService {
   }
 
   async getEffectiveTiersForSportEvent(sportEventId: string): Promise<SportEventTierGroup[]> {
-    const [tiers, valuations, field] = await Promise.all([
-      this.deps.tiers.findBySportEvent(sportEventId),
-      this.deps.valuations.findBySportEvent(sportEventId),
-      this.deps.field.findBySportEvent(sportEventId),
-    ]);
-    const participantIdByEntry = new Map(field.map((entry) => [entry.id, entry.participantId]));
-    return tiers.map((tier) => ({
-      ...tier,
-      participants: valuations
-        .filter((valuation) => valuation.sportEventTierId === tier.id)
-        .sort((left, right) => (left.tierOrderIndex ?? Number.MAX_SAFE_INTEGER) - (right.tierOrderIndex ?? Number.MAX_SAFE_INTEGER))
-        .map((valuation) => ({
-          sportEventParticipantId: valuation.sportEventParticipantId,
-          participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
-          tierOrderIndex: valuation.tierOrderIndex,
-          price: valuation.price,
-        })),
-    }));
+    return (await this.getEffectiveTiersAndValuations(sportEventId)).tiers;
   }
 
   async getEffectiveValuationsForSportEvent(sportEventId: string): Promise<ParticipantValuationView[]> {
-    const [tiers, valuations, field] = await Promise.all([
+    return (await this.getEffectiveTiersAndValuations(sportEventId)).valuations;
+  }
+
+  /**
+   * Both effective views from one read of the tiers, the valuations and the field (#1196). A
+   * caller that already holds the event's field passes it in, and it is not read again.
+   */
+  async getEffectiveTiersAndValuations(
+    sportEventId: string,
+    field?: readonly SportEventParticipant[],
+  ): Promise<{ tiers: SportEventTierGroup[]; valuations: ParticipantValuationView[] }> {
+    const [tiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySportEvent(sportEventId),
       this.deps.valuations.findBySportEvent(sportEventId),
-      this.deps.field.findBySportEvent(sportEventId),
+      field ?? this.deps.field.findBySportEvent(sportEventId),
     ]);
+    const participantIdByEntry = new Map(fieldRows.map((entry) => [entry.id, entry.participantId]));
     const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
-    const participantIdByEntry = new Map(field.map((entry) => [entry.id, entry.participantId]));
-    return valuations.map((valuation) => {
-      const tier = valuation.sportEventTierId ? tierById.get(valuation.sportEventTierId) : undefined;
-      return {
-        sportEventParticipantId: valuation.sportEventParticipantId,
-        participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
-        tierId: tier?.id ?? null,
-        tierKey: tier?.tierKey ?? null,
-        tierLabel: tier?.label ?? null,
-        tierNumber: tier?.tierNumber ?? null,
-        tierOrderIndex: valuation.tierOrderIndex,
-        price: valuation.price,
-      };
-    });
+    return {
+      tiers: tiers.map((tier) => ({
+        ...tier,
+        participants: valuations
+          .filter((valuation) => valuation.sportEventTierId === tier.id)
+          .sort((left, right) => (left.tierOrderIndex ?? Number.MAX_SAFE_INTEGER) - (right.tierOrderIndex ?? Number.MAX_SAFE_INTEGER))
+          .map((valuation) => ({
+            sportEventParticipantId: valuation.sportEventParticipantId,
+            participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
+            tierOrderIndex: valuation.tierOrderIndex,
+            price: valuation.price,
+          })),
+      })),
+      valuations: valuations.map((valuation) => {
+        const tier = valuation.sportEventTierId ? tierById.get(valuation.sportEventTierId) : undefined;
+        return {
+          sportEventParticipantId: valuation.sportEventParticipantId,
+          participantId: participantIdByEntry.get(valuation.sportEventParticipantId) as string,
+          tierId: tier?.id ?? null,
+          tierKey: tier?.tierKey ?? null,
+          tierLabel: tier?.label ?? null,
+          tierNumber: tier?.tierNumber ?? null,
+          tierOrderIndex: valuation.tierOrderIndex,
+          price: valuation.price,
+        };
+      }),
+    };
   }
 
   /**
