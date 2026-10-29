@@ -15,7 +15,7 @@ import type {
   ContestUpdate,
   ReleasedEdition,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
 
 /**
@@ -57,13 +57,25 @@ export class PrismaContestRepository implements ContestRepository {
       where: {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
-        // A draft can never open once any of its events has started, and a started event cannot
-        // be removed (#1161). A bracket or squares contest closes at its round or game instead,
-        // which can be after its event starts, so those drafts stay.
+        // A draft that can never open is left out (#1161, #1217): one with an event finished or
+        // cancelled, which is past every cutoff, and one closing at its event's start once an
+        // event has started, since a started event cannot be removed. Only a bracket starting
+        // after round 1 and a squares contest with its game close later, as `contestCutoff` says.
         NOT: {
           status: ContestStatus.DRAFT,
-          selectionType: { notIn: [SelectionType.BRACKET, SelectionType.SQUARES] },
-          sportEvents: { some: { sportEvent: { startDate: { lte: now } } } },
+          OR: [
+            { sportEvents: { some: { sportEvent: { status: { in: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] } } } } },
+            {
+              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
+              sportEvents: { some: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
+              NOT: {
+                OR: [
+                  { selectionType: SelectionType.BRACKET, configuration: { configJson: { path: ['startsAtRound'], gt: 1 } } },
+                  { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
+                ],
+              },
+            },
+          ],
         },
       },
       orderBy: { createdAt: 'desc' },

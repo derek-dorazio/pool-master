@@ -308,7 +308,7 @@ describe('SquadService', () => {
       expect(squadRepo.findDetailsByLeague).toHaveBeenCalledWith('league-1');
       expect(squadRepo.findById).not.toHaveBeenCalled();
       expect(squadMembershipRepo.findBySquad).not.toHaveBeenCalled();
-      expect(userRepo.findByLeague).not.toHaveBeenCalled();
+      expect(userRepo.findActiveByLeague).not.toHaveBeenCalled();
       expect(result.map((squad) => [squad.id, squad.memberCount, squad.members.map((member) => member.userId)])).toEqual([
         ['squad-1', 1, ['user-1', 'user-2']],
         ['squad-2', 1, ['user-3']],
@@ -326,7 +326,7 @@ describe('SquadService', () => {
 
       expect(squadRepo.findDetailsById).toHaveBeenCalledTimes(1);
       expect(squadRepo.findById).not.toHaveBeenCalled();
-      expect(userRepo.findByLeague).not.toHaveBeenCalled();
+      expect(userRepo.findActiveByLeague).not.toHaveBeenCalled();
       expect(result.id).toBe('squad-2');
       expect(result.members.map((member) => member.user.id)).toEqual(['user-3']);
     });
