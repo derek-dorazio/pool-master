@@ -31,20 +31,21 @@ describe('refresh-token retention (#1175)', () => {
       expiredRecently: { expiresAt: daysAgo(29), revokedAt: null },
       revokedRecently: { expiresAt: daysAgo(-5), revokedAt: daysAgo(29) },
     };
-    const ids: Record<string, string> = {};
+    const ids = new Map<string, string>();
     for (const [name, dates] of Object.entries(tokens)) {
       const row = await getPrisma().refreshToken.create({
         data: { token: randomUUID(), userId: user.id, ...dates },
       });
-      ids[name] = row.id;
+      ids.set(name, row.id);
     }
 
     const deleted = await new RefreshTokenRetention(getPrisma()).purge(NOW);
 
     expect(deleted).toBeGreaterThanOrEqual(2);
     const remaining = await getPrisma().refreshToken.findMany({ where: { userId: user.id }, select: { id: true } });
-    expect(remaining.map((row) => row.id).sort()).toEqual(
-      [ids.live, ids.expiredRecently, ids.revokedRecently].sort(),
-    );
+    expect(remaining).toHaveLength(3);
+    expect(remaining.map((row) => row.id)).toEqual(expect.arrayContaining(
+      [ids.get('live'), ids.get('expiredRecently'), ids.get('revokedRecently')],
+    ));
   });
 });
