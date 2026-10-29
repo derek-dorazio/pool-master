@@ -453,6 +453,29 @@ export class InMemoryContestWorld {
     };
   }
 
+  /**
+   * Sets an entry's status for one event as a submit or a pick change writes it: `submittedAt`
+   * stamped for SUBMITTED, cleared for DRAFT, the row's tiebreaker kept. Test setup, and the
+   * game-picks fake's write.
+   */
+  setEntryEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): ContestEntry {
+    const existing = this.entries.get(id);
+    if (!existing) throw new Error(`Record to update not found: entry ${id}`);
+    const kept = existing.events.find((row) => row.sportEventId === sportEventId)?.tiebreakerValue;
+    const event = {
+      sportEventId,
+      status,
+      ...(status === 'SUBMITTED' && { submittedAt: at }),
+      ...(kept !== undefined && { tiebreakerValue: kept }),
+    };
+    const updated: ContestEntry = {
+      ...existing,
+      events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],
+    };
+    this.entries.set(id, updated);
+    return updated;
+  }
+
   entryRepo(): ContestEntryRepository {
     return {
       findByIdWithSquad: async (id) => {
@@ -533,24 +556,6 @@ export class InMemoryContestWorld {
         const existing = this.entries.get(id);
         if (!existing) throw new Error(`Record to update not found: entry ${id}`);
         const updated = { ...existing, ...updates, updatedAt: this.tick() };
-        this.entries.set(id, updated);
-        return updated;
-      },
-      setEventStatus: async (id, sportEventId, status: ContestEntryStatus, at) => {
-        const existing = this.entries.get(id);
-        if (!existing) throw new Error(`Record to update not found: entry ${id}`);
-        // As the adapter's upsert does, the row's tiebreaker is kept.
-        const kept = existing.events.find((row) => row.sportEventId === sportEventId)?.tiebreakerValue;
-        const event = {
-          sportEventId,
-          status,
-          ...(status === 'SUBMITTED' && { submittedAt: at }),
-          ...(kept !== undefined && { tiebreakerValue: kept }),
-        };
-        const updated: ContestEntry = {
-          ...existing,
-          events: [...existing.events.filter((row) => row.sportEventId !== sportEventId), event],
-        };
         this.entries.set(id, updated);
         return updated;
       },

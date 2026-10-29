@@ -180,17 +180,6 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
     return mapToEntry(row);
   }
 
-  async setEventStatus(id: string, sportEventId: string, status: ContestEntryStatus, at: Date): Promise<ContestEntry> {
-    const submittedAt = status === 'SUBMITTED' ? at : null;
-    await this.prisma.contestEntryEvent.upsert({
-      where: { contestEntryId_sportEventId: { contestEntryId: id, sportEventId } },
-      create: { contestEntryId: id, sportEventId, status, submittedAt },
-      update: { status, submittedAt },
-    });
-    const row = await this.prisma.contestEntry.findUniqueOrThrow({ where: { id }, include: ENTRY_EVENTS });
-    return mapToEntry(row);
-  }
-
   /** Refused once the contest is drawn; waits for a draw being recorded (#644). */
   async delete(id: string): Promise<ContestEntryDeleteResult> {
     return this.prisma.$transaction(async (tx) => {
