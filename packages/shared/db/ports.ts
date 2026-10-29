@@ -66,6 +66,8 @@ export interface UserUpdate {
 
 export interface UserRepository {
   findById(id: string): Promise<User | null>;
+  /** The users with these ids, in one read (#1196); an id with no user is left out. */
+  findByIds(ids: readonly string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
 
   /**

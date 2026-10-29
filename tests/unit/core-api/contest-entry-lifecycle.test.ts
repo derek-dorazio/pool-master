@@ -10,9 +10,11 @@ import {
   ContestEntryOperationError,
   ContestNotFoundError,
   ContestOperationError,
+  type EntrySubmittedReceiptInput,
 } from '../../../packages/core-api/src/modules/contests/service';
 import {
   ContestStatus,
+  type Contest,
   LeagueMembershipStatus,
   LeagueRole,
   SquadMembershipStatus,
@@ -20,6 +22,7 @@ import {
 import type { MailDeliveryProvider } from '../../../packages/core-api/src/modules/email/mail-delivery';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { deliverQueuedEmail, emailServiceOver } from '../../support/email-service';
+import { expectDefined } from '../../support/expect-defined';
 
 function setup(options: { mailDelivery?: MailDeliveryProvider } = {}) {
   const world = new InMemoryContestWorld();
@@ -362,6 +365,19 @@ describe('ContestService entries — confirmation email', () => {
    * A contest on an event with six tiers. The world's configuration takes one pick per tier, so
    * a complete lineup is 6 picks (#479: the roster is derived, never stored).
    */
+  /** What the selection room hands the receipt once the entry is submitted in the contest's event (#1196). */
+  async function receiptFor(world: InMemoryContestWorld, contest: Contest, entryId: string): Promise<EntrySubmittedReceiptInput> {
+    const squadId = expectDefined(world.entries.get(entryId), 'entry').squadId;
+    return {
+      contest,
+      sportEvent: expectDefined(world.sportEvents.get(contest.sportEventIds[0] ?? ''), 'sport event'),
+      configuration: [...world.configurations.values()].find((configuration) => configuration.contestId === contest.id) ?? null,
+      valuations: [],
+      squadMemberships: await world.squadMembershipRepo().findBySquads([squadId]),
+      entryIds: [entryId],
+    };
+  }
+
   function setupOnTieredEvent(options: { mailDelivery?: MailDeliveryProvider } = {}) {
     const context = setup(options);
     const event = context.world.addSportEvent({ startDate: new Date(Date.now() + 24 * 60 * 60 * 1000) });
@@ -381,7 +397,7 @@ describe('ContestService entries — confirmation email', () => {
     await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(0);
 
-    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
+    await service.sendEntrySubmittedEmails(await receiptFor(world, contest, created.id));
     await deliverQueuedEmail();
 
     expect(mail.sent).toHaveLength(1);
@@ -402,7 +418,7 @@ describe('ContestService entries — confirmation email', () => {
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
-    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
+    await service.sendEntrySubmittedEmails(await receiptFor(world, contest, created.id));
 
     await deliverQueuedEmail();
     expect(mail.sent.map((message) => message.to).sort()).toEqual(['cora@example.com', 'olive@example.com']);
@@ -415,7 +431,7 @@ describe('ContestService entries — confirmation email', () => {
     const created = await service.createEntry(contest.id, owner.id);
     completeLineup(world, created.id);
 
-    await service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '');
+    await service.sendEntrySubmittedEmails(await receiptFor(world, contest, created.id));
 
     await deliverQueuedEmail();
     expect(mail.sent).toHaveLength(1);
@@ -430,7 +446,7 @@ describe('ContestService entries — confirmation email', () => {
     completeLineup(world, created.id);
     await service.updateEntry(contest.id, created.id, owner.id, { tiebreakerValue: -4 });
 
-    await expect(service.sendEntrySubmittedEmail(contest.id, created.id, contest.sportEventIds[0] ?? '')).resolves.toBeUndefined();
+    await expect(service.sendEntrySubmittedEmails(await receiptFor(world, contest, created.id))).resolves.toBeUndefined();
     expect(world.entries.get(created.id)?.tiebreakerValue).toBe(-4);
   });
 });

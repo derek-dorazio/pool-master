@@ -552,8 +552,9 @@ export class InMemoryContestWorld {
     return {
       findByEntriesAndEvents: async (entryIds, sportEventIds) =>
         ordered().filter((pick) => entryIds.includes(pick.entryId) && sportEventIds.includes(pick.sportEventId)),
-      findByEntriesWithParticipant: async (entryIds) =>
-        ordered().filter((pick) => entryIds.includes(pick.entryId)),
+      findByEntriesWithParticipant: async (entryIds, options) =>
+        ordered().filter((pick) => entryIds.includes(pick.entryId)
+          && (options?.sportEventId === undefined || pick.sportEventId === options.sportEventId)),
       countByEntries: async (entryIds) => {
         const counts = new Map<string, number>();
         for (const pick of this.picks.values()) {
@@ -679,6 +680,7 @@ export class InMemoryContestWorld {
   userRepo(): UserRepository {
     return fakeUserRepo({
       findById: async (id) => this.users.get(id) ?? null,
+      findByIds: async (ids) => [...this.users.values()].filter((user) => ids.includes(user.id)),
       // ACTIVE memberships only, as the port says.
       findActiveByLeague: async (leagueId) => {
         const memberIds = new Set([...this.memberships.values()]
@@ -780,7 +782,6 @@ export class InMemoryContestWorld {
       sportLeagues: this.sportLeagueRepo(),
       eventParticipants: { listEventParticipants: async () => [], listCachedEventParticipants: async () => [] },
       tiers: {
-        getEffectiveValuationsForSportEvent: async () => [],
         listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
       },
       planEntitlements: this.planEntitlements(),
