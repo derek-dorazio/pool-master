@@ -1,5 +1,6 @@
 import { createColumnHelper } from '@tanstack/react-table';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { isPlatformSearchTerm, PLATFORM_SEARCH_MIN_LENGTH } from '@poolmaster/shared/domain';
 import {
   createParticipantLeagueAffiliation,
   deleteParticipantLeagueAffiliation,
@@ -20,8 +21,9 @@ import { extractErrorMessage, throwApiError } from '@/lib/errors';
 import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { ParticipantLeagueAffiliationDto } from '@/lib/api';
-import { capitalize } from './manage-navigation';
+import { capitalize, SEARCH_DEBOUNCE_MS } from './manage-navigation';
 import { useParticipantsQuery, useSportLeagueNoun } from './use-sport-catalog';
 import { useManagedSport } from './use-managed-sport';
 
@@ -152,11 +154,16 @@ export function SportLeagueRosterGridCard({
     setDraft({});
   }
 
+  // The picker searches the sport rather than reading its whole roster (#1313).
+  const addTerm = useDebouncedValue(addSearch.trim(), SEARCH_DEBOUNCE_MS);
+  const canSearch = isPlatformSearchTerm(addTerm);
   const playersQuery = useParticipantsQuery({
     sport,
-    queryKey: QueryKeys.rootAdmin.manageSport.participantList(sport, 'ACTIVE'),
+    queryKey: QueryKeys.rootAdmin.manageSport.participantSearch(sport, addTerm),
     status: 'ACTIVE',
-    enabled: addOpen,
+    q: addTerm,
+    enabled: addOpen && canSearch,
+    keepPrevious: true,
   });
 
   const saveMutation = useInvalidatingMutation({
@@ -266,13 +273,12 @@ export function SportLeagueRosterGridCard({
     [entries],
   );
 
-  const addablePlayers = useMemo(() => {
-    const term = addSearch.trim().toLowerCase();
-    return (playersQuery.data ?? [])
+  const addablePlayers = useMemo(
+    () => (canSearch ? (playersQuery.data ?? []) : [])
       .filter((player) => !rosterIds.has(player.id))
-      .filter((player) => term === '' || player.name.toLowerCase().includes(term))
-      .map((player) => ({ id: player.id, name: player.name }));
-  }, [addSearch, playersQuery.data, rosterIds]);
+      .map((player) => ({ id: player.id, name: player.name })),
+    [canSearch, playersQuery.data, rosterIds],
+  );
 
   const gridMeta = useMemo<RosterGridMeta>(
     () => ({ draft, setDraft, onRemove: setRemoveTarget }),
@@ -365,11 +371,13 @@ export function SportLeagueRosterGridCard({
       <PickerModal
         canApply={addSelectedId !== null}
         emptyMessage={
-          playersQuery.isLoading
-            ? `Loading ${participant.many}...`
-            : playersQuery.isError
-              ? `We could not load the ${participant.one} list.`
-              : `Every active ${participant.one} is already on this roster.`
+          !canSearch
+            ? `Type at least ${PLATFORM_SEARCH_MIN_LENGTH} characters to find a ${participant.one}.`
+            : playersQuery.isFetching
+              ? `Searching ${participant.many}...`
+              : playersQuery.isError
+                ? `We could not load the ${participant.one} list.`
+                : `No active ${participant.one} off this roster matched the search.`
         }
         getItemLabel={(item) => item.name}
         isPending={addMutation.isPending}
