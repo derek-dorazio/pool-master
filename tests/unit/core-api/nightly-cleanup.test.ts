@@ -2,6 +2,7 @@ import {
   NightlyCleanupScheduler,
   deleteInBatches,
   type NightlyCleanupStep,
+  type NightlyCleanupStepName,
 } from '../../../packages/core-api/src/core/nightly-cleanup';
 import { EmailMessageRetention } from '../../../packages/core-api/src/modules/email';
 import { fakeLogger } from '../../support/fake-logger';
@@ -12,7 +13,7 @@ const RUN_HOUR = new Date('2026-10-29T08:05:00.000Z');
 const HOUR_MS = 60 * 60_000;
 
 /** A step that records each run's `now` and deletes `count` rows. */
-function recordingStep(name: string, count: number): NightlyCleanupStep & { runs: Date[] } {
+function recordingStep(name: NightlyCleanupStepName, count: number): NightlyCleanupStep & { runs: Date[] } {
   const runs: Date[] = [];
   return {
     name,

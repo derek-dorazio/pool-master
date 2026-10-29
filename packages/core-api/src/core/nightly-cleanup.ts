@@ -9,9 +9,12 @@ import type { JobLock } from './job-lock';
  * Steps belong to the module that owns their table, and the scheduler only sequences them. A
  * step that fails is logged and the others still run; whatever it left is deleted the next night.
  */
+/** Each step's key in the run's summary line. */
+export type NightlyCleanupStepName = 'refreshTokens' | 'emailMessages';
+
 export interface NightlyCleanupStep {
   /** Names the step's count in the run's summary line. */
-  readonly name: string;
+  readonly name: NightlyCleanupStepName;
   /** Deletes what the step's retention period no longer keeps as of `now`; resolves to how many rows. */
   purge(now: Date): Promise<number>;
 }
@@ -103,8 +106,8 @@ export class NightlyCleanupScheduler {
 
   /** One run of every step, logging one summary line with each step's count. */
   async run(now: Date): Promise<void> {
-    const deleted: Record<string, number> = {};
-    const failed: string[] = [];
+    const deleted: Partial<Record<NightlyCleanupStepName, number>> = {};
+    const failed: NightlyCleanupStepName[] = [];
     for (const step of this.options.steps) {
       try {
         deleted[step.name] = await step.purge(now);

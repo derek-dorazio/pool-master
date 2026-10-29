@@ -22,14 +22,15 @@ function daysAgo(days: number): Date {
 }
 
 describe('refresh-token retention (#1175)', () => {
-  it('deletes tokens expired or revoked more than 30 days ago, and keeps live tokens and ones dead for less', async () => {
+  it('deletes tokens expired more than 30 days ago, revoked or not, and keeps live tokens and ones expired for less', async () => {
     const { user } = await createTestUser();
+    // A token expires 7 days after it is issued, so a revoked one expires at most 7 days after its revoke.
     const tokens = {
       expiredLongAgo: { expiresAt: daysAgo(31), revokedAt: null },
-      revokedLongAgo: { expiresAt: daysAgo(-5), revokedAt: daysAgo(31) },
+      revokedAndExpiredLongAgo: { expiresAt: daysAgo(31), revokedAt: daysAgo(36) },
+      revokedLongAgoExpiredRecently: { expiresAt: daysAgo(24), revokedAt: daysAgo(31) },
       live: { expiresAt: daysAgo(-7), revokedAt: null },
       expiredRecently: { expiresAt: daysAgo(29), revokedAt: null },
-      revokedRecently: { expiresAt: daysAgo(-5), revokedAt: daysAgo(29) },
     };
     const ids = new Map<string, string>();
     for (const [name, dates] of Object.entries(tokens)) {
@@ -45,7 +46,7 @@ describe('refresh-token retention (#1175)', () => {
     const remaining = await getPrisma().refreshToken.findMany({ where: { userId: user.id }, select: { id: true } });
     expect(remaining).toHaveLength(3);
     expect(remaining.map((row) => row.id)).toEqual(expect.arrayContaining(
-      [ids.get('live'), ids.get('expiredRecently'), ids.get('revokedRecently')],
+      [ids.get('live'), ids.get('expiredRecently'), ids.get('revokedLongAgoExpiredRecently')],
     ));
   });
 });

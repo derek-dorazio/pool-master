@@ -118,7 +118,11 @@ export function inMemoryEmailMessages(now: () => Date = () => new Date()): InMem
       return Promise.resolve(old.length);
     },
     deleteBatchCreatedBefore(cutoff, limit) {
-      const old = rows.filter((row) => row.createdAt < cutoff).slice(0, limit);
+      // Oldest first, as the Prisma adapter takes them.
+      const old = rows
+        .filter((row) => row.createdAt < cutoff)
+        .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        .slice(0, limit);
       for (const row of old) {
         rows.splice(rows.indexOf(row), 1);
       }
