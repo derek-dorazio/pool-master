@@ -12,14 +12,15 @@ import { signUpWithDisplayPreferences } from '@/features/auth/signup-display-pre
 import { InvitationContextCard } from '@/features/leagues/invitation-context-card';
 import { describeUnusableInvitation } from '@/features/leagues/unusable-invitation';
 import {
+  browserTimeZone,
   Button,
   Chip,
   FormField,
+  Heading,
   Input,
   LinkButton,
   PublicInviteJoinPage,
   TimeZoneSelect,
-  browserTimeZone,
 } from '@/features/shared/ui';
 import { getLogger } from '@/lib/logger';
 import {
@@ -268,7 +269,7 @@ export function JoinTeamOwnerPage() {
               <div className="flex items-center gap-4">
                 <TeamAvatar iconKey={invitationQuery.data.team.iconKey} size="lg" />
                 <div>
-                  <h3 className="title-card text-sm text-foreground">What you&apos;re joining</h3>
+                  <Heading level={3} variant="card" size="sm">What you&apos;re joining</Heading>
                   <p className="mt-1 text-sm text-muted-foreground">
                     You&apos;ll join <span className="font-medium text-foreground">{invitationQuery.data.team.name}</span> as a co-owner inside{' '}
                     <span className="font-medium text-foreground">{invitationQuery.data.league.name}</span>.
@@ -290,7 +291,7 @@ export function JoinTeamOwnerPage() {
             }}
           >
             <div>
-              <h3 className="title-card text-sm text-foreground">Create your account</h3>
+              <Heading level={3} variant="card" size="sm">Create your account</Heading>
               <p className="mt-1 text-sm text-muted-foreground">
                 Your account uses the email this invitation was sent to, so there is nothing to
                 confirm — you&apos;ll land straight in the league.

@@ -814,6 +814,25 @@ describe('Championships › Points race', () => {
     expect(screen.getByTestId('cup-contest-contest-4')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-4/leaderboard');
   });
 
+  it('opens an open contest in the cup on its contest page, since it has no leaderboard before picks are revealed', async () => {
+    const running = buildRunningCup();
+    primeViewer([{
+      ...running,
+      contests: [
+        ...running.contests,
+        buildCupContest({
+          contestId: 'contest-6', name: 'Open Championship Tiers', status: 'OPEN', count: 'NOT_FINAL',
+          firstEventStartsAt: '2099-07-16T12:00:00.000Z', completedAt: null,
+        }),
+      ],
+    }]);
+
+    renderChampionships('/league/BIGDAWGS/championships/2026/race/sport-league-pga');
+
+    expect(await screen.findByTestId('cup-contest-contest-6')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-6');
+    expect(screen.getByTestId('cup-contest-contest-6-date')).toHaveTextContent('Starts');
+  });
+
   it('puts a crowned cup\'s podium above its standings, with its champion and crowning date, and no next contest', async () => {
     primeViewer([CROWNED_NFL_CUP]);
 
@@ -888,6 +907,9 @@ describe('Championships › a squad\'s cup points', () => {
     expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveTextContent('T4 of 12 · x1.5');
     expect(screen.getByTestId('cup-squad-contest-contest-2')).toHaveAttribute('href', '/league/BIGDAWGS/contests/contest-2/leaderboard');
     expect(screen.getByTestId('cup-squad-contest-contest-5')).toHaveTextContent('No entry');
+    // Each is the shared contest row: when it finished, and the squad's points on the right.
+    expect(screen.getByTestId('cup-squad-contest-contest-2-date')).toHaveTextContent('Finished');
+    expect(screen.getByTestId('cup-squad-contest-contest-2-trailing')).toHaveTextContent('65 pts');
     expect(screen.getByRole('link', { name: '2026 PGA Tour Cup' })).toHaveAttribute(
       'href',
       '/league/BIGDAWGS/championships/2026/race/sport-league-pga',

@@ -26,9 +26,12 @@ import {
   Alert,
   Button,
   ConfirmationModal,
+  DEFAULT_DISPLAY_PREFERENCES,
   EntityDetailPage,
-  FormModal,
+  formatDateDisplay,
   FormField,
+  FormModal,
+  Heading,
   Input,
   LinkButton,
   Modal,
@@ -36,8 +39,6 @@ import {
   Select,
   Tile,
   TimeZoneSelect,
-  DEFAULT_DISPLAY_PREFERENCES,
-  formatDateDisplay,
   useDisplayPreferences,
   useMutationActionWorkflow,
 } from '@/features/shared/ui';
@@ -344,9 +345,9 @@ export function UserPage() {
           <p className="text-xs font-medium uppercase text-muted-foreground">
             User
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
+          <Heading className="mt-3" level={1} variant="page">
             User profile unavailable
-          </h1>
+          </Heading>
           <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
             You do not have access to view this user profile.
           </p>
@@ -423,9 +424,9 @@ export function UserPage() {
   return (
     <section className="space-y-6" data-testid="user-page">
       <Tile padding="lg">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+        <Heading level={1} variant="page">
           My profile
-        </h1>
+        </Heading>
         <p className="mt-3 max-w-3xl text-sm text-muted-foreground">
           Manage your user profile, preferences, login, and account information.
         </p>

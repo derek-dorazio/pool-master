@@ -5,7 +5,7 @@ import {
   Breadcrumbs,
   EmptyState,
   ErrorState,
-  ListCard,
+  Heading,
   ListStack,
   LoadingState,
   Tile,
@@ -13,6 +13,7 @@ import {
 import { hasPlanFeature } from '@/features/plans/plan-features';
 import { PlanLockedNotice } from '@/features/plans/plan-locked-notice';
 import { hasErrorCode } from '@/lib/errors';
+import { ContestRow } from '@/features/contests/contest-row';
 import { CUP_WEIGHT_LABELS, formatCupPoints } from './cup-view';
 import { useChampionshipsRoute } from './use-championships-route';
 import { useCupSquadPointsQuery } from './use-cups-query';
@@ -50,7 +51,7 @@ export function CupSquadPointsPage() {
         ]}
       />
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 className="text-xl font-semibold text-foreground">{squadPoints.squadName}</h2>
+        <Heading level={2} variant="subtitle">{squadPoints.squadName}</Heading>
         <p className="text-lg font-semibold tabular-nums text-foreground" data-testid="cup-squad-points-total">
           {formatCupPoints(squadPoints.points)} pts
         </p>
@@ -60,15 +61,17 @@ export function CupSquadPointsPage() {
           {squadPoints.contests.map((contest) => {
             const weight = CUP_WEIGHT_LABELS[contest.cupWeight];
             return (
-              <ListCard
-                data-testid={`cup-squad-contest-${contest.contestId}`}
-                description={contest.displayPlace
+              <ContestRow
+                completedAt={contest.completedAt}
+                key={contest.contestId}
+                name={contest.name}
+                note={contest.displayPlace
                   ? `${contest.displayPlace} of ${contest.rankedEntryCount}${weight ? ` · ${weight}` : ''}`
                   : 'No entry'}
-                key={contest.contestId}
-                title={contest.name}
+                startsAt={null}
+                testId={`cup-squad-contest-${contest.contestId}`}
                 to={buildLeagueContestLeaderboardPath(leagueCode, contest.contestId)}
-                trailing={<span className="font-semibold tabular-nums text-foreground">{formatCupPoints(contest.points)} pts</span>}
+                trailing={`${formatCupPoints(contest.points)} pts`}
               />
             );
           })}

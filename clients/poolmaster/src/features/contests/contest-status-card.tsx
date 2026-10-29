@@ -6,7 +6,14 @@ import {
   buildLeagueContestLeaderboardPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
-import { DateDisplay, Eyebrow, formatDateTimeDisplay, LinkButton, useDisplayPreferences } from '@/features/shared/ui';
+import {
+  DateDisplay,
+  Eyebrow,
+  formatDateTimeDisplay,
+  Heading,
+  LinkButton,
+  useDisplayPreferences,
+} from '@/features/shared/ui';
 import { OpenContestAction } from './open-contest-action';
 import { formatTimeUntil, getContestReadinessChecks } from './contest-readiness';
 import { RunDrawAction } from './run-draw-action';
@@ -27,9 +34,9 @@ function StatusCardFrame({
       data-testid="contest-status-card"
     >
       <Eyebrow tone="inverse">{eyebrow}</Eyebrow>
-      <h2 className="title-card text-xl" data-testid="contest-status-card-title">
+      <Heading level={2} variant="card" size="xl" tone="inherit" data-testid="contest-status-card-title">
         {title}
-      </h2>
+      </Heading>
       {children}
     </section>
   );

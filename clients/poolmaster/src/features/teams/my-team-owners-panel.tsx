@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { LeagueRole, SquadOwnerInvitationStatus } from '@poolmaster/shared/domain';
 import type { SquadDto, TeamOwnerInvitationDto } from '@/lib/api';
-import { Alert, Button, Input, StatusBadge, Tile } from '@/features/shared/ui';
+import { Alert, Button, Heading, Input, StatusBadge, Tile } from '@/features/shared/ui';
 import { extractErrorMessage } from '@/lib/errors';
 import { buildUserPath } from '@/features/account/user-routing';
 import { formatUserName } from '@/features/account/user-name';
@@ -57,7 +57,7 @@ export function MyTeamOwnersPanel({
   return (
     <div className="space-y-5" data-testid="my-team-owners-panel">
       <Tile radius="lg">
-        <h4 className="text-sm font-semibold text-foreground">Add co-owner</h4>
+        <Heading level={4} variant="label">Add co-owner</Heading>
         <p className="mt-2 text-sm text-muted-foreground">
           Invite another person to co-own {selectedTeam.name}. People already in this league can&apos;t be invited.
         </p>
@@ -151,7 +151,7 @@ export function MyTeamOwnersPanel({
 
       {teamOwnerInvitations.length ? (
         <Tile radius="lg">
-          <h4 className="text-sm font-semibold text-foreground">Pending owner invites</h4>
+          <Heading level={4} variant="label">Pending owner invites</Heading>
           <div className="mt-4 space-y-3">
             {teamOwnerInvitations.map((invitation) => (
               <Tile
@@ -187,7 +187,7 @@ export function MyTeamOwnersPanel({
 
       {replaceTargetUserId ? (
         <Tile radius="lg">
-          <h4 className="text-sm font-semibold text-foreground">Replace owner</h4>
+          <Heading level={4} variant="label">Replace owner</Heading>
           <p className="mt-2 text-sm text-muted-foreground">
             Replacing an owner removes them from {selectedTeam.name} and the league, and invites the replacement email to take their place.
           </p>

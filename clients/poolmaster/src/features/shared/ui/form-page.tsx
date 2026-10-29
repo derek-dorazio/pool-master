@@ -2,6 +2,7 @@ import type { ReactNode, SubmitEventHandler } from "react";
 import { Alert } from "./alert";
 import { Button, LinkButton } from "./button";
 import { Tile } from "./tile";
+import { Heading } from "./heading";
 
 type FormPageProps = {
   /** Shown above the footer when the save fails. */
@@ -40,7 +41,7 @@ export function FormPage({
   return (
     <form className="space-y-5" data-testid={testId} noValidate onSubmit={onSubmit}>
       <div>
-        <h2 className="font-display text-lg font-extrabold text-foreground">{title}</h2>
+        <Heading level={2} variant="subtitle">{title}</Heading>
         {description ? <p className="mt-0.5 text-sm text-muted-foreground">{description}</p> : null}
       </div>
       <Tile className="space-y-5 p-5" padding="none" radius="md">{children}</Tile>
