@@ -23,7 +23,7 @@ import {
 } from '@poolmaster/shared/generated/hey-api';
 import { CupPointsScale, SelectionType } from '@poolmaster/shared/domain';
 import { randomUUID } from 'node:crypto';
-import { buildRegisteredUser, seedContestFixture } from './builders';
+import { buildRegisteredUser, promoteToRootAdmin, seedContestFixture } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -1017,5 +1017,38 @@ describe('SDK Functional: Leagues', () => {
       status: 403,
       code: 'LEAGUE_MEMBERSHIP_REQUIRED',
     });
+  });
+
+  it('tells a removed member their membership is inactive on both league reads, and gives a removed root admin the league with no membership edge', async () => {
+    const commissioner = await buildRegisteredUser({ displayName: 'Removing Commissioner' });
+    const removed = await buildRegisteredUser({ displayName: 'Removed Member' });
+    const removedAdmin = await buildRegisteredUser({ displayName: 'Removed Admin' });
+    await promoteToRootAdmin(removedAdmin);
+    const createResponse = await createLeague({
+      client: commissioner.client,
+      body: buildCreateLeagueBody('Removed Members League'),
+    });
+    const leagueId = createResponse.data?.league.id as string;
+    const leagueCode = createResponse.data?.league.leagueCode as string;
+    for (const user of [removed, removedAdmin]) {
+      const invite = await generateInviteLink({ client: commissioner.client, path: { id: leagueId }, body: { maxUses: 1 } });
+      await acceptInvitation({ client: user.client, body: { inviteCode: invite.data?.invitation.inviteCode as string } });
+      await removeMember({ client: commissioner.client, path: { id: leagueId, uid: user.userId } });
+    }
+
+    expectFunctionalError(await getLeagueByCode({ client: removed.client, path: { leagueCode } }), {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_INACTIVE',
+    });
+    expectFunctionalError(await getLeague({ client: removed.client, path: { id: leagueId } }), {
+      status: 403,
+      code: 'LEAGUE_MEMBERSHIP_INACTIVE',
+    });
+
+    const adminView = await getLeagueByCode({ client: removedAdmin.client, path: { leagueCode } });
+    expect(adminView.response?.status).toBe(200);
+    expect(adminView.data?.league.id).toBe(leagueId);
+    expect(adminView.data?.membership).toBeNull();
+    expect(adminView.data?.league.memberCount).toBe(1);
   });
 });

@@ -29,6 +29,12 @@ export interface LeagueActivityCounts {
   activeContestCount: number;
 }
 
+/** A league with the viewer's own membership in it, null when they have none. */
+export interface LeagueForViewer {
+  league: League;
+  membership: LeagueMembership | null;
+}
+
 export interface CreateLeagueInput {
   createdBy: string;
   name: string;
@@ -552,27 +558,24 @@ export class LeagueService {
     }, 'Deleted inactive league');
   }
 
-  /** Returns the league together with its member list. */
-  async getLeagueWithMembers(
-    leagueId: string,
-  ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.deps.leagues.findById(leagueId);
-    if (!league) {
-      return null;
-    }
-    const members = await this.deps.memberships.findByLeague(leagueId);
-    return { league, members };
+  /**
+   * The league and the viewer's own membership in it, of any status, for the league-context read.
+   * One row for the viewer rather than the whole member list (#1219). Null for an unknown league.
+   */
+  async getLeagueForViewer(leagueId: string, userId: string): Promise<LeagueForViewer | null> {
+    return this.withViewerMembership(await this.deps.leagues.findById(leagueId), userId);
   }
 
-  async getLeagueWithMembersByCode(
-    leagueCode: string,
-  ): Promise<{ league: League; members: LeagueMembership[] } | null> {
-    const league = await this.findByCode(leagueCode);
+  async getLeagueByCodeForViewer(leagueCode: string, userId: string): Promise<LeagueForViewer | null> {
+    return this.withViewerMembership(await this.findByCode(leagueCode), userId);
+  }
+
+  private async withViewerMembership(league: League | null, userId: string): Promise<LeagueForViewer | null> {
     if (!league) {
       return null;
     }
-    const members = await this.deps.memberships.findByLeague(league.id);
-    return { league, members };
+    const membership = await this.deps.memberships.findByLeagueAndUser(league.id, userId);
+    return { league, membership };
   }
 
   private async ensureDefaultSquad(leagueId: string, userId: string): Promise<void> {
