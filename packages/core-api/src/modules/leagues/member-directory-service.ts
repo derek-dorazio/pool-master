@@ -1,4 +1,3 @@
-import { LeagueMembershipStatus } from '@poolmaster/shared/domain';
 import type { LeagueMembershipRepository, UserRepository } from '@poolmaster/shared/db';
 import type { LeagueMembershipDto } from '@poolmaster/shared/dto';
 import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
@@ -11,7 +10,7 @@ import { mapLeagueMembershipToDto } from '../../mappers/leagues-extra.mapper';
  * on it and the rest thrown away. It now composes the two ports the roster actually needs
  * and returns the canonical edge with the canonical `UserDto` embedded.
  *
- * `UserRepository.findByLeague` is the scoped peer read access rules A4 and A6 require: the
+ * `UserRepository.findActiveByLeague` is the scoped peer read access rules A4 and A6 require: the
  * league join IS the scope, so there is no way to call it unscoped.
  */
 export class MemberDirectoryService {
@@ -23,19 +22,16 @@ export class MemberDirectoryService {
   async listMembers(leagueId: string): Promise<LeagueMembershipDto[]> {
     const [memberships, users] = await Promise.all([
       this.memberships.findByLeague(leagueId),
-      this.users.findByLeague(leagueId),
+      this.users.findActiveByLeague(leagueId),
     ]);
     const userById = new Map(users.map((user) => [user.id, user]));
 
-    return memberships
-      .filter((membership) => membership.status === LeagueMembershipStatus.ACTIVE)
-      .sort((a, b) => a.joinedAt.getTime() - b.joinedAt.getTime())
-      .flatMap((membership) => {
-        const user = userById.get(membership.userId);
-        // findByLeague draws both sides from the same join, so a membership without a user
-        // cannot occur; flatMap rather than map keeps that impossible case from needing a
-        // fabricated user.
-        return user ? [mapLeagueMembershipToDto(membership, user)] : [];
-      });
+    // Both reads are ACTIVE memberships only, and memberships come in join order.
+    return memberships.flatMap((membership) => {
+      const user = userById.get(membership.userId);
+      // Both sides come from the same join, so a membership without a user cannot occur;
+      // flatMap rather than map keeps that impossible case from needing a fabricated user.
+      return user ? [mapLeagueMembershipToDto(membership, user)] : [];
+    });
   }
 }

@@ -372,7 +372,7 @@ describe('Team use cases', () => {
       expect(world.tables.squads.get(ownerSquad.id)?.isActive).toBe(true);
     });
 
-    it('leaves the team, every owner\'s memberships and its pending invitations untouched when revoking the invitations fails part way', async () => {
+    it('leaves the team, every owner\'s memberships and its pending invitations untouched when revoking the invitations fails', async () => {
       const { world, league, commissioner, owner, ownerSquad, service } = leagueWithTwoTeams();
       const coOwner = world.addUser();
       world.addMember({ league, user: coOwner, squadId: ownerSquad.id });
@@ -385,7 +385,7 @@ describe('Team use cases', () => {
         invitedBy: owner.id,
         expiresAt: new Date(Date.now() + 86_400_000),
       });
-      jest.spyOn(world.ownerInvitations, 'update').mockRejectedValue(new Error('database unavailable'));
+      jest.spyOn(world.ownerInvitations, 'revokePendingBySquad').mockRejectedValue(new Error('database unavailable'));
 
       await expect(service.inactivateSquad(league.id, ownerSquad.id, commissioner.id)).rejects.toThrow('database unavailable');
 

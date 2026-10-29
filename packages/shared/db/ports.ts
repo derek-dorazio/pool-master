@@ -82,17 +82,17 @@ export interface UserRepository {
   findAll(filters?: UserSearchFilters): Promise<User[]>;
 
   /**
-   * Users holding a `LeagueMembership` in the given league, ordered by name.
+   * Users holding an ACTIVE `LeagueMembership` in the given league, ordered by name.
    *
    * This is the **scoped** peer read that access rules A4 and A6 require: a league member
    * may read other members' user data, but only indirectly, through the league join. The
    * league is the scope, so it is a parameter rather than a filter — there is no way to
    * call this without one.
    *
-   * Returns every membership status. Callers that want active members only filter on the
-   * membership, which they must already load to know the role.
+   * A removed member's INACTIVE row is left out in SQL (#1182): every caller wants the
+   * current members, and a league's removed members only grow over the years.
    */
-  findByLeague(leagueId: string): Promise<User[]>;
+  findActiveByLeague(leagueId: string): Promise<User[]>;
 
   /**
    * Resolves a user by an identifier that may be either their email or their username.
@@ -182,8 +182,11 @@ export interface LeagueRepository {
    * application code: `membershipRepo.findByUser` followed by a `findById` per membership,
    * which is N+1 and had to log and skip memberships whose league had vanished. One query
    * cannot produce that orphan case, because the join only returns rows that exist.
+   *
+   * `filters` narrow it in SQL as they narrow `findAll` (#1182), so a member's search never
+   * reads all their leagues to keep a few.
    */
-  findByUser(userId: string): Promise<League[]>;
+  findByUser(userId: string, filters?: LeagueSearchFilters): Promise<League[]>;
 
   /**
    * The points table starts STANDARD, the plan PREMIUM renewing six months from now, no sport
@@ -235,6 +238,7 @@ export interface LeagueRepository {
 }
 
 export interface LeagueMembershipRepository {
+  /** The league's ACTIVE memberships, earliest joiner first. */
   findByLeague(leagueId: string): Promise<LeagueMembership[]>;
   findByUser(userId: string): Promise<LeagueMembership[]>;
 
@@ -320,6 +324,8 @@ export interface SquadOwnerInvitationRepository {
   findById(id: string): Promise<SquadOwnerInvitation | null>;
   findByLeague(leagueId: string): Promise<SquadOwnerInvitation[]>;
   findByCode(inviteCode: string): Promise<SquadOwnerInvitation | null>;
+  /** Marks the squad's PENDING invitations REVOKED in one write (#1182); answers how many. */
+  revokePendingBySquad(squadId: string): Promise<number>;
   findPendingByLeagueAndEmail(
     leagueId: string,
     email: string,
@@ -352,7 +358,11 @@ export interface MembershipTransaction {
 
 export interface LeagueInvitationRepository {
   findById(id: string): Promise<LeagueInvitation | null>;
-  findByLeague(leagueId: string): Promise<LeagueInvitation[]>;
+  /**
+   * The league's outstanding invitations, newest first (#221, #1182): every PENDING invitation,
+   * plus email invites that went EXPIRED unaccepted, filtered in SQL.
+   */
+  findOutstandingByLeague(leagueId: string): Promise<LeagueInvitation[]>;
   findByCode(inviteCode: string): Promise<LeagueInvitation | null>;
   findByEmail(leagueId: string, email: string): Promise<LeagueInvitation | null>;
   create(invitation: Omit<LeagueInvitation, 'id' | 'createdAt' | 'updatedAt'>): Promise<LeagueInvitation>;
