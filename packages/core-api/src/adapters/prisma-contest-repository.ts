@@ -66,7 +66,8 @@ export class PrismaContestRepository implements ContestRepository {
           OR: [
             { sportEvents: { some: { sportEvent: { status: { in: [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED] } } } } },
             {
-              sportEvents: { some: { sportEvent: { startDate: { lte: now } } } },
+              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
+              sportEvents: { some: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
               NOT: {
                 OR: [
                   { selectionType: SelectionType.BRACKET, configuration: { configJson: { path: ['startsAtRound'], gt: 1 } } },

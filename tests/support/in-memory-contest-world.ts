@@ -73,6 +73,7 @@ import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
 import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
+import { hasSportEventStarted } from '../../packages/core-api/src/modules/events/operational-timing';
 import { planEntitlementsOver } from './plan-entitlements';
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
@@ -338,7 +339,7 @@ export class InMemoryContestWorld {
     }
     const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
     const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGameMatchId).kind === ContestCutoffKind.EVENT_START;
-    return closesAtEventStart && events.some((event) => event.startDate <= now);
+    return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
   }
 
   contestRepo(): ContestRepository {

@@ -308,6 +308,18 @@ describe('ContestRepository', () => {
     expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
   });
 
+  it('counts an event under way before its start date as started, leaving out its round-1 bracket draft and keeping its round-2 one (#1217)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    // Before the June 4 start date, but the event is already IN_PROGRESS.
+    const now = new Date('2026-06-01T12:00:00.000Z');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS' } });
+    const drafts = await createLateCutoffDrafts(league.id, event.id);
+
+    const current = await repos().contests.findCurrentByLeague(league.id, now);
+
+    expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id, drafts.secondChance.id]);
+  });
+
   it('leaves out every draft with an event finished or cancelled, even a later-round bracket, squares with its game, or a draft whose event has not started (#1217)', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const prisma = getPrisma();
