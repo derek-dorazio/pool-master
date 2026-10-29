@@ -11,6 +11,8 @@ import {
   type SmtpSinkServer,
 } from '../support/smtp-sink';
 import { FUNCTIONAL_APP_BASE_URL } from './state';
+import { queryBudgetViolation } from '../support/query-budget';
+import { QUERY_BUDGET_ALLOW_LIST } from './query-budget-allow-list';
 
 const stateFilePathEnv = process.env.FUNCTIONAL_SERVER_STATE_FILE;
 const runId = process.env.FUNCTIONAL_RUN_ID ?? 'functional-run';
@@ -22,6 +24,10 @@ if (!stateFilePathEnv) {
 // Re-bound so the narrowing survives into the closures below; a module-level
 // `const` guard does not narrow inside function bodies.
 const stateFilePath: string = stateFilePathEnv;
+
+// #1244 — each request over the query budget, one JSON line apiece, read and cleared by the
+// suite after every test (tests/functional/query-budget-check.ts).
+const queryBudgetViolationsPath = path.join(path.dirname(stateFilePath), 'query-budget-violations.jsonl');
 
 let smtpSink: SmtpSinkServer | undefined;
 let mailInbox: MailInboxServer | undefined;
@@ -93,6 +99,22 @@ function activeRunsExist(): boolean {
   return found;
 }
 
+/**
+ * Records each request over the query budget that is not on the allow-list. Recorded on send,
+ * before the test sees its response, so the check after the test always finds it.
+ */
+function recordQueryBudgetViolations(app: FastifyInstance): void {
+  fsSync.rmSync(queryBudgetViolationsPath, { force: true });
+  app.addHook('onSend', (request, _reply, payload, done) => {
+    const queryCount = request.queryUsage?.queryCount ?? 0;
+    const violation = queryBudgetViolation(`${request.method} ${request.routeOptions.url ?? request.url}`, queryCount, QUERY_BUDGET_ALLOW_LIST);
+    if (violation !== null) {
+      fsSync.appendFileSync(queryBudgetViolationsPath, `${JSON.stringify(violation)}\n`);
+    }
+    done(null, payload);
+  });
+}
+
 async function writeState(port: number, mailInboxUrl: string): Promise<void> {
   await fs.mkdir(path.dirname(stateFilePath), { recursive: true });
   await fs.writeFile(
@@ -104,6 +126,8 @@ async function writeState(port: number, mailInboxUrl: string): Promise<void> {
       runId,
       // #442 — where tests read the emails the server sent; see tests/functional/mail.ts.
       mailInboxUrl,
+      // #1244 — read by tests/functional/query-budget-check.ts.
+      queryBudgetViolationsPath,
       // #276 — read by global-setup, which adopts this daemon only while its spawner or a run using
       // it is alive: the condition under which the watchdog below keeps it running.
       spawnerPid,
@@ -139,6 +163,7 @@ async function main(): Promise<void> {
   });
 
   const app = buildApp();
+  recordQueryBudgetViolations(app);
 
   await app.ready();
   await app.listen({ host: '127.0.0.1', port: 0 });

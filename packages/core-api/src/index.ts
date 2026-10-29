@@ -10,6 +10,7 @@ import { authGuard } from './plugins/auth-guard';
 import { etagPlugin } from './plugins/etag-support';
 import { requestLoggingContext } from './plugins/request-logging-context';
 import { requestReadMemo } from './plugins/request-read-memo';
+import { requestQueryUsage } from './plugins/request-query-usage';
 import { FASTIFY_AJV_OPTIONS } from './plugins/string-transforms';
 import { FASTIFY_SCHEMA_CONTROLLER } from './plugins/serializer-cache';
 import { globalErrorHandler } from './core/error-handler';
@@ -18,6 +19,7 @@ import { readTrustProxy } from './core/config';
 import { PostgresJobLock } from './core/job-lock';
 import { NightlyCleanupScheduler } from './core/nightly-cleanup';
 import { createCdnInvalidator } from './core/cdn-invalidator';
+import { countingQueries } from './core/request-query-usage';
 
 // Domain modules (core-api)
 import { authModule } from './modules/auth/routes';
@@ -96,7 +98,8 @@ export function buildApp() {
     ajv: FASTIFY_AJV_OPTIONS,
     schemaController: FASTIFY_SCHEMA_CONTROLLER,
   });
-  const prisma = new PrismaClient();
+  // Counts each request's queries against its budget (#1244).
+  const prisma = countingQueries(new PrismaClient());
   const isOpenApiExport = process.env.OPENAPI_EXPORT === 'true';
 
   app.decorate('prisma', prisma);
@@ -171,6 +174,7 @@ export function buildApp() {
   // Core plugins
   // =========================================================================
   app.register(requestReadMemo);
+  app.register(requestQueryUsage);
   app.register(swaggerPlugin);
   app.register(healthPlugin);
   app.register(versionModule, { prefix: '/version', operationId: 'getRootVersion' });

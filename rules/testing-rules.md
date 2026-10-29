@@ -811,6 +811,12 @@ lower layers, stop expanding E2E and strengthen the lower-layer tests first.
 - When a slice introduces or standardizes intentional error conditions, functional API coverage must include explicit negative-path cases for those errors and assert the expected application error codes, not just the HTTP status.
 - Do not stop at a single generic failure case when the route exposes multiple meaningful denial reasons; cover the distinct error conditions that the frontend or other clients need to handle differently.
 
+**Query budget (#1244):**
+- Every request the functional suite makes must run at most 25 Prisma queries (`REQUEST_QUERY_BUDGET` in `packages/core-api/src/core/request-query-usage.ts`). The server records each request over it, and the test that made it fails after it runs, naming the route and the count.
+- A read answered by the request read memo is not a query; each statement of a `$transaction([...])` batch is one.
+- An over-budget route is fixed by batching its reads, not by splitting the test. The routes over budget when the check arrived are on `tests/functional/query-budget-allow-list.ts`, each with the ticket that fixes it; the fix PR removes its entry. A new entry needs a ticket and is a review trigger.
+- The same count is on every `request completed` log line as `res.queryCount` and `res.dbMs`, and a request over budget logs `request.queryBudget.exceeded` at `warn` in every environment.
+
 Functional suites should prioritize durable critical-path journeys covering:
 
 - auth

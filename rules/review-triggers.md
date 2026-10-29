@@ -36,6 +36,7 @@ Already enforced mechanically, and therefore **not** triggers:
 | Frontend types duplicating generated ones | `poolmaster/no-parallel-api-types` (ESLint) |
 | Inline query keys, inline theme styles, bare controls | the corresponding `poolmaster/*` ESLint rules |
 | Generated OpenAPI/SDK staleness | `api:check` |
+| A route running more than 25 queries per request | the functional suite's query budget check (`rules/testing-rules.md` §6 *Backend Functional API Tests*) |
 
 Triggers cover only what needs **judgement** — things no scanner can infer and a file list
 does not reveal.
@@ -74,6 +75,8 @@ State the trigger and one line of context. If none apply, write `None.`
 - **Blocking work on a request path** — file, network, or crypto operations in a handler.
 - A change to **polling or refetch intervals**, or to cache invalidation behavior.
 - A **new runtime dependency**, with a line on why an existing primitive did not suffice.
+- A **new entry on the query budget allow-list** (`tests/functional/query-budget-allow-list.ts`), with
+  the ticket that brings the route back under budget.
 
 ### Process
 
