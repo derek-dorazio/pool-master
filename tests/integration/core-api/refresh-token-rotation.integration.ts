@@ -137,6 +137,22 @@ describe('refresh-token reuse (#1229)', () => {
     expect(live).toBe(0);
   });
 
+  it('ends only the session the reused token belongs to, so the same member stays signed in on their other devices', async () => {
+    const service = buildAuthService();
+    const { user } = await createTestUser();
+    const phone = await service.issueSessionForUser(user.id);
+    const laptop = await service.issueSessionForUser(user.id);
+    await service.refresh(phone.refreshToken);
+    await getPrisma().refreshToken.update({
+      where: { tokenHash: sha256(phone.refreshToken) },
+      data: { rotatedAt: new Date(Date.now() - 60_000) },
+    });
+
+    await expect(service.refresh(phone.refreshToken)).rejects.toMatchObject({ code: 'INVALID_REFRESH_TOKEN' });
+
+    await expect(service.refresh(laptop.refreshToken)).resolves.toMatchObject({ sessionId: laptop.sessionId });
+  });
+
   it('refuses a token rotated moments ago without ending the session, so two tabs refreshing at once stay signed in', async () => {
     const service = buildAuthService();
     const { user } = await createTestUser();

@@ -216,7 +216,7 @@ export class AuthService {
       // A token a refresh replaced has come back after the two-tab grace window: someone holds a
       // copy of it. Whoever refreshed first may be the thief, so the whole session ends (#1229).
       const ended = await this.prisma.refreshToken.updateMany({
-        where: { sessionId: stored.sessionId, revokedAt: null },
+        where: { userId: stored.userId, sessionId: stored.sessionId, revokedAt: null },
         data: { revokedAt: now },
       });
       this.logger?.warn({
