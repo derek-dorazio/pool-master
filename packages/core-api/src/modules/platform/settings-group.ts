@@ -7,6 +7,7 @@
  */
 
 import type { z } from 'zod';
+import type { PublicReadPath } from '../../core/public-cache';
 
 /** The process environment a group's code defaults may depend on (e.g. which environment this is). */
 export type SettingsEnvironment = Readonly<NodeJS.ProcessEnv>;
@@ -27,6 +28,8 @@ export interface SettingsGroup<T> {
    * `SettingsGroup<unknown>[]`.
    */
   onChange?(next: T, previous: T): void;
+  /** The public reads built from this group, which a save or reset clears at the CDN (#1181). */
+  readonly publicReads?: readonly PublicReadPath[];
 }
 
 export function defineSettingsGroup<T>(group: SettingsGroup<T>): SettingsGroup<T> {

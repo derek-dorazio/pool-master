@@ -24,6 +24,8 @@ import type {
 import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import { summarizeSyncWriteRows } from '../core/sync-write-diagnostics';
 import type { EventFieldCache } from '../../events/event-field-cache';
+import type { CdnInvalidator } from '../../../core/cdn-invalidator';
+import { PublicReadPath } from '../../../core/public-cache';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -32,11 +34,16 @@ interface PersistenceDiagnosticsResult<T> {
 }
 
 export class IngestionPersistence {
-  /** `fieldCache`: the event fields this container read lately, an event's forgotten once its field is written (#1163). */
+  /**
+   * `fieldCache`: the event fields this container read lately, an event's forgotten once its field
+   * is written (#1163). `cdn`: clears the public event pages once a field is written, since a
+   * loaded field is what turns an offer from NOT_YET to OPEN (#1181).
+   */
   constructor(
     private readonly prisma: PrismaClient,
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
+    private readonly cdn?: CdnInvalidator,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -253,6 +260,7 @@ export class IngestionPersistence {
       sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, seedsLocked, participantIdByKey, detailRows);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
+      this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
     }
 
     this.logger?.info({

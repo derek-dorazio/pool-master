@@ -76,6 +76,24 @@ revision and overrides only the image, `NODE_ENV`, `LOG_LEVEL` and `POOLMASTER_E
 variables) registers a newer revision, and the next deploy (any merge to `main`) carries that env
 to the running service. Nothing reaches the service until that deploy.
 
+## Public API Reads at CloudFront
+
+The webapp distribution keeps the public, anonymous API reads (#1181): one ordered cache behavior
+per path in `local.public_api_paths` (event pages, sport leagues, contest templates, plans), ahead
+of `/api/*`. Its cache policy (`aws_cloudfront_cache_policy.public_api`) honours core-api's
+`Cache-Control` up to an hour and keys on the query string, the Authorization header and the
+`poolmaster_access` cookie, so only visitors without a session share a copy. The origin request
+policy forwards every cookie and the write headers, so a root admin's writes under the same paths
+still reach core-api. The list must equal `PublicReadPath` in
+`packages/core-api/src/core/public-cache.ts`; `tests/unit/core-api/public-cache.test.ts` fails
+when they differ.
+
+core-api clears those reads after an admin save with `cloudfront:CreateInvalidation`, which
+`aws_iam_role_policy.ecs_task_cloudfront_invalidation` grants on this distribution alone, using
+the `CLOUDFRONT_DISTRIBUTION_ID` the task definition carries. Like any env change, that variable
+reaches the running task on the next deploy after the apply; until then saves invalidate nothing
+and the reads can be up to an hour old. The admin distribution keeps nothing.
+
 ## Database Connection Pool
 
 `DATABASE_URL` carries `connection_limit` and `pool_timeout`, from the `db_connection_limit`

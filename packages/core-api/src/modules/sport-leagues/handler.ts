@@ -13,6 +13,7 @@ import type {
   UpdateSportLeagueRequest,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { sendError } from '../../core/error-handler';
+import type { ReadCache } from '../../core/read-cache';
 import {
   mapAffiliationToDto,
   mapAffiliationUploadPreviewRowToDto,
@@ -22,12 +23,18 @@ import type { SportLeagueService } from '../sport-catalog/sport-league-service';
 
 type SportLeagueParams = { Params: { sportLeagueId: string } };
 
-/** Service errors carry their own code and status; the global error handler sends them. */
-export function createSportLeagueHandlers(sportLeagues: SportLeagueService) {
+/**
+ * Service errors carry their own code and status; the global error handler sends them. `lists`
+ * keeps the public list by its filters (#1181); the routes clear it on every write.
+ */
+export function createSportLeagueHandlers(sportLeagues: SportLeagueService, lists: ReadCache<SportLeagueListResponse>) {
   return {
     listSportLeagues: async (request: FastifyRequest<{ Querystring: SportLeagueListQuery }>): Promise<SportLeagueListResponse> => {
-      const rows = await sportLeagues.listSportLeagues({ sport: request.query.sport, isActive: request.query.isActive });
-      return { sportLeagues: rows.map(mapSportLeagueToDto) };
+      const { sport, isActive } = request.query;
+      return lists.get(`${sport ?? ''}:${isActive ?? ''}`, new Date(), async () => {
+        const rows = await sportLeagues.listSportLeagues({ sport, isActive });
+        return { sportLeagues: rows.map(mapSportLeagueToDto) };
+      });
     },
 
     getSportLeague: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {

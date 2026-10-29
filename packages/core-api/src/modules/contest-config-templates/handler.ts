@@ -1,17 +1,21 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type {
+  ContestConfigTemplateDto,
   UpdateContestConfigTemplateRequest,
   ListContestConfigTemplatesQuery,
 } from '@poolmaster/shared/dto';
 import { sendError } from '../../core/error-handler';
+import type { ReadCache } from '../../core/read-cache';
 import {
   ContestConfigTemplateNotFoundError,
   ContestConfigTemplateRulesMismatchError,
   type ContestConfigTemplateService,
 } from './service';
 
+/** `lists` keeps the public list by its filters (#1181); an update that lands clears it. */
 export function createContestConfigTemplateHandlers(
   service: ContestConfigTemplateService,
+  lists: ReadCache<ContestConfigTemplateDto[]>,
 ) {
   return {
     listTemplates,
@@ -24,7 +28,9 @@ export function createContestConfigTemplateHandlers(
     }>,
     reply: FastifyReply,
   ): Promise<void> {
-    const templates = await service.listTemplates(request.query);
+    const { sport, sportLeagueId, eventType, active } = request.query;
+    const key = [sport, sportLeagueId, eventType, active].map((filter) => filter ?? '').join(':');
+    const templates = await lists.get(key, new Date(), () => service.listTemplates(request.query));
     return reply.send({ templates });
   }
 
@@ -40,6 +46,7 @@ export function createContestConfigTemplateHandlers(
         request.params.templateId,
         request.body,
       );
+      lists.clear();
       return reply.send({ template });
     } catch (error) {
       if (error instanceof ContestConfigTemplateNotFoundError) {
