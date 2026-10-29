@@ -470,8 +470,8 @@ export interface IntermediatePrize {
 /**
  * One feed's sync against a provider — the ingestion history. `eventId` is the provider's
  * event identifier when the run was narrowed to one event, null for a whole-sport run.
- * `payload` is the ledger's record of the run: request, provider operation, stats,
- * outcome, and the serialized ingestion job once it completes.
+ * `payload` is the run's summary as the ledger records it: request, feed, stats and outcome.
+ * Its detailed diagnostics are read one run at a time, as a `ProviderSyncRunWithDetails`.
  */
 export interface ProviderSyncRun {
   id: string;
@@ -483,6 +483,15 @@ export interface ProviderSyncRun {
   completedAt: Date | null;
   createdAt: Date;
   payload: Record<string, unknown>;
+}
+
+/**
+ * One sync run with its detailed diagnostics: the changed rows, the ingestion job record, and
+ * the raw provider payload. `details` is null before the run starts and once the nightly
+ * cleanup has cleared it, 30 days after submission.
+ */
+export interface ProviderSyncRunWithDetails extends ProviderSyncRun {
+  details: Record<string, unknown> | null;
 }
 
 /** A runtime-tunable platform setting, stored as one JSON document per key. */

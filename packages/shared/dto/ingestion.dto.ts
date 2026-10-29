@@ -150,7 +150,7 @@ export type ProviderSyncWriteSummaryDto = z.infer<typeof ProviderSyncWriteSummar
 export const ProviderSyncWriteDiagnosticsDtoSchema = z.object({
   summary: ProviderSyncWriteSummaryDtoSchema,
   rows: z.array(ProviderSyncWriteDetailRowDtoSchema),
-}).describe('Normalized write-effect diagnostics for a provider sync run. Field syncs intentionally retain one row per normalized event participant so an 80-player Golf field can be reviewed without diffing raw JSON; raw provider payload JSON remains a separate debug payload.');
+}).describe('Normalized write-effect diagnostics for a provider sync run. The summary counts every row the sync compared; `rows` keeps only those it created, updated or deleted, so an unchanged golf field stores no rows. Raw provider payload JSON is a separate debug payload.');
 export type ProviderSyncWriteDiagnosticsDto = z.infer<typeof ProviderSyncWriteDiagnosticsDtoSchema>;
 
 export const SyncRequestSourceSchema = z.enum(['SCHEDULED', 'MANUAL']).describe('Whether the scheduler or a root admin asked for the sync.');
@@ -184,16 +184,29 @@ export const ProviderSyncRunPayloadDtoSchema = z.object({
   requestedFeeds: z.array(IngestionFeedTypeSchema).optional().describe('Feeds represented by the originating manual or scheduled sync request.'),
   requestedFeed: IngestionFeedTypeSchema.optional().describe('Single feed represented by this sync run row.'),
   requestPayload: ProviderSyncRequestPayloadDtoSchema.optional().describe('The request that submitted the sync run.'),
-  providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
-  jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
-  writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized created/updated/deleted/unchanged row diagnostics for PoolMaster writes.'),
   outcome: ProviderSyncOutcomeDtoSchema.optional().describe('Admin-facing outcome and warning summary for the sync run.'),
   stats: z.record(z.string(), z.number()).optional().describe('Canonical numeric sync stats used by admin diagnostics.'),
   recordsProcessed: z.number().optional().describe('Legacy top-level processed-record count retained for summary compatibility.'),
   errors: z.number().optional().describe('Legacy top-level error count retained for summary compatibility.'),
   detail: z.string().optional().describe('Legacy human-readable detail retained for summary compatibility.'),
-}).loose().describe('Provider sync run diagnostic payload.');
+}).loose().describe('Provider sync run summary: the request, feed, outcome and stats. The detailed diagnostics are read one run at a time with getProviderSyncRun.');
 export type ProviderSyncRunPayloadDto = z.infer<typeof ProviderSyncRunPayloadDtoSchema>;
+
+export const ProviderSyncFailurePayloadDtoSchema = z.object({
+  error: z.object({
+    name: z.string().optional().describe('The error\'s class name, when it was an Error.'),
+    message: z.string(),
+  }).describe('The error that failed the run.'),
+}).describe('Why a sync run failed unexpectedly, before the ingestion job could report it.');
+export type ProviderSyncFailurePayloadDto = z.infer<typeof ProviderSyncFailurePayloadDtoSchema>;
+
+export const ProviderSyncRunDetailsDtoSchema = z.object({
+  providerPayload: ProviderSyncProviderPayloadDtoSchema.optional().describe('Raw/debug provider payload captured for this run.'),
+  jobPayload: ProviderSyncJobPayloadDtoSchema.optional().describe('Serialized ingestion job details after an ingestion job is available.'),
+  writeDiagnostics: ProviderSyncWriteDiagnosticsDtoSchema.optional().describe('Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept.'),
+  failurePayload: ProviderSyncFailurePayloadDtoSchema.optional().describe('Present when the run failed unexpectedly.'),
+}).loose().describe('A provider sync run\'s detailed diagnostics.');
+export type ProviderSyncRunDetailsDto = z.infer<typeof ProviderSyncRunDetailsDtoSchema>;
 
 export const ProviderSyncRunDtoSchema = z.object({
   id: z.string(),
@@ -204,9 +217,14 @@ export const ProviderSyncRunDtoSchema = z.object({
   startedAt: DateTimeSchema.nullable(),
   completedAt: DateTimeSchema.nullable(),
   createdAt: DateTimeSchema.describe('When the run was submitted.'),
-  payload: ProviderSyncRunPayloadDtoSchema.describe('Provider sync diagnostic payload with canonical stats plus raw provider/job drill-downs.'),
+  payload: ProviderSyncRunPayloadDtoSchema.describe('Provider sync run summary with canonical stats and outcome.'),
 }).describe('One feed\'s sync against a provider, with its diagnostics.');
 export type ProviderSyncRunDto = z.infer<typeof ProviderSyncRunDtoSchema>;
+
+export const ProviderSyncRunDetailDtoSchema = ProviderSyncRunDtoSchema.extend({
+  details: ProviderSyncRunDetailsDtoSchema.nullable().describe('The run\'s detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission.'),
+}).describe('One feed\'s sync against a provider, with its summary and its detailed diagnostics.');
+export type ProviderSyncRunDetailDto = z.infer<typeof ProviderSyncRunDetailDtoSchema>;
 
 export const ProviderSyncRunListQuerySchema = z.object({
   providerId: z.string().optional(),
@@ -219,7 +237,7 @@ export type ProviderSyncRunListQuery = z.infer<typeof ProviderSyncRunListQuerySc
 
 export const ProviderSyncRunListResponseSchema = z.object({
   syncRuns: z.array(ProviderSyncRunDtoSchema),
-}).describe('Sync runs submitted inside the requested window.');
+}).describe('Sync runs submitted inside the requested window, newest submission first, each with its summary only.');
 export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResponseSchema>;
 
 export const ProviderManualSyncSubmissionResponseSchema = z.object({
@@ -288,6 +306,7 @@ registerSchema('EventSyncRequest', EventSyncRequestSchema);
 registerSchema('ProviderSummaryDto', ProviderSummaryDtoSchema);
 registerSchema('ProviderListResponse', ProviderListResponseSchema);
 registerSchema('ProviderSyncRunDto', ProviderSyncRunDtoSchema);
+registerSchema('ProviderSyncRunDetailDto', ProviderSyncRunDetailDtoSchema);
 registerSchema('ProviderSyncRunListQuery', ProviderSyncRunListQuerySchema);
 registerSchema('ProviderSyncRunListResponse', ProviderSyncRunListResponseSchema);
 registerSchema('ProviderManualSyncSubmissionResponse', ProviderManualSyncSubmissionResponseSchema);

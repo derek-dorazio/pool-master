@@ -1193,7 +1193,8 @@ refreshes them from the database every 30 seconds, and every save is recorded in
 | Operation | Role | Notes |
 |---|---|---|
 | List providers | `rootAdmin` | `listProviders` — each registered provider with a live health check made for the request, its scheduled sports and its active event count. There is no stored health: `ProviderHealthLog` went with the manual health check that wrote it and the provider detail that read it |
-| List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours). Unpaged (§16): the window is the bound |
+| List sync runs | `rootAdmin` | `listProviderSyncRuns` — filtered by provider, sport and status, bounded by a submission-time window (`from`/`to`, default the last 6 hours), newest submission first. Unpaged (§16): the window is the bound. Each run carries its summary only (request, feed, outcome, stats) |
+| Read one sync run | `rootAdmin` | `getProviderSyncRun` (#1174) — the run's summary plus its detailed diagnostics: the rows the sync created, updated or deleted (unchanged rows are counted, not stored), the ingestion job record and the raw provider payload. They live in their own column, `details_json`, and are null before the run starts. 404 `SYNC_RUN_NOT_FOUND` |
 | Submit an event sync | `rootAdmin` | `submitEventSync` — 202 with one `SUBMITTED` run per feed; the runs execute after acceptance. An event whose `syncScope` forbids a feed is 409 |
 | List unmapped competitors | `rootAdmin` | `listUnmappedProviderParticipants` — competitors a provider reports that no participant is mapped to. `bindParticipantProviderMapping` (above) repairs each |
 | Browse a provider's catalog | `rootAdmin` | `listProviderCatalogEvents` — live provider events, each the full `ProviderEventDto`; without `from`/`to` it returns every event the provider has, with no window around today (#402) |

@@ -5,6 +5,7 @@ import {
   disableUser,
   enableUser,
   getIngestionSchedule,
+  getProviderSyncRun,
   submitEventSync,
   setUserRootAdmin,
   listContestConfigTemplates,
@@ -297,11 +298,12 @@ describe('SDK Functional: Root Admin', () => {
     });
     await promoteToRootAdmin(user);
     const providerId = `functional-provider-${randomUUID()}`;
+    const completedRunId = randomUUID();
 
     await getFunctionalPrisma().providerSyncRun.createMany({
       data: [
         {
-          id: randomUUID(),
+          id: completedRunId,
           providerId,
           sport: 'GOLF',
           eventId: 'masters-2026',
@@ -311,6 +313,12 @@ describe('SDK Functional: Root Admin', () => {
           payloadJson: {
             runType: 'EVENT_SYNC',
             detail: 'Imported event and field snapshot.',
+          },
+          detailsJson: {
+            jobPayload: {
+              jobType: 'EVENT_PARTICIPANTS_SYNC', providerId, sport: 'GOLF',
+              status: 'COMPLETED', recordsProcessed: 2, errors: 0, errorLog: [],
+            },
           },
         },
         {
@@ -342,6 +350,15 @@ describe('SDK Functional: Root Admin', () => {
     expect(response.data?.syncRuns).toHaveLength(1);
     expect(response.data?.syncRuns[0]?.providerId).toBe(providerId);
     expect(response.data?.syncRuns[0]?.payload.detail).toBe('Imported event and field snapshot.');
+    expect(response.data?.syncRuns[0]).not.toHaveProperty('details');
+
+    // Opening the run reads its detailed diagnostics, which the list leaves out (#1174).
+    const runResponse = await getProviderSyncRun({
+      client: user.client,
+      path: { syncRunId: completedRunId },
+    });
+    expect(runResponse.response?.status).toBe(200);
+    expect(runResponse.data?.details?.jobPayload).toMatchObject({ recordsProcessed: 2 });
   });
 
   it('answers 404 PROVIDER_NOT_FOUND when a root admin browses an unknown provider\'s catalog', async () => {

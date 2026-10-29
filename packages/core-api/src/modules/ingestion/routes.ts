@@ -59,12 +59,28 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
     schema: {
       tags: ['Ingestion'],
       summary: 'List provider sync runs inside a time window',
-      description: 'The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Runs not yet started come first, then newest start.',
+      description: 'The sync-run history, filtered by provider, sport and status and bounded by a submission-time window. `to` defaults to now and `from` to 6 hours before `to`; nothing pages the result. Newest submission first. Each run carries its summary only; read one run\'s detailed diagnostics with getProviderSyncRun.',
       operationId: 'listProviderSyncRuns',
       querystring: schemaRef('ProviderSyncRunListQuery'),
       response: { 200: schemaRef('ProviderSyncRunListResponse'), ...errors() },
     },
     handler: handler.listSyncRuns,
+  });
+
+  fastify.get('/sync-runs/:syncRunId', {
+    schema: {
+      tags: ['Ingestion'],
+      summary: 'Read one provider sync run with its detailed diagnostics',
+      description: 'One sync run\'s summary plus its detailed diagnostics: the rows the sync changed, the ingestion job record, and the raw provider payload. The diagnostics are null before the run starts and once they are cleared, 30 days after submission. 404 when there is no such run.',
+      operationId: 'getProviderSyncRun',
+      params: {
+        type: 'object',
+        required: ['syncRunId'],
+        properties: { syncRunId: { type: 'string', format: 'uuid' } },
+      },
+      response: { 200: schemaRef('ProviderSyncRunDetailDto'), ...errors(404) },
+    },
+    handler: handler.getSyncRun,
   });
 
   fastify.post('/sports/:sport/events/:eventId/sync', {

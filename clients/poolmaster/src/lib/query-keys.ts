@@ -304,6 +304,9 @@ export const QueryKeys = {
     settingsHistory: (key: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'settings', key, 'history'] as const,
     providerSyncRuns: ['poolmaster', 'root-admin', 'provider-sync-runs'] as const,
+    // Under the list's prefix, so refreshing the list refreshes an open run's details too.
+    providerSyncRun: (syncRunId: QueryKeyId) =>
+      ['poolmaster', 'root-admin', 'provider-sync-runs', syncRunId] as const,
     unmappedProviderParticipants: ['poolmaster', 'root-admin', 'unmapped-provider-participants'] as const,
     participantCandidates: (sportId: QueryKeyId, search: QueryKeyId) =>
       ['poolmaster', 'root-admin', 'participant-candidates', sportId, search] as const,
