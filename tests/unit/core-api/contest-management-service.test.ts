@@ -138,7 +138,6 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
 
   return {
     findByContest: jest.fn().mockImplementation(async () => ({ ...state })),
-    findByTemplateEventSeries: jest.fn().mockResolvedValue([]),
     create: jest.fn().mockImplementation(async (configuration) => {
       Object.assign(state, configuration, {
         id: 'config-1',
@@ -2020,9 +2019,10 @@ describe('ContestManagementService — a contest of several events', () => {
       cups: createCupKeeper(cupsAsked),
       planEntitlements: options.planEntitlements ?? platinumEntitlements(),
     });
-    jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([
-      { id: 'config-1', contestId: 'contest-1', selectionType: SelectionType.TIERED, configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, maxEntriesPerSquad: 1, createdAt: new Date('2026-04-07T12:00:00.000Z'), updatedAt: new Date('2026-04-07T12:00:00.000Z') },
-    ]);
+    jest.mocked(contestRepo.findJoinableByReleasedEdition).mockImplementation(async () => {
+      const contest = await contestRepo.findById('contest-1');
+      return contest ? [contest] : [];
+    });
     return { service, contestRepo, configurationRepo, cupsAsked };
   }
 
@@ -2220,29 +2220,12 @@ describe('ContestManagementService — a contest of several events', () => {
     ]);
 
     it('adds the released major to a live majors pool of its year, after the majors it already has', async () => {
-      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
 
       await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual(['contest-1']);
 
-      expect(configurationRepo.findByTemplateEventSeries).toHaveBeenCalledWith('series-pga-championship');
+      expect(contestRepo.findJoinableByReleasedEdition).toHaveBeenCalledWith(PGA_EDITION);
       expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
-    });
-
-    it('leaves alone a pool that already has the major, a COMPLETED pool, and a pool of another year\'s majors', async () => {
-      for (const contest of [
-        { status: ContestStatus.ACTIVE, sportEventIds: [MASTERS, PGA] },
-        { status: ContestStatus.COMPLETED },
-        { status: ContestStatus.ACTIVE },
-      ]) {
-        const { service, contestRepo } = build({ reader: startedMasters, contest });
-        const edition = contest.status === ContestStatus.ACTIVE && !('sportEventIds' in contest)
-          ? { ...PGA_EDITION, eventYear: 2027 }
-          : PGA_EDITION;
-
-        await expect(service.addReleasedEditionToTemplateContests(edition)).resolves.toEqual([]);
-
-        expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
-      }
     });
 
     it('skips a pool whose rules refuse the major (a random draw keeps one event) without failing the release', async () => {
@@ -2254,12 +2237,13 @@ describe('ContestManagementService — a contest of several events', () => {
     });
 
     it('does nothing when no template covers the released event\'s series', async () => {
-      const { service, contestRepo, configurationRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
-      jest.mocked(configurationRepo.findByTemplateEventSeries).mockResolvedValue([]);
+      const { service, contestRepo } = build({ reader: startedMasters, contest: { status: ContestStatus.ACTIVE } });
+      jest.mocked(contestRepo.findJoinableByReleasedEdition).mockResolvedValue([]);
 
       await expect(service.addReleasedEditionToTemplateContests(PGA_EDITION)).resolves.toEqual([]);
 
       expect(contestRepo.findById).not.toHaveBeenCalled();
+      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
     });
   });
 });

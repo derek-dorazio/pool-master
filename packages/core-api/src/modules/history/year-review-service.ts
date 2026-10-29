@@ -11,7 +11,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { ChampionshipRepository, LeagueRepository, LeagueYearReviewRepository, SquadMembershipRepository, UserRepository } from '@poolmaster/shared/db';
-import { CupWeight, YearReviewStatus, championshipYear, trophyForPlace, type User } from '@poolmaster/shared/domain';
+import { YearReviewStatus, championshipYear, trophyForPlace, type User } from '@poolmaster/shared/domain';
 import { championshipName } from '../../mappers/championship.mapper';
 import { cupName } from '../../mappers/cups.mapper';
 import {
@@ -50,7 +50,7 @@ export interface YearReviewView {
 
 export interface YearReviewServiceDeps extends LeagueMemberDeps {
   reviews: LeagueYearReviewRepository;
-  finishes: Pick<ChampionshipRepository, 'findByLeagueYear'>;
+  finishes: Pick<ChampionshipRepository, 'hasCountedFinish'>;
   history: Pick<HistoryService, 'getLeagueSquadYears'>;
   leagues: Pick<LeagueRepository, 'findById'>;
   squadMemberships: Pick<SquadMembershipRepository, 'findBySquads'>;
@@ -106,8 +106,7 @@ export class YearReviewService {
   }
 
   private async hasCountedContest(leagueId: string, year: number): Promise<boolean> {
-    const finishes = await this.deps.finishes.findByLeagueYear(leagueId, year);
-    return finishes.some((finish) => finish.weight !== CupWeight.NOT_COUNTED);
+    return this.deps.finishes.hasCountedFinish(leagueId, year);
   }
 
   /** One email per active owner of each squad that placed in the year; answers how many. */

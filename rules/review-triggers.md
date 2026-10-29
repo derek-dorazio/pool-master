@@ -189,6 +189,19 @@ every other request behind them until `pool_timeout` fails them. The fix is one 
 concurrency cap with the reason stated beside it. A fan-out over a list with a small fixed
 bound (a sport's handful of scoring periods) is not a finding.
 
+**A generic list reused and post-processed is a finding.** A screen that calls a list
+endpoint and then, in the browser, keeps one row by id (`.find`), filters most rows away by
+status, year, team or user, or counts the rows; or a service that does the same in JS after
+a repository list read. The cost grows with every league's history while the answer stays
+one row or one number. The fix is the single-item endpoint, a filter parameter pushed into
+SQL, or a count returned by the server.
+
+**Shared data read again is a finding.** Reading the same contest, league, membership,
+sport event, field, configuration or sport league more than once in one request, job or
+fan-out, or re-reading event-wide data once per contest inside a loop over contests. The
+multiplier is the number of callers, not the data size. The fix is to pass the loaded object
+down, memoise it for the length of the fan-out, or rely on a request-scoped memo.
+
 Backend shapes are governed by `service-rules.md` §5 *Prisma and Persistence*; frontend
 shapes by `react-ui-rules.md` §4 *TanStack Query Rules* and §5 *State, Effect, Form, And
 Component Rules*.

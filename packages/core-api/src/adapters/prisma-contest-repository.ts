@@ -13,6 +13,7 @@ import type {
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
+  ReleasedEdition,
 } from '@poolmaster/shared/db';
 import { championshipYear, ContestStatus, SelectionType, type Contest, type ContestFormat, type CupWeight, type Sport } from '@poolmaster/shared/domain';
 import { lockContestRow } from './contest-row-lock';
@@ -151,6 +152,31 @@ export class PrismaContestRepository implements ContestRepository {
         }),
       },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: CONTEST_INCLUDE,
+    });
+    return rows.map(mapToContest);
+  }
+
+  async findJoinableByReleasedEdition(edition: ReleasedEdition): Promise<Contest[]> {
+    const series = await this.prisma.eventSeries.findUnique({
+      where: { id: edition.eventSeriesId },
+      select: { sportLeagueId: true, name: true },
+    });
+    if (!series) {
+      return [];
+    }
+    const rows = await this.prisma.contest.findMany({
+      where: {
+        configuration: { template: { sportLeagueId: series.sportLeagueId, eventSeriesNames: { has: series.name } } },
+        status: { not: ContestStatus.COMPLETED },
+        draw: null,
+        squaresDraw: null,
+        sportEvents: {
+          none: { sportEventId: edition.id },
+          every: { sportEvent: { eventYear: edition.eventYear } },
+        },
+      },
+      orderBy: [{ configuration: { createdAt: 'asc' } }, { id: 'asc' }],
       include: CONTEST_INCLUDE,
     });
     return rows.map(mapToContest);

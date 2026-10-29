@@ -166,6 +166,7 @@ export class InMemorySportEvents {
   sportLeagueRepo(): SportLeagueRepository {
     return {
       findById: async (id) => this.sportLeagues.find((row) => row.id === id) ?? null,
+      findByIds: async (ids) => this.sportLeagues.filter((row) => ids.includes(row.id)),
       findAll: async (filters) => this.sportLeagues.filter((row) => (
         (filters.sportId === undefined || row.sportId === filters.sportId)
         && (filters.isActive === undefined || row.isActive === filters.isActive)

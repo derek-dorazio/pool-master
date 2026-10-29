@@ -57,6 +57,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     }),
     sportLeagues: fakeSportLeagueRepo({
       findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: id === PGA ? 'PGA Tour' : 'NFL' })),
+      findByIds: jest.fn().mockImplementation(async (ids: string[]) => ids.map((id) => ({ id, name: id === PGA ? 'PGA Tour' : 'NFL' }))),
     }),
     now: () => CROWNED_AT,
   });
@@ -248,6 +249,53 @@ describe('CupService (#841)', () => {
 
     expect(listed.map((view) => view.sportLeagueName)).toEqual(['PGA Tour']);
     await expect(service.getCup(LEAGUE, emptyCupId)).resolves.toMatchObject({ contests: [] });
+  });
+
+  it('lists every season with a listed contest newest first, each with its cups as that season\'s list shows them, a season whose cup lists nothing with none and a draft-only season left out (#1166)', async () => {
+    const { cups, service, contest } = build();
+    await service.ensureCup(KEY);
+    await service.ensureCup({ ...KEY, sportLeagueId: NFL });
+    await service.ensureCup({ ...KEY, seasonYear: 2025 });
+    contest('masters', [['eagles', 1], ['birdies', 2]]);
+    contest('bowl', [['bogeys', 1]], { sportLeagueId: NFL });
+    contest('last-masters', [['birdies', 1]], { seasonYear: 2025 });
+    // A contest moved to 2024 whose season has no cup, and a 2027 draft.
+    contest('moved', [], { seasonYear: 2024, status: ContestStatus.OPEN });
+    contest('next', [], { seasonYear: 2027, status: ContestStatus.DRAFT });
+    const lastSeasonCup = cups.cups.find((cup) => cup.seasonYear === 2025);
+    await service.crown(LEAGUE, lastSeasonCup?.id ?? '');
+
+    const seasons = await service.listLeagueSeasons(LEAGUE);
+
+    expect(seasons.map((season) => [season.seasonYear, season.cups.map((view) => view.sportLeagueName)])).toEqual([
+      [2026, ['PGA Tour', 'NFL']],
+      [2025, ['PGA Tour']],
+      [2024, []],
+    ]);
+    for (const season of seasons) {
+      expect(season.cups).toEqual(await service.listSeasonCups(LEAGUE, season.seasonYear));
+    }
+    expect(seasons[1]?.cups[0]?.standings.map((row) => [row.squad.name, row.trophy])).toEqual([
+      ['Birdies', CupTrophy.CHAMPION], ['Bogeys', null], ['Eagles', null],
+    ]);
+  });
+
+  it('opens a crowned cup with its frozen standings and an open one with its live ones, reading both from one season list (#1166)', async () => {
+    const { cups, service, contest } = build();
+    await service.ensureCup(KEY);
+    await service.ensureCup({ ...KEY, sportLeagueId: NFL });
+    contest('masters', [['eagles', 1], ['birdies', 2]]);
+    contest('bowl', [['bogeys', 1], ['eagles', 2]], { sportLeagueId: NFL });
+    const pga = cups.cups.find((cup) => cup.sportLeagueId === PGA);
+    await service.crown(LEAGUE, pga?.id ?? '');
+
+    const listed = await service.listSeasonCups(LEAGUE, 2026);
+
+    expect(listed).toEqual([await service.getCup(LEAGUE, pga?.id ?? ''), await service.getCup(LEAGUE, cups.cups.find((cup) => cup.sportLeagueId === NFL)?.id ?? '')]);
+    expect(listed.map((view) => [view.cup.status, view.standings.map((row) => row.trophy)])).toEqual([
+      [CupStatus.CROWNED, [CupTrophy.CHAMPION, CupTrophy.RUNNER_UP, null]],
+      [CupStatus.OPEN, [null, null, null]],
+    ]);
   });
 
   it('refuses another league\'s cup with CUP_NOT_FOUND and another league\'s squad with SQUAD_NOT_FOUND', async () => {

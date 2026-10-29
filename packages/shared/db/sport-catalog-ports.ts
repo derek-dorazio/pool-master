@@ -40,6 +40,8 @@ export type SportLeagueUpdate = Partial<Pick<SportLeague, 'name' | 'matchKeyword
 
 export interface SportLeagueRepository {
   findById(id: string): Promise<SportLeague | null>;
+  /** The sports leagues with these ids that exist. */
+  findByIds(ids: readonly string[]): Promise<SportLeague[]>;
   /** Ordered by name. */
   findAll(filters: SportLeagueFilters): Promise<SportLeague[]>;
   findBySportAndName(sportId: string, name: string): Promise<SportLeague | null>;
