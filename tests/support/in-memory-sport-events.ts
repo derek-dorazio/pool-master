@@ -401,7 +401,9 @@ export class InMemorySportEvents {
       .sort((left, right) => (left.seedNumber ?? Infinity) - (right.seedNumber ?? Infinity));
     return {
       findById: async (id) => this.field.find((row) => row.id === id) ?? null,
+      findByIds: async (ids) => this.field.filter((row) => ids.includes(row.id)),
       findBySportEvent: async (sportEventId) => bySeed(sportEventId),
+      findBySportEvents: async (sportEventIds) => [...sportEventIds].sort().flatMap((sportEventId) => bySeed(sportEventId)),
       findFieldForEvent: async (sportEventId, sportLeagueId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId)),
       findFieldRow: async (sportEventId, sportEventParticipantId, sportLeagueId) => {
         const entry = this.field.find((row) => row.id === sportEventParticipantId && row.sportEventId === sportEventId);
@@ -463,10 +465,12 @@ export class InMemorySportEvents {
   }
 
   tierRepo(): SportEventTierRepository {
+    const findBySportEvents = async (sportEventIds: readonly string[]) => this.tierRows
+      .filter((row) => sportEventIds.includes(row.sportEventId))
+      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.tierNumber - right.tierNumber);
     return {
-      findBySportEvent: async (sportEventId) => this.tierRows
-        .filter((row) => row.sportEventId === sportEventId)
-        .sort((left, right) => left.tierNumber - right.tierNumber),
+      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
+      findBySportEvents,
       createMany: async (sportEventId, tiers) => {
         for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), sportEventId, ...tier }));
       },
@@ -506,6 +510,10 @@ export class InMemorySportEvents {
     return {
       findBySportEvent: async (sportEventId) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
+        return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
+      },
+      findBySportEvents: async (sportEventIds) => {
+        const entryIds = new Set(this.field.filter((row) => sportEventIds.includes(row.sportEventId)).map((row) => row.id));
         return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
       },
       assignTiers: async (assignments) => {
@@ -647,6 +655,10 @@ export class InMemorySportEvents {
       return row;
     };
     return {
+      findById: async (id) => {
+        const row = this.matchRows.find((match) => match.id === id);
+        return row ? { ...row, periodScores: [...row.periodScores].sort((left, right) => left.periodNumber - right.periodNumber) } : null;
+      },
       findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
       findBySportEvents,
       replaceBracket: async (sportEventId, matches) => {

@@ -6833,7 +6833,7 @@ export interface components {
         ContestManagementSportEventDto: {
             /** @description One event the contest covers. */
             sportEventId: string;
-            /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+            /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
             effectiveTiers: {
                 /** @description Stable per-event tier key. */
                 tierKey: string;
@@ -6864,7 +6864,7 @@ export interface components {
             sportEvents: {
                 /** @description One event the contest covers. */
                 sportEventId: string;
-                /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                 effectiveTiers: {
                     /** @description Stable per-event tier key. */
                     tierKey: string;
@@ -7395,7 +7395,7 @@ export interface components {
                 sportEvents: {
                     /** @description One event the contest covers. */
                     sportEventId: string;
-                    /** @description Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured. */
+                    /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
                     effectiveTiers: {
                         /** @description Stable per-event tier key. */
                         tierKey: string;

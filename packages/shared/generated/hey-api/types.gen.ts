@@ -4526,7 +4526,7 @@ export type ContestManagementSportEventDto = {
      */
     sportEventId: string;
     /**
-     * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+     * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
      */
     effectiveTiers: Array<{
         /**
@@ -4586,7 +4586,7 @@ export type ContestManagementDetailDto = {
          */
         sportEventId: string;
         /**
-         * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+         * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
          */
         effectiveTiers: Array<{
             /**
@@ -5346,7 +5346,7 @@ export type ContestManagementResponse = {
              */
             sportEventId: string;
             /**
-             * Read-only tier structure the contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet. Never contest-configured.
+             * Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.
              */
             effectiveTiers: Array<{
                 /**

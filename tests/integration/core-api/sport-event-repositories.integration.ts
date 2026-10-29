@@ -299,6 +299,26 @@ describe('SportEventParticipantRepository — the field', () => {
     expect(await field.countDistinctParticipants([])).toBe(0);
   });
 
+  it('reads field rows by id, leaving out an id with no row, and several events\' fields at once, each by seed, leaving out events not asked for', async () => {
+    const { field } = repos();
+    const [week1, week2, other] = [await createEvent('Week 1'), await createEvent('Week 2'), await createEvent('Other')];
+    const [ana, ben, cal, dee] = await createParticipants(['Ana', 'Ben', 'Cal', 'Dee']);
+    await field.createMany(week1.id, [{ participantId: ana.id }, { participantId: ben.id, seedNumber: 1 }]);
+    await field.createMany(week2.id, [{ participantId: cal.id }]);
+    await field.createMany(other.id, [{ participantId: dee.id }]);
+    const [benRow, anaRow] = await field.findBySportEvent(week1.id);
+
+    const byId = await field.findByIds([anaRow.id, benRow.id, randomUUID()]);
+    expect(byId.map((row) => row.participantId).sort()).toEqual([ana.id, ben.id].sort());
+    expect(await field.findByIds([])).toEqual([]);
+
+    const both = await field.findBySportEvents([week1.id, week2.id]);
+    expect(both.filter((row) => row.sportEventId === week1.id).map((row) => row.participantId)).toEqual([ben.id, ana.id]);
+    expect(both.filter((row) => row.sportEventId === week2.id).map((row) => row.participantId)).toEqual([cal.id]);
+    expect(both).toHaveLength(3);
+    expect(await field.findBySportEvents([])).toEqual([]);
+  });
+
   it('patches rows and manual prices all or none; undefined leaves a column, null clears it', async () => {
     const { field, valuations } = repos();
     const event = await createEvent();
@@ -382,6 +402,34 @@ describe('SportEventTierRepository and valuations', () => {
     await tiers.replace(event.id, [TIERS[0]]);
 
     await expect(valuations.findBySportEvent(event.id)).resolves.toEqual([expect.objectContaining({ sportEventTierId: null })]);
+  });
+
+  it('reads several events\' tiers, each in tier order, and their valuations at once, leaving out events not asked for', async () => {
+    const { tiers, valuations, field } = repos();
+    const [first, second, other] = [await createEvent('First'), await createEvent('Second'), await createEvent('Other')];
+    const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
+    for (const event of [first, second, other]) await tiers.createMany(event.id, [TIERS[1], TIERS[0]]);
+    await field.createMany(first.id, [{ participantId: ana.id }]);
+    await field.createMany(second.id, [{ participantId: ben.id }]);
+    await field.createMany(other.id, [{ participantId: cal.id }]);
+    const assign = async (sportEventId: string) => {
+      const [entry] = await field.findBySportEvent(sportEventId);
+      const [tier] = await tiers.findBySportEvent(sportEventId);
+      await valuations.assignTiers([{ sportEventParticipantId: entry.id, sportEventTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+      return entry;
+    };
+    const [anaRow, benRow] = [await assign(first.id), await assign(second.id)];
+    await assign(other.id);
+
+    const read = await tiers.findBySportEvents([first.id, second.id]);
+    for (const event of [first, second]) {
+      expect(read.filter((tier) => tier.sportEventId === event.id).map((tier) => tier.tierNumber)).toEqual([1, 2]);
+    }
+    expect(read).toHaveLength(4);
+    expect((await valuations.findBySportEvents([first.id, second.id])).map((row) => row.sportEventParticipantId).sort())
+      .toEqual([anaRow.id, benRow.id].sort());
+    expect(await tiers.findBySportEvents([])).toEqual([]);
+    expect(await valuations.findBySportEvents([])).toEqual([]);
   });
 
   it('sets tier and price independently, each leaving the other in place', async () => {

@@ -7,7 +7,7 @@
  * One game, the Chiefs at home to the Eagles. Alice and Bob each have an entry, and Carol is the
  * commissioner, with no entry of her own.
  */
-import { expect } from '@jest/globals';
+import { expect, jest } from '@jest/globals';
 import {
   ContestEntryStatus,
   ContestFormat,
@@ -23,7 +23,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { ContestSettlementService } from '../../../packages/core-api/src/modules/contests/contest-settlement-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
-import type { DrawnSquaresBoard } from '../../../packages/core-api/src/modules/notifications';
+import type { DrawnSquares } from '../../../packages/core-api/src/modules/notifications';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
@@ -78,21 +78,29 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
   const bob = enter('Bob');
 
   let now = later(KICKOFF, -24);
-  // The boards the service asked receipts for, one per draw (#867).
-  const receipts: DrawnSquaresBoard[] = [];
-  const service = new SquaresService({
+  // The draws the service asked receipts for, one per draw (#867).
+  const receipts: DrawnSquares[] = [];
+  // The reads a test counts (#1201).
+  const repos = {
     contests: world.contestRepo(),
-    configurations: world.configurationRepo(),
     entries: world.entryRepo(),
+    matches: games.matchRepo(),
+    field: games.fieldRepo(),
+    squares: squares.repo(),
+  };
+  const service = new SquaresService({
+    contests: repos.contests,
+    configurations: world.configurationRepo(),
+    entries: repos.entries,
     memberships: world.membershipRepo(),
     squadMemberships: world.squadMembershipRepo(),
     sportEvents: world.sportEventRepo(),
-    matches: games.matchRepo(),
-    field: games.fieldRepo(),
+    matches: repos.matches,
+    field: repos.field,
     participants: games.participantRepo(),
-    squares: squares.repo(),
+    squares: repos.squares,
     standings: world.standingRepo(),
-    receipts: { squaresDrawn: async (board) => { receipts.push(board); } },
+    receipts: { squaresDrawn: async (drawn) => { receipts.push(drawn); } },
     now: () => now,
     drawSeed: () => 'seed',
   });
@@ -108,7 +116,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     squares.draws.set(contest.id, { contestId: contest.id, seed: 'seed', rowDigits: IN_ORDER, columnDigits: IN_ORDER, drawnByUserId: null, drawnAt: T0 });
   };
   return {
-    world, games, squares, contest, superBowl, game, alice, bob, service, settlement, actor, updateGame, drawInOrder, receipts,
+    world, games, squares, contest, superBowl, game, alice, bob, service, settlement, actor, updateGame, drawInOrder, receipts, repos,
     setNow: (when: Date) => { now = when; },
     contestStatus: () => expectDefined(world.contests.get(contest.id)).status,
     entryStatus: (entry: ContestEntry) => expectDefined(world.entries.get(entry.id)).events[0]?.status,
@@ -218,10 +226,45 @@ describe('SquaresService claiming boxes', () => {
     expect((await context.service.getBoard(context.contest.id, context.actor('Alice'))).claimsOpen).toBe(false);
   });
 
+  it('answers a claim or a clear with the board after reading only the boxes again, not the whole contest', async () => {
+    const context = setup();
+    const contestReads = jest.spyOn(context.repos.contests, 'findById');
+    const boxReads = jest.spyOn(context.repos.squares, 'findSquares');
+    const claimed = await context.service.claim(context.contest.id, 2, 3, context.alice.id, context.actor('Alice'));
+    expect(claimed.boxes.map((box) => [box.rowIndex, box.columnIndex])).toEqual([[2, 3]]);
+    const cleared = await context.service.clear(context.contest.id, 2, 3, context.actor('Alice'));
+    expect(cleared.boxes).toEqual([]);
+
+    expect(contestReads).toHaveBeenCalledTimes(2);
+    expect(boxReads).toHaveBeenCalledTimes(4);
+  });
+
   it('hides a draft contest from members, as if it did not exist, but shows it to the commissioner', async () => {
     const context = setup({ status: ContestStatus.DRAFT });
     await expectRefused(context.service.getBoard(context.contest.id, context.actor('Alice')), 'CONTEST_NOT_FOUND', 404);
     await expect(context.service.getBoard(context.contest.id, context.actor('Carol'))).resolves.toMatchObject({ claimsOpen: false });
+  });
+});
+
+describe('SquaresService reading the board', () => {
+  it('reads the grid\'s one game by id and only its two teams\' field rows, naming the teams, however many games the event has', async () => {
+    const context = setup();
+    context.games.addGame(context.superBowl.id, 2, KICKOFF);
+    const gameReads = jest.spyOn(context.repos.matches, 'findById');
+    const fieldReads = jest.spyOn(context.repos.field, 'findByIds');
+    const board = await context.service.getBoard(context.contest.id, context.actor('Alice'));
+
+    expect(board.game.id).toBe(context.game.id);
+    expect([board.awayTeamName, board.homeTeamName]).toEqual(['Away 1', 'Home 1']);
+    expect(gameReads.mock.calls).toEqual([[context.game.id]]);
+    expect(fieldReads.mock.calls).toEqual([[[context.game.homeSportEventParticipantId, context.game.awaySportEventParticipantId]]]);
+  });
+
+  it('refuses a board whose game is not one of its contest\'s event, as a broken setup', async () => {
+    const context = setup();
+    const otherEvent = context.world.addSportEvent({ name: 'Pro Bowl', startDate: KICKOFF, sport: Sport.AMERICAN_FOOTBALL });
+    context.updateGame({ sportEventId: otherEvent.id });
+    await expectRefused(context.service.getBoard(context.contest.id, context.actor('Alice')), 'SELECTION_CONFIG_INVALID', 400);
   });
 });
 
@@ -262,8 +305,32 @@ describe('SquaresService drawing the numbers', () => {
     const board = await context.service.draw(context.contest.id, context.actor('Carol'));
     await expectRefused(context.service.draw(context.contest.id, context.actor('Carol')), 'SQUARES_ALREADY_DRAWN', 409);
 
-    expect(context.receipts).toEqual([board]);
-    expect(context.receipts[0].digits).not.toBeNull();
+    expect(context.receipts.map((drawn) => drawn.board)).toEqual([board]);
+    expect(context.receipts[0].board.digits).not.toBeNull();
+  });
+
+  it('hands the receipts the contest\'s entries and event it already loaded, so they are not read again', async () => {
+    const context = setup();
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+    await context.service.draw(context.contest.id, context.actor('Carol'));
+
+    const [drawn] = context.receipts;
+    expect(drawn.entries.map((entry) => entry.id).sort()).toEqual([context.alice.id, context.bob.id]);
+    expect(drawn.sportEvent.id).toBe(context.superBowl.id);
+  });
+
+  it('answers a draw with the board built from the one load before it, its drawn digits those the draw stored', async () => {
+    const context = setup();
+    context.squares.addBox(context.contest.id, context.alice.id, 0, 0);
+    const contestReads = jest.spyOn(context.repos.contests, 'findById');
+    const entryReads = jest.spyOn(context.repos.entries, 'findByContestWithSquad');
+    const board = await context.service.draw(context.contest.id, context.actor('Carol'));
+
+    expect(contestReads).toHaveBeenCalledTimes(1);
+    expect(entryReads).toHaveBeenCalledTimes(1);
+    const stored = expectDefined(context.squares.draws.get(context.contest.id));
+    expect(board.digits).toMatchObject({ seed: stored.seed, rowDigits: stored.rowDigits, columnDigits: stored.columnDigits, drawnAt: stored.drawnAt });
+    expect(board.boxes).toEqual([{ rowIndex: 0, columnIndex: 0, contestEntryId: context.alice.id, entryName: 'Alice' }]);
   });
 
   it('still draws once the game is under way, until the first quarter\'s score is in', async () => {
