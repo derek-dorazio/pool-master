@@ -8,12 +8,16 @@ import { schemaComponentsPlugin } from '../../plugins/schema-components';
 import '@poolmaster/shared/dto/sport-catalog.dto';
 import type { SportListResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { getAppPrisma } from '../../core/prisma-context';
+import { readPublicReadCacheTtlMs } from '../../core/public-cache';
+import { ReadCache } from '../../core/read-cache';
 import { PrismaSportRepository } from '../../adapters';
 import { mapSportToDto } from '../../mappers';
 
 export function sportsModule(fastify: FastifyInstance): void {
   void fastify.register(schemaComponentsPlugin);
   const sports = new PrismaSportRepository(getAppPrisma(fastify));
+  // Seeded with the platform and never written, so one read per TTL serves every request (#1181).
+  const lists = new ReadCache<SportListResponse>(readPublicReadCacheTtlMs(process.env));
 
   fastify.get('/', {
     schema: {
@@ -23,6 +27,7 @@ export function sportsModule(fastify: FastifyInstance): void {
       operationId: 'listSports',
       response: { 200: schemaRef('SportListResponse') },
     },
-    handler: async (): Promise<SportListResponse> => ({ sports: (await sports.findAll()).map(mapSportToDto) }),
+    handler: (): Promise<SportListResponse> =>
+      lists.get('', new Date(), async () => ({ sports: (await sports.findAll()).map(mapSportToDto) })),
   });
 }

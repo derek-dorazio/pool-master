@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient, SquadMembership as PrismaSquadMembership } f
 import type { SquadMembershipRepository, SquadMembershipWithSquadName } from '@poolmaster/shared/db';
 import type { SquadMembership, SquadMembershipStatus } from '@poolmaster/shared/domain';
 import { SquadMembershipStatus as SharedSquadMembershipStatus } from '@poolmaster/shared/domain';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 
 export class PrismaSquadMembershipRepository implements SquadMembershipRepository {
   constructor(private readonly prisma: PrismaClient | Prisma.TransactionClient) {}
@@ -37,10 +38,12 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
   }
 
   async findByLeagueAndUser(leagueId: string, userId: string): Promise<SquadMembership | null> {
-    const row = await this.prisma.squadMembership.findUnique({
-      where: { leagueId_userId: { leagueId, userId } },
+    return memoizedRead(this.prisma, `${ReadMemoKey.squadMembership}${leagueId}:${userId}`, async () => {
+      const row = await this.prisma.squadMembership.findUnique({
+        where: { leagueId_userId: { leagueId, userId } },
+      });
+      return row ? mapToSquadMembership(row) : null;
     });
-    return row ? mapToSquadMembership(row) : null;
   }
 
   async findByLeagueAndUserWithSquadName(
@@ -57,7 +60,7 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
   async create(
     membership: Omit<SquadMembership, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<SquadMembership> {
-    const row = await this.prisma.squadMembership.create({
+    const row = await forgettingReads(ReadMemoKey.squadMembership, () => this.prisma.squadMembership.create({
       data: {
         squadId: membership.squadId,
         leagueId: membership.leagueId,
@@ -65,19 +68,19 @@ export class PrismaSquadMembershipRepository implements SquadMembershipRepositor
         status: membership.status,
         joinedAt: membership.joinedAt,
       },
-    });
+    }));
     return mapToSquadMembership(row);
   }
 
   async update(id: string, updates: Partial<SquadMembership>): Promise<SquadMembership> {
-    const row = await this.prisma.squadMembership.update({
+    const row = await forgettingReads(ReadMemoKey.squadMembership, () => this.prisma.squadMembership.update({
       where: { id },
       data: {
         ...(updates.squadId !== undefined && { squadId: updates.squadId }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.joinedAt !== undefined && { joinedAt: updates.joinedAt }),
       },
-    });
+    }));
     return mapToSquadMembership(row);
   }
 

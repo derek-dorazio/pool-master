@@ -540,6 +540,22 @@ resource "aws_iam_role" "ecs_task" {
   })
 }
 
+# #1181 — core-api clears the public API reads CloudFront keeps when a root admin
+# saves something they show (core/cdn-invalidator.ts). Only this distribution.
+resource "aws_iam_role_policy" "ecs_task_cloudfront_invalidation" {
+  name = "${local.name_prefix}-cloudfront-invalidation"
+  role = aws_iam_role.ecs_task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["cloudfront:CreateInvalidation"]
+      Resource = [aws_cloudfront_distribution.webapp.arn]
+    }]
+  })
+}
+
 resource "aws_iam_role_policy" "ecs_task_ses_send" {
   name = "${local.name_prefix}-ses-send"
   role = aws_iam_role.ecs_task.id
@@ -797,6 +813,8 @@ resource "aws_ecs_task_definition" "core_api" {
       { name = "SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.mail.configuration_set_name },
       { name = "SES_EVENTS_TOPIC_ARN", value = aws_sns_topic.ses_events.arn },
       { name = "AUTO_START_SCHEDULER", value = "true" },
+      # #1181 — the distribution an admin save invalidates the public API reads on.
+      { name = "CLOUDFRONT_DISTRIBUTION_ID", value = aws_cloudfront_distribution.webapp.id },
     ])
     # pool-master-rop.76.1 — JWT_SECRET injected from Secrets Manager.
     # ECS resolves the ARN at task start and exposes the value in the

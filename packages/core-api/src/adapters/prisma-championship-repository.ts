@@ -47,11 +47,6 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
     });
   }
 
-  async findCupName(leagueId: string): Promise<string | null> {
-    const row = await this.prisma.league.findUnique({ where: { id: leagueId }, select: { cupName: true } });
-    return row?.cupName ?? null;
-  }
-
   async hasCountedFinish(leagueId: string, year: number): Promise<boolean> {
     const row = await this.prisma.leagueYearFinish.findFirst({
       where: { leagueId, year, weight: { not: CupWeight.NOT_COUNTED } },

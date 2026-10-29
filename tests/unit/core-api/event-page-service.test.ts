@@ -14,9 +14,10 @@ import {
   type EventPageOffer,
 } from '@poolmaster/shared/domain';
 import { ContestOpening, type ContestOpeningSetup } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
-import { EventPageNotFoundError, EventPageService } from '../../../packages/core-api/src/modules/event-pages/service';
+import { EventPageNotFoundError, EventPageService, eventPagesChangeAt } from '../../../packages/core-api/src/modules/event-pages/service';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
+const DEFAULT_CLOSES_AT = new Date('2027-01-09T18:00:00.000Z');
 
 function template(id: string, configJson: ContestConfigTemplate['configJson']): ContestConfigTemplate {
   return {
@@ -80,6 +81,7 @@ function build(options: {
   offers?: EventPageOffer[];
   editions?: Record<string, EventPageEdition[]>;
   openings?: Record<string, ContestOpening>;
+  closesAt?: Record<string, Date>;
 }) {
   const pages = options.pages ?? [PAGE];
   const offers = options.offers ?? [CLUTCH_CARD, BRACKET, SQUARES];
@@ -94,7 +96,9 @@ function build(options: {
     pages: repo,
     opening: (sportEventId, setup) => {
       asked.push({ sportEventId, setup });
-      return Promise.resolve(options.openings?.[sportEventId] ?? ContestOpening.OPEN);
+      const opening = options.openings?.[sportEventId] ?? ContestOpening.OPEN;
+      const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
+      return Promise.resolve({ opening, closesAt });
     },
   });
   return { service, asked };
@@ -117,6 +121,24 @@ describe('EventPageService', () => {
       ['bracket', 'playoffs-2027', EventPageOfferState.OPEN],
       ['squares', 'playoffs-2027', EventPageOfferState.OPEN],
     ]);
+  });
+
+  it('carries each offer\'s cutoff, and says the pages change at the soonest one, so no copy is kept past it (#1181)', async () => {
+    const { service } = build({
+      editions: {
+        'cw/Conference Championships': [edition('cw-2027', '2027-01-24T20:00:00.000Z')],
+        'nfl/NFL Playoffs': [edition('playoffs-2027', '2027-01-09T18:00:00.000Z')],
+      },
+      closesAt: { 'cw-2027': new Date('2027-01-24T20:00:00.000Z'), 'playoffs-2027': new Date('2027-01-16T21:30:00.000Z') },
+    });
+
+    const view = await service.getPage(Sport.AMERICAN_FOOTBALL, 'championship-weekend');
+
+    expect(view.offers.map((each) => each.closesAt.toISOString())).toEqual([
+      '2027-01-24T20:00:00.000Z', '2027-01-16T21:30:00.000Z', '2027-01-16T21:30:00.000Z',
+    ]);
+    expect(eventPagesChangeAt([view])).toEqual(new Date('2027-01-16T21:30:00.000Z'));
+    expect(eventPagesChangeAt([{ page: PAGE, offers: [] }])).toBeNull();
   });
 
   it('asks about a bracket from the offer\'s own starting round, over its template\'s, and about anything else with none', async () => {

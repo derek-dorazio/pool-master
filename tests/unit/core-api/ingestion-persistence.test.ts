@@ -9,6 +9,8 @@ import { fakeLogger } from '../../support/fake-logger';
 import { asPrismaClient } from '../../support/prisma-double';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
+import { PublicReadPath } from '../../../packages/core-api/src/core/public-cache';
+import { RecordingCdnInvalidator } from '../../support/recording-cdn-invalidator';
 
 function buildInProgressEvent(): SportEvent {
   return {
@@ -375,6 +377,15 @@ describe('IngestionPersistence', () => {
       await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), fieldCache).persistEventDetailWithDiagnostics(detail);
 
       expect(await readsAfresh(fieldCache)).toBe(true);
+    });
+
+    it('clears the public event pages at the CDN once sync writes a field, since a loaded field can open an offer (#1181)', async () => {
+      const cdn = new RecordingCdnInvalidator();
+      const prisma = syncedEvent(jest.fn().mockResolvedValue([{ id: 'sport-event-participant-1', participantId: 'participant-1' }]));
+
+      await new IngestionPersistence(asPrismaClient(prisma), fakeLogger(), undefined, cdn).persistEventDetailWithDiagnostics(detail);
+
+      expect(cdn.calls).toEqual([[PublicReadPath.EVENT_PAGES]]);
     });
 
     it('forgets it too when writing the field fails partway, since some rows may have been written', async () => {

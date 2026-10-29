@@ -80,6 +80,4 @@ export interface CupRepository {
    * the crowned cup, or null when it was already crowned, so two crownings never both write.
    */
   crown(cupId: string, crowning: { crownedAt: Date; pointsTable: CupPointsTable; standings: readonly CupStanding[] }): Promise<Cup | null>;
-  /** The league's points table, or null when there is no such league. */
-  findPointsTable(leagueId: string): Promise<CupPointsTable | null>;
 }

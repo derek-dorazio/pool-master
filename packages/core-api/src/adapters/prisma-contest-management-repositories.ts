@@ -1,4 +1,5 @@
 import type { PrismaClient } from '@prisma/client';
+import { forgettingReads, memoizedRead, ReadMemoKey } from '../core/request-read-memo';
 import type {
   ContestConfigTemplateRepository,
   ContestConfigurationRepository,
@@ -26,10 +27,12 @@ export class PrismaContestConfigurationRepository
   constructor(private readonly prisma: PrismaClient) {}
 
   async findByContest(contestId: string): Promise<ContestConfiguration | null> {
-    const row = await this.prisma.contestConfiguration.findUnique({
-      where: { contestId },
+    return memoizedRead(this.prisma, `${ReadMemoKey.contestConfiguration}${contestId}`, async () => {
+      const row = await this.prisma.contestConfiguration.findUnique({
+        where: { contestId },
+      });
+      return row ? mapContestConfiguration(row) : null;
     });
-    return row ? mapContestConfiguration(row) : null;
   }
 
   async findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]> {
@@ -43,7 +46,7 @@ export class PrismaContestConfigurationRepository
   async create(
     configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
   ): Promise<ContestConfiguration> {
-    const row = await this.prisma.contestConfiguration.create({
+    const row = await forgettingReads(ReadMemoKey.contestConfiguration, () => this.prisma.contestConfiguration.create({
       data: {
         contestId: configuration.contestId,
         templateId: configuration.templateId,
@@ -54,7 +57,7 @@ export class PrismaContestConfigurationRepository
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
       },
-    });
+    }));
     return mapContestConfiguration(row);
   }
 
@@ -62,7 +65,7 @@ export class PrismaContestConfigurationRepository
     id: string,
     updates: Partial<ContestConfiguration>,
   ): Promise<ContestConfiguration> {
-    const row = await this.prisma.contestConfiguration.update({
+    const row = await forgettingReads(ReadMemoKey.contestConfiguration, () => this.prisma.contestConfiguration.update({
       where: { id },
       data: {
         ...(updates.templateId !== undefined && {
@@ -87,7 +90,7 @@ export class PrismaContestConfigurationRepository
           totalPrizePoolAmount: updates.totalPrizePoolAmount,
         }),
       },
-    });
+    }));
     return mapContestConfiguration(row);
   }
 }

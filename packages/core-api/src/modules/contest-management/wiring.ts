@@ -142,7 +142,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
 
 /**
  * What asking whether a setup could open on an event needs (#1007): contest creation's reader,
- * plus whether a squares contest still has a game to be played on.
+ * plus the next game a squares contest could still be played on.
  */
 export function createContestOpeningReader(prisma: PrismaClient): ContestOpeningReader {
   const matches = new PrismaSportEventMatchRepository(prisma);
@@ -155,11 +155,14 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
   });
   return {
     ...reader,
-    hasSquaresGameAhead: async (sportEvent, now) => {
+    nextSquaresKickoff: async (sportEvent, now) => {
       const games = await matches.findBySportEvent(sportEvent.id);
-      return games.some((game) => game.status !== MatchStatus.CANCELLED
-        && isSquaresRound(sportEvent.squaresFromRound, game.roundNumber)
-        && !hasSportEventStarted(cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventMatchId: game.id }, sportEvent, games), now));
+      const kickoffs = games
+        .filter((game) => game.status !== MatchStatus.CANCELLED && isSquaresRound(sportEvent.squaresFromRound, game.roundNumber))
+        .map((game) => cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventMatchId: game.id }, sportEvent, games))
+        .filter((timing) => !hasSportEventStarted(timing, now))
+        .map((timing) => timing.startDate.getTime());
+      return kickoffs.length === 0 ? null : new Date(Math.min(...kickoffs));
     },
   };
 }

@@ -12,6 +12,7 @@ import type {
   CupKey,
   CupRepository,
   LeagueCupContest,
+  LeagueRepository,
   SportLeagueRepository,
   SquadRepository,
 } from '@poolmaster/shared/db';
@@ -22,6 +23,7 @@ import {
   type CupTrophy,
   CupWeight,
   cupFinishPoints,
+  leaguePointsTable,
   rankCupTallies,
   type Cup,
   type CupPointsTable,
@@ -170,6 +172,8 @@ export interface CupLivePositions {
 
 export interface CupServiceDeps {
   cups: CupRepository;
+  /** The league's points table comes from its row, read once per request (#1176). */
+  leagues: Pick<LeagueRepository, 'findById'>;
   liveContests: CupLivePositions;
   squads: SquadRepository;
   sportLeagues: SportLeagueRepository;
@@ -385,15 +389,15 @@ export class CupService {
    * was crowned on, counting only contests settled before its crowning.
    */
   private async loadSeason(cup: Cup): Promise<CupSeason> {
-    const [leagueTable, contests] = await Promise.all([
-      this.deps.cups.findPointsTable(cup.leagueId),
+    const [league, contests] = await Promise.all([
+      this.deps.leagues.findById(cup.leagueId),
       this.deps.cups.findContests(cup),
     ]);
-    if (leagueTable === null) {
+    if (league === null) {
       throw new CupNotFoundError(`Cup ${cup.id}'s league no longer exists.`);
     }
     const finishes = await this.deps.cups.findFinishes(finalContestIds(contests));
-    return seasonOf(cup, leagueTable, contests, groupByContest(finishes));
+    return seasonOf(cup, leaguePointsTable(league), contests, groupByContest(finishes));
   }
 
   private async buildCupView(cup: Cup, leagueSquads: readonly Squad[], contests: readonly CupContest[]): Promise<CupView> {
@@ -413,15 +417,16 @@ export class CupService {
     }
     const contestIds = listed.flatMap((cup) => finalContestIds(contestsOf.get(cup.id) ?? []));
     const crownedIds = listed.filter((cup) => cup.status === CupStatus.CROWNED).map((cup) => cup.id);
-    const [leagueTable, sportLeagues, finishes, frozen] = await Promise.all([
-      this.deps.cups.findPointsTable(first.leagueId),
+    const [league, sportLeagues, finishes, frozen] = await Promise.all([
+      this.deps.leagues.findById(first.leagueId),
       this.deps.sportLeagues.findByIds([...new Set(listed.map((cup) => cup.sportLeagueId))]),
       this.deps.cups.findFinishes(contestIds),
       this.deps.cups.findStandings(crownedIds),
     ]);
-    if (leagueTable === null) {
+    if (league === null) {
       throw new CupNotFoundError(`Cup ${first.id}'s league no longer exists.`);
     }
+    const leagueTable = leaguePointsTable(league);
     const byContest = groupByContest(finishes);
     const sportLeagueNames = new Map(sportLeagues.map((sportLeague) => [sportLeague.id, sportLeague.name]));
     const frozenByCup = new Map<string, CupStanding[]>();
