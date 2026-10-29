@@ -212,11 +212,23 @@ export class AuthService {
     }
     // An inactive account keeps its session, for the same reason it may sign in (A9).
 
-    // Revoke the old refresh token (rotation)
-    await this.prisma.refreshToken.update({
-      where: { id: stored.id },
+    // Revoke the old refresh token (rotation). The read above is not enough: two refreshes with
+    // the same token can both see it live, so only the one whose conditional update revokes it
+    // may issue the next token (#1175).
+    const rotated = await this.prisma.refreshToken.updateMany({
+      where: { id: stored.id, revokedAt: null },
       data: { revokedAt: new Date() },
     });
+    if (rotated.count === 0) {
+      this.logger?.warn({
+        action: 'authService.refresh.alreadyRotated',
+        data: {
+          userId: stored.user.id,
+          sessionId: stored.sessionId,
+        },
+      }, 'Rejected refresh for a token another refresh already rotated');
+      throw new AuthError('Invalid or expired refresh token', 'INVALID_REFRESH_TOKEN');
+    }
 
     const tokens = await this.issueTokens(
       stored.user.id,

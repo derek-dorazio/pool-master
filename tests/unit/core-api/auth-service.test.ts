@@ -39,7 +39,7 @@ function createPrismaMock(passwordHash: string | null = null) {
     user: { findUnique: jest.fn().mockResolvedValue({ passwordHash }) },
     refreshToken: {
       create: jest.fn().mockResolvedValue({}),
-      update: jest.fn().mockResolvedValue(undefined),
+      updateMany: jest.fn().mockResolvedValue({ count: 1 }),
       findUnique: jest.fn(),
     },
   };
