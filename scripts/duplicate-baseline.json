@@ -47,7 +47,7 @@
         "clients/poolmaster/src/features/championships/cup-standings-grid.tsx"
       ],
       "count": 3,
-      "ticket": "#1277"
+      "ticket": "#1290"
     },
     {
       "files": [
@@ -63,39 +63,23 @@
         "clients/poolmaster/src/features/contests/contest-entry-page.tsx"
       ],
       "count": 1,
-      "ticket": "#1277"
+      "ticket": "#1290"
     },
     {
       "files": [
         "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
         "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx"
       ],
-      "count": 3,
-      "ticket": "#1277"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/bracket-entry-page.tsx",
-        "clients/poolmaster/src/features/contests/squares-pages.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1277"
+      "count": 2,
+      "ticket": "#1290"
     },
     {
       "files": [
         "clients/poolmaster/src/features/contests/bracket-leaderboard.tsx",
         "clients/poolmaster/src/features/contests/pick-em-leaderboard.tsx"
       ],
-      "count": 2,
-      "ticket": "#1277"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/bracket-leaderboard.tsx",
-        "clients/poolmaster/src/features/contests/survivor-leaderboard.tsx"
-      ],
-      "count": 4,
-      "ticket": "#1277"
+      "count": 1,
+      "ticket": "#1290"
     },
     {
       "files": [
@@ -103,23 +87,7 @@
         "clients/poolmaster/src/features/contests/contest-leaderboard-page.tsx"
       ],
       "count": 1,
-      "ticket": "#1277"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/contest-entry-page.tsx",
-        "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx"
-      ],
-      "count": 2,
-      "ticket": "#1277"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/contest-leaderboard-page.tsx",
-        "clients/poolmaster/src/features/contests/survivor-leaderboard.tsx"
-      ],
-      "count": 1,
-      "ticket": "#1277"
+      "ticket": "#1290"
     },
     {
       "files": [
@@ -128,22 +96,6 @@
       ],
       "count": 1,
       "ticket": "#1290"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/pick-em-entry-page.tsx",
-        "clients/poolmaster/src/features/contests/squares-pages.tsx"
-      ],
-      "count": 2,
-      "ticket": "#1277"
-    },
-    {
-      "files": [
-        "clients/poolmaster/src/features/contests/pick-em-leaderboard.tsx",
-        "clients/poolmaster/src/features/contests/survivor-leaderboard.tsx"
-      ],
-      "count": 5,
-      "ticket": "#1277"
     },
     {
       "files": [
